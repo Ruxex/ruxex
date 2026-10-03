@@ -117,7 +117,7 @@ impl Harness {
         write_auth(home.path(), "first")?;
         let config = Arc::new(
             ConfigBuilder::default()
-                .codex_home(home.path().into())
+                .genex_home(home.path().into())
                 .build()
                 .await?,
         );

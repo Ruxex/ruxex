@@ -25,7 +25,7 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const EVENT_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub(crate) struct ExecServerHarness {
-    codex_home: TempDir,
+    genex_home: TempDir,
     child: Child,
     stdin: ChildStdin,
     stdout: Lines<BufReader<ChildStdout>>,
@@ -40,14 +40,14 @@ impl Drop for ExecServerHarness {
 
 pub(crate) struct TestGenexHelperPaths {
     pub(crate) codex_exe: PathBuf,
-    pub(crate) codex_linux_sandbox_exe: Option<PathBuf>,
+    pub(crate) genex_linux_sandbox_exe: Option<PathBuf>,
 }
 
 pub(crate) fn test_genex_helper_paths() -> anyhow::Result<TestGenexHelperPaths> {
-    let (helper_binary, codex_linux_sandbox_exe) = super::current_test_binary_helper_paths()?;
+    let (helper_binary, genex_linux_sandbox_exe) = super::current_test_binary_helper_paths()?;
     Ok(TestGenexHelperPaths {
         codex_exe: helper_binary,
-        codex_linux_sandbox_exe,
+        genex_linux_sandbox_exe,
     })
 }
 
@@ -74,7 +74,7 @@ where
 
 impl ExecServerHarness {
     pub(crate) async fn start(mut command: Command) -> anyhow::Result<Self> {
-        let codex_home = TempDir::new()?;
+        let genex_home = TempDir::new()?;
         command.stdin(Stdio::piped());
         command.stdout(Stdio::piped());
         command.stderr(Stdio::inherit());
@@ -82,9 +82,9 @@ impl ExecServerHarness {
         if !command
             .as_std()
             .get_envs()
-            .any(|(key, value)| key == "CODEX_HOME" && value.is_some())
+            .any(|(key, value)| key == "GENEX_HOME" && value.is_some())
         {
-            command.env("CODEX_HOME", codex_home.path());
+            command.env("GENEX_HOME", genex_home.path());
         }
         let mut child = command.spawn()?;
         let stdin = child
@@ -97,7 +97,7 @@ impl ExecServerHarness {
             .ok_or_else(|| anyhow!("failed to capture exec-server stdout"))?;
 
         Ok(Self {
-            codex_home,
+            genex_home,
             child,
             stdin,
             stdout: BufReader::new(stdout).lines(),
@@ -105,8 +105,8 @@ impl ExecServerHarness {
         })
     }
 
-    pub(crate) fn codex_home(&self) -> &std::path::Path {
-        self.codex_home.path()
+    pub(crate) fn genex_home(&self) -> &std::path::Path {
+        self.genex_home.path()
     }
 
     pub(crate) async fn send_request(

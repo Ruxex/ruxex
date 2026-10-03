@@ -42,18 +42,18 @@ async fn fresh_context_subagent_inherits_disabled_view_image_and_mcp_tools() -> 
 
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_model("gpt-5.4")
         .with_provider_config("supports_websockets = false")
         .with_extra_config(&format!(
             "[mcp_servers.{TEST_SERVER_NAME}]\nurl = \"{mcp_server_url}/mcp\"\n\n[features.multi_agent_v2]\nenabled = true"
         ))
-        .write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
+        .write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -202,13 +202,13 @@ async fn guardian_reviewer_inherits_disabled_view_image() -> Result<()> {
         create_final_assistant_message_sse_response("review complete")?,
     )
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let guardian_thread_id = create_fake_parented_rollout_with_source(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "review a requested action",
@@ -220,7 +220,7 @@ async fn guardian_reviewer_inherits_disabled_view_image() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let resume_id = mcp

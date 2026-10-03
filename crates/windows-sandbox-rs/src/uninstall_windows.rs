@@ -19,11 +19,11 @@ mod retained_logons;
 /// That callback removes user-owned desktop files while the sandbox accounts remain disabled.
 /// `report` must remain usable after the home and its log files have been removed.
 pub fn clean_up_packaged_windows_sandbox(
-    codex_home: Option<&Path>,
+    genex_home: Option<&Path>,
     report: impl Fn(&str),
     clean_up_desktop: impl FnOnce() -> Result<()>,
 ) -> Result<()> {
-    prepare_packaged_windows_sandbox_cleanup()?.finish(codex_home, report, clean_up_desktop)
+    prepare_packaged_windows_sandbox_cleanup()?.finish(genex_home, report, clean_up_desktop)
 }
 
 /// Holds the setup lock after sandbox accounts are disabled, their processes
@@ -91,24 +91,24 @@ impl PreparedWindowsSandboxCleanup {
     /// `report` records each cleanup outcome without relying on files in the home.
     pub fn finish(
         &self,
-        codex_home: Option<&Path>,
+        genex_home: Option<&Path>,
         report: impl Fn(&str),
         clean_up_desktop: impl FnOnce() -> Result<()>,
     ) -> Result<()> {
         self.users.validate_current()?;
         let mut errors = Vec::new();
 
-        if let Some(codex_home) = codex_home {
+        if let Some(genex_home) = genex_home {
             if let Err(error) = crate::logging::release_setup_log() {
                 errors.push(format!("release setup log: {error:#}"));
             }
             for (directory, path) in [
-                (".sandbox", crate::setup::sandbox_dir(codex_home)),
+                (".sandbox", crate::setup::sandbox_dir(genex_home)),
                 (
                     ".sandbox-secrets",
-                    crate::setup::sandbox_secrets_dir(codex_home),
+                    crate::setup::sandbox_secrets_dir(genex_home),
                 ),
-                (".sandbox-bin", crate::setup::sandbox_bin_dir(codex_home)),
+                (".sandbox-bin", crate::setup::sandbox_bin_dir(genex_home)),
             ] {
                 match std::fs::remove_dir_all(path) {
                     Ok(()) => report(&format!("removed {directory}")),

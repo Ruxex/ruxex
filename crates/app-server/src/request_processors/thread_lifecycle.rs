@@ -11,7 +11,7 @@ pub(super) struct ListenerTaskContext {
     pub(super) outgoing: Arc<OutgoingMessageSender>,
     pub(super) pending_thread_unloads: Arc<Mutex<HashSet<ThreadId>>>,
     pub(super) thread_watch_manager: ThreadWatchManager,
-    pub(super) codex_home: PathBuf,
+    pub(super) genex_home: PathBuf,
     pub(super) thread_unload_delay: Duration,
     pub(super) skills_watcher: Arc<SkillsWatcher>,
     pub(super) turn_cost_worker: Option<crate::turn_cost_worker::TurnCostWorkerHandle>,
@@ -269,7 +269,7 @@ pub(super) async fn ensure_listener_task_running(
         thread_state_manager,
         pending_thread_unloads,
         thread_watch_manager,
-        codex_home,
+        genex_home,
         turn_cost_worker,
         ..
     } = listener_task_context;
@@ -289,7 +289,7 @@ pub(super) async fn ensure_listener_task_running(
                     handle_thread_listener_command(
                         conversation_id,
                         &conversation,
-                        codex_home.as_path(),
+                        genex_home.as_path(),
                         &thread_state_manager,
                         &thread_state,
                         &thread_watch_manager,
@@ -472,7 +472,7 @@ pub(super) async fn unload_thread_without_subscribers(
 pub(super) async fn handle_thread_listener_command(
     conversation_id: ThreadId,
     conversation: &Arc<GenexThread>,
-    codex_home: &Path,
+    genex_home: &Path,
     thread_state_manager: &ThreadStateManager,
     thread_state: &Arc<Mutex<ThreadState>>,
     thread_watch_manager: &ThreadWatchManager,
@@ -488,7 +488,7 @@ pub(super) async fn handle_thread_listener_command(
             handle_pending_thread_resume_request(
                 conversation_id,
                 conversation,
-                codex_home,
+                genex_home,
                 thread_state_manager,
                 thread_state,
                 thread_watch_manager,
@@ -571,7 +571,7 @@ pub(super) async fn handle_thread_listener_command(
 pub(super) async fn handle_pending_thread_resume_request(
     conversation_id: ThreadId,
     conversation: &Arc<GenexThread>,
-    _codex_home: &Path,
+    _genex_home: &Path,
     thread_state_manager: &ThreadStateManager,
     thread_state: &Arc<Mutex<ThreadState>>,
     thread_watch_manager: &ThreadWatchManager,

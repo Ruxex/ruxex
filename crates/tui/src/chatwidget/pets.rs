@@ -14,7 +14,7 @@ pub(super) fn load_ambient_pet(
 
     crate::pets::AmbientPet::load(
         Some(selected_pet),
-        &config.codex_home,
+        &config.genex_home,
         frame_requester,
         config.tui.animations,
     )
@@ -35,14 +35,14 @@ pub(super) fn start_configured_pet_load_if_needed(
         return;
     }
 
-    let codex_home = config.codex_home.clone();
+    let genex_home = config.genex_home.clone();
     let animations_enabled = config.tui.animations;
     let event_pet_id = pet_id.clone();
     spawn_pet_load(
         async move {
             crate::pets::load_pet_with_assets(
                 pet_id,
-                codex_home,
+                genex_home,
                 frame_requester,
                 animations_enabled,
                 &pet_http_client,
@@ -147,7 +147,7 @@ impl ChatWidget {
         self.pet_picker_preview_pet = None;
         let params = crate::pets::build_pet_picker_params(
             self.local_settings.tui.pet.as_deref(),
-            &self.local_settings.codex_home,
+            &self.local_settings.genex_home,
             self.pet_picker_preview_state.clone(),
         );
         self.bottom_pane.show_selection_view(params);
@@ -239,7 +239,7 @@ impl ChatWidget {
         self.pet_picker_preview_state.set_loading();
         self.request_redraw();
 
-        let codex_home = self.local_settings.codex_home.clone();
+        let genex_home = self.local_settings.genex_home.clone();
         let frame_requester = self.frame_requester.clone();
         let tx = self.app_event_tx.clone();
         let pet_http_client = self.pet_http_client.clone();
@@ -247,7 +247,7 @@ impl ChatWidget {
             async move {
                 crate::pets::load_pet_with_assets(
                     pet_id,
-                    codex_home,
+                    genex_home,
                     frame_requester,
                     /*animations_enabled*/ false,
                     &pet_http_client,

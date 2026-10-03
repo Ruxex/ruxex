@@ -36,7 +36,7 @@ use wiremock::matchers::path;
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
 
 fn create_config_toml_custom_provider(
-    codex_home: &Path,
+    genex_home: &Path,
     requires_auth: bool,
 ) -> std::io::Result<()> {
     let mut config = MockResponsesConfig::new("http://127.0.0.1:0")
@@ -45,11 +45,11 @@ fn create_config_toml_custom_provider(
     if requires_auth {
         config = config.with_provider_config("requires_auth = true");
     }
-    config.write(codex_home)
+    config.write(genex_home)
 }
 
-fn create_config_toml(codex_home: &Path) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(genex_home: &Path) -> std::io::Result<()> {
+    let config_toml = genex_home.join("config.toml");
     std::fs::write(
         config_toml,
         r#"
@@ -76,11 +76,11 @@ async fn login_with_api_key_via_request(mcp: &mut TestAppServer, api_key: &str) 
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_auth_status_no_auth() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -102,11 +102,11 @@ async fn get_auth_status_no_auth() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_auth_status_with_api_key() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -131,11 +131,11 @@ async fn get_auth_status_with_api_key() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_auth_status_with_api_key_when_auth_not_required() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml_custom_provider(codex_home.path(), /*requires_auth*/ false)?;
+    let genex_home = TempDir::new()?;
+    create_config_toml_custom_provider(genex_home.path(), /*requires_auth*/ false)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -163,11 +163,11 @@ async fn get_auth_status_with_api_key_when_auth_not_required() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_auth_status_with_api_key_no_include_token() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -190,11 +190,11 @@ async fn get_auth_status_with_api_key_no_include_token() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_auth_status_with_api_key_refresh_requested() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;

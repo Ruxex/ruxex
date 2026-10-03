@@ -17,7 +17,7 @@ whose host permits detached child processes.
 Windows automatic attachment requires the canonical socket address to fit the
 108-byte AF_UNIX limit (including its terminator). A short junction alias whose
 resolved address exceeds that limit falls back to the embedded server. Use a
-shorter `CODEX_HOME` to share the daemon; discovery does not trust a mutable alias.
+shorter `GENEX_HOME` to share the daemon; discovery does not trust a mutable alias.
 
 Shared clients use the environment inherited when the daemon started. Opening a
 new terminal or clearing variables there does not clear the running daemon's
@@ -43,7 +43,7 @@ responses report the resolved backend, socket path, local CLI version, and
 running app-server version when applicable.
 
 Eligible managed daemons check for updates after five minutes, then hourly by
-default. Edit `CODEX_HOME/app-server-daemon/settings.json` to change this:
+default. Edit `GENEX_HOME/app-server-daemon/settings.json` to change this:
 
 ```json
 {"shutdownGraceSeconds": 60,
@@ -76,7 +76,7 @@ For a new Linux or macOS machine:
 ```sh
 Set `CODEX_INSTALLER_URL` to a provider installer endpoint before enabling
 standalone updates, then run the provider's documented installation command.
-$HOME/.codex/packages/standalone/current/codex app-server daemon bootstrap
+$HOME/.genex/packages/standalone/current/codex app-server daemon bootstrap
 ```
 
 On Windows, use a non-elevated PowerShell terminal whose host allows breakaway:
@@ -84,28 +84,28 @@ On Windows, use a non-elevated PowerShell terminal whose host allows breakaway:
 ```powershell
 The installer endpoint is provider-specific; configure it through
 `CODEX_INSTALLER_URL` rather than relying on a built-in hosted URL.
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
+$codexHome = if ($env:GENEX_HOME) { $env:GENEX_HOME } else { Join-Path $HOME '.genex' }
 & "$codexHome\packages\standalone\current\bin\codex.exe" app-server daemon bootstrap
 ```
 
 `bootstrap` can use any complete CLI package. If no daemon package is installed,
-it copies the invoking package into `CODEX_HOME/packages/app-server-daemon` and
+it copies the invoking package into `GENEX_HOME/packages/app-server-daemon` and
 prints an installation message without asking for confirmation. Existing daemon
 packages are reused, including legacy installations; a broken selection is not
 silently replaced. A bare executable cannot supply a new installation.
 
-It records the daemon settings under `CODEX_HOME/app-server-daemon/`, starts app-server as a
+It records the daemon settings under `GENEX_HOME/app-server-daemon/`, starts app-server as a
 pidfile-backed detached process. It launches a detached updater loop when
 automatic updates are enabled, the installer selected the stable `latest`
 channel, and the managed binary supports the updater command.
 
 ## Installation and update cases
 
-New daemons use `CODEX_HOME/packages/app-server-daemon/current/bin/genex`
+New daemons use `GENEX_HOME/packages/app-server-daemon/current/bin/genex`
 (`codex.exe` on Windows). The package contains the executable and its helpers.
 Daemon-only installer updates leave the user's CLI command and shell setup alone.
 
-Previously launched legacy daemons retain `CODEX_HOME/packages/standalone/current`,
+Previously launched legacy daemons retain `GENEX_HOME/packages/standalone/current`,
 including its flat binary layout when present. Starts and scheduled updates keep
 using that location. An explicit production update prepares and validates a
 compatible dedicated package before stopping the legacy updater and daemon,
@@ -164,12 +164,12 @@ JSON-RPC initialize handshake on the Unix control socket.
 `stop` sends a graceful termination request first, then force-terminates the
 process after the configured grace window if it is still alive.
 
-All mutating lifecycle commands are serialized per `CODEX_HOME`, so concurrent
+All mutating lifecycle commands are serialized per `GENEX_HOME`, so concurrent
 operations do not race another in-flight lifecycle operation.
 
 ## State
 
-The daemon stores its local state under `CODEX_HOME/app-server-daemon/`:
+The daemon stores its local state under `GENEX_HOME/app-server-daemon/`:
 
 - `settings.json` for updater preferences
 - `app-server.pid` for the app-server process record

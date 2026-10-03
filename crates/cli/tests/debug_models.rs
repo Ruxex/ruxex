@@ -3,16 +3,16 @@ use std::path::Path;
 use anyhow::Result;
 use tempfile::TempDir;
 
-fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
-    cmd.env("CODEX_HOME", codex_home);
+    cmd.env("GENEX_HOME", genex_home);
     Ok(cmd)
 }
 
 #[test]
 fn debug_models_default_prints_json_without_auth() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let mut cmd = genex_command(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    let mut cmd = genex_command(genex_home.path())?;
     let output = cmd.args(["debug", "models"]).output()?;
 
     assert!(output.status.success());

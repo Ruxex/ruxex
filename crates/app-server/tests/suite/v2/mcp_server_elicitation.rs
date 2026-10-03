@@ -345,10 +345,10 @@ async fn mcp_server_strict_auto_review(scenario: Review) -> Result<()> {
 async fn provider_form_capability_follows_the_turn_starting_connection() -> Result<()> {
     let (responses_server, response_mock, apps_server_url, apps_server_handle) =
         start_elicitation_services(ElicitationScenario::providerForm).await?;
-    let codex_home = TempDir::new()?;
-    write_config_toml(codex_home.path(), &responses_server.uri(), &apps_server_url)?;
+    let genex_home = TempDir::new()?;
+    write_config_toml(genex_home.path(), &responses_server.uri(), &apps_server_url)?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -356,7 +356,7 @@ async fn provider_form_capability_follows_the_turn_starting_connection() -> Resu
         AuthCredentialsStoreMode::File,
     )?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(codex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
     let mut supported_client = connect_websocket(bind_addr).await?;
     initialize_websocket_client(
         &mut supported_client,
@@ -608,7 +608,7 @@ async fn start_elicitation_services(
 
 struct ElicitationRoundTripFixture {
     mcp: TestAppServer,
-    _codex_home: TempDir,
+    _genex_home: TempDir,
     response_mock: ResponseMock,
     _responses_server: wiremock::MockServer,
     scenario: ElicitationScenario,
@@ -674,8 +674,8 @@ impl ElicitationRoundTripFixture {
     ) -> Result<Self> {
         let (responses_server, response_mock, apps_server_url, apps_server_handle) =
             start_elicitation_services(scenario).await?;
-        let codex_home = TempDir::new()?;
-        write_config_toml(codex_home.path(), &responses_server.uri(), &apps_server_url)?;
+        let genex_home = TempDir::new()?;
+        write_config_toml(genex_home.path(), &responses_server.uri(), &apps_server_url)?;
         let strict = if let ElicitationScenario::Strict(strict) = scenario {
             Some(strict)
         } else {
@@ -687,10 +687,10 @@ impl ElicitationRoundTripFixture {
             _ => "",
         };
         if !requirements.is_empty() {
-            std::fs::write(codex_home.path().join("requirements.toml"), requirements)?;
+            std::fs::write(genex_home.path().join("requirements.toml"), requirements)?;
         }
         write_api_key_auth(
-            codex_home.path(),
+            genex_home.path(),
             ApiKeyAuthFixture::new("test-token")
                 .account_id("account-123")
                 .user_id("user-123")
@@ -699,7 +699,7 @@ impl ElicitationRoundTripFixture {
         )?;
 
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .build()
             .await?;
         let mut extensions = HashMap::from([(
@@ -793,7 +793,7 @@ impl ElicitationRoundTripFixture {
 
         Ok(Self {
             mcp,
-            _codex_home: codex_home,
+            _genex_home: genex_home,
             response_mock,
             _responses_server: responses_server,
             scenario,
@@ -1470,12 +1470,12 @@ async fn list_directory_connectors(
 }
 
 fn write_config_toml(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     responses_server_uri: &str,
     apps_server_url: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"

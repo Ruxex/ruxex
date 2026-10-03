@@ -11,12 +11,12 @@ use pretty_assertions::assert_eq;
 async fn lifecycle_metadata_uses_local_prompt_history() -> Result<()> {
     let local_home = tempfile::tempdir()?;
     let local_config = ConfigBuilder::default()
-        .codex_home(local_home.path().to_path_buf())
+        .genex_home(local_home.path().to_path_buf())
         .build()
         .await?;
     let local_settings = LocalSettings::from(&local_config);
     let history_config =
-        HistoryConfig::new(local_settings.codex_home.clone(), &local_settings.history);
+        HistoryConfig::new(local_settings.genex_home.clone(), &local_settings.history);
     genex_message_history::append_entry("local prompt", ThreadId::new(), &history_config).await?;
     let (log_id, entry_count) = genex_message_history::history_metadata(&history_config).await;
     let expected = Some(MessageHistoryMetadata {
@@ -28,7 +28,7 @@ async fn lifecycle_metadata_uses_local_prompt_history() -> Result<()> {
     for mode in [ThreadParamsMode::Embedded, ThreadParamsMode::Remote] {
         let server_home = tempfile::tempdir()?;
         let mut config = ConfigBuilder::default()
-            .codex_home(server_home.path().to_path_buf())
+            .genex_home(server_home.path().to_path_buf())
             .build()
             .await?;
         config.history.persistence = HistoryPersistence::None;

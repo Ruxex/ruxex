@@ -169,8 +169,8 @@ fn role_block(description: &str, role_name: &str) -> Option<String> {
     Some(block.join("\n"))
 }
 
-fn write_home_skill(codex_home: &Path, dir: &str, name: &str, description: &str) -> Result<()> {
-    let skill_dir = codex_home.join("skills").join(dir);
+fn write_home_skill(genex_home: &Path, dir: &str, name: &str, description: &str) -> Result<()> {
+    let skill_dir = genex_home.join("skills").join(dir);
     fs::create_dir_all(&skill_dir)?;
     let contents = format!("---\nname: {name}\ndescription: {description}\n---\n\n# Body\n");
     fs::write(skill_dir.join("SKILL.md"), contents)?;
@@ -695,7 +695,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     let _ = wait_for_requests(&child_request_log).await?;
 
     let start_inputs = wait_for_hook_log(
-        test.codex_home_path(),
+        test.genex_home_path(),
         "subagent_start_hook_log.jsonl",
         /*expected_len*/ 1,
     )
@@ -712,7 +712,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     );
 
     let user_prompt_submit_inputs = wait_for_hook_log(
-        test.codex_home_path(),
+        test.genex_home_path(),
         "user_prompt_submit_hook_log.jsonl",
         /*expected_len*/ 2,
     )
@@ -738,7 +738,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     );
 
     let session_start_inputs = wait_for_hook_log(
-        test.codex_home_path(),
+        test.genex_home_path(),
         "session_start_hook_log.jsonl",
         /*expected_len*/ 1,
     )
@@ -850,7 +850,7 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
     let _ = wait_for_requests(&second_child_request).await?;
 
     let subagent_stop_inputs = wait_for_hook_log(
-        test.codex_home_path(),
+        test.genex_home_path(),
         "subagent_stop_hook_log.jsonl",
         /*expected_len*/ 2,
     )
@@ -887,7 +887,7 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
         Some("child done first")
     );
 
-    let stop_inputs = read_hook_log(test.codex_home_path(), "stop_hook_log.jsonl")?;
+    let stop_inputs = read_hook_log(test.genex_home_path(), "stop_hook_log.jsonl")?;
     assert!(
         stop_inputs
             .iter()
@@ -940,10 +940,10 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
     assert_eq!(requests.len(), 1);
 
     let subagent_stop_inputs_after_internal =
-        read_hook_log(test.codex_home_path(), "subagent_stop_hook_log.jsonl")?;
+        read_hook_log(test.genex_home_path(), "subagent_stop_hook_log.jsonl")?;
     assert_eq!(subagent_stop_inputs_after_internal, subagent_stop_inputs);
 
-    let stop_inputs_after_internal = read_hook_log(test.codex_home_path(), "stop_hook_log.jsonl")?;
+    let stop_inputs_after_internal = read_hook_log(test.genex_home_path(), "stop_hook_log.jsonl")?;
     assert_eq!(stop_inputs_after_internal.len(), stop_input_count);
 
     Ok(())
@@ -3182,7 +3182,7 @@ async fn spawn_agent_role_overrides_requested_model_and_reasoning_settings() -> 
         }),
         |builder| {
             builder.with_config(|config| {
-                let role_path = config.codex_home.join("custom-role.toml");
+                let role_path = config.genex_home.join("custom-role.toml");
                 std::fs::write(
                     &role_path,
                     format!(
@@ -3222,7 +3222,7 @@ async fn spawn_agent_preserves_configured_defaults_through_unrelated_role() -> R
         }),
         |builder| {
             builder.with_config(|config| {
-                let role_path = config.codex_home.join("instructions-only-role.toml");
+                let role_path = config.genex_home.join("instructions-only-role.toml");
                 std::fs::write(&role_path, "developer_instructions = \"Stay focused\"\n")
                     .expect("write role config");
                 config.agent_roles.insert(
@@ -3290,7 +3290,7 @@ async fn spawn_agent_rejects_reasoning_effort_unsupported_by_role_model() -> Res
                 .features
                 .enable(Feature::Collab)
                 .expect("test config should allow feature update");
-            let role_path = config.codex_home.join("model-only-role.toml");
+            let role_path = config.genex_home.join("model-only-role.toml");
             std::fs::write(&role_path, format!("model = \"{ROLE_MODEL}\"\n"))
                 .expect("write role config");
             config.agent_roles.insert(
@@ -3357,7 +3357,7 @@ async fn spawn_agent_tool_description_mentions_role_locked_settings() -> Result<
             .enable(Feature::Collab)
             .expect("test config should allow feature update");
         config.multi_agent_v2.hide_spawn_agent_metadata = false;
-        let role_path = config.codex_home.join("custom-role.toml");
+        let role_path = config.genex_home.join("custom-role.toml");
         std::fs::write(
             &role_path,
             format!(

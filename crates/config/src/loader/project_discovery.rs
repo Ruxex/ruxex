@@ -13,11 +13,11 @@ use toml::Value as TomlValue;
 pub(super) fn merge_managed_config_for_discovery(
     discovery_config: &mut TomlValue,
     loaded: &LoadedConfigLayers,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> io::Result<()> {
     if let Some(config) = &loaded.managed_config_from_mdm {
         let resolved =
-            resolve_relative_paths_in_config_toml(config.managed_config.clone(), codex_home)?;
+            resolve_relative_paths_in_config_toml(config.managed_config.clone(), genex_home)?;
         merge_toml_values(discovery_config, &resolved);
     }
     Ok(())

@@ -44,8 +44,8 @@ fn loaded_plugin(config_name: &str, root: &Path, enabled: bool) -> LoadedPlugin 
         error: None,
     }
 }
-fn synced_plugin_root(codex_home: &Path, marketplace: &str, plugin_name: &str) -> AbsolutePathBuf {
-    let synced_root = curated_plugins_repo_path(codex_home);
+fn synced_plugin_root(genex_home: &Path, marketplace: &str, plugin_name: &str) -> AbsolutePathBuf {
+    let synced_root = curated_plugins_repo_path(genex_home);
     match marketplace {
         TEST_CURATED_MARKETPLACE_NAME => {
             write_test_curated_marketplace(&synced_root, &[plugin_name])
@@ -57,7 +57,7 @@ fn synced_plugin_root(codex_home: &Path, marketplace: &str, plugin_name: &str) -
     }
     let plugin_id =
         PluginId::new(plugin_name.to_string(), marketplace.to_string()).expect("plugin id");
-    let root = PluginStore::new(codex_home.to_path_buf())
+    let root = PluginStore::new(genex_home.to_path_buf())
         .plugin_root(&plugin_id, TEST_CURATED_PLUGIN_CACHE_VERSION);
     fs::create_dir_all(root.as_path()).expect("create cached plugin root");
     root
@@ -147,10 +147,10 @@ fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
         })
     );
 }
-fn roots_for(codex_home: &Path, plugins: Vec<LoadedPlugin>) -> TrustedPluginRoots {
+fn roots_for(genex_home: &Path, plugins: Vec<LoadedPlugin>) -> TrustedPluginRoots {
     TrustedPluginRoots::from_plugin_load_outcome(
         &PluginLoadOutcome::from_plugins(plugins),
-        codex_home,
+        genex_home,
     )
 }
 
@@ -213,16 +213,16 @@ fn recognizes_windows_executor_plugin_cache_root() {
             "skills/presentations/container_tools/mark_artifact_operation_started.mjs".to_string(),
     };
     let script = PathUri::parse(
-        "file:///C:/Users/user/.codex/plugins/cache/codex-primary-runtime/presentations/0.1.29/skills/presentations/container_tools/mark_artifact_operation_started.mjs",
+        "file:///C:/Users/user/.genex/plugins/cache/codex-primary-runtime/presentations/0.1.29/skills/presentations/container_tools/mark_artifact_operation_started.mjs",
     )
     .expect("Windows script URI");
 
     assert!(executor_plugin_root_matches(&script, &attribution));
 }
-fn assert_invalid_metrics_manifest(codex_home: &Path, root: &AbsolutePathBuf, manifest: &str) {
+fn assert_invalid_metrics_manifest(genex_home: &Path, root: &AbsolutePathBuf, manifest: &str) {
     fs::write(root.join("analytics.yaml"), manifest).expect("write analytics manifest");
     let roots = roots_for(
-        codex_home,
+        genex_home,
         vec![loaded_plugin(
             "sample@test-curated",
             root.as_path(),
@@ -237,9 +237,9 @@ fn assert_invalid_metrics_manifest(codex_home: &Path, root: &AbsolutePathBuf, ma
         None
     );
 }
-fn assert_untrusted(codex_home: &Path, config_name: &str, root: &Path) {
+fn assert_untrusted(genex_home: &Path, config_name: &str, root: &Path) {
     assert!(
-        roots_for(codex_home, vec![loaded_plugin(config_name, root, ENABLED)])
+        roots_for(genex_home, vec![loaded_plugin(config_name, root, ENABLED)])
             .roots
             .is_empty()
     );
@@ -537,7 +537,7 @@ fn only_emits_safe_normalized_relative_script_paths() {
     );
     assert_eq!(
         normalized_relative_script_path(Path::new(
-            "/home/user/.codex/plugins/cache/test-curated/sample/scripts/run.py"
+            "/home/user/.genex/plugins/cache/test-curated/sample/scripts/run.py"
         )),
         None
     );

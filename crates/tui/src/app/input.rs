@@ -179,7 +179,7 @@ impl App {
                 external_editor::run_editor(
                     &seed,
                     &editor_cmd,
-                    config.codex_home.as_path(),
+                    config.genex_home.as_path(),
                     &file_system_policy,
                     config.cwd.as_path(),
                 )

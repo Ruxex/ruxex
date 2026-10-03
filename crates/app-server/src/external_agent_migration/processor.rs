@@ -73,7 +73,7 @@ pub(crate) struct ExternalAgentConfigRequestProcessorArgs {
     pub(crate) config_processor: ConfigRequestProcessor,
     pub(crate) state_db: Option<StateDbHandle>,
     pub(crate) arg0_paths: Arg0DispatchPaths,
-    pub(crate) codex_home: PathBuf,
+    pub(crate) genex_home: PathBuf,
 }
 
 impl ExternalAgentConfigRequestProcessor {
@@ -86,15 +86,15 @@ impl ExternalAgentConfigRequestProcessor {
             config_processor,
             state_db,
             arg0_paths,
-            codex_home,
+            genex_home,
         } = args;
         let migration_service = ExternalAgentConfigService::new(
-            codex_home.clone(),
+            genex_home.clone(),
             thread_manager.auth_manager(),
             state_db.clone(),
         );
         let session_importer = ExternalAgentSessionImporter::new(
-            codex_home,
+            genex_home,
             migration_service.connector_metadata_roots().to_vec(),
             Arc::clone(&thread_manager),
             thread_store,
@@ -147,7 +147,7 @@ impl ExternalAgentConfigRequestProcessor {
         let (connector_names_by_source_path, connectors) =
             detected_session_connectors(&migration_service, &sessions);
         record_detected_session_connectors(
-            self.migration_service.codex_home(),
+            self.migration_service.genex_home(),
             connector_names_by_source_path,
         )
         .map_err(|err| {
@@ -334,7 +334,7 @@ impl ExternalAgentConfigRequestProcessor {
             .into_iter()
             .map(protocol_import_history)
             .collect::<Result<Vec<_>, _>>()?;
-        let connectors = read_imported_connector_candidates(self.migration_service.codex_home())
+        let connectors = read_imported_connector_candidates(self.migration_service.genex_home())
             .map_err(|err| {
                 internal_error(format!(
                     "failed to read imported connector candidates: {err}"

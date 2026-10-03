@@ -10,7 +10,7 @@ This module is the canonical place to **load and describe Codex configuration la
 
 Exported from `codex_config::loader`:
 
-- `load_config_layers_state(fs, codex_home, cwd_opt, cli_overrides, options, thread_config_loader) -> ConfigLayerStack`
+- `load_config_layers_state(fs, genex_home, cwd_opt, cli_overrides, options, thread_config_loader) -> ConfigLayerStack`
 - `ConfigLayerStack`
   - `effective_config() -> toml::Value`
   - `origins() -> HashMap<String, ConfigLayerMetadata>`
@@ -27,7 +27,7 @@ Precedence is **top overrides bottom**:
 
 1. Current forced MDM preferences (`config_toml_base64`)
 2. `SessionFlags` (CLI overrides, applied as dotted-path TOML writes)
-4. `Project` config (`.codex/config.toml`)
+4. `Project` config (`.genex/config.toml`)
 5. `User` profile config, when present
 6. `User` config (`config.toml`)
 7. `EnterpriseManaged` cloud-managed config bundle layers
@@ -64,7 +64,7 @@ let cli_overrides: Vec<(String, TomlValue)> = Vec::new();
 let cwd = AbsolutePathBuf::current_dir()?;
 let layers = load_config_layers_state(
     LOCAL_FS.as_ref(),
-    &codex_home,
+    &genex_home,
     Some(cwd),
     &cli_overrides,
     LoaderOverrides::default(),

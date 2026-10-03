@@ -123,8 +123,8 @@ async fn maybe_install_mcp_dependencies(
     }
 
     let config = turn_context.config.as_ref();
-    let codex_home = config.codex_home.clone();
-    let mut servers = match load_global_mcp_servers(&codex_home).await {
+    let genex_home = config.genex_home.clone();
+    let mut servers = match load_global_mcp_servers(&genex_home).await {
         Ok(servers) => servers,
         Err(err) => {
             warn!("failed to load MCP servers while installing skill dependencies: {err}");
@@ -145,7 +145,7 @@ async fn maybe_install_mcp_dependencies(
         return;
     }
 
-    if let Err(err) = ConfigEditsBuilder::new(&codex_home)
+    if let Err(err) = ConfigEditsBuilder::new(&genex_home)
         .replace_mcp_servers(&servers)
         .apply()
         .await

@@ -7,7 +7,7 @@ use crate::outgoing_message::QueuedOutgoingMessage;
 use genex_app_server_protocol::JSONRPCErrorError;
 use genex_app_server_protocol::JSONRPCMessage;
 use genex_app_server_protocol::RequestId;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use std::net::SocketAddr;
 use std::path::Path;
@@ -46,23 +46,23 @@ const APP_SERVER_CONTROL_SOCKET_FILE_NAME: &str = "app-server-control.sock";
 const APP_SERVER_STARTUP_LOCK_FILE_NAME: &str = "app-server-startup.lock";
 const DAEMON_RECOVERY_FILE_NAME: &str = "loaded-threads.json";
 
-pub fn daemon_recovery_file_path(codex_home: &Path) -> PathBuf {
-    codex_home
+pub fn daemon_recovery_file_path(genex_home: &Path) -> PathBuf {
+    genex_home
         .join("app-server-daemon")
         .join(DAEMON_RECOVERY_FILE_NAME)
 }
 
-pub fn app_server_control_socket_path(codex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
+pub fn app_server_control_socket_path(genex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(
-        codex_home
+        genex_home
             .join(APP_SERVER_CONTROL_SOCKET_DIR_NAME)
             .join(APP_SERVER_CONTROL_SOCKET_FILE_NAME),
     )
 }
 
-pub fn app_server_startup_lock_path(codex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
+pub fn app_server_startup_lock_path(genex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(
-        codex_home
+        genex_home
             .join(APP_SERVER_CONTROL_SOCKET_DIR_NAME)
             .join(APP_SERVER_STARTUP_LOCK_FILE_NAME),
     )
@@ -117,13 +117,13 @@ impl AppServerTransport {
 
         if let Some(raw_socket_path) = listen_url.strip_prefix("unix://") {
             let socket_path = if raw_socket_path.is_empty() {
-                let codex_home = find_codex_home().map_err(|err| {
+                let genex_home = find_genex_home().map_err(|err| {
                     AppServerTransportParseError::InvalidUnixSocketPath {
                         listen_url: listen_url.to_string(),
-                        message: format!("failed to resolve CODEX_HOME: {err}"),
+                        message: format!("failed to resolve GENEX_HOME: {err}"),
                     }
                 })?;
-                app_server_control_socket_path(&codex_home).map_err(|err| {
+                app_server_control_socket_path(&genex_home).map_err(|err| {
                     AppServerTransportParseError::InvalidUnixSocketPath {
                         listen_url: listen_url.to_string(),
                         message: err.to_string(),
@@ -360,7 +360,7 @@ mod tests {
         use std::os::unix::ffi::OsStringExt;
         use std::path::PathBuf;
 
-        let codex_home =
+        let genex_home =
             AbsolutePathBuf::from_absolute_path(PathBuf::from(OsString::from_vec(vec![
                 b'/', b'b', b'a', b'd', 0xff,
             ])))
@@ -370,7 +370,7 @@ mod tests {
             result: Box::new(ClientResponsePayload::Initialize(
                 genex_app_server_protocol::InitializeResponse {
                     user_agent: "codex-test-agent".to_string(),
-                    genex_home: codex_home,
+                    genex_home: genex_home,
                     platform_family: "unix".to_string(),
                     platform_os: "linux".to_string(),
                 },

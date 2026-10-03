@@ -255,7 +255,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Creates the model manager implementation appropriate for this provider.
     fn models_manager(
         &self,
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager;
 
@@ -402,7 +402,7 @@ impl ModelProvider for ConfiguredModelProvider {
 
     fn models_manager(
         &self,
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager {
         match config_model_catalog {
@@ -416,7 +416,7 @@ impl ModelProvider for ConfiguredModelProvider {
                     self.auth_manager.clone(),
                 ));
                 Arc::new(RemoteModelsManager::new(
-                    codex_home,
+                    genex_home,
                     endpoint,
                     self.auth_manager.clone(),
                 ))

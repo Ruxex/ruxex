@@ -39,19 +39,19 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn turn_steer_requires_active_turn() -> Result<()> {
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
 
     let server = create_mock_responses_server_sequence(vec![]).await;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         &server.uri(),
     )?;
-    mount_analytics_capture(&server, &codex_home).await?;
+    mount_analytics_capture(&server, &genex_home).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -119,8 +119,8 @@ async fn turn_steer_rejects_oversized_text_input() -> Result<()> {
     let shell_command = vec!["sleep".to_string(), "10".to_string()];
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -134,14 +134,14 @@ async fn turn_steer_rejects_oversized_text_input() -> Result<()> {
     ])
     .await;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         &server.uri(),
     )?;
-    mount_analytics_capture(&server, &codex_home).await?;
+    mount_analytics_capture(&server, &genex_home).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -232,8 +232,8 @@ async fn turn_steer_returns_active_turn_id() -> Result<()> {
     let shell_command = vec!["sleep".to_string(), "2".to_string()];
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -248,14 +248,14 @@ async fn turn_steer_returns_active_turn_id() -> Result<()> {
     ])
     .await;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         &server.uri(),
     )?;
-    mount_analytics_capture(&server, &codex_home).await?;
+    mount_analytics_capture(&server, &genex_home).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -366,8 +366,8 @@ async fn turn_steer_rejects_context_only_input_without_merging_context() -> Resu
     );
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -382,14 +382,14 @@ async fn turn_steer_rejects_context_only_input_without_merging_context() -> Resu
     ])
     .await;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         &server.uri(),
     )?;
-    mount_analytics_capture(&server, &codex_home).await?;
+    mount_analytics_capture(&server, &genex_home).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .without_managed_config()
         .build_initialized()
         .await?;

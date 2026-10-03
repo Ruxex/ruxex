@@ -14,8 +14,8 @@ use super::SkillConfigRules;
 use super::bundled_skills_enabled_from_stack;
 use super::skill_config_rules_from_stack;
 
-fn user_layer(codex_home: &TempDir, config: &str) -> ConfigLayerEntry {
-    let config_path = AbsolutePathBuf::try_from(codex_home.path().join(CONFIG_TOML_FILE))
+fn user_layer(genex_home: &TempDir, config: &str) -> ConfigLayerEntry {
+    let config_path = AbsolutePathBuf::try_from(genex_home.path().join(CONFIG_TOML_FILE))
         .expect("absolute config path");
     ConfigLayerEntry::new(
         ConfigLayerSource::User {
@@ -26,10 +26,10 @@ fn user_layer(codex_home: &TempDir, config: &str) -> ConfigLayerEntry {
     )
 }
 
-fn stack(codex_home: &TempDir, user: &str, session: &str) -> ConfigLayerStack {
+fn stack(genex_home: &TempDir, user: &str, session: &str) -> ConfigLayerStack {
     ConfigLayerStack::new(
         vec![
-            user_layer(codex_home, user),
+            user_layer(genex_home, user),
             ConfigLayerEntry::new(
                 ConfigLayerSource::SessionFlags,
                 toml::from_str(session).expect("valid session config"),
@@ -53,20 +53,20 @@ enabled = {enabled}
 
 #[test]
 fn bundled_skills_follow_effective_configuration() {
-    let codex_home = TempDir::new().expect("temp dir");
+    let genex_home = TempDir::new().expect("temp dir");
 
     assert!(bundled_skills_enabled_from_stack(&stack(
-        &codex_home,
+        &genex_home,
         "",
         ""
     )));
     assert!(!bundled_skills_enabled_from_stack(&stack(
-        &codex_home,
+        &genex_home,
         "[skills.bundled]\nenabled = false\n",
         ""
     )));
     assert!(bundled_skills_enabled_from_stack(&stack(
-        &codex_home,
+        &genex_home,
         "[skills.bundled]\nenabled = false\n",
         "[skills.bundled]\nenabled = true\n"
     )));
@@ -74,10 +74,10 @@ fn bundled_skills_follow_effective_configuration() {
 
 #[test]
 fn malformed_bundled_skills_config_defaults_to_enabled() {
-    let codex_home = TempDir::new().expect("temp dir");
+    let genex_home = TempDir::new().expect("temp dir");
 
     assert!(bundled_skills_enabled_from_stack(&stack(
-        &codex_home,
+        &genex_home,
         "[skills]\nbundled = 'invalid'\n",
         ""
     )));
@@ -85,12 +85,12 @@ fn malformed_bundled_skills_config_defaults_to_enabled() {
 
 #[test]
 fn session_flags_can_reenable_user_disabled_path() {
-    let codex_home = TempDir::new().expect("temp dir");
-    let skill_path = codex_home.path().join("skills/demo/SKILL.md");
+    let genex_home = TempDir::new().expect("temp dir");
+    let skill_path = genex_home.path().join("skills/demo/SKILL.md");
 
     assert_eq!(
         skill_config_rules_from_stack(&stack(
-            &codex_home,
+            &genex_home,
             &path_toggle_config(&skill_path, /*enabled*/ false),
             &path_toggle_config(&skill_path, /*enabled*/ true),
         )),
@@ -105,12 +105,12 @@ fn session_flags_can_reenable_user_disabled_path() {
 
 #[test]
 fn session_flags_can_disable_user_enabled_path() {
-    let codex_home = TempDir::new().expect("temp dir");
-    let skill_path = codex_home.path().join("skills/demo/SKILL.md");
+    let genex_home = TempDir::new().expect("temp dir");
+    let skill_path = genex_home.path().join("skills/demo/SKILL.md");
 
     assert_eq!(
         skill_config_rules_from_stack(&stack(
-            &codex_home,
+            &genex_home,
             &path_toggle_config(&skill_path, /*enabled*/ true),
             &path_toggle_config(&skill_path, /*enabled*/ false),
         )),
@@ -125,11 +125,11 @@ fn session_flags_can_disable_user_enabled_path() {
 
 #[test]
 fn preserves_name_selectors() {
-    let codex_home = TempDir::new().expect("temp dir");
+    let genex_home = TempDir::new().expect("temp dir");
 
     assert_eq!(
         skill_config_rules_from_stack(&stack(
-            &codex_home,
+            &genex_home,
             r#"
 [[skills.config]]
 name = "github:yeet"
@@ -148,12 +148,12 @@ enabled = false
 
 #[test]
 fn preserves_order_across_path_and_name_selectors() {
-    let codex_home = TempDir::new().expect("temp dir");
-    let skill_path = codex_home.path().join("skills/demo/SKILL.md");
+    let genex_home = TempDir::new().expect("temp dir");
+    let skill_path = genex_home.path().join("skills/demo/SKILL.md");
 
     assert_eq!(
         skill_config_rules_from_stack(&stack(
-            &codex_home,
+            &genex_home,
             &path_toggle_config(&skill_path, /*enabled*/ false),
             r#"
 [[skills.config]]
@@ -178,8 +178,8 @@ enabled = true
 
 #[test]
 fn path_rule_disables_selected_path() {
-    let codex_home = TempDir::new().expect("temp dir");
-    let path = codex_home.path().join("disable-by-path/SKILL.md").abs();
+    let genex_home = TempDir::new().expect("temp dir");
+    let path = genex_home.path().join("disable-by-path/SKILL.md").abs();
     let rules = SkillConfigRules {
         entries: vec![SkillConfigRule {
             selector: SkillConfigRuleSelector::Path(path.clone()),
@@ -195,8 +195,8 @@ fn path_rule_disables_selected_path() {
 
 #[test]
 fn later_name_rule_reenables_path_disabled_skill() {
-    let codex_home = TempDir::new().expect("temp dir");
-    let path = codex_home.path().join("reenable-by-name/SKILL.md").abs();
+    let genex_home = TempDir::new().expect("temp dir");
+    let path = genex_home.path().join("reenable-by-name/SKILL.md").abs();
     let rules = SkillConfigRules {
         entries: vec![
             SkillConfigRule {
@@ -218,8 +218,8 @@ fn later_name_rule_reenables_path_disabled_skill() {
 
 #[test]
 fn later_path_rule_reenables_one_skill_disabled_by_name() {
-    let codex_home = TempDir::new().expect("temp dir");
-    let root = codex_home.path().join("reenable-by-path");
+    let genex_home = TempDir::new().expect("temp dir");
+    let root = genex_home.path().join("reenable-by-path");
     let first_path = root.join("first/SKILL.md").abs();
     let second_path = root.join("second/SKILL.md").abs();
     let rules = SkillConfigRules {

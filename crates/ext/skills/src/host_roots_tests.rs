@@ -192,10 +192,10 @@ fn stack(layers: Vec<ConfigLayerEntry>) -> ConfigLayerStack {
     .expect("valid config stack")
 }
 
-fn user_layer(codex_home: &AbsolutePathBuf) -> ConfigLayerEntry {
+fn user_layer(genex_home: &AbsolutePathBuf) -> ConfigLayerEntry {
     ConfigLayerEntry::new(
         ConfigLayerSource::User {
-            file: codex_home.join("config.toml"),
+            file: genex_home.join("config.toml"),
             profile: None,
         },
         empty_config(),
@@ -247,8 +247,8 @@ fn layer_roots_preserve_scope_precedence_and_disabled_projects() {
     let system_folder = absolute(temp_dir.path().join("etc/codex"));
     let home_folder = absolute(temp_dir.path().join("home"));
     let user_folder = home_folder.join("codex");
-    let project_folder = absolute(temp_dir.path().join("repo/.codex"));
-    let nested_project_folder = absolute(temp_dir.path().join("repo/nested/.codex"));
+    let project_folder = absolute(temp_dir.path().join("repo/.genex"));
+    let nested_project_folder = absolute(temp_dir.path().join("repo/nested/.genex"));
     let config_stack = stack(vec![
         ConfigLayerEntry::new(
             ConfigLayerSource::System {
@@ -447,7 +447,7 @@ async fn repo_ancestry_stops_at_project_root_and_preserves_root_to_cwd_order() {
 async fn resolved_project_layer_loads_skill_without_git_marker() {
     let temp_dir = TempDir::new().expect("temp dir");
     let workspace = absolute(temp_dir.path().join("workspace"));
-    let dot_codex = workspace.join(".codex");
+    let dot_codex = workspace.join(".genex");
     let skill_root = dot_codex.join("skills");
     fs::create_dir_all(&workspace).expect("create workspace");
     let skill_path = write_skill(&skill_root, "local", "local-skill");
@@ -481,7 +481,7 @@ async fn resolved_project_layer_loads_skill_without_git_marker() {
 async fn resolved_project_layer_loads_skill_when_cwd_is_file() {
     let temp_dir = TempDir::new().expect("temp dir");
     let repository = absolute(temp_dir.path().join("repo"));
-    let dot_codex = repository.join(".codex");
+    let dot_codex = repository.join(".genex");
     let skill_root = dot_codex.join("skills");
     fs::create_dir_all(&repository).expect("create repository");
     fs::write(repository.join(".git"), "gitdir: fake\n").expect("write git marker");
@@ -598,16 +598,16 @@ async fn repo_ancestry_limits_concurrent_probes_and_preserves_order() {
 async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_names() {
     let temp_dir = TempDir::new().expect("temp dir");
     let home_folder = absolute(temp_dir.path().join("home"));
-    let codex_home = home_folder.join("codex");
+    let genex_home = home_folder.join("codex");
     let system_folder = absolute(temp_dir.path().join("etc/codex"));
     let repository = absolute(temp_dir.path().join("repo"));
     let cwd = repository.join("nested/inner");
     fs::create_dir_all(&cwd).expect("create cwd");
     fs::write(repository.join(".git"), "gitdir: fake\n").expect("write git marker");
 
-    let project_dot_codex = repository.join(".codex");
-    let nested_project_dot_codex = repository.join("nested/.codex");
-    let user_skills = codex_home.join("skills");
+    let project_dot_codex = repository.join(".genex");
+    let nested_project_dot_codex = repository.join("nested/.genex");
+    let user_skills = genex_home.join("skills");
     let root_project_skill = write_skill(
         &project_dot_codex.join("skills"),
         "root-duplicate",
@@ -620,7 +620,7 @@ async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_name
     );
     let user_skill = write_skill(&user_skills, "user-duplicate", "duplicate-skill");
     let home_skill = write_skill(&home_folder.join(".agents/skills"), "home", "home-skill");
-    let system_skill = write_skill(&codex_home.join("skills/.system"), "system", "system-skill");
+    let system_skill = write_skill(&genex_home.join("skills/.system"), "system", "system-skill");
     let admin_skill = write_skill(&system_folder.join("skills"), "admin", "admin-skill");
     let repo_agent_skill = write_skill(
         &repository.join(".agents/skills"),
@@ -639,7 +639,7 @@ async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_name
             },
             empty_config(),
         ),
-        user_layer(&codex_home),
+        user_layer(&genex_home),
         project_layer(&project_dot_codex),
         project_layer(&nested_project_dot_codex),
     ]);

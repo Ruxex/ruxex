@@ -7,17 +7,17 @@ use serde_json::json;
 use std::path::Path;
 use tempfile::TempDir;
 
-fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
-    cmd.env("CODEX_HOME", codex_home);
+    cmd.env("GENEX_HOME", genex_home);
     Ok(cmd)
 }
 
 #[tokio::test]
 async fn marketplace_upgrade_runs_under_plugin() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "upgrade"])
         .assert()
         .success()
@@ -28,7 +28,7 @@ async fn marketplace_upgrade_runs_under_plugin() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_upgrade_json_prints_upgrade_outcome() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
     let manifest = r#"{"name":"debug","plugins":[]}"#;
     std::fs::create_dir_all(source.path().join(".agents/plugins"))?;
@@ -63,8 +63,8 @@ async fn marketplace_upgrade_json_prints_upgrade_outcome() -> Result<()> {
     let marketplace_override =
         format!("marketplaces.debug={{source_type=\"git\",source={source_arg}}}");
 
-    let assert = genex_command(codex_home.path())?
-        .current_dir(codex_home.path())
+    let assert = genex_command(genex_home.path())?
+        .current_dir(genex_home.path())
         .args(["--config", &marketplace_override])
         .args(["plugin", "marketplace", "upgrade", "--json"])
         .assert()
@@ -72,7 +72,7 @@ async fn marketplace_upgrade_json_prints_upgrade_outcome() -> Result<()> {
     let stdout = assert.get_output().stdout.as_slice();
     let actual: serde_json::Value = serde_json::from_slice(stdout)?;
     let installed_root = AbsolutePathBuf::try_from(
-        marketplace_install_root(&codex_home.path().canonicalize()?).join("debug"),
+        marketplace_install_root(&genex_home.path().canonicalize()?).join("debug"),
     )?;
 
     assert_eq!(
@@ -87,16 +87,16 @@ async fn marketplace_upgrade_json_prints_upgrade_outcome() -> Result<()> {
         std::fs::read_to_string(installed_root.join(".agents/plugins/marketplace.json"))?,
         manifest
     );
-    assert!(!codex_home.path().join("config.toml").exists());
+    assert!(!genex_home.path().join("config.toml").exists());
 
     Ok(())
 }
 
 #[tokio::test]
 async fn marketplace_upgrade_no_longer_runs_at_top_level() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["marketplace", "upgrade"])
         .assert()
         .failure()

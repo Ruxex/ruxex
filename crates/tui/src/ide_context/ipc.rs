@@ -141,10 +141,10 @@ type IdeContextStream = super::windows_pipe::WindowsPipeStream;
 #[cfg(unix)]
 pub(crate) fn fetch_ide_context(
     workspace_root: &Path,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> Result<IdeContext, IdeContextError> {
     let deadline = Instant::now() + IDE_CONTEXT_REQUEST_TIMEOUT;
-    let primary_socket_path = primary_ipc_socket_path(codex_home);
+    let primary_socket_path = primary_ipc_socket_path(genex_home);
     let uid = unsafe { libc::getuid() };
     let legacy_socket_paths = legacy_ipc_socket_paths(&std::env::temp_dir(), uid);
     fetch_ide_context_from_unix_socket_paths(
@@ -158,7 +158,7 @@ pub(crate) fn fetch_ide_context(
 #[cfg(windows)]
 pub(crate) fn fetch_ide_context(
     workspace_root: &Path,
-    _codex_home: &Path,
+    _genex_home: &Path,
 ) -> Result<IdeContext, IdeContextError> {
     fetch_ide_context_from_socket(
         default_ipc_socket_path(),
@@ -170,14 +170,14 @@ pub(crate) fn fetch_ide_context(
 #[cfg(not(any(unix, windows)))]
 pub(crate) fn fetch_ide_context(
     _workspace_root: &Path,
-    _codex_home: &Path,
+    _genex_home: &Path,
 ) -> Result<IdeContext, IdeContextError> {
     Err(IdeContextError::UnsupportedPlatform)
 }
 
 #[cfg(unix)]
-fn primary_ipc_socket_path(codex_home: &Path) -> PathBuf {
-    codex_home.join("ipc").join("ipc.sock")
+fn primary_ipc_socket_path(genex_home: &Path) -> PathBuf {
+    genex_home.join("ipc").join("ipc.sock")
 }
 
 #[cfg(unix)]
@@ -959,12 +959,12 @@ mod tests {
     }
 
     #[test]
-    fn primary_ipc_socket_path_uses_codex_home() {
-        let codex_home = Path::new("/home/test/.codex");
+    fn primary_ipc_socket_path_uses_genex_home() {
+        let genex_home = Path::new("/home/test/.genex");
 
         assert_eq!(
-            primary_ipc_socket_path(codex_home),
-            codex_home.join("ipc").join("ipc.sock")
+            primary_ipc_socket_path(genex_home),
+            genex_home.join("ipc").join("ipc.sock")
         );
     }
 

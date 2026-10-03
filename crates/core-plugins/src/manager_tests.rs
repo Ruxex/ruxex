@@ -73,7 +73,7 @@ fn unrestricted_config_layer_stack() -> ConfigLayerStack {
 }
 
 fn config_layer_stack_with_requirements(
-    codex_home: &Path,
+    genex_home: &Path,
     user_config: &str,
     requirements: &str,
 ) -> ConfigLayerStack {
@@ -86,7 +86,7 @@ fn config_layer_stack_with_requirements(
     let requirements_toml = with_sources.clone().into_toml();
     let requirements = ConfigRequirements::try_from(with_sources).expect("normalize requirements");
     let config_file =
-        AbsolutePathBuf::try_from(codex_home.join(CONFIG_TOML_FILE)).expect("absolute config path");
+        AbsolutePathBuf::try_from(genex_home.join(CONFIG_TOML_FILE)).expect("absolute config path");
     ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::User {
@@ -102,12 +102,12 @@ fn config_layer_stack_with_requirements(
 }
 
 fn plugins_config_input_with_requirements(
-    codex_home: &Path,
+    genex_home: &Path,
     user_config: &str,
     requirements: &str,
 ) -> PluginsConfigInput {
     PluginsConfigInput::new(
-        config_layer_stack_with_requirements(codex_home, user_config, requirements),
+        config_layer_stack_with_requirements(genex_home, user_config, requirements),
         String::new(),
         /*plugins_enabled*/ true,
     )
@@ -138,9 +138,9 @@ fn marketplace_source_refresh_notifies_only_after_installed_cache_changes() {
 
 #[tokio::test]
 async fn marketplace_policy_projection_disables_installed_plugin_and_invalidates_cache() {
-    let codex_home = TempDir::new().expect("create Codex home");
+    let genex_home = TempDir::new().expect("create Genex home");
     write_plugin(
-        &codex_home.path().join("plugins/cache/company"),
+        &genex_home.path().join("plugins/cache/company"),
         "sample/local",
         "sample",
     );
@@ -153,7 +153,7 @@ source = "https://github.com/example/company.git"
 enabled = true
 "#;
     let allowed = plugins_config_input_with_requirements(
-        codex_home.path(),
+        genex_home.path(),
         user_config,
         r#"
 [marketplaces]
@@ -165,7 +165,7 @@ url = "https://github.com/example/company.git"
 "#,
     );
     let blocked = plugins_config_input_with_requirements(
-        codex_home.path(),
+        genex_home.path(),
         user_config,
         r#"
 [marketplaces]
@@ -176,7 +176,7 @@ source = "git"
 url = "https://github.com/example/other.git"
 "#,
     );
-    let manager = test_plugins_manager(codex_home.path().to_path_buf());
+    let manager = test_plugins_manager(genex_home.path().to_path_buf());
 
     let allowed_outcome = manager.plugins_for_config(&allowed).await;
     assert_eq!(allowed_outcome.plugins().len(), 1);
@@ -188,8 +188,8 @@ url = "https://github.com/example/other.git"
 
 #[tokio::test]
 async fn plugin_read_rejects_marketplace_blocked_by_requirements() {
-    let codex_home = TempDir::new().expect("create Codex home");
-    let marketplace_root = codex_home.path().join("marketplace");
+    let genex_home = TempDir::new().expect("create Genex home");
+    let marketplace_root = genex_home.path().join("marketplace");
     write_plugin(&marketplace_root, "sample", "sample");
     write_file(
         &marketplace_root.join(".agents/plugins/marketplace.json"),
@@ -204,7 +204,7 @@ async fn plugin_read_rejects_marketplace_blocked_by_requirements() {
 }"#,
     );
     let config = plugins_config_input_with_requirements(
-        codex_home.path(),
+        genex_home.path(),
         "",
         r#"
 [marketplaces]
@@ -215,7 +215,7 @@ restrict_to_allowed_sources = true
         AbsolutePathBuf::try_from(marketplace_root.join(".agents/plugins/marketplace.json"))
             .expect("absolute marketplace path");
 
-    let err = test_plugins_manager(codex_home.path().to_path_buf())
+    let err = test_plugins_manager(genex_home.path().to_path_buf())
         .read_plugin_for_config(
             &config,
             &PluginReadRequest {
@@ -233,8 +233,8 @@ restrict_to_allowed_sources = true
 
 #[test]
 fn marketplace_policy_filters_discovered_marketplaces_by_configured_name() {
-    let codex_home = TempDir::new().expect("create Codex home");
-    let repo_root = codex_home.path().join("repo");
+    let genex_home = TempDir::new().expect("create Genex home");
+    let repo_root = genex_home.path().join("repo");
     let subdirectory = repo_root.join("worktree/subdirectory");
     fs::create_dir_all(&subdirectory).expect("create input subdirectory");
     write_plugin(&repo_root, "sample", "sample");
@@ -254,7 +254,7 @@ fn marketplace_policy_filters_discovered_marketplaces_by_configured_name() {
     let repo_root = AbsolutePathBuf::try_from(repo_root).expect("absolute repository root");
     let subdirectory =
         AbsolutePathBuf::try_from(subdirectory).expect("absolute input subdirectory");
-    let manager = test_plugins_manager(codex_home.path().to_path_buf());
+    let manager = test_plugins_manager(genex_home.path().to_path_buf());
     let user_config = format!(
         r#"
 [marketplaces.company]
@@ -264,7 +264,7 @@ source = {:?}
         repo_root.as_path()
     );
     let allowed = plugins_config_input_with_requirements(
-        codex_home.path(),
+        genex_home.path(),
         &user_config,
         &format!(
             r#"
@@ -279,7 +279,7 @@ path = {:?}
         ),
     );
     let blocked = plugins_config_input_with_requirements(
-        codex_home.path(),
+        genex_home.path(),
         &user_config,
         &format!(
             r#"
@@ -387,18 +387,18 @@ fn plugin_config_toml(enabled: bool, plugins_feature_enabled: bool) -> String {
 
 async fn load_plugins_from_config(
     config_toml: &str,
-    codex_home: &Path,
+    genex_home: &Path,
     auth_mode: Option<AuthMode>,
 ) -> PluginLoadOutcome {
-    write_file(&codex_home.join(CONFIG_TOML_FILE), config_toml);
-    let config = load_config(codex_home, codex_home).await;
-    test_plugins_manager_with_options(codex_home.to_path_buf(), Some(Product::Codex), auth_mode)
+    write_file(&genex_home.join(CONFIG_TOML_FILE), config_toml);
+    let config = load_config(genex_home, genex_home).await;
+    test_plugins_manager_with_options(genex_home.to_path_buf(), Some(Product::Codex), auth_mode)
         .plugins_for_config(&config)
         .await
 }
 
-async fn load_config(codex_home: &Path, cwd: &Path) -> PluginsConfigInput {
-    load_plugins_config_input(codex_home, cwd).await
+async fn load_config(genex_home: &Path, cwd: &Path) -> PluginsConfigInput {
+    load_plugins_config_input(genex_home, cwd).await
 }
 
 async fn loaded_plugin_names(manager: &PluginsManager, config: &PluginsConfigInput) -> Vec<String> {
@@ -413,8 +413,8 @@ async fn loaded_plugin_names(manager: &PluginsManager, config: &PluginsConfigInp
 
 #[tokio::test]
 async fn load_plugins_loads_manifest_mcp_server_objects() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/counter-sample/local");
@@ -442,7 +442,7 @@ plugins = true
 enabled = true
 "#;
     let outcome =
-        load_plugins_from_config(config_toml, codex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
 
     assert_eq!(outcome.plugins()[0].error, None);
     assert_eq!(
@@ -480,8 +480,8 @@ enabled = true
 
 #[tokio::test]
 async fn load_plugins_applies_plugin_mcp_server_policy() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -527,7 +527,7 @@ output_token_limit = 12000
 "#;
 
     let outcome =
-        load_plugins_from_config(config_toml, codex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
     let server = outcome.plugins()[0]
         .mcp_servers
         .get("sample")
@@ -551,8 +551,8 @@ output_token_limit = 12000
 
 #[tokio::test]
 async fn load_plugins_resolves_disabled_skill_names_against_loaded_plugin_skills() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -578,7 +578,7 @@ enabled = false
 enabled = true
 "#;
     let outcome =
-        load_plugins_from_config(config_toml, codex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
     let skill_path = std::fs::canonicalize(skill_path)
         .expect("skill path should canonicalize")
         .abs();
@@ -593,8 +593,8 @@ enabled = true
 
 #[tokio::test]
 async fn load_plugins_ignores_unknown_disabled_skill_names() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -619,7 +619,7 @@ enabled = false
 enabled = true
 "#;
     let outcome =
-        load_plugins_from_config(config_toml, codex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
 
     assert!(outcome.plugins()[0].disabled_skill_paths.is_empty());
     assert!(outcome.plugins()[0].has_enabled_skills);
@@ -638,8 +638,8 @@ enabled = true
 
 #[tokio::test]
 async fn plugin_capability_summary_uses_manifest_mcp_server_objects() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/counter-sample/local");
@@ -680,8 +680,8 @@ async fn plugin_capability_summary_uses_manifest_mcp_server_objects() {
 
 #[tokio::test]
 async fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -700,7 +700,7 @@ async fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
 
     let outcome = load_plugins_from_config(
         &plugin_config_toml(/*enabled*/ true, /*plugins_feature_enabled*/ true),
-        codex_home.path(),
+        genex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -717,8 +717,8 @@ async fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
 
 #[tokio::test]
 async fn capability_summary_truncates_overlong_plugin_descriptions() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -740,7 +740,7 @@ async fn capability_summary_truncates_overlong_plugin_descriptions() {
 
     let outcome = load_plugins_from_config(
         &plugin_config_toml(/*enabled*/ true, /*plugins_feature_enabled*/ true),
-        codex_home.path(),
+        genex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -757,8 +757,8 @@ async fn capability_summary_truncates_overlong_plugin_descriptions() {
 
 #[tokio::test]
 async fn install_plugin_materializes_default_command_skills() {
-    let codex_home = TempDir::new().unwrap();
-    let source_root = codex_home.path().join("source/sample");
+    let genex_home = TempDir::new().unwrap();
+    let source_root = genex_home.path().join("source/sample");
 
     write_file(
         &source_root.join(".codex-plugin/plugin.json"),
@@ -788,7 +788,7 @@ async fn install_plugin_materializes_default_command_skills() {
         &source_root.join(".codex-plugin/migrated-command-skills/undeclared-command/SKILL.md"),
         "---\nname: undeclared-command\ndescription: undeclared command\n---\n",
     );
-    let result = PluginStore::new(codex_home.path().to_path_buf())
+    let result = PluginStore::new(genex_home.path().to_path_buf())
         .install(
             source_root.abs(),
             PluginId::parse("sample@test").expect("plugin id should parse"),
@@ -859,8 +859,8 @@ async fn install_plugin_materializes_default_command_skills() {
 
 #[test]
 fn install_plugin_ignores_invalid_commands_manifest_field() {
-    let codex_home = TempDir::new().unwrap();
-    let source_root = codex_home.path().join("source/sample");
+    let genex_home = TempDir::new().unwrap();
+    let source_root = genex_home.path().join("source/sample");
     write_file(
         &source_root.join(".codex-plugin/plugin.json"),
         r#"{"name":"sample","commands":{}}"#,
@@ -870,7 +870,7 @@ fn install_plugin_ignores_invalid_commands_manifest_field() {
         "---\ndescription: Review\n---\nReview the current change.\n",
     );
 
-    let result = PluginStore::new(codex_home.path().to_path_buf())
+    let result = PluginStore::new(genex_home.path().to_path_buf())
         .install(
             source_root.abs(),
             PluginId::parse("sample@test").expect("plugin id should parse"),
@@ -887,8 +887,8 @@ fn install_plugin_ignores_invalid_commands_manifest_field() {
 
 #[test]
 fn install_plugin_ignores_command_migration_errors() {
-    let codex_home = TempDir::new().unwrap();
-    let source_root = codex_home.path().join("source/sample");
+    let genex_home = TempDir::new().unwrap();
+    let source_root = genex_home.path().join("source/sample");
     write_file(
         &source_root.join(".codex-plugin/plugin.json"),
         r#"{"name":"sample","commands":"./commands/review.md"}"#,
@@ -896,7 +896,7 @@ fn install_plugin_ignores_command_migration_errors() {
     fs::create_dir_all(source_root.join("commands")).unwrap();
     fs::write(source_root.join("commands/review.md"), [0xff]).unwrap();
 
-    let result = PluginStore::new(codex_home.path().to_path_buf())
+    let result = PluginStore::new(genex_home.path().to_path_buf())
         .install(
             source_root.abs(),
             PluginId::parse("sample@test").expect("plugin id should parse"),
@@ -908,8 +908,8 @@ fn install_plugin_ignores_command_migration_errors() {
 
 #[tokio::test]
 async fn load_plugin_skills_dedupes_overlapping_manifest_roots() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local")
@@ -977,8 +977,8 @@ async fn load_plugin_skills_dedupes_overlapping_manifest_roots() {
 
 #[tokio::test]
 async fn load_plugins_ignores_invalid_manifest_skills_shape() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -1001,7 +1001,7 @@ async fn load_plugins_ignores_invalid_manifest_skills_shape() {
 
     let outcome = load_plugins_from_config(
         &plugin_config_toml(/*enabled*/ true, /*plugins_feature_enabled*/ true),
-        codex_home.path(),
+        genex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -1015,8 +1015,8 @@ async fn load_plugins_ignores_invalid_manifest_skills_shape() {
 
 #[tokio::test]
 async fn load_plugins_preserves_disabled_plugins_without_effective_contributions() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -1041,7 +1041,7 @@ async fn load_plugins_preserves_disabled_plugins_without_effective_contributions
         &plugin_config_toml(
             /*enabled*/ false, /*plugins_feature_enabled*/ true,
         ),
-        codex_home.path(),
+        genex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -1072,8 +1072,8 @@ async fn load_plugins_preserves_disabled_plugins_without_effective_contributions
 
 #[tokio::test]
 async fn load_plugins_returns_empty_when_feature_disabled() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -1087,14 +1087,14 @@ async fn load_plugins_returns_empty_when_feature_disabled() {
         "---\nname: sample-search\ndescription: search sample data\n---\n",
     );
     write_file(
-        &codex_home.path().join(CONFIG_TOML_FILE),
+        &genex_home.path().join(CONFIG_TOML_FILE),
         &plugin_config_toml(
             /*enabled*/ true, /*plugins_feature_enabled*/ false,
         ),
     );
 
-    let config = load_config(codex_home.path(), codex_home.path()).await;
-    let outcome = test_plugins_manager(codex_home.path().to_path_buf())
+    let config = load_config(genex_home.path(), genex_home.path()).await;
+    let outcome = test_plugins_manager(genex_home.path().to_path_buf())
         .plugins_for_config(&config)
         .await;
 
@@ -1103,13 +1103,13 @@ async fn load_plugins_returns_empty_when_feature_disabled() {
 
 #[tokio::test]
 async fn plugin_cache_reuses_effective_configurations() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
     write_plugin(
-        codex_home.path().join("plugins/cache/test").as_path(),
+        genex_home.path().join("plugins/cache/test").as_path(),
         "sample/local",
         "sample",
     );
@@ -1124,7 +1124,7 @@ async fn plugin_cache_reuses_effective_configurations() {
 }"#,
     );
 
-    let user_file = codex_home.path().join(CONFIG_TOML_FILE).abs();
+    let user_file = genex_home.path().join(CONFIG_TOML_FILE).abs();
     let user_config: toml::Value = toml::from_str(&plugin_config_toml(
         /*enabled*/ true, /*plugins_feature_enabled*/ true,
     ))
@@ -1156,7 +1156,7 @@ async fn plugin_cache_reuses_effective_configurations() {
             /*plugins_enabled*/ true,
         )
     };
-    let manager = test_plugins_manager(codex_home.path().to_path_buf());
+    let manager = test_plugins_manager(genex_home.path().to_path_buf());
 
     let first_config = config(r#"model = "first""#);
     let second_config = config(
@@ -1199,8 +1199,8 @@ enabled = false"#,
 }
 
 async fn load_plugins_rejects_invalid_plugin_keys() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let genex_home = TempDir::new().unwrap();
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -1224,7 +1224,7 @@ async fn load_plugins_rejects_invalid_plugin_keys() {
 
     let outcome = load_plugins_from_config(
         &toml::to_string(&Value::Table(root)).expect("plugin test config should serialize"),
-        codex_home.path(),
+        genex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -1297,8 +1297,8 @@ async fn install_plugin_updates_config_with_relative_path_and_plugin_key() {
 
 #[tokio::test]
 async fn strict_install_requires_allowed_local_marketplace_to_be_added_first() {
-    let codex_home = TempDir::new().expect("create Codex home");
-    let marketplace_root = codex_home.path().join("company-marketplace");
+    let genex_home = TempDir::new().expect("create Genex home");
+    let marketplace_root = genex_home.path().join("company-marketplace");
     write_plugin(&marketplace_root, "sample", "sample");
     write_file(
         &marketplace_root.join(".agents/plugins/marketplace.json"),
@@ -1325,11 +1325,11 @@ source = "local"
 path = {marketplace_root:?}
 "#
     );
-    let config = config_layer_stack_with_requirements(codex_home.path(), "", &requirements);
+    let config = config_layer_stack_with_requirements(genex_home.path(), "", &requirements);
     let marketplace_path =
         AbsolutePathBuf::try_from(marketplace_root.join(".agents/plugins/marketplace.json"))
             .expect("absolute marketplace path");
-    let manager = test_plugins_manager(codex_home.path().to_path_buf());
+    let manager = test_plugins_manager(genex_home.path().to_path_buf());
 
     let err = manager
         .install_plugin(
@@ -1346,7 +1346,7 @@ path = {marketplace_root:?}
         PluginInstallError::Marketplace(MarketplaceError::InvalidMarketplaceFile { .. })
     ));
     assert!(err.to_string().contains("must be added to config"));
-    assert!(!codex_home.path().join(CONFIG_TOML_FILE).exists());
+    assert!(!genex_home.path().join(CONFIG_TOML_FILE).exists());
 
     let user_config = format!(
         r#"
@@ -1355,9 +1355,9 @@ source_type = "local"
 source = {marketplace_root:?}
 "#
     );
-    write_file(&codex_home.path().join(CONFIG_TOML_FILE), &user_config);
+    write_file(&genex_home.path().join(CONFIG_TOML_FILE), &user_config);
     let config =
-        config_layer_stack_with_requirements(codex_home.path(), &user_config, &requirements);
+        config_layer_stack_with_requirements(genex_home.path(), &user_config, &requirements);
     let outcome = manager
         .install_plugin(
             &config,
@@ -2107,7 +2107,7 @@ enabled = true
 "#,
     );
     write_file(
-        &repo_root.join(".codex/config.toml"),
+        &repo_root.join(".genex/config.toml"),
         r#"[[skills.config]]
 name = "enabled-plugin:sample-search"
 enabled = false
@@ -2948,8 +2948,8 @@ enabled = true
 
 #[tokio::test]
 async fn non_curated_plugin_cache_refresh_preserves_manual_priority() {
-    let codex_home = TempDir::new().unwrap();
-    let marketplace_root = codex_home.path().join("marketplace");
+    let genex_home = TempDir::new().unwrap();
+    let marketplace_root = genex_home.path().join("marketplace");
     fs::create_dir_all(marketplace_root.join(".git")).unwrap();
     write_plugin_with_version(
         &marketplace_root,
@@ -2968,7 +2968,7 @@ async fn non_curated_plugin_cache_refresh_preserves_manual_priority() {
 }"#,
     );
     write_file(
-        &codex_home.path().join(CONFIG_TOML_FILE),
+        &genex_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 
@@ -2976,7 +2976,7 @@ plugins = true
 enabled = true
 "#,
     );
-    let config = load_plugins_config_input(codex_home.path(), &marketplace_root).await;
+    let config = load_plugins_config_input(genex_home.path(), &marketplace_root).await;
     let context = PluginMarketplaceContext {
         global_config: config.clone(),
         scopes: vec![PluginMarketplaceScope {
@@ -2985,7 +2985,7 @@ enabled = true
         }],
         load_errors: Vec::new(),
     };
-    let manager = Arc::new(test_plugins_manager(codex_home.path().to_path_buf()));
+    let manager = Arc::new(test_plugins_manager(genex_home.path().to_path_buf()));
     manager
         .non_curated_cache_refresh_state
         .write()

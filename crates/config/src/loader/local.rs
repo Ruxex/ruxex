@@ -94,22 +94,22 @@ pub struct LocalTomlLayer<S> {
 /// current MDM configuration.
 pub async fn load_local_config_layers(
     fs: &dyn ExecutorFileSystem,
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: &AbsolutePathBuf,
 ) -> io::Result<LocalConfigLayers> {
-    load_local_config_layers_with_overrides(fs, codex_home, cwd, &LoaderOverrides::default()).await
+    load_local_config_layers_with_overrides(fs, genex_home, cwd, &LoaderOverrides::default()).await
 }
 
 pub(super) async fn load_local_config_layers_with_overrides(
     fs: &dyn ExecutorFileSystem,
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: &AbsolutePathBuf,
     overrides: &LoaderOverrides,
 ) -> io::Result<LocalConfigLayers> {
-    let codex_home = AbsolutePathBuf::from_absolute_path(codex_home)?;
+    let genex_home = AbsolutePathBuf::from_absolute_path(genex_home)?;
     let loaded_managed = layer_io::load_config_layers_internal(
         fs,
-        codex_home.as_path(),
+        genex_home.as_path(),
         overrides.clone(),
         /*strict_config*/ false,
     )
@@ -118,7 +118,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
     let system_file = system_config_toml_file_with_overrides(overrides)?;
     let system =
         load_config_toml_for_required_layer_raw(fs, &system_file, /*strict_config*/ false).await?;
-    let user_file = codex_home.join(CONFIG_TOML_FILE);
+    let user_file = genex_home.join(CONFIG_TOML_FILE);
     let user =
         load_config_toml_for_required_layer_raw(fs, &user_file, /*strict_config*/ false).await?;
 
@@ -132,18 +132,18 @@ pub(super) async fn load_local_config_layers_with_overrides(
     project_discovery::merge_managed_config_for_discovery(
         &mut discovery_config,
         &loaded_managed,
-        codex_home.as_path(),
+        genex_home.as_path(),
     )?;
     let project_root_markers = project_root_markers_from_config(&discovery_config)?
         .unwrap_or_else(default_project_root_markers);
-    let requirements = local_requirements_layers(fs, codex_home.as_path(), overrides).await?;
+    let requirements = local_requirements_layers(fs, genex_home.as_path(), overrides).await?;
     let mut trust_context = project_trust_context(
         fs,
         &discovery_config,
         &trusted_broker_config,
         cwd,
         &project_root_markers,
-        codex_home.as_path(),
+        genex_home.as_path(),
         &user_file,
     )
     .await?;
@@ -165,7 +165,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
         cwd,
         &trust_context.project_root,
         &trust_context,
-        codex_home.as_path(),
+        genex_home.as_path(),
         /*strict_config*/ false,
     )
     .await?;
@@ -187,7 +187,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
     ];
     append_project_layers(fs, &mut config_layers, project_layers.layers).await?;
 
-    append_mdm_config_layer(&mut config_layers, loaded_managed, &codex_home)?;
+    append_mdm_config_layer(&mut config_layers, loaded_managed, &genex_home)?;
 
     Ok(LocalConfigLayers {
         config: LocalTomlLayerStack {
@@ -248,7 +248,7 @@ async fn append_project_layers(
 fn append_mdm_config_layer(
     output: &mut Vec<LocalTomlLayer<ConfigLayerSource>>,
     loaded: layer_io::LoadedConfigLayers,
-    codex_home: &AbsolutePathBuf,
+    genex_home: &AbsolutePathBuf,
 ) -> io::Result<()> {
     if let Some(config) = loaded.managed_config_from_mdm {
         output.push(LocalTomlLayer {
@@ -256,7 +256,7 @@ fn append_mdm_config_layer(
                 domain: "com.codex.codex".to_string(),
                 key: "config_toml_base64".to_string(),
             },
-            base_dir: codex_home.clone(),
+            base_dir: genex_home.clone(),
             toml: config.managed_config,
         });
     }
@@ -265,11 +265,11 @@ fn append_mdm_config_layer(
 
 async fn local_requirements_layers(
     fs: &dyn ExecutorFileSystem,
-    codex_home: &Path,
+    genex_home: &Path,
     overrides: &LoaderOverrides,
 ) -> io::Result<LocalTomlLayerStack<RequirementSource>> {
     #[cfg(not(target_os = "macos"))]
-    let _ = codex_home;
+    let _ = genex_home;
 
     let system_file = system_requirements_toml_file_with_overrides(overrides)?;
     let system = load_requirements_toml(fs, &system_file).await?;
@@ -279,7 +279,7 @@ async fn local_requirements_layers(
 
     #[cfg(target_os = "macos")]
     {
-        let codex_home = AbsolutePathBuf::from_absolute_path(codex_home)?;
+        let genex_home = AbsolutePathBuf::from_absolute_path(genex_home)?;
         entries.extend(
             super::macos::load_managed_admin_requirements_layer(
                 overrides
@@ -287,7 +287,7 @@ async fn local_requirements_layers(
                     .as_deref(),
             )
             .await?
-            .map(|layer| layer.with_base_dir(codex_home)),
+            .map(|layer| layer.with_base_dir(genex_home)),
         );
     }
 

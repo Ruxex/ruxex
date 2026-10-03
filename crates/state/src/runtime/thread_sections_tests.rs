@@ -8,9 +8,9 @@ use pretty_assertions::assert_eq;
 
 #[tokio::test]
 async fn deleting_custom_section_preserves_threads_and_clears_section_ordering() -> Result<()> {
-    let codex_home = unique_temp_dir();
+    let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await?;
@@ -37,9 +37,9 @@ async fn deleting_custom_section_preserves_threads_and_clears_section_ordering()
     ] {
         runtime
             .upsert_thread(&test_thread_metadata(
-                &codex_home,
+                &genex_home,
                 thread_id,
-                codex_home.clone(),
+                genex_home.clone(),
             ))
             .await?;
         runtime
@@ -79,9 +79,9 @@ async fn deleting_custom_section_preserves_threads_and_clears_section_ordering()
 #[tokio::test]
 async fn concurrent_section_deletion_and_membership_moves_preserve_thread_invariants() -> Result<()>
 {
-    let codex_home = unique_temp_dir();
+    let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await?;
@@ -91,9 +91,9 @@ async fn concurrent_section_deletion_and_membership_moves_preserve_thread_invari
     let thread_id = ThreadId::new();
     runtime
         .upsert_thread(&test_thread_metadata(
-            &codex_home,
+            &genex_home,
             thread_id,
-            codex_home.clone(),
+            genex_home.clone(),
         ))
         .await?;
 

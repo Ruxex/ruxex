@@ -182,7 +182,7 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
         }]
     );
 
-    let hook_inputs = read_interrupt_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_interrupt_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     let payload = &hook_inputs[0];
     assert_eq!(
@@ -208,7 +208,7 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
     assert!(payload.get("last_assistant_message").is_none());
 
     let transcript_snapshot = fs::read_to_string(
-        test.codex_home_path()
+        test.genex_home_path()
             .join("interrupt_transcript_snapshot.jsonl"),
     )?;
     assert!(
@@ -234,7 +234,7 @@ async fn timed_out_interrupt_hook_fails_before_turn_aborted() -> Result<()> {
     let server = start_mock_server().await;
     let test = build_test(&server, /*system_message*/ None).await?;
     fs::write(
-        test.codex_home_path().join("interrupt_hook.py"),
+        test.genex_home_path().join("interrupt_hook.py"),
         "import time\ntime.sleep(60)\n",
     )?;
     start_interruptible_turn(&test, &server).await?;
@@ -331,23 +331,23 @@ async fn async_interrupt_hook_runs_without_delaying_turn_aborted() -> Result<()>
 
     assert!(
         !test
-            .codex_home_path()
+            .genex_home_path()
             .join("interrupt_hook_log.jsonl")
             .exists(),
         "the gated async hook must not finish before the turn abort is emitted"
     );
 
     fs::write(
-        test.codex_home_path().join("async_interrupt_release"),
+        test.genex_home_path().join("async_interrupt_release"),
         "ready",
     )?;
     fs_wait::wait_for_path_exists(
-        test.codex_home_path().join("async_interrupt_finished"),
+        test.genex_home_path().join("async_interrupt_finished"),
         Duration::from_secs(5),
     )
     .await
     .context("async interrupt hook should finish after the turn abort")?;
-    assert_eq!(read_interrupt_hook_inputs(test.codex_home_path())?.len(), 1);
+    assert_eq!(read_interrupt_hook_inputs(test.genex_home_path())?.len(), 1);
 
     Ok(())
 }
@@ -414,7 +414,7 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
         _ => None,
     })
     .await;
-    assert_eq!(read_interrupt_hook_inputs(test.codex_home_path())?.len(), 1);
+    assert_eq!(read_interrupt_hook_inputs(test.genex_home_path())?.len(), 1);
 
     Ok(())
 }
@@ -431,7 +431,7 @@ async fn startup_interrupt_without_active_turn_does_not_run_interrupt_hook() -> 
 
     assert!(
         !test
-            .codex_home_path()
+            .genex_home_path()
             .join("interrupt_hook_log.jsonl")
             .exists(),
         "startup interrupt should not invoke Interrupt hooks without an active turn",

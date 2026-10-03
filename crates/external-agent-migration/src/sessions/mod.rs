@@ -101,18 +101,18 @@ pub struct PendingSessionImport {
 }
 
 pub fn prepare_validated_session_import(
-    codex_home: &Path,
+    genex_home: &Path,
     session: ExternalAgentSessionMigration,
 ) -> io::Result<Option<PendingSessionImport>> {
     prepare_validated_session_import_with_metadata_mode(
-        codex_home,
+        genex_home,
         session,
         SessionMetadataMode::Embedded,
     )
 }
 
 pub fn prepare_validated_session_import_with_metadata_mode(
-    codex_home: &Path,
+    genex_home: &Path,
     session: ExternalAgentSessionMigration,
     metadata_mode: SessionMetadataMode,
 ) -> io::Result<Option<PendingSessionImport>> {
@@ -120,7 +120,7 @@ pub fn prepare_validated_session_import_with_metadata_mode(
     else {
         return Ok(None);
     };
-    pending.target = match ledger::find_existing_session_import(codex_home, &pending.source_path)? {
+    pending.target = match ledger::find_existing_session_import(genex_home, &pending.source_path)? {
         ledger::SessionImportSourceMapping::None => SessionImportTarget::New,
         ledger::SessionImportSourceMapping::Unique {
             source_content_sha256,
@@ -214,15 +214,15 @@ mod tests {
     #[test]
     fn skips_session_that_was_already_imported() {
         let root = TempDir::new().expect("tempdir");
-        let codex_home = root.path().join("codex-home");
+        let genex_home = root.path().join("genex-home");
         let source_path = root.path().join("session.jsonl");
         std::fs::write(&source_path, session_record(root.path(), "first request"))
             .expect("session");
-        ledger::record_imported_session(&codex_home, &source_path, ThreadId::new())
+        ledger::record_imported_session(&genex_home, &source_path, ThreadId::new())
             .expect("record import");
 
         let pending =
-            prepare_validated_session_import(&codex_home, session_migration(&source_path))
+            prepare_validated_session_import(&genex_home, session_migration(&source_path))
                 .expect("already imported session should be skipped");
 
         assert!(pending.is_none());
@@ -231,19 +231,19 @@ mod tests {
     #[test]
     fn prepares_changed_session_for_its_unique_import() {
         let root = TempDir::new().expect("tempdir");
-        let codex_home = root.path().join("codex-home");
+        let genex_home = root.path().join("genex-home");
         let source_path = root.path().join("session.jsonl");
         let initial = session_record(root.path(), "first request");
         let expected_source_content_sha256 = format!("{:x}", Sha256::digest(&initial));
         std::fs::write(&source_path, initial).expect("initial session");
         let imported_thread_id = ThreadId::new();
-        ledger::record_imported_session(&codex_home, &source_path, imported_thread_id)
+        ledger::record_imported_session(&genex_home, &source_path, imported_thread_id)
             .expect("record import");
         std::fs::write(&source_path, session_record(root.path(), "changed request"))
             .expect("changed session");
 
         let pending =
-            prepare_validated_session_import(&codex_home, session_migration(&source_path))
+            prepare_validated_session_import(&genex_home, session_migration(&source_path))
                 .expect("prepare changed session")
                 .expect("changed session should be eligible");
 
@@ -259,7 +259,7 @@ mod tests {
     #[test]
     fn skips_changed_session_with_ambiguous_imports() {
         let root = TempDir::new().expect("tempdir");
-        let codex_home = root.path().join("codex-home");
+        let genex_home = root.path().join("genex-home");
         let source_path = root.path().join("session.jsonl");
         std::fs::write(&source_path, session_record(root.path(), "changed request"))
             .expect("session");
@@ -272,13 +272,13 @@ mod tests {
             title: None,
         };
         ledger::record_completed_session_imports(
-            &codex_home,
+            &genex_home,
             vec![import("first hash"), import("second hash")],
         )
         .expect("record ambiguous imports");
 
         let pending =
-            prepare_validated_session_import(&codex_home, session_migration(&source_path))
+            prepare_validated_session_import(&genex_home, session_migration(&source_path))
                 .expect("prepare ambiguous session");
 
         assert!(pending.is_none());

@@ -33,7 +33,7 @@ use windows_sys::Win32::Foundation::CloseHandle;
 pub const CODEX_WINDOWS_SANDBOX_ARG1: &str = "--run-as-windows-sandbox";
 
 const COMMAND_CWD_FLAG: &str = "--command-cwd";
-const CODEX_HOME_FLAG: &str = "--codex-home";
+const GENEX_HOME_FLAG: &str = "--genex-home";
 const DENY_READ_PATHS_JSON_FLAG: &str = "--deny-read-paths-json";
 const DENY_WRITE_PATHS_JSON_FLAG: &str = "--deny-write-paths-json";
 const ENV_JSON_FLAG: &str = "--env-json";
@@ -66,7 +66,7 @@ pub fn create_windows_sandbox_command_args_for_permission_profile(
     write_roots_override: Option<&[PathBuf]>,
     deny_read_paths_override: &[AbsolutePathBuf],
     deny_write_paths_override: &[AbsolutePathBuf],
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> Result<Vec<String>> {
     let permission_profile_json = serde_json::to_string(permission_profile)
         .unwrap_or_else(|err| panic!("failed to serialize permission profile: {err}"));
@@ -74,8 +74,8 @@ pub fn create_windows_sandbox_command_args_for_permission_profile(
         .unwrap_or_else(|err| panic!("failed to serialize env: {err}"));
     let mut args = vec![
         CODEX_WINDOWS_SANDBOX_ARG1.to_string(),
-        CODEX_HOME_FLAG.to_string(),
-        codex_home.to_string_lossy().into_owned(),
+        GENEX_HOME_FLAG.to_string(),
+        genex_home.to_string_lossy().into_owned(),
         COMMAND_CWD_FLAG.to_string(),
         command_cwd.as_path().to_string_lossy().into_owned(),
         PERMISSION_PROFILE_FLAG.to_string(),
@@ -105,7 +105,7 @@ pub fn create_windows_sandbox_command_args_for_permission_profile(
             let common = prepare_spawn_context_common(
                 permission_profile,
                 workspace_roots,
-                codex_home,
+                genex_home,
                 command_cwd.as_path(),
                 &mut desktop_env,
                 &command,
@@ -118,21 +118,21 @@ pub fn create_windows_sandbox_command_args_for_permission_profile(
                 permissions: &common.permissions,
                 command_cwd: command_cwd.as_path(),
                 env_map: &desktop_env,
-                codex_home,
+                genex_home,
                 proxy_enforced,
             };
             // Desktop selection needs the account and capabilities, not the wrapper's ACL refresh.
             let (sandbox_creds, _) = require_sandbox_account(&request, proxy_settings_mode)?;
-            let caps = load_or_create_cap_sids(codex_home)?;
+            let caps = load_or_create_cap_sids(genex_home)?;
             let cap_sids = if common.uses_write_capabilities {
                 root_capability_sids(
-                    codex_home,
+                    genex_home,
                     command_cwd.as_path(),
                     effective_write_roots_for_permissions(
                         &common.permissions,
                         command_cwd.as_path(),
                         &desktop_env,
-                        codex_home,
+                        genex_home,
                         write_roots_override,
                     ),
                 )?
@@ -171,7 +171,7 @@ pub fn create_windows_sandbox_command_args_for_permission_profile(
             let common = prepare_legacy_spawn_context(
                 permission_profile,
                 workspace_roots,
-                codex_home,
+                genex_home,
                 command_cwd.as_path(),
                 &mut desktop_env,
                 &command,
@@ -184,11 +184,11 @@ pub fn create_windows_sandbox_command_args_for_permission_profile(
                 &common.permissions,
                 &common.current_dir,
                 &desktop_env,
-                codex_home,
+                genex_home,
             );
             let security = prepare_legacy_session_security(
                 common.uses_write_capabilities,
-                codex_home,
+                genex_home,
                 command_cwd.as_path(),
                 capability_roots,
             )?;
@@ -283,7 +283,7 @@ async fn run_windows_sandbox_wrapper_args(args: Vec<String>) -> Result<i32> {
 }
 
 struct WindowsSandboxWrapperRequest {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     command_cwd: AbsolutePathBuf,
     workspace_roots: Vec<AbsolutePathBuf>,
     env_map: HashMap<String, String>,
@@ -310,7 +310,7 @@ async fn run_windows_sandbox_wrapper_request(request: WindowsSandboxWrapperReque
         crate::WindowsSandboxSessionRequest {
             permission_profile: &request.permission_profile,
             workspace_roots: request.workspace_roots.as_slice(),
-            codex_home: request.codex_home.as_path(),
+            genex_home: request.genex_home.as_path(),
             command: request.command,
             cwd: request.command_cwd.as_path(),
             env_map: request.env_map,
@@ -337,7 +337,7 @@ async fn run_windows_sandbox_wrapper_request(request: WindowsSandboxWrapperReque
 
 fn parse_windows_sandbox_wrapper_args(args: Vec<String>) -> Result<WindowsSandboxWrapperRequest> {
     let mut args = args.into_iter();
-    let mut codex_home = None;
+    let mut genex_home = None;
     let mut command_cwd = None;
     let mut workspace_roots = Vec::new();
     let mut env_map = None;
@@ -357,7 +357,7 @@ fn parse_windows_sandbox_wrapper_args(args: Vec<String>) -> Result<WindowsSandbo
 
     while let Some(arg) = args.next() {
         match arg.as_str() {
-            CODEX_HOME_FLAG => codex_home = Some(PathBuf::from(next_flag_value(&mut args, &arg)?)),
+            GENEX_HOME_FLAG => genex_home = Some(PathBuf::from(next_flag_value(&mut args, &arg)?)),
             COMMAND_CWD_FLAG => {
                 command_cwd = Some(absolute_path_arg(next_flag_value(&mut args, &arg)?, &arg)?);
             }
@@ -416,11 +416,11 @@ fn parse_windows_sandbox_wrapper_args(args: Vec<String>) -> Result<WindowsSandbo
         }
     }
 
-    let codex_home = codex_home.ok_or_else(|| anyhow!("missing required {CODEX_HOME_FLAG}"))?;
-    if !codex_home.is_absolute() {
+    let genex_home = genex_home.ok_or_else(|| anyhow!("missing required {GENEX_HOME_FLAG}"))?;
+    if !genex_home.is_absolute() {
         bail!(
-            "{CODEX_HOME_FLAG} must be absolute: {}",
-            codex_home.display()
+            "{GENEX_HOME_FLAG} must be absolute: {}",
+            genex_home.display()
         );
     }
     let command_cwd = command_cwd.ok_or_else(|| anyhow!("missing required {COMMAND_CWD_FLAG}"))?;
@@ -431,7 +431,7 @@ fn parse_windows_sandbox_wrapper_args(args: Vec<String>) -> Result<WindowsSandbo
         workspace_roots.push(command_cwd.clone());
     }
     Ok(WindowsSandboxWrapperRequest {
-        codex_home,
+        genex_home,
         command_cwd,
         workspace_roots,
         env_map: env_map.ok_or_else(|| anyhow!("missing required {ENV_JSON_FLAG}"))?,

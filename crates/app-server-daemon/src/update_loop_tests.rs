@@ -127,7 +127,7 @@ test "$CODEX_INSTALL_DEFER_SELECTION" = 1
 test "$CODEX_INSTALL_IF_CURRENT" = 0
 test "$CODEX_INSTALL_DAEMON_ONLY" = 1
 test "$CODEX_INSTALL_IF_LATEST" = 0
-root="$CODEX_HOME/packages/app-server-daemon"
+root="$GENEX_HOME/packages/app-server-daemon"
 mkdir -p "$root/releases/{release}/bin"
 printf '#!/bin/sh\nif [ "$1" = --version ]; then echo codex 1.0.0; else exit 2; fi\n' > "$root/releases/{release}/bin/genex"
 chmod +x "$root/releases/{release}/bin/genex"
@@ -496,7 +496,7 @@ async fn test_control_server(
     let mut listener = genex_uds::UnixListener::bind(&daemon.socket_path)
         .await
         .expect("control listener");
-    let codex_home = home.to_path_buf();
+    let genex_home = home.to_path_buf();
     tokio::spawn(async move {
         loop {
             let connection = listener.accept().await.expect("control connection");
@@ -509,7 +509,7 @@ async fn test_control_server(
                 .expect("initialize request")
                 .expect("frame");
             let version = if std::fs::read_to_string(
-                crate::managed_install::package_root(&codex_home).join("auto-update-version"),
+                crate::managed_install::package_root(&genex_home).join("auto-update-version"),
             )
             .unwrap_or_default()
             .starts_with("1.1.0")
@@ -521,7 +521,7 @@ async fn test_control_server(
             websocket.send(tokio_tungstenite::tungstenite::Message::Text(
                 serde_json::json!({"id": 1, "result": {
                     "userAgent": format!("genex_app_server_daemon/{version}"),
-                    "genexHome": codex_home, "platformFamily": "unix", "platformOs": std::env::consts::OS,
+                    "genexHome": genex_home, "platformFamily": "unix", "platformOs": std::env::consts::OS,
                 }}).to_string().into(),
             )).await.expect("initialize response");
             websocket

@@ -14,7 +14,7 @@ use tempfile::TempDir;
 
 async fn build_config(temp_dir: &TempDir) -> Config {
     ConfigBuilder::default()
-        .codex_home(temp_dir.path().to_path_buf())
+        .genex_home(temp_dir.path().to_path_buf())
         .build()
         .await
         .expect("config should build")
@@ -29,7 +29,7 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
     )?;
     let config = build_config(&home).await;
     let client_config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .cli_overrides(vec![(
             "default_permissions".to_string(),
             ":workspace".into(),
@@ -167,7 +167,7 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
         "server-only"
     );
     let explicit_config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .harness_overrides(crate::legacy_core::config::ConfigOverrides {
             sandbox_mode: Some(genex_protocol::config_types::SandboxMode::ReadOnly),
             approval_policy: Some(genex_protocol::protocol::AskForApproval::OnRequest),
@@ -197,11 +197,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
 
 #[tokio::test]
 async fn viewing_thread_reads_history_without_resuming_it() -> Result<()> {
-    let codex_home = tempfile::tempdir()?;
-    let config = build_config(&codex_home).await;
+    let genex_home = tempfile::tempdir()?;
+    let config = build_config(&genex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            codex_home.path(),
+            genex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -241,11 +241,11 @@ fn only_active_writer_failures_offer_read_only_view() {
 
 #[tokio::test]
 async fn legacy_resume_preserves_history_mode_after_picker_server_replacement() -> Result<()> {
-    let codex_home = tempfile::tempdir().expect("tempdir");
-    let config = build_config(&codex_home).await;
+    let genex_home = tempfile::tempdir().expect("tempdir");
+    let config = build_config(&genex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            codex_home.path(),
+            genex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -281,11 +281,11 @@ async fn legacy_resume_preserves_history_mode_after_picker_server_replacement() 
 
 #[tokio::test]
 async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut() -> Result<()> {
-    let codex_home = tempfile::tempdir().expect("tempdir");
-    let config = build_config(&codex_home).await;
+    let genex_home = tempfile::tempdir().expect("tempdir");
+    let config = build_config(&genex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_paginated_rollout(
-            codex_home.path(),
+            genex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved paginated user message",
@@ -297,7 +297,7 @@ async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut()
     let mut app_server = crate::start_embedded_app_server_for_picker(&config).await?;
     app_server.remember_thread_history_mode(thread_id, ThreadHistoryMode::Paginated);
     let _maintenance_guard =
-        genex_rollout::try_acquire_rollout_maintenance_lock(codex_home.path())?
+        genex_rollout::try_acquire_rollout_maintenance_lock(genex_home.path())?
             .expect("acquire rollout maintenance lock");
     let next_request_id = app_server.next_request_id;
 
@@ -326,11 +326,11 @@ async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut()
 
 #[tokio::test]
 async fn stale_legacy_history_mode_is_revalidated_before_resume() -> Result<()> {
-    let codex_home = tempfile::tempdir().expect("tempdir");
-    let config = build_config(&codex_home).await;
+    let genex_home = tempfile::tempdir().expect("tempdir");
+    let config = build_config(&genex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_paginated_rollout(
-            codex_home.path(),
+            genex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved paginated user message",

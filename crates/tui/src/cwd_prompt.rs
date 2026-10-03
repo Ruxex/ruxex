@@ -416,7 +416,7 @@ mod tests {
     async fn cwd_prompt_remembered_choices_select_and_persist_matching_directory() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let config = ConfigBuilder::default()
-            .codex_home(temp_dir.path().to_path_buf())
+            .genex_home(temp_dir.path().to_path_buf())
             .build()
             .await?;
         let current_cwd = Path::new("/Users/example/current");

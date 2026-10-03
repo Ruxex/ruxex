@@ -185,17 +185,17 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
     let sandbox_helper_paths = params
         .arg0
         .iter()
-        .map(|_| runtime_paths.codex_self_exe.clone())
+        .map(|_| runtime_paths.genex_self_exe.clone())
         .collect::<Vec<_>>();
     // Bubblewrap launches the configured helper, which may re-enter this executable to apply
     // seccomp, so the outer filesystem sandbox must expose both paths.
     #[cfg(target_os = "linux")]
     let sandbox_helper_paths = {
         let mut sandbox_helper_paths = sandbox_helper_paths;
-        if !sandbox_helper_paths.contains(&runtime_paths.codex_self_exe) {
-            sandbox_helper_paths.push(runtime_paths.codex_self_exe.clone());
+        if !sandbox_helper_paths.contains(&runtime_paths.genex_self_exe) {
+            sandbox_helper_paths.push(runtime_paths.genex_self_exe.clone());
         }
-        sandbox_helper_paths.extend(runtime_paths.codex_linux_sandbox_exe.iter().cloned());
+        sandbox_helper_paths.extend(runtime_paths.genex_linux_sandbox_exe.iter().cloned());
         sandbox_helper_paths
     };
     #[cfg(unix)]
@@ -210,7 +210,7 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
     let sandbox_manager = SandboxManager::new();
     #[cfg(target_os = "macos")]
     let sandbox_manager = sandbox_manager
-        .with_allowed_symlinked_codex_home(runtime_paths.allowed_symlinked_codex_home.clone());
+        .with_allowed_symlinked_genex_home(runtime_paths.allowed_symlinked_genex_home.clone());
     let (sandbox, windows_sandbox_level) = select_sandbox(
         &sandbox_manager,
         &permissions,
@@ -236,7 +236,7 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
             helper_args.extend(params.argv.iter().cloned());
             (
                 runtime_paths
-                    .codex_self_exe
+                    .genex_self_exe
                     .as_path()
                     .as_os_str()
                     .to_owned(),
@@ -265,9 +265,9 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
             network: None,
             sandbox_policy_cwd,
             sandbox_exe: if cfg!(windows) {
-                Some(runtime_paths.codex_self_exe.as_path())
+                Some(runtime_paths.genex_self_exe.as_path())
             } else {
-                runtime_paths.codex_linux_sandbox_exe.as_deref()
+                runtime_paths.genex_linux_sandbox_exe.as_deref()
             },
             use_legacy_landlock: sandbox_context.use_legacy_landlock,
             windows_sandbox_level: windows_sandbox_level.unwrap_or(WindowsSandboxLevel::Disabled),

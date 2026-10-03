@@ -85,7 +85,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let config = MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .enable_feature(Feature::StandaloneWebSearch)
@@ -97,7 +97,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
         .with_provider_config("env_key = \"CUSTOM_RESPONSES_API_KEY\"")
         .with_provider_config("supports_standalone_web_search = true")
         .with_provider_config("requires_auth = false");
-    config.write(codex_home.path())?;
+    config.write(genex_home.path())?;
 
     let env_overrides = vec![
         ("PROVIDER_API_KEY", None),
@@ -105,7 +105,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     ];
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&env_overrides)
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -290,7 +290,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
 
     drop(mcp);
     let mut reloaded_mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&env_overrides)
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;

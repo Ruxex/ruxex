@@ -94,8 +94,8 @@ struct CreateConfigTomlParams {
     extra_provider_config: Option<String>,
 }
 
-fn create_config_toml(codex_home: &Path, params: CreateConfigTomlParams) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(genex_home: &Path, params: CreateConfigTomlParams) -> std::io::Result<()> {
+    let config_toml = genex_home.join("config.toml");
     let base_url = params
         .base_url
         .unwrap_or_else(|| "http://127.0.0.1:0/v1".to_string());
@@ -162,15 +162,15 @@ shell_snapshot = false
     std::fs::write(config_toml, contents)
 }
 
-fn read_config_toml(codex_home: &Path) -> Result<toml::Value> {
+fn read_config_toml(genex_home: &Path) -> Result<toml::Value> {
     Ok(toml::from_str(&std::fs::read_to_string(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
     )?)?)
 }
 
-fn load_file_auth(codex_home: &Path) -> Result<Option<AuthDotJson>> {
+fn load_file_auth(genex_home: &Path) -> Result<Option<AuthDotJson>> {
     Ok(load_auth_dot_json(
-        codex_home,
+        genex_home,
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?)
@@ -272,19 +272,19 @@ async fn mock_oauth_token(server: &MockServer, id_token: &str) {
 
 #[tokio::test]
 async fn logout_account_removes_auth_and_notifies() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
 
     login_with_api_key(
-        codex_home.path(),
+        genex_home.path(),
         "sk-test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
-    assert!(codex_home.path().join("auth.json").exists());
+    assert!(genex_home.path().join("auth.json").exists());
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -309,7 +309,7 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
     assert_eq!(payload.plan_type, None);
 
     assert!(
-        !codex_home.path().join("auth.json").exists(),
+        !genex_home.path().join("auth.json").exists(),
         "auth.json should be deleted"
     );
 
@@ -326,23 +326,23 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
 
 #[tokio::test]
 async fn logout_account_succeeds_when_config_reload_fails() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
     login_with_api_key(
-        codex_home.path(),
+        genex_home.path(),
         "sk-test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
-    std::fs::write(codex_home.path().join("config.toml"), "invalid = [")?;
+    std::fs::write(genex_home.path().join("config.toml"), "invalid = [")?;
 
     let request_id = mcp.send_logout_account_request().await?;
     let response = timeout(
@@ -354,7 +354,7 @@ async fn logout_account_succeeds_when_config_reload_fails() -> Result<()> {
         to_response::<LogoutAccountResponse>(response)?,
         LogoutAccountResponse {}
     );
-    assert_eq!(load_file_auth(codex_home.path())?, None);
+    assert_eq!(load_file_auth(genex_home.path())?, None);
     assert_account_updated(&mut mcp, /*auth_mode*/ None).await?;
 
     Ok(())
@@ -362,21 +362,21 @@ async fn logout_account_succeeds_when_config_reload_fails() -> Result<()> {
 
 #[tokio::test]
 async fn startup_enforces_local_auth_requirements_before_cloud_fetch() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mock_server = MockServer::start().await;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             managed_auth_base_url: Some(format!("{}/backend-api", mock_server.uri())),
             ..Default::default()
         },
     )?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         "allowed_login_methods = [\"api\"]\n",
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .plan_type("enterprise")
             .user_id("user-123")
@@ -386,7 +386,7 @@ async fn startup_enforces_local_auth_requirements_before_cloud_fetch() -> Result
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -432,11 +432,11 @@ async fn mount_disabled_attribution_settings(mock_server: &MockServer) {
 
 #[tokio::test]
 async fn login_account_api_key_succeeds_and_notifies() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -473,7 +473,7 @@ async fn login_account_api_key_succeeds_and_notifies() -> Result<()> {
     pretty_assertions::assert_eq!(payload.auth_mode, Some(AuthMode::ApiKey));
     pretty_assertions::assert_eq!(payload.plan_type, None);
 
-    assert!(codex_home.path().join("auth.json").exists());
+    assert!(genex_home.path().join("auth.json").exists());
     Ok(())
 }
 
@@ -484,9 +484,9 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
     credential_type: &str,
 ) -> Result<()> {
     let managed_access_keys = credential_type == "amazonBedrockAccessKeys";
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
-    let config_path = codex_home.path().join("config.toml");
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
+    let config_path = genex_home.path().join("config.toml");
     let original_config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         &config_path,
@@ -500,18 +500,18 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
         ),
     )?;
     login_with_api_key(
-        codex_home.path(),
+        genex_home.path(),
         "sk-test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
-    let mut expected_config = read_config_toml(codex_home.path())?;
+    let mut expected_config = read_config_toml(genex_home.path())?;
     expected_config
         .as_table_mut()
         .expect("config should be a table")
@@ -554,7 +554,7 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
     );
 
     assert_eq!(
-        load_file_auth(codex_home.path())?,
+        load_file_auth(genex_home.path())?,
         Some(AuthDotJson {
             auth_mode: Some(if managed_access_keys {
                 DomainAuthMode::BedrockAccessKeys
@@ -577,8 +577,8 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
             }),
         })
     );
-    assert_eq!(read_config_toml(codex_home.path())?, expected_config);
-    assert!(!codex_home.path().join(".env").exists());
+    assert_eq!(read_config_toml(genex_home.path())?, expected_config);
+    assert!(!genex_home.path().join(".env").exists());
 
     let notification = timeout(
         DEFAULT_READ_TIMEOUT,
@@ -629,9 +629,9 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
         let response: LogoutAccountResponse =
             timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
         assert_eq!(response, LogoutAccountResponse {});
-        assert_eq!(load_file_auth(codex_home.path())?, None);
-        assert_eq!(read_config_toml(codex_home.path())?, expected_logout_config);
-        assert!(!codex_home.path().join(".env").exists());
+        assert_eq!(load_file_auth(genex_home.path())?, None);
+        assert_eq!(read_config_toml(genex_home.path())?, expected_logout_config);
+        assert!(!genex_home.path().join(".env").exists());
         assert_account_updated(&mut mcp, /*auth_mode*/ None).await?;
         assert_eq!(
             read_account(&mut mcp).await?,
@@ -648,24 +648,24 @@ async fn login_amazon_bedrock_replaces_primary_auth_and_persists_provider(
 #[tokio::test]
 async fn login_amazon_bedrock_rejects_non_bedrock_provider_override_without_changes() -> Result<()>
 {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
     login_with_api_key(
-        codex_home.path(),
+        genex_home.path(),
         "sk-test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
-    let expected_auth = load_file_auth(codex_home.path())?;
+    let expected_auth = load_file_auth(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .with_args(&["-c", "model_provider=\"mock_provider\""])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
-    let expected_config = read_config_toml(codex_home.path())?;
+    let expected_config = read_config_toml(genex_home.path())?;
 
     let request_id = mcp
         .send_login_account_amazon_bedrock_request("managed-bedrock-api-key", "us-west-2")
@@ -679,8 +679,8 @@ async fn login_amazon_bedrock_rejects_non_bedrock_provider_override_without_chan
         error.error.message,
         "Amazon Bedrock login cannot select `amazon-bedrock` because session-flags sets `model_provider` to \"mock_provider\""
     );
-    assert_eq!(load_file_auth(codex_home.path())?, expected_auth);
-    assert_eq!(read_config_toml(codex_home.path())?, expected_config);
+    assert_eq!(load_file_auth(genex_home.path())?, expected_auth);
+    assert_eq!(read_config_toml(genex_home.path())?, expected_config);
 
     let maybe_completed = timeout(
         Duration::from_millis(500),
@@ -710,18 +710,18 @@ async fn login_amazon_bedrock_access_keys_rejects_overridden_aws_configuration()
         r#"model_providers.amazon-bedrock.aws.profile="other-account""#,
         r#"model_providers.amazon-bedrock.aws.region="eu-west-1""#,
     ] {
-        let codex_home = TempDir::new()?;
-        create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+        let genex_home = TempDir::new()?;
+        create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
         login_with_api_key(
-            codex_home.path(),
+            genex_home.path(),
             "sk-test-key",
             AuthCredentialsStoreMode::File,
             AuthKeyringBackendKind::default(),
         )?;
-        let expected_auth = load_file_auth(codex_home.path())?;
+        let expected_auth = load_file_auth(genex_home.path())?;
 
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_auto_env()
             .with_env_overrides(&[("PROVIDER_API_KEY", None)])
             .with_args(&["-c", config_override])
@@ -746,7 +746,7 @@ async fn login_amazon_bedrock_access_keys_rejects_overridden_aws_configuration()
             error.error.message,
             "Amazon Bedrock configuration cannot take effect: Overridden by session flags"
         );
-        assert_eq!(load_file_auth(codex_home.path())?, expected_auth);
+        assert_eq!(load_file_auth(genex_home.path())?, expected_auth);
     }
 
     Ok(())
@@ -754,9 +754,9 @@ async fn login_amazon_bedrock_access_keys_rejects_overridden_aws_configuration()
 
 #[tokio::test]
 async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
-    let mut expected_config = read_config_toml(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
+    let mut expected_config = read_config_toml(genex_home.path())?;
     expected_config
         .as_table_mut()
         .expect("config should be a table")
@@ -766,7 +766,7 @@ async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
         );
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .with_args(&["-c", "model_provider=\"amazon-bedrock\""])
@@ -786,7 +786,7 @@ async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
         LoginAccountResponse::AmazonBedrock {}
     );
     assert_eq!(
-        load_file_auth(codex_home.path())?,
+        load_file_auth(genex_home.path())?,
         Some(AuthDotJson {
             auth_mode: Some(DomainAuthMode::BedrockApiKey),
             api_key: None,
@@ -801,7 +801,7 @@ async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
             bedrock_access_keys: None,
         })
     );
-    assert_eq!(read_config_toml(codex_home.path())?, expected_config);
+    assert_eq!(read_config_toml(genex_home.path())?, expected_config);
     timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.read_stream_until_notification_message("account/login/completed"),
@@ -819,11 +819,11 @@ async fn logout_managed_bedrock_restores_default_account(
     model_provider_id: &str,
     model: &str,
 ) -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -856,7 +856,7 @@ async fn logout_managed_bedrock_restores_default_account(
         }
     );
 
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?
         .replace(
             "model_provider = \"amazon-bedrock\"",
@@ -872,7 +872,7 @@ async fn logout_managed_bedrock_restores_default_account(
             "{config}\n[model_providers.{model_provider_id}]\nbase_url = \"https://bedrock.example.com/v1\"\n[model_providers.{model_provider_id}.aws]\nprofile = \"managed-profile\"\nregion = \"us-west-2\"\nauth_refresh = {{ command = \"aws\" }}\n"
         ),
     )?;
-    let mut expected_config = read_config_toml(codex_home.path())?;
+    let mut expected_config = read_config_toml(genex_home.path())?;
     let expected_config_root = expected_config
         .as_table_mut()
         .expect("config should be a table");
@@ -893,8 +893,8 @@ async fn logout_managed_bedrock_restores_default_account(
         to_response::<LogoutAccountResponse>(response)?,
         LogoutAccountResponse {}
     );
-    assert_eq!(load_file_auth(codex_home.path())?, None);
-    assert_eq!(read_config_toml(codex_home.path())?, expected_config);
+    assert_eq!(load_file_auth(genex_home.path())?, None);
+    assert_eq!(read_config_toml(genex_home.path())?, expected_config);
     assert_account_updated(&mut mcp, /*auth_mode*/ None).await?;
     assert_eq!(
         read_account(&mut mcp).await?,
@@ -909,9 +909,9 @@ async fn logout_managed_bedrock_restores_default_account(
 #[tokio::test]
 async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account() -> Result<()> {
     for managed_bedrock_auth in [false, true] {
-        let codex_home = TempDir::new()?;
-        create_config_toml(codex_home.path(), aws_managed_bedrock_config())?;
-        let config_path = codex_home.path().join("config.toml");
+        let genex_home = TempDir::new()?;
+        create_config_toml(genex_home.path(), aws_managed_bedrock_config())?;
+        let config_path = genex_home.path().join("config.toml");
         let config = std::fs::read_to_string(&config_path)?
             .replace(
                 "model = \"mock-model\"",
@@ -922,15 +922,15 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
                 "[model_providers.amazon-bedrock]\nbase_url = \"https://bedrock.example.com/v1\"\n[model_providers.amazon-bedrock.aws]\nauth_refresh = { command = \"aws\" }",
             );
         std::fs::write(config_path, config)?;
-        let dotenv_path = codex_home.path().join(".env");
-        let aws_credentials_path = codex_home.path().join("aws-credentials");
+        let dotenv_path = genex_home.path().join(".env");
+        let aws_credentials_path = genex_home.path().join("aws-credentials");
         let dotenv = "AWS_ACCESS_KEY_ID=environment-id\nAWS_SECRET_ACCESS_KEY=environment-secret\n";
         let aws_credentials = "[codex-bedrock]\naws_access_key_id = profile-id\naws_secret_access_key = profile-secret\n";
         std::fs::write(&dotenv_path, dotenv)?;
         std::fs::write(&aws_credentials_path, aws_credentials)?;
         if managed_bedrock_auth {
             login_with_bedrock_api_key(
-                codex_home.path(),
+                genex_home.path(),
                 "managed-bedrock-api-key",
                 "us-east-1",
                 AuthCredentialsStoreMode::File,
@@ -938,7 +938,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
             )?;
         } else {
             login_with_api_key(
-                codex_home.path(),
+                genex_home.path(),
                 "sk-test-key",
                 AuthCredentialsStoreMode::File,
                 AuthKeyringBackendKind::default(),
@@ -947,7 +947,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
 
         let aws_credentials_env_path = aws_credentials_path.to_string_lossy();
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_auto_env()
             .with_env_overrides(&[
                 ("PROVIDER_API_KEY", None),
@@ -969,7 +969,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
                 requires_auth: false,
             }
         );
-        let mut expected_config = read_config_toml(codex_home.path())?;
+        let mut expected_config = read_config_toml(genex_home.path())?;
         let expected_config_root = expected_config
             .as_table_mut()
             .expect("config should be a table");
@@ -990,8 +990,8 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
             to_response::<LogoutAccountResponse>(response)?,
             LogoutAccountResponse {}
         );
-        assert_eq!(load_file_auth(codex_home.path())?, None);
-        assert_eq!(read_config_toml(codex_home.path())?, expected_config);
+        assert_eq!(load_file_auth(genex_home.path())?, None);
+        assert_eq!(read_config_toml(genex_home.path())?, expected_config);
         assert_eq!(std::fs::read_to_string(dotenv_path)?, dotenv);
         assert_eq!(
             std::fs::read_to_string(aws_credentials_path)?,
@@ -1012,10 +1012,10 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
 #[tokio::test]
 async fn logout_managed_bedrock_preserves_changed_provider_without_experimental_api() -> Result<()>
 {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), aws_managed_bedrock_config())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), aws_managed_bedrock_config())?;
     login_with_bedrock_api_key(
-        codex_home.path(),
+        genex_home.path(),
         "managed-bedrock-api-key",
         "us-west-2",
         AuthCredentialsStoreMode::File,
@@ -1023,7 +1023,7 @@ async fn logout_managed_bedrock_preserves_changed_provider_without_experimental_
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -1042,8 +1042,8 @@ async fn logout_managed_bedrock_preserves_changed_provider_without_experimental_
         .await?;
     assert!(matches!(initialized, JSONRPCMessage::Response(_)));
 
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
-    let config_path = codex_home.path().join("config.toml");
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
@@ -1051,7 +1051,7 @@ async fn logout_managed_bedrock_preserves_changed_provider_without_experimental_
             "{config}\n[model_providers.amazon-bedrock.aws]\nprofile = \"preserved\"\nregion = \"us-west-2\"\n"
         ),
     )?;
-    let expected_config = read_config_toml(codex_home.path())?;
+    let expected_config = read_config_toml(genex_home.path())?;
 
     let request_id = mcp.send_logout_account_request().await?;
     let response = timeout(
@@ -1063,8 +1063,8 @@ async fn logout_managed_bedrock_preserves_changed_provider_without_experimental_
         to_response::<LogoutAccountResponse>(response)?,
         LogoutAccountResponse {}
     );
-    assert_eq!(load_file_auth(codex_home.path())?, None);
-    assert_eq!(read_config_toml(codex_home.path())?, expected_config);
+    assert_eq!(load_file_auth(genex_home.path())?, None);
+    assert_eq!(read_config_toml(genex_home.path())?, expected_config);
     assert_account_updated(&mut mcp, /*auth_mode*/ None).await?;
     assert_eq!(
         read_account(&mut mcp).await?,
@@ -1078,10 +1078,10 @@ async fn logout_managed_bedrock_preserves_changed_provider_without_experimental_
 
 #[tokio::test]
 async fn managed_bedrock_login_requires_experimental_api() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -1112,17 +1112,17 @@ async fn managed_bedrock_login_requires_experimental_api() -> Result<()> {
         error.error.message,
         "account/login/start.amazonBedrock requires experimentalApi capability"
     );
-    assert_eq!(load_file_auth(codex_home.path())?, None);
+    assert_eq!(load_file_auth(genex_home.path())?, None);
     Ok(())
 }
 
 #[tokio::test]
 async fn login_managed_bedrock_updates_active_bedrock_account() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -1155,22 +1155,22 @@ async fn login_managed_bedrock_updates_active_bedrock_account() -> Result<()> {
         }
     );
 
-    assert!(codex_home.path().join("auth.json").exists());
+    assert!(genex_home.path().join("auth.json").exists());
     Ok(())
 }
 
 #[tokio::test]
 async fn login_account_amazon_bedrock_rejects_invalid_credentials_without_changes() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
-    let expected_config = read_config_toml(codex_home.path())?;
+    let expected_config = read_config_toml(genex_home.path())?;
 
     let request_id = mcp
         .send_login_account_amazon_bedrock_request("  ", "us-west-2")
@@ -1215,8 +1215,8 @@ async fn login_account_amazon_bedrock_rejects_invalid_credentials_without_change
         error.error.message,
         "AWS access key ID and secret access key must not be empty."
     );
-    assert_eq!(load_file_auth(codex_home.path())?, None);
-    assert_eq!(read_config_toml(codex_home.path())?, expected_config);
+    assert_eq!(load_file_auth(genex_home.path())?, None);
+    assert_eq!(read_config_toml(genex_home.path())?, expected_config);
 
     Ok(())
 }
@@ -1252,9 +1252,9 @@ enum LoginRefreshTrigger {
 
 #[tokio::test]
 async fn get_account_no_auth() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             requires_auth: Some(true),
             ..Default::default()
@@ -1262,7 +1262,7 @@ async fn get_account_no_auth() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -1283,9 +1283,9 @@ async fn get_account_no_auth() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_with_api_key() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             requires_auth: Some(true),
             ..Default::default()
@@ -1293,7 +1293,7 @@ async fn get_account_with_api_key() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -1322,9 +1322,9 @@ async fn get_account_with_api_key() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_when_auth_not_required() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             requires_auth: Some(false),
             ..Default::default()
@@ -1332,7 +1332,7 @@ async fn get_account_when_auth_not_required() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -1355,9 +1355,9 @@ async fn get_account_when_auth_not_required() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_with_aws_provider() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             model_provider_id: Some("amazon-bedrock".to_string()),
             extra_provider_config: Some(
@@ -1372,7 +1372,7 @@ region = "us-west-2"
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -1397,9 +1397,9 @@ region = "us-west-2"
 
 #[tokio::test]
 async fn get_account_with_user_managed_bedrock_provider() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             model_provider_id: Some("amazon-bedrock".to_string()),
             extra_provider_config: Some(
@@ -1416,7 +1416,7 @@ command = "print-token"
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -1435,9 +1435,9 @@ command = "print-token"
 
 #[tokio::test]
 async fn account_reads_use_startup_config_when_config_reload_fails() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             model_provider_id: Some("amazon-bedrock".to_string()),
             extra_provider_config: Some(
@@ -1452,12 +1452,12 @@ region = "us-west-2"
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
-    std::fs::write(codex_home.path().join("config.toml"), "invalid = [")?;
+    std::fs::write(genex_home.path().join("config.toml"), "invalid = [")?;
 
     assert_eq!(
         read_account(&mut mcp).await?,
@@ -1494,16 +1494,16 @@ region = "us-west-2"
 
 #[tokio::test]
 async fn get_account_with_managed_bedrock_provider() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         CreateConfigTomlParams {
             model_provider_id: Some("amazon-bedrock".to_string()),
             ..Default::default()
         },
     )?;
     login_with_bedrock_api_key(
-        codex_home.path(),
+        genex_home.path(),
         "managed-bedrock-api-key",
         "us-west-2",
         AuthCredentialsStoreMode::File,
@@ -1511,7 +1511,7 @@ async fn get_account_with_managed_bedrock_provider() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;

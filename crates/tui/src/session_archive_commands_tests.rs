@@ -24,14 +24,14 @@ use crate::tests::start_test_embedded_app_server;
 
 async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
     ConfigBuilder::default()
-        .codex_home(temp_dir.path().to_path_buf())
+        .genex_home(temp_dir.path().to_path_buf())
         .build()
         .await
 }
 
 async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::StateRuntime>> {
     let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(config.codex_home.as_path().abs()),
+        genex_state::SqliteConfig::new_for_testing(config.genex_home.as_path().abs()),
         config.model_provider_id.clone(),
     )
     .await
@@ -66,7 +66,7 @@ fn write_rollout(
         "sessions/2025/02/01"
     };
     let rollout_path = config
-        .codex_home
+        .genex_home
         .join(subdir)
         .join(format!("rollout-2025-02-01T10-00-00-{thread_id}.jsonl"));
     std::fs::create_dir_all(rollout_path.parent().expect("rollout parent"))?;
@@ -75,7 +75,7 @@ fn write_rollout(
             session_id: thread_id.into(),
             id: thread_id,
             timestamp: timestamp.to_string(),
-            cwd: config.codex_home.join("project").to_path_buf(),
+            cwd: config.genex_home.join("project").to_path_buf(),
             originator: "codex".to_string(),
             cli_version: "0.0.0".to_string(),
             source,
@@ -138,7 +138,7 @@ fn thread_metadata(
         serde_json::from_value(serde_json::json!("cli"))
             .expect("cli session source should deserialize"),
     );
-    builder.cwd = config.codex_home.join("project").to_path_buf();
+    builder.cwd = config.genex_home.join("project").to_path_buf();
     let mut metadata = builder.build(config.model_provider_id.as_str());
     metadata.title = name.to_string();
     metadata.first_user_message = Some("preview text".to_string());
@@ -175,7 +175,7 @@ async fn archives_by_sqlite_name() -> color_eyre::Result<()> {
     let mut app_server = start_app_server(config.clone()).await?;
     let message = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         SessionArchiveAction::Archive,
         "saved-session",
     )
@@ -227,7 +227,7 @@ async fn unarchives_by_sqlite_name() -> color_eyre::Result<()> {
     let mut app_server = start_app_server(config.clone()).await?;
     let message = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         SessionArchiveAction::Unarchive,
         "saved-session",
     )
@@ -285,7 +285,7 @@ async fn delete_refuses_same_label_in_active_and_archived_sessions() -> color_ey
     let mut app_server = start_app_server(config.clone()).await?;
     let error = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         SessionArchiveAction::Delete(DeleteConfirmation::Skip),
         "preview text",
     )
@@ -343,7 +343,7 @@ async fn refuses_action_with_stale_sqlite_collection() -> color_eyre::Result<()>
         let name = format!("stale-{listed_archived}");
         let error = run_session_archive_action_with_app_server(
             &mut app_server,
-            config.codex_home.as_path(),
+            config.genex_home.as_path(),
             action,
             &name,
         )
@@ -392,13 +392,13 @@ async fn trusts_sqlite_name_over_legacy_index_for_delete() -> color_eyre::Result
         ))
         .await
         .map_err(std::io::Error::other)?;
-    genex_rollout::append_thread_name(config.codex_home.as_path(), thread_id, "old-session")
+    genex_rollout::append_thread_name(config.genex_home.as_path(), thread_id, "old-session")
         .await?;
 
     let mut app_server = start_app_server(config.clone()).await?;
     let error = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         "old-session",
         "do the thing",
         "stable-client-message-id",
@@ -411,7 +411,7 @@ async fn trusts_sqlite_name_over_legacy_index_for_delete() -> color_eyre::Result
     );
     let message = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         SessionArchiveAction::Delete(DeleteConfirmation::Skip),
         "new-session",
     )
@@ -466,7 +466,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
     let mut app_server = start_app_server(config.clone()).await?;
     let (resolved_thread_id, response) = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         "saved-session",
         "do the thing",
         "stable-client-message-id",
@@ -511,7 +511,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
         .map_err(std::io::Error::other)?;
     let (resolved_custom_thread_id, _) = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         "external-session",
         "do the thing",
         "custom-client-message-id",
@@ -525,7 +525,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
 
     let duplicate_error = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         "saved-session",
         "do the thing",
         "duplicate-client-message-id",

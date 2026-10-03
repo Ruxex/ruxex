@@ -21,8 +21,8 @@ const COMMAND_RUNNER_EXE: &str = "codex-command-runner.exe";
 pub(crate) const BIN_DIRNAME: &str = "bin";
 pub(crate) const RESOURCES_DIRNAME: &str = "genex-resources";
 
-pub(crate) fn helper_bin_dir(codex_home: &Path) -> PathBuf {
-    sandbox_bin_dir(codex_home)
+pub(crate) fn helper_bin_dir(genex_home: &Path) -> PathBuf {
+    sandbox_bin_dir(genex_home)
 }
 
 fn legacy_lookup() -> PathBuf {
@@ -34,8 +34,8 @@ fn legacy_lookup() -> PathBuf {
     PathBuf::from(COMMAND_RUNNER_EXE)
 }
 
-pub(crate) fn resolve_command_runner(codex_home: &Path, log_dir: Option<&Path>) -> Result<PathBuf> {
-    Ok(match copy_runner_if_needed(codex_home, log_dir) {
+pub(crate) fn resolve_command_runner(genex_home: &Path, log_dir: Option<&Path>) -> Result<PathBuf> {
+    Ok(match copy_runner_if_needed(genex_home, log_dir) {
         Ok(path) => {
             log_note(
                 &format!(
@@ -60,16 +60,16 @@ pub(crate) fn resolve_command_runner(codex_home: &Path, log_dir: Option<&Path>) 
     })
 }
 
-pub fn resolve_exe_for_launch(source: &Path, codex_home: &Path) -> PathBuf {
-    resolve_exe_for_runtime(source, codex_home)
+pub fn resolve_exe_for_launch(source: &Path, genex_home: &Path) -> PathBuf {
+    resolve_exe_for_runtime(source, genex_home)
 }
 
-fn resolve_exe_for_runtime(source: &Path, codex_home: &Path) -> PathBuf {
-    let sandbox_log_dir = crate::sandbox_dir(codex_home);
+fn resolve_exe_for_runtime(source: &Path, genex_home: &Path) -> PathBuf {
+    let sandbox_log_dir = crate::sandbox_dir(genex_home);
     let Some(file_name) = source.file_name() else {
         return source.to_path_buf();
     };
-    let destination = helper_bin_dir(codex_home).join(file_name);
+    let destination = helper_bin_dir(genex_home).join(file_name);
     match copy_from_source_if_needed(source, &destination) {
         Ok(_) => {
             log_note(
@@ -95,10 +95,10 @@ fn resolve_exe_for_runtime(source: &Path, codex_home: &Path) -> PathBuf {
     }
 }
 
-fn copy_runner_if_needed(codex_home: &Path, log_dir: Option<&Path>) -> Result<PathBuf> {
+fn copy_runner_if_needed(genex_home: &Path, log_dir: Option<&Path>) -> Result<PathBuf> {
     let source = sibling_source_path()?;
     let suffix = helper_version_suffix(&source)?;
-    let destination = helper_bin_dir(codex_home).join(materialized_file_name(&suffix));
+    let destination = helper_bin_dir(genex_home).join(materialized_file_name(&suffix));
     log_note(
         &format!(
             "helper copy: validating command-runner source={} destination={}",
@@ -205,11 +205,11 @@ mod tests {
 
     #[test]
     fn helper_bin_dir_is_under_sandbox_bin() {
-        let codex_home = Path::new(r"C:\Users\example\.codex");
+        let genex_home = Path::new(r"C:\Users\example\.genex");
 
         assert_eq!(
-            PathBuf::from(r"C:\Users\example\.codex\.sandbox-bin"),
-            helper_bin_dir(codex_home)
+            PathBuf::from(r"C:\Users\example\.genex\.sandbox-bin"),
+            helper_bin_dir(genex_home)
         );
     }
 
@@ -227,14 +227,14 @@ mod tests {
     #[test]
     fn copy_runner_into_shared_bin_dir() {
         let tmp = TempDir::new().expect("tempdir");
-        let codex_home = tmp.path().join("codex-home");
+        let genex_home = tmp.path().join("genex-home");
         let source_dir = tmp.path().join("sibling-source");
         fs::create_dir_all(&source_dir).expect("create source dir");
         let runner_source = source_dir.join("codex-command-runner.exe");
         fs::write(&runner_source, b"runner").expect("runner");
         let runner_suffix = helper_version_suffix(&runner_source).expect("runner suffix");
         let runner_destination =
-            helper_bin_dir(&codex_home).join(materialized_file_name(&runner_suffix));
+            helper_bin_dir(&genex_home).join(materialized_file_name(&runner_suffix));
 
         let runner_outcome =
             copy_from_source_if_needed(&runner_source, &runner_destination).expect("runner copy");

@@ -28,12 +28,12 @@ pub(super) async fn spawn_command_under_sandbox(
     use std::process::Stdio;
 
     #[cfg(target_os = "linux")]
-    let codex_linux_sandbox_exe = Some(
-        core_test_support::find_codex_linux_sandbox_exe()
+    let genex_linux_sandbox_exe = Some(
+        core_test_support::find_genex_linux_sandbox_exe()
             .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?,
     );
     #[cfg(target_os = "macos")]
-    let codex_linux_sandbox_exe = None;
+    let genex_linux_sandbox_exe = None;
     let exec_request = build_exec_request(
         ExecParams {
             command,
@@ -52,8 +52,8 @@ pub(super) async fn spawn_command_under_sandbox(
         permission_profile,
         sandbox_cwd,
         &[PathUri::from_abs_path(sandbox_cwd)],
-        &codex_linux_sandbox_exe,
-        /*codex_self_exe*/ &None,
+        &genex_linux_sandbox_exe,
+        /*genex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
     )
     .map_err(|err| io::Error::other(err.to_string()))?;
@@ -365,7 +365,7 @@ async fn sandbox_blocks_first_time_dot_codex_creation() {
     let temp = tempfile::tempdir().expect("should be able to create temp dir");
     let repo_root = temp.path().join("repo").abs();
     create_dir_all(&repo_root).await.expect("mkdir repo");
-    let dot_codex = repo_root.join(".codex");
+    let dot_codex = repo_root.join(".genex");
     let config_toml = dot_codex.join("config.toml");
     let permission_profile = PermissionProfile::workspace_write_with(
         &[],
@@ -378,7 +378,7 @@ async fn sandbox_blocks_first_time_dot_codex_creation() {
         vec![
             "bash".to_string(),
             "-lc".to_string(),
-            "mkdir -p .codex && echo 'sandbox_mode = \"danger-full-access\"' > .codex/config.toml"
+            "mkdir -p .genex && echo 'sandbox_mode = \"danger-full-access\"' > .genex/config.toml"
                 .to_string(),
         ],
         repo_root.clone(),
@@ -388,12 +388,12 @@ async fn sandbox_blocks_first_time_dot_codex_creation() {
         sandbox_env,
     )
     .await
-    .expect("should spawn command creating .codex");
+    .expect("should spawn command creating .genex");
 
-    let status = child.wait().await.expect("should wait for .codex command");
+    let status = child.wait().await.expect("should wait for .genex command");
     assert!(
         !status.success(),
-        "sandbox unexpectedly allowed first-time .codex creation: {status:?}"
+        "sandbox unexpectedly allowed first-time .genex creation: {status:?}"
     );
     let dot_codex_metadata = tokio::fs::symlink_metadata(&dot_codex).await;
     if let Ok(metadata) = dot_codex_metadata {

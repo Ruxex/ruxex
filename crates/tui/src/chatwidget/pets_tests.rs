@@ -29,12 +29,12 @@ fn pet_load_without_runtime_sends_completion_event() {
 async fn shared_pet_load_uses_cached_builtin_assets() {
     let (chat, _tx, _rx, _op_rx) =
         crate::chatwidget::tests::make_chatwidget_manual_with_sender().await;
-    let codex_home = tempfile::tempdir().unwrap();
-    crate::pets::write_test_pack(codex_home.path());
+    let genex_home = tempfile::tempdir().unwrap();
+    crate::pets::write_test_pack(genex_home.path());
 
     crate::pets::load_pet_with_assets(
         crate::pets::DEFAULT_PET_ID.to_string(),
-        AbsolutePathBuf::from_absolute_path(codex_home.path()).expect("absolute temporary path"),
+        AbsolutePathBuf::from_absolute_path(genex_home.path()).expect("absolute temporary path"),
         chat.frame_requester.clone(),
         /*animations_enabled*/ false,
         &chat.pet_http_client,
@@ -43,7 +43,7 @@ async fn shared_pet_load_uses_cached_builtin_assets() {
     .expect("load cached built-in pet");
 
     assert!(
-        codex_home
+        genex_home
             .path()
             .join("cache")
             .join("tui-pets")

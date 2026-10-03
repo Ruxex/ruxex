@@ -5,9 +5,9 @@ use tempfile::tempdir;
 
 #[tokio::test]
 async fn dismiss_version_creates_cache_file_when_missing() {
-    let codex_home = tempdir().expect("temp genex home");
+    let genex_home = tempdir().expect("temp genex home");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .build()
         .await
         .expect("load config");

@@ -49,9 +49,9 @@ pub(super) async fn list_threads(
     };
     let state_db = store.state_db().await;
     let rollout_config = RolloutConfig {
-        codex_home: store.config.codex_home.clone(),
+        genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
-        cwd: store.config.codex_home.clone(),
+        cwd: store.config.genex_home.clone(),
         model_provider_id: store.config.default_model_provider_id.clone(),
     };
     let page = list_rollout_threads(

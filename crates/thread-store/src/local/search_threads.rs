@@ -68,15 +68,15 @@ pub(super) async fn search_threads(
     };
     let state_db = store.state_db().await;
     let rollout_config = RolloutConfig {
-        codex_home: store.config.codex_home.clone(),
+        genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
-        cwd: store.config.codex_home.clone(),
+        cwd: store.config.genex_home.clone(),
         model_provider_id: store.config.default_model_provider_id.clone(),
     };
     let rg_command = InstallContext::current().rg_command();
     let matching_rollouts = search_rollout_matches(
         rg_command.as_path(),
-        store.config.codex_home.as_path(),
+        store.config.genex_home.as_path(),
         params.archived,
         search_term,
     )

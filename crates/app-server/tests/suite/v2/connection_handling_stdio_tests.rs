@@ -51,16 +51,16 @@ async fn stdio_sigterm_exits_with_open_pipes() -> Result<()> {
 #[tokio::test]
 async fn stdio_sigterm_times_out_with_blocked_stderr() -> Result<()> {
     // TestAppServer drains stderr, so keep this subprocess's stderr pipe unread.
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut process = tokio::process::Command::new(cargo_bin("codex-app-server")?)
         .arg(DISABLE_PLUGIN_STARTUP_TASKS_ARG)
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .env(
             "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            codex_home.path().join("managed_config.toml"),
+            genex_home.path().join("managed_config.toml"),
         )
         .env("RUST_LOG", "codex_app_server_transport=error")
-        .current_dir(codex_home.path())
+        .current_dir(genex_home.path())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -113,8 +113,8 @@ async fn stdio_sigterm_times_out_with_blocked_stderr() -> Result<()> {
 #[test_case(Shutdown::Eof; "eof_then_sigterm")]
 #[tokio::test]
 async fn stdio_shutdown_times_out_with_blocked_file_write(shutdown: Shutdown) -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let path = codex_home.path().join("blocked-write");
+    let genex_home = TempDir::new()?;
+    let path = genex_home.path().join("blocked-write");
     let status = Command::new("mkfifo").arg(&path).status()?;
     assert!(status.success(), "failed to create FIFO: {status}");
     let mut reader = std::fs::File::from(
@@ -123,7 +123,7 @@ async fn stdio_shutdown_times_out_with_blocked_file_write(shutdown: Shutdown) ->
             .into_nonblocking_fd()?,
     );
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         // The FIFO belongs to the app-server's local filesystem, even in remote CI.
         .without_auto_env()
         .build_initialized()

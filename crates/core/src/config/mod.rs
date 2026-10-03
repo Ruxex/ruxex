@@ -272,14 +272,14 @@ fn resolve_mcp_oauth_credentials_store_mode(
 
 #[cfg(test)]
 pub(crate) async fn test_config() -> Config {
-    let codex_home = tempfile::tempdir().expect("create temp dir");
+    let genex_home = tempfile::tempdir().expect("create temp dir");
     Config::load_from_base_config_with_overrides(
         ConfigToml {
             model: Some("gpt-5.5".to_string()),
             ..Default::default()
         },
         ConfigOverrides::default(),
-        AbsolutePathBuf::from_absolute_path(codex_home.path()).expect("temp dir should resolve"),
+        AbsolutePathBuf::from_absolute_path(genex_home.path()).expect("temp dir should resolve"),
     )
     .await
     .expect("load default test config")
@@ -669,7 +669,7 @@ pub struct Config {
     /// appends one extra argument containing a JSON payload describing the
     /// event.
     ///
-    /// Example `~/.codex/config.toml` snippet:
+    /// Example `~/.genex/config.toml` snippet:
     ///
     /// ```toml
     /// notify = ["notify-send", "Codex"]
@@ -779,7 +779,7 @@ pub struct Config {
     pub workspace_roots_explicit: bool,
 
     /// Preferred store for CLI auth credentials.
-    /// file (default): Use a file in the Codex home directory.
+    /// file (default): Use a file in the Genex home directory.
     /// keyring: Use an OS-specific keyring service.
     /// auto: Use the OS-specific keyring service if available, otherwise use a file.
     pub cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
@@ -797,7 +797,7 @@ pub struct Config {
     /// keyring: Use an OS-specific keyring service.
     ///          Credentials stored in the keyring will only be readable by Codex unless the user explicitly grants access via OS-level keyring access.
     ///          https://github.com/codex/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2
-    /// file: CODEX_HOME/.credentials.json
+    /// file: GENEX_HOME/.credentials.json
     ///       This file will be readable to Codex and other applications running as the same user.
     /// auto (default): keyring if available, otherwise file.
     pub mcp_oauth_credentials_store_mode: OAuthCredentialsStoreMode,
@@ -853,17 +853,17 @@ pub struct Config {
     /// Maximum token budget allowed for a goal and default budget for new goals.
     pub max_goal_token_budget: Option<i64>,
 
-    /// Directory containing all Codex state (defaults to `~/.codex` but can be
-    /// overridden by the `CODEX_HOME` environment variable).
-    pub codex_home: AbsolutePathBuf,
+    /// Directory containing all Codex state (defaults to `~/.genex` but can be
+    /// overridden by the `GENEX_HOME` environment variable).
+    pub genex_home: AbsolutePathBuf,
 
     /// Resolved configuration shared by all Codex SQLite databases.
     pub sqlite: genex_state::SqliteConfig,
 
-    /// Directory where Codex writes log files (defaults to `$CODEX_HOME/log`).
+    /// Directory where Codex writes log files (defaults to `$GENEX_HOME/log`).
     pub log_dir: PathBuf,
 
-    /// Settings that govern if and what will be written to `~/.codex/history.jsonl`.
+    /// Settings that govern if and what will be written to `~/.genex/history.jsonl`.
     pub history: History,
 
     /// When true, session is not persisted on disk. Default to `false`
@@ -883,7 +883,7 @@ pub struct Config {
 
     /// Path to the current Codex executable. This cannot be set in the config
     /// file: it must be set in code via [`ConfigOverrides`].
-    pub codex_self_exe: Option<PathBuf>,
+    pub genex_self_exe: Option<PathBuf>,
 
     /// Path to the `codex-linux-sandbox` executable. This must be set if
     /// [`genex_sandboxing::SandboxType::LinuxSeccomp`] is used. Note that this
@@ -891,7 +891,7 @@ pub struct Config {
     /// [`ConfigOverrides`].
     ///
     /// When this program is invoked, arg0 will be set to `codex-linux-sandbox`.
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub genex_linux_sandbox_exe: Option<PathBuf>,
 
     /// Path to the `genex-execve-wrapper` executable used for shell
     /// escalation. This cannot be set in the config file: it must be set in
@@ -1248,8 +1248,8 @@ pub struct TerminalResizeReflowConfig {
 }
 
 impl AuthManagerConfig for Config {
-    fn codex_home(&self) -> PathBuf {
-        self.codex_home.to_path_buf()
+    fn genex_home(&self) -> PathBuf {
+        self.genex_home.to_path_buf()
     }
 
     fn cli_auth_credentials_store_mode(&self) -> AuthCredentialsStoreMode {
@@ -1283,7 +1283,7 @@ impl AuthManagerConfig for Config {
 
 #[derive(Clone, Default)]
 pub struct ConfigBuilder {
-    codex_home: Option<PathBuf>,
+    genex_home: Option<PathBuf>,
     cli_overrides: Option<Vec<(String, TomlValue)>>,
     harness_overrides: Option<ConfigOverrides>,
     loader_overrides: Option<LoaderOverrides>,
@@ -1293,8 +1293,8 @@ pub struct ConfigBuilder {
 }
 
 impl ConfigBuilder {
-    pub fn codex_home(mut self, codex_home: PathBuf) -> Self {
-        self.codex_home = Some(codex_home);
+    pub fn genex_home(mut self, genex_home: PathBuf) -> Self {
+        self.genex_home = Some(genex_home);
         self
     }
 
@@ -1338,7 +1338,7 @@ impl ConfigBuilder {
 
     async fn build_inner(self) -> std::io::Result<Config> {
         let Self {
-            codex_home,
+            genex_home,
             cli_overrides,
             harness_overrides,
             loader_overrides,
@@ -1346,9 +1346,9 @@ impl ConfigBuilder {
             thread_config_loader,
             fallback_cwd,
         } = self;
-        let codex_home = match codex_home {
-            Some(codex_home) => AbsolutePathBuf::from_absolute_path(codex_home)?,
-            None => find_codex_home()?,
+        let genex_home = match genex_home {
+            Some(genex_home) => AbsolutePathBuf::from_absolute_path(genex_home)?,
+            None => find_genex_home()?,
         };
         let cli_overrides = cli_overrides.unwrap_or_default();
         let mut harness_overrides = harness_overrides.unwrap_or_default();
@@ -1361,7 +1361,7 @@ impl ConfigBuilder {
         harness_overrides.cwd = Some(cwd.to_path_buf());
         let config_layer_stack = load_config_layers_state(
             LOCAL_FS.as_ref(),
-            &codex_home,
+            &genex_home,
             Some(cwd),
             &cli_overrides,
             ConfigLoadOptions {
@@ -1401,7 +1401,7 @@ impl ConfigBuilder {
             LOCAL_FS.as_ref(),
             config_toml,
             harness_overrides,
-            codex_home,
+            genex_home,
             config_layer_stack,
         )
         .await
@@ -1632,7 +1632,7 @@ impl Config {
 
         McpConfig {
             requires_read_only_mcp_tools: false,
-            codex_home: self.codex_home.to_path_buf(),
+            genex_home: self.genex_home.to_path_buf(),
             mcp_enterprise_managed_auth: self.mcp_enterprise_managed_auth.clone(),
             xaa_enabled: self.features.enabled(Feature::UseXaa)
                 && self.mcp_enterprise_managed_auth.is_some(),
@@ -1653,7 +1653,7 @@ impl Config {
             permission_profile: self.permissions.permission_profile().clone(),
             environment_cwds: HashMap::new(),
             server_permission_profiles: HashMap::new(),
-            codex_linux_sandbox_exe: self.codex_linux_sandbox_exe.clone(),
+            genex_linux_sandbox_exe: self.genex_linux_sandbox_exe.clone(),
             use_legacy_landlock: self.features.use_legacy_landlock(),
             prefix_mcp_tool_names: self.prefix_mcp_tool_names(),
             non_prefixed_mcp_tool_servers: if self
@@ -1714,7 +1714,7 @@ impl Config {
                 default_zsh_path,
                 ..Default::default()
             },
-            refreshed_config.codex_home.clone(),
+            refreshed_config.genex_home.clone(),
             config_layer_stack,
         )
         .await
@@ -1761,18 +1761,18 @@ impl Config {
     pub async fn load_default_with_cli_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
     ) -> std::io::Result<Self> {
-        let codex_home = find_codex_home()?;
-        Self::load_default_with_cli_overrides_for_codex_home(
-            codex_home.to_path_buf(),
+        let genex_home = find_genex_home()?;
+        Self::load_default_with_cli_overrides_for_genex_home(
+            genex_home.to_path_buf(),
             cli_overrides,
         )
         .await
     }
 
-    /// Load a default configuration for a specific Codex home without reading
+    /// Load a default configuration for a specific Genex home without reading
     /// user, project, or system config layers.
-    pub async fn load_default_with_cli_overrides_for_codex_home(
-        codex_home: PathBuf,
+    pub async fn load_default_with_cli_overrides_for_genex_home(
+        genex_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
     ) -> std::io::Result<Self> {
         let mut merged = toml::Value::try_from(ConfigToml::default()).map_err(|e| {
@@ -1783,13 +1783,13 @@ impl Config {
         })?;
         let cli_layer = genex_config::build_cli_overrides_layer(&cli_overrides);
         genex_config::merge_toml_values(&mut merged, &cli_layer);
-        let codex_home = AbsolutePathBuf::from_absolute_path_checked(codex_home)?;
-        let config_toml = deserialize_config_toml_with_base(merged, &codex_home)?;
+        let genex_home = AbsolutePathBuf::from_absolute_path_checked(genex_home)?;
+        let config_toml = deserialize_config_toml_with_base(merged, &genex_home)?;
         Self::load_config_with_layer_stack(
             LOCAL_FS.as_ref(),
             config_toml,
             ConfigOverrides::default(),
-            codex_home,
+            genex_home,
             ConfigLayerStack::default(),
         )
         .await
@@ -1800,7 +1800,7 @@ impl Config {
     /// designed to use [AskForApproval::Never] exclusively.
     ///
     /// Further, [ConfigOverrides] contains some options that are not supported
-    /// in [ConfigToml], such as `cwd`, `codex_self_exe`, `codex_linux_sandbox_exe`, and
+    /// in [ConfigToml], such as `cwd`, `genex_self_exe`, `genex_linux_sandbox_exe`, and
     /// `main_execve_wrapper_exe`.
     pub async fn load_with_cli_overrides_and_harness_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
@@ -1815,12 +1815,12 @@ impl Config {
 }
 
 pub fn resolve_profile_v2_config_path(
-    codex_home: &Path,
+    genex_home: &Path,
     profile_name: &ProfileV2Name,
 ) -> AbsolutePathBuf {
     AbsolutePathBuf::resolve_path_against_base(
         format!("{profile_name}{CONFIG_PROFILE_V2_SUFFIX}"),
-        codex_home,
+        genex_home,
     )
 }
 
@@ -1828,13 +1828,13 @@ pub fn resolve_profile_v2_config_path(
 /// with [ConfigToml] directly means that [ConfigRequirements] have not been
 /// applied yet, which risks failing to enforce required constraints.
 pub async fn load_config_as_toml_with_cli_overrides(
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     loader_overrides: LoaderOverrides,
 ) -> std::io::Result<ConfigToml> {
     load_config_as_toml_with_cli_and_loader_overrides(
-        codex_home,
+        genex_home,
         cwd,
         cli_overrides,
         loader_overrides,
@@ -1847,12 +1847,12 @@ pub async fn load_config_as_toml_with_cli_overrides(
 /// [ConfigRequirements] have not been applied yet, which risks skipping
 /// required constraints.
 pub async fn load_config_as_toml_with_cli_and_loader_overrides(
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     loader_overrides: LoaderOverrides,
 ) -> std::io::Result<ConfigToml> {
-    load_config_as_toml_with_cli_and_load_options(codex_home, cwd, cli_overrides, loader_overrides)
+    load_config_as_toml_with_cli_and_load_options(genex_home, cwd, cli_overrides, loader_overrides)
         .await
 }
 
@@ -1861,12 +1861,12 @@ pub async fn load_config_as_toml_with_cli_and_loader_overrides(
 /// [ConfigRequirements] have not been applied yet, which risks skipping
 /// required constraints.
 pub async fn load_config_as_toml_with_cli_and_load_options(
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     options: impl Into<ConfigLoadOptions>,
 ) -> std::io::Result<ConfigToml> {
-    load_config_toml_with_layer_stack(codex_home, cwd, cli_overrides, options)
+    load_config_toml_with_layer_stack(genex_home, cwd, cli_overrides, options)
         .await
         .map(|result| result.config_toml)
 }
@@ -1884,14 +1884,14 @@ pub struct ConfigTomlLoadResult {
 /// Loads the partially merged config together with the layer stack used to
 /// derive it, before constructing a full [`Config`].
 pub async fn load_config_toml_with_layer_stack(
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     options: impl Into<ConfigLoadOptions>,
 ) -> std::io::Result<ConfigTomlLoadResult> {
     let config_layer_stack = load_config_layers_state(
         LOCAL_FS.as_ref(),
-        codex_home,
+        genex_home,
         cwd.cloned(),
         &cli_overrides,
         options,
@@ -1900,7 +1900,7 @@ pub async fn load_config_toml_with_layer_stack(
     .await?;
 
     let merged_toml = config_layer_stack.effective_config();
-    let cfg = deserialize_config_toml_with_base(merged_toml, codex_home).map_err(|e| {
+    let cfg = deserialize_config_toml_with_base(merged_toml, genex_home).map_err(|e| {
         tracing::error!("Failed to deserialize overridden config: {e}");
         e
     })?;
@@ -2076,7 +2076,7 @@ where
 }
 
 pub async fn load_global_mcp_servers(
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> std::io::Result<BTreeMap<String, McpServerConfig>> {
     // In general, Config::load_with_cli_overrides() should be used to load the
     // full config with requirements.toml applied, but in this case, we need
@@ -2087,11 +2087,11 @@ pub async fn load_global_mcp_servers(
     // result.
     let cli_overrides = Vec::<(String, TomlValue)>::new();
     // There is no cwd/project context for this query, so this will not include
-    // MCP servers defined in in-repo .codex/ folders.
+    // MCP servers defined in in-repo .genex/ folders.
     let cwd: Option<AbsolutePathBuf> = None;
     let config_layer_stack = load_config_layers_state(
         LOCAL_FS.as_ref(),
-        codex_home,
+        genex_home,
         cwd,
         &cli_overrides,
         LoaderOverrides::default(),
@@ -2201,16 +2201,16 @@ pub(crate) fn set_project_trust_level_inner(
     Ok(())
 }
 
-/// Patch `CODEX_HOME/config.toml` project state to set trust level.
+/// Patch `GENEX_HOME/config.toml` project state to set trust level.
 /// Use with caution.
 pub fn set_project_trust_level(
-    codex_home: &Path,
+    genex_home: &Path,
     project_path: &Path,
     trust_level: TrustLevel,
 ) -> anyhow::Result<()> {
     use crate::config::edit::ConfigEditsBuilder;
 
-    ConfigEditsBuilder::new(codex_home)
+    ConfigEditsBuilder::new(genex_home)
         .set_project_trust_level(project_path, trust_level)
         .apply_blocking()
 }
@@ -2414,8 +2414,8 @@ pub struct ConfigOverrides {
     pub persisted_permission_profile_id: Option<String>,
     pub model_provider: Option<String>,
     pub service_tier: Option<Option<String>>,
-    pub codex_self_exe: Option<PathBuf>,
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub genex_self_exe: Option<PathBuf>,
+    pub genex_linux_sandbox_exe: Option<PathBuf>,
     pub main_execve_wrapper_exe: Option<PathBuf>,
     pub default_zsh_path: Option<AbsolutePathBuf>,
     pub base_instructions: Option<String>,
@@ -2953,7 +2953,7 @@ impl Config {
     async fn load_from_base_config_with_overrides(
         cfg: ConfigToml,
         overrides: ConfigOverrides,
-        codex_home: AbsolutePathBuf,
+        genex_home: AbsolutePathBuf,
     ) -> std::io::Result<Self> {
         // Note this ignores requirements.toml enforcement for tests.
         let config_layer_stack = ConfigLayerStack::default();
@@ -2961,7 +2961,7 @@ impl Config {
             LOCAL_FS.as_ref(),
             cfg,
             overrides,
-            codex_home,
+            genex_home,
             config_layer_stack,
         )
         .await
@@ -2971,7 +2971,7 @@ impl Config {
         fs: &dyn ExecutorFileSystem,
         mut cfg: ConfigToml,
         overrides: ConfigOverrides,
-        codex_home: AbsolutePathBuf,
+        genex_home: AbsolutePathBuf,
         config_layer_stack: ConfigLayerStack,
     ) -> std::io::Result<Self> {
         // Keep the large config-construction future off small test thread stacks.
@@ -3050,8 +3050,8 @@ impl Config {
             persisted_permission_profile_id,
             model_provider,
             service_tier: service_tier_override,
-            codex_self_exe,
-            codex_linux_sandbox_exe,
+            genex_self_exe,
+            genex_linux_sandbox_exe,
             main_execve_wrapper_exe,
             default_zsh_path,
             base_instructions,
@@ -3668,7 +3668,7 @@ impl Config {
             .log_dir
             .as_ref()
             .map(AbsolutePathBuf::to_path_buf)
-            .unwrap_or_else(|| codex_home.join("log").to_path_buf());
+            .unwrap_or_else(|| genex_home.join("log").to_path_buf());
         let sqlite_home_env = resolve_sqlite_home_env(&resolved_cwd);
         requirements::push_sqlite_home_env_override_warning(
             configured_sqlite_home.as_ref(),
@@ -3681,7 +3681,7 @@ impl Config {
             .as_ref()
             .cloned()
             .or(sqlite_home_env)
-            .unwrap_or_else(|| codex_home.clone());
+            .unwrap_or_else(|| genex_home.clone());
         let original_permission_profile = permission_profile.clone();
         apply_requirement_constrained_value(
             "approval_policy",
@@ -3747,7 +3747,7 @@ impl Config {
             &shell_environment_policy.r#set,
         )?;
         let helper_readable_roots = get_readable_roots_required_for_codex_runtime(
-            &codex_home,
+            &genex_home,
             zsh_path.as_ref(),
             main_execve_wrapper_exe.as_ref(),
         );
@@ -3955,7 +3955,7 @@ impl Config {
                 })
                 .transpose()?,
             agent_interrupt_message_enabled,
-            codex_home,
+            genex_home,
             sqlite: genex_state::SqliteConfig::from_sqlite_home(sqlite_home),
             log_dir,
             config_layer_stack,
@@ -3964,8 +3964,8 @@ impl Config {
             extra_config: None,
             bypass_hook_trust,
             file_opener: cfg.file_opener.unwrap_or(UriBasedFileOpener::VsCode),
-            codex_self_exe,
-            codex_linux_sandbox_exe,
+            genex_self_exe,
+            genex_linux_sandbox_exe,
             main_execve_wrapper_exe,
             zsh_path,
 
@@ -4428,15 +4428,15 @@ fn is_permission_allowed(
 }
 
 /// Returns the path to the Codex configuration directory, which can be
-/// specified by the `CODEX_HOME` environment variable. If not set, defaults to
-/// `~/.codex`.
+/// specified by the `GENEX_HOME` environment variable. If not set, defaults to
+/// `~/.genex`.
 ///
-/// - If `CODEX_HOME` is set, the value must exist and be a directory. The
+/// - If `GENEX_HOME` is set, the value must exist and be a directory. The
 ///   value will be canonicalized and this function will Err otherwise.
-/// - If `CODEX_HOME` is not set, this function does not verify that the
+/// - If `GENEX_HOME` is not set, this function does not verify that the
 ///   directory exists.
-pub fn find_codex_home() -> std::io::Result<AbsolutePathBuf> {
-    genex_utils_home_dir::find_codex_home()
+pub fn find_genex_home() -> std::io::Result<AbsolutePathBuf> {
+    genex_utils_home_dir::find_genex_home()
 }
 
 /// Returns the path to the folder where Codex logs are stored. Does not verify

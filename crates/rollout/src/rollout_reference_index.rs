@@ -35,11 +35,11 @@ struct IndexedRollout {
 
 impl RolloutReferenceIndex {
     /// Scans active and archived local rollout metadata.
-    pub async fn scan(codex_home: &Path) -> io::Result<Self> {
+    pub async fn scan(genex_home: &Path) -> io::Result<Self> {
         Self::scan_paths(
             vec![
-                codex_home.join(ARCHIVED_SESSIONS_SUBDIR),
-                codex_home.join(SESSIONS_SUBDIR),
+                genex_home.join(ARCHIVED_SESSIONS_SUBDIR),
+                genex_home.join(SESSIONS_SUBDIR),
             ],
             /*thread_ids*/ None,
         )
@@ -50,9 +50,9 @@ impl RolloutReferenceIndex {
     ///
     /// Reference counts exclude archived history and must not be used to decide whether a
     /// rollout can be deleted or compressed.
-    pub async fn scan_unarchived(codex_home: &Path) -> io::Result<Self> {
+    pub async fn scan_unarchived(genex_home: &Path) -> io::Result<Self> {
         Self::scan_paths(
-            vec![codex_home.join(SESSIONS_SUBDIR)],
+            vec![genex_home.join(SESSIONS_SUBDIR)],
             /*thread_ids*/ None,
         )
         .await
@@ -64,11 +64,11 @@ impl RolloutReferenceIndex {
     /// ownership among the candidates. Reference counts are partial and must not be used to
     /// decide whether a rollout can be deleted or compressed.
     pub async fn scan_unarchived_threads(
-        codex_home: &Path,
+        genex_home: &Path,
         thread_ids: &[ThreadId],
     ) -> io::Result<Self> {
         let thread_ids = thread_ids.iter().copied().collect();
-        Self::scan_paths(vec![codex_home.join(SESSIONS_SUBDIR)], Some(&thread_ids)).await
+        Self::scan_paths(vec![genex_home.join(SESSIONS_SUBDIR)], Some(&thread_ids)).await
     }
 
     async fn scan_paths(

@@ -3,7 +3,7 @@
 //! Unlike custom pets, built-in pets are not checked into the TUI package as
 //! local spritesheets. The TUI resolves them from the public Codex pets CDN on
 //! first use, verifies that the downloaded file has the expected spritesheet
-//! geometry, and installs it into a versioned cache under CODEX_HOME.
+//! geometry, and installs it into a versioned cache under GENEX_HOME.
 //!
 //! This module deliberately stops at "a validated spritesheet exists at this
 //! path". Higher layers remain responsible for deciding when downloads are
@@ -30,8 +30,8 @@ const PET_CDN_BASE_URL: &str = "https://persistent.oaistatic.com/codex/pets/v1";
 const PET_DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(60);
 const PET_MAX_DOWNLOAD_BYTES: u64 = 4 * 1024 * 1024;
 
-pub(crate) fn builtin_spritesheet_path(codex_home: &Path, file: &str) -> PathBuf {
-    pack_dir(codex_home).join("assets").join(file)
+pub(crate) fn builtin_spritesheet_path(genex_home: &Path, file: &str) -> PathBuf {
+    pack_dir(genex_home).join("assets").join(file)
 }
 
 /// Ensure that a built-in pet's spritesheet is present and structurally valid.
@@ -43,11 +43,11 @@ pub(crate) fn builtin_spritesheet_path(codex_home: &Path, file: &str) -> PathBuf
 /// should treat any error here as "the asset is unavailable", not as a partial
 /// install they can safely ignore.
 pub(crate) async fn ensure_builtin_pet(
-    codex_home: &Path,
+    genex_home: &Path,
     pet: catalog::BuiltinPet,
     http_client: &RouteAwareClientPool,
 ) -> Result<()> {
-    let destination = builtin_spritesheet_path(codex_home, pet.spritesheet_file);
+    let destination = builtin_spritesheet_path(genex_home, pet.spritesheet_file);
     let cache_destination = destination.clone();
     let cache_valid = tokio::task::spawn_blocking(move || {
         validate_cached_spritesheet(&cache_destination).is_ok()
@@ -102,8 +102,8 @@ fn builtin_pet_url(pet: catalog::BuiltinPet) -> Result<String> {
     Ok(url)
 }
 
-fn pack_dir(codex_home: &Path) -> PathBuf {
-    codex_home.join(PET_PACK_DIR).join(PET_PACK_VERSION)
+fn pack_dir(genex_home: &Path) -> PathBuf {
+    genex_home.join(PET_PACK_DIR).join(PET_PACK_VERSION)
 }
 
 async fn download_bytes_with_limit(
@@ -179,8 +179,8 @@ fn validate_cached_spritesheet(path: &Path) -> Result<()> {
 }
 
 #[cfg(test)]
-pub(crate) fn write_test_pack(codex_home: &Path) {
-    let assets_dir = pack_dir(codex_home).join("assets");
+pub(crate) fn write_test_pack(genex_home: &Path) {
+    let assets_dir = pack_dir(genex_home).join("assets");
     fs::create_dir_all(&assets_dir).unwrap();
     for pet in catalog::BUILTIN_PETS {
         let path = assets_dir.join(pet.spritesheet_file);

@@ -68,15 +68,15 @@ async fn clock_tools_emit_control_tool_analytics() -> Result<()> {
             .collect(),
     )
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_provider_config("supports_websockets = false")
         .with_extra_config("[features.current_time_reminder]\nenabled = true\nsleep_tool = true")
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .without_managed_config()
         .build_initialized()
@@ -196,7 +196,7 @@ async fn external_sleep_polls_current_time_and_emits_items(
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config("include_environment_context = false")
         .with_extra_config(&format!(
@@ -208,10 +208,10 @@ sleep_tool = true
 clock_source = "external"
 "#,
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 

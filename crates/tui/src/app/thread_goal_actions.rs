@@ -114,8 +114,8 @@ impl App {
             return;
         };
 
-        let codex_home = app_server.codex_home_path(&self.config.codex_home);
-        match goal_files::objective_text_for_edit(app_server, codex_home.as_ref(), &goal.objective)
+        let genex_home = app_server.genex_home_path(&self.config.genex_home);
+        match goal_files::objective_text_for_edit(app_server, genex_home.as_ref(), &goal.objective)
             .await
         {
             Ok(objective) => goal.objective = objective,
@@ -136,7 +136,7 @@ impl App {
         draft: goal_files::GoalDraft,
         mode: ThreadGoalSetMode,
     ) {
-        let codex_home = app_server.codex_home_path(&self.config.codex_home);
+        let genex_home = app_server.genex_home_path(&self.config.genex_home);
         let mode = if matches!(mode, ThreadGoalSetMode::ConfirmIfExists) {
             let result = app_server.thread_goal_get(thread_id).await;
             if self.current_displayed_thread_id() != Some(thread_id) {
@@ -164,7 +164,7 @@ impl App {
 
         let (objective, output_dir) = match goal_files::materialize_goal_draft(
             app_server,
-            codex_home.as_ref(),
+            genex_home.as_ref(),
             draft,
         )
         .await

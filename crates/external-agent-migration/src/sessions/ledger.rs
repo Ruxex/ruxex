@@ -76,13 +76,13 @@ pub(crate) struct ImportedSourceState {
 
 #[cfg(test)]
 pub(crate) fn record_imported_session(
-    codex_home: &Path,
+    genex_home: &Path,
     source_path: &Path,
     imported_thread_id: ThreadId,
 ) -> io::Result<()> {
     let source_path = canonical_source_path(source_path)?;
     record_completed_session_imports(
-        codex_home,
+        genex_home,
         vec![CompletedExternalAgentSessionImport {
             source_content_sha256: session_content_sha256(&source_path)?,
             source_path,
@@ -94,11 +94,11 @@ pub(crate) fn record_imported_session(
 }
 
 pub(crate) fn find_existing_session_import(
-    codex_home: &Path,
+    genex_home: &Path,
     source_path: &Path,
 ) -> io::Result<SessionImportSourceMapping> {
     let source_path = canonical_source_path(source_path)?;
-    let ledger = load_import_ledger(codex_home)?;
+    let ledger = load_import_ledger(genex_home)?;
     let mut matching_records = ledger
         .records
         .iter()
@@ -116,7 +116,7 @@ pub(crate) fn find_existing_session_import(
 }
 
 pub(super) fn checkpoint_existing_session_import(
-    codex_home: &Path,
+    genex_home: &Path,
     source_path: &Path,
     thread_id: ThreadId,
     expected_source_content_sha256: &str,
@@ -133,7 +133,7 @@ pub(super) fn checkpoint_existing_session_import(
         return Ok(false);
     }
 
-    let mut ledger = load_import_ledger(codex_home)?;
+    let mut ledger = load_import_ledger(genex_home)?;
     let mut matching_indices = ledger
         .records
         .iter()
@@ -154,18 +154,18 @@ pub(super) fn checkpoint_existing_session_import(
     record.content_sha256 = source_content_sha256.to_string();
     record.imported_at = now_unix_seconds();
     record.source_modified_at = source_modified_at;
-    save_import_ledger(codex_home, &ledger)?;
+    save_import_ledger(genex_home, &ledger)?;
     Ok(true)
 }
 
 pub fn record_completed_session_imports(
-    codex_home: &Path,
+    genex_home: &Path,
     imports: Vec<CompletedExternalAgentSessionImport>,
 ) -> io::Result<()> {
     if imports.is_empty() {
         return Ok(());
     }
-    let mut ledger = load_import_ledger(codex_home)?;
+    let mut ledger = load_import_ledger(genex_home)?;
     let imported_at = now_unix_seconds();
     for import in imports {
         let source_modified_at = session_modified_at(&import.source_path).ok().flatten();
@@ -194,17 +194,17 @@ pub fn record_completed_session_imports(
             title: import.title,
         });
     }
-    save_import_ledger(codex_home, &ledger)
+    save_import_ledger(genex_home, &ledger)
 }
 
 pub fn record_detected_session_connectors(
-    codex_home: &Path,
+    genex_home: &Path,
     connector_names_by_source_path: BTreeMap<PathBuf, Vec<String>>,
 ) -> io::Result<()> {
     if connector_names_by_source_path.is_empty() {
         return Ok(());
     }
-    let mut ledger = load_import_ledger(codex_home)?;
+    let mut ledger = load_import_ledger(genex_home)?;
     for (source_path, connector_names) in connector_names_by_source_path {
         let source_path = canonical_source_path(&source_path)?;
         if let Some(record) = ledger
@@ -224,17 +224,17 @@ pub fn record_detected_session_connectors(
                 connector_names: detected_connector_names,
             });
     }
-    save_import_ledger(codex_home, &ledger)
+    save_import_ledger(genex_home, &ledger)
 }
 
 pub fn append_imported_session_connector_names(
-    codex_home: &Path,
+    genex_home: &Path,
     connector_names_by_source_path: BTreeMap<PathBuf, Vec<String>>,
 ) -> io::Result<()> {
     if connector_names_by_source_path.is_empty() {
         return Ok(());
     }
-    let mut ledger = load_import_ledger(codex_home)?;
+    let mut ledger = load_import_ledger(genex_home)?;
     for (source_path, connector_names) in connector_names_by_source_path {
         let source_path = canonical_source_path(&source_path)?;
         for record in ledger
@@ -245,13 +245,13 @@ pub fn append_imported_session_connector_names(
             append_connector_names(&mut record.connector_names, connector_names.clone());
         }
     }
-    save_import_ledger(codex_home, &ledger)
+    save_import_ledger(genex_home, &ledger)
 }
 
 pub fn read_imported_connector_candidates(
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> io::Result<Vec<ImportedConnectorCandidate>> {
-    let ledger = load_import_ledger(codex_home)?;
+    let ledger = load_import_ledger(genex_home)?;
     let mut connector_names_by_source = BTreeMap::<PathBuf, Vec<String>>::new();
     for record in ledger.detected_connector_records {
         connector_names_by_source
@@ -364,9 +364,9 @@ impl ImportedExternalAgentSessionLedger {
 }
 
 pub(crate) fn load_import_ledger(
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> io::Result<ImportedExternalAgentSessionLedger> {
-    let path = import_ledger_path(codex_home);
+    let path = import_ledger_path(genex_home);
     let raw = match fs::read_to_string(path) {
         Ok(raw) => raw,
         Err(err) if err.kind() == io::ErrorKind::NotFound => {
@@ -383,17 +383,17 @@ pub(crate) fn load_import_ledger(
 }
 
 pub(crate) fn save_import_ledger(
-    codex_home: &Path,
+    genex_home: &Path,
     ledger: &ImportedExternalAgentSessionLedger,
 ) -> io::Result<()> {
-    fs::create_dir_all(codex_home)?;
-    let path = import_ledger_path(codex_home);
+    fs::create_dir_all(genex_home)?;
+    let path = import_ledger_path(genex_home);
     let raw = serde_json::to_vec_pretty(ledger).map_err(io::Error::other)?;
     fs::write(path, raw)
 }
 
-fn import_ledger_path(codex_home: &Path) -> PathBuf {
-    codex_home.join(SESSION_IMPORT_LEDGER_FILE)
+fn import_ledger_path(genex_home: &Path) -> PathBuf {
+    genex_home.join(SESSION_IMPORT_LEDGER_FILE)
 }
 
 fn canonical_source_path(path: &Path) -> io::Result<PathBuf> {

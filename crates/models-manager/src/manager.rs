@@ -259,11 +259,11 @@ pub struct StaticModelsManager {
 impl RemoteModelsManager {
     /// Construct an provider-compatible remote model manager.
     pub fn new(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         endpoint_client: Arc<dyn ModelsEndpointClient>,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
-        let cache_path = codex_home.join(MODEL_CACHE_FILE);
+        let cache_path = genex_home.join(MODEL_CACHE_FILE);
         Self::new_with_optional_cache(
             Some(Arc::new(FileModelsCache::new(
                 cache_path,

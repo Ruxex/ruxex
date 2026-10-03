@@ -98,14 +98,14 @@ async fn paginated_history_without_state_db_does_not_initialize_sqlite() {
 #[tokio::test]
 async fn split_homes_support_backfill_listing_and_paginated_history() {
     let root = TempDir::new().expect("temp dir");
-    let codex_home = root.path().join("codex");
+    let genex_home = root.path().join("codex");
     let sqlite_home = root.path().join("sqlite");
     let thread_id = ThreadId::new();
     let sqlite = genex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
     let rollout_config = RolloutConfig {
-        codex_home: codex_home.clone(),
+        genex_home: genex_home.clone(),
         sqlite: sqlite.clone(),
-        cwd: codex_home.clone(),
+        cwd: genex_home.clone(),
         model_provider_id: "test-provider".to_string(),
     };
     let recorder = RolloutRecorder::new(
@@ -140,7 +140,7 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
 
     let runtime = genex_rollout::state_db::try_init(&rollout_config)
         .await
-        .expect("backfill state from Codex home");
+        .expect("backfill state from Genex home");
     assert!(
         runtime
             .get_thread(thread_id)
@@ -193,7 +193,7 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
             history: None,
             include_archived: false,
             metadata: ThreadPersistenceMetadata {
-                cwd: Some(codex_home.clone()),
+                cwd: Some(genex_home.clone()),
                 model_provider: "test-provider".to_string(),
             },
         })
@@ -275,8 +275,8 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
         );
         let filename = sqlite_path.file_name().expect("SQLite database filename");
         assert!(
-            !codex_home.join(filename).exists(),
-            "SQLite database should not be created under Codex home"
+            !genex_home.join(filename).exists(),
+            "SQLite database should not be created under Genex home"
         );
     }
 }
@@ -887,7 +887,7 @@ async fn paginated_fork_reads_compressed_shared_lineage_without_materializing() 
         .expect_err("external shared source cannot be referenced by rollout id");
     assert!(matches!(
         error,
-        crate::ThreadStoreError::InvalidRequest { message } if message.contains("must be in Codex home")
+        crate::ThreadStoreError::InvalidRequest { message } if message.contains("must be in Genex home")
     ));
     store
         .shutdown_thread(source_thread_id)
@@ -2290,8 +2290,8 @@ SELECT
     assert_eq!(counts, (0, 0, 0));
 }
 
-async fn projection_store(codex_home: &Path) -> LocalThreadStore {
-    let config = test_config(codex_home);
+async fn projection_store(genex_home: &Path) -> LocalThreadStore {
+    let config = test_config(genex_home);
     let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
         config.default_model_provider_id.clone(),

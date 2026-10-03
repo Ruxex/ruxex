@@ -58,13 +58,13 @@ async fn empty_goal_continuations_block_after_three_without_activity(
         scripts.push(responses::sse(events));
     }
     let server = create_mock_responses_server_sequence(scripts).await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_model("gpt-5.4")
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;

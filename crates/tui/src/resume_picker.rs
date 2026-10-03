@@ -329,7 +329,7 @@ struct PickerPage {
 
 #[derive(Clone)]
 struct SessionPickerViewPersistence {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
 }
 
 struct SessionPickerRunOptions {
@@ -457,7 +457,7 @@ async fn run_resume_picker_with_launch_context(
             local_settings.tui.session_picker_view.unwrap_or_default(),
         ),
         view_persistence: Some(SessionPickerViewPersistence {
-            codex_home: local_settings.codex_home.to_path_buf(),
+            genex_home: local_settings.genex_home.to_path_buf(),
         }),
         pager_keymap: runtime_keymap.pager,
         list_keymap: runtime_keymap.list,
@@ -518,7 +518,7 @@ pub async fn run_fork_picker_with_app_server(
             local_settings.tui.session_picker_view.unwrap_or_default(),
         ),
         view_persistence: Some(SessionPickerViewPersistence {
-            codex_home: local_settings.codex_home.to_path_buf(),
+            genex_home: local_settings.genex_home.to_path_buf(),
         }),
         pager_keymap: runtime_keymap.pager,
         list_keymap: runtime_keymap.list,
@@ -1907,7 +1907,7 @@ impl PickerState {
             return Ok(());
         };
 
-        ConfigEditsBuilder::new(&persistence.codex_home)
+        ConfigEditsBuilder::new(&persistence.genex_home)
             .set_session_picker_view(SessionPickerViewMode::from(self.density))
             .apply()
             .await

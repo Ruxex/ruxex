@@ -15,7 +15,7 @@ use genex_exec_server_protocol::EnvironmentConfigLayerStack;
 use genex_exec_server_protocol::EnvironmentConfigReadParams;
 use genex_exec_server_protocol::EnvironmentConfigReadResponse;
 use genex_file_system::ExecutorFileSystem;
-use genex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_genex_home;
 use genex_utils_path_uri::PathUri;
 
 use crate::Environment;
@@ -38,10 +38,10 @@ pub(crate) async fn read_environment_config(
         .cwd
         .to_abs_path()
         .map_err(|error| ReadEnvironmentConfigError::InvalidParams(error.to_string()))?;
-    let codex_home = find_codex_home().map_err(|error| {
-        ReadEnvironmentConfigError::Internal(format!("failed to find Codex home: {error}"))
+    let genex_home = find_genex_home().map_err(|error| {
+        ReadEnvironmentConfigError::Internal(format!("failed to find Genex home: {error}"))
     })?;
-    let layers = load_local_config_layers(file_system, codex_home.as_path(), &cwd)
+    let layers = load_local_config_layers(file_system, genex_home.as_path(), &cwd)
         .await
         .map_err(|error| {
             ReadEnvironmentConfigError::Internal(format!(
@@ -53,7 +53,7 @@ pub(crate) async fn read_environment_config(
     Ok(EnvironmentConfigReadResponse {
         user_home_dir: dirs::home_dir()
             .and_then(|home_dir| PathUri::from_host_native_path(home_dir).ok()),
-        codex_home_dir: PathUri::from_abs_path(&codex_home),
+        genex_home_dir: PathUri::from_abs_path(&genex_home),
         hostname: host_name(),
         config: serialize_layer_stack(layers.config, |source| {
             format_config_layer_source(source, CONFIG_TOML_FILE)

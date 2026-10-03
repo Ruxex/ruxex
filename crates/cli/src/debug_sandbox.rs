@@ -44,7 +44,7 @@ use seatbelt::DenialLogger;
 #[cfg(target_os = "macos")]
 pub async fn run_command_under_seatbelt(
     command: SeatbeltCommand,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    genex_linux_sandbox_exe: Option<PathBuf>,
     loader_overrides: LoaderOverrides,
 ) -> anyhow::Result<()> {
     let SeatbeltCommand {
@@ -72,7 +72,7 @@ pub async fn run_command_under_seatbelt(
         },
         command,
         config_overrides,
-        codex_linux_sandbox_exe,
+        genex_linux_sandbox_exe,
         SandboxType::Seatbelt,
         log_denials,
         &allow_unix_sockets,
@@ -83,7 +83,7 @@ pub async fn run_command_under_seatbelt(
 #[cfg(not(target_os = "macos"))]
 pub async fn run_command_under_seatbelt(
     _command: SeatbeltCommand,
-    _codex_linux_sandbox_exe: Option<PathBuf>,
+    _genex_linux_sandbox_exe: Option<PathBuf>,
     _loader_overrides: LoaderOverrides,
 ) -> anyhow::Result<()> {
     anyhow::bail!("Seatbelt sandbox is only available on macOS");
@@ -91,7 +91,7 @@ pub async fn run_command_under_seatbelt(
 
 pub async fn run_command_under_landlock(
     command: LandlockCommand,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    genex_linux_sandbox_exe: Option<PathBuf>,
     loader_overrides: LoaderOverrides,
 ) -> anyhow::Result<()> {
     let LandlockCommand {
@@ -117,7 +117,7 @@ pub async fn run_command_under_landlock(
         },
         command,
         config_overrides,
-        codex_linux_sandbox_exe,
+        genex_linux_sandbox_exe,
         SandboxType::Landlock,
         /*log_denials*/ false,
         &[],
@@ -127,7 +127,7 @@ pub async fn run_command_under_landlock(
 
 pub async fn run_command_under_windows_sandbox(
     command: WindowsCommand,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    genex_linux_sandbox_exe: Option<PathBuf>,
     loader_overrides: LoaderOverrides,
 ) -> anyhow::Result<()> {
     let WindowsCommand {
@@ -153,7 +153,7 @@ pub async fn run_command_under_windows_sandbox(
         },
         command,
         config_overrides,
-        codex_linux_sandbox_exe,
+        genex_linux_sandbox_exe,
         SandboxType::Windows,
         /*log_denials*/ false,
         &[],
@@ -200,7 +200,7 @@ async fn run_command_under_sandbox(
     mut config_options: DebugSandboxConfigOptions,
     command: Vec<String>,
     config_overrides: CliConfigOverrides,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    genex_linux_sandbox_exe: Option<PathBuf>,
     sandbox_type: SandboxType,
     log_denials: bool,
     #[cfg_attr(not(target_os = "macos"), allow(unused_variables))]
@@ -218,7 +218,7 @@ async fn run_command_under_sandbox(
         .sandbox_state_readable_root
         .clone();
     let sandbox_state_disable_network = config_options.sandbox_state.sandbox_state_disable_network;
-    let codex_linux_sandbox_exe = match sandbox_state.as_ref() {
+    let genex_linux_sandbox_exe = match sandbox_state.as_ref() {
         Some(state) => {
             config_options.cwd = Some(
                 state
@@ -228,17 +228,17 @@ async fn run_command_under_sandbox(
                     .to_path_buf(),
             );
             state
-                .codex_linux_sandbox_exe
+                .genex_linux_sandbox_exe
                 .clone()
-                .or(codex_linux_sandbox_exe)
+                .or(genex_linux_sandbox_exe)
         }
-        None => codex_linux_sandbox_exe,
+        None => genex_linux_sandbox_exe,
     };
     let config = load_debug_sandbox_config(
         config_overrides
             .parse_overrides()
             .map_err(anyhow::Error::msg)?,
-        codex_linux_sandbox_exe,
+        genex_linux_sandbox_exe,
         config_options,
         /*strict_config*/ false,
     )
@@ -424,8 +424,8 @@ async fn run_command_under_sandbox(
         }
         SandboxType::Landlock => {
             #[expect(clippy::expect_used)]
-            let codex_linux_sandbox_exe = config
-                .codex_linux_sandbox_exe
+            let genex_linux_sandbox_exe = config
+                .genex_linux_sandbox_exe
                 .expect("codex-linux-sandbox executable not found");
             let network_sandbox_policy = runtime_permission_profile.network_sandbox_policy();
             let (env, managed_network) = if let Some(network) = network.as_ref() {
@@ -444,7 +444,7 @@ async fn run_command_under_sandbox(
                 managed_network.as_ref(),
             );
             spawn_debug_sandbox_child(
-                codex_linux_sandbox_exe,
+                genex_linux_sandbox_exe,
                 args,
                 Some("codex-linux-sandbox"),
                 cwd.to_path_buf(),
@@ -469,7 +469,7 @@ async fn run_command_under_sandbox(
                 .split_first()
                 .context("sandbox command must not be empty")?;
             let sandbox_policy_cwd = PathUri::from_abs_path(&sandbox_policy_cwd);
-            let codex_self_exe = std::env::current_exe()?;
+            let genex_self_exe = std::env::current_exe()?;
             let request = SandboxManager::new().transform(SandboxTransformRequest {
                 command: SandboxCommand {
                     program: program.into(),
@@ -485,7 +485,7 @@ async fn run_command_under_sandbox(
                 environment_id: None,
                 network: network.as_ref(),
                 sandbox_policy_cwd: &sandbox_policy_cwd,
-                sandbox_exe: Some(codex_self_exe.as_path()),
+                sandbox_exe: Some(genex_self_exe.as_path()),
                 use_legacy_landlock: false,
                 windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel::Disabled,
                 windows_sandbox_private_desktop: false,
@@ -563,7 +563,7 @@ async fn run_command_under_windows_session(
     let spawned = spawn_windows_sandbox_session_for_level(WindowsSandboxSessionRequest {
         permission_profile,
         workspace_roots: workspace_roots.as_slice(),
-        codex_home: config.codex_home.as_path(),
+        genex_home: config.genex_home.as_path(),
         command,
         cwd: cwd.as_path(),
         env_map: env,
@@ -628,25 +628,25 @@ async fn spawn_debug_sandbox_child(
 
 async fn load_debug_sandbox_config(
     cli_overrides: Vec<(String, TomlValue)>,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    genex_linux_sandbox_exe: Option<PathBuf>,
     options: DebugSandboxConfigOptions,
     strict_config: bool,
 ) -> anyhow::Result<Config> {
-    load_debug_sandbox_config_with_codex_home(
+    load_debug_sandbox_config_with_genex_home(
         cli_overrides,
-        codex_linux_sandbox_exe,
+        genex_linux_sandbox_exe,
         options,
-        /*codex_home*/ None,
+        /*genex_home*/ None,
         strict_config,
     )
     .await
 }
 
-async fn load_debug_sandbox_config_with_codex_home(
+async fn load_debug_sandbox_config_with_genex_home(
     cli_overrides: Vec<(String, TomlValue)>,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    genex_linux_sandbox_exe: Option<PathBuf>,
     options: DebugSandboxConfigOptions,
-    codex_home: Option<PathBuf>,
+    genex_home: Option<PathBuf>,
     strict_config: bool,
 ) -> anyhow::Result<Config> {
     let DebugSandboxConfigOptions {
@@ -674,10 +674,10 @@ async fn load_debug_sandbox_config_with_codex_home(
         cli_overrides.clone(),
         ConfigOverrides {
             cwd: cwd.clone(),
-            codex_linux_sandbox_exe: codex_linux_sandbox_exe.clone(),
+            genex_linux_sandbox_exe: genex_linux_sandbox_exe.clone(),
             ..Default::default()
         },
-        codex_home.clone(),
+        genex_home.clone(),
         managed_requirements_mode,
         loader_overrides.clone(),
         strict_config,
@@ -693,10 +693,10 @@ async fn load_debug_sandbox_config_with_codex_home(
         ConfigOverrides {
             sandbox_mode: Some(SandboxMode::ReadOnly),
             cwd,
-            codex_linux_sandbox_exe,
+            genex_linux_sandbox_exe,
             ..Default::default()
         },
-        codex_home,
+        genex_home,
         managed_requirements_mode,
         loader_overrides,
         strict_config,
@@ -708,7 +708,7 @@ async fn load_debug_sandbox_config_with_codex_home(
 async fn build_debug_sandbox_config_with_loader_overrides(
     cli_overrides: Vec<(String, TomlValue)>,
     harness_overrides: ConfigOverrides,
-    codex_home: Option<PathBuf>,
+    genex_home: Option<PathBuf>,
     managed_requirements_mode: ManagedRequirementsMode,
     mut loader_overrides: LoaderOverrides,
     strict_config: bool,
@@ -721,10 +721,10 @@ async fn build_debug_sandbox_config_with_loader_overrides(
         loader_overrides.ignore_managed_requirements = true;
     }
     builder = builder.loader_overrides(loader_overrides);
-    if let Some(codex_home) = codex_home {
+    if let Some(genex_home) = genex_home {
         builder = builder
-            .codex_home(codex_home.clone())
-            .fallback_cwd(Some(codex_home));
+            .genex_home(genex_home.clone())
+            .fallback_cwd(Some(genex_home));
     }
     builder.build().await
 }

@@ -180,7 +180,7 @@ fn ensure_no_external_references(
 async fn scan_reference_index(
     store: &LocalThreadStore,
 ) -> ThreadStoreResult<RolloutReferenceIndex> {
-    RolloutReferenceIndex::scan(store.config.codex_home.as_path())
+    RolloutReferenceIndex::scan(store.config.genex_home.as_path())
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to scan fork history references: {err}"),
@@ -202,7 +202,7 @@ async fn delete_thread_after_reference_check(
     let thread_id_str = thread_id.to_string();
     let state_db_ctx = store.state_db().await;
     match find_thread_path_by_id_str(
-        store.config.codex_home.as_path(),
+        store.config.genex_home.as_path(),
         thread_id_str.as_str(),
         state_db_ctx.as_deref(),
     )
@@ -217,7 +217,7 @@ async fn delete_thread_after_reference_check(
         }
     }
     match find_archived_thread_path_by_id_str(
-        store.config.codex_home.as_path(),
+        store.config.genex_home.as_path(),
         thread_id_str.as_str(),
         state_db_ctx.as_deref(),
     )
@@ -252,7 +252,7 @@ async fn delete_thread_after_reference_check(
     for rollout_path in thread_rollouts.paths {
         delete_rollout_file(store, rollout_path.as_path())?;
     }
-    remove_thread_name_entries(store.config.codex_home.as_path(), thread_id)
+    remove_thread_name_entries(store.config.genex_home.as_path(), thread_id)
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to delete thread name index entries for {thread_id}: {err}"),
@@ -275,13 +275,13 @@ fn delete_rollout_file(store: &LocalThreadStore, rollout_path: &Path) -> ThreadS
 
 fn delete_rollout_path(store: &LocalThreadStore, rollout_path: &Path) -> ThreadStoreResult<bool> {
     let canonical_rollout_path = scoped_rollout_path(
-        store.config.codex_home.join(SESSIONS_SUBDIR),
+        store.config.genex_home.join(SESSIONS_SUBDIR),
         rollout_path,
         "sessions",
     )
     .or_else(|_| {
         scoped_rollout_path(
-            store.config.codex_home.join(ARCHIVED_SESSIONS_SUBDIR),
+            store.config.genex_home.join(ARCHIVED_SESSIONS_SUBDIR),
             rollout_path,
             "archived sessions",
         )

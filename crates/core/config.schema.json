@@ -148,7 +148,7 @@
       "description": "Determine where Codex should store CLI auth credentials.",
       "oneOf": [
         {
-          "description": "Persist credentials in CODEX_HOME/auth.json.",
+          "description": "Persist credentials in GENEX_HOME/auth.json.",
           "enum": [
             "file"
           ],
@@ -162,7 +162,7 @@
           "type": "string"
         },
         {
-          "description": "Use keyring when available; otherwise, fall back to a file in CODEX_HOME.",
+          "description": "Use keyring when available; otherwise, fall back to a file in GENEX_HOME.",
           "enum": [
             "auto"
           ],
@@ -1198,7 +1198,7 @@
     },
     "History": {
       "additionalProperties": false,
-      "description": "Settings that govern if and what will be written to `~/.codex/history.jsonl`.",
+      "description": "Settings that govern if and what will be written to `~/.genex/history.jsonl`.",
       "properties": {
         "max_bytes": {
           "default": null,
@@ -2314,7 +2314,7 @@
           "type": "string"
         },
         {
-          "description": "CODEX_HOME/.credentials.json This file will be readable to Codex and other applications running as the same user.",
+          "description": "GENEX_HOME/.credentials.json This file will be readable to Codex and other applications running as the same user.",
           "enum": [
             "file"
           ],
@@ -3584,7 +3584,7 @@
         },
         "pet": {
           "default": null,
-          "description": "Pet id to preselect in the terminal pet picker.\n\nCustom pet ids resolve against CODEX_HOME/pets/<pet-id>/pet.json.",
+          "description": "Pet id to preselect in the terminal pet picker.\n\nCustom pet ids resolve against GENEX_HOME/pets/<pet-id>/pet.json.",
           "type": "string"
         },
         "pet_anchor": {
@@ -3668,7 +3668,7 @@
         },
         "theme": {
           "default": null,
-          "description": "Syntax highlighting theme name (kebab-case).\n\nWhen set, overrides automatic light/dark theme detection. Use `/theme` in the TUI or see `$CODEX_HOME/themes` for custom themes.",
+          "description": "Syntax highlighting theme name (kebab-case).\n\nWhen set, overrides automatic light/dark theme detection. Use `/theme` in the TUI or see `$GENEX_HOME/themes` for custom themes.",
           "type": "string"
         },
         "vim_mode_default": {
@@ -5368,7 +5368,7 @@
       "type": "object"
     }
   },
-  "description": "Base config deserialized from ~/.codex/config.toml.",
+  "description": "Base config deserialized from ~/.genex/config.toml.",
   "properties": {
     "agents": {
       "allOf": [
@@ -5382,8 +5382,8 @@
       "description": "Whether the model may request a login shell for shell-based tools. Default to `true`\n\nIf `true`, the model may request a login shell (`login = true`), and omitting `login` defaults to using a login shell. If `false`, the model can never use a login shell: `login = true` requests are rejected, and omitting `login` defaults to a non-login shell.",
       "type": "boolean"
     },
-    "allow_symlinked_codex_home": {
-      "description": "Allow macOS sandbox writable roots at or beneath CODEX_HOME to traverse symlinks. Read only from the host's user config at startup; defaults to false. This grants no write access by itself, but trusts symlink targets even if they change between commands or lie outside CODEX_HOME. This setting has no effect on Linux or Windows.",
+    "allow_symlinked_genex_home": {
+      "description": "Allow macOS sandbox writable roots at or beneath GENEX_HOME to traverse symlinks. Read only from the host's user config at startup; defaults to false. This grants no write access by itself, but trusts symlink targets even if they change between commands or lie outside GENEX_HOME. This setting has no effect on Linux or Windows.",
       "type": "boolean"
     },
     "approval_policy": {
@@ -5414,7 +5414,7 @@
         }
       ],
       "default": null,
-      "description": "Preferred backend for storing CLI auth credentials. file (default): Use a file in the Codex home directory. keyring: Use an OS-specific keyring service. auto: Use the keyring if available, otherwise use a file."
+      "description": "Preferred backend for storing CLI auth credentials. file (default): Use a file in the Genex home directory. keyring: Use an OS-specific keyring service. auto: Use the keyring if available, otherwise use a file."
     },
     "compact_prompt": {
       "description": "Compact prompt used for history compaction.",
@@ -5824,7 +5824,7 @@
         "max_bytes": null,
         "persistence": "save-all"
       },
-      "description": "Settings that govern if and what will be written to `~/.codex/history.jsonl`."
+      "description": "Settings that govern if and what will be written to `~/.genex/history.jsonl`."
     },
     "hooks": {
       "allOf": [
@@ -5856,7 +5856,7 @@
           "$ref": "#/definitions/AbsolutePathBuf"
         }
       ],
-      "description": "Directory where Codex writes log files. Setting this value explicitly also enables the TUI text log in this directory. Defaults to `$CODEX_HOME/log`."
+      "description": "Directory where Codex writes log files. Setting this value explicitly also enables the TUI text log in this directory. Defaults to `$GENEX_HOME/log`."
     },
     "managed_auth_base_url": {
       "description": "Base URL for host-managed authentication requests.",
@@ -5896,7 +5896,7 @@
         }
       ],
       "default": null,
-      "description": "Preferred backend for storing MCP OAuth credentials. keyring: Use an OS-specific keyring service. https://github.com/codex/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2 file: Use a file in the Codex home directory. auto (default): Use the OS-specific keyring service if available, otherwise use a file."
+      "description": "Preferred backend for storing MCP OAuth credentials. keyring: Use an OS-specific keyring service. https://github.com/codex/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2 file: Use a file in the Genex home directory. auto (default): Use the OS-specific keyring service if available, otherwise use a file."
     },
     "mcp_optional_startup_grace_ms": {
       "description": "Milliseconds to wait for optional MCP servers while building the initial tool catalog.\n\nDefaults to 1000. Set to 0 to disable the shared grace and wait for each server's configured `startup_timeout_sec` instead.",
@@ -6065,7 +6065,7 @@
     },
     "project_root_markers": {
       "default": null,
-      "description": "Markers used to detect the project root when searching parent directories for `.codex` folders. Defaults to [\".git\"] when unset.",
+      "description": "Markers used to detect the project root when searching parent directories for `.genex` folders. Defaults to [\".git\"] when unset.",
       "items": {
         "type": "string"
       },
@@ -6138,7 +6138,7 @@
           "$ref": "#/definitions/AbsolutePathBuf"
         }
       ],
-      "description": "Directory where Codex stores the SQLite state DB. Defaults to `$CODEX_SQLITE_HOME` when set. Otherwise uses `$CODEX_HOME`."
+      "description": "Directory where Codex stores the SQLite state DB. Defaults to `$GENEX_SQLITE_HOME` when set. Otherwise uses `$GENEX_HOME`."
     },
     "suppress_unstable_features_warning": {
       "description": "Suppress warnings about unstable (under development) features.",

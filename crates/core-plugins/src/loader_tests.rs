@@ -408,7 +408,7 @@ fn configured_plugins_from_stack_merges_enabled_effective_layers() {
             ),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Project {
-                    dot_codex_folder: user_config_path(&temp_dir, "project/.codex"),
+                    dot_codex_folder: user_config_path(&temp_dir, "project/.genex"),
                 },
                 toml::from_str(
                     "[plugins.profile]\nenabled = true\n[plugins.profile.mcp_servers.example]\nenabled = false\n",
@@ -417,7 +417,7 @@ fn configured_plugins_from_stack_merges_enabled_effective_layers() {
             ),
             ConfigLayerEntry::new_disabled(
                 ConfigLayerSource::Project {
-                    dot_codex_folder: user_config_path(&temp_dir, "project/untrusted/.codex"),
+                    dot_codex_folder: user_config_path(&temp_dir, "project/untrusted/.genex"),
                 },
                 toml::from_str("[plugins.untrusted]\nenabled = true\n")
                     .expect("untrusted project config toml"),
@@ -836,7 +836,7 @@ fn materialize_git_subdir_uses_sparse_checkout() {
     let run_git = |args: &[&str], cwd| super::run_git(args, cwd, PluginGitMode::Manual);
     let run_git_output =
         |args: &[&str], cwd| super::run_git_output(args, cwd, PluginGitMode::Manual);
-    let codex_home = tempfile::tempdir().expect("create codex home");
+    let genex_home = tempfile::tempdir().expect("create genex home");
     let repo = tempfile::tempdir().expect("create git repo");
     let plugin_dir = repo.path().join("plugins/toolkit");
     fs::create_dir_all(&plugin_dir).expect("create plugin directory");
@@ -857,7 +857,7 @@ fn materialize_git_subdir_uses_sparse_checkout() {
     let sha = run_git_output(&["rev-parse", "HEAD"], Some(repo.path())).expect("resolve commit");
 
     let materialized = materialize_marketplace_plugin_source(
-        codex_home.path(),
+        genex_home.path(),
         &MarketplacePluginSource::Git {
             url: repo.path().display().to_string(),
             path: Some("plugins/toolkit".to_string()),
@@ -887,7 +887,7 @@ fn materialize_git_source_rejects_sha_that_resolves_to_hostile_default_branch() 
     let run_git = |args: &[&str], cwd| super::run_git(args, cwd, PluginGitMode::Manual);
     let run_git_output =
         |args: &[&str], cwd| super::run_git_output(args, cwd, PluginGitMode::Manual);
-    let codex_home = tempfile::tempdir().expect("create codex home");
+    let genex_home = tempfile::tempdir().expect("create genex home");
     let repo = tempfile::tempdir().expect("create git repo");
     run_git(&["init"], Some(repo.path())).expect("init git repo");
     run_git(
@@ -912,7 +912,7 @@ fn materialize_git_source_rejects_sha_that_resolves_to_hostile_default_branch() 
         .expect("name default branch after commit A");
 
     let err = materialize_marketplace_plugin_source(
-        codex_home.path(),
+        genex_home.path(),
         &MarketplacePluginSource::Git {
             url: repo.path().display().to_string(),
             path: None,

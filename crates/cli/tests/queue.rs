@@ -24,7 +24,7 @@ enum QueueResponse {
 
 async fn respond_to_queue_request<S>(
     stream: S,
-    codex_home: &Path,
+    genex_home: &Path,
     response: QueueResponse,
 ) -> Result<Value>
 where
@@ -45,7 +45,7 @@ where
         "id": initialize["id"],
         "result": {
             "userAgent": "codex_cli_rs/0.0.0-test",
-            "genexHome": codex_home,
+            "genexHome": genex_home,
         },
     });
     websocket
@@ -151,11 +151,11 @@ fn queue_rejects_image_attachments() -> Result<()> {
 }
 
 async fn run_remote_queue_command(response: QueueResponse) -> Result<(Output, Value)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let endpoint = format!("ws://{}", listener.local_addr()?);
     let remote_first = matches!(response, QueueResponse::MethodNotFound);
-    let server_home = codex_home.path().to_path_buf();
+    let server_home = genex_home.path().to_path_buf();
     let server = tokio::spawn(async move {
         let (stream, _) = listener.accept().await?;
         respond_to_queue_request(stream, server_home.as_path(), response).await
@@ -179,7 +179,7 @@ async fn run_remote_queue_command(response: QueueResponse) -> Result<(Output, Va
         ]
     };
     let output = tokio::process::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .env("CODEX_REMOTE_TOKEN", "test-token")
         .args(remote_args)
         .args(["--thread", THREAD_ID, "--message", "do the thing"])
@@ -191,8 +191,8 @@ async fn run_remote_queue_command(response: QueueResponse) -> Result<(Output, Va
 #[cfg(unix)]
 #[tokio::test]
 async fn queue_rejects_local_daemon_that_does_not_support_queueing() -> Result<()> {
-    let codex_home = tempfile::tempdir_in("/tmp")?;
-    let socket_path = genex_app_server::app_server_control_socket_path(codex_home.path())?;
+    let genex_home = tempfile::tempdir_in("/tmp")?;
+    let socket_path = genex_app_server::app_server_control_socket_path(genex_home.path())?;
     std::fs::create_dir_all(
         socket_path
             .as_path()
@@ -200,7 +200,7 @@ async fn queue_rejects_local_daemon_that_does_not_support_queueing() -> Result<(
             .context("missing socket parent")?,
     )?;
     let listener = tokio::net::UnixListener::bind(socket_path.as_path())?;
-    let server_home = codex_home.path().to_path_buf();
+    let server_home = genex_home.path().to_path_buf();
     let server = tokio::spawn(async move {
         let (probe, _) = listener.accept().await?;
         drop(probe);
@@ -214,7 +214,7 @@ async fn queue_rejects_local_daemon_that_does_not_support_queueing() -> Result<(
     });
 
     let output = tokio::process::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .args(["queue", "--thread", THREAD_ID, "--message", "do the thing"])
         .output()
         .await?;
@@ -225,15 +225,15 @@ async fn queue_rejects_local_daemon_that_does_not_support_queueing() -> Result<(
         String::from_utf8(output.stderr)?
             .contains("local app-server daemon does not support thread/queue/add")
     );
-    assert!(!codex_home.path().join("queue_1.sqlite").exists());
+    assert!(!genex_home.path().join("queue_1.sqlite").exists());
     Ok(())
 }
 
 #[cfg(unix)]
 #[tokio::test]
 async fn queue_rejects_overrides_that_bypass_local_daemon() -> Result<()> {
-    let codex_home = tempfile::tempdir_in("/tmp")?;
-    let socket_path = genex_app_server::app_server_control_socket_path(codex_home.path())?;
+    let genex_home = tempfile::tempdir_in("/tmp")?;
+    let socket_path = genex_app_server::app_server_control_socket_path(genex_home.path())?;
     std::fs::create_dir_all(
         socket_path
             .as_path()
@@ -248,7 +248,7 @@ async fn queue_rejects_overrides_that_bypass_local_daemon() -> Result<()> {
     });
 
     let output = tokio::process::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .args([
             "queue",
             "-c",

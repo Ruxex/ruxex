@@ -38,7 +38,7 @@ pub(super) async fn read_thread(
         && (params.include_archived
             || (metadata.archived_at.is_none()
                 && !rollout_path_is_archived(
-                    store.config.codex_home.as_path(),
+                    store.config.genex_home.as_path(),
                     metadata.rollout_path.as_path(),
                 )))
         && (!params.include_history
@@ -120,7 +120,7 @@ async fn resolve_requested_rollout_path(
     rollout_path: std::path::PathBuf,
 ) -> ThreadStoreResult<std::path::PathBuf> {
     let path = if rollout_path.is_relative() {
-        store.config.codex_home.join(rollout_path)
+        store.config.genex_home.join(rollout_path)
     } else {
         rollout_path
     };
@@ -192,7 +192,7 @@ async fn read_thread_from_rollout_path(
     let Some(item) = read_thread_item_from_rollout(path.clone()).await else {
         return stored_thread_from_session_meta(store, path).await;
     };
-    let archived = rollout_path_is_archived(store.config.codex_home.as_path(), path.as_path());
+    let archived = rollout_path_is_archived(store.config.genex_home.as_path(), path.as_path());
     let mut thread = stored_thread_from_rollout_item(
         item,
         archived,
@@ -341,7 +341,7 @@ async fn stored_thread_from_session_meta(
     path: std::path::PathBuf,
 ) -> ThreadStoreResult<StoredThread> {
     let meta_line = read_required_session_meta_line(path.as_path()).await?;
-    let archived = rollout_path_is_archived(store.config.codex_home.as_path(), path.as_path());
+    let archived = rollout_path_is_archived(store.config.genex_home.as_path(), path.as_path());
     Ok(stored_thread_from_meta_line(
         store, meta_line, path, archived,
     ))
@@ -501,7 +501,7 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let relative_path = active_path
             .strip_prefix(home.path())
-            .expect("path should be under codex home")
+            .expect("path should be under genex home")
             .to_path_buf();
 
         let thread = store

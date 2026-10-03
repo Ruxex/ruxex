@@ -291,7 +291,7 @@ pub struct SandboxManager {
     #[cfg(target_os = "macos")]
     seatbelt_profile: MacosSeatbeltProfile,
     #[cfg(target_os = "macos")]
-    allowed_symlinked_codex_home: Option<AbsolutePathBuf>,
+    allowed_symlinked_genex_home: Option<AbsolutePathBuf>,
 }
 
 impl SandboxManager {
@@ -305,18 +305,18 @@ impl SandboxManager {
             #[cfg(target_os = "macos")]
             seatbelt_profile: MacosSeatbeltProfile::FileSystemHelper,
             #[cfg(target_os = "macos")]
-            allowed_symlinked_codex_home: None,
+            allowed_symlinked_genex_home: None,
         }
     }
 
     /// Allows otherwise-authorized writable roots beneath the opted-in user home
     /// to follow symlinks, including targets outside that home.
     #[cfg(target_os = "macos")]
-    pub fn with_allowed_symlinked_codex_home(
+    pub fn with_allowed_symlinked_genex_home(
         mut self,
-        allowed_symlinked_codex_home: Option<AbsolutePathBuf>,
+        allowed_symlinked_genex_home: Option<AbsolutePathBuf>,
     ) -> Self {
-        self.allowed_symlinked_codex_home = allowed_symlinked_codex_home;
+        self.allowed_symlinked_genex_home = allowed_symlinked_genex_home;
         self
     }
 
@@ -471,7 +471,7 @@ impl SandboxManager {
                         extra_allow_unix_sockets: &[],
                     },
                     self.seatbelt_profile,
-                    self.allowed_symlinked_codex_home.as_ref(),
+                    self.allowed_symlinked_genex_home.as_ref(),
                 )
                 .map_err(|err| match err {
                     SeatbeltPreparationError::FileSystem(message) => {
@@ -594,18 +594,18 @@ impl SandboxManager {
     ) -> Result<SandboxExecRequest, SandboxTransformError> {
         #[cfg(target_os = "windows")]
         if request.transform.sandbox == SandboxType::WindowsRestrictedToken {
-            let codex_home = genex_utils_home_dir::find_codex_home()
+            let genex_home = genex_utils_home_dir::find_genex_home()
                 .map_err(|err| SandboxTransformError::WindowsSandboxPreparation(err.to_string()))?;
-            return self.transform_for_direct_spawn_with_codex_home(request, codex_home.as_path());
+            return self.transform_for_direct_spawn_with_genex_home(request, genex_home.as_path());
         }
         self.transform(request.transform)
     }
 
     #[cfg(target_os = "windows")]
-    fn transform_for_direct_spawn_with_codex_home(
+    fn transform_for_direct_spawn_with_genex_home(
         &self,
         request: SandboxDirectSpawnTransformRequest<'_>,
-        codex_home: &Path,
+        genex_home: &Path,
     ) -> Result<SandboxExecRequest, SandboxTransformError> {
         let workspace_roots = request.workspace_roots;
         let proxy_settings_mode = request.windows_sandbox_proxy_settings_mode;
@@ -614,7 +614,7 @@ impl SandboxManager {
             wrap_windows_sandbox_exec_request_for_direct_spawn(
                 &mut request,
                 workspace_roots,
-                codex_home,
+                genex_home,
                 proxy_settings_mode,
             )?;
         }
@@ -626,7 +626,7 @@ impl SandboxManager {
 fn wrap_windows_sandbox_exec_request_for_direct_spawn(
     request: &mut SandboxExecRequest,
     workspace_roots: &[AbsolutePathBuf],
-    codex_home: &Path,
+    genex_home: &Path,
     proxy_settings_mode: genex_windows_sandbox::WindowsSandboxProxySettingsMode,
 ) -> Result<(), SandboxTransformError> {
     // TODO(anp): Keep PathUri through the Windows sandbox wrapper boundary.
@@ -650,7 +650,7 @@ fn wrap_windows_sandbox_exec_request_for_direct_spawn(
         ));
     };
     let source = std::path::PathBuf::from(&program);
-    let helper = genex_windows_sandbox::resolve_exe_for_launch(source.as_path(), codex_home);
+    let helper = genex_windows_sandbox::resolve_exe_for_launch(source.as_path(), genex_home);
     *program = helper.to_string_lossy().into_owned();
 
     let inner_command = std::mem::take(&mut request.command);
@@ -718,7 +718,7 @@ fn wrap_windows_sandbox_exec_request_for_direct_spawn(
             write_roots_override,
             deny_read_paths_override,
             deny_write_paths_override,
-            codex_home,
+            genex_home,
         )
         .map_err(|err| SandboxTransformError::WindowsSandboxPreparation(err.to_string()))?;
 

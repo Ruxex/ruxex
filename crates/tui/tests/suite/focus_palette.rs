@@ -25,10 +25,10 @@ const FOCUS_PROBE_INPUT: &str = "focus-palette-24527";
 #[test]
 fn focus_gained_with_unanswered_palette_queries_preserves_immediate_input() -> Result<()> {
     let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let codex_home = tempfile::tempdir()?;
-    write_test_config(codex_home.path(), &repo_root)?;
+    let genex_home = tempfile::tempdir()?;
+    write_test_config(genex_home.path(), &repo_root)?;
 
-    let mut terminal = PtyGenex::start(&repo_root, codex_home, &[])?;
+    let mut terminal = PtyGenex::start(&repo_root, genex_home, &[])?;
     terminal.wait_for_startup()?;
 
     let startup_output_len = terminal.output.len();
@@ -48,18 +48,18 @@ fn focus_gained_with_unanswered_palette_queries_preserves_immediate_input() -> R
 
 #[cfg(target_os = "macos")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn interactive_startup_honors_codex_home_symlink_opt_out() -> Result<()> {
+async fn interactive_startup_honors_genex_home_symlink_opt_out() -> Result<()> {
     use core_test_support::responses;
     use wiremock::matchers::body_string_contains;
 
     core_test_support::skip_if_sandbox!(Ok(()));
     let workspace = tempfile::tempdir()?;
     let workspace_path = workspace.path().canonicalize()?;
-    let codex_home = tempfile::tempdir()?;
+    let genex_home = tempfile::tempdir()?;
     let target = tempfile::tempdir()?;
-    let visualizations = codex_home.path().join("visualizations");
+    let visualizations = genex_home.path().join("visualizations");
     std::os::unix::fs::symlink(target.path(), &visualizations)?;
-    write_test_config(codex_home.path(), &workspace_path)?;
+    write_test_config(genex_home.path(), &workspace_path)?;
 
     let server = responses::start_mock_server().await;
     // Automatic thread-title requests must not consume the tool responses.
@@ -100,12 +100,12 @@ async fn interactive_startup_honors_codex_home_symlink_opt_out() -> Result<()> {
     .await;
     let base_url = server.uri();
     let visualizations = toml::Value::String(visualizations.display().to_string());
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
         format!(
-            "allow_symlinked_codex_home = true\n\
+            "allow_symlinked_genex_home = true\n\
              sandbox_mode = \"workspace-write\"\n\
              approval_policy = \"never\"\n\
              {config}\n\
@@ -120,7 +120,7 @@ async fn interactive_startup_honors_codex_home_symlink_opt_out() -> Result<()> {
     // local executor and its sandbox policy.
     let mut terminal = PtyGenex::start(
         &workspace_path,
-        codex_home,
+        genex_home,
         &["-c", "model_provider=\"test\"", "Write ready.txt"],
     )?;
     terminal.wait_for_startup()?;
@@ -156,13 +156,13 @@ pub(super) struct PtyGenex {
     cursor_answered: bool,
     palette_answered: bool,
     keyboard_answered: bool,
-    _codex_home: TempDir,
+    _genex_home: TempDir,
 }
 
 impl PtyGenex {
     pub(super) fn start(
         repo_root: &Path,
-        codex_home: TempDir,
+        genex_home: TempDir,
         extra_args: &[&str],
     ) -> Result<Self> {
         let mut master_fd = -1;
@@ -205,7 +205,7 @@ impl PtyGenex {
             .arg(repo_root)
             .env("TERM", "xterm-256color")
             .env("PROVIDER_API_KEY", "focus-palette-test")
-            .env("CODEX_HOME", codex_home.path())
+            .env("GENEX_HOME", genex_home.path())
             .stdin(stdin)
             .stdout(stdout)
             .stderr(slave)
@@ -222,7 +222,7 @@ impl PtyGenex {
             cursor_answered: false,
             palette_answered: false,
             keyboard_answered: false,
-            _codex_home: codex_home,
+            _genex_home: genex_home,
         })
     }
 
@@ -380,17 +380,17 @@ fn contains_bytes(buffer: &[u8], needle: &[u8]) -> bool {
     buffer.windows(needle.len()).any(|window| window == needle)
 }
 
-pub(super) fn write_test_config(codex_home: &Path, repo_root: &Path) -> Result<()> {
+pub(super) fn write_test_config(genex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root = repo_root.display();
     let config = format!(
         "model = \"gpt-5.6-terra\"\nmodel_provider = \"provider\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\n\
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
     );
-    std::fs::write(codex_home.join("config.toml"), config)
+    std::fs::write(genex_home.join("config.toml"), config)
         .context("write focus-test Genex configuration")?;
     std::fs::write(
-        codex_home.join("auth.json"),
+        genex_home.join("auth.json"),
         r#"{"PROVIDER_API_KEY":"focus-palette-test","tokens":null,"last_refresh":null}"#,
     )
     .context("write focus-test API-key authentication")
@@ -426,7 +426,7 @@ fn no_daemon_skips_startup_and_discovery() -> Result<()> {
         terminal.wait_for_screen("Model:")?;
         ensure!(
             !terminal
-                ._codex_home
+                ._genex_home
                 .path()
                 .join("app-server-daemon")
                 .exists()

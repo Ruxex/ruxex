@@ -52,7 +52,7 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
 pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
     let logged_out = match logout(
-        &config.codex_home,
+        &config.genex_home,
         config.cli_auth_credentials_store_mode,
         config.auth_keyring_backend_kind(),
     ) {

@@ -64,7 +64,7 @@ const EXTERNAL_AGENT_CONFIG_IMPORT_METRIC: &str = "codex.external_agent_config.i
 
 #[derive(Clone)]
 pub struct ExternalAgentConfigService {
-    pub(super) codex_home: PathBuf,
+    pub(super) genex_home: PathBuf,
     pub(super) connector_metadata_roots: Vec<PathBuf>,
     pub(crate) external_agent_home: PathBuf,
     pub(crate) auth_manager: Arc<AuthManager>,
@@ -75,7 +75,7 @@ pub struct ExternalAgentConfigService {
 
 impl ExternalAgentConfigService {
     pub fn new(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         auth_manager: Arc<AuthManager>,
         state_db: Option<StateDbHandle>,
     ) -> Self {
@@ -83,7 +83,7 @@ impl ExternalAgentConfigService {
         let external_agent_home = default_external_agent_home(source);
         let connector_metadata_roots = source.connector_metadata_roots(&external_agent_home);
         Self {
-            codex_home,
+            genex_home,
             connector_metadata_roots,
             external_agent_home,
             auth_manager,
@@ -98,7 +98,7 @@ impl ExternalAgentConfigService {
         let external_agent_home = default_external_agent_home(source);
         let connector_metadata_roots = source.connector_metadata_roots(&external_agent_home);
         Self {
-            codex_home: self.codex_home.clone(),
+            genex_home: self.genex_home.clone(),
             connector_metadata_roots,
             external_agent_home,
             auth_manager: Arc::clone(&self.auth_manager),
@@ -133,16 +133,16 @@ impl ExternalAgentConfigService {
         )
     }
 
-    pub fn codex_home(&self) -> &Path {
-        &self.codex_home
+    pub fn genex_home(&self) -> &Path {
+        &self.genex_home
     }
 
     #[cfg(test)]
-    fn new_for_test(codex_home: PathBuf, external_agent_home: PathBuf) -> Self {
+    fn new_for_test(genex_home: PathBuf, external_agent_home: PathBuf) -> Self {
         let source = ExternalAgentSource::default();
         let connector_metadata_roots = source.connector_metadata_roots(&external_agent_home);
         Self {
-            codex_home,
+            genex_home,
             connector_metadata_roots,
             external_agent_home,
             auth_manager: genex_login::test_support::auth_manager_from_optional_auth(
@@ -401,7 +401,7 @@ impl ExternalAgentConfigService {
     }
 
     pub(crate) fn home_target_skills_dir(&self) -> PathBuf {
-        self.codex_home
+        self.genex_home
             .parent()
             .map(|parent| parent.join(".agents").join("skills"))
             .unwrap_or_else(|| PathBuf::from(".agents").join("skills"))
@@ -495,8 +495,8 @@ impl ExternalAgentConfigService {
         };
         let source_settings = self.source_settings(&scope);
         let target_config = match &scope {
-            MigrationScope::Home => self.codex_home.join("config.toml"),
-            MigrationScope::Repository { root } => root.join(".codex").join("config.toml"),
+            MigrationScope::Home => self.genex_home.join("config.toml"),
+            MigrationScope::Repository { root } => root.join(".genex").join("config.toml"),
         };
         let Some(settings) = self.effective_source_settings(&scope)? else {
             return Ok(None);
@@ -543,8 +543,8 @@ impl ExternalAgentConfigService {
             return Ok(Vec::new());
         };
         let target_config = match &scope {
-            MigrationScope::Home => self.codex_home.join("config.toml"),
-            MigrationScope::Repository { root } => root.join(".codex").join("config.toml"),
+            MigrationScope::Home => self.genex_home.join("config.toml"),
+            MigrationScope::Repository { root } => root.join(".genex").join("config.toml"),
         };
         let settings = self.effective_source_settings(&scope)?;
         let migrated = self.build_mcp_config(&scope, settings)?;
@@ -583,11 +583,11 @@ impl ExternalAgentConfigService {
         let (source_agents, target_agents) = match scope {
             MigrationScope::Home => (
                 self.external_agent_home.join("agents"),
-                self.codex_home.join("agents"),
+                self.genex_home.join("agents"),
             ),
             MigrationScope::Repository { root } => (
                 root.join(self.source.config_dir()).join("agents"),
-                root.join(".codex").join("agents"),
+                root.join(".genex").join("agents"),
             ),
         };
 
@@ -599,8 +599,8 @@ impl ExternalAgentConfigService {
             return Ok(Vec::new());
         };
         let target_hooks = match &scope {
-            MigrationScope::Home => self.codex_home.join("hooks.json"),
-            MigrationScope::Repository { root } => root.join(".codex").join("hooks.json"),
+            MigrationScope::Home => self.genex_home.join("hooks.json"),
+            MigrationScope::Repository { root } => root.join(".genex").join("hooks.json"),
         };
         let source_external_agent_dir = self.source_config_dir(&scope);
 
@@ -705,7 +705,7 @@ impl ExternalAgentConfigService {
                 if source_agents_md.is_empty() {
                     return Ok(None);
                 }
-                (source_agents_md, self.codex_home.join("AGENTS.md"))
+                (source_agents_md, self.genex_home.join("AGENTS.md"))
             }
         };
         if !is_missing_or_empty_text_file(&target_agents_md)? {

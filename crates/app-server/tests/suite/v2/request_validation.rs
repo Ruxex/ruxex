@@ -28,9 +28,9 @@ const REMOTE_IMAGE_URL_ERROR: &str =
 
 #[tokio::test]
 async fn legacy_permission_profile_requests_fail_closed() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
     let legacy_permission_profile = json!({
@@ -115,9 +115,9 @@ async fn legacy_permission_profile_requests_fail_closed() -> Result<()> {
 
 #[tokio::test]
 async fn thread_start_keeps_unknown_field_compatibility_with_named_permissions() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -149,14 +149,14 @@ async fn thread_start_keeps_unknown_field_compatibility_with_named_permissions()
 
 #[tokio::test]
 async fn request_handlers_reject_remote_image_urls() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        codex_home.path(),
+        genex_home.path(),
         "http://localhost/unused",
         "http://localhost/unused",
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

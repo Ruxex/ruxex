@@ -491,7 +491,7 @@ impl App {
     /// Persist prompt text in the local cross-session message history.
     pub(super) fn append_message_history_entry(&self, thread_id: ThreadId, text: String) {
         let history_config = genex_message_history::HistoryConfig::new(
-            self.local_settings.codex_home.clone(),
+            self.local_settings.genex_home.clone(),
             &self.local_settings.history,
         );
         tokio::spawn(async move {
@@ -515,7 +515,7 @@ impl App {
         log_id: u64,
     ) -> Result<()> {
         let history_config = genex_message_history::HistoryConfig::new(
-            self.local_settings.codex_home.clone(),
+            self.local_settings.genex_home.clone(),
             &self.local_settings.history,
         );
         let app_event_tx = self.app_event_tx.clone();
@@ -549,7 +549,7 @@ impl App {
         log_id: u64,
     ) -> Result<()> {
         let history_config = genex_message_history::HistoryConfig::new(
-            self.local_settings.codex_home.clone(),
+            self.local_settings.genex_home.clone(),
             &self.local_settings.history,
         );
         let app_event_tx = self.app_event_tx.clone();

@@ -12,9 +12,9 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[tokio::test]
 async fn read_default_provider_capabilities() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -35,14 +35,14 @@ async fn read_default_provider_capabilities() -> Result<()> {
 
 #[tokio::test]
 async fn read_amazon_bedrock_provider_capabilities() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"model_provider = "amazon-bedrock"
 "#,
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -63,14 +63,14 @@ async fn read_amazon_bedrock_provider_capabilities() -> Result<()> {
 
 #[tokio::test]
 async fn read_amazon_bedrock_runtime_provider_capabilities() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"model_provider = "amazon-bedrock-runtime"
 "#,
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 

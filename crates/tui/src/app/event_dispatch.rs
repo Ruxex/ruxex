@@ -146,7 +146,7 @@ impl App {
                 if let Some(request) = self.chat_widget.request_managed_worktrees() {
                     crate::worktree_browser::fetch(
                         request,
-                        self.config.codex_home.to_path_buf(),
+                        self.config.genex_home.to_path_buf(),
                         app_server.request_handle(),
                         self.app_event_tx.clone(),
                     );
@@ -170,11 +170,11 @@ impl App {
                 if self.chat_widget.worktree_request_is_current(&request)
                     && !request.cwd.starts_with(&root)
                 {
-                    let codex_home = self.config.codex_home.to_path_buf();
+                    let genex_home = self.config.genex_home.to_path_buf();
                     let tx = self.app_event_tx.clone();
                     tokio::spawn(async move {
                         let result = crate::worktree_browser::remove(
-                            codex_home,
+                            genex_home,
                             request.cwd,
                             root.clone(),
                         )
@@ -2309,7 +2309,7 @@ impl App {
                         // navigating, the runtime theme must still be applied.
                         if let Some(theme) = crate::render::highlight::resolve_theme_by_name(
                             &name,
-                            Some(&self.local_settings.codex_home),
+                            Some(&self.local_settings.genex_home),
                         ) {
                             crate::render::highlight::set_syntax_theme(theme);
                         }

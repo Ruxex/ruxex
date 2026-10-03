@@ -65,14 +65,14 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 10);
 
 #[tokio::test]
 async fn queue_requires_experimental_handshake() -> Result<()> {
-    let (mut app, codex_home, _server) = queue_app(Vec::new()).await?;
+    let (mut app, genex_home, _server) = queue_app(Vec::new()).await?;
     let thread = app.start_thread(ThreadStartParams::default()).await?.thread;
     let queue = list_queue(&mut app, &thread.id).await?;
     assert!(queue.data.is_empty());
     drop(app);
 
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build()
         .await?;
@@ -125,7 +125,7 @@ async fn queue_crud_preserves_identity_order_and_notifications() -> Result<()> {
         create_final_assistant_message_sse_response("active done")?,
         create_final_assistant_message_sse_response("queued done")?,
     ];
-    let (mut app, _codex_home, _server) = queue_app(responses).await?;
+    let (mut app, _genex_home, _server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -256,7 +256,7 @@ async fn queue_list_returns_ordered_pages_and_lightweight_notifications() -> Res
         "uses a host-local command and cwd fixture unavailable to remote executors"
     );
 
-    let (mut app, _codex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
+    let (mut app, _genex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -331,7 +331,7 @@ async fn queue_rejects_messages_after_reaching_its_capacity() -> Result<()> {
         "uses a host-local command and cwd fixture unavailable to remote executors"
     );
 
-    let (mut app, _codex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
+    let (mut app, _genex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -368,7 +368,7 @@ async fn queue_rejects_messages_after_reaching_its_capacity() -> Result<()> {
 #[tokio::test]
 async fn idle_queue_dispatch_preserves_client_id() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("queued done")?];
-    let (mut app, _codex_home, server) = queue_app(responses).await?;
+    let (mut app, _genex_home, server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -432,7 +432,7 @@ async fn cold_thread_resume_dispatches_a_persisted_queued_submission() -> Result
         create_final_assistant_message_sse_response("materialized thread")?,
         create_final_assistant_message_sse_response("cold-resumed queued message")?,
     ];
-    let (mut first, codex_home, _server) = queue_app(responses).await?;
+    let (mut first, genex_home, _server) = queue_app(responses).await?;
     let thread_id = first
         .start_thread(ThreadStartParams::default())
         .await?
@@ -468,7 +468,7 @@ async fn cold_thread_resume_dispatches_a_persisted_queued_submission() -> Result
     drop(first);
 
     let mut resumed = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -570,7 +570,7 @@ async fn interrupt_preserves_queue_and_queue_start_can_resume_a_non_head_item() 
         create_final_assistant_message_sse_response("message added after interruption done")?,
         create_final_assistant_message_sse_response("message added after cold resume done")?,
     ];
-    let (mut app, codex_home, _server) = queue_app(responses).await?;
+    let (mut app, genex_home, _server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -646,7 +646,7 @@ async fn interrupt_preserves_queue_and_queue_start_can_resume_a_non_head_item() 
 
     drop(app);
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -710,7 +710,7 @@ async fn queue_start_while_active_returns_busy_and_preserves_the_queue() -> Resu
         create_final_assistant_message_sse_response("queued message done")?,
     ])
     .await;
-    let (mut app, _codex_home, _server) = queue_app_with_server(server).await?;
+    let (mut app, _genex_home, _server) = queue_app_with_server(server).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -783,7 +783,7 @@ async fn queue_start_without_id_starts_the_head_when_idle() -> Result<()> {
         create_final_assistant_message_sse_response("first queued message done")?,
         create_final_assistant_message_sse_response("second queued message done")?,
     ];
-    let (mut app, _codex_home, server) = queue_app(responses).await?;
+    let (mut app, _genex_home, server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -870,7 +870,7 @@ async fn a_new_turn_preserves_queued_messages_until_it_completes() -> Result<()>
         create_final_assistant_message_sse_response("first queued message done")?,
         create_final_assistant_message_sse_response("second queued message done")?,
     ];
-    let (mut app, _codex_home, _server) = queue_app(responses).await?;
+    let (mut app, _genex_home, _server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -949,17 +949,17 @@ async fn queue_app(responses: Vec<String>) -> Result<(TestAppServer, TempDir, Mo
 }
 
 async fn queue_app_with_server(server: MockServer) -> Result<(TestAppServer, TempDir, MockServer)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let config = MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .with_root_config(r#"approvals_reviewer = "user""#);
-    config.write(codex_home.path())?;
+    config.write(genex_home.path())?;
     let app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
-    Ok((app, codex_home, server))
+    Ok((app, genex_home, server))
 }
 
 fn blocked_turn_response() -> Result<String> {

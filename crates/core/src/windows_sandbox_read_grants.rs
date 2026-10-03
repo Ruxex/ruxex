@@ -11,7 +11,7 @@ pub fn grant_read_root_non_elevated(
     workspace_roots: &[AbsolutePathBuf],
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    genex_home: &Path,
     read_root: &Path,
 ) -> Result<PathBuf> {
     if !read_root.is_absolute() {
@@ -30,7 +30,7 @@ pub fn grant_read_root_non_elevated(
         workspace_roots,
         command_cwd,
         env_map,
-        codex_home,
+        genex_home,
         vec![canonical_root.clone()],
     )?;
     Ok(canonical_root)

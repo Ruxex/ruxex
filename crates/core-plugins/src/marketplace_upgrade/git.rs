@@ -7,7 +7,7 @@ use std::process::Stdio;
 use std::time::Duration;
 
 pub(super) fn git_remote_revision(
-    codex_home: &Path,
+    genex_home: &Path,
     source: &str,
     ref_name: Option<&str>,
     timeout: Duration,
@@ -22,7 +22,7 @@ pub(super) fn git_remote_revision(
     let ref_name = ref_name.unwrap_or("HEAD");
     let mut command = git_command(mode);
     let _trusted_repository = matches!(mode, PluginGitMode::Automatic)
-        .then(|| crate::configure_trusted_git_repository(&mut command, codex_home))
+        .then(|| crate::configure_trusted_git_repository(&mut command, genex_home))
         .transpose()?;
     let output = run_git_command_with_timeout(
         command.arg("ls-remote").arg(source).arg(ref_name),
@@ -48,7 +48,7 @@ pub(super) fn git_remote_revision(
 }
 
 pub(super) fn clone_git_source(
-    codex_home: &Path,
+    genex_home: &Path,
     source: &str,
     ref_name: Option<&str>,
     sparse_paths: &[String],
@@ -59,7 +59,7 @@ pub(super) fn clone_git_source(
     let git_destination = git_path_arg(destination);
     let mut command = git_command(mode);
     let _trusted_repository = matches!(mode, PluginGitMode::Automatic)
-        .then(|| crate::configure_trusted_git_repository(&mut command, codex_home))
+        .then(|| crate::configure_trusted_git_repository(&mut command, genex_home))
         .transpose()?;
     if sparse_paths.is_empty() {
         let output = run_git_command_with_timeout(

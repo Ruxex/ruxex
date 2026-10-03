@@ -7,14 +7,14 @@ use super::sandbox_check;
 
 #[tokio::test]
 async fn reports_missing_linux_sandbox_helper() {
-    let home = tempfile::tempdir().expect("create Codex home");
+    let home = tempfile::tempdir().expect("create Genex home");
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .build()
         .await
         .expect("load sandbox config");
     let arg0_paths = Arg0DispatchPaths {
-        codex_linux_sandbox_exe: Some(home.path().join("missing-linux-helper")),
+        genex_linux_sandbox_exe: Some(home.path().join("missing-linux-helper")),
         ..Default::default()
     };
 
@@ -27,7 +27,7 @@ async fn reports_missing_linux_sandbox_helper() {
 #[cfg(target_os = "windows")]
 #[tokio::test]
 async fn reports_refresh_failure_after_setup_completed() {
-    let home = tempfile::tempdir().expect("create Codex home");
+    let home = tempfile::tempdir().expect("create Genex home");
     let version = genex_windows_sandbox::SETUP_VERSION;
     for (path, contents) in [
         (
@@ -75,7 +75,7 @@ async fn reports_refresh_failure_after_setup_completed() {
     )
     .expect("write elevated sandbox config");
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .build()
         .await
         .expect("load sandbox config");
@@ -92,7 +92,7 @@ async fn reports_refresh_failure_after_setup_completed() {
 #[cfg(target_os = "windows")]
 #[tokio::test]
 async fn rejects_oversized_setup_failure_reports() {
-    let home = tempfile::tempdir().expect("create Codex home");
+    let home = tempfile::tempdir().expect("create Genex home");
     genex_windows_sandbox::write_setup_error_report(
         home.path(),
         &genex_windows_sandbox::SetupErrorReport {
@@ -107,7 +107,7 @@ async fn rejects_oversized_setup_failure_reports() {
     )
     .expect("write elevated sandbox config");
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .build()
         .await
         .expect("load sandbox config");
@@ -133,7 +133,7 @@ async fn rejects_oversized_setup_failure_reports() {
 #[cfg(target_os = "windows")]
 #[tokio::test]
 async fn reports_malformed_setup_failure_reports() {
-    let home = tempfile::tempdir().expect("create Codex home");
+    let home = tempfile::tempdir().expect("create Genex home");
     let path = genex_windows_sandbox::setup_error_path(home.path());
     std::fs::create_dir_all(path.parent().expect("setup failure report parent"))
         .expect("create sandbox directory");
@@ -144,7 +144,7 @@ async fn reports_malformed_setup_failure_reports() {
     )
     .expect("write elevated sandbox config");
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .build()
         .await
         .expect("load sandbox config");

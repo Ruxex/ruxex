@@ -267,7 +267,7 @@ async fn exec_resume_last_repairs_rollout_missing_from_state_db() -> anyhow::Res
         .expect("no session file found after first run");
     let thread_id = ThreadId::from_string(&extract_conversation_id(&path))?;
     let config = ConfigBuilder::default()
-        .codex_home(test.home_path().to_path_buf())
+        .genex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)
@@ -330,7 +330,7 @@ async fn exec_resume_last_trusts_usable_state_db_candidate() -> anyhow::Result<(
     let newer_thread_id = ThreadId::from_string(&extract_conversation_id(&newer_path))?;
 
     let config = ConfigBuilder::default()
-        .codex_home(test.home_path().to_path_buf())
+        .genex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)
@@ -401,7 +401,7 @@ async fn exec_resume_last_skips_mismatched_state_db_candidate() -> anyhow::Resul
     let newer_thread_id = ThreadId::from_string(&extract_conversation_id(&newer_path))?;
 
     let config = ConfigBuilder::default()
-        .codex_home(test.home_path().to_path_buf())
+        .genex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)
@@ -987,7 +987,7 @@ async fn exec_fork_creates_distinct_threads_with_and_without_a_prompt() -> anyho
 
     let source_name = format!("fork-named-{}", Uuid::new_v4());
     let config = ConfigBuilder::default()
-        .codex_home(test.home_path().to_path_buf())
+        .genex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)

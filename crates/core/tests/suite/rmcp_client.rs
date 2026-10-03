@@ -715,11 +715,11 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
     .await;
     let command = remote_aware_stdio_server_bin()?;
     let allowed_command = command.clone();
-    let codex_home = Arc::new(tempdir()?);
+    let genex_home = Arc::new(tempdir()?);
     let test_env = test_env().await?;
     if from_plugin {
         let plugin_root =
-            super::plugins::write_sample_plugin_manifest_and_config(codex_home.as_ref());
+            super::plugins::write_sample_plugin_manifest_and_config(genex_home.as_ref());
         let plugin_server = json!({
             "command": command,
             "environment_id": remote_aware_environment_id(),
@@ -736,7 +736,7 @@ async fn environment_mcp_policy_filters_runtime_config_and_model_tools(
         )?;
     }
     let fixture = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .with_config(move |config| {
             if !from_plugin {
@@ -1112,9 +1112,9 @@ async fn stdio_mcp_tool_names_respect_selected_servers() -> anyhow::Result<()> {
 
     let command = remote_aware_stdio_server_bin()?;
     let fixture = test_genex()
-        .with_pre_build_hook(move |codex_home| {
+        .with_pre_build_hook(move |genex_home| {
             fs::write(
-                codex_home.join("config.toml"),
+                genex_home.join("config.toml"),
                 r#"
 [features.non_prefixed_mcp_tool_names]
 enabled = true
@@ -1935,7 +1935,7 @@ async fn stdio_mcp_tool_call_includes_sandbox_state_meta(
         SandboxState {
             permission_profile: owner_permission_profile
                 .materialize_project_roots_with_path_uris(&owner_workspace_roots),
-            codex_linux_sandbox_exe: fixture.config.codex_linux_sandbox_exe.clone(),
+            genex_linux_sandbox_exe: fixture.config.genex_linux_sandbox_exe.clone(),
             sandbox_cwd: PathUri::from_abs_path(&fixture.config.cwd),
             use_legacy_landlock: false,
         }
@@ -3470,10 +3470,10 @@ async fn streamable_http_tool_call_round_trip(mode: HeadersHelperMode) -> anyhow
     Ok(())
 }
 
-/// This test writes to a fallback credentials file in CODEX_HOME.
-/// Ideally, we wouldn't need to serialize the test but it's much more cumbersome to wire CODEX_HOME through the code.
+/// This test writes to a fallback credentials file in GENEX_HOME.
+/// Ideally, we wouldn't need to serialize the test but it's much more cumbersome to wire GENEX_HOME through the code.
 #[test]
-#[serial(codex_home)]
+#[serial(genex_home)]
 fn streamable_http_with_oauth_round_trip() -> anyhow::Result<()> {
     const TEST_STACK_SIZE_BYTES: usize = 8 * 1024 * 1024;
 
@@ -3570,10 +3570,10 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
     };
     let server_url = http_server.url().to_string();
 
-    // Phase 3: seed an isolated CODEX_HOME with fallback OAuth tokens for this
+    // Phase 3: seed an isolated GENEX_HOME with fallback OAuth tokens for this
     // server so the test does not share credentials with other suite cases.
     let temp_home = Arc::new(tempdir()?);
-    let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", temp_home.path().as_os_str());
+    let _genex_home_guard = EnvVarGuard::set("GENEX_HOME", temp_home.path().as_os_str());
     let unset_authorization_env_var = format!(
         "CODEX_TEST_UNSET_MCP_OAUTH_AUTHORIZATION_{}",
         std::process::id()

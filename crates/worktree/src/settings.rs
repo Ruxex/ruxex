@@ -25,30 +25,30 @@ pub struct WorktreeSettings {
 
 impl WorktreeSettings {
     /// Shares Desktop's allocation root while leaving CLI cleanup disabled.
-    pub fn for_cli(codex_home: &Path, desktop: Option<&HashMap<String, Value>>) -> Result<Self> {
+    pub fn for_cli(genex_home: &Path, desktop: Option<&HashMap<String, Value>>) -> Result<Self> {
         let desktop = desktop
             .and_then(|settings| settings.get(WORKTREE_ROOT))
             .map(|root| HashMap::from([(WORKTREE_ROOT.to_owned(), root.clone())]));
         Ok(Self {
             auto_cleanup_enabled: false,
-            ..Self::from_desktop_config(codex_home, desktop.as_ref())?
+            ..Self::from_desktop_config(genex_home, desktop.as_ref())?
         })
     }
 
     /// Resolves existing `[desktop]` values without introducing another config format.
     pub fn from_desktop_config(
-        codex_home: &Path,
+        genex_home: &Path,
         desktop: Option<&HashMap<String, Value>>,
     ) -> Result<Self> {
         let root = match desktop.and_then(|settings| settings.get(WORKTREE_ROOT)) {
-            None | Some(Value::Null) => codex_home.join("worktrees"),
+            None | Some(Value::Null) => genex_home.join("worktrees"),
             Some(value) => {
                 let configured = value
                     .as_str()
                     .context("desktop.git-worktree-root must be a string")?
                     .trim();
                 if configured.is_empty() {
-                    codex_home.join("worktrees")
+                    genex_home.join("worktrees")
                 } else {
                     let path = PathBuf::from(configured);
                     if !path.is_absolute() {

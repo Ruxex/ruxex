@@ -258,7 +258,7 @@ async fn maybe_persist_disabled_install_request(
         return;
     }
 
-    if let Err(err) = persist_disabled_install_request(&turn.config.codex_home, tool).await {
+    if let Err(err) = persist_disabled_install_request(&turn.config.genex_home, tool).await {
         warn!(
             error = %err,
             tool_id = tool.id(),
@@ -287,10 +287,10 @@ fn request_plugin_install_response_requests_persistent_disable(
 }
 
 async fn persist_disabled_install_request(
-    codex_home: &genex_utils_absolute_path::AbsolutePathBuf,
+    genex_home: &genex_utils_absolute_path::AbsolutePathBuf,
     tool: &DiscoverableTool,
 ) -> anyhow::Result<()> {
-    ConfigEditsBuilder::new(codex_home)
+    ConfigEditsBuilder::new(genex_home)
         .with_edits([ConfigEdit::AddToolSuggestDisabledTool(
             disabled_install_request(tool),
         )])

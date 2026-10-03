@@ -103,9 +103,9 @@ impl AppServerSession {
         ))
     }
 
-    pub(crate) fn with_local_codex_home(mut self, codex_home: &AbsolutePathBuf) -> Self {
+    pub(crate) fn with_local_genex_home(mut self, genex_home: &AbsolutePathBuf) -> Self {
         self.task_tool_capabilities_dir = (!self.uses_embedded_app_server())
-            .then(|| codex_home.join("tui-thread-reference-capabilities"));
+            .then(|| genex_home.join("tui-thread-reference-capabilities"));
         self
     }
 

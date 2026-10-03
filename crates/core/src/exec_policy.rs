@@ -463,7 +463,7 @@ impl ExecPolicyManager {
 
     pub(crate) async fn append_amendment_and_update(
         &self,
-        codex_home: &Path,
+        genex_home: &Path,
         amendment: &ExecPolicyAmendment,
     ) -> Result<(), ExecPolicyUpdateError> {
         let _update_guard =
@@ -475,7 +475,7 @@ impl ExecPolicyManager {
                         "exec policy update semaphore closed".to_string(),
                     ),
                 })?;
-        let policy_path = default_policy_path(codex_home);
+        let policy_path = default_policy_path(genex_home);
         spawn_blocking({
             let policy_path = policy_path.clone();
             let prefix = amendment.command.clone();
@@ -513,7 +513,7 @@ impl ExecPolicyManager {
 
     pub(crate) async fn append_network_rule_and_update(
         &self,
-        codex_home: &Path,
+        genex_home: &Path,
         host: &str,
         protocol: NetworkRuleProtocol,
         decision: Decision,
@@ -528,7 +528,7 @@ impl ExecPolicyManager {
                         "exec policy update semaphore closed".to_string(),
                     ),
                 })?;
-        let policy_path = default_policy_path(codex_home);
+        let policy_path = default_policy_path(genex_home);
         let host = host.to_string();
         spawn_blocking({
             let policy_path = policy_path.clone();
@@ -864,8 +864,8 @@ fn profile_has_managed_filesystem_restrictions(permission_profile: &PermissionPr
         && !file_system_sandbox_policy.has_full_disk_write_access()
 }
 
-pub(crate) fn default_policy_path(codex_home: &Path) -> PathBuf {
-    codex_home.join(RULES_DIR_NAME).join(DEFAULT_POLICY_FILE)
+pub(crate) fn default_policy_path(genex_home: &Path) -> PathBuf {
+    genex_home.join(RULES_DIR_NAME).join(DEFAULT_POLICY_FILE)
 }
 
 #[cfg(test)]

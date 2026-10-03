@@ -18,8 +18,8 @@ const REMOTE_PLUGIN_ID: &str = "plugins~Plugin_sample";
 
 #[tokio::test]
 async fn host_skills_service_reuses_plugin_manager_skill_snapshot() {
-    let codex_home = tempfile::tempdir().expect("create codex home");
-    let plugin_root = codex_home
+    let genex_home = tempfile::tempdir().expect("create genex home");
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache/test-remote/sample/local");
     write_file(
@@ -29,7 +29,7 @@ async fn host_skills_service_reuses_plugin_manager_skill_snapshot() {
     let skill_path = plugin_root.join("skills/SKILL.md");
     write_file(&skill_path, "---\nname: search\ndescription: first\n---\n");
     write_file(
-        &codex_home.path().join("config.toml"),
+        &genex_home.path().join("config.toml"),
         &format!(
             r#"[features]
 plugins = true
@@ -44,17 +44,17 @@ enabled = false
         ),
     );
     let plugin_id = PluginId::parse(PLUGIN_CONFIG_NAME).expect("remote plugin id should parse");
-    PluginStore::new(codex_home.path().to_path_buf())
+    PluginStore::new(genex_home.path().to_path_buf())
         .write_remote_plugin_id(&plugin_id, REMOTE_PLUGIN_ID)
         .expect("persist remote plugin id");
-    let config = load_plugins_config(codex_home.path()).await;
+    let config = load_plugins_config(genex_home.path()).await;
     let plugins_input = config.plugins_config_input();
     let skills_service = Arc::new(HostSkillsService::new(
-        config.codex_home.clone(),
+        config.genex_home.clone(),
         /*bundled_skills_enabled*/ false,
     ));
     let plugins_manager = PluginsManager::new_with_options(
-        codex_home.path().to_path_buf(),
+        genex_home.path().to_path_buf(),
         Some(Product::Codex),
         AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key")),
         skills_service.clone(),
@@ -63,7 +63,7 @@ enabled = false
 
     write_file(&skill_path, "---\nname: search\ndescription: second\n---\n");
 
-    let other_cwd = codex_home.path().join("other-workspace");
+    let other_cwd = genex_home.path().join("other-workspace");
     std::fs::create_dir_all(&other_cwd).expect("create second workspace");
     let other_cwd = AbsolutePathBuf::from_absolute_path(other_cwd).expect("absolute workspace");
 

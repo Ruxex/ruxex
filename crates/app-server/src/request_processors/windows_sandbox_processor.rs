@@ -90,7 +90,7 @@ impl WindowsSandboxRequestProcessor {
                 workspace_roots,
                 command_cwd,
                 env_map: std::env::vars().collect(),
-                codex_home: config.codex_home.to_path_buf(),
+                genex_home: config.genex_home.to_path_buf(),
             };
             let setup_result =
                 genex_core::windows_sandbox::run_windows_sandbox_setup(setup_request).await;
@@ -170,7 +170,7 @@ fn determine_windows_sandbox_readiness(config: &Config) -> WindowsSandboxReadine
 
     determine_windows_sandbox_readiness_from_state(
         WindowsSandboxLevel::from_config(config),
-        sandbox_setup_is_complete(config.codex_home.as_path()),
+        sandbox_setup_is_complete(config.genex_home.as_path()),
     )
 }
 

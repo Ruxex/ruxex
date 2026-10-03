@@ -22,23 +22,23 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 20);
 
 #[tokio::test]
 async fn rollout_compress_runs_after_startup_with_compression_disabled() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_args(&["-c", "features.local_thread_store_compression=false"])
         .build_initialized()
         .await?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
         /*model_provider*/ None,
         /*git_info*/ None,
     )?;
-    let path = rollout_path(codex_home.path(), filename_ts, &thread_id);
+    let path = rollout_path(genex_home.path(), filename_ts, &thread_id);
     let original = std::fs::read_to_string(&path)?;
     let compressed_path = path.with_extension("jsonl.zst");
 

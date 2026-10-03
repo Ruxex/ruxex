@@ -1171,7 +1171,7 @@ impl TurnRequestProcessor {
                 .await?;
             }
             CoreReviewDelivery::Detached => {
-                let review_skill_path = system_cache_root_dir(&self.config.codex_home)
+                let review_skill_path = system_cache_root_dir(&self.config.genex_home)
                     .join("review-agent")
                     .join("SKILL.md");
                 let prompt = format!(
@@ -1261,7 +1261,7 @@ impl TurnRequestProcessor {
             outgoing: Arc::clone(&self.outgoing),
             pending_thread_unloads: Arc::clone(&self.pending_thread_unloads),
             thread_watch_manager: self.thread_watch_manager.clone(),
-            codex_home: self.config.codex_home.to_path_buf(),
+            genex_home: self.config.genex_home.to_path_buf(),
             thread_unload_delay: self.config.thread_unload_delay,
             skills_watcher: Arc::clone(&self.skills_watcher),
             turn_cost_worker: self.turn_cost_worker.clone(),

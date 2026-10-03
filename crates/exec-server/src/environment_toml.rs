@@ -171,17 +171,17 @@ fn normalize_stdio_cwd(
     Ok(Some(config_dir.join(cwd)))
 }
 
-pub(crate) fn environment_provider_from_codex_home(
-    codex_home: &Path,
+pub(crate) fn environment_provider_from_genex_home(
+    genex_home: &Path,
 ) -> Result<Box<dyn EnvironmentProvider>, ExecServerError> {
-    let path = codex_home.join(ENVIRONMENTS_TOML_FILE);
+    let path = genex_home.join(ENVIRONMENTS_TOML_FILE);
     let Some(environments) = load_environments_toml(&path)? else {
         return Ok(Box::new(DefaultEnvironmentProvider::from_env()));
     };
 
     Ok(Box::new(TomlEnvironmentProvider::new_with_config_dir(
         environments,
-        Some(codex_home),
+        Some(genex_home),
     )?))
 }
 
@@ -598,8 +598,8 @@ mod tests {
 
     #[test]
     fn load_environments_toml_reads_root_environment_list() {
-        let codex_home = tempdir().expect("tempdir");
-        let path = codex_home.path().join(ENVIRONMENTS_TOML_FILE);
+        let genex_home = tempdir().expect("tempdir");
+        let path = genex_home.path().join(ENVIRONMENTS_TOML_FILE);
         std::fs::write(
             &path,
             r#"
@@ -659,7 +659,7 @@ CODEX_LOG = "debug"
 
     #[test]
     fn load_environments_toml_rejects_unknown_fields() {
-        let codex_home = tempdir().expect("tempdir");
+        let genex_home = tempdir().expect("tempdir");
         let cases = [
             ("unknown = true\n", "unknown field `unknown`"),
             (
@@ -674,7 +674,7 @@ unknown = true
         ];
 
         for (index, (contents, expected)) in cases.into_iter().enumerate() {
-            let path = codex_home.path().join(format!("environments-{index}.toml"));
+            let path = genex_home.path().join(format!("environments-{index}.toml"));
             std::fs::write(&path, contents).expect("write environments.toml");
 
             let err = load_environments_toml(&path).expect_err("unknown field should fail");
@@ -687,10 +687,10 @@ unknown = true
     }
 
     #[tokio::test]
-    async fn environment_provider_from_codex_home_uses_present_environments_file() {
-        let codex_home = tempdir().expect("tempdir");
+    async fn environment_provider_from_genex_home_uses_present_environments_file() {
+        let genex_home = tempdir().expect("tempdir");
         std::fs::write(
-            codex_home.path().join(ENVIRONMENTS_TOML_FILE),
+            genex_home.path().join(ENVIRONMENTS_TOML_FILE),
             r#"
 default = "none"
 include_local = false
@@ -699,7 +699,7 @@ include_local = false
         .expect("write environments.toml");
 
         let provider =
-            environment_provider_from_codex_home(codex_home.path()).expect("environment provider");
+            environment_provider_from_genex_home(genex_home.path()).expect("environment provider");
 
         let snapshot = provider.snapshot().await.expect("environments");
         let environment_ids: Vec<_> = snapshot
@@ -714,11 +714,11 @@ include_local = false
     }
 
     #[tokio::test]
-    async fn environment_provider_from_codex_home_falls_back_when_file_is_missing() {
-        let codex_home = tempdir().expect("tempdir");
+    async fn environment_provider_from_genex_home_falls_back_when_file_is_missing() {
+        let genex_home = tempdir().expect("tempdir");
 
         let provider =
-            environment_provider_from_codex_home(codex_home.path()).expect("environment provider");
+            environment_provider_from_genex_home(genex_home.path()).expect("environment provider");
 
         let snapshot = provider.snapshot().await.expect("environments");
         let environment_ids: Vec<_> = snapshot

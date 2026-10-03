@@ -285,7 +285,7 @@ impl AccountRequestProcessor {
         }
 
         match login_with_api_key(
-            &self.config.codex_home,
+            &self.config.genex_home,
             &params.api_key,
             self.config.cli_auth_credentials_store_mode,
             self.config.auth_keyring_backend_kind(),
@@ -360,7 +360,7 @@ impl AccountRequestProcessor {
 
             match credentials {
                 BedrockLoginCredentials::ApiKey(api_key) => login_with_bedrock_api_key(
-                    &self.config.codex_home,
+                    &self.config.genex_home,
                     api_key.trim(),
                     region,
                     self.config.cli_auth_credentials_store_mode,
@@ -376,7 +376,7 @@ impl AccountRequestProcessor {
                         .map(str::trim)
                         .filter(|token| !token.is_empty());
                     login_with_bedrock_access_keys(
-                        &self.config.codex_home,
+                        &self.config.genex_home,
                         access_key_id.trim(),
                         secret_access_key.trim(),
                         session_token,

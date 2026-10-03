@@ -567,7 +567,7 @@ fn resolve_git_info_patch(
 }
 
 fn rollout_path_is_archived(store: &LocalThreadStore, path: &Path) -> bool {
-    super::helpers::rollout_path_is_archived(store.config.codex_home.as_path(), path)
+    super::helpers::rollout_path_is_archived(store.config.genex_home.as_path(), path)
 }
 
 #[cfg(test)]

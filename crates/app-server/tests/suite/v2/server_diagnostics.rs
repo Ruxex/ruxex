@@ -24,10 +24,10 @@ const READ_TIMEOUT: Duration = Duration::from_secs(20);
 #[tokio::test]
 async fn server_diagnostics_exposes_process_and_registered_thread_gauge() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     app_server
@@ -72,9 +72,9 @@ async fn server_diagnostics_exposes_process_and_registered_thread_gauge() -> Res
 
 #[tokio::test]
 async fn server_diagnostics_requires_experimental_capability() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     let initialization = app_server

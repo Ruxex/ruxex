@@ -38,10 +38,10 @@ async fn delete_runs_session_end_before_removing_transcript() -> Result<()> {
 
 async fn run_removal_session_end_test(operation: &str) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("persisted answer").await;
-    let codex_home = TempDir::new()?;
-    let log_path = write_config_and_hook(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    let log_path = write_config_and_hook(genex_home.path(), &server.uri())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(READ_TIMEOUT)
         .await?;
     let thread_id = start_thread(&mut app_server).await?;
@@ -108,10 +108,10 @@ async fn app_server_shutdown_runs_session_end_for_all_loaded_threads(
     shutdown: Shutdown,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let log_path = write_config_and_hook(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    let log_path = write_config_and_hook(genex_home.path(), &server.uri())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(READ_TIMEOUT)
         .await?;
     let first = start_thread(&mut app_server).await?;
@@ -164,9 +164,9 @@ async fn start_thread(app_server: &mut TestAppServer) -> Result<String> {
     Ok(response.thread.id)
 }
 
-fn write_config_and_hook(codex_home: &Path, server_uri: &str) -> Result<std::path::PathBuf> {
-    let log_path = codex_home.join("session-end.jsonl");
-    let script_path = codex_home.join("session-end.py");
+fn write_config_and_hook(genex_home: &Path, server_uri: &str) -> Result<std::path::PathBuf> {
+    let log_path = genex_home.join("session-end.jsonl");
+    let script_path = genex_home.join("session-end.py");
     std::fs::write(
         &script_path,
         format!(
@@ -199,7 +199,7 @@ timeout = 3
 "#,
             script_path = script_path.display(),
         ))
-        .write(codex_home)?;
+        .write(genex_home)?;
     Ok(log_path)
 }
 

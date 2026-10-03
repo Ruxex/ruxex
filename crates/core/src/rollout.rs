@@ -21,8 +21,8 @@ pub use genex_rollout::read_session_meta_line;
 pub use genex_rollout::rollout_date_parts;
 
 impl genex_rollout::RolloutConfigView for Config {
-    fn codex_home(&self) -> &std::path::Path {
-        self.codex_home.as_path()
+    fn genex_home(&self) -> &std::path::Path {
+        self.genex_home.as_path()
     }
 
     fn sqlite_config(&self) -> &genex_state::SqliteConfig {

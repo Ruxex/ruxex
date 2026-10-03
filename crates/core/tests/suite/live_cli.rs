@@ -23,8 +23,8 @@ fn run_live(prompt: &str) -> (assert_cmd::assert::Assert, TempDir) {
 
     let dir = TempDir::new().unwrap();
     let home = TempDir::new().unwrap();
-    let codex_home = home.path().join(".codex");
-    std::fs::create_dir_all(&codex_home).unwrap();
+    let genex_home = home.path().join(".genex");
+    std::fs::create_dir_all(&genex_home).unwrap();
 
     // Build a plain `std::process::Command` so we have full control over the underlying stdio
     // handles. `assert_cmd`’s own `Command` wrapper always forces stdout/stderr to be piped
@@ -36,7 +36,7 @@ fn run_live(prompt: &str) -> (assert_cmd::assert::Assert, TempDir) {
     cmd.current_dir(dir.path());
     cmd.env("PROVIDER_API_KEY", require_api_key());
     cmd.env("HOME", home.path());
-    cmd.env("CODEX_HOME", &codex_home);
+    cmd.env("GENEX_HOME", &genex_home);
 
     // We want three things at once:
     //   1. live streaming of the child’s stdout/stderr while the test is running

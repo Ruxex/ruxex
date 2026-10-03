@@ -33,10 +33,10 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_delete_rejects_paginated_writer_owned_by_another_process() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
     let thread_id = create_fake_paginated_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "owned",
@@ -44,7 +44,7 @@ async fn thread_delete_rejects_paginated_writer_owned_by_another_process() -> Re
         /*git_info*/ None,
     )?;
     let mut owner = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let _: ThreadResumeResponse = owner
@@ -59,7 +59,7 @@ async fn thread_delete_rejects_paginated_writer_owned_by_another_process() -> Re
         .await?;
 
     let mut other = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let request_id = other
@@ -89,15 +89,15 @@ async fn thread_delete_rejects_paginated_writer_owned_by_another_process() -> Re
 
 #[tokio::test]
 async fn thread_delete_deletes_spawned_descendants() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    let parent_id = create_delete_test_rollout(codex_home.path(), /*minute*/ 0, "parent")?;
-    let child_id = create_delete_test_rollout(codex_home.path(), /*minute*/ 1, "child")?;
+    let parent_id = create_delete_test_rollout(genex_home.path(), /*minute*/ 0, "parent")?;
+    let child_id = create_delete_test_rollout(genex_home.path(), /*minute*/ 1, "child")?;
     let grandchild_id =
-        create_delete_test_rollout(codex_home.path(), /*minute*/ 2, "grandchild")?;
+        create_delete_test_rollout(genex_home.path(), /*minute*/ 2, "grandchild")?;
 
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -123,7 +123,7 @@ async fn thread_delete_deletes_spawned_descendants() -> Result<()> {
     }
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -151,7 +151,7 @@ async fn thread_delete_deletes_spawned_descendants() -> Result<()> {
     for thread_id in [parent_thread_id, child_thread_id, grandchild_thread_id] {
         assert_eq!(state_db.get_thread(thread_id).await?, None);
         let rollout_path = find_thread_path_by_id_str(
-            codex_home.path(),
+            genex_home.path(),
             &thread_id.to_string(),
             /*state_db_ctx*/ None,
         )
@@ -172,23 +172,23 @@ async fn thread_delete_deletes_spawned_descendants() -> Result<()> {
 
 #[tokio::test]
 async fn thread_delete_preflights_external_fork_references_for_spawned_subtrees() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    let parent_id = create_delete_test_rollout(codex_home.path(), /*minute*/ 0, "parent")?;
-    let child_id = create_delete_test_rollout(codex_home.path(), /*minute*/ 1, "child")?;
-    let external_id = create_delete_test_rollout(codex_home.path(), /*minute*/ 2, "external")?;
+    let parent_id = create_delete_test_rollout(genex_home.path(), /*minute*/ 0, "parent")?;
+    let child_id = create_delete_test_rollout(genex_home.path(), /*minute*/ 1, "child")?;
+    let external_id = create_delete_test_rollout(genex_home.path(), /*minute*/ 2, "external")?;
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let external_thread_id = ThreadId::from_string(&external_id)?;
     let parent_path = find_thread_path_by_id_str(
-        codex_home.path(),
+        genex_home.path(),
         &parent_thread_id.to_string(),
         /*state_db_ctx*/ None,
     )
     .await?
     .expect("parent rollout path");
     let external_path = find_thread_path_by_id_str(
-        codex_home.path(),
+        genex_home.path(),
         &external_thread_id.to_string(),
         /*state_db_ctx*/ None,
     )
@@ -208,7 +208,7 @@ async fn thread_delete_preflights_external_fork_references_for_spawned_subtrees(
     std::fs::write(external_path.as_path(), format!("{external_meta}\n"))?;
 
     let state_db = StateRuntime::init(
-        SqliteConfig::new_for_testing(codex_home.path().abs()),
+        SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -221,7 +221,7 @@ async fn thread_delete_preflights_external_fork_references_for_spawned_subtrees(
         .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -244,7 +244,7 @@ async fn thread_delete_preflights_external_fork_references_for_spawned_subtrees(
     for thread_id in [parent_thread_id, child_thread_id, external_thread_id] {
         assert!(
             find_thread_path_by_id_str(
-                codex_home.path(),
+                genex_home.path(),
                 &thread_id.to_string(),
                 /*state_db_ctx*/ None,
             )
@@ -262,9 +262,9 @@ async fn thread_delete_preflights_external_fork_references_for_spawned_subtrees(
     Ok(())
 }
 
-fn create_delete_test_rollout(codex_home: &Path, minute: u8, preview: &str) -> Result<String> {
+fn create_delete_test_rollout(genex_home: &Path, minute: u8, preview: &str) -> Result<String> {
     create_fake_rollout(
-        codex_home,
+        genex_home,
         &format!("2025-01-01T00-{minute:02}-00"),
         &format!("2025-01-01T00:{minute:02}:00Z"),
         preview,
@@ -275,16 +275,16 @@ fn create_delete_test_rollout(codex_home: &Path, minute: u8, preview: &str) -> R
 
 #[tokio::test]
 async fn thread_delete_handles_live_threads_before_rollout_exists() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
     let persisted_thread = mcp.start_thread(ThreadStartParams::default()).await?.thread;
     let rollout_path = find_thread_path_by_id_str(
-        codex_home.path(),
+        genex_home.path(),
         &persisted_thread.id,
         /*state_db_ctx*/ None,
     )

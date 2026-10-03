@@ -25,12 +25,12 @@ async fn residency_slot_reservation_unloads_oldest_idle_v2_agent() {
     let _ = config.features.enable(Feature::MultiAgentV2);
     config.multi_agent_v2.max_concurrent_threads_per_session = 2;
     let temp_home = tempfile::tempdir().expect("create temp home");
-    config.codex_home = temp_home.path().to_path_buf().try_into().unwrap();
+    config.genex_home = temp_home.path().to_path_buf().try_into().unwrap();
     config.cwd = temp_home.path().to_path_buf().try_into().unwrap();
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         GenexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.to_path_buf(),
+        config.genex_home.to_path_buf(),
         Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
     );
     let root = manager
@@ -73,12 +73,12 @@ async fn interrupted_v2_agent_is_lost_after_residency_eviction() {
     let _ = config.features.enable(Feature::MultiAgentV2);
     config.multi_agent_v2.max_concurrent_threads_per_session = 2;
     let temp_home = tempfile::tempdir().expect("create temp home");
-    config.codex_home = temp_home.path().to_path_buf().try_into().unwrap();
+    config.genex_home = temp_home.path().to_path_buf().try_into().unwrap();
     config.cwd = temp_home.path().to_path_buf().try_into().unwrap();
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         GenexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.to_path_buf(),
+        config.genex_home.to_path_buf(),
         Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
     );
     let root = manager

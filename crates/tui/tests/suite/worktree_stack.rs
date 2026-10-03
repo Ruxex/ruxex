@@ -50,10 +50,10 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
         "commit test repository"
     );
 
-    let codex_home = tempfile::tempdir_in("/tmp")?;
-    write_test_config(codex_home.path(), &root)?;
+    let genex_home = tempfile::tempdir_in("/tmp")?;
+    write_test_config(genex_home.path(), &root)?;
     let server = responses::start_mock_server().await;
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = fs::read_to_string(&config_path)?
         .replace("model_provider = \"provider\"", "model_provider = \"test\"");
     fs::write(
@@ -74,13 +74,13 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     .await;
 
     let worktrees = WorktreeManager::new(WorktreeSettings::for_cli(
-        codex_home.path(),
+        genex_home.path(),
         /*desktop*/ None,
     )?);
     // The launcher gives codex-main and Tokio workers explicit 16 MiB stacks.
     let mut terminal = PtyGenex::start(
         &root,
-        codex_home,
+        genex_home,
         &[
             "-c",
             "features.worktrees=true",

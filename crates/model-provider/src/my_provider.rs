@@ -122,7 +122,7 @@ impl ModelProvider for MyModelProvider {
 
     fn models_manager(
         &self,
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager {
         match config_model_catalog {
@@ -137,7 +137,7 @@ impl ModelProvider for MyModelProvider {
                     ModelsEndpointAuthMode::MyProvider,
                 ));
                 Arc::new(RemoteModelsManager::new(
-                    codex_home,
+                    genex_home,
                     endpoint,
                     self.auth_manager.clone(),
                 ))

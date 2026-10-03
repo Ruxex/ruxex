@@ -321,7 +321,7 @@ impl MessageProcessor {
                     turn_start_admission: Some(Arc::clone(&turn_start_admission)),
                 }),
                 Arc::new(GenexHomeUserInstructionsProvider::new(
-                    config.codex_home.clone(),
+                    config.genex_home.clone(),
                 )),
                 genex_core::passthrough_image_store(),
                 Arc::clone(&thread_store),
@@ -348,7 +348,7 @@ impl MessageProcessor {
             TurnCostWorker::spawn(Arc::clone(&config), Arc::clone(&auth_manager));
         let skills_watcher = SkillsWatcher::new(
             thread_manager.skills_service(),
-            &config.codex_home,
+            &config.genex_home,
             outgoing.clone(),
         );
 
@@ -503,7 +503,7 @@ impl MessageProcessor {
                 config_processor: config_processor.clone(),
                 state_db,
                 arg0_paths,
-                codex_home: config.codex_home.to_path_buf(),
+                genex_home: config.genex_home.to_path_buf(),
             });
         let environment_processor =
             EnvironmentRequestProcessor::new(thread_manager.environment_manager());

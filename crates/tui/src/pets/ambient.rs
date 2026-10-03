@@ -139,22 +139,22 @@ impl AmbientPet {
     /// Load the active ambient pet and prepare its frame cache.
     ///
     /// This resolves the selected pet id, extracts per-frame PNGs into the
-    /// CODEX_HOME cache, and records the terminal protocol support snapshot used
+    /// GENEX_HOME cache, and records the terminal protocol support snapshot used
     /// for later draw requests. A caller that repeatedly recreates `AmbientPet`
     /// instead of mutating one instance would lose animation timing continuity
     /// and pay the frame-cache preparation cost more often than necessary.
     pub(crate) fn load(
         selected_pet: Option<&str>,
-        codex_home: &std::path::Path,
+        genex_home: &std::path::Path,
         frame_requester: FrameRequester,
         animations_enabled: bool,
     ) -> Result<Self> {
-        let pet = Pet::load_with_codex_home(
+        let pet = Pet::load_with_genex_home(
             selected_pet.unwrap_or(DEFAULT_PET_ID),
-            /*codex_home*/ Some(codex_home),
+            /*genex_home*/ Some(genex_home),
         )
         .with_context(|| "load ambient pet")?;
-        let cache_dir = codex_home
+        let cache_dir = genex_home
             .join("cache")
             .join("tui-pets")
             .join("frame-cache")

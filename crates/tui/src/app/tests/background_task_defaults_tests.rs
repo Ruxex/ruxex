@@ -101,9 +101,9 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
                 }
             ),
         )?;
-        std::fs::create_dir(destination.path().join(".codex"))?;
+        std::fs::create_dir(destination.path().join(".genex"))?;
         std::fs::write(
-            destination.path().join(".codex/config.toml"),
+            destination.path().join(".genex/config.toml"),
             "model = \"destination-model\"\nservice_tier = \"flex\"\n",
         )?;
         for home in [client_home.path(), server_home.path()] {
@@ -129,7 +129,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
         app.chat_widget.set_service_tier(Some("flex".into()));
         app.harness_overrides.cwd = Some(launch.path().to_path_buf());
         app.config = ConfigBuilder::default()
-            .codex_home(client_home.path().to_path_buf())
+            .genex_home(client_home.path().to_path_buf())
             .loader_overrides(app.loader_overrides.clone())
             .cli_overrides(app.cli_kv_overrides.clone())
             .harness_overrides(app.harness_overrides.clone())
@@ -142,7 +142,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             ));
         trust_launch_folder(&mut app);
         let mut server_config = app.config.clone();
-        server_config.codex_home = server_home.path().to_path_buf().abs();
+        server_config.genex_home = server_home.path().to_path_buf().abs();
         server_config.sqlite = SqliteConfig::new_for_testing(server_home.path().abs());
         let thread_mode = if mode.starts_with("remote") {
             crate::app_server_session::ThreadParamsMode::Remote
@@ -309,7 +309,7 @@ async fn command_center_new_preserves_explicit_choices_and_managed_defaults() ->
             _ => {}
         }
         app.config = ConfigBuilder::default()
-            .codex_home(client_home.path().to_path_buf())
+            .genex_home(client_home.path().to_path_buf())
             .loader_overrides(app.loader_overrides.clone())
             .cli_overrides(app.cli_kv_overrides.clone())
             .harness_overrides(app.harness_overrides.clone())
@@ -317,7 +317,7 @@ async fn command_center_new_preserves_explicit_choices_and_managed_defaults() ->
             .await?;
         trust_launch_folder(&mut app);
         let mut server_config = app.config.clone();
-        server_config.codex_home = server_home.path().to_path_buf().abs();
+        server_config.genex_home = server_home.path().to_path_buf().abs();
         server_config.sqlite = SqliteConfig::new_for_testing(server_home.path().abs());
         let (mut server, requests, proxy) = start_recording_app_server_with_history(
             &server_config,

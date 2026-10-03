@@ -597,9 +597,9 @@ mod tests {
 
     #[tokio::test]
     async fn flush_persists_logs_for_query() {
-        let codex_home = temp_genex_home();
+        let genex_home = temp_genex_home();
         let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
             "test-provider".to_string(),
         )
         .await
@@ -626,14 +626,14 @@ mod tests {
         assert_eq!(after_flush.len(), 1);
         assert_eq!(after_flush[0].message.as_deref(), Some("buffered-log"));
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(genex_home).await;
     }
 
     #[tokio::test]
     async fn configured_batch_size_flushes_without_explicit_flush() {
-        let codex_home = temp_genex_home();
+        let genex_home = temp_genex_home();
         let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
             "test-provider".to_string(),
         )
         .await
@@ -678,14 +678,14 @@ mod tests {
             vec![Some("first-batch-log"), Some("second-batch-log")]
         );
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(genex_home).await;
     }
 
     #[tokio::test]
     async fn configured_flush_interval_persists_buffered_logs() {
-        let codex_home = temp_genex_home();
+        let genex_home = temp_genex_home();
         let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
             "test-provider".to_string(),
         )
         .await
@@ -714,7 +714,7 @@ mod tests {
 
         assert_eq!(after_interval[0].message.as_deref(), Some("interval-log"));
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(genex_home).await;
     }
 
     #[tokio::test]

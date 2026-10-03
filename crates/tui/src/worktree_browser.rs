@@ -48,14 +48,14 @@ pub(crate) enum Action {
 
 pub(crate) fn fetch(
     request: Request,
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     app_server: AppServerRequestHandle,
     tx: AppEventSender,
 ) {
     tokio::spawn(async move {
         let result = async {
-            let mut entries = list(codex_home.clone(), request.cwd.clone()).await?;
-            let archive_root = codex_home.join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR);
+            let mut entries = list(genex_home.clone(), request.cwd.clone()).await?;
+            let archive_root = genex_home.join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR);
             for entry in &mut entries {
                 let Owner::Unavailable(id) = entry.owner else {
                     continue;
@@ -115,16 +115,16 @@ pub(crate) fn fetch(
     });
 }
 
-pub(crate) async fn list(codex_home: PathBuf, cwd: PathBuf) -> anyhow::Result<Vec<Entry>> {
+pub(crate) async fn list(genex_home: PathBuf, cwd: PathBuf) -> anyhow::Result<Vec<Entry>> {
     let host = crate::legacy_core::config::load_config_toml_with_layer_stack(
-        &codex_home,
+        &genex_home,
         /*cwd*/ None,
         Vec::new(),
         genex_config::ConfigLoadOptions::default(),
     )
     .await?;
     let settings =
-        genex_worktree::WorktreeSettings::for_cli(&codex_home, host.config_toml.desktop.as_ref())?;
+        genex_worktree::WorktreeSettings::for_cli(&genex_home, host.config_toml.desktop.as_ref())?;
     // Closing the popup discards its result; an already-running blocking Git call still finishes.
     tokio::task::spawn_blocking(move || {
         let cwd = genex_git_utils::get_git_repo_root(&cwd).unwrap_or(cwd);
@@ -148,19 +148,19 @@ pub(crate) async fn list(codex_home: PathBuf, cwd: PathBuf) -> anyhow::Result<Ve
 }
 
 pub(crate) async fn remove(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     source_cwd: PathBuf,
     root: PathBuf,
 ) -> anyhow::Result<()> {
     let host = crate::legacy_core::config::load_config_toml_with_layer_stack(
-        &codex_home,
+        &genex_home,
         /*cwd*/ None,
         Vec::new(),
         genex_config::ConfigLoadOptions::default(),
     )
     .await?;
     let settings =
-        genex_worktree::WorktreeSettings::for_cli(&codex_home, host.config_toml.desktop.as_ref())?;
+        genex_worktree::WorktreeSettings::for_cli(&genex_home, host.config_toml.desktop.as_ref())?;
     tokio::task::spawn_blocking(move || {
         genex_worktree::WorktreeManager::new(settings).remove(&source_cwd, &root)
     })

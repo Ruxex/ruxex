@@ -726,8 +726,8 @@ fn write_skill_config_selector(table: &mut TomlTable, selector: &SkillConfigSele
 }
 
 /// Persist edits using a blocking strategy.
-pub fn apply_blocking(codex_home: &Path, edits: &[ConfigEdit]) -> anyhow::Result<()> {
-    let config_path = codex_home.join(CONFIG_TOML_FILE);
+pub fn apply_blocking(genex_home: &Path, edits: &[ConfigEdit]) -> anyhow::Result<()> {
+    let config_path = genex_home.join(CONFIG_TOML_FILE);
     apply_blocking_to_resolved_file(&config_path, edits)
 }
 
@@ -784,8 +784,8 @@ pub struct ConfigEditsBuilder {
 }
 
 impl ConfigEditsBuilder {
-    pub fn new(codex_home: &Path) -> Self {
-        Self::for_config_path(&codex_home.join(CONFIG_TOML_FILE))
+    pub fn new(genex_home: &Path) -> Self {
+        Self::for_config_path(&genex_home.join(CONFIG_TOML_FILE))
     }
 
     pub fn for_config(config: &crate::config::Config) -> Self {
@@ -793,7 +793,7 @@ impl ConfigEditsBuilder {
             .config_layer_stack
             .get_user_config_file()
             .map(genex_utils_absolute_path::AbsolutePathBuf::to_path_buf)
-            .unwrap_or_else(|| config.codex_home.join(CONFIG_TOML_FILE).to_path_buf());
+            .unwrap_or_else(|| config.genex_home.join(CONFIG_TOML_FILE).to_path_buf());
         Self::for_config_path(&config_path)
     }
 

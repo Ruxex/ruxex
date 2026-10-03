@@ -56,16 +56,16 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_revert_preserves_model_selected_multi_agent_version(restart: bool) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::MultiAgentV2)
-        .write(codex_home.path())?;
-    let config = load_default_config_for_test(&codex_home).await;
+        .write(genex_home.path())?;
+    let config = load_default_config_for_test(&genex_home).await;
     let mut model = genex_core::test_support::construct_model_info_offline("mock-model", &config);
     model.multi_agent_version = Some(MultiAgentVersion::V2);
-    write_models_cache_with_models(codex_home.path(), vec![model]).await?;
+    write_models_cache_with_models(genex_home.path(), vec![model]).await?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;
@@ -98,7 +98,7 @@ async fn thread_revert_preserves_model_selected_multi_agent_version(restart: boo
         // Restart before another turn can persist a replacement TurnContext.
         mcp.shutdown_gracefully().await?;
         mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .build()
             .await?;
         initialize_experimental(&mut mcp).await?;
@@ -151,7 +151,7 @@ async fn thread_revert_preserves_model_selected_multi_agent_version(restart: boo
 #[tokio::test]
 async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let updated_workspace = TempDir::new()?;
     let saved_cwd = AbsolutePathBuf::from_absolute_path(updated_workspace.path().canonicalize()?)?
         .into_path_buf();
@@ -160,10 +160,10 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
         AbsolutePathBuf::from_absolute_path(&saved_cwd)?,
         AbsolutePathBuf::from_absolute_path(extra_workspace.path().canonicalize()?)?,
     ];
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
     // This fixture checks host-native cwd and workspace restoration across fork and revert.
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -197,7 +197,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
             request_id,
             params: ThreadForkParams {
                 thread_id: parent.id.clone(),
-                cwd: Some(codex_home.path().to_string_lossy().into_owned()),
+                cwd: Some(genex_home.path().to_string_lossy().into_owned()),
                 ..Default::default()
             },
         })
@@ -276,7 +276,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
 
         mcp.shutdown_gracefully().await?;
         mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_auto_env()
             .build()
             .await?;
@@ -333,10 +333,10 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
 #[tokio::test]
 async fn thread_revert_replaces_paginated_history_before_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;
@@ -420,7 +420,7 @@ async fn thread_revert_replaces_paginated_history_before_turn() -> Result<()> {
 
     mcp.shutdown_gracefully().await?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;
@@ -518,7 +518,7 @@ async fn thread_revert_interrupts_active_turn_and_keeps_thread_loaded() -> Resul
     .await;
     MockResponsesConfig::new(&server.uri()).write(home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;

@@ -40,15 +40,15 @@ fn marketplace_list_row(marketplace_name: &str, root: &Path) -> String {
     )
 }
 
-fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
-    cmd.env("CODEX_HOME", codex_home);
-    cmd.env("HOME", codex_home);
+    cmd.env("GENEX_HOME", genex_home);
+    cmd.env("HOME", genex_home);
     Ok(cmd)
 }
 
-fn genex_command_in(codex_home: &Path, current_dir: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = genex_command(codex_home)?;
+fn genex_command_in(genex_home: &Path, current_dir: &Path) -> Result<assert_cmd::Command> {
+    let mut cmd = genex_command(genex_home)?;
     cmd.current_dir(current_dir);
     Ok(cmd)
 }
@@ -62,9 +62,9 @@ fn configured_local_marketplace(source: &str) -> MarketplaceConfigUpdate<'_> {
     }
 }
 
-fn write_plugins_enabled_config(codex_home: &Path) -> Result<()> {
+fn write_plugins_enabled_config(genex_home: &Path) -> Result<()> {
     std::fs::write(
-        codex_home.join(CONFIG_TOML_FILE),
+        genex_home.join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 "#,
@@ -133,58 +133,58 @@ fn write_marketplace_source_with_explicit_empty_products(source: &Path) -> Resul
 }
 
 fn setup_local_marketplace() -> Result<(TempDir, TempDir)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     write_marketplace_source(source.path())?;
     let source_path = source.path().to_string_lossy().into_owned();
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "debug",
         &configured_local_marketplace(&source_path),
     )?;
-    Ok((codex_home, source))
+    Ok((genex_home, source))
 }
 
 fn setup_unconfigured_local_marketplace() -> Result<(TempDir, TempDir)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     write_marketplace_source(source.path())?;
-    Ok((codex_home, source))
+    Ok((genex_home, source))
 }
 
 fn setup_local_marketplace_with_explicit_empty_products() -> Result<(TempDir, TempDir)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     write_marketplace_source_with_explicit_empty_products(source.path())?;
     let source_path = source.path().to_string_lossy().into_owned();
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "debug",
         &configured_local_marketplace(&source_path),
     )?;
-    Ok((codex_home, source))
+    Ok((genex_home, source))
 }
 
 fn setup_configured_marketplace_without_manifest() -> Result<(TempDir, TempDir)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     let source_path = source.path().to_string_lossy().into_owned();
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "debug",
         &configured_local_marketplace(&source_path),
     )?;
-    Ok((codex_home, source))
+    Ok((genex_home, source))
 }
 
 fn setup_configured_marketplace_with_malformed_manifest() -> Result<(TempDir, TempDir)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     std::fs::create_dir_all(source.path().join(".agents").join("plugins"))?;
     std::fs::write(
         source
@@ -196,17 +196,17 @@ fn setup_configured_marketplace_with_malformed_manifest() -> Result<(TempDir, Te
     )?;
     let source_path = source.path().to_string_lossy().into_owned();
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "debug",
         &configured_local_marketplace(&source_path),
     )?;
-    Ok((codex_home, source))
+    Ok((genex_home, source))
 }
 
 fn setup_local_marketplace_with_implicit_system_roots() -> Result<(TempDir, TempDir, TempDir)> {
-    let (codex_home, source) = setup_local_marketplace()?;
+    let (genex_home, source) = setup_local_marketplace()?;
 
-    let bundled_root = codex_home
+    let bundled_root = genex_home
         .path()
         .join(".tmp")
         .join("bundled-marketplaces")
@@ -214,7 +214,7 @@ fn setup_local_marketplace_with_implicit_system_roots() -> Result<(TempDir, Temp
     std::fs::create_dir_all(&bundled_root)?;
     let bundled_source = bundled_root.display().to_string();
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "codex-bundled",
         &configured_local_marketplace(&bundled_source),
     )?;
@@ -230,19 +230,19 @@ fn setup_local_marketplace_with_implicit_system_roots() -> Result<(TempDir, Temp
     std::fs::create_dir_all(&runtime_root)?;
     let runtime_source = runtime_root.display().to_string();
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "codex-primary-runtime",
         &configured_local_marketplace(&runtime_source),
     )?;
 
-    Ok((codex_home, source, cache_home))
+    Ok((genex_home, source, cache_home))
 }
 
 fn setup_custom_marketplace_under_implicit_system_root() -> Result<(TempDir, std::path::PathBuf)> {
-    let codex_home = TempDir::new()?;
-    write_plugins_enabled_config(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    write_plugins_enabled_config(genex_home.path())?;
 
-    let custom_root = codex_home
+    let custom_root = genex_home
         .path()
         .join(".tmp")
         .join("bundled-marketplaces")
@@ -250,16 +250,16 @@ fn setup_custom_marketplace_under_implicit_system_root() -> Result<(TempDir, std
     std::fs::create_dir_all(&custom_root)?;
     let custom_source = custom_root.display().to_string();
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "custom-marketplace",
         &configured_local_marketplace(&custom_source),
     )?;
 
-    Ok((codex_home, custom_root))
+    Ok((genex_home, custom_root))
 }
 
-fn remove_installed_plugin_config(codex_home: &Path, plugin_key: &str) -> Result<()> {
-    let config_path = codex_home.join(CONFIG_TOML_FILE);
+fn remove_installed_plugin_config(genex_home: &Path, plugin_key: &str) -> Result<()> {
+    let config_path = genex_home.join(CONFIG_TOML_FILE);
     let plugin_header = format!("[plugins.\"{plugin_key}\"]");
     let config = std::fs::read_to_string(&config_path)?;
     let mut rewritten = Vec::new();
@@ -283,9 +283,9 @@ fn remove_installed_plugin_config(codex_home: &Path, plugin_key: &str) -> Result
 }
 
 fn setup_configured_local_marketplace_with_missing_source() -> Result<TempDir> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        genex_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 
@@ -293,13 +293,13 @@ plugins = true
 source_type = "local"
 "#,
     )?;
-    Ok(codex_home)
+    Ok(genex_home)
 }
 
 fn setup_configured_local_marketplace_with_invalid_name() -> Result<TempDir> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        genex_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 
@@ -308,7 +308,7 @@ source_type = "local"
 source = "/tmp/debug"
 "#,
     )?;
-    Ok(codex_home)
+    Ok(genex_home)
 }
 
 fn assert_configured_marketplace_snapshot_failure(
@@ -342,10 +342,10 @@ fn assert_marketplace_failure(
 
 #[tokio::test]
 async fn marketplace_list_shows_configured_marketplace_names() -> Result<()> {
-    let (codex_home, source) = setup_local_marketplace()?;
+    let (genex_home, source) = setup_local_marketplace()?;
     let expected_row = marketplace_list_row("debug", source.path());
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "list"])
         .assert()
         .success()
@@ -358,10 +358,10 @@ async fn marketplace_list_shows_configured_marketplace_names() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_list_json_prints_configured_marketplaces() -> Result<()> {
-    let (codex_home, source) = setup_local_marketplace()?;
+    let (genex_home, source) = setup_local_marketplace()?;
     let source_path = source.path().display().to_string();
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "list", "--json"])
         .assert()
         .success();
@@ -389,13 +389,13 @@ async fn marketplace_list_json_prints_configured_marketplaces() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_list_json_includes_configured_git_marketplace_source() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let marketplace_root = codex_home
+    let genex_home = TempDir::new()?;
+    let marketplace_root = genex_home
         .path()
         .join(".tmp")
         .join("marketplaces")
         .join("debug");
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     write_marketplace_source(&marketplace_root)?;
     let update = MarketplaceConfigUpdate {
         source_type: "git",
@@ -403,10 +403,10 @@ async fn marketplace_list_json_includes_configured_git_marketplace_source() -> R
         ref_name: None,
         sparse_paths: &[],
     };
-    record_user_marketplace(codex_home.path(), "debug", &update)?;
+    record_user_marketplace(genex_home.path(), "debug", &update)?;
     let normalized_root = canonicalize_existing_preserving_symlinks(&marketplace_root)?;
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "list", "--json"])
         .assert()
         .success();
@@ -434,14 +434,14 @@ async fn marketplace_list_json_includes_configured_git_marketplace_source() -> R
 
 #[tokio::test]
 async fn marketplace_list_json_keys_configured_source_by_root() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let home = TempDir::new()?;
-    let marketplace_root = codex_home
+    let marketplace_root = genex_home
         .path()
         .join(".tmp")
         .join("marketplaces")
         .join("debug");
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     write_marketplace_source(home.path())?;
     write_marketplace_source(&marketplace_root)?;
     let update = MarketplaceConfigUpdate {
@@ -450,10 +450,10 @@ async fn marketplace_list_json_keys_configured_source_by_root() -> Result<()> {
         ref_name: None,
         sparse_paths: &[],
     };
-    record_user_marketplace(codex_home.path(), "debug", &update)?;
+    record_user_marketplace(genex_home.path(), "debug", &update)?;
     let normalized_root = canonicalize_existing_preserving_symlinks(&marketplace_root)?;
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .env("HOME", home.path())
         .args(["plugin", "marketplace", "list", "--json"])
         .assert()
@@ -486,13 +486,13 @@ async fn marketplace_list_json_keys_configured_source_by_root() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_list_includes_home_marketplace_when_present() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let home = TempDir::new()?;
     write_marketplace_source(home.path())?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     let expected_row = marketplace_list_row("debug", home.path());
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .env("HOME", home.path())
         .args(["plugin", "marketplace", "list"])
         .assert()
@@ -506,10 +506,10 @@ async fn marketplace_list_includes_home_marketplace_when_present() -> Result<()>
 
 #[tokio::test]
 async fn marketplace_list_includes_root_when_plugins_are_filtered_out() -> Result<()> {
-    let (codex_home, source) = setup_local_marketplace_with_explicit_empty_products()?;
+    let (genex_home, source) = setup_local_marketplace_with_explicit_empty_products()?;
     let expected_row = marketplace_list_row("debug", source.path());
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "list"])
         .assert()
         .success()
@@ -521,10 +521,10 @@ async fn marketplace_list_includes_root_when_plugins_are_filtered_out() -> Resul
 
 #[tokio::test]
 async fn marketplace_list_fails_when_configured_marketplace_snapshot_is_missing() -> Result<()> {
-    let (codex_home, source) = setup_configured_marketplace_without_manifest()?;
+    let (genex_home, source) = setup_configured_marketplace_without_manifest()?;
 
     assert_marketplace_failure(
-        genex_command(codex_home.path())?
+        genex_command(genex_home.path())?
             .args(["plugin", "marketplace", "list"])
             .assert(),
         "debug",
@@ -537,10 +537,10 @@ async fn marketplace_list_fails_when_configured_marketplace_snapshot_is_missing(
 
 #[tokio::test]
 async fn marketplace_list_fails_when_configured_marketplace_name_is_invalid() -> Result<()> {
-    let codex_home = setup_configured_local_marketplace_with_invalid_name()?;
+    let genex_home = setup_configured_local_marketplace_with_invalid_name()?;
 
     assert_marketplace_failure(
-        genex_command(codex_home.path())?
+        genex_command(genex_home.path())?
             .args(["plugin", "marketplace", "list"])
             .assert(),
         "bad/name",
@@ -554,9 +554,9 @@ async fn marketplace_list_fails_when_configured_marketplace_name_is_invalid() ->
 #[tokio::test]
 async fn marketplace_list_fails_when_configured_local_marketplace_source_is_missing() -> Result<()>
 {
-    let codex_home = setup_configured_local_marketplace_with_missing_source()?;
+    let genex_home = setup_configured_local_marketplace_with_missing_source()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "list"])
         .assert()
         .failure()
@@ -572,9 +572,9 @@ async fn marketplace_list_fails_when_configured_local_marketplace_source_is_miss
 
 #[tokio::test]
 async fn marketplace_list_fails_when_home_marketplace_is_malformed() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let home = TempDir::new()?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     std::fs::create_dir_all(home.path().join(".agents/plugins"))?;
     let home_marketplace_path = home
         .path()
@@ -583,7 +583,7 @@ async fn marketplace_list_fails_when_home_marketplace_is_malformed() -> Result<(
         .join("marketplace.json");
     std::fs::write(&home_marketplace_path, "{not valid json")?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .env("HOME", home.path())
         .args(["plugin", "marketplace", "list"])
         .assert()
@@ -597,10 +597,10 @@ async fn marketplace_list_fails_when_home_marketplace_is_malformed() -> Result<(
 
 #[tokio::test]
 async fn marketplace_list_fails_when_configured_marketplace_snapshot_is_malformed() -> Result<()> {
-    let (codex_home, source) = setup_configured_marketplace_with_malformed_manifest()?;
+    let (genex_home, source) = setup_configured_marketplace_with_malformed_manifest()?;
 
     assert_marketplace_failure(
-        genex_command(codex_home.path())?
+        genex_command(genex_home.path())?
             .args(["plugin", "marketplace", "list"])
             .assert(),
         "debug",
@@ -613,7 +613,7 @@ async fn marketplace_list_fails_when_configured_marketplace_snapshot_is_malforme
 
 #[tokio::test]
 async fn plugin_list_prints_plugins_in_a_table() -> Result<()> {
-    let (codex_home, source) = setup_local_marketplace()?;
+    let (genex_home, source) = setup_local_marketplace()?;
     let marketplace_manifest = source
         .path()
         .join(".agents")
@@ -621,7 +621,7 @@ async fn plugin_list_prints_plugins_in_a_table() -> Result<()> {
         .join("marketplace.json");
     let plugin_path = source.path().join("plugins").join("sample");
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .success()
@@ -640,11 +640,11 @@ async fn plugin_list_prints_plugins_in_a_table() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_list_json_prints_available_plugins_when_requested() -> Result<()> {
-    let (codex_home, source) = setup_local_marketplace()?;
+    let (genex_home, source) = setup_local_marketplace()?;
     let plugin_path = source.path().join("plugins").join("sample");
     let source_path = source.path().to_string_lossy().into_owned();
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .args(["plugin", "list", "--available", "--json"])
         .assert()
         .success();
@@ -683,13 +683,13 @@ async fn plugin_list_json_prints_available_plugins_when_requested() -> Result<()
 
 #[tokio::test]
 async fn plugin_list_json_includes_configured_git_marketplace_source() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let marketplace_root = codex_home
+    let genex_home = TempDir::new()?;
+    let marketplace_root = genex_home
         .path()
         .join(".tmp")
         .join("marketplaces")
         .join("debug");
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(genex_home.path())?;
     write_marketplace_source(&marketplace_root)?;
     let update = MarketplaceConfigUpdate {
         source_type: "git",
@@ -697,11 +697,11 @@ async fn plugin_list_json_includes_configured_git_marketplace_source() -> Result
         ref_name: None,
         sparse_paths: &[],
     };
-    record_user_marketplace(codex_home.path(), "debug", &update)?;
+    record_user_marketplace(genex_home.path(), "debug", &update)?;
     let plugin_path = marketplace_root.join("plugins").join("sample");
     let normalized_plugin_path = canonicalize_existing_preserving_symlinks(&plugin_path)?;
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .args(["plugin", "list", "--available", "--json"])
         .assert()
         .success();
@@ -740,16 +740,16 @@ async fn plugin_list_json_includes_configured_git_marketplace_source() -> Result
 
 #[tokio::test]
 async fn plugin_list_json_prints_installed_plugins() -> Result<()> {
-    let (codex_home, source) = setup_local_marketplace()?;
+    let (genex_home, source) = setup_local_marketplace()?;
     let plugin_path = source.path().join("plugins").join("sample");
     let source_path = source.path().to_string_lossy().into_owned();
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .args(["plugin", "list", "--json"])
         .assert()
         .success();
@@ -788,9 +788,9 @@ async fn plugin_list_json_prints_installed_plugins() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_list_available_requires_json() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "list", "--available"])
         .assert()
         .failure()
@@ -804,14 +804,14 @@ async fn plugin_list_available_requires_json() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_list_shows_installed_version_when_plugin_is_installed() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .success()
@@ -824,9 +824,9 @@ async fn plugin_list_shows_installed_version_when_plugin_is_installed() -> Resul
 
 #[tokio::test]
 async fn plugin_list_excludes_unconfigured_repo_local_marketplaces() -> Result<()> {
-    let (codex_home, source) = setup_unconfigured_local_marketplace()?;
+    let (genex_home, source) = setup_unconfigured_local_marketplace()?;
 
-    genex_command_in(codex_home.path(), source.path())?
+    genex_command_in(genex_home.path(), source.path())?
         .args(["plugin", "list", "--marketplace", "debug"])
         .assert()
         .success()
@@ -838,10 +838,10 @@ async fn plugin_list_excludes_unconfigured_repo_local_marketplaces() -> Result<(
 
 #[tokio::test]
 async fn plugin_list_fails_when_configured_marketplace_snapshot_is_missing() -> Result<()> {
-    let (codex_home, source) = setup_configured_marketplace_without_manifest()?;
+    let (genex_home, source) = setup_configured_marketplace_without_manifest()?;
 
     assert_configured_marketplace_snapshot_failure(
-        genex_command(codex_home.path())?
+        genex_command(genex_home.path())?
             .args(["plugin", "list"])
             .assert(),
         source.path(),
@@ -853,9 +853,9 @@ async fn plugin_list_fails_when_configured_marketplace_snapshot_is_missing() -> 
 
 #[tokio::test]
 async fn plugin_list_ignores_implicit_system_marketplace_roots_without_manifests() -> Result<()> {
-    let (codex_home, source, cache_home) = setup_local_marketplace_with_implicit_system_roots()?;
+    let (genex_home, source, cache_home) = setup_local_marketplace_with_implicit_system_roots()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .env("HOME", cache_home.path())
         .env("USERPROFILE", cache_home.path())
         .args(["plugin", "list"])
@@ -880,9 +880,9 @@ async fn plugin_list_ignores_implicit_system_marketplace_roots_without_manifests
 
 #[tokio::test]
 async fn plugin_list_fails_for_custom_marketplace_under_system_root() -> Result<()> {
-    let (codex_home, custom_root) = setup_custom_marketplace_under_implicit_system_root()?;
+    let (genex_home, custom_root) = setup_custom_marketplace_under_implicit_system_root()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .failure()
@@ -900,16 +900,16 @@ async fn plugin_list_fails_for_custom_marketplace_under_system_root() -> Result<
 
 #[tokio::test]
 async fn plugin_list_hides_version_for_cached_but_unconfigured_plugin() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    remove_installed_plugin_config(codex_home.path(), "sample@debug")?;
+    remove_installed_plugin_config(genex_home.path(), "sample@debug")?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "list"])
         .assert()
         .success()
@@ -922,18 +922,18 @@ async fn plugin_list_hides_version_for_cached_but_unconfigured_plugin() -> Resul
 
 #[tokio::test]
 async fn plugin_add_and_remove_updates_installed_plugin_config() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success()
         .stdout(contains("Added plugin `sample` from marketplace `debug`."));
 
-    let config = std::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE))?;
+    let config = std::fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE))?;
     assert!(config.contains("[plugins.\"sample@debug\"]"));
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "remove", "sample", "--marketplace", "debug"])
         .assert()
         .success()
@@ -941,7 +941,7 @@ async fn plugin_add_and_remove_updates_installed_plugin_config() -> Result<()> {
             "Removed plugin `sample` from marketplace `debug`.",
         ));
 
-    let config = std::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE))?;
+    let config = std::fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE))?;
     assert!(!config.contains("[plugins.\"sample@debug\"]"));
 
     Ok(())
@@ -949,15 +949,15 @@ async fn plugin_add_and_remove_updates_installed_plugin_config() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_add_json_prints_install_outcome() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug", "--json"])
         .assert()
         .success();
     let stdout = assert.get_output().stdout.as_slice();
     let actual: serde_json::Value = serde_json::from_slice(stdout)?;
-    let installed_path = codex_home.path().join("plugins/cache/debug/sample/1.2.3");
+    let installed_path = genex_home.path().join("plugins/cache/debug/sample/1.2.3");
     let normalized_installed_path = canonicalize_existing_preserving_symlinks(&installed_path)?;
 
     assert_eq!(
@@ -977,14 +977,14 @@ async fn plugin_add_json_prints_install_outcome() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_remove_json_prints_remove_outcome() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .args([
             "plugin",
             "remove",
@@ -1012,9 +1012,9 @@ async fn plugin_remove_json_prints_remove_outcome() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_add_rejects_unconfigured_repo_local_marketplaces() -> Result<()> {
-    let (codex_home, source) = setup_unconfigured_local_marketplace()?;
+    let (genex_home, source) = setup_unconfigured_local_marketplace()?;
 
-    genex_command_in(codex_home.path(), source.path())?
+    genex_command_in(genex_home.path(), source.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .failure()
@@ -1027,10 +1027,10 @@ async fn plugin_add_rejects_unconfigured_repo_local_marketplaces() -> Result<()>
 
 #[tokio::test]
 async fn plugin_add_fails_when_configured_marketplace_snapshot_is_malformed() -> Result<()> {
-    let (codex_home, source) = setup_configured_marketplace_with_malformed_manifest()?;
+    let (genex_home, source) = setup_configured_marketplace_with_malformed_manifest()?;
 
     assert_configured_marketplace_snapshot_failure(
-        genex_command(codex_home.path())?
+        genex_command(genex_home.path())?
             .args(["plugin", "add", "sample@debug"])
             .assert(),
         source.path(),
@@ -1042,21 +1042,21 @@ async fn plugin_add_fails_when_configured_marketplace_snapshot_is_malformed() ->
 
 #[tokio::test]
 async fn plugin_add_reinstalls_from_configured_marketplace_snapshot() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success()
         .stdout(contains("Added plugin `sample` from marketplace `debug`."));
 
     assert!(
-        codex_home
+        genex_home
             .path()
             .join("plugins/cache/debug/sample/1.2.3/.codex-plugin/plugin.json")
             .is_file()
@@ -1067,19 +1067,19 @@ async fn plugin_add_reinstalls_from_configured_marketplace_snapshot() -> Result<
 
 #[tokio::test]
 async fn plugin_remove_works_after_marketplace_is_removed() -> Result<()> {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample", "--marketplace", "debug"])
         .assert()
         .success();
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "remove", "debug"])
         .assert()
         .success();
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "remove", "sample@debug"])
         .assert()
         .success()
@@ -1087,7 +1087,7 @@ async fn plugin_remove_works_after_marketplace_is_removed() -> Result<()> {
             "Removed plugin `sample` from marketplace `debug`.",
         ));
 
-    let config = std::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE))?;
+    let config = std::fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE))?;
     assert!(!config.contains("[plugins.\"sample@debug\"]"));
 
     Ok(())
@@ -1096,26 +1096,26 @@ async fn plugin_remove_works_after_marketplace_is_removed() -> Result<()> {
 #[tokio::test]
 async fn plugin_add_rejects_cached_plugins_without_authorizing_marketplace_snapshot() -> Result<()>
 {
-    let (codex_home, _source) = setup_local_marketplace()?;
+    let (genex_home, _source) = setup_local_marketplace()?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .success();
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "marketplace", "remove", "debug"])
         .assert()
         .success();
 
     assert!(
-        codex_home
+        genex_home
             .path()
             .join("plugins/cache/debug/sample/1.2.3/.codex-plugin/plugin.json")
             .is_file()
     );
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args(["plugin", "add", "sample@debug"])
         .assert()
         .failure()
@@ -1233,7 +1233,7 @@ impl RemoteMarketplaceFixture {
     async fn run(&self, args: &[&str]) -> Result<Output> {
         Ok(Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
             .current_dir(self.home.path())
-            .env("CODEX_HOME", self.home.path())
+            .env("GENEX_HOME", self.home.path())
             .env("HOME", self.home.path())
             .env_remove("PROVIDER_API_KEY")
             .env_remove("CODEX_API_KEY")

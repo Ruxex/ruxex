@@ -109,7 +109,7 @@ async fn remote_compact_v2_trims_tool_search_output_to_empty_tools_array() -> Re
                 }),
         )
         .await?;
-        let codex = &harness.test().codex;
+        let codex = &harness.test().genex;
         let history = [
             json!({"type": "message", "role": "user", "content": [{"type": "input_text", "text": "find the tool"}]}),
             json!({"type": "tool_search_call", "call_id": call_id, "execution": "client", "arguments": {"query": "oversized deferred tool"}}),
@@ -167,7 +167,7 @@ async fn remote_compact_v2_trim_estimate_uses_session_base_instructions() -> Res
                 }),
         )
         .await?;
-        let codex = &harness.test().codex;
+        let codex = &harness.test().genex;
         let history = [
             json!({"type": "message", "role": "user", "content": [{"type": "input_text", "text": "older user"}]}),
             json!({"type": "function_call", "call_id": "retained", "name": "exec_command", "arguments": "{}"}),

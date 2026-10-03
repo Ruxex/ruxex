@@ -607,9 +607,9 @@ async fn history_lookup_response_is_routed_to_requesting_thread() -> Result<()> 
     let thread_id = ThreadId::new();
 
     let local_home = tempfile::tempdir()?;
-    app.local_settings.codex_home = AbsolutePathBuf::from_absolute_path(local_home.path())?;
+    app.local_settings.genex_home = AbsolutePathBuf::from_absolute_path(local_home.path())?;
     let history_config = genex_message_history::HistoryConfig::new(
-        app.local_settings.codex_home.clone(),
+        app.local_settings.genex_home.clone(),
         &app.local_settings.history,
     );
     genex_message_history::append_entry("local prompt", thread_id, &history_config).await?;
@@ -1945,7 +1945,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
         let root_thread_id = ThreadId::new();
         let rollout_dir = app
             .config
-            .codex_home
+            .genex_home
             .join("sessions")
             .join("2026")
             .join("01")
@@ -2266,7 +2266,7 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
     let config = app.chat_widget.config_ref().clone();
     let parent_thread_id = ThreadId::from_string(
         &app_test_support::create_fake_rollout(
-            config.codex_home.as_path(),
+            config.genex_home.as_path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -2391,7 +2391,7 @@ async fn resume_rejects_selected_config_profile_permission_definitions() -> Resu
     loader.user_config_path = Some(selected.abs());
     loader.user_config_profile = Some("work".parse()?);
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .loader_overrides(loader)
         .build()
         .await?;
@@ -2406,8 +2406,8 @@ async fn resume_rejects_selected_config_profile_permission_definitions() -> Resu
 #[tokio::test]
 async fn apply_permission_profile_selection_preserves_loader_overrides() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    let selected_config = codex_home.path().join("work.config.toml");
+    let genex_home = tempdir()?;
+    let selected_config = genex_home.path().join("work.config.toml");
     std::fs::write(
         &selected_config,
         r#"
@@ -2417,7 +2417,7 @@ default_permissions = "locked-down"
 ":minimal" = "read"
 "#,
     )?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
     app.loader_overrides.user_config_path = Some(selected_config.abs());
     app.harness_overrides.sandbox_mode = Some(SandboxMode::WorkspaceWrite);
     app.harness_overrides.permission_profile = Some(PermissionProfile::workspace_write());
@@ -2489,8 +2489,8 @@ default_permissions = "locked-down"
 #[tokio::test]
 async fn update_feature_flags_enabling_guardian_selects_auto_review() -> Result<()> {
     let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
     let auto_review = auto_review_mode();
     let mut app_server = start_config_write_test_app_server(&app).await?;
 
@@ -2576,7 +2576,7 @@ async fn update_feature_flags_enabling_guardian_selects_auto_review() -> Result<
         .join("\n");
     assert!(rendered.contains("Permissions updated to Approve for me"));
 
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert!(config.contains("guardian_approval = true"));
     assert!(config.contains("approvals_reviewer = \"auto_review\""));
     assert!(config.contains("approval_policy = \"on-request\""));
@@ -2589,9 +2589,9 @@ async fn update_feature_flags_enabling_guardian_selects_auto_review() -> Result<
 async fn update_feature_flags_disabling_guardian_clears_review_policy_and_restores_default()
 -> Result<()> {
     let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    let config_toml_path = codex_home.path().join("config.toml").abs();
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    let config_toml_path = genex_home.path().join("config.toml").abs();
     let config_toml = "approvals_reviewer = \"guardian_subagent\"\napproval_policy = \"on-request\"\nsandbox_mode = \"workspace-write\"\n\n[features]\nguardian_approval = true\n";
     std::fs::write(config_toml_path.as_path(), config_toml)?;
     let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -2669,7 +2669,7 @@ async fn update_feature_flags_disabling_guardian_clears_review_policy_and_restor
         .join("\n");
     assert!(rendered.contains("Permissions updated to Ask for approval"));
 
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert!(!config.contains("guardian_approval = true"));
     assert!(!config.contains("approvals_reviewer ="));
     assert!(config.contains("approval_policy = \"on-request\""));
@@ -2682,10 +2682,10 @@ async fn update_feature_flags_disabling_guardian_clears_review_policy_and_restor
 async fn update_feature_flags_enabling_guardian_overrides_explicit_manual_review_policy()
 -> Result<()> {
     let (mut app, _app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
     let auto_review = auto_review_mode();
-    let config_toml_path = codex_home.path().join("config.toml").abs();
+    let config_toml_path = genex_home.path().join("config.toml").abs();
     let config_toml = "approvals_reviewer = \"user\"\n";
     std::fs::write(config_toml_path.as_path(), config_toml)?;
     let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -2737,7 +2737,7 @@ async fn update_feature_flags_enabling_guardian_overrides_explicit_manual_review
         })
     );
 
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert!(config.contains("approvals_reviewer = \"auto_review\""));
     assert!(config.contains("guardian_approval = true"));
     assert!(config.contains("approval_policy = \"on-request\""));
@@ -2750,9 +2750,9 @@ async fn update_feature_flags_enabling_guardian_overrides_explicit_manual_review
 async fn update_feature_flags_disabling_guardian_clears_manual_review_policy_without_history()
 -> Result<()> {
     let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    let config_toml_path = codex_home.path().join("config.toml").abs();
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    let config_toml_path = genex_home.path().join("config.toml").abs();
     let config_toml = "approvals_reviewer = \"user\"\napproval_policy = \"on-request\"\nsandbox_mode = \"workspace-write\"\n\n[features]\nguardian_approval = true\n";
     std::fs::write(config_toml_path.as_path(), config_toml)?;
     let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -2799,7 +2799,7 @@ async fn update_feature_flags_disabling_guardian_clears_manual_review_policy_wit
         "manual review should not emit a permissions history update when the effective state stays default"
     );
 
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert!(!config.contains("guardian_approval = true"));
     assert!(!config.contains("approvals_reviewer ="));
     app_server.shutdown().await?;
@@ -4895,12 +4895,12 @@ async fn set_thread_goal_draft_materializes_long_objective_and_confirms_before_p
     let response = app_server.thread_goal_get(thread_id).await?;
     let goal = response.goal.expect("goal should be set");
     let saved_objective = goal.objective.clone();
-    let codex_home = app_server
-        .codex_home_path(&app.chat_widget.config_ref().codex_home)
+    let genex_home = app_server
+        .genex_home_path(&app.chat_widget.config_ref().genex_home)
         .expect("genex home");
-    assert!(goal_files::objective_file_path(&goal.objective, Some(&codex_home)).is_some());
+    assert!(goal_files::objective_file_path(&goal.objective, Some(&genex_home)).is_some());
     assert_eq!(
-        goal_files::objective_text_for_edit(&mut app_server, Some(&codex_home), &goal.objective)
+        goal_files::objective_text_for_edit(&mut app_server, Some(&genex_home), &goal.objective)
             .await
             .expect("managed goal file should be readable"),
         objective
@@ -4913,10 +4913,10 @@ async fn set_thread_goal_draft_materializes_long_objective_and_confirms_before_p
     let suffix = "attachments/00000000-0000-4000-8000-000000000000/goal-objective.md";
     for path in [
         format!("/tmp/{suffix}"),
-        format!("{codex_home}/../other/{suffix}"),
-        format!("{codex_home}/other/{suffix}"),
+        format!("{genex_home}/../other/{suffix}"),
+        format!("{genex_home}/other/{suffix}"),
     ] {
-        assert!(!is_managed(&codex_home, &path));
+        assert!(!is_managed(&genex_home, &path));
     }
     assert!(!is_managed(
         &AppServerPath::from_app_server("/tmp/codex\\home"),
@@ -4924,7 +4924,7 @@ async fn set_thread_goal_draft_materializes_long_objective_and_confirms_before_p
     ));
     let unix_path = AppServerPath::from_app_server("/tmp/codex\\").join("a");
     assert_eq!(unix_path.as_str(), "/tmp/codex\\/a");
-    let attachments_dir = app.chat_widget.config_ref().codex_home.join("attachments");
+    let attachments_dir = app.chat_widget.config_ref().genex_home.join("attachments");
     let attachment_count = std::fs::read_dir(&attachments_dir)?.count();
     let placeholder = "[Pasted Content 5 chars]";
     let paste_draft = crate::goal_files::GoalDraft {
@@ -5867,7 +5867,7 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
 async fn remote_exec_resume_current_cwd_is_rejected() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
     std::fs::write(
-        app.config.codex_home.join("config.toml"),
+        app.config.genex_home.join("config.toml"),
         "[tui]\nresume_cwd = \"current\"\n",
     )?;
     app.environment_manager = Arc::new(
@@ -5875,7 +5875,7 @@ async fn remote_exec_resume_current_cwd_is_rejected() -> Result<()> {
             Some("ws://127.0.0.1:8765".to_string()),
             Some(genex_exec_server::ExecServerRuntimePaths::new(
                 std::env::current_exe()?,
-                /*codex_linux_sandbox_exe*/ None,
+                /*genex_linux_sandbox_exe*/ None,
             )?),
         )
         .await,
@@ -5926,7 +5926,7 @@ async fn remote_resume_keeps_server_only_cwd_out_of_local_config() -> Result<()>
     };
     let filename_timestamp = "2025-01-05T12-00-00";
     let thread_id = app_test_support::create_fake_rollout(
-        app.config.codex_home.as_path(),
+        app.config.genex_home.as_path(),
         filename_timestamp,
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -5935,7 +5935,7 @@ async fn remote_resume_keeps_server_only_cwd_out_of_local_config() -> Result<()>
     )
     .expect("materialized rollout should be created");
     let rollout_path = app_test_support::rollout_path(
-        app.config.codex_home.as_path(),
+        app.config.genex_home.as_path(),
         filename_timestamp,
         &thread_id,
     );
@@ -5994,14 +5994,14 @@ async fn remote_resume_keeps_server_only_cwd_out_of_local_config() -> Result<()>
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
     let temp_dir = tempdir()?;
-    let codex_home = temp_dir.path().join("codex-home");
+    let genex_home = temp_dir.path().join("genex-home");
     let launch_cwd = temp_dir.path().join("launch");
     let active_cwd = temp_dir.path().join("active");
     let session_cwd = temp_dir.path().join("session");
     let explicit_cwd = temp_dir.path().join("explicit");
     let runtime_cwd = temp_dir.path().join("runtime");
     for directory in [
-        &codex_home,
+        &genex_home,
         &launch_cwd,
         &active_cwd,
         &session_cwd,
@@ -6025,7 +6025,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
         ("session", true, false, true, "runtime"),
     ] {
         std::fs::write(
-            codex_home.join("config.toml"),
+            genex_home.join("config.toml"),
             format!("[tui]\nresume_cwd = \"{configured_mode}\"\n"),
         )?;
         for cwd in [
@@ -6036,14 +6036,14 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             &runtime_cwd,
         ] {
             crate::legacy_core::config::set_project_trust_level(
-                &codex_home,
+                &genex_home,
                 cwd,
                 genex_protocol::config_types::TrustLevel::Trusted,
             )
             .map_err(std::io::Error::other)?;
         }
         let config = ConfigBuilder::default()
-            .codex_home(codex_home.clone())
+            .genex_home(genex_home.clone())
             .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
             .harness_overrides(ConfigOverrides {
                 cwd: Some(active_cwd.clone()),
@@ -6053,7 +6053,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             .await?;
         let filename_timestamp = "2025-01-05T12-00-00";
         let thread_id = app_test_support::create_fake_rollout(
-            &codex_home,
+            &genex_home,
             filename_timestamp,
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -6062,7 +6062,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
         )
         .expect("materialized rollout should be created");
         let rollout_path =
-            app_test_support::rollout_path(&codex_home, filename_timestamp, &thread_id);
+            app_test_support::rollout_path(&genex_home, filename_timestamp, &thread_id);
         let mut rollout_lines = std::fs::read_to_string(&rollout_path)?
             .lines()
             .map(serde_json::from_str::<serde_json::Value>)
@@ -6086,7 +6086,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
                     Some("ws://127.0.0.1:8765".to_string()),
                     Some(genex_exec_server::ExecServerRuntimePaths::new(
                         std::env::current_exe()?,
-                        /*codex_linux_sandbox_exe*/ None,
+                        /*genex_linux_sandbox_exe*/ None,
                     )?),
                 )
                 .await,
@@ -6160,24 +6160,24 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
 #[tokio::test]
 async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Result<()> {
     let temp_dir = tempdir()?;
-    let codex_home = temp_dir.path().join("codex-home");
+    let genex_home = temp_dir.path().join("genex-home");
     let launch_cwd = temp_dir.path().join("launch");
     let active_cwd = temp_dir.path().join("active");
     let first_session_cwd = temp_dir.path().join("first-session");
     let second_session_cwd = temp_dir.path().join("second-session");
-    std::fs::create_dir_all(&codex_home)?;
+    std::fs::create_dir_all(&genex_home)?;
     std::fs::create_dir_all(&launch_cwd)?;
     std::fs::create_dir_all(&active_cwd)?;
     std::fs::create_dir_all(&first_session_cwd)?;
     std::fs::create_dir_all(&second_session_cwd)?;
     crate::legacy_core::config::set_project_trust_level(
-        &codex_home,
+        &genex_home,
         &launch_cwd,
         genex_protocol::config_types::TrustLevel::Trusted,
     )
     .map_err(std::io::Error::other)?;
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.clone())
+        .genex_home(genex_home.clone())
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
         .harness_overrides(ConfigOverrides {
             cwd: Some(active_cwd.clone()),
@@ -6211,7 +6211,7 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
         ),
     ] {
         let thread_id = app_test_support::create_fake_rollout(
-            &codex_home,
+            &genex_home,
             filename_timestamp,
             metadata_timestamp,
             "Saved user message",
@@ -6220,7 +6220,7 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
         )
         .expect("materialized rollout should be created");
         let rollout_path =
-            app_test_support::rollout_path(&codex_home, filename_timestamp, &thread_id);
+            app_test_support::rollout_path(&genex_home, filename_timestamp, &thread_id);
         let mut rollout_lines = std::fs::read_to_string(&rollout_path)?
             .lines()
             .map(serde_json::from_str::<serde_json::Value>)
@@ -6291,7 +6291,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
     let config = app.chat_widget.config_ref().clone();
     let filename_ts = "2025-01-05T12-00-00";
     let source_thread_id = app_test_support::create_fake_paginated_rollout(
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         filename_ts,
         "2025-01-05T12:00:00Z",
         "unused preview",
@@ -6300,7 +6300,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
     )
     .expect("materialized rollout should be created");
     let source_path =
-        app_test_support::rollout_path(config.codex_home.as_path(), filename_ts, &source_thread_id);
+        app_test_support::rollout_path(config.genex_home.as_path(), filename_ts, &source_thread_id);
     let session_meta = std::fs::read_to_string(&source_path)?
         .lines()
         .next()
@@ -7647,7 +7647,7 @@ async fn clear_only_ui_reset_preserves_chat_session_state() {
 async fn clear_only_ui_reset_allows_active_skill_warning_to_render_again() {
     let mut app = make_test_app().await;
     let error = SkillErrorInfo {
-        path: test_path_buf("/tmp/project/.codex/skills/abc/SKILL.md"),
+        path: test_path_buf("/tmp/project/.genex/skills/abc/SKILL.md"),
         message: "invalid description".to_string(),
     };
 

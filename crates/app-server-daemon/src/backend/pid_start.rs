@@ -114,12 +114,12 @@ impl PidBackend {
         {
             command.arg("--managed-daemon");
         } else if managed_app_server {
-            let codex_home = self
+            let genex_home = self
                 .pid_file
                 .parent()
                 .and_then(std::path::Path::parent)
-                .context("daemon pid path has no Codex home")?;
-            let recovery_file = genex_app_server_transport::daemon_recovery_file_path(codex_home);
+                .context("daemon pid path has no Genex home")?;
+            let recovery_file = genex_app_server_transport::daemon_recovery_file_path(genex_home);
             match fs::remove_file(&recovery_file).await {
                 Ok(()) => {}
                 Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
@@ -146,8 +146,8 @@ impl PidBackend {
             use windows_sys::Win32::System::Threading::DETACHED_PROCESS;
             // Preserve process-scoped paths before changing cwd; CA names match CUSTOM_CA_ENV_KEYS.
             for name in [
-                "CODEX_HOME",
-                "CODEX_SQLITE_HOME",
+                "GENEX_HOME",
+                "GENEX_SQLITE_HOME",
                 "CODEX_CA_CERTIFICATE",
                 "SSL_CERT_FILE",
                 "REQUESTS_CA_BUNDLE",
@@ -166,7 +166,7 @@ impl PidBackend {
                 let Some(mut value) = std::env::var_os(name) else {
                     continue;
                 };
-                if matches!(name, "CODEX_SQLITE_HOME" | "npm_config_cafile") {
+                if matches!(name, "GENEX_SQLITE_HOME" | "npm_config_cafile") {
                     value = value.to_str().unwrap_or_default().trim().into();
                 }
                 // These consumers expand `~` independently of the working directory.
@@ -177,7 +177,7 @@ impl PidBackend {
                 } else {
                     matches!(
                         name,
-                        "CODEX_SQLITE_HOME" | "AWS_CONFIG_FILE" | "AWS_SHARED_CREDENTIALS_FILE"
+                        "GENEX_SQLITE_HOME" | "AWS_CONFIG_FILE" | "AWS_SHARED_CREDENTIALS_FILE"
                     ) && std::path::Path::new(&value).starts_with("~")
                 };
                 if value.is_empty() || expands_home {

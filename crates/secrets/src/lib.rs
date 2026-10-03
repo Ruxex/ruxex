@@ -100,38 +100,38 @@ pub struct SecretsManager {
 }
 
 impl SecretsManager {
-    pub fn new(codex_home: PathBuf, backend_kind: SecretsBackendKind) -> Self {
+    pub fn new(genex_home: PathBuf, backend_kind: SecretsBackendKind) -> Self {
         let backend: Arc<dyn SecretsBackend> = match backend_kind {
             SecretsBackendKind::Local => {
                 let keyring_store: Arc<dyn KeyringStore> = Arc::new(DefaultKeyringStore);
-                Arc::new(LocalSecretsBackend::new(codex_home, keyring_store))
+                Arc::new(LocalSecretsBackend::new(genex_home, keyring_store))
             }
         };
         Self { backend }
     }
 
     pub fn new_with_keyring_store(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         backend_kind: SecretsBackendKind,
         keyring_store: Arc<dyn KeyringStore>,
     ) -> Self {
         let backend: Arc<dyn SecretsBackend> = match backend_kind {
             SecretsBackendKind::Local => {
-                Arc::new(LocalSecretsBackend::new(codex_home, keyring_store))
+                Arc::new(LocalSecretsBackend::new(genex_home, keyring_store))
             }
         };
         Self { backend }
     }
 
     pub fn new_with_keyring_store_and_namespace(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         backend_kind: SecretsBackendKind,
         keyring_store: Arc<dyn KeyringStore>,
         namespace: LocalSecretsNamespace,
     ) -> Self {
         let backend: Arc<dyn SecretsBackend> = match backend_kind {
             SecretsBackendKind::Local => Arc::new(LocalSecretsBackend::new_with_namespace(
-                codex_home,
+                genex_home,
                 keyring_store,
                 namespace,
             )),
@@ -180,10 +180,10 @@ pub fn environment_id_from_cwd(cwd: &Path) -> String {
 }
 
 /// Computes the OS keyring account name used to store the local secrets passphrase.
-pub fn compute_keyring_account(codex_home: &Path) -> String {
-    let canonical = codex_home
+pub fn compute_keyring_account(genex_home: &Path) -> String {
+    let canonical = genex_home
         .canonicalize()
-        .unwrap_or_else(|_| codex_home.to_path_buf())
+        .unwrap_or_else(|_| genex_home.to_path_buf())
         .to_string_lossy()
         .into_owned();
     let mut hasher = Sha256::new();
@@ -224,10 +224,10 @@ mod tests {
 
     #[test]
     fn manager_round_trips_local_backend() -> Result<()> {
-        let codex_home = tempfile::tempdir().expect("tempdir");
+        let genex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
         let manager = SecretsManager::new_with_keyring_store(
-            codex_home.path().to_path_buf(),
+            genex_home.path().to_path_buf(),
             SecretsBackendKind::Local,
             keyring,
         );

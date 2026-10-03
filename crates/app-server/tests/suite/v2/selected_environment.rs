@@ -24,11 +24,11 @@ use tokio::time::timeout;
 const AGENTS_INSTRUCTIONS: &str = "selected environment workspace instructions";
 const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(10);
 
-fn write_mock_config(codex_home: &Path, server_uri: &str) -> std::io::Result<()> {
+fn write_mock_config(genex_home: &Path, server_uri: &str) -> std::io::Result<()> {
     MockResponsesConfig::new(server_uri)
         .with_root_config("compact_prompt = \"compact\"\nmodel_auto_compact_token_limit = 100000")
         .with_provider_config("supports_websockets = false")
-        .write(codex_home)
+        .write(genex_home)
 }
 
 fn text_turn_params(thread_id: String, prompt: &str) -> TurnStartParams {
@@ -45,10 +45,10 @@ fn text_turn_params(thread_id: String, prompt: &str) -> TurnStartParams {
 #[tokio::test]
 async fn thread_start_reports_selected_environment_metadata() -> Result<()> {
     let server = responses::start_mock_server().await;
-    let codex_home = TempDir::new()?;
-    write_mock_config(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_mock_config(genex_home.path(), &server.uri())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let selected_workspace_roots = app_server
@@ -67,7 +67,7 @@ async fn thread_start_reports_selected_environment_metadata() -> Result<()> {
     } = app_server
         .start_thread(ThreadStartParams::default())
         .await?;
-    let host_cwd = codex_home.path().to_path_buf().abs().canonicalize()?;
+    let host_cwd = genex_home.path().to_path_buf().abs().canonicalize()?;
     let cwd = cwd.canonicalize()?;
     assert_eq!(
         (cwd, runtime_workspace_roots, active_permission_profile),
@@ -95,10 +95,10 @@ async fn thread_start_reports_selected_environment_instruction_source() -> Resul
         ]),
     )
     .await;
-    let codex_home = TempDir::new()?;
-    write_mock_config(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_mock_config(genex_home.path(), &server.uri())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -159,10 +159,10 @@ async fn turn_model_context_uses_selected_environment() -> Result<()> {
         ]),
     )
     .await;
-    let codex_home = TempDir::new()?;
-    write_mock_config(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_mock_config(genex_home.path(), &server.uri())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let (environment_cwd, environment_shell) = {
@@ -233,15 +233,15 @@ async fn command_execution_notifications_preserve_selected_environment_paths() -
         create_final_assistant_message_sse_response("done")?,
     ])
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config("compact_prompt = \"compact\"\nmodel_auto_compact_token_limit = 100000")
         .with_provider_config("supports_websockets = false")
         .with_sandbox_mode("danger-full-access")
         .enable_feature(Feature::UnifiedExec)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 

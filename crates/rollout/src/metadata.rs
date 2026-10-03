@@ -166,12 +166,12 @@ pub async fn extract_metadata_from_rollout(
 
 pub(crate) async fn backfill_sessions(
     runtime: &genex_state::StateRuntime,
-    codex_home: &Path,
+    genex_home: &Path,
     default_provider: &str,
 ) {
     backfill_sessions_with_lease(
         runtime,
-        codex_home,
+        genex_home,
         default_provider,
         BACKFILL_LEASE_SECONDS,
     )
@@ -180,7 +180,7 @@ pub(crate) async fn backfill_sessions(
 
 pub(crate) async fn backfill_sessions_with_lease(
     runtime: &genex_state::StateRuntime,
-    codex_home: &Path,
+    genex_home: &Path,
     default_provider: &str,
     backfill_lease_seconds: i64,
 ) {
@@ -193,7 +193,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         Err(err) => {
             warn!(
                 "failed to read backfill state at {}: {err}",
-                codex_home.display()
+                genex_home.display()
             );
             BackfillState::default()
         }
@@ -206,7 +206,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         Err(err) => {
             warn!(
                 "failed to claim backfill worker at {}: {err}",
-                codex_home.display()
+                genex_home.display()
             );
             return;
         }
@@ -214,7 +214,7 @@ pub(crate) async fn backfill_sessions_with_lease(
     if !claimed {
         info!(
             "state db backfill already running at {}; skipping duplicate worker",
-            codex_home.display()
+            genex_home.display()
         );
         return;
     }
@@ -223,7 +223,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         Err(err) => {
             warn!(
                 "failed to read claimed backfill state at {}: {err}",
-                codex_home.display()
+                genex_home.display()
             );
             BackfillState {
                 status: BackfillStatus::Running,
@@ -235,15 +235,15 @@ pub(crate) async fn backfill_sessions_with_lease(
         if let Err(err) = runtime.mark_backfill_running().await {
             warn!(
                 "failed to mark backfill running at {}: {err}",
-                codex_home.display()
+                genex_home.display()
             );
         } else {
             backfill_state.status = BackfillStatus::Running;
         }
     }
 
-    let sessions_root = codex_home.join(SESSIONS_SUBDIR);
-    let archived_root = codex_home.join(ARCHIVED_SESSIONS_SUBDIR);
+    let sessions_root = genex_home.join(SESSIONS_SUBDIR);
+    let archived_root = genex_home.join(ARCHIVED_SESSIONS_SUBDIR);
     let mut rollout_paths: Vec<BackfillRolloutPath> = Vec::new();
     for (root, archived) in [(sessions_root, false), (archived_root, true)] {
         if !tokio::fs::try_exists(&root).await.unwrap_or(false) {
@@ -252,7 +252,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         match collect_rollout_paths(&root).await {
             Ok(paths) => {
                 rollout_paths.extend(paths.into_iter().map(|path| BackfillRolloutPath {
-                    watermark: backfill_watermark_for_path(codex_home, &path),
+                    watermark: backfill_watermark_for_path(genex_home, &path),
                     path,
                     archived,
                 }));
@@ -327,7 +327,7 @@ pub(crate) async fn backfill_sessions_with_lease(
             {
                 warn!(
                     "failed to checkpoint backfill at {}: {err}",
-                    codex_home.display()
+                    genex_home.display()
                 );
             } else {
                 last_watermark = Some(last_entry.watermark.clone());
@@ -340,7 +340,7 @@ pub(crate) async fn backfill_sessions_with_lease(
     {
         warn!(
             "failed to mark backfill complete at {}: {err}",
-            codex_home.display()
+            genex_home.display()
         );
     }
 
@@ -379,8 +379,8 @@ struct BackfillRolloutPath {
     archived: bool,
 }
 
-fn backfill_watermark_for_path(codex_home: &Path, path: &Path) -> String {
-    path.strip_prefix(codex_home)
+fn backfill_watermark_for_path(genex_home: &Path, path: &Path) -> String {
+    path.strip_prefix(genex_home)
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/")

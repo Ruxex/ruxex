@@ -45,7 +45,7 @@ fn source_record(cwd: &Path, role: &str, text: &str) -> Value {
 }
 
 struct ImportFixture {
-    _codex_home: TempDir,
+    _genex_home: TempDir,
     project_root: PathBuf,
     session_path: PathBuf,
     app_server: TestAppServer,
@@ -53,10 +53,10 @@ struct ImportFixture {
 
 impl ImportFixture {
     async fn new() -> Result<Self> {
-        let codex_home = TempDir::new()?;
-        let project_root = codex_home.path().join("repo");
+        let genex_home = TempDir::new()?;
+        let project_root = genex_home.path().join("repo");
         std::fs::create_dir_all(&project_root)?;
-        let session_path = codex_home
+        let session_path = genex_home
             .path()
             .join(concat!(".", "cla", "ude"))
             .join("projects/repo/session.jsonl");
@@ -64,9 +64,9 @@ impl ImportFixture {
         let initial_record = source_record(&project_root, "user", FIRST_USER);
         std::fs::write(&session_path, format!("{initial_record}\n"))?;
 
-        let app_server = start_app_server(codex_home.path()).await?;
+        let app_server = start_app_server(genex_home.path()).await?;
         Ok(Self {
-            _codex_home: codex_home,
+            _genex_home: genex_home,
             project_root,
             session_path,
             app_server,
@@ -74,7 +74,7 @@ impl ImportFixture {
     }
 
     fn ledger_path(&self) -> PathBuf {
-        self._codex_home
+        self._genex_home
             .path()
             .join("external_agent_session_imports.json")
     }
@@ -187,7 +187,7 @@ impl ImportFixture {
 
     async fn restart(&mut self) -> Result<()> {
         timeout(TIMEOUT, self.app_server.shutdown_gracefully()).await??;
-        self.app_server = start_app_server(self._codex_home.path()).await?;
+        self.app_server = start_app_server(self._genex_home.path()).await?;
         Ok(())
     }
 
@@ -217,10 +217,10 @@ impl ImportFixture {
     }
 }
 
-async fn start_app_server(codex_home: &Path) -> Result<TestAppServer> {
-    let home = codex_home.display().to_string();
+async fn start_app_server(genex_home: &Path) -> Result<TestAppServer> {
+    let home = genex_home.display().to_string();
     TestAppServer::builder()
-        .with_codex_home(codex_home)
+        .with_genex_home(genex_home)
         .with_env_overrides(&[("HOME", Some(home.as_str()))])
         .build_initialized_with_timeout(TIMEOUT)
         .await
@@ -305,7 +305,7 @@ async fn active_target_is_deferred_without_checkpoint() -> Result<()> {
 async fn cold_diverged_target_is_deferred_without_checkpoint() -> Result<()> {
     let model = create_mock_responses_server_repeating_assistant(NATIVE_ASSISTANT).await;
     let mut fixture = ImportFixture::new().await?;
-    MockResponsesConfig::new(&model.uri()).write(fixture._codex_home.path())?;
+    MockResponsesConfig::new(&model.uri()).write(fixture._genex_home.path())?;
     fixture.restart().await?;
     let original = fixture.import_one().await?;
     fixture.resume(&original).await?;

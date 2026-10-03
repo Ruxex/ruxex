@@ -50,9 +50,9 @@ pub(crate) fn quiet_startup_test_pump() -> StartupDraftPump {
 
 #[tokio::test]
 async fn startup_draft_hydrates_its_header_without_moving_the_composer() {
-    let codex_home = tempfile::tempdir().expect("create temporary Genex home");
+    let genex_home = tempfile::tempdir().expect("create temporary Genex home");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .build()
         .await
         .expect("build startup configuration");
@@ -389,9 +389,9 @@ fn startup_draft_preserves_windows_altgr_text_input() {
 
 #[tokio::test]
 async fn startup_draft_applies_paste_burst_preferences_without_losing_buffered_input() {
-    let codex_home = tempfile::tempdir().expect("create temporary Genex home");
+    let genex_home = tempfile::tempdir().expect("create temporary Genex home");
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .build()
         .await
         .expect("build startup configuration");
@@ -437,9 +437,9 @@ async fn startup_draft_applies_paste_burst_preferences_without_losing_buffered_i
 
 #[tokio::test]
 async fn startup_draft_applies_editor_keymap_without_enabling_vim() {
-    let codex_home = tempfile::tempdir().expect("create temporary Genex home");
+    let genex_home = tempfile::tempdir().expect("create temporary Genex home");
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .build()
         .await
         .expect("build startup configuration");

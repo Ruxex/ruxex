@@ -51,8 +51,8 @@ const READ_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[test]
 fn standalone_app_server_emits_json_info_events() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let event = app_server_json_shutdown_event("codex-app-server", &[], codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    let event = app_server_json_shutdown_event("codex-app-server", &[], genex_home.path())?;
 
     assert_eq!(
         event,
@@ -85,17 +85,17 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             .mount(&collector)
             .await;
 
-        let codex_home = TempDir::new()?;
+        let genex_home = TempDir::new()?;
         let endpoint = format!("{}/v1/metrics", collector.uri());
         std::fs::write(
-            codex_home.path().join("config.toml"),
+            genex_home.path().join("config.toml"),
             format!(
                 "[metrics]\nenabled = true\n\n[otel.metrics_exporter.otlp-http]\nendpoint = {endpoint:?}\nprotocol = \"json\"\n"
             ),
         )?;
 
         let _app_server = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .with_env_overrides(&[
                 ("OTEL_METRIC_EXPORT_INTERVAL", Some("200")),
             ])
@@ -219,7 +219,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
         }
 
         let state = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+            genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
             "test-provider".to_string(),
         )
         .await?;
@@ -317,15 +317,15 @@ async fn sqlite_log_metrics_grpc_exports_do_not_create_log_cycles(grpc_status: &
         Ok::<(), std::io::Error>(())
     });
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "[metrics]\nenabled = true\n\n[otel.metrics_exporter.otlp-grpc]\nendpoint = {endpoint:?}\n"
         ),
     )?;
     let _app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[
             ("OTEL_METRIC_EXPORT_INTERVAL", Some("200")),
         ])
@@ -374,15 +374,15 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
         create_final_assistant_message_sse_response("done")?,
     ])
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::UnifiedExec)
         .with_root_config("compact_prompt = \"compact\"\nmodel_auto_compact_token_limit = 100000")
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_json_logging("warn,genex_core::tools::parallel=info")
         .build_initialized()
         .await?;

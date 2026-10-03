@@ -61,13 +61,13 @@ impl ConfiguredMarketplaceUpgradeOutcome {
 }
 
 pub fn upgrade_configured_git_marketplaces(
-    codex_home: &Path,
+    genex_home: &Path,
     config_layer_stack: &ConfigLayerStack,
     marketplace_name: Option<&str>,
     reload_config: &ConfigLayerReload,
 ) -> ConfiguredMarketplaceUpgradeOutcome {
     upgrade_configured_git_marketplaces_with_mode(
-        codex_home,
+        genex_home,
         config_layer_stack,
         marketplace_name,
         PluginGitMode::Manual,
@@ -77,7 +77,7 @@ pub fn upgrade_configured_git_marketplaces(
 
 /// Applies the initiating operation's Git trust policy to every selected marketplace.
 pub(crate) fn upgrade_configured_git_marketplaces_with_mode(
-    codex_home: &Path,
+    genex_home: &Path,
     config_layer_stack: &ConfigLayerStack,
     marketplace_name: Option<&str>,
     mode: PluginGitMode,
@@ -98,7 +98,7 @@ pub(crate) fn upgrade_configured_git_marketplaces_with_mode(
         return ConfiguredMarketplaceUpgradeOutcome::default();
     }
 
-    let install_root = marketplace_install_root(codex_home);
+    let install_root = marketplace_install_root(genex_home);
     let mut selected_marketplaces = marketplaces
         .iter()
         .map(|marketplace| marketplace.name.clone())
@@ -124,7 +124,7 @@ pub(crate) fn upgrade_configured_git_marketplaces_with_mode(
                 }
             };
         match upgrade_configured_git_marketplace(
-            codex_home,
+            genex_home,
             &install_root,
             &marketplace,
             reload_config,
@@ -213,7 +213,7 @@ fn parse_configured_git_marketplace(
 }
 
 fn upgrade_configured_git_marketplace(
-    codex_home: &Path,
+    genex_home: &Path,
     install_root: &Path,
     marketplace: &ConfiguredGitMarketplace,
     reload_config: &ConfigLayerReload,
@@ -229,7 +229,7 @@ fn upgrade_configured_git_marketplace(
         None => (marketplace.source.as_str(), marketplace.ref_name.as_deref()),
     };
     let remote_revision = git_remote_revision(
-        codex_home,
+        genex_home,
         source,
         ref_name,
         MARKETPLACE_UPGRADE_GIT_TIMEOUT,
@@ -262,7 +262,7 @@ fn upgrade_configured_git_marketplace(
         })?;
 
     let activated_revision = clone_git_source(
-        codex_home,
+        genex_home,
         source,
         ref_name,
         &marketplace.sparse_paths,

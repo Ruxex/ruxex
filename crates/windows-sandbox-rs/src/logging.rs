@@ -52,8 +52,8 @@ pub fn current_log_file_path(base_dir: &Path) -> PathBuf {
     log_file_path_for_utc_date(base_dir, chrono::Utc::now().date_naive())
 }
 
-pub fn current_log_file_path_for_codex_home(codex_home: &Path) -> PathBuf {
-    current_log_file_path(&crate::sandbox_dir(codex_home))
+pub fn current_log_file_path_for_genex_home(genex_home: &Path) -> PathBuf {
+    current_log_file_path(&crate::sandbox_dir(genex_home))
 }
 
 pub fn log_writer(base_dir: &Path) -> Option<RollingFileAppender> {
@@ -243,12 +243,12 @@ mod tests {
     }
 
     #[test]
-    fn current_log_file_path_for_codex_home_uses_sandbox_dir() {
-        let codex_home = Path::new("codex-home");
+    fn current_log_file_path_for_genex_home_uses_sandbox_dir() {
+        let genex_home = Path::new("genex-home");
 
         assert_eq!(
-            current_log_file_path_for_codex_home(codex_home),
-            current_log_file_path(&codex_home.join(".sandbox"))
+            current_log_file_path_for_genex_home(genex_home),
+            current_log_file_path(&genex_home.join(".sandbox"))
         );
     }
 }

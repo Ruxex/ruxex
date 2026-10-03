@@ -1022,7 +1022,7 @@ impl Session {
             .without_plugins(&session_configuration.disabled_plugin_ids);
         let trusted_plugin_roots = TrustedPluginRoots::from_plugin_load_outcome(
             &plugin_outcome,
-            per_turn_config.codex_home.as_path(),
+            per_turn_config.genex_home.as_path(),
         );
         let skills_snapshot = if per_turn_config
             .features

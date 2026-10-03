@@ -94,7 +94,7 @@ async fn selected_plugin_mcp_startup_respects_explicit_mentions(
         start_apps_server_with_delays(Vec::new(), Vec::new(), Duration::ZERO, Duration::ZERO)
             .await?;
     let fixture = selected_capability_fixture(&responses_server.uri(), &apps_url)?;
-    let config_path = fixture.codex_home.path().join("config.toml");
+    let config_path = fixture.genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?.replace(
         "executor_capability_discovery = true",
         &format!("executor_capability_discovery = {executor_capability_discovery}"),
@@ -107,7 +107,7 @@ async fn selected_plugin_mcp_startup_respects_explicit_mentions(
     )
     .await;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(fixture.codex_home.path())
+        .with_genex_home(fixture.genex_home.path())
         // This fixture owns environments.toml and selects its environments explicitly.
         .without_auto_env()
         .build()
@@ -120,7 +120,7 @@ async fn selected_plugin_mcp_startup_respects_explicit_mentions(
     )
     .await?;
     let mut exec_server =
-        spawn_exec_server(fixture.codex_home.path(), &fixture.exec_server_url).await?;
+        spawn_exec_server(fixture.genex_home.path(), &fixture.exec_server_url).await?;
     add_environment(&mut app_server, &fixture.exec_server_url).await?;
 
     let text_input = |text| UserInput::Text {
@@ -217,14 +217,14 @@ async fn managed_plugins_requirement_disables_selected_executor_plugin_capabilit
     )
     .await?;
     let fixture = selected_capability_fixture(&responses_server.uri(), &apps_url)?;
-    let config_path = fixture.codex_home.path().join("config.toml");
+    let config_path = fixture.genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?.replace(
         "executor_capability_discovery = true",
         &format!("executor_capability_discovery = {executor_capability_discovery}\nplugins = true"),
     );
     std::fs::write(config_path, config)?;
     std::fs::write(
-        fixture.codex_home.path().join("requirements.toml"),
+        fixture.genex_home.path().join("requirements.toml"),
         "[features]\nplugins = false\n",
     )?;
     let response_mock = responses::mount_sse_once(
@@ -238,7 +238,7 @@ async fn managed_plugins_requirement_disables_selected_executor_plugin_capabilit
     .await;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(fixture.codex_home.path())
+        .with_genex_home(fixture.genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -250,7 +250,7 @@ async fn managed_plugins_requirement_disables_selected_executor_plugin_capabilit
     )
     .await?;
     let mut exec_server =
-        spawn_exec_server(fixture.codex_home.path(), &fixture.exec_server_url).await?;
+        spawn_exec_server(fixture.genex_home.path(), &fixture.exec_server_url).await?;
     add_environment(&mut app_server, &fixture.exec_server_url).await?;
 
     run_turn(
@@ -351,7 +351,7 @@ async fn selected_capability_stack_tracks_environment_availability_and_resume() 
     .await;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(fixture.codex_home.path())
+        .with_genex_home(fixture.genex_home.path())
         // This fixture owns environments.toml and selects its environments explicitly.
         .without_auto_env()
         .build()
@@ -375,7 +375,7 @@ async fn selected_capability_stack_tracks_environment_availability_and_resume() 
     assert_selected_capabilities_absent(&initial_requests[0]);
 
     let mut exec_server =
-        spawn_exec_server(fixture.codex_home.path(), &fixture.exec_server_url).await?;
+        spawn_exec_server(fixture.genex_home.path(), &fixture.exec_server_url).await?;
     add_environment(&mut app_server, &fixture.exec_server_url).await?;
     wait_for_selected_mcp_server(&mut app_server, &thread_id).await?;
 
@@ -403,7 +403,7 @@ async fn selected_capability_stack_tracks_environment_availability_and_resume() 
     std::fs::remove_file(&fixture.pid_file)?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(fixture.codex_home.path())
+        .with_genex_home(fixture.genex_home.path())
         // This fixture owns environments.toml and selects its environments explicitly.
         .without_auto_env()
         .build()
@@ -438,7 +438,7 @@ async fn selected_capability_stack_tracks_environment_availability_and_resume() 
             .is_some_and(|text| text.contains(NO_SELECTED_SKILLS_MESSAGE))
     );
 
-    exec_server = spawn_exec_server(fixture.codex_home.path(), &fixture.exec_server_url).await?;
+    exec_server = spawn_exec_server(fixture.genex_home.path(), &fixture.exec_server_url).await?;
     add_environment(&mut app_server, &fixture.exec_server_url).await?;
     wait_for_selected_mcp_server(&mut app_server, &thread_id).await?;
 
@@ -542,8 +542,8 @@ async fn selected_capabilities_become_available_between_samples_in_one_turn(
     let fixture = selected_capability_fixture(&responses_server.uri(), &apps_url)?;
     let initialize_barrier = fixture.block_mcp_startup()?;
     let stop_hook_barrier = if matches!(mention_timing, MentionTiming::InitialBeforeRestart) {
-        let barrier = fixture.codex_home.path().join("allow-stop-hook");
-        let hook_path = fixture.codex_home.path().join("wait-for-stop.py");
+        let barrier = fixture.genex_home.path().join("allow-stop-hook");
+        let hook_path = fixture.genex_home.path().join("wait-for-stop.py");
         std::fs::write(
             &hook_path,
             "import json\nimport sys\nimport time\nfrom pathlib import Path\n\n\
@@ -555,12 +555,12 @@ async fn selected_capabilities_become_available_between_samples_in_one_turn(
             barrier.display()
         ));
         std::fs::write(
-            fixture.codex_home.path().join("requirements.toml"),
+            fixture.genex_home.path().join("requirements.toml"),
             format!(
                 "[[hooks.Stop]]\n[[hooks.Stop.hooks]]\ntype = 'command'\ncommand = {command}\ntimeout = 60\n"
             ),
         )?;
-        let config_path = fixture.codex_home.path().join("config.toml");
+        let config_path = fixture.genex_home.path().join("config.toml");
         let config = std::fs::read_to_string(&config_path)?
             .replace("[features]\n", "[features]\nhooks = true\n");
         std::fs::write(config_path, config)?;
@@ -601,7 +601,7 @@ async fn selected_capabilities_become_available_between_samples_in_one_turn(
     .await;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(fixture.codex_home.path())
+        .with_genex_home(fixture.genex_home.path())
         // This fixture owns environments.toml and selects its environments explicitly.
         .without_auto_env()
         .build()
@@ -723,7 +723,7 @@ async fn selected_capabilities_become_available_between_samples_in_one_turn(
         request_id
     };
     let mut exec_server =
-        spawn_exec_server(fixture.codex_home.path(), &fixture.exec_server_url).await?;
+        spawn_exec_server(fixture.genex_home.path(), &fixture.exec_server_url).await?;
     add_environment(&mut app_server, &fixture.exec_server_url).await?;
     if let Some(request_id) = request_id {
         app_server
@@ -812,7 +812,7 @@ async fn selected_capabilities_become_available_between_samples_in_one_turn(
 }
 
 struct SelectedCapabilityFixture {
-    codex_home: TempDir,
+    genex_home: TempDir,
     _plugin: TempDir,
     pid_file: std::path::PathBuf,
     exec_server_url: String,
@@ -838,13 +838,13 @@ fn selected_capability_fixture(
     responses_server_uri: &str,
     apps_url: &str,
 ) -> Result<SelectedCapabilityFixture> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        codex_home.path(),
+        genex_home.path(),
         responses_server_uri,
         apps_url,
     )?;
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?.replacen(
         "model_provider = \"mock_provider\"",
         "mcp_oauth_credentials_store = \"file\"\nmodel_provider = \"mock_provider\"",
@@ -857,7 +857,7 @@ fn selected_capability_fixture(
         ),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .email("selected-capability-stack@example.com")
@@ -872,13 +872,13 @@ fn selected_capability_fixture(
     let exec_server_url = format!("ws://{}", listener.local_addr()?);
     drop(listener);
     std::fs::write(
-        codex_home.path().join("environments.toml"),
+        genex_home.path().join("environments.toml"),
         format!(
             "default = \"{EXECUTOR_ID}\"\ninclude_local = true\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nurl = \"{exec_server_url}\"\nconnect_timeout_sec = 0.05\n"
         ),
     )?;
 
-    let local_skill_dir = codex_home.path().join("skills/local-deploy");
+    let local_skill_dir = genex_home.path().join("skills/local-deploy");
     std::fs::create_dir_all(&local_skill_dir)?;
     std::fs::write(
         local_skill_dir.join("SKILL.md"),
@@ -932,7 +932,7 @@ fn selected_capability_fixture(
     };
     let environment_cwd = AbsolutePathBuf::try_from(plugin.path().to_path_buf())?;
     Ok(SelectedCapabilityFixture {
-        codex_home,
+        genex_home,
         _plugin: plugin,
         pid_file,
         exec_server_url,
@@ -1150,14 +1150,14 @@ async fn wait_for_selected_mcp_server(
     Ok(())
 }
 
-async fn spawn_exec_server(codex_home: &std::path::Path, url: &str) -> Result<Child> {
+async fn spawn_exec_server(genex_home: &std::path::Path, url: &str) -> Result<Child> {
     let mut child = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
         .args(["exec-server", "--listen", url])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .kill_on_drop(true)
-        .env("CODEX_HOME", codex_home)
+        .env("GENEX_HOME", genex_home)
         .env(EXECUTOR_ENV_NAME, EXECUTOR_ENV_VALUE)
         .spawn()?;
     let stdout = child

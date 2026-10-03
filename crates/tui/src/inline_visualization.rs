@@ -41,8 +41,8 @@ pub(crate) struct InlineVisualizationContext {
 
 impl InlineVisualizationContext {
     #[cfg(test)]
-    pub(crate) fn new(codex_home: &Path, thread_id: ThreadId) -> Option<Self> {
-        Self::new_with_writable_roots(codex_home, thread_id, std::iter::empty())
+    pub(crate) fn new(genex_home: &Path, thread_id: ThreadId) -> Option<Self> {
+        Self::new_with_writable_roots(genex_home, thread_id, std::iter::empty())
     }
 
     pub(crate) fn from_config(
@@ -55,12 +55,12 @@ impl InlineVisualizationContext {
         }
         let writable_roots = file_system_policy.get_writable_roots_with_cwd(config.cwd.as_path());
         let context = Self::new_with_writable_roots(
-            config.codex_home.as_path(),
+            config.genex_home.as_path(),
             thread_id,
             writable_roots.iter().map(|root| root.root.as_path()),
         )?;
         let viewer_caches = [
-            config.codex_home.as_path().join("visualization-viewers"),
+            config.genex_home.as_path().join("visualization-viewers"),
             context.viewer_dir.parent()?.parent()?.to_path_buf(),
         ];
         for viewer_cache in viewer_caches {
@@ -79,17 +79,17 @@ impl InlineVisualizationContext {
     }
 
     fn new_with_writable_roots<'a>(
-        codex_home: &Path,
+        genex_home: &Path,
         thread_id: ThreadId,
         writable_roots: impl IntoIterator<Item = &'a Path>,
     ) -> Option<Self> {
-        let codex_home = fs::canonicalize(codex_home).ok()?;
+        let genex_home = fs::canonicalize(genex_home).ok()?;
         let thread_id = thread_id.to_string();
         let uuid = Uuid::parse_str(&thread_id).ok()?;
         let timestamp = uuid.get_timestamp()?;
         let (seconds, nanos) = timestamp.to_unix();
         let created_at = DateTime::from_timestamp(i64::try_from(seconds).ok()?, nanos)?;
-        let visualizations_dir = codex_home.join("visualizations");
+        let visualizations_dir = genex_home.join("visualizations");
         let granted_thread_dirs = writable_roots
             .into_iter()
             .filter(|root| is_visualization_thread_dir(&visualizations_dir, root))
@@ -104,7 +104,7 @@ impl InlineVisualizationContext {
         Some(Self {
             visualizations_dir,
             thread_dir,
-            viewer_dir: codex_home
+            viewer_dir: genex_home
                 .join("visualization-viewers")
                 .join(thread_id)
                 .join(artifact_thread_id),

@@ -19,7 +19,7 @@ async fn replacement_preserves_remote_launch_paths_and_older_servers() -> Result
     ] {
         let (mut app, _events, _ops) = make_test_app_with_channels().await;
         let home = tempdir()?;
-        app.config.codex_home = home.path().to_path_buf().abs();
+        app.config.genex_home = home.path().to_path_buf().abs();
         app.config.sqlite = SqliteConfig::new_for_testing(home.path().abs());
         std::fs::write(
             home.path().join("config.toml"),

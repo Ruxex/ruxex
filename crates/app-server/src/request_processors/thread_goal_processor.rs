@@ -321,7 +321,7 @@ impl ThreadGoalRequestProcessor {
             }
         } else {
             let rollout_path = genex_rollout::find_thread_path_by_id_str(
-                &self.config.codex_home,
+                &self.config.genex_home,
                 &thread_id.to_string(),
                 self.state_db.as_deref(),
             )
@@ -382,7 +382,7 @@ impl ThreadGoalRequestProcessor {
                 ))
             })?,
             None => genex_rollout::find_thread_path_by_id_str(
-                &self.config.codex_home,
+                &self.config.genex_home,
                 &thread_id.to_string(),
                 self.state_db.as_deref(),
             )

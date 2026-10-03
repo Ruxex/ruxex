@@ -11,7 +11,7 @@ use genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
 use genex_exec_server::CODEX_FS_HELPER_ARG1;
 use genex_install_context::InstallContext;
 use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
-use genex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_genex_home;
 #[cfg(target_os = "windows")]
 use genex_windows_sandbox::CODEX_WINDOWS_SANDBOX_ARG1;
 #[cfg(unix)]
@@ -31,8 +31,8 @@ pub struct Arg0DispatchPaths {
     /// Prefer this over [`std::env::current_exe()`] in code that may run under
     /// a test harness, where `current_exe()` can point at the harness binary
     /// instead of the real Genex CLI.
-    pub codex_self_exe: Option<PathBuf>,
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub genex_self_exe: Option<PathBuf>,
+    pub genex_linux_sandbox_exe: Option<PathBuf>,
     pub main_execve_wrapper_exe: Option<PathBuf>,
 }
 
@@ -205,7 +205,7 @@ fn prepare_path_env_var_with_aliases(
 /// `codex-linux-sandbox` we *directly* execute
 /// [`genex_linux_sandbox::run_main`] (which never returns). Otherwise we:
 ///
-/// 1.  Load `.env` values from `~/.codex/.env` before creating any threads.
+/// 1.  Load `.env` values from `~/.genex/.env` before creating any threads.
 /// 2.  Spawn a main runtime thread with a controlled stack size.
 /// 3.  Construct a Tokio multi-thread runtime.
 /// 4.  Capture the current executable path and derive the
@@ -260,8 +260,8 @@ where
     Fut: Future<Output = anyhow::Result<()>>,
 {
     let paths = Arg0DispatchPaths {
-        codex_self_exe: current_exe.clone(),
-        codex_linux_sandbox_exe: if cfg!(target_os = "linux") {
+        genex_self_exe: current_exe.clone(),
+        genex_linux_sandbox_exe: if cfg!(target_os = "linux") {
             linux_sandbox_exe_path(path_entry_guard.as_ref(), current_exe)
         } else {
             None
@@ -286,7 +286,7 @@ fn linux_sandbox_exe_path(
     // re-exec through a path whose basename still triggers arg0 dispatch on
     // bubblewrap builds that do not support `--argv0`.
     path_entry_guard
-        .and_then(|path_entry| path_entry.paths().codex_linux_sandbox_exe.clone())
+        .and_then(|path_entry| path_entry.paths().genex_linux_sandbox_exe.clone())
         .or(current_exe)
 }
 
@@ -299,13 +299,13 @@ fn build_runtime() -> anyhow::Result<tokio::runtime::Runtime> {
 
 const ILLEGAL_ENV_VAR_PREFIX: &str = "CODEX_";
 
-/// Load env vars from ~/.codex/.env.
+/// Load env vars from ~/.genex/.env.
 ///
 /// Security: Do not allow `.env` files to create or modify any variables
 /// with names starting with `CODEX_`.
 fn load_dotenv() {
-    if let Ok(codex_home) = find_codex_home()
-        && let Ok(iter) = dotenvy::from_path_iter(codex_home.join(".env"))
+    if let Ok(genex_home) = find_genex_home()
+        && let Ok(iter) = dotenvy::from_path_iter(genex_home.join(".env"))
     {
         set_filtered(iter);
     }
@@ -341,24 +341,24 @@ where
 fn prepare_path_entry_for_codex_aliases(
     existing_path: Option<OsString>,
 ) -> std::io::Result<(Arg0PathEntryGuard, OsString)> {
-    let codex_home = find_codex_home()?;
+    let genex_home = find_genex_home()?;
     #[cfg(not(debug_assertions))]
     {
         // Guard against placing helpers in system temp directories outside debug builds.
         let temp_root = std::env::temp_dir();
-        if codex_home.starts_with(&temp_root) {
+        if genex_home.starts_with(&temp_root) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 format!(
-                    "Refusing to create helper binaries under temporary dir {temp_root:?} (codex_home: {codex_home:?})"
+                    "Refusing to create helper binaries under temporary dir {temp_root:?} (genex_home: {genex_home:?})"
                 ),
             ));
         }
     }
 
-    std::fs::create_dir_all(&codex_home)?;
-    // Use a CODEX_HOME-scoped temp root to avoid cluttering the top-level directory.
-    let temp_root = codex_home.join("tmp").join("arg0");
+    std::fs::create_dir_all(&genex_home)?;
+    // Use a GENEX_HOME-scoped temp root to avoid cluttering the top-level directory.
+    let temp_root = genex_home.join("tmp").join("arg0");
     std::fs::create_dir_all(&temp_root)?;
     #[cfg(unix)]
     {
@@ -421,8 +421,8 @@ fn prepare_path_entry_for_codex_aliases(
     let updated_path_env_var = path_env_with_entry(path, existing_path);
 
     let paths = Arg0DispatchPaths {
-        codex_self_exe: std::env::current_exe().ok(),
-        codex_linux_sandbox_exe: {
+        genex_self_exe: std::env::current_exe().ok(),
+        genex_linux_sandbox_exe: {
             #[cfg(target_os = "linux")]
             {
                 Some(path.join(CODEX_LINUX_SANDBOX_ARG0))
@@ -611,7 +611,7 @@ mod tests {
     fn windows_batch_alias_preserves_unicode_executable_paths() -> anyhow::Result<()> {
         let root = TempDir::new()?;
         let profile = root.path().join("用户");
-        let alias_directory = profile.join(".codex").join("tmp").join("arg0");
+        let alias_directory = profile.join(".genex").join("tmp").join("arg0");
         let executable_directory = profile.join("bin");
         fs::create_dir_all(&alias_directory)?;
         fs::create_dir_all(&executable_directory)?;
@@ -644,7 +644,7 @@ mod tests {
         assert_eq!(
             super::windows_batch_executable_path(
                 Path::new(r"D:\Tools\codex.exe"),
-                Path::new(r"C:\Users\person\.codex\tmp\arg0"),
+                Path::new(r"C:\Users\person\.genex\tmp\arg0"),
             ),
             r"D:\Tools\codex.exe",
         );
@@ -659,8 +659,8 @@ mod tests {
             temp_dir,
             lock_file,
             Arg0DispatchPaths {
-                codex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
-                codex_linux_sandbox_exe: Some(alias_path.clone()),
+                genex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
+                genex_linux_sandbox_exe: Some(alias_path.clone()),
                 main_execve_wrapper_exe: None,
             },
         );
@@ -740,8 +740,8 @@ mod tests {
             temp_dir,
             lock_file,
             Arg0DispatchPaths {
-                codex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
-                codex_linux_sandbox_exe: Some(alias_path.clone()),
+                genex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
+                genex_linux_sandbox_exe: Some(alias_path.clone()),
                 main_execve_wrapper_exe: Some(alias_path),
             },
         );
@@ -751,7 +751,7 @@ mod tests {
             Some(PathBuf::from("/usr/bin/genex")),
             |paths| async move {
                 let alias_path = paths
-                    .codex_linux_sandbox_exe
+                    .genex_linux_sandbox_exe
                     .or(paths.main_execve_wrapper_exe)
                     .expect("unix dispatch should create at least one alias path");
                 ensure!(

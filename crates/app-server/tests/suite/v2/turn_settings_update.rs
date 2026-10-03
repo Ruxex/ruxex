@@ -95,12 +95,12 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
         ],
     )
     .await;
-    let codex_home = TempDir::new()?;
-    mock_config(codex_home.path(), &server.uri())?
+    let genex_home = TempDir::new()?;
+    mock_config(genex_home.path(), &server.uri())?
         .enable_feature(Feature::StepModelSwitching)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     if matches!(scenario, UpdateScenario::Rejected) {
-        let path = codex_home.path().join("step-models.json");
+        let path = genex_home.path().join("step-models.json");
         let mut catalog: ModelsResponse = serde_json::from_slice(&std::fs::read(&path)?)?;
         for model in &mut catalog.models {
             model.node_repl_disabled = model.slug == MODEL_B;
@@ -108,7 +108,7 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
         std::fs::write(path, serde_json::to_vec(&catalog)?)?;
     }
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let request_id = app
@@ -290,12 +290,12 @@ async fn turn_settings_update_reports_unavailable_without_starting_or_changing_a
         ]),
     )
     .await;
-    let codex_home = TempDir::new()?;
-    mock_config(codex_home.path(), &server.uri())?
+    let genex_home = TempDir::new()?;
+    mock_config(genex_home.path(), &server.uri())?
         .enable_feature(Feature::StepModelSwitching)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let request_id = app
@@ -368,10 +368,10 @@ async fn disabled_turn_settings_update_reports_rejection_without_changing_future
         ]),
     )
     .await;
-    let codex_home = TempDir::new()?;
-    mock_config(codex_home.path(), &server.uri())?.write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_config(genex_home.path(), &server.uri())?.write(genex_home.path())?;
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let request_id = app
@@ -464,13 +464,13 @@ async fn live_reviewer_updates_route_approvals_without_changing_future_turns(
         replies.push(responses::sse_completed(&format!("done-{index}")));
     }
     let requests = responses::mount_sse_sequence(&server, replies).await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     // Reviewer-only updates do not require the experimental model-switching feature.
-    mock_config(codex_home.path(), &server.uri())?
+    mock_config(genex_home.path(), &server.uri())?
         .enable_feature(Feature::GuardianApproval)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let id = app
@@ -552,7 +552,7 @@ async fn start_turn(app: &mut TestAppServer, thread_id: &str) -> Result<String> 
     Ok(response.turn.id)
 }
 
-fn mock_config(codex_home: &Path, server_uri: &str) -> Result<MockResponsesConfig> {
+fn mock_config(genex_home: &Path, server_uri: &str) -> Result<MockResponsesConfig> {
     let model = test_models_response()?
         .models
         .into_iter()
@@ -566,7 +566,7 @@ fn mock_config(codex_home: &Path, server_uri: &str) -> Result<MockResponsesConfi
             model
         })
         .collect();
-    let catalog_path = codex_home.join("step-models.json");
+    let catalog_path = genex_home.join("step-models.json");
     std::fs::write(
         &catalog_path,
         serde_json::to_vec(&ModelsResponse { models })?,

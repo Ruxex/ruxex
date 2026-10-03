@@ -90,22 +90,22 @@ fn configured_local_marketplace_update(source: &str) -> MarketplaceConfigUpdate<
 }
 
 fn record_git_marketplace(
-    codex_home: &Path,
+    genex_home: &Path,
     marketplace_name: &str,
     source: &Path,
     ref_name: Option<&str>,
 ) -> Result<()> {
     let source = source.display().to_string();
     record_user_marketplace(
-        codex_home,
+        genex_home,
         marketplace_name,
         &configured_git_marketplace_update(&source, ref_name),
     )?;
     Ok(())
 }
 
-fn disable_plugin_startup_tasks(codex_home: &Path) -> Result<()> {
-    let config_path = codex_home.join("config.toml");
+fn disable_plugin_startup_tasks(genex_home: &Path) -> Result<()> {
+    let config_path = genex_home.join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
@@ -114,13 +114,13 @@ fn disable_plugin_startup_tasks(codex_home: &Path) -> Result<()> {
     Ok(())
 }
 
-fn marketplace_install_root(codex_home: &Path) -> std::path::PathBuf {
-    codex_home.join(INSTALLED_MARKETPLACES_DIR)
+fn marketplace_install_root(genex_home: &Path) -> std::path::PathBuf {
+    genex_home.join(INSTALLED_MARKETPLACES_DIR)
 }
 
-fn expected_installed_root(codex_home: &Path, marketplace_name: &str) -> Result<AbsolutePathBuf> {
+fn expected_installed_root(genex_home: &Path, marketplace_name: &str) -> Result<AbsolutePathBuf> {
     AbsolutePathBuf::try_from(
-        marketplace_install_root(&codex_home.canonicalize()?).join(marketplace_name),
+        marketplace_install_root(&genex_home.canonicalize()?).join(marketplace_name),
     )
     .context("expected installed root should be absolute")
 }
@@ -140,7 +140,7 @@ async fn send_marketplace_upgrade(
 
 #[tokio::test]
 async fn marketplace_upgrade_all_configured_git_marketplaces() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let debug_source = TempDir::new()?;
     let tools_source = TempDir::new()?;
     init_marketplace_repo(debug_source.path(), "debug", "debug old")?;
@@ -148,7 +148,7 @@ async fn marketplace_upgrade_all_configured_git_marketplaces() -> Result<()> {
     let debug_new_revision = commit_marketplace_marker(debug_source.path(), "debug new")?;
     let tools_new_revision = commit_marketplace_marker(tools_source.path(), "tools new")?;
     record_git_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "debug",
         debug_source.path(),
         Some(&debug_new_revision),
@@ -158,18 +158,18 @@ async fn marketplace_upgrade_all_configured_git_marketplaces() -> Result<()> {
         serde_json::to_string(&tools_source.path().to_string_lossy())?,
         serde_json::to_string(&tools_new_revision)?,
     );
-    disable_plugin_startup_tasks(codex_home.path())?;
-    let config_before = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    disable_plugin_startup_tasks(genex_home.path())?;
+    let config_before = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_args(&["--config", &tools_override])
         .without_auto_env()
         .build_initialized()
         .await?;
 
-    let debug_root = expected_installed_root(codex_home.path(), "debug")?;
-    let tools_root = expected_installed_root(codex_home.path(), "tools")?;
+    let debug_root = expected_installed_root(genex_home.path(), "debug")?;
+    let tools_root = expected_installed_root(genex_home.path(), "tools")?;
     let response = send_marketplace_upgrade(&mut mcp, /*marketplace_name*/ None).await?;
 
     assert_eq!(
@@ -188,7 +188,7 @@ async fn marketplace_upgrade_all_configured_git_marketplaces() -> Result<()> {
         std::fs::read_to_string(tools_root.as_path().join("marker.txt"))?,
         "tools new"
     );
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert_eq!(config, config_before);
     for (root, expected_revision) in [
         (debug_root, debug_new_revision),
@@ -211,7 +211,7 @@ async fn marketplace_upgrade_all_configured_git_marketplaces() -> Result<()> {
 async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configuration(
     invalid_user_config: bool,
 ) -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
     let plugin_source = TempDir::new()?;
     init_marketplace_repo(source.path(), "trusted", "old")?;
@@ -242,12 +242,12 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
     run_git(source.path(), &["add", ".agents/plugins/marketplace.json"])?;
     commit_marketplace_marker(source.path(), "new")?;
     record_git_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "trusted",
         source.path(),
         /*ref_name*/ None,
     )?;
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     std::fs::write(
         &config_path,
         format!(
@@ -256,23 +256,23 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
         ),
     )?;
 
-    run_git(codex_home.path(), &["init", "--quiet"])?;
+    run_git(genex_home.path(), &["init", "--quiet"])?;
     let source_path = source.path().display().to_string();
-    let missing_path = codex_home.path().join("missing").display().to_string();
+    let missing_path = genex_home.path().join("missing").display().to_string();
     let rewrite_key = format!("url.{missing_path}.insteadOf");
     for untrusted_source in [&source_path, &plugin_url] {
         run_git(
-            codex_home.path(),
+            genex_home.path(),
             &["config", "--add", &rewrite_key, untrusted_source],
         )?;
-        assert!(run_git(codex_home.path(), &["ls-remote", untrusted_source, "HEAD"]).is_err());
+        assert!(run_git(genex_home.path(), &["ls-remote", untrusted_source, "HEAD"]).is_err());
     }
 
     let manual_plugin_alias = "https://manual.example/plugin.git";
     let manual_plugin_rewrite = format!("url.{}.insteadOf", plugin_source.path().display());
     let config_before = std::fs::read_to_string(&config_path)?;
     let mut builder = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_plugin_startup_tasks()
         .with_env_overrides(&[
             ("GIT_CONFIG_COUNT", Some("1")),
@@ -296,7 +296,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
     let mut server = builder
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
-    let plugin_root = codex_home
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache/trusted/toolkit/1.0.0/.codex-plugin/plugin.json");
     timeout(DEFAULT_TIMEOUT, async {
@@ -310,7 +310,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
         // Subsequent explicit operations must pick up a repaired user config normally.
         std::fs::write(&config_path, config_before)?;
     }
-    let marketplace_path = marketplace_install_root(codex_home.path())
+    let marketplace_path = marketplace_install_root(genex_home.path())
         .join("trusted/.agents/plugins/marketplace.json");
     std::fs::write(
         &marketplace_path,
@@ -353,7 +353,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
         })
         .await?;
     assert!(
-        codex_home
+        genex_home
             .path()
             .join("plugins/cache/trusted/toolkit/1.1.0/.codex-plugin/plugin.json")
             .is_file(),
@@ -364,7 +364,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
 
 #[tokio::test]
 async fn marketplace_upgrade_named_marketplace_only() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let debug_source = TempDir::new()?;
     let tools_source = TempDir::new()?;
     init_marketplace_repo(debug_source.path(), "debug", "debug old")?;
@@ -372,22 +372,22 @@ async fn marketplace_upgrade_named_marketplace_only() -> Result<()> {
     commit_marketplace_marker(debug_source.path(), "debug new")?;
     commit_marketplace_marker(tools_source.path(), "tools new")?;
     record_git_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "debug",
         debug_source.path(),
         /*ref_name*/ None,
     )?;
     let tools_source_alias = "manual:tools";
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "tools",
         &configured_git_marketplace_update(tools_source_alias, /*ref_name*/ None),
     )?;
-    disable_plugin_startup_tasks(codex_home.path())?;
+    disable_plugin_startup_tasks(genex_home.path())?;
     let tools_rewrite = format!("url.{}.insteadOf", tools_source.path().display());
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[
             ("GIT_CONFIG_COUNT", Some("1")),
             ("GIT_CONFIG_KEY_0", Some(&tools_rewrite)),
@@ -397,7 +397,7 @@ async fn marketplace_upgrade_named_marketplace_only() -> Result<()> {
         .build_initialized()
         .await?;
 
-    let tools_root = expected_installed_root(codex_home.path(), "tools")?;
+    let tools_root = expected_installed_root(genex_home.path(), "tools")?;
     let response = send_marketplace_upgrade(&mut mcp, Some("tools")).await?;
 
     assert_eq!(
@@ -413,7 +413,7 @@ async fn marketplace_upgrade_named_marketplace_only() -> Result<()> {
         "tools new"
     );
     assert!(
-        !marketplace_install_root(codex_home.path())
+        !marketplace_install_root(genex_home.path())
             .join("debug")
             .exists()
     );
@@ -422,20 +422,20 @@ async fn marketplace_upgrade_named_marketplace_only() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_upgrade_returns_empty_roots_when_already_up_to_date() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
     init_marketplace_repo(source.path(), "debug", "debug old")?;
     commit_marketplace_marker(source.path(), "debug new")?;
     record_git_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "debug",
         source.path(),
         /*ref_name*/ None,
     )?;
-    disable_plugin_startup_tasks(codex_home.path())?;
+    disable_plugin_startup_tasks(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -457,16 +457,16 @@ async fn marketplace_upgrade_returns_empty_roots_when_already_up_to_date() -> Re
 
 #[tokio::test]
 async fn marketplace_upgrade_rejects_unknown_or_non_git_marketplace() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let local_source = TempDir::new()?;
     record_user_marketplace(
-        codex_home.path(),
+        genex_home.path(),
         "local-only",
         &configured_local_marketplace_update(&local_source.path().display().to_string()),
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;

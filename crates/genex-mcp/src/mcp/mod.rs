@@ -110,8 +110,8 @@ pub struct McpPermissionPromptAutoApproveContext {
 pub struct McpConfig {
     /// Requests server-side read-only filtering and invocation checks for MCP tools.
     pub requires_read_only_mcp_tools: bool,
-    /// Codex home directory used for MCP OAuth state and app-tool cache files.
-    pub codex_home: PathBuf,
+    /// Genex home directory used for MCP OAuth state and app-tool cache files.
+    pub genex_home: PathBuf,
     /// Trusted enterprise IdP inherited after normal catalog and policy resolution.
     pub mcp_enterprise_managed_auth: Option<McpEnterpriseManagedAuthConfig>,
     pub xaa_enabled: bool,
@@ -141,7 +141,7 @@ pub struct McpConfig {
     /// Explicit server permissions; unresolved or unavailable servers have no entry.
     pub server_permission_profiles: HashMap<String, PermissionProfile>,
     /// Optional path to `codex-linux-sandbox` for sandboxed MCP tool execution.
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub genex_linux_sandbox_exe: Option<PathBuf>,
     /// Whether to use legacy Landlock behavior in the MCP sandbox state.
     // TODO(anp): Reconcile this runtime-wide copy with TurnEnvironment::sandbox_context
     // for the environment that owns each MCP server.

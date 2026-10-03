@@ -39,9 +39,9 @@ fn windows_verbatim_path_prefix_does_not_count_as_glob_syntax() {
 async fn restricted_read_implicitly_allows_helper_executables() -> std::io::Result<()> {
     let temp_dir = TempDir::new()?;
     let cwd = temp_dir.path().join("workspace");
-    let codex_home = temp_dir.path().join(".codex");
+    let genex_home = temp_dir.path().join(".genex");
     let zsh_path = temp_dir.path().join("runtime").join("zsh");
-    let arg0_root = codex_home.join("tmp").join("arg0");
+    let arg0_root = genex_home.join("tmp").join("arg0");
     let allowed_arg0_dir = arg0_root.join("codex-arg0-session");
     let sibling_arg0_dir = arg0_root.join("codex-arg0-other-session");
     let execve_wrapper = allowed_arg0_dir.join("genex-execve-wrapper");
@@ -78,7 +78,7 @@ async fn restricted_read_implicitly_allows_helper_executables() -> std::io::Resu
             main_execve_wrapper_exe: Some(execve_wrapper),
             ..Default::default()
         },
-        AbsolutePathBuf::from_absolute_path(&codex_home)?,
+        AbsolutePathBuf::from_absolute_path(&genex_home)?,
     )
     .await?;
 

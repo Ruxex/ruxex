@@ -56,7 +56,7 @@ pub enum InstallMethod {
     Standalone {
         /// The managed standalone release directory. Legacy installs use paths
         /// such as
-        /// `~/.codex/packages/standalone/releases/0.111.0-x86_64-unknown-linux-musl`.
+        /// `~/.genex/packages/standalone/releases/0.111.0-x86_64-unknown-linux-musl`.
         /// Package-layout installs use the package root that contains `bin/`,
         /// `genex-resources/`, and `genex-path/`.
         release_dir: AbsolutePathBuf,
@@ -88,7 +88,7 @@ impl InstallContext {
         current_exe: Option<&Path>,
         method_override: Option<InstallMethod>,
     ) -> Self {
-        let genex_home = genex_utils_home_dir::find_codex_home().ok();
+        let genex_home = genex_utils_home_dir::find_genex_home().ok();
         Self::from_exe_with_genex_home(
             is_macos,
             current_exe,
@@ -303,11 +303,11 @@ impl GenexPackageLayout {
 
 fn install_method_from_exe(
     exe_path: &Path,
-    codex_home: Option<&Path>,
+    genex_home: Option<&Path>,
     package_layout: Option<&GenexPackageLayout>,
     is_macos: bool,
 ) -> InstallMethod {
-    if let Some(standalone_method) = standalone_install_method(exe_path, codex_home, package_layout)
+    if let Some(standalone_method) = standalone_install_method(exe_path, genex_home, package_layout)
     {
         return standalone_method;
     }
@@ -321,16 +321,16 @@ fn install_method_from_exe(
 
 fn standalone_install_method(
     exe_path: &Path,
-    codex_home: Option<&Path>,
+    genex_home: Option<&Path>,
     package_layout: Option<&GenexPackageLayout>,
 ) -> Option<InstallMethod> {
-    let canonical_codex_home = canonical_absolute_path(codex_home?)?;
+    let canonical_genex_home = canonical_absolute_path(genex_home?)?;
     let release_dir = if let Some(package_layout) = package_layout {
         package_layout.package_dir.clone()
     } else {
         canonical_absolute_path(exe_path)?.parent()?
     };
-    let releases_root = canonical_codex_home
+    let releases_root = canonical_genex_home
         .join("packages")
         .join(STANDALONE_PACKAGES_DIRNAME)
         .join(RELEASES_DIRNAME);
@@ -469,8 +469,8 @@ mod tests {
 
     #[test]
     fn detects_standalone_install_from_release_layout() -> std::io::Result<()> {
-        let codex_home = tempfile::tempdir()?;
-        let release_dir = codex_home
+        let genex_home = tempfile::tempdir()?;
+        let release_dir = genex_home
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         let resources_dir = release_dir.join(RESOURCES_DIRNAME);
@@ -493,7 +493,7 @@ mod tests {
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*codex_home*/ Some(codex_home.path()),
+            /*genex_home*/ Some(genex_home.path()),
         );
         assert_eq!(
             context,
@@ -527,8 +527,8 @@ mod tests {
 
     #[test]
     fn standalone_rg_falls_back_when_resources_are_missing() -> std::io::Result<()> {
-        let codex_home = tempfile::tempdir()?;
-        let release_dir = codex_home
+        let genex_home = tempfile::tempdir()?;
+        let release_dir = genex_home
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         fs::create_dir_all(&release_dir)?;
@@ -539,7 +539,7 @@ mod tests {
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*codex_home*/ Some(codex_home.path()),
+            /*genex_home*/ Some(genex_home.path()),
         );
         assert_eq!(context.rg_command(), default_rg_command());
         Ok(())
@@ -594,7 +594,7 @@ mod tests {
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*codex_home*/ None,
+            /*genex_home*/ None,
         );
         assert_eq!(
             context,
@@ -679,8 +679,8 @@ mod tests {
 
     #[test]
     fn standalone_package_layout_keeps_standalone_install_method() -> std::io::Result<()> {
-        let codex_home = tempfile::tempdir()?;
-        let package_dir = codex_home
+        let genex_home = tempfile::tempdir()?;
+        let package_dir = genex_home
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         let bin_dir = package_dir.join(BIN_DIRNAME);
@@ -705,7 +705,7 @@ mod tests {
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*codex_home*/ Some(codex_home.path()),
+            /*genex_home*/ Some(genex_home.path()),
         );
         assert_eq!(
             context,
@@ -778,7 +778,7 @@ mod tests {
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*codex_home*/ None,
+            /*genex_home*/ None,
         );
         assert_eq!(context.rg_command(), default_rg_command());
         Ok(())
@@ -804,7 +804,7 @@ mod tests {
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*codex_home*/ None,
+            /*genex_home*/ None,
         );
         assert_eq!(
             context.code_mode_host_program_from_exe(Some(&fallback_exe_path)),
@@ -902,7 +902,7 @@ mod tests {
             /*is_macos*/ true,
             /*current_exe*/ Some(Path::new("/opt/homebrew/bin/genex")),
             /*method_override*/ None,
-            /*codex_home*/ None,
+            /*genex_home*/ None,
         );
         assert_eq!(
             context,

@@ -41,13 +41,13 @@ pub(super) async fn unarchive_thread(
     let mut restored_path = None;
     let mut rollout_moves = Vec::new();
     for rollout_path in rollout_paths {
-        if !rollout_path_is_archived(store.config.codex_home.as_path(), rollout_path.as_path()) {
+        if !rollout_path_is_archived(store.config.genex_home.as_path(), rollout_path.as_path()) {
             continue;
         }
         let canonical_archived_path = scoped_rollout_path(
             store
                 .config
-                .codex_home
+                .genex_home
                 .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR),
             rollout_path.as_path(),
             "archived",
@@ -64,7 +64,7 @@ pub(super) async fn unarchive_thread(
         };
         let dest_dir = store
             .config
-            .codex_home
+            .genex_home
             .join(genex_rollout::SESSIONS_SUBDIR)
             .join(year)
             .join(month)

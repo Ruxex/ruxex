@@ -109,7 +109,7 @@ description: {name} skill
 
 fn skill_script_command(test: &TestGenex, script_name: &str) -> Result<String> {
     let script_path = fs::canonicalize(
-        test.codex_home_path()
+        test.genex_home_path()
             .join("skills/mbolin-test-skill/scripts")
             .join(script_name),
     )?;

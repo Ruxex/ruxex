@@ -37,11 +37,11 @@ use std::time::Duration;
 use tempfile::TempDir;
 use uuid::Uuid;
 
-fn test_config(codex_home: &Path) -> RolloutConfig {
+fn test_config(genex_home: &Path) -> RolloutConfig {
     RolloutConfig {
-        codex_home: codex_home.to_path_buf(),
-        sqlite: genex_state::SqliteConfig::new_for_testing(codex_home.abs()),
-        cwd: codex_home.to_path_buf(),
+        genex_home: genex_home.to_path_buf(),
+        sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
+        cwd: genex_home.to_path_buf(),
         model_provider_id: "test-provider".to_string(),
     }
 }

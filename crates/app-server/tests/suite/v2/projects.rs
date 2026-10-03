@@ -55,12 +55,12 @@ use uuid::Uuid;
 #[tokio::test]
 async fn projects_list_by_recency_and_preserve_metadata_timestamps() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let mut projects = Vec::new();
@@ -205,13 +205,13 @@ async fn projects_list_by_recency_and_preserve_metadata_timestamps() -> Result<(
 #[tokio::test]
 async fn projects_persist_and_assign_threads() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
-    let root = AbsolutePathBuf::from_absolute_path(codex_home.path())?;
+        .write(genex_home.path())?;
+    let root = AbsolutePathBuf::from_absolute_path(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -293,7 +293,7 @@ async fn projects_persist_and_assign_threads() -> Result<()> {
 
     drop(server);
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let resumed: ThreadResumeResponse = server
@@ -636,19 +636,19 @@ async fn projects_persist_and_assign_threads() -> Result<()> {
         .await?;
     assert_eq!(unassigned_after_delete.data.len(), 1);
     assert_eq!(unassigned_after_delete.data[0].id, started.thread.id);
-    assert!(codex_home.path().exists());
+    assert!(genex_home.path().exists());
     Ok(())
 }
 
 #[tokio::test]
 async fn deleted_project_is_dropped_before_first_durable_thread_persistence() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -733,12 +733,12 @@ async fn deleted_project_is_dropped_before_first_durable_thread_persistence() ->
 #[tokio::test]
 async fn project_import_is_atomic_and_notifies_after_commit_in_order() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -885,12 +885,12 @@ async fn project_import_is_atomic_and_notifies_after_commit_in_order() -> Result
 #[tokio::test]
 async fn projects_validate_filters_cursors_and_sqlite_less_assignment() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -968,7 +968,7 @@ async fn projects_validate_filters_cursors_and_sqlite_less_assignment() -> Resul
         format!("experimental_thread_store = {{ type = \"in_memory\", id = \"{store_id}\" }}"),
     )?;
     let mut unsupported_projects = TestAppServer::builder()
-        .with_codex_home(unsupported_projects_home.path())
+        .with_genex_home(unsupported_projects_home.path())
         .build_initialized()
         .await?;
     let start_id = unsupported_projects
@@ -1017,12 +1017,12 @@ async fn projects_validate_filters_cursors_and_sqlite_less_assignment() -> Resul
 #[tokio::test]
 async fn assigned_forks_inherit_projects_for_persistent_and_ephemeral_children() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let project: ProjectCreateResponse = server

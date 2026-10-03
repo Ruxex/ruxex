@@ -19,9 +19,9 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 60);
 const ALLOW: &str = "[in_app_browser]\nallow_external_browser_settings_import = true";
 const DENY: &str = "[in_app_browser]\nallow_external_browser_settings_import = false";
 
-async fn start_stable_server(codex_home: &TempDir) -> Result<TestAppServer> {
+async fn start_stable_server(genex_home: &TempDir) -> Result<TestAppServer> {
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     let initialized = timeout(
@@ -48,11 +48,11 @@ async fn config_requirements_read_preserves_import_policy() -> Result<()> {
         (ALLOW, Some(Some(true))),
         (DENY, Some(Some(false))),
     ] {
-        let codex_home = TempDir::new()?;
-        std::fs::write(codex_home.path().join("requirements.toml"), contents)?;
+        let genex_home = TempDir::new()?;
+        std::fs::write(genex_home.path().join("requirements.toml"), contents)?;
         // An unrecognized ordinary user setting cannot override managed policy.
-        std::fs::write(codex_home.path().join("config.toml"), ALLOW)?;
-        let mut server = start_stable_server(&codex_home).await?;
+        std::fs::write(genex_home.path().join("config.toml"), ALLOW)?;
+        let mut server = start_stable_server(&genex_home).await?;
         let request_id = server.send_config_requirements_read_request().await?;
         let wire: Value = timeout(READ_TIMEOUT, server.read_response(request_id)).await??;
         let expected_wire = expected_table
@@ -79,16 +79,16 @@ async fn config_requirements_read_preserves_import_policy() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn import_policy_is_separate_from_browser_feature_and_agent_policy() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         format!(
             "[features]\nin_app_browser = true\nbrowser_use = false\n\
              [browser_use]\ndisable_auto_review = true\n{DENY}"
         ),
     )?;
-    std::fs::write(codex_home.path().join("config.toml"), ALLOW)?;
-    let mut server = start_stable_server(&codex_home).await?;
+    std::fs::write(genex_home.path().join("config.toml"), ALLOW)?;
+    let mut server = start_stable_server(&genex_home).await?;
     let request_id = server.send_config_requirements_read_request().await?;
     let response: ConfigRequirementsReadResponse =
         timeout(READ_TIMEOUT, server.read_response(request_id)).await??;
@@ -122,10 +122,10 @@ async fn import_policy_is_separate_from_browser_feature_and_agent_policy() -> Re
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_requirements_read_rejects_invalid_import_policy() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let mut server = start_stable_server(&codex_home).await?;
+    let genex_home = TempDir::new()?;
+    let mut server = start_stable_server(&genex_home).await?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         "[in_app_browser]\nallow_external_browser_settings_import = \"false\"",
     )?;
     let request_id = server.send_config_requirements_read_request().await?;

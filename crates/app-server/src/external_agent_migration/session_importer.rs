@@ -66,7 +66,7 @@ enum SessionImportOutcome {
 
 #[derive(Clone)]
 pub(super) struct ExternalAgentSessionImporter {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     connector_metadata_roots: Vec<PathBuf>,
     permits: Arc<Semaphore>,
     append_checkpoint_permits: Arc<Semaphore>,
@@ -78,7 +78,7 @@ pub(super) struct ExternalAgentSessionImporter {
 
 impl ExternalAgentSessionImporter {
     pub(super) fn new(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         connector_metadata_roots: Vec<PathBuf>,
         thread_manager: Arc<ThreadManager>,
         thread_store: Arc<dyn ThreadStore>,
@@ -86,7 +86,7 @@ impl ExternalAgentSessionImporter {
         arg0_paths: Arg0DispatchPaths,
     ) -> Self {
         Self {
-            codex_home,
+            genex_home,
             connector_metadata_roots,
             permits: Arc::new(Semaphore::new(1)),
             append_checkpoint_permits: Arc::new(Semaphore::new(1)),
@@ -180,7 +180,7 @@ impl ExternalAgentSessionImporter {
             }
         }
         if let Err(err) = append_imported_session_connector_names(
-            &self.codex_home,
+            &self.genex_home,
             appended_connector_names_by_source_path,
         ) {
             record_import_error(
@@ -245,7 +245,7 @@ impl ExternalAgentSessionImporter {
             .into_iter()
             .map(|completed_import| completed_import.import)
             .collect();
-        if let Err(err) = record_completed_session_imports(&self.codex_home, completed_imports) {
+        if let Err(err) = record_completed_session_imports(&self.genex_home, completed_imports) {
             record_import_error(
                 &mut item_result,
                 "session_ledger_update",
@@ -300,7 +300,7 @@ impl ExternalAgentSessionImporter {
                 let cwd = session.cwd.clone();
                 let title = session.title.clone();
                 let appended = append_existing_session(
-                    &self.codex_home,
+                    &self.genex_home,
                     self.append_checkpoint_permits.as_ref(),
                     self.thread_manager.as_ref(),
                     self.thread_store.as_ref(),
@@ -368,9 +368,9 @@ impl ExternalAgentSessionImporter {
         session: ExternalAgentSessionMigration,
         metadata_mode: SessionMetadataMode,
     ) -> Result<Option<PendingSessionImport>, SessionImportStepFailure> {
-        let codex_home = self.codex_home.clone();
+        let genex_home = self.genex_home.clone();
         tokio::task::spawn_blocking(move || {
-            prepare_validated_session_import_with_metadata_mode(&codex_home, session, metadata_mode)
+            prepare_validated_session_import_with_metadata_mode(&genex_home, session, metadata_mode)
         })
         .await
         .map_err(|err| {
@@ -403,7 +403,7 @@ impl ExternalAgentSessionImporter {
                 /*request_overrides*/ None,
                 ConfigOverrides {
                     cwd: Some(cwd),
-                    codex_linux_sandbox_exe: self.arg0_paths.codex_linux_sandbox_exe.clone(),
+                    genex_linux_sandbox_exe: self.arg0_paths.genex_linux_sandbox_exe.clone(),
                     main_execve_wrapper_exe: self.arg0_paths.main_execve_wrapper_exe.clone(),
                     ..Default::default()
                 },

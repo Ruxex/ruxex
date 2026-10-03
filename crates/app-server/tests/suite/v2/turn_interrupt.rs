@@ -47,8 +47,8 @@ async fn turn_interrupt_aborts_running_turn() -> Result<()> {
     let shell_command = vec!["sleep".to_string(), "10".to_string()];
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -65,10 +65,10 @@ async fn turn_interrupt_aborts_running_turn() -> Result<()> {
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("workspace-write")
         .with_root_config(r#"approvals_reviewer = "user""#)
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -127,8 +127,8 @@ async fn turn_interrupt_aborts_running_turn() -> Result<()> {
 #[tokio::test]
 async fn turn_interrupt_rejects_completed_turn() -> Result<()> {
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
 
     let server = create_mock_responses_server_sequence_unchecked(vec![
         create_final_assistant_message_sse_response("done")?,
@@ -137,10 +137,10 @@ async fn turn_interrupt_rejects_completed_turn() -> Result<()> {
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("workspace-write")
         .with_root_config(r#"approvals_reviewer = "user""#)
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -214,8 +214,8 @@ async fn turn_interrupt_resolves_pending_command_approval_request() -> Result<()
     ];
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -230,10 +230,10 @@ async fn turn_interrupt_resolves_pending_command_approval_request() -> Result<()
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .with_root_config(r#"approvals_reviewer = "user""#)
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 

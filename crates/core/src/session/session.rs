@@ -124,7 +124,7 @@ pub(crate) struct SessionConfiguration {
     /// Top-level runtime workspace roots, independent of explicit environment selections.
     pub(super) runtime_workspace_roots: Vec<AbsolutePathBuf>,
     /// Directory containing all Codex state for this session.
-    pub(super) codex_home: AbsolutePathBuf,
+    pub(super) genex_home: AbsolutePathBuf,
     /// Optional user-facing name for the thread, updated during the session.
     pub(super) thread_name: Option<String>,
     /// Thread-owned plugin selection inherited by future turns.
@@ -157,8 +157,8 @@ impl SessionConfiguration {
         &self.legacy_fallback_cwd
     }
 
-    pub(crate) fn codex_home(&self) -> &AbsolutePathBuf {
-        &self.codex_home
+    pub(crate) fn genex_home(&self) -> &AbsolutePathBuf {
+        &self.genex_home
     }
 
     pub(super) fn inferred_environment_config(&self) -> EnvironmentConfig {
@@ -1152,7 +1152,7 @@ impl Session {
                 });
             }
             let effective_config = config.config_layer_stack.effective_config();
-            let config_path = config.codex_home.join(CONFIG_TOML_FILE);
+            let config_path = config.genex_home.join(CONFIG_TOML_FILE);
             if let Some(event) = unstable_features_warning_event(
                 effective_config.get("features").and_then(TomlValue::as_table),
                 config.suppress_unstable_features_warning,
@@ -1323,7 +1323,7 @@ impl Session {
                     watch::channel(state).0
                 });
                 ShellSnapshot::new(
-                    config.codex_home.clone(),
+                    config.genex_home.clone(),
                     thread_id,
                     session_telemetry.clone(),
                     state_db_ctx.clone(),

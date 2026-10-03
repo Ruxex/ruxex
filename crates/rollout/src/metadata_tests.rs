@@ -243,18 +243,18 @@ fn builder_from_items_falls_back_to_filename() {
 #[tokio::test]
 async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     let dir = tempdir().expect("tempdir");
-    let codex_home = dir.path().to_path_buf();
+    let genex_home = dir.path().to_path_buf();
     let first_uuid = Uuid::new_v4();
     let second_uuid = Uuid::new_v4();
     let first_path = write_rollout_in_sessions(
-        codex_home.as_path(),
+        genex_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         first_uuid,
         /*git*/ None,
     );
     let second_path = write_rollout_in_sessions(
-        codex_home.as_path(),
+        genex_home.as_path(),
         "2026-01-27T12-35-56",
         "2026-01-27T12:35:56Z",
         second_uuid,
@@ -262,12 +262,12 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     );
 
     let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await
     .expect("initialize runtime");
-    let first_watermark = backfill_watermark_for_path(codex_home.as_path(), first_path.as_path());
+    let first_watermark = backfill_watermark_for_path(genex_home.as_path(), first_path.as_path());
     runtime.mark_backfill_running().await.expect("mark running");
     runtime
         .checkpoint_backfill(first_watermark.as_str())
@@ -278,7 +278,7 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     ))
     .await;
 
-    backfill_sessions(runtime.as_ref(), codex_home.as_path(), "test-provider").await;
+    backfill_sessions(runtime.as_ref(), genex_home.as_path(), "test-provider").await;
 
     let first_id = ThreadId::from_string(&first_uuid.to_string()).expect("first thread id");
     let second_id = ThreadId::from_string(&second_uuid.to_string()).expect("second thread id");
@@ -305,7 +305,7 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     assert_eq!(
         state.last_watermark,
         Some(backfill_watermark_for_path(
-            codex_home.as_path(),
+            genex_home.as_path(),
             second_path.as_path()
         ))
     );
@@ -315,10 +315,10 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
 #[tokio::test]
 async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_fields() {
     let dir = tempdir().expect("tempdir");
-    let codex_home = dir.path().to_path_buf();
+    let genex_home = dir.path().to_path_buf();
     let thread_uuid = Uuid::new_v4();
     let rollout_path = write_rollout_in_sessions(
-        codex_home.as_path(),
+        genex_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         thread_uuid,
@@ -333,7 +333,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
     );
 
     let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await
@@ -351,7 +351,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         .await
         .expect("existing metadata upsert");
 
-    backfill_sessions(runtime.as_ref(), codex_home.as_path(), "test-provider").await;
+    backfill_sessions(runtime.as_ref(), genex_home.as_path(), "test-provider").await;
 
     let persisted = runtime
         .get_thread(thread_id)
@@ -369,11 +369,11 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
 #[tokio::test]
 async fn backfill_sessions_normalizes_cwd_before_upsert() {
     let dir = tempdir().expect("tempdir");
-    let codex_home = dir.path().to_path_buf();
+    let genex_home = dir.path().to_path_buf();
     let thread_uuid = Uuid::new_v4();
-    let session_cwd = codex_home.join(".");
+    let session_cwd = genex_home.join(".");
     let rollout_path = write_rollout_in_sessions_with_cwd(
-        codex_home.as_path(),
+        genex_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         thread_uuid,
@@ -383,13 +383,13 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
     );
 
     let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await
     .expect("initialize runtime");
 
-    backfill_sessions(runtime.as_ref(), codex_home.as_path(), "test-provider").await;
+    backfill_sessions(runtime.as_ref(), genex_home.as_path(), "test-provider").await;
 
     let thread_id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
     let stored = runtime
@@ -403,25 +403,25 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
 }
 
 fn write_rollout_in_sessions(
-    codex_home: &Path,
+    genex_home: &Path,
     filename_ts: &str,
     event_ts: &str,
     thread_uuid: Uuid,
     git: Option<GitInfo>,
 ) -> PathBuf {
     write_rollout_in_sessions_with_cwd(
-        codex_home,
+        genex_home,
         filename_ts,
         event_ts,
         thread_uuid,
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         git,
         ThreadHistoryMode::Paginated,
     )
 }
 
 fn write_rollout_in_sessions_with_cwd(
-    codex_home: &Path,
+    genex_home: &Path,
     filename_ts: &str,
     event_ts: &str,
     thread_uuid: Uuid,
@@ -430,7 +430,7 @@ fn write_rollout_in_sessions_with_cwd(
     history_mode: ThreadHistoryMode,
 ) -> PathBuf {
     let id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
-    let sessions_dir = codex_home.join("sessions");
+    let sessions_dir = genex_home.join("sessions");
     std::fs::create_dir_all(sessions_dir.as_path()).expect("create sessions dir");
     let path = sessions_dir.join(format!("rollout-{filename_ts}-{thread_uuid}.jsonl"));
     let session_meta = SessionMeta {

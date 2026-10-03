@@ -56,7 +56,7 @@ pub(super) async fn reconnect(
             tokio::time::sleep(Duration::from_secs(delay)).await;
             let client = crate::app_server_connection::connect(&target).await?;
             let mut session = AppServerSession::new(client, mode)
-                .with_local_codex_home(&config.codex_home)
+                .with_local_genex_home(&config.genex_home)
                 .with_remote_cwd_override(remote_cwd.clone())
                 .with_thread_tool_transport(task_tools.clone());
             let bootstrap = session.bootstrap(&config).await?;
@@ -475,7 +475,7 @@ impl App {
         );
         let connected_notice_key = crate::status::remote_connection::server_version_notice_key(
             &self.app_server_target,
-            app_server.server_codex_home(),
+            app_server.server_genex_home(),
             client_version,
             app_server.server_version(),
         );
@@ -488,7 +488,7 @@ impl App {
         if let Some((notice, key)) = crate::status::remote_connection::pending_server_version_notice(
             &self.local_settings.tui,
             &self.app_server_target,
-            app_server.server_codex_home(),
+            app_server.server_genex_home(),
             client_version,
             app_server.server_version(),
             self.reconnect.seen_version_notice.as_deref(),

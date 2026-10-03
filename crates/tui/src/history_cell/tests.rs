@@ -39,9 +39,9 @@ const SMALL_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAA
 
 
 async fn test_config() -> Config {
-    let codex_home = std::env::temp_dir();
+    let genex_home = std::env::temp_dir();
     ConfigBuilder::default()
-        .codex_home(codex_home.clone())
+        .genex_home(genex_home.clone())
         .build()
         .await
         .expect("config")

@@ -79,27 +79,27 @@ impl SecretsFile {
 
 #[derive(Debug, Clone)]
 pub struct LocalSecretsBackend {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     keyring_store: Arc<dyn KeyringStore>,
     namespace: LocalSecretsNamespace,
 }
 
 impl LocalSecretsBackend {
-    pub fn new(codex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
+    pub fn new(genex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
         Self::new_with_namespace(
-            codex_home,
+            genex_home,
             keyring_store,
             LocalSecretsNamespace::ManagedSecrets,
         )
     }
 
     pub fn new_with_namespace(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         keyring_store: Arc<dyn KeyringStore>,
         namespace: LocalSecretsNamespace,
     ) -> Self {
         Self {
-            codex_home,
+            genex_home,
             keyring_store,
             namespace,
         }
@@ -148,7 +148,7 @@ impl LocalSecretsBackend {
     }
 
     fn secrets_dir(&self) -> PathBuf {
-        self.codex_home.join("secrets")
+        self.genex_home.join("secrets")
     }
 
     fn secrets_path(&self) -> PathBuf {
@@ -235,7 +235,7 @@ impl LocalSecretsBackend {
     }
 
     fn load_or_create_passphrase(&self) -> Result<SecretString> {
-        let account = compute_keyring_account(&self.codex_home);
+        let account = compute_keyring_account(&self.genex_home);
         let loaded = self
             .keyring_store
             .load(keyring_service(), &account)
@@ -425,9 +425,9 @@ mod tests {
 
     #[test]
     fn load_file_rejects_newer_schema_versions() -> Result<()> {
-        let codex_home = tempfile::tempdir().expect("tempdir");
+        let genex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
-        let backend = LocalSecretsBackend::new(codex_home.path().to_path_buf(), keyring);
+        let backend = LocalSecretsBackend::new(genex_home.path().to_path_buf(), keyring);
 
         let file = SecretsFile {
             version: SECRETS_VERSION + 1,
@@ -447,15 +447,15 @@ mod tests {
 
     #[test]
     fn set_fails_when_keyring_is_unavailable() -> Result<()> {
-        let codex_home = tempfile::tempdir().expect("tempdir");
+        let genex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
-        let account = compute_keyring_account(codex_home.path());
+        let account = compute_keyring_account(genex_home.path());
         keyring.set_error(
             &account,
             KeyringError::Invalid("error".into(), "load".into()),
         );
 
-        let backend = LocalSecretsBackend::new(codex_home.path().to_path_buf(), keyring);
+        let backend = LocalSecretsBackend::new(genex_home.path().to_path_buf(), keyring);
         let scope = SecretScope::Global;
         let name = SecretName::new("TEST_SECRET")?;
         let error = backend
@@ -472,9 +472,9 @@ mod tests {
 
     #[test]
     fn save_file_does_not_leave_temp_files() -> Result<()> {
-        let codex_home = tempfile::tempdir().expect("tempdir");
+        let genex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
-        let backend = LocalSecretsBackend::new(codex_home.path().to_path_buf(), keyring);
+        let backend = LocalSecretsBackend::new(genex_home.path().to_path_buf(), keyring);
 
         let scope = SecretScope::Global;
         let name = SecretName::new("TEST_SECRET")?;
@@ -508,15 +508,15 @@ mod tests {
         let _cache_lock = MCP_OAUTH_CACHE_TEST_LOCK
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        let codex_home = tempfile::tempdir().expect("tempdir");
+        let genex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
         let codex_auth_backend = LocalSecretsBackend::new_with_namespace(
-            codex_home.path().to_path_buf(),
+            genex_home.path().to_path_buf(),
             keyring.clone(),
             LocalSecretsNamespace::GenexAuth,
         );
         let mcp_backend = LocalSecretsBackend::new_with_namespace(
-            codex_home.path().to_path_buf(),
+            genex_home.path().to_path_buf(),
             keyring,
             LocalSecretsNamespace::McpOAuth,
         );
@@ -542,20 +542,20 @@ mod tests {
             Some("mcp-value".to_string())
         );
         assert!(
-            codex_home
+            genex_home
                 .path()
                 .join("secrets")
                 .join("codex_auth.age")
                 .exists()
         );
         assert!(
-            codex_home
+            genex_home
                 .path()
                 .join("secrets")
                 .join("mcp_oauth.age")
                 .exists()
         );
-        assert!(!codex_home.path().join("secrets").join("local.age").exists());
+        assert!(!genex_home.path().join("secrets").join("local.age").exists());
         Ok(())
     }
 
@@ -564,15 +564,15 @@ mod tests {
         let _cache_lock = MCP_OAUTH_CACHE_TEST_LOCK
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        let codex_home = tempfile::tempdir().expect("tempdir");
+        let genex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
         let first = LocalSecretsBackend::new_with_namespace(
-            codex_home.path().to_path_buf(),
+            genex_home.path().to_path_buf(),
             keyring.clone(),
             LocalSecretsNamespace::McpOAuth,
         );
         let second = LocalSecretsBackend::new_with_namespace(
-            codex_home.path().to_path_buf(),
+            genex_home.path().to_path_buf(),
             keyring,
             LocalSecretsNamespace::McpOAuth,
         );

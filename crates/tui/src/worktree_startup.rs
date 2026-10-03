@@ -126,7 +126,7 @@ pub(super) async fn prepare(
 ) -> color_eyre::Result<(Config, ManagedTuiWorktree)> {
     if let Some(id_or_name) = cli.fork_session_id.as_deref() {
         let prepared = if should_load_configured_environments(&loader_overrides, target) {
-            EnvironmentManager::prepare_from_codex_home(&source.codex_home).await
+            EnvironmentManager::prepare_from_genex_home(&source.genex_home).await
         } else {
             EnvironmentManager::prepare_from_env().await
         }
@@ -136,8 +136,8 @@ pub(super) async fn prepare(
         }
         let environment = prepared.build(
             Some(ExecServerRuntimePaths::from_optional_paths(
-                arg0_paths.codex_self_exe.clone(),
-                arg0_paths.codex_linux_sandbox_exe.clone(),
+                arg0_paths.genex_self_exe.clone(),
+                arg0_paths.genex_linux_sandbox_exe.clone(),
             )?),
             source.http_client_factory(),
         )?;
@@ -177,7 +177,7 @@ pub(super) async fn prepare(
             let cwd = latest_thread_cwd(thread.path, thread.cwd.into_path_buf()).await;
             let cwd = AbsolutePathBuf::from_absolute_path(cwd)?;
             load_bootstrap_config_or_exit(
-                &source.codex_home,
+                &source.genex_home,
                 Some(&cwd),
                 cli_overrides.clone(),
                 loader_overrides.clone(),
@@ -211,7 +211,7 @@ pub(super) async fn prepare(
         }
     }
     let host = load_bootstrap_config_or_exit(
-        &source.codex_home,
+        &source.genex_home,
         /*cwd*/ None,
         Vec::new(),
         LoaderOverrides::default(),
@@ -220,7 +220,7 @@ pub(super) async fn prepare(
     .await;
     let manager = genex_worktree::WorktreeManager::new(
         genex_worktree::WorktreeSettings::for_cli(
-            &source.codex_home,
+            &source.genex_home,
             host.config_toml.desktop.as_ref(),
         )
         .map_err(std::io::Error::other)?,
@@ -242,7 +242,7 @@ pub(super) async fn prepare(
     };
     let destination = AbsolutePathBuf::from_absolute_path(managed.checkout.cwd.clone())?;
     load_config_toml_with_layer_stack(
-        &source.codex_home,
+        &source.genex_home,
         Some(&destination),
         cli_overrides.clone(),
         genex_config::ConfigLoadOptions {

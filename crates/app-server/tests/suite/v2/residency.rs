@@ -28,7 +28,7 @@ enum ModelTransport {
 }
 
 async fn write_provider_config(
-    codex_home: &Path,
+    genex_home: &Path,
     model_base_url: &str,
     transport: ModelTransport,
 ) -> Result<()> {
@@ -59,8 +59,8 @@ supports_websockets = {supports_websockets}
 "x-provider-internal-codex-residency" = "{PROVIDER_RESIDENCY_ENV_VAR}"
 "#
     );
-    std::fs::write(codex_home.join("config.toml"), config)?;
-    write_models_cache(codex_home).await?;
+    std::fs::write(genex_home.join("config.toml"), config)?;
+    write_models_cache(genex_home).await?;
     Ok(())
 }
 
@@ -97,15 +97,15 @@ async fn managed_residency_overrides_provider_headers(transport: ModelTransport)
         ModelTransport::Websocket => websocket_server.uri().to_string(),
     };
 
-    let codex_home = TempDir::new()?;
-    write_provider_config(codex_home.path(), &model_base_url, transport).await?;
+    let genex_home = TempDir::new()?;
+    write_provider_config(genex_home.path(), &model_base_url, transport).await?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         "enforce_residency = \"us\"\n",
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", Some("sk-test")),
             ("CODEX_ACCESS_TOKEN", None),

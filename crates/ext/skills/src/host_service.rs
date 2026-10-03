@@ -81,7 +81,7 @@ impl HostSkillsLoadInput {
 ///
 /// Source-specific model exposure remains the responsibility of the skills extension.
 pub struct HostSkillsService {
-    codex_home: AbsolutePathBuf,
+    genex_home: AbsolutePathBuf,
     restriction_product: Option<Product>,
     extra_roots: RwLock<Vec<AbsolutePathBuf>>,
     cache_by_cwd: RwLock<HashMap<AbsolutePathBuf, HostSkillsSnapshot>>,
@@ -118,24 +118,24 @@ impl HostSkillsRequest<'_> {
 }
 
 impl HostSkillsService {
-    pub fn new(codex_home: AbsolutePathBuf, bundled_skills_enabled: bool) -> Self {
-        Self::new_with_restriction_product(codex_home, bundled_skills_enabled, Some(Product::Codex))
+    pub fn new(genex_home: AbsolutePathBuf, bundled_skills_enabled: bool) -> Self {
+        Self::new_with_restriction_product(genex_home, bundled_skills_enabled, Some(Product::Codex))
     }
 
     pub fn new_with_restriction_product(
-        codex_home: AbsolutePathBuf,
+        genex_home: AbsolutePathBuf,
         bundled_skills_enabled: bool,
         restriction_product: Option<Product>,
     ) -> Self {
         let service = Self {
-            codex_home,
+            genex_home,
             restriction_product,
             extra_roots: RwLock::new(Vec::new()),
             cache_by_cwd: RwLock::new(HashMap::new()),
             cache_by_config: RwLock::new(VecDeque::new()),
             root_scan_slots: Arc::new(Semaphore::new(MAX_CONCURRENT_ROOT_SCANS)),
         };
-        // The cache is shared by every process using this CODEX_HOME. Disabled services filter
+        // The cache is shared by every process using this GENEX_HOME. Disabled services filter
         // system roots when loading rather than mutating shared state.
         if bundled_skills_enabled {
             service.ensure_system_skills_installed();
@@ -410,7 +410,7 @@ impl HostSkillsService {
     }
 
     fn ensure_system_skills_installed(&self) {
-        if let Err(err) = install_system_skills(&self.codex_home) {
+        if let Err(err) = install_system_skills(&self.genex_home) {
             tracing::error!("failed to install system skills: {err}");
         }
     }

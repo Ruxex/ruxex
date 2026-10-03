@@ -62,26 +62,26 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
         )
         .mount(&server)
         .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server_uri = server.uri();
     let feature_config = format!(
         "[features]\napi_key_model_discovery = {}\n",
         user_enablement.unwrap_or(app_enablement)
     );
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "[model_providers.provider]\nbase_url = \"{server_uri}/v1\"\n{feature_config}"
         ),
     )?;
     login_with_api_key(
-        codex_home.path(),
+        genex_home.path(),
         "test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None), ("CODEX_API_KEY", None)])
         .build_initialized()
         .await?;
@@ -196,10 +196,10 @@ fn expected_visible_models() -> Vec<Model> {
 
 #[tokio::test]
 async fn list_models_returns_all_models_with_large_limit() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    write_models_cache(genex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -226,10 +226,10 @@ async fn list_models_returns_all_models_with_large_limit() -> Result<()> {
 
 #[tokio::test]
 async fn list_models_includes_hidden_models() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    write_models_cache(genex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -319,10 +319,10 @@ async fn list_models_uses_remote_catalog_as_source_of_truth(
         .mount_as_scoped(&server)
         .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server_uri = server.uri();
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -337,21 +337,21 @@ api_key_model_discovery = true
     )?;
     if let Some(api_key) = api_key {
         login_with_api_key(
-            codex_home.path(),
+            genex_home.path(),
             api_key,
             AuthCredentialsStoreMode::File,
             AuthKeyringBackendKind::default(),
         )?;
     } else {
         write_api_key_auth(
-            codex_home.path(),
+            genex_home.path(),
             ApiKeyAuthFixture::new(bearer_token).plan_type("pro"),
             AuthCredentialsStoreMode::File,
         )?;
     }
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None), ("CODEX_API_KEY", None)])
         .build_initialized()
@@ -421,10 +421,10 @@ api_key_model_discovery = true
 
 #[tokio::test]
 async fn list_models_pagination_works() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    write_models_cache(genex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -467,10 +467,10 @@ async fn list_models_pagination_works() -> Result<()> {
 
 #[tokio::test]
 async fn list_models_rejects_invalid_cursor() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    write_models_cache(genex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;

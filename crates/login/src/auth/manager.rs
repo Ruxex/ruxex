@@ -141,7 +141,7 @@ impl From<RefreshTokenError> for std::io::Error {
 
 impl GenexAuth {
     async fn from_auth_dot_json(
-        _codex_home: &Path,
+        _genex_home: &Path,
         auth_dot_json: AuthDotJson,
         _auth_credentials_store_mode: AuthCredentialsStoreMode,
         _managed_auth_base_url: Option<&str>,
@@ -190,14 +190,14 @@ impl GenexAuth {
     }
 
     pub async fn from_auth_storage(
-        codex_home: &Path,
+        genex_home: &Path,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         managed_auth_base_url: Option<&str>,
         keyring_backend_kind: AuthKeyringBackendKind,
         auth_route_config: &AuthRouteConfig,
     ) -> std::io::Result<Option<Self>> {
         load_auth(
-            codex_home,
+            genex_home,
             /*enable_codex_api_key_env*/ false,
             auth_credentials_store_mode,
             /*allowed_login_methods*/ None,
@@ -294,15 +294,15 @@ fn read_non_empty_env_var(key: &str) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
-/// Delete the auth.json file inside `codex_home` if it exists. Returns `Ok(true)`
+/// Delete the auth.json file inside `genex_home` if it exists. Returns `Ok(true)`
 /// if a file was removed, `Ok(false)` if no auth file was present.
 pub fn logout(
-    codex_home: &Path,
+    genex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<bool> {
     let storage = create_auth_storage(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -311,7 +311,7 @@ pub fn logout(
 
 /// Writes an `auth.json` that contains only the API key.
 pub fn login_with_api_key(
-    codex_home: &Path,
+    genex_home: &Path,
     api_key: &str,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
@@ -323,7 +323,7 @@ pub fn login_with_api_key(
         bedrock_access_keys: None,
     };
     save_auth(
-        codex_home,
+        genex_home,
         &auth_dot_json,
         auth_credentials_store_mode,
         keyring_backend_kind,
@@ -332,13 +332,13 @@ pub fn login_with_api_key(
 
 /// Persist the provided auth payload using the specified backend.
 pub fn save_auth(
-    codex_home: &Path,
+    genex_home: &Path,
     auth: &AuthDotJson,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<()> {
     let storage = create_auth_storage(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -351,12 +351,12 @@ pub fn save_auth(
 /// ordinary production reads; this helper is for tests and write-side
 /// maintenance that must inspect the exact payload in storage.
 pub fn load_auth_dot_json(
-    codex_home: &Path,
+    genex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<Option<AuthDotJson>> {
     let storage = create_auth_storage(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -365,7 +365,7 @@ pub fn load_auth_dot_json(
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AuthConfig {
-    pub codex_home: PathBuf,
+    pub genex_home: PathBuf,
     pub auth_credentials_store_mode: AuthCredentialsStoreMode,
     pub keyring_backend_kind: AuthKeyringBackendKind,
     pub forced_login_method: Option<ForcedLoginMethod>,
@@ -416,7 +416,7 @@ impl AuthConfig {
         let allowed_login_methods = self.allowed_login_methods();
         let workspaces = self.effective_managed_workspaces();
         let auth = load_auth(
-            &self.codex_home,
+            &self.genex_home,
             enable_codex_api_key_env,
             self.auth_credentials_store_mode,
             Some(&allowed_login_methods),
@@ -497,7 +497,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
     }
 
     let Some(auth) = load_auth(
-        &config.codex_home,
+        &config.genex_home,
         /*enable_codex_api_key_env*/ true,
         config.auth_credentials_store_mode,
         /*allowed_login_methods*/ None,
@@ -531,7 +531,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 
         if let Some(message) = method_violation {
             return logout_with_message(
-                &config.codex_home,
+                &config.genex_home,
                 message,
                 config.auth_credentials_store_mode,
                 config.keyring_backend_kind,
@@ -566,7 +566,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
                 ),
             };
             return logout_with_message(
-                &config.codex_home,
+                &config.genex_home,
                 message,
                 config.auth_credentials_store_mode,
                 config.keyring_backend_kind,
@@ -578,7 +578,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 }
 
 fn logout_with_message(
-    codex_home: &Path,
+    genex_home: &Path,
     message: String,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
@@ -586,7 +586,7 @@ fn logout_with_message(
     // External auth tokens live in the ephemeral store, but persistent auth may still exist
     // from earlier logins. Clear both so a forced logout truly removes all active auth.
     let removal_result = logout_all_stores(
-        codex_home,
+        genex_home,
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -598,24 +598,24 @@ fn logout_with_message(
 }
 
 fn logout_all_stores(
-    codex_home: &Path,
+    genex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<bool> {
     if auth_credentials_store_mode == AuthCredentialsStoreMode::Ephemeral {
         return logout(
-            codex_home,
+            genex_home,
             AuthCredentialsStoreMode::Ephemeral,
             AuthKeyringBackendKind::default(),
         );
     }
     let removed_ephemeral = logout(
-        codex_home,
+        genex_home,
         AuthCredentialsStoreMode::Ephemeral,
         AuthKeyringBackendKind::default(),
     )?;
     let removed_managed = logout(
-        codex_home,
+        genex_home,
         auth_credentials_store_mode,
         keyring_backend_kind,
     )?;
@@ -624,7 +624,7 @@ fn logout_all_stores(
 
 #[allow(clippy::too_many_arguments)]
 async fn load_auth(
-    codex_home: &Path,
+    genex_home: &Path,
     enable_codex_api_key_env: bool,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     allowed_login_methods: Option<&[ForcedLoginMethod]>,
@@ -643,7 +643,7 @@ async fn load_auth(
 
     // Ephemeral credentials take precedence over persisted credentials.
     let ephemeral_storage = create_auth_storage(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         AuthCredentialsStoreMode::Ephemeral,
         AuthKeyringBackendKind::default(),
     );
@@ -652,7 +652,7 @@ async fn load_auth(
         && auth_mode_is_allowed(allowed_login_methods, auth_dot_json.resolved_mode())
     {
         let auth = GenexAuth::from_auth_dot_json(
-            codex_home,
+            genex_home,
             auth_dot_json,
             AuthCredentialsStoreMode::Ephemeral,
             managed_auth_base_url,
@@ -670,7 +670,7 @@ async fn load_auth(
 
     // Fall back to the configured persistent store (file/keyring/auto).
     let storage = create_auth_storage(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -685,7 +685,7 @@ async fn load_auth(
         return Ok(None);
     }
     let auth = GenexAuth::from_auth_dot_json(
-        codex_home,
+        genex_home,
         auth_dot_json,
         auth_credentials_store_mode,
         managed_auth_base_url,
@@ -955,7 +955,7 @@ impl UnauthorizedRecovery {
 /// `reload()` is called explicitly. This matches the design goal of avoiding
 /// different parts of the program seeing inconsistent auth data mid‑run.
 pub struct AuthManager {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     inner: RwLock<CachedAuth>,
     auth_change_tx: watch::Sender<u64>,
     auth_change_state_tx: watch::Sender<AuthChangeState>,
@@ -978,8 +978,8 @@ pub struct AuthManager {
 /// `genex_core::config::Config`, but this trait keeps `codex-login` independent
 /// from `codex-core`.
 pub trait AuthManagerConfig {
-    /// Returns the Codex home directory used for auth storage.
-    fn codex_home(&self) -> PathBuf;
+    /// Returns the Genex home directory used for auth storage.
+    fn genex_home(&self) -> PathBuf;
 
     /// Returns the CLI auth credential storage mode for auth loading.
     fn cli_auth_credentials_store_mode(&self) -> AuthCredentialsStoreMode;
@@ -1006,7 +1006,7 @@ pub trait AuthManagerConfig {
 impl Debug for AuthManager {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AuthManager")
-            .field("codex_home", &self.codex_home)
+            .field("genex_home", &self.genex_home)
             .field("inner", &self.inner)
             .field("enable_codex_api_key_env", &self.enable_codex_api_key_env)
             .field(
@@ -1033,7 +1033,7 @@ impl AuthManager {
     /// simply return `None` in that case so callers can treat it as an
     /// unauthenticated state.
     pub async fn new(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         enable_codex_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         forced_managed_workspace_id: Option<Vec<String>>,
@@ -1043,7 +1043,7 @@ impl AuthManager {
     ) -> Self {
         Self::new_from_auth_config(
             AuthConfig {
-                codex_home,
+                genex_home,
                 auth_credentials_store_mode,
                 keyring_backend_kind,
                 forced_login_method: None,
@@ -1064,7 +1064,7 @@ impl AuthManager {
             .ok()
             .flatten();
         let AuthConfig {
-            codex_home,
+            genex_home,
             auth_credentials_store_mode,
             keyring_backend_kind,
             forced_login_method,
@@ -1075,7 +1075,7 @@ impl AuthManager {
         } = auth_config;
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Self {
-            codex_home,
+            genex_home,
             inner: RwLock::new(CachedAuth {
                 auth: managed_auth,
                 permanent_refresh_failure: None,
@@ -1109,7 +1109,7 @@ impl AuthManager {
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
 
         Arc::new(Self {
-            codex_home: PathBuf::from("non-existent"),
+            genex_home: PathBuf::from("non-existent"),
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
@@ -1126,15 +1126,15 @@ impl AuthManager {
         })
     }
 
-    /// Create an AuthManager with a specific GenexAuth and codex home, for testing only.
-    pub fn from_auth_for_testing_with_home(auth: GenexAuth, codex_home: PathBuf) -> Arc<Self> {
+    /// Create an AuthManager with a specific GenexAuth and genex home, for testing only.
+    pub fn from_auth_for_testing_with_home(auth: GenexAuth, genex_home: PathBuf) -> Arc<Self> {
         let cached = CachedAuth {
             auth: Some(auth),
             permanent_refresh_failure: None,
         };
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Arc::new(Self {
-            codex_home,
+            genex_home,
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
@@ -1154,7 +1154,7 @@ impl AuthManager {
     pub fn external_bearer_only(config: ModelProviderAuthInfo) -> Arc<Self> {
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Arc::new(Self {
-            codex_home: PathBuf::from("non-existent"),
+            genex_home: PathBuf::from("non-existent"),
             inner: RwLock::new(CachedAuth {
                 auth: None,
                 permanent_refresh_failure: None,
@@ -1330,7 +1330,7 @@ impl AuthManager {
         let allowed_login_methods = self.allowed_login_methods();
         let effective_managed_workspaces = self.effective_managed_workspaces();
         load_auth(
-            &self.codex_home,
+            &self.genex_home,
             self.enable_codex_api_key_env,
             self.auth_credentials_store_mode,
             Some(&allowed_login_methods),
@@ -1457,7 +1457,7 @@ impl AuthManager {
 
     /// Convenience constructor returning an `Arc` wrapper.
     pub async fn shared(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         enable_codex_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         forced_managed_workspace_id: Option<Vec<String>>,
@@ -1467,7 +1467,7 @@ impl AuthManager {
     ) -> Arc<Self> {
         Arc::new(
             Self::new(
-                codex_home,
+                genex_home,
                 enable_codex_api_key_env,
                 auth_credentials_store_mode,
                 forced_managed_workspace_id,
@@ -1620,7 +1620,7 @@ impl AuthManager {
     pub async fn logout(&self) -> std::io::Result<bool> {
         self.ensure_logout_allowed()?;
         let removed = logout_all_stores(
-            &self.codex_home,
+            &self.genex_home,
             self.auth_credentials_store_mode,
             self.keyring_backend_kind,
         )?;
@@ -1698,7 +1698,7 @@ impl AuthManager {
 
 fn auth_config_from(config: &impl AuthManagerConfig) -> AuthConfig {
     AuthConfig {
-        codex_home: config.codex_home(),
+        genex_home: config.genex_home(),
         auth_credentials_store_mode: config.cli_auth_credentials_store_mode(),
         keyring_backend_kind: config.auth_keyring_backend_kind(),
         forced_login_method: config.forced_login_method(),

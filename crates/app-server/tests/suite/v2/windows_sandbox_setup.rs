@@ -21,9 +21,9 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 async fn windows_sandbox_setup_start_emits_completion_notification() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     write_mock_responses_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         &server.uri(),
         &BTreeMap::new(),
         /*auto_compact_limit*/ 500_000,
@@ -32,7 +32,7 @@ async fn windows_sandbox_setup_start_emits_completion_notification() -> Result<(
         "compact prompt",
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -69,9 +69,9 @@ async fn windows_sandbox_setup_start_emits_completion_notification() -> Result<(
 
 #[tokio::test]
 async fn windows_sandbox_setup_start_rejects_relative_cwd() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;

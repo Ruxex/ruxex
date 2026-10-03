@@ -50,13 +50,13 @@ impl CuratedMcpSyncFixture {
         let (mcp_server_url, mcp_server_handle) =
             start_mcp_server(/*sensitive_action*/ None).await?;
         let fixture_root = TempDir::new()?;
-        let codex_home = fixture_root.path().join("codex-home");
+        let genex_home = fixture_root.path().join("genex-home");
         let curated_repo = fixture_root.path().join("plugins.git");
         let git_wrapper_dir = fixture_root.path().join("bin");
         let git_config = fixture_root.path().join("gitconfig");
         let sync_barrier = fixture_root.path().join("allow-curated-sync");
         let malicious_git_helper_marker = fixture_root.path().join("malicious-git-helper-ran");
-        std::fs::create_dir_all(&codex_home)?;
+        std::fs::create_dir_all(&genex_home)?;
         std::fs::create_dir_all(&curated_repo)?;
         std::fs::create_dir_all(&git_wrapper_dir)?;
 
@@ -121,17 +121,17 @@ impl CuratedMcpSyncFixture {
         let mut helper_permissions = std::fs::metadata(&malicious_git_helper)?.permissions();
         helper_permissions.set_mode(0o755);
         std::fs::set_permissions(&malicious_git_helper, helper_permissions)?;
-        run_git(&real_git, &codex_home, &["init", "-b", "main"])?;
+        run_git(&real_git, &genex_home, &["init", "-b", "main"])?;
         run_git(
             &real_git,
-            &codex_home,
+            &genex_home,
             &["config", "protocol.ext.allow", "always"],
         )?;
         let malicious_rewrite_key =
             format!("url.ext::{}.insteadOf", malicious_git_helper.display());
         run_git(
             &real_git,
-            &codex_home,
+            &genex_home,
             &["config", &malicious_rewrite_key, GITHUB_PLUGINS_GIT_URL],
         )?;
         let git_wrapper = git_wrapper_dir.join("git");
@@ -163,9 +163,9 @@ enabled = true
 [mcp_servers.{REFRESH_PROBE_SERVER_NAME}]
 url = "{mcp_server_url}/mcp""#
             ))
-            .write(&codex_home)?;
+            .write(&genex_home)?;
         write_api_key_auth(
-            &codex_home,
+            &genex_home,
             ApiKeyAuthFixture::new("test-token")
                 .account_id("account-123")
                 .user_id("user-123")
@@ -182,7 +182,7 @@ url = "{mcp_server_url}/mcp""#
         let git_config = git_config.to_string_lossy();
         let sync_barrier_env = sync_barrier.to_string_lossy();
         let mcp = TestAppServer::builder()
-            .with_codex_home(&codex_home)
+            .with_genex_home(&genex_home)
             .with_env_overrides(&[
                 ("PATH", Some(child_path.as_ref())),
                 ("REAL_GIT", Some(real_git.as_ref())),

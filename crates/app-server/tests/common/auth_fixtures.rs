@@ -88,7 +88,7 @@ pub fn encode_fixture_token(claims: &AuthFixtureClaims) -> Result<String> {
 }
 
 pub fn write_api_key_auth(
-    codex_home: &Path,
+    genex_home: &Path,
     fixture: ApiKeyAuthFixture,
     cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> Result<()> {
@@ -100,7 +100,7 @@ pub fn write_api_key_auth(
     };
 
     save_auth(
-        codex_home,
+        genex_home,
         &auth,
         cli_auth_credentials_store_mode,
         AuthKeyringBackendKind::default(),

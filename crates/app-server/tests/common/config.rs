@@ -97,7 +97,7 @@ impl MockResponsesConfig {
         self
     }
 
-    pub fn write(self, codex_home: &Path) -> std::io::Result<()> {
+    pub fn write(self, genex_home: &Path) -> std::io::Result<()> {
         let Self {
             provider_id,
             provider_name,
@@ -132,7 +132,7 @@ impl MockResponsesConfig {
         };
 
         std::fs::write(
-            codex_home.join("config.toml"),
+            genex_home.join("config.toml"),
             format!(
                 r#"
 model = "{model}"
@@ -157,7 +157,7 @@ stream_max_retries = 0
 }
 
 pub fn write_mock_responses_config_toml(
-    codex_home: &Path,
+    genex_home: &Path,
     server_uri: &str,
     feature_flags: &BTreeMap<Feature, bool>,
     auto_compact_limit: i64,
@@ -179,11 +179,11 @@ pub fn write_mock_responses_config_toml(
             .with_provider_config("requires_auth = true");
     }
 
-    config.write(codex_home)
+    config.write(genex_home)
 }
 
 pub fn write_mock_responses_config_toml_with_managed_auth_base_url(
-    codex_home: &Path,
+    genex_home: &Path,
     server_uri: &str,
     managed_auth_base_url: &str,
 ) -> std::io::Result<()> {
@@ -191,7 +191,7 @@ pub fn write_mock_responses_config_toml_with_managed_auth_base_url(
         .with_root_config(&format!(
             "managed_auth_base_url = \"{managed_auth_base_url}\""
         ))
-        .write(codex_home)
+        .write(genex_home)
 }
 
 #[cfg(test)]

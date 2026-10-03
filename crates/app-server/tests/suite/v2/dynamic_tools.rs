@@ -60,11 +60,11 @@ async fn thread_start_normalizes_legacy_dynamic_tools_into_model_request() -> Re
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -178,11 +178,11 @@ async fn thread_start_normalizes_legacy_dynamic_tools_into_model_request() -> Re
 async fn thread_start_rejects_hidden_dynamic_tools_without_namespace() -> Result<()> {
     let server = MockServer::start().await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -220,11 +220,11 @@ async fn thread_start_rejects_hidden_dynamic_tools_without_namespace() -> Result
 async fn thread_start_rejects_invalid_dynamic_tool_inputs() -> Result<()> {
     let server = MockServer::start().await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -366,11 +366,11 @@ async fn dynamic_tool_call_round_trip_sends_text_content_items_to_model() -> Res
     ];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -596,16 +596,16 @@ async fn start_function_dynamic_tool_call(call_id: &str) -> Result<PendingDynami
     ];
     let server = create_mock_responses_server_sequence_unchecked(response_sequence).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let config = load_default_config_for_test(&codex_home).await;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let config = load_default_config_for_test(&genex_home).await;
     let mut model_info =
         genex_core::test_support::construct_model_info_offline("mock-model", &config);
     model_info.input_modalities.push(InputModality::Audio);
-    write_models_cache_with_models(codex_home.path(), vec![model_info]).await?;
+    write_models_cache_with_models(genex_home.path(), vec![model_info]).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;

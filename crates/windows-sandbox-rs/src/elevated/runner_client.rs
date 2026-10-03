@@ -319,14 +319,14 @@ fn connect_pipe_with_timeout(
 }
 
 pub(crate) fn spawn_runner_transport(
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: &Path,
     sandbox_creds: &SandboxCreds,
     log_dir: Option<&Path>,
     mut spawn_request: SpawnRequest,
     desktop_policy: Option<&DesktopPolicy>,
 ) -> Result<RunnerTransport> {
-    let runner_exe = find_runner_exe(codex_home, log_dir)?;
+    let runner_exe = find_runner_exe(genex_home, log_dir)?;
     if let Some(policy) = desktop_policy {
         spawn_request.private_desktop_name = Some(shared_private_desktop_for_user(
             &sandbox_creds.username,

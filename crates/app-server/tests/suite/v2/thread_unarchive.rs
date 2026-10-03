@@ -62,11 +62,11 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -129,7 +129,7 @@ async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result
         .expect("pinned thread should have a section entry timestamp");
 
     let found_rollout_path =
-        find_thread_path_by_id_str(codex_home.path(), &thread.id, /*state_db_ctx*/ None)
+        find_thread_path_by_id_str(genex_home.path(), &thread.id, /*state_db_ctx*/ None)
             .await?
             .expect("expected rollout path for thread id to exist");
     assert_paths_match_on_disk(&found_rollout_path, &rollout_path)?;
@@ -143,7 +143,7 @@ async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(archive_id)).await??;
 
     let archived_path = find_archived_thread_path_by_id_str(
-        codex_home.path(),
+        genex_home.path(),
         &thread.id,
         /*state_db_ctx*/ None,
     )
@@ -231,13 +231,13 @@ async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result
 
 #[tokio::test]
 async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
     MockResponsesConfig::new("http://127.0.0.1:1")
         .with_root_config(&format!(
             r#"experimental_thread_store = {{ type = "in_memory", id = "{store_id}" }}"#
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let store = InMemoryThreadStore::for_id(store_id.clone());
     let _in_memory_store = InMemoryThreadStoreId { store_id };
     let thread_id = ThreadId::from_string("00000000-0000-4000-8000-000000000126")?;
@@ -280,8 +280,8 @@ async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
 
     let loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .genex_home(genex_home.path().to_path_buf())
+        .fallback_cwd(Some(genex_home.path().to_path_buf()))
         .loader_overrides(loader_overrides.clone())
         .build()
         .await?;

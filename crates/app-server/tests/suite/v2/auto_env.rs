@@ -27,10 +27,10 @@ async fn builder_interposes_fixed_delay_for_auto_env() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_remote!(Ok(()), "the fixed-delay fixture is local-only");
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let requested_delay = Duration::from_secs(1);
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_exec_server_delay(requested_delay)
         .build()
         .await?;
@@ -70,9 +70,9 @@ async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()>
         ]),
     )
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     write_mock_responses_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         &server.uri(),
         &BTreeMap::new(),
         /*auto_compact_limit*/ 100_000,
@@ -82,7 +82,7 @@ async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()>
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -150,11 +150,11 @@ async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()>
 
 #[tokio::test]
 async fn auto_env_rejects_explicit_environment_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    std::fs::write(codex_home.path().join("environments.toml"), "")?;
+    let genex_home = TempDir::new()?;
+    std::fs::write(genex_home.path().join("environments.toml"), "")?;
 
     let result = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await;
     let Err(err) = result else {
@@ -164,7 +164,7 @@ async fn auto_env_rejects_explicit_environment_config() -> Result<()> {
         err.to_string(),
         format!(
             "automatic environment cannot be used when {} exists",
-            codex_home.path().join("environments.toml").display()
+            genex_home.path().join("environments.toml").display()
         )
     );
 

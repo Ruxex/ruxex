@@ -32,9 +32,9 @@ pub struct WriterLockGuard {
 
 impl WriterLockCoordinator {
     /// Uses the same lock namespace as existing local thread-store writers.
-    pub fn new(codex_home: &Path) -> Self {
+    pub fn new(genex_home: &Path) -> Self {
         Self {
-            directory: codex_home.join(WRITER_LOCK_DIR),
+            directory: genex_home.join(WRITER_LOCK_DIR),
             cleanup_attempted: AtomicBool::new(false),
         }
     }

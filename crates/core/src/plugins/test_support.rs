@@ -78,19 +78,19 @@ pub(crate) fn write_test_api_curated_marketplace(root: &Path, plugin_names: &[&s
     }
 }
 
-pub(crate) fn write_plugins_feature_config(codex_home: &Path) {
+pub(crate) fn write_plugins_feature_config(genex_home: &Path) {
     write_file(
-        &codex_home.join(CONFIG_TOML_FILE),
+        &genex_home.join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 "#,
     );
 }
 
-pub(crate) async fn load_plugins_config(codex_home: &Path) -> crate::config::Config {
+pub(crate) async fn load_plugins_config(genex_home: &Path) -> crate::config::Config {
     ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
-        .fallback_cwd(Some(codex_home.to_path_buf()))
+        .genex_home(genex_home.to_path_buf())
+        .fallback_cwd(Some(genex_home.to_path_buf()))
         .build()
         .await
         .expect("config should load")

@@ -268,7 +268,7 @@ impl App {
                 crate::status::remote_connection::pending_server_version_notice(
                     &local_settings.tui,
                     &app_server_target,
-                    app_server.server_codex_home(),
+                    app_server.server_genex_home(),
                     GENEX_CLI_VERSION,
                     app_server.server_version(),
                     /*last_shown*/ None,

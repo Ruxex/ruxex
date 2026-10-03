@@ -17,14 +17,14 @@ use tokio::time::timeout;
 /// New daemons own their packages, regardless of how the calling CLI was installed.
 /// Preserve legacy launch state, including logs left after a daemon is stopped;
 /// settings, installer selections, and lock files alone do not prove a prior launch.
-pub(crate) fn package_root(codex_home: &Path) -> PathBuf {
-    let dedicated = codex_home.join("packages/app-server-daemon");
+pub(crate) fn package_root(genex_home: &Path) -> PathBuf {
+    let dedicated = genex_home.join("packages/app-server-daemon");
     if !matches!(dedicated.join("current").symlink_metadata(),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound)
     {
         return dedicated;
     }
-    let state = codex_home.join("app-server-daemon");
+    let state = genex_home.join("app-server-daemon");
     for (package, artifacts) in [
         (
             "app-server-daemon",
@@ -49,15 +49,15 @@ pub(crate) fn package_root(codex_home: &Path) -> PathBuf {
             !matches!(state.join(name).symlink_metadata(),
                 Err(error) if error.kind() == std::io::ErrorKind::NotFound)
         }) {
-            return codex_home.join("packages").join(package);
+            return genex_home.join("packages").join(package);
         }
     }
     dedicated
 }
 
 /// Resolve both packaged and legacy binaries without requiring a valid install.
-pub(crate) fn managed_genex_bin(codex_home: &Path) -> PathBuf {
-    let root = package_root(codex_home);
+pub(crate) fn managed_genex_bin(genex_home: &Path) -> PathBuf {
+    let root = package_root(genex_home);
     let current = root.join("current");
     let packaged = current.join("bin").join(managed_genex_file_name());
     let legacy = current.join(if cfg!(windows) { "codex.exe" } else { "codex" });
@@ -71,8 +71,8 @@ pub(crate) fn managed_genex_bin(codex_home: &Path) -> PathBuf {
 }
 
 /// Only latest-channel stable releases may run the public latest-version updater.
-pub(crate) fn is_stable_standalone_release(codex_home: &Path, codex_bin: &Path) -> bool {
-    let standalone = package_root(codex_home);
+pub(crate) fn is_stable_standalone_release(genex_home: &Path, codex_bin: &Path) -> bool {
+    let standalone = package_root(genex_home);
     let Ok(releases) = std::fs::canonicalize(standalone.join("releases")) else {
         return false;
     };

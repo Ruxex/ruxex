@@ -56,7 +56,7 @@ pub(super) async fn updates_check(config: &Config) -> DoctorCheck {
         ),
         format!("update action: {}", update_action_label(&install_context)),
     ];
-    let version_file = config.codex_home.join(VERSION_FILE_NAME);
+    let version_file = config.genex_home.join(VERSION_FILE_NAME);
     push_cached_version_details(&mut details, &version_file);
 
     let mut status = CheckStatus::Ok;

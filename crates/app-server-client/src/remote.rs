@@ -145,7 +145,7 @@ enum RemoteClientCommand {
 #[derive(Default)]
 struct RemoteServerMetadata {
     server_version: Option<String>,
-    codex_home: Option<String>,
+    genex_home: Option<String>,
     platform_family: Option<String>,
     platform_os: Option<String>,
 }
@@ -216,8 +216,8 @@ impl RemoteAppServerClient {
         self.metadata.server_version.as_deref()
     }
 
-    pub fn codex_home(&self) -> Option<&str> {
-        self.metadata.codex_home.as_deref()
+    pub fn genex_home(&self) -> Option<&str> {
+        self.metadata.genex_home.as_deref()
     }
 
     pub fn platform_family(&self) -> Option<&str> {
@@ -845,11 +845,11 @@ where
                                     let (_, rest) = user_agent.split_once('/')?;
                                     rest.split_whitespace().next().map(str::to_string)
                                 });
-                            metadata.codex_home = response
+                            metadata.genex_home = response
                                 .result
                                 .get("genexHome")
                                 .and_then(serde_json::Value::as_str)
-                                .filter(|codex_home| !codex_home.is_empty())
+                                .filter(|genex_home| !genex_home.is_empty())
                                 .map(str::to_string);
                             metadata.platform_family = response.result.get("platformFamily")
                                 .and_then(serde_json::Value::as_str).map(str::to_string);

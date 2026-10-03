@@ -177,13 +177,13 @@ impl PidBackend {
                 }
                 match self.command_kind {
                     PidCommandKind::AppServer => {
-                        let codex_home = self
+                        let genex_home = self
                             .pid_file
                             .parent()
                             .and_then(Path::parent)
-                            .context("daemon pid path has no Codex home")?;
+                            .context("daemon pid path has no Genex home")?;
                         let socket_path =
-                            genex_app_server_transport::app_server_control_socket_path(codex_home)?;
+                            genex_app_server_transport::app_server_control_socket_path(genex_home)?;
                         if let Err(err) =
                             crate::client::request_shutdown(socket_path.as_path(), pid).await
                         {

@@ -130,7 +130,7 @@ async fn load_plugins_from_layer_stack_with_scope(
     scope: PluginLoadScope<'_>,
 ) -> Vec<LoadedPlugin<McpServerConfig>> {
     let configured_plugins =
-        configured_plugins_from_stack(config_layer_stack, store.codex_home().as_path());
+        configured_plugins_from_stack(config_layer_stack, store.genex_home().as_path());
     let mut configured_plugins: Vec<_> = configured_plugins.into_iter().collect();
     configured_plugins.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
@@ -158,12 +158,12 @@ async fn load_plugins_from_layer_stack_with_scope(
 
 #[cfg(test)]
 pub(crate) fn refresh_non_curated_plugin_cache(
-    codex_home: &Path,
+    genex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
 ) -> Result<bool, String> {
     collapse_non_curated_cache_refresh(refresh_non_curated_plugin_cache_detailed(
-        codex_home,
+        genex_home,
         additional_roots,
         configured_plugin_keys,
         PluginGitMode::Automatic,
@@ -171,13 +171,13 @@ pub(crate) fn refresh_non_curated_plugin_cache(
 }
 
 pub(crate) fn refresh_non_curated_plugin_cache_detailed(
-    codex_home: &Path,
+    genex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
     git_mode: PluginGitMode,
 ) -> Result<NonCuratedCacheRefreshOutcome, String> {
     refresh_non_curated_plugin_cache_with_mode(
-        codex_home,
+        genex_home,
         additional_roots,
         configured_plugin_keys,
         NonCuratedCacheRefreshMode::IfVersionChanged,
@@ -187,12 +187,12 @@ pub(crate) fn refresh_non_curated_plugin_cache_detailed(
 
 #[cfg(test)]
 pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall(
-    codex_home: &Path,
+    genex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
 ) -> Result<bool, String> {
     collapse_non_curated_cache_refresh(refresh_non_curated_plugin_cache_force_reinstall_detailed(
-        codex_home,
+        genex_home,
         additional_roots,
         configured_plugin_keys,
         PluginGitMode::Automatic,
@@ -200,13 +200,13 @@ pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall(
 }
 
 pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall_detailed(
-    codex_home: &Path,
+    genex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
     git_mode: PluginGitMode,
 ) -> Result<NonCuratedCacheRefreshOutcome, String> {
     refresh_non_curated_plugin_cache_with_mode(
-        codex_home,
+        genex_home,
         additional_roots,
         configured_plugin_keys,
         NonCuratedCacheRefreshMode::ForceReinstall,
@@ -215,7 +215,7 @@ pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall_detailed(
 }
 
 fn refresh_non_curated_plugin_cache_with_mode(
-    codex_home: &Path,
+    genex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
     mode: NonCuratedCacheRefreshMode,
@@ -247,7 +247,7 @@ fn refresh_non_curated_plugin_cache_with_mode(
         .map(PluginId::as_key)
         .collect::<HashSet<_>>();
 
-    let store = PluginStore::try_new(codex_home.to_path_buf()).map_err(|err| err.to_string())?;
+    let store = PluginStore::try_new(genex_home.to_path_buf()).map_err(|err| err.to_string())?;
     let marketplace_outcome = list_marketplaces_with_home(additional_roots, /*home_dir*/ None)
         .map_err(|err| format!("failed to discover marketplaces for cache refresh: {err}"))?;
     let mut plugin_sources = HashMap::<String, (MarketplacePluginSource, Option<String>)>::new();
@@ -314,7 +314,7 @@ fn refresh_non_curated_plugin_cache_with_mode(
         };
         let refresh_result = (|| -> Result<bool, String> {
             let materialized =
-                materialize_marketplace_plugin_source_with_mode(codex_home, &source, git_mode)
+                materialize_marketplace_plugin_source_with_mode(genex_home, &source, git_mode)
                     .map_err(|err| {
                         format!("failed to materialize plugin source for {plugin_key}: {err}")
                     })?;
@@ -1170,15 +1170,15 @@ pub struct MaterializedMarketplacePluginSource {
 }
 
 pub fn materialize_marketplace_plugin_source(
-    codex_home: &Path,
+    genex_home: &Path,
     source: &MarketplacePluginSource,
 ) -> Result<MaterializedMarketplacePluginSource, String> {
-    materialize_marketplace_plugin_source_with_mode(codex_home, source, PluginGitMode::Manual)
+    materialize_marketplace_plugin_source_with_mode(genex_home, source, PluginGitMode::Manual)
 }
 
 /// Applies the initiating operation's Git trust policy throughout plugin materialization.
 pub(crate) fn materialize_marketplace_plugin_source_with_mode(
-    codex_home: &Path,
+    genex_home: &Path,
     source: &MarketplacePluginSource,
     mode: PluginGitMode,
 ) -> Result<MaterializedMarketplacePluginSource, String> {
@@ -1193,7 +1193,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
             ref_name,
             sha,
         } => {
-            let staging_root = codex_home.join("plugins/.marketplace-plugin-source-staging");
+            let staging_root = genex_home.join("plugins/.marketplace-plugin-source-staging");
             fs::create_dir_all(&staging_root).map_err(|err| {
                 format!(
                     "failed to create marketplace plugin source staging directory {}: {err}",
@@ -1210,7 +1210,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
                     )
                 })?;
             clone_git_plugin_source(
-                codex_home,
+                genex_home,
                 url,
                 ref_name.as_deref(),
                 sha.as_deref(),
@@ -1238,7 +1238,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
             registry,
         } => {
             let (path, tempdir) = materialize_npm_plugin_source(
-                codex_home,
+                genex_home,
                 package,
                 version.as_deref(),
                 registry.as_deref(),
@@ -1252,7 +1252,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
 }
 
 fn clone_git_plugin_source(
-    codex_home: &Path,
+    genex_home: &Path,
     url: &str,
     ref_name: Option<&str>,
     sha: Option<&str>,
@@ -1261,7 +1261,7 @@ fn clone_git_plugin_source(
     mode: PluginGitMode,
 ) -> Result<(), String> {
     let clone_cwd = match mode {
-        PluginGitMode::Automatic => Some(codex_home),
+        PluginGitMode::Automatic => Some(genex_home),
         PluginGitMode::Manual => None,
     };
     if let Some(sparse_checkout_path) = sparse_checkout_path {

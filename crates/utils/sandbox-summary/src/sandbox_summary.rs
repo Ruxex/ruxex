@@ -212,9 +212,9 @@ mod tests {
         })
         .unwrap();
         let hidden_root = AbsolutePathBuf::try_from(if cfg!(windows) {
-            "C:\\Users\\test\\.codex\\state"
+            "C:\\Users\\test\\.genex\\state"
         } else {
-            "/Users/test/.codex/state"
+            "/Users/test/.genex/state"
         })
         .unwrap();
         let profile = PermissionProfile::workspace_write_with(

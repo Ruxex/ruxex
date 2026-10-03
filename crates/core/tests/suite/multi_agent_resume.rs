@@ -146,7 +146,7 @@ fn configure_multi_agent_v2_with_role(
     config.multi_agent_v2.subagent_developer_instructions =
         Some(SUBAGENT_DEVELOPER_INSTRUCTIONS.to_string());
     config.multi_agent_v2.max_concurrent_threads_per_session = 3;
-    let role_path = config.codex_home.join("durable-worker-role.toml");
+    let role_path = config.genex_home.join("durable-worker-role.toml");
     std::fs::write(
         &role_path,
         format!(
@@ -468,7 +468,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     let redirected_server = start_mock_server().await;
     let redirected_base_url = format!("{}/v1", redirected_server.uri());
     std::fs::write(
-        resumed.config.codex_home.join("durable-worker-role.toml"),
+        resumed.config.genex_home.join("durable-worker-role.toml"),
         format!(
             r#"model = "{ROLE_MODEL}"
 model_reasoning_effort = "high"

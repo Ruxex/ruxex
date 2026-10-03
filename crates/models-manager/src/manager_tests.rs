@@ -269,11 +269,11 @@ impl ModelsEndpointClient for TestModelsEndpoint {
 }
 
 fn provider_manager_for_tests(
-    codex_home: std::path::PathBuf,
+    genex_home: std::path::PathBuf,
     endpoint_client: Arc<dyn ModelsEndpointClient>,
 ) -> RemoteModelsManager {
     provider_manager_for_tests_with_auth(
-        codex_home,
+        genex_home,
         endpoint_client,
         Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
@@ -282,19 +282,19 @@ fn provider_manager_for_tests(
 }
 
 fn provider_manager_for_tests_with_auth(
-    codex_home: std::path::PathBuf,
+    genex_home: std::path::PathBuf,
     endpoint_client: Arc<dyn ModelsEndpointClient>,
     auth_manager: Option<Arc<AuthManager>>,
 ) -> RemoteModelsManager {
-    RemoteModelsManager::new(codex_home, endpoint_client, auth_manager)
+    RemoteModelsManager::new(genex_home, endpoint_client, auth_manager)
 }
 
-async fn mutate_file_cache_for_test<F>(codex_home: &std::path::Path, f: F)
+async fn mutate_file_cache_for_test<F>(genex_home: &std::path::Path, f: F)
 where
     F: FnOnce(&mut ModelsCacheEntry),
 {
     let client_version = crate::client_version_to_whole();
-    let cache = FileModelsCache::new(codex_home.join(MODEL_CACHE_FILE), DEFAULT_MODEL_CACHE_TTL);
+    let cache = FileModelsCache::new(genex_home.join(MODEL_CACHE_FILE), DEFAULT_MODEL_CACHE_TTL);
     let mut entry = cache
         .load(&client_version)
         .await
@@ -394,9 +394,9 @@ async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_
 
 #[tokio::test]
 async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new(Vec::new());
-    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
     let requested_model = Some("unsupported".to_string());
 
     let model = manager
@@ -414,10 +414,10 @@ async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
 
 #[tokio::test]
 async fn get_model_info_tracks_fallback_usage() {
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let config = ModelsManagerConfig::default();
     let manager = provider_manager_for_tests(
-        codex_home.path().to_path_buf(),
+        genex_home.path().to_path_buf(),
         TestModelsEndpoint::new(Vec::new()),
     );
     let known_slug = manager
@@ -441,9 +441,9 @@ async fn get_model_info_tracks_fallback_usage() {
 
 #[tokio::test]
 async fn get_model_info_applies_long_context_override_to_bundled_gpt_5_6_models() {
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let manager = provider_manager_for_tests(
-        codex_home.path().to_path_buf(),
+        genex_home.path().to_path_buf(),
         TestModelsEndpoint::new(Vec::new()),
     );
     let config = ModelsManagerConfig {
@@ -517,10 +517,10 @@ async fn get_model_info_matches_hyphenated_provider_namespace_suffix() {
 
 #[tokio::test]
 async fn get_model_info_rejects_multi_segment_namespace_suffix_matching() {
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let config = ModelsManagerConfig::default();
     let manager = provider_manager_for_tests(
-        codex_home.path().to_path_buf(),
+        genex_home.path().to_path_buf(),
         TestModelsEndpoint::new(Vec::new()),
     );
     let known_slug = manager
@@ -544,9 +544,9 @@ async fn refresh_available_models_sorts_by_priority() {
         remote_model("priority-low", "Low", /*priority*/ 1),
         remote_model("priority-high", "High", /*priority*/ 0),
     ];
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new(vec![remote_models.clone()]);
-    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     let available = manager
         .list_models(
@@ -581,7 +581,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
         "API Auth Visible",
         /*priority*/ 0,
     )];
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let endpoint = Arc::new(TestModelsEndpoint {
         has_command_auth: true,
         uses_managed_auth: false,
@@ -591,7 +591,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
         observed_proxy_policy: Mutex::new(None),
     });
     let manager = provider_manager_for_tests_with_auth(
-        codex_home.path().to_path_buf(),
+        genex_home.path().to_path_buf(),
         endpoint.clone(),
         Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
@@ -612,9 +612,9 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
 #[tokio::test]
 async fn refresh_available_models_uses_cache_when_fresh() {
     let remote_models = vec![remote_model("cached", "Cached", /*priority*/ 5)];
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new(vec![remote_models.clone()]);
-    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -643,7 +643,7 @@ async fn refresh_available_models_uses_cache_when_fresh() {
 
 #[tokio::test]
 async fn online_refresh_updates_access_programs_with_unchanged_etag() {
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let granted_model = ModelInfo {
         available_access_programs: Some(ModelAccessPrograms {
             cyber: vec![
@@ -666,7 +666,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         fetch_count: AtomicUsize::new(0),
         observed_proxy_policy: Mutex::new(None),
     });
-    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     // Caller-specific access can change without changing the catalog ETag.
     for model in [granted_model, revoked_model] {
@@ -687,7 +687,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         // A new manager must read the latest access metadata from the disk cache.
         let cache_endpoint = TestModelsEndpoint::new(Vec::new());
         let cache_manager =
-            provider_manager_for_tests(codex_home.path().to_path_buf(), cache_endpoint.clone());
+            provider_manager_for_tests(genex_home.path().to_path_buf(), cache_endpoint.clone());
         assert_eq!(
             cache_manager
                 .list_models(
@@ -709,10 +709,10 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
 #[tokio::test]
 async fn refresh_available_models_refetches_when_cache_stale() {
     let initial_models = vec![remote_model("stale", "Stale", /*priority*/ 1)];
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("fresh", "Fresh", /*priority*/ 9)];
     let endpoint = TestModelsEndpoint::new(vec![initial_models.clone(), updated_models.clone()]);
-    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -723,7 +723,7 @@ async fn refresh_available_models_refetches_when_cache_stale() {
         .expect("initial refresh succeeds");
 
     // Rewrite cache with an old timestamp so it is treated as stale.
-    mutate_file_cache_for_test(codex_home.path(), |cache| {
+    mutate_file_cache_for_test(genex_home.path(), |cache| {
         cache.fetched_at = Utc::now() - chrono::Duration::hours(1);
     })
     .await;
@@ -746,10 +746,10 @@ async fn refresh_available_models_refetches_when_cache_stale() {
 #[tokio::test]
 async fn refresh_available_models_refetches_when_version_mismatch() {
     let initial_models = vec![remote_model("old", "Old", /*priority*/ 1)];
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("new", "New", /*priority*/ 2)];
     let endpoint = TestModelsEndpoint::new(vec![initial_models.clone(), updated_models.clone()]);
-    let manager = provider_manager_for_tests(codex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -759,7 +759,7 @@ async fn refresh_available_models_refetches_when_version_mismatch() {
         .await
         .expect("initial refresh succeeds");
 
-    mutate_file_cache_for_test(codex_home.path(), |cache| {
+    mutate_file_cache_for_test(genex_home.path(), |cache| {
         let client_version = crate::client_version_to_whole();
         cache.client_version = Some(format!("{client_version}-mismatch"));
     })
@@ -787,7 +787,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
         "Remote Old",
         /*priority*/ 1,
     )];
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let refreshed_models = vec![remote_model(
         "remote-new",
         "Remote New",
@@ -796,7 +796,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
     let endpoint = TestModelsEndpoint::new(vec![initial_models, refreshed_models]);
     let manager = RemoteModelsManager::new_with_cache(
         Arc::new(FileModelsCache::new(
-            codex_home.path().join(MODEL_CACHE_FILE),
+            genex_home.path().join(MODEL_CACHE_FILE),
             Duration::ZERO,
         )),
         endpoint.clone(),
@@ -842,14 +842,14 @@ async fn refresh_available_models_drops_removed_remote_models() {
 #[tokio::test]
 async fn refresh_available_models_skips_network_without_auth() {
     let dynamic_slug = "dynamic-model-only-for-test-noauth";
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::without_refresh(vec![vec![remote_model(
         dynamic_slug,
         "No Auth",
         /*priority*/ 1,
     )]]);
     let manager = provider_manager_for_tests_with_auth(
-        codex_home.path().to_path_buf(),
+        genex_home.path().to_path_buf(),
         endpoint.clone(),
         /*auth_manager*/ None,
     );

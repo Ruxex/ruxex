@@ -406,7 +406,7 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
     )?;
     let authapi_base_url = server.uri();
     let mut app = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .without_managed_config()
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", None),
@@ -454,7 +454,7 @@ async fn start_authenticated_app(home: &Path, server: &MockServer) -> Result<Tes
         AuthCredentialsStoreMode::File,
     )?;
     TestAppServer::builder()
-        .with_codex_home(home)
+        .with_genex_home(home)
         .without_managed_config()
         .build_initialized()
         .await

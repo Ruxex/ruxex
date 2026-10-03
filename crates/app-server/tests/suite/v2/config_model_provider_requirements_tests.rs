@@ -44,7 +44,7 @@ X-Local = "no"
     let expected: ConfigToml = toml::from_str(requirements)?;
     let expected_providers = json!(expected.model_providers);
     let mut server = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build()
         .await?;
     timeout(Duration::from_secs(/*secs*/ 60), server.initialize()).await??;
@@ -150,7 +150,7 @@ async fn dotted_managed_provider_id_hides_exact_origins() -> Result<()> {
         "[model_providers.\"corp.gateway\"]\nname = 'Local gateway'\nbase_url = 'https://local.example.test'\n[model_providers.corp]\nname = 'Other provider'\n",
     )?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized_with_timeout(Duration::from_secs(/*secs*/ 60))
         .await?;
     let id = server

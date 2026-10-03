@@ -180,7 +180,7 @@ async fn request_queue_waits_for_dispatcher_admission_before_recording_telemetry
         notifications,
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current executable"),
-            /*codex_linux_sandbox_exe*/ None,
+            /*genex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths"),
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
@@ -389,7 +389,7 @@ fn request_telemetry_fixture(router: RpcRouter<ExecServerHandler>) -> RequestTel
         notifications,
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current executable"),
-            /*codex_linux_sandbox_exe*/ None,
+            /*genex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths"),
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),

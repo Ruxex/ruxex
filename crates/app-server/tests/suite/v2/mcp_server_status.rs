@@ -150,7 +150,7 @@ async fn oauth_login_validates_callback_issuer_and_uses_http_headers_helper(
         .mount(&oauth)
         .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let helper_command = if cfg!(windows) {
         r#"echo {"X-Gateway":"gateway-token"}"#
     } else {
@@ -163,7 +163,7 @@ async fn oauth_login_validates_callback_issuer_and_uses_http_headers_helper(
         .map(|callback| format!("mcp_oauth_callback_url = \"{callback}\"\n"))
         .unwrap_or_default();
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "mcp_oauth_credentials_store = \"file\"\n\
              {global_callback_config}\
@@ -178,7 +178,7 @@ async fn oauth_login_validates_callback_issuer_and_uses_http_headers_helper(
         ),
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -249,23 +249,23 @@ async fn oauth_login_validates_callback_issuer_and_uses_http_headers_helper(
 async fn oauth_login_rejects_servers_disabled_by_managed_requirements(
     with_headers_helper: bool,
 ) -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let marker = codex_home.path().join("helper-ran");
+    let genex_home = TempDir::new()?;
+    let marker = genex_home.path().join("helper-ran");
     let helper = with_headers_helper
         .then(|| toml::Value::String(format!("echo invoked > \"{}\"", marker.display())))
         .map_or_else(String::new, |command| {
             format!("http_headers_helper = {command}\n")
         });
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!("[mcp_servers.blocked]\nurl = \"https://example.com/mcp\"\n{helper}"),
     )?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         "[mcp_servers.blocked.identity]\nurl = \"https://allowed.example.com/mcp\"\n",
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -416,14 +416,14 @@ async fn oauth_login_automatically_uses_dcr_without_provider_owned_cimd_url() ->
         let _ = axum::serve(listener, oauth_server).await;
     });
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&responses_server.uri())
         .with_extra_config(&format!(
             "mcp_oauth_credentials_store = \"file\"\n[mcp_servers.dcr]\nurl = \"{base_url}/mcp\""
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -529,23 +529,23 @@ async fn mcp_server_status_list_returns_raw_server_and_tool_names() -> Result<()
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let (mcp_server_url, mcp_server_handle) =
         start_mcp_server("look-up.raw", /*tools_error*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .with_extra_config(&format!(
             "[mcp_servers.some-server]\nurl = \"{mcp_server_url}/mcp\"\n\
              [mcp_servers.broken-server]\ncommand = {}",
             toml::Value::String(
-                codex_home
+                genex_home
                     .path()
                     .join("missing-mcp-server")
                     .display()
                     .to_string()
             )
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -623,9 +623,9 @@ async fn mcp_server_status_list_returns_raw_server_and_tool_names() -> Result<()
 async fn mcp_server_status_list_waits_for_live_stdio_metadata_before_using_cached_tools()
 -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let codex_home = TempDir::new()?;
-    let barrier_file = codex_home.path().join("allow-initialize");
-    let pid_file = codex_home.path().join("mcp.pid");
+    let genex_home = TempDir::new()?;
+    let barrier_file = genex_home.path().join("allow-initialize");
+    let pid_file = genex_home.path().join("mcp.pid");
     std::fs::write(&barrier_file, "ready")?;
     mock_responses_config(&server.uri())
         .with_extra_config(&format!(
@@ -643,10 +643,10 @@ MCP_TEST_PID_FILE = {}
             toml::Value::String(barrier_file.to_string_lossy().into_owned()),
             toml::Value::String(pid_file.to_string_lossy().into_owned()),
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -697,14 +697,14 @@ async fn mcp_server_status_list_uses_thread_project_local_config() -> Result<()>
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let (mcp_server_url, mcp_server_handle) =
         start_mcp_server("project_lookup", /*tools_error*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let workspace = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     std::fs::create_dir_all(workspace.path().join(".git"))?;
-    set_project_trust_level(codex_home.path(), workspace.path(), TrustLevel::Trusted)?;
+    set_project_trust_level(genex_home.path(), workspace.path(), TrustLevel::Trusted)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -714,7 +714,7 @@ async fn mcp_server_status_list_uses_thread_project_local_config() -> Result<()>
         })
         .await?;
 
-    let project_config_dir = workspace.path().join(".codex");
+    let project_config_dir = workspace.path().join(".genex");
     std::fs::create_dir_all(&project_config_dir)?;
     std::fs::write(
         project_config_dir.join("config.toml"),
@@ -772,15 +772,15 @@ async fn mcp_server_status_list_reports_thread_runtime_connections() -> Result<(
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let (mcp_server_url, mcp_server_handle) =
         start_mcp_server("lookup", /*tools_error*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .with_extra_config(&format!(
             "[mcp_servers.connected]\nurl = \"{mcp_server_url}/mcp\"\n\
              [mcp_servers.disabled]\nurl = \"{mcp_server_url}/mcp\"\nenabled = false\n"
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp.start_thread(ThreadStartParams::default()).await?;
@@ -831,7 +831,7 @@ async fn mcp_server_status_list_reports_thread_runtime_connections() -> Result<(
             "[mcp_servers.connected]\nurl = \"{replacement_url}/mcp\"\n\
              [mcp_servers.disabled]\nurl = \"{mcp_server_url}/mcp\"\nenabled = false\n"
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let response: ListMcpServerStatusResponse = mcp
         .request(|request_id| ClientRequest::McpServerStatusList {
             request_id,
@@ -880,8 +880,8 @@ async fn mcp_server_status_list_reports_disconnected_stdio_transport() -> Result
         "the stdio executable and shutdown marker are host-local"
     );
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let codex_home = TempDir::new()?;
-    let exit_file = codex_home.path().join("exit-mcp-server");
+    let genex_home = TempDir::new()?;
+    let exit_file = genex_home.path().join("exit-mcp-server");
     mock_responses_config(&server.uri())
         .with_extra_config(&format!(
             "[mcp_servers.stdio]\ncommand = {}\nstartup_timeout_sec = 2\n\
@@ -889,9 +889,9 @@ async fn mcp_server_status_list_reports_disconnected_stdio_transport() -> Result
             toml::Value::String(stdio_server_bin()?),
             toml::Value::String(exit_file.to_string_lossy().into_owned()),
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp.start_thread(ThreadStartParams::default()).await?;
@@ -953,12 +953,12 @@ async fn mcp_server_status_retains_capabilities_when_tool_discovery_fails() -> R
         )),
     )
     .await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .with_extra_config(&format!("[mcp_servers.degraded]\nurl = \"{url}/mcp\""))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     for detail in [None, Some(McpServerStatusDetail::ToolsAndAuthOnly)] {
@@ -1105,15 +1105,15 @@ impl ServerHandler for SlowInventoryServer {
 async fn mcp_server_status_list_tools_and_auth_only_skips_slow_inventory_calls() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let (mcp_server_url, mcp_server_handle) = start_slow_inventory_mcp_server("lookup").await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .with_extra_config(&format!(
             "[mcp_servers.some-server]\nurl = \"{mcp_server_url}/mcp\""
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1153,7 +1153,7 @@ async fn mcp_server_status_list_keeps_tools_for_sanitized_name_collisions() -> R
         start_mcp_server("dash_lookup", /*tools_error*/ None).await?;
     let (underscore_server_url, underscore_server_handle) =
         start_mcp_server("underscore_lookup", /*tools_error*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .with_extra_config(&format!(
             r#"[mcp_servers.some-server]
@@ -1163,10 +1163,10 @@ url = "{dash_server_url}/mcp"
 url = "{underscore_server_url}/mcp"
 "#
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;

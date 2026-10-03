@@ -497,8 +497,8 @@ async fn tool_start_receives_frozen_host_plugin_root() -> Result<()> {
     skip_if_wine_exec!(Ok(()), "requires a native test_stdio_server");
 
     let server = responses::start_mock_server().await;
-    let codex_home = Arc::new(tempfile::tempdir()?);
-    let plugin_root = super::plugins::write_sample_plugin_manifest_and_config(codex_home.as_ref());
+    let genex_home = Arc::new(tempfile::tempdir()?);
+    let plugin_root = super::plugins::write_sample_plugin_manifest_and_config(genex_home.as_ref());
     let test_env = test_env().await?;
     let server_config = json!({
         "command": super::rmcp_client::remote_aware_stdio_server_bin()?,
@@ -514,7 +514,7 @@ async fn tool_start_receives_frozen_host_plugin_root() -> Result<()> {
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.tool_lifecycle_contributor(recorder.clone());
     let test = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.4", |model| model.supports_search_tool = false)
         .build_with_environment(&server, test_env)

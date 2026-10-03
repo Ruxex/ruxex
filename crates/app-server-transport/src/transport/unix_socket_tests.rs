@@ -7,7 +7,7 @@ use super::app_server_control_socket_path;
 use super::start_control_socket_acceptor;
 use genex_app_server_protocol::JSONRPCMessage;
 use genex_app_server_protocol::JSONRPCNotification;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_uds::UnixStream;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use futures::SinkExt;
@@ -385,8 +385,8 @@ fn absolute_path(path: &str) -> AbsolutePathBuf {
 }
 
 fn default_control_socket_path() -> AbsolutePathBuf {
-    let codex_home = find_codex_home().expect("codex home");
-    app_server_control_socket_path(&codex_home).expect("default control socket path")
+    let genex_home = find_genex_home().expect("genex home");
+    app_server_control_socket_path(&genex_home).expect("default control socket path")
 }
 
 fn test_socket_path(temp_dir: &Path) -> AbsolutePathBuf {

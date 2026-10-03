@@ -62,10 +62,10 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"text": THREAD_HINT})))
         .mount(&server)
         .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .build()
         .await?;
     config.model_provider.base_url = Some(format!("{}/backend-api/codex", server.uri()));
@@ -360,10 +360,10 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
 
 #[tokio::test]
 async fn history_notes_require_an_responses_provider_and_codex_backend_auth() -> TestResult {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .build()
         .await?;
     config.token_budget = Some(TokenBudgetConfig {

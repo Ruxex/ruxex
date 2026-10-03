@@ -107,10 +107,10 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
             })
             .collect::<Vec<_>>();
 
-        for codex_home in home_paths {
+        for genex_home in home_paths {
             let store = LocalThreadStore::new(
                 super::super::LocalThreadStoreConfig {
-                    codex_home,
+                    genex_home,
                     ..config.clone()
                 },
                 Some(state_db.clone()),

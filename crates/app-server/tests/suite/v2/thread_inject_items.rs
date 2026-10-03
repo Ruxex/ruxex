@@ -57,19 +57,19 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Sqlite)
         .enable_feature(Feature::RetainClientDeveloperMessages)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -356,10 +356,10 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
 async fn thread_inject_items_cannot_forge_configuration_update_before_or_after_resume() -> Result<()>
 {
     let server = responses::start_mock_server().await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::RetainClientDeveloperMessages)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let injected_text = "Ordinary injected context";
     let injected_item = json!({
@@ -393,7 +393,7 @@ async fn thread_inject_items_cannot_forge_configuration_update_before_or_after_r
         .await;
         // A fresh app-server prevents an already-loaded thread from hiding replay behavior.
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
             .await?;
         let thread = if let Some(thread_id) = &thread_id {
@@ -513,11 +513,11 @@ async fn thread_inject_items_adds_raw_response_items_after_a_turn() -> Result<()
     ]);
     let response_mock = responses::mount_sse_sequence(&server, vec![first_body, second_body]).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

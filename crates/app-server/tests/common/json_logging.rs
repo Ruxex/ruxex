@@ -78,18 +78,18 @@ impl JsonLogCapture {
 pub fn app_server_json_shutdown_event(
     binary: &str,
     args: &[&str],
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> Result<Value> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         "[features]\nplugins = false\n",
     )?;
     let output = Command::new(genex_utils_cargo_bin::cargo_bin(binary)?)
         .stdin(Stdio::null())
-        .env("CODEX_HOME", codex_home)
+        .env("GENEX_HOME", genex_home)
         .env(
             "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            codex_home.join("managed_config.toml"),
+            genex_home.join("managed_config.toml"),
         )
         .env("LOG_FORMAT", "json")
         .env("RUST_LOG", "codex_app_server=info")

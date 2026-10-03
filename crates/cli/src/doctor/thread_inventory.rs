@@ -90,7 +90,7 @@ impl RolloutScan {
 
 pub(super) async fn thread_inventory_check(config: &Config) -> DoctorCheck {
     thread_inventory_check_for_roots(
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         config.sqlite_config(),
         config.model_provider_id.as_str(),
     )
@@ -98,11 +98,11 @@ pub(super) async fn thread_inventory_check(config: &Config) -> DoctorCheck {
 }
 
 async fn thread_inventory_check_for_roots(
-    codex_home: &Path,
+    genex_home: &Path,
     sqlite: &genex_state::SqliteConfig,
     default_provider: &str,
 ) -> DoctorCheck {
-    let scan = scan_rollout_files(codex_home).await;
+    let scan = scan_rollout_files(genex_home).await;
     let state_db_path = sqlite.state_db_path();
 
     let mut details = vec![
@@ -156,7 +156,7 @@ async fn thread_inventory_check_for_roots(
         }
     };
 
-    parity_check_from_scan_and_rows(codex_home, scan, rows, details)
+    parity_check_from_scan_and_rows(genex_home, scan, rows, details)
 }
 
 fn missing_state_db_check(scan: RolloutScan, details: Vec<String>) -> DoctorCheck {
@@ -210,14 +210,14 @@ fn missing_state_db_check(scan: RolloutScan, details: Vec<String>) -> DoctorChec
                 scan.reached_scan_cap
             ))
             .expected("rollout directories are fully scannable")
-            .remedy("Check file permissions and unexpected files under CODEX_HOME sessions."),
+            .remedy("Check file permissions and unexpected files under GENEX_HOME sessions."),
         );
     }
     check
 }
 
 fn parity_check_from_scan_and_rows(
-    codex_home: &Path,
+    genex_home: &Path,
     scan: RolloutScan,
     rows: Vec<ThreadStateAuditRow>,
     mut details: Vec<String>,
@@ -261,7 +261,7 @@ fn parity_check_from_scan_and_rows(
                             .existing_keys
                             .contains(&rollout_path_key(&row.rollout_path))
                             || row.rollout_path.is_file())
-                        .then(|| archived_from_rollout_path(codex_home, &row.rollout_path))
+                        .then(|| archived_from_rollout_path(genex_home, &row.rollout_path))
                         .flatten()
                     })?;
                 (expected_archived != row.archived).then_some(row)
@@ -428,22 +428,22 @@ fn parity_check_from_scan_and_rows(
                 scan.reached_scan_cap
             ))
             .expected("rollout directories are fully scannable")
-            .remedy("Check file permissions and unexpected files under CODEX_HOME sessions."),
+            .remedy("Check file permissions and unexpected files under GENEX_HOME sessions."),
         );
     }
     check
 }
 
-async fn scan_rollout_files(codex_home: &Path) -> RolloutScan {
+async fn scan_rollout_files(genex_home: &Path) -> RolloutScan {
     let mut scan = RolloutScan::default();
     scan_rollout_root(
-        &codex_home.join("sessions"),
+        &genex_home.join("sessions"),
         /*archived*/ false,
         &mut scan,
     )
     .await;
     scan_rollout_root(
-        &codex_home.join("archived_sessions"),
+        &genex_home.join("archived_sessions"),
         /*archived*/ true,
         &mut scan,
     )
@@ -600,12 +600,12 @@ fn rollout_path_key(path: &Path) -> PathBuf {
     path_key(&genex_rollout::plain_rollout_path(path))
 }
 
-fn archived_from_rollout_path(codex_home: &Path, path: &Path) -> Option<bool> {
+fn archived_from_rollout_path(genex_home: &Path, path: &Path) -> Option<bool> {
     let key = path_key(path);
-    if key.starts_with(path_key(&codex_home.join("archived_sessions"))) {
+    if key.starts_with(path_key(&genex_home.join("archived_sessions"))) {
         return Some(true);
     }
-    if key.starts_with(path_key(&codex_home.join("sessions"))) {
+    if key.starts_with(path_key(&genex_home.join("sessions"))) {
         return Some(false);
     }
     None
@@ -771,7 +771,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -799,7 +799,7 @@ mod tests {
             "00000000-0000-0000-0000-000000000002",
         );
         let stale_path = fixture
-            .codex_home
+            .genex_home
             .path()
             .join("sessions/2025/01/02/rollout-2025-01-02T12-00-00-00000000-0000-0000-0000-000000000003.jsonl");
         fixture
@@ -818,7 +818,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -868,7 +868,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -894,7 +894,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -924,7 +924,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -951,7 +951,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -991,7 +991,7 @@ mod tests {
             .await;
 
         let legacy_id = "00000000-0000-0000-0000-000000000003";
-        let legacy_path = fixture.codex_home.path().join(format!(
+        let legacy_path = fixture.genex_home.path().join(format!(
             "sessions/2025/01/02/rollout-2025-01-02T11-00-00-{legacy_id}.jsonl"
         ));
         std::fs::write(
@@ -1005,7 +1005,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -1037,7 +1037,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -1051,7 +1051,7 @@ mod tests {
     #[tokio::test]
     async fn thread_inventory_check_ignores_compression_temp_files() {
         let fixture = Fixture::new().await;
-        let temp_path = fixture.codex_home.path().join(
+        let temp_path = fixture.genex_home.path().join(
             "sessions/2025/01/02/rollout-2025-01-02T10-00-00-00000000-0000-0000-0000-000000000001.jsonl.zst.compress.1.0.tmp",
         );
         std::fs::create_dir_all(temp_path.parent().expect("rollout temp parent"))
@@ -1059,7 +1059,7 @@ mod tests {
         std::fs::write(temp_path, "not a completed rollout").expect("rollout temp file");
 
         let check = thread_inventory_check_for_roots(
-            fixture.codex_home.path(),
+            fixture.genex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -1274,7 +1274,7 @@ mod tests {
     }
 
     struct Fixture {
-        codex_home: TempDir,
+        genex_home: TempDir,
         sqlite_home: TempDir,
     }
 
@@ -1294,7 +1294,7 @@ mod tests {
 
     impl Fixture {
         async fn new() -> Self {
-            let codex_home = TempDir::new().expect("codex home");
+            let genex_home = TempDir::new().expect("genex home");
             let sqlite_home = TempDir::new().expect("sqlite home");
             let _runtime = genex_state::StateRuntime::init(
                 genex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
@@ -1303,7 +1303,7 @@ mod tests {
             .await
             .expect("state runtime");
             Self {
-                codex_home,
+                genex_home,
                 sqlite_home,
             }
         }
@@ -1314,9 +1314,9 @@ mod tests {
 
         fn write_rollout(&self, archived: bool, timestamp: &str, thread_id: &str) -> PathBuf {
             let root = if archived {
-                self.codex_home.path().join("archived_sessions")
+                self.genex_home.path().join("archived_sessions")
             } else {
-                self.codex_home.path().join("sessions/2025/01/02")
+                self.genex_home.path().join("sessions/2025/01/02")
             };
             std::fs::create_dir_all(&root).expect("rollout dir");
             let path = root.join(format!("rollout-{timestamp}-{thread_id}.jsonl"));
@@ -1329,7 +1329,7 @@ mod tests {
                         session_id: parsed_thread_id.into(),
                         id: parsed_thread_id,
                         timestamp: timestamp.to_string(),
-                        cwd: self.codex_home.path().to_path_buf(),
+                        cwd: self.genex_home.path().to_path_buf(),
                         originator: "test".to_string(),
                         cli_version: "test".to_string(),
                         source: SessionSource::Cli,
@@ -1374,7 +1374,7 @@ INSERT INTO threads (
             .bind(1_i64)
             .bind("cli")
             .bind("test-provider")
-            .bind(self.codex_home.path().display().to_string())
+            .bind(self.genex_home.path().display().to_string())
             .bind("test title")
             .bind("read-only")
             .bind("on-request")

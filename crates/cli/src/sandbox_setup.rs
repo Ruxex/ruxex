@@ -6,7 +6,7 @@ use clap::ArgGroup;
 use clap::Parser;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::edit::ConfigEditsBuilder;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_utils_cli::ProfileV2Name;
 use toml::Value as TomlValue;
 
@@ -26,7 +26,7 @@ pub(crate) struct SandboxSetupCommand {
         long = "user",
         value_name = "USER",
         conflicts_with = "current_user",
-        requires = "codex_home"
+        requires = "genex_home"
     )]
     user: Option<String>,
 
@@ -38,9 +38,9 @@ pub(crate) struct SandboxSetupCommand {
     )]
     current_user: bool,
 
-    /// CODEX_HOME for the Codex user. Required with --user.
-    #[arg(long = "codex-home", value_name = "DIR")]
-    codex_home: Option<PathBuf>,
+    /// GENEX_HOME for the Codex user. Required with --user.
+    #[arg(long = "genex-home", value_name = "DIR")]
+    genex_home: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,11 +90,11 @@ async fn run_elevated(
 ) -> anyhow::Result<()> {
     let identity = resolve_sandbox_setup_identity(&cmd)?;
     let config = ConfigBuilder::default()
-        .codex_home(identity.codex_home.clone())
-        .fallback_cwd(Some(identity.codex_home.clone()))
-        .loader_overrides(super::loader_overrides_for_profile_at_codex_home(
+        .genex_home(identity.genex_home.clone())
+        .fallback_cwd(Some(identity.genex_home.clone()))
+        .loader_overrides(super::loader_overrides_for_profile_at_genex_home(
             config_profile.as_ref(),
-            &identity.codex_home,
+            &identity.genex_home,
         ))
         .cli_overrides(cli_overrides)
         .build()
@@ -102,11 +102,11 @@ async fn run_elevated(
         .context("failed to load target user's Codex config for sandbox provisioning")?;
 
     genex_core::windows_sandbox::run_elevated_provisioning_setup(
-        identity.codex_home.as_path(),
+        identity.genex_home.as_path(),
         identity.real_user.as_str(),
         config.permissions.network.as_ref(),
     )?;
-    ConfigEditsBuilder::new(identity.codex_home.as_path())
+    ConfigEditsBuilder::new(identity.genex_home.as_path())
         .set_windows_sandbox_mode("elevated")
         .apply()
         .await
@@ -119,14 +119,14 @@ async fn run_elevated(
     println!(
         "Windows elevated sandbox setup completed for {} at {}.",
         identity.real_user,
-        identity.codex_home.display()
+        identity.genex_home.display()
     );
     Ok(())
 }
 
 struct SandboxSetupIdentity {
     real_user: String,
-    codex_home: PathBuf,
+    genex_home: PathBuf,
 }
 
 fn resolve_sandbox_setup_identity(
@@ -138,13 +138,13 @@ fn resolve_sandbox_setup_identity(
             .map_err(|err| {
                 anyhow::anyhow!("failed to determine current user from environment: {err}")
             })?;
-        let codex_home = match cmd.codex_home.clone() {
-            Some(codex_home) => codex_home,
-            None => find_codex_home()?.to_path_buf(),
+        let genex_home = match cmd.genex_home.clone() {
+            Some(genex_home) => genex_home,
+            None => find_genex_home()?.to_path_buf(),
         };
         return Ok(SandboxSetupIdentity {
             real_user,
-            codex_home,
+            genex_home,
         });
     }
 
@@ -152,13 +152,13 @@ fn resolve_sandbox_setup_identity(
         .user
         .clone()
         .ok_or_else(|| anyhow::anyhow!("--user or --current-user is required"))?;
-    let codex_home = cmd
-        .codex_home
+    let genex_home = cmd
+        .genex_home
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("--codex-home is required with --user"))?;
+        .ok_or_else(|| anyhow::anyhow!("--genex-home is required with --user"))?;
     Ok(SandboxSetupIdentity {
         real_user,
-        codex_home,
+        genex_home,
     })
 }
 
@@ -173,8 +173,8 @@ mod tests {
             "--elevated",
             "--user",
             "DOMAIN\\alice",
-            "--codex-home",
-            r"C:\Users\alice\.codex",
+            "--genex-home",
+            r"C:\Users\alice\.genex",
         ])
         .expect("parse");
 
@@ -182,8 +182,8 @@ mod tests {
         assert_eq!(command.user.as_deref(), Some(r"DOMAIN\alice"));
         assert!(!command.current_user);
         assert_eq!(
-            command.codex_home.as_deref(),
-            Some(std::path::Path::new(r"C:\Users\alice\.codex"))
+            command.genex_home.as_deref(),
+            Some(std::path::Path::new(r"C:\Users\alice\.genex"))
         );
     }
 
@@ -196,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn requires_codex_home_for_managed_user() {
+    fn requires_genex_home_for_managed_user() {
         let err =
             SandboxSetupCommand::try_parse_from(["setup", "--elevated", "--user", "DOMAIN\\alice"])
                 .expect_err("parse should fail");
@@ -211,8 +211,8 @@ mod tests {
             "--elevated".to_string(),
             "--user".to_string(),
             r"DOMAIN\alice".to_string(),
-            "--codex-home".to_string(),
-            r"C:\Users\alice\.codex".to_string(),
+            "--genex-home".to_string(),
+            r"C:\Users\alice\.genex".to_string(),
         ])
         .expect("parse")
         .expect("setup command");

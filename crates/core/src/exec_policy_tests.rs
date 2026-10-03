@@ -79,11 +79,11 @@ fn starlark_string(value: &str) -> String {
 }
 
 async fn write_project_trust_config(
-    codex_home: &Path,
+    genex_home: &Path,
     trusted_projects: &[(&Path, TrustLevel)],
 ) -> std::io::Result<()> {
     tokio::fs::write(
-        codex_home.join(genex_config::CONFIG_TOML_FILE),
+        genex_home.join(genex_config::CONFIG_TOML_FILE),
         toml::to_string(&ConfigToml {
             projects: Some(
                 trusted_projects
@@ -108,7 +108,7 @@ async fn write_project_trust_config(
 async fn test_config() -> (TempDir, Config) {
     let home = TempDir::new().expect("create temp dir");
     let config = ConfigBuilder::without_managed_config_for_tests()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .build()
         .await
         .expect("load default test config");
@@ -712,11 +712,11 @@ fn commands_for_exec_policy_falls_back_for_whitespace_shell_script() {
 #[tokio::test]
 async fn ignore_user_config_keeps_user_policy_files() -> std::io::Result<()> {
     let temp = tempdir()?;
-    let codex_home = temp.path().join("home_ignore_user_config");
-    let rules_dir = codex_home.join(RULES_DIR_NAME);
+    let genex_home = temp.path().join("home_ignore_user_config");
+    let rules_dir = genex_home.join(RULES_DIR_NAME);
     fs::create_dir_all(&rules_dir)?;
     fs::write(
-        codex_home.join(CONFIG_TOML_FILE),
+        genex_home.join(CONFIG_TOML_FILE),
         "model = \"from-user-config\"\ninvalid = [",
     )?;
     fs::write(
@@ -725,7 +725,7 @@ async fn ignore_user_config_keeps_user_policy_files() -> std::io::Result<()> {
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home)
+        .genex_home(genex_home)
         .fallback_cwd(Some(temp.path().to_path_buf()))
         .loader_overrides(LoaderOverrides {
             ignore_user_config: true,
@@ -1693,12 +1693,12 @@ async fn heuristics_apply_when_other_commands_match_policy() {
 
 #[tokio::test]
 async fn append_execpolicy_amendment_updates_policy_and_file() {
-    let codex_home = tempdir().expect("create temp dir");
+    let genex_home = tempdir().expect("create temp dir");
     let prefix = vec!["echo".to_string(), "hello".to_string()];
     let manager = ExecPolicyManager::default();
 
     manager
-        .append_amendment_and_update(codex_home.path(), &ExecPolicyAmendment::from(prefix))
+        .append_amendment_and_update(genex_home.path(), &ExecPolicyAmendment::from(prefix))
         .await
         .expect("update policy");
     let updated_policy = manager.current();
@@ -1715,7 +1715,7 @@ async fn append_execpolicy_amendment_updates_policy_and_file() {
         }
     ));
 
-    let contents = fs::read_to_string(default_policy_path(codex_home.path()))
+    let contents = fs::read_to_string(default_policy_path(genex_home.path()))
         .expect("policy file should have been created");
     assert_eq!(
         contents,
@@ -1726,11 +1726,11 @@ async fn append_execpolicy_amendment_updates_policy_and_file() {
 
 #[tokio::test]
 async fn append_execpolicy_amendment_rejects_empty_prefix() {
-    let codex_home = tempdir().expect("create temp dir");
+    let genex_home = tempdir().expect("create temp dir");
     let manager = ExecPolicyManager::default();
 
     let result = manager
-        .append_amendment_and_update(codex_home.path(), &ExecPolicyAmendment::from(vec![]))
+        .append_amendment_and_update(genex_home.path(), &ExecPolicyAmendment::from(vec![]))
         .await;
 
     assert!(matches!(
@@ -2333,13 +2333,13 @@ async fn assert_exec_approval_requirement_for_command(
 #[tokio::test]
 async fn exec_policies_only_load_from_trusted_project_layers() -> std::io::Result<()> {
     let temp = tempfile::tempdir()?;
-    let codex_home = temp.path().join("home_execpolicy_nested");
+    let genex_home = temp.path().join("home_execpolicy_nested");
     let project_root = temp.path().join("project_execpolicy_nested");
     let nested = project_root.join("nested");
-    let root_rules = project_root.join(".codex").join(RULES_DIR_NAME);
-    let nested_rules = nested.join(".codex").join(RULES_DIR_NAME);
+    let root_rules = project_root.join(".genex").join(RULES_DIR_NAME);
+    let nested_rules = nested.join(".genex").join(RULES_DIR_NAME);
 
-    fs::create_dir_all(&codex_home)?;
+    fs::create_dir_all(&genex_home)?;
     fs::create_dir_all(&nested_rules)?;
     fs::write(project_root.join(".git"), "gitdir: here")?;
     fs::create_dir_all(&root_rules)?;
@@ -2351,10 +2351,10 @@ async fn exec_policies_only_load_from_trusted_project_layers() -> std::io::Resul
         nested_rules.join("deny-mv.rules"),
         r#"prefix_rule(pattern=["mv"], decision="forbidden")"#,
     )?;
-    write_project_trust_config(&codex_home, &[(&nested, TrustLevel::Trusted)]).await?;
+    write_project_trust_config(&genex_home, &[(&nested, TrustLevel::Trusted)]).await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home)
+        .genex_home(genex_home)
         .fallback_cwd(Some(nested))
         .build()
         .await?;
@@ -2383,7 +2383,7 @@ async fn exec_policies_require_project_trust_without_config_toml() -> std::io::R
     let temp = tempfile::tempdir()?;
     let project_root = temp.path().join("project_execpolicy");
     let nested = project_root.join("nested");
-    let rules_dir = project_root.join(".codex").join(RULES_DIR_NAME);
+    let rules_dir = project_root.join(".genex").join(RULES_DIR_NAME);
     fs::create_dir_all(&nested)?;
     fs::write(project_root.join(".git"), "gitdir: here")?;
     fs::create_dir_all(&rules_dir)?;
@@ -2411,12 +2411,12 @@ async fn exec_policies_require_project_trust_without_config_toml() -> std::io::R
     ];
 
     for (name, trust_entries, expected_decision) in cases {
-        let codex_home = temp.path().join(format!("home_execpolicy_{name}"));
-        fs::create_dir_all(&codex_home)?;
-        write_project_trust_config(&codex_home, &trust_entries).await?;
+        let genex_home = temp.path().join(format!("home_execpolicy_{name}"));
+        fs::create_dir_all(&genex_home)?;
+        write_project_trust_config(&genex_home, &trust_entries).await?;
 
         let config = ConfigBuilder::default()
-            .codex_home(codex_home)
+            .genex_home(genex_home)
             .fallback_cwd(Some(nested.clone()))
             .build()
             .await?;
@@ -2442,7 +2442,7 @@ async fn exec_policy_warnings_ignore_untrusted_project_rules_without_config_toml
     let temp = tempfile::tempdir()?;
     let project_root = temp.path().join("project_execpolicy_warning");
     let nested = project_root.join("nested");
-    let rules_dir = project_root.join(".codex").join(RULES_DIR_NAME);
+    let rules_dir = project_root.join(".genex").join(RULES_DIR_NAME);
     fs::create_dir_all(&nested)?;
     fs::write(project_root.join(".git"), "gitdir: here")?;
     fs::create_dir_all(&rules_dir)?;
@@ -2463,12 +2463,12 @@ async fn exec_policy_warnings_ignore_untrusted_project_rules_without_config_toml
     ];
 
     for (name, trust_entries, expect_warning) in cases {
-        let codex_home = temp.path().join(format!("home_execpolicy_warning_{name}"));
-        fs::create_dir_all(&codex_home)?;
-        write_project_trust_config(&codex_home, &trust_entries).await?;
+        let genex_home = temp.path().join(format!("home_execpolicy_warning_{name}"));
+        fs::create_dir_all(&genex_home)?;
+        write_project_trust_config(&genex_home, &trust_entries).await?;
 
         let config = ConfigBuilder::default()
-            .codex_home(codex_home)
+            .genex_home(genex_home)
             .fallback_cwd(Some(nested.clone()))
             .build()
             .await?;

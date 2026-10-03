@@ -26,14 +26,14 @@ async fn config_requirements_read_preserves_webmcp_policy() -> Result<()> {
             Some((None, Some(false))),
         ),
     ] {
-        let codex_home = TempDir::new()?;
-        std::fs::write(codex_home.path().join("requirements.toml"), contents)?;
+        let genex_home = TempDir::new()?;
+        std::fs::write(genex_home.path().join("requirements.toml"), contents)?;
         std::fs::write(
-            codex_home.path().join("config.toml"),
+            genex_home.path().join("config.toml"),
             "[browser_use]\nallow_webmcp = true",
         )?;
         let mut server = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .build()
             .await?;
         let read_timeout = Duration::from_secs(/*secs*/ 60);

@@ -40,16 +40,16 @@ async fn fork_before_first_turn_preserves_model_selected_multi_agent_version(
     source_state: SourceState,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::MultiAgentV2)
-        .write(codex_home.path())?;
-    let config = load_default_config_for_test(&codex_home).await;
+        .write(genex_home.path())?;
+    let config = load_default_config_for_test(&genex_home).await;
     let mut model = genex_core::test_support::construct_model_info_offline("mock-model", &config);
     model.multi_agent_version = Some(MultiAgentVersion::V2);
-    write_models_cache_with_models(codex_home.path(), vec![model]).await?;
+    write_models_cache_with_models(genex_home.path(), vec![model]).await?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let parent = mcp
@@ -72,7 +72,7 @@ async fn fork_before_first_turn_preserves_model_selected_multi_agent_version(
     if matches!(source_state, SourceState::Unloaded) {
         mcp.shutdown_gracefully().await?;
         mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .build_initialized()
             .await?;
     }
@@ -102,7 +102,7 @@ async fn fork_before_first_turn_preserves_model_selected_multi_agent_version(
     // Resume before the child's first turn can persist another version-bearing context.
     mcp.shutdown_gracefully().await?;
     mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let _: ThreadResumeResponse = mcp

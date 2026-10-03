@@ -58,8 +58,8 @@ pub async fn spawn_process(request: SpawnRequest<'_>) -> Result<SpawnedProcess> 
             let windows = request
                 .windows_sandbox
                 .context("missing Windows sandbox spawn request")?;
-            let codex_home = genex_utils_home_dir::find_codex_home()
-                .context("windows sandbox: failed to resolve codex_home")?;
+            let genex_home = genex_utils_home_dir::find_genex_home()
+                .context("windows sandbox: failed to resolve genex_home")?;
             let empty_paths = &[];
             let overrides = windows.filesystem_overrides;
 
@@ -67,7 +67,7 @@ pub async fn spawn_process(request: SpawnRequest<'_>) -> Result<SpawnedProcess> 
                 genex_windows_sandbox::WindowsSandboxSessionRequest {
                     permission_profile: windows.permission_profile,
                     workspace_roots: windows.workspace_roots,
-                    codex_home: codex_home.as_path(),
+                    genex_home: genex_home.as_path(),
                     command: request.command.to_vec(),
                     cwd: request.cwd,
                     env_map: request.env.clone(),

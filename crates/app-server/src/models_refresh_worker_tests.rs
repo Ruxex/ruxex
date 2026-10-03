@@ -83,10 +83,10 @@ impl ModelsEndpointClient for TestModelsEndpoint {
 
 #[tokio::test]
 async fn refreshes_immediately_periodically_and_stops_when_dropped() {
-    let codex_home = tempdir().expect("temp dir");
+    let genex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new();
     let models_manager: SharedModelsManager = Arc::new(RemoteModelsManager::new(
-        codex_home.path().to_path_buf(),
+        genex_home.path().to_path_buf(),
         endpoint.clone(),
         /*auth_manager*/ None,
     ));

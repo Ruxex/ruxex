@@ -584,10 +584,10 @@ async fn missing_packaged_defaults_file_returns_an_error() {
 #[tokio::test]
 async fn default_windows_managed_config_is_not_read() {
     let tmp = tempdir().expect("tempdir");
-    let codex_home = tmp.path().join("codex-home");
-    std::fs::create_dir_all(&codex_home).expect("create codex home");
+    let genex_home = tmp.path().join("genex-home");
+    std::fs::create_dir_all(&genex_home).expect("create genex home");
     std::fs::write(
-        codex_home.join("managed_config.toml"),
+        genex_home.join("managed_config.toml"),
         r#"
 model = "legacy-model"
 approval_policy = "never"
@@ -595,7 +595,7 @@ sandbox_mode = "danger-full-access"
 "#,
     )
     .expect("write default legacy managed config");
-    std::fs::write(codex_home.join(CONFIG_TOML_FILE), r#"model = "user-model""#)
+    std::fs::write(genex_home.join(CONFIG_TOML_FILE), r#"model = "user-model""#)
         .expect("write user config");
 
     let mut overrides = LoaderOverrides::without_managed_config_for_tests();
@@ -603,7 +603,7 @@ sandbox_mode = "danger-full-access"
     overrides.system_requirements_path = Some(tmp.path().join("requirements.toml"));
     let stack = load_config_layers_state(
         &TestFileSystem,
-        &codex_home,
+        &genex_home,
         /*cwd*/ None,
         &[],
         overrides,
@@ -868,12 +868,12 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
 #[tokio::test]
 async fn local_layers_keep_raw_paths_order_and_requirements() {
     let tmp = tempdir().expect("tempdir");
-    let codex_home = tmp.path().join("codex-home");
+    let genex_home = tmp.path().join("genex-home");
     let project = tmp.path().join("project");
-    let dot_codex = project.join(".codex");
+    let dot_codex = project.join(".genex");
     let system_dir = tmp.path().join("system");
     let managed_dir = tmp.path().join("managed");
-    for dir in [&codex_home, &dot_codex, &system_dir, &managed_dir] {
+    for dir in [&genex_home, &dot_codex, &system_dir, &managed_dir] {
         std::fs::create_dir_all(dir).expect("create fixture directory");
     }
     std::fs::write(project.join(".project-root"), "").expect("write project marker");
@@ -885,7 +885,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             "project_root_markers=[\".project-root\"]\nmodel_instructions_file=\"./user.md\"\n[projects.{project_key}]\ntrust_level=\"{trust_level}\""
         )
     };
-    let user_file = codex_home.join(CONFIG_TOML_FILE);
+    let user_file = genex_home.join(CONFIG_TOML_FILE);
     std::fs::write(
         &user_file,
         format!(
@@ -915,7 +915,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     let cwd = AbsolutePathBuf::from_absolute_path(&project).expect("absolute cwd");
     let layers = local::load_local_config_layers_with_overrides(
         &TestFileSystem,
-        &codex_home,
+        &genex_home,
         &cwd,
         &overrides,
     )
@@ -929,7 +929,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             .iter()
             .map(|layer| layer.base_dir.to_path_buf())
             .collect::<Vec<_>>(),
-        vec![system_dir.clone(), codex_home.clone(), dot_codex.clone(),]
+        vec![system_dir.clone(), genex_home.clone(), dot_codex.clone(),]
     );
     assert_eq!(layers.config.cloud_insertion_index, 1);
     assert_eq!(layers.requirements.cloud_insertion_index, 1);
@@ -970,7 +970,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
         .expect("write project environment policy");
         let layers = local::load_local_config_layers_with_overrides(
             &TestFileSystem,
-            &codex_home,
+            &genex_home,
             &cwd,
             &overrides,
         )
@@ -986,7 +986,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     std::fs::write(&user_file, user_config("untrusted")).expect("write user config");
     let layers = local::load_local_config_layers_with_overrides(
         &TestFileSystem,
-        &codex_home,
+        &genex_home,
         &cwd,
         &overrides,
     )

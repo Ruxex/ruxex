@@ -95,10 +95,10 @@ impl ExternalAgentConfigService {
         };
         let import_sources = self.marketplace_import_sources(cwd)?;
         let config = ConfigBuilder::default()
-            .codex_home(self.codex_home.clone())
+            .genex_home(self.genex_home.clone())
             .fallback_cwd(Some(
                 cwd.map(Path::to_path_buf)
-                    .unwrap_or_else(|| self.codex_home.clone()),
+                    .unwrap_or_else(|| self.genex_home.clone()),
             ))
             .build()
             .await
@@ -150,7 +150,7 @@ impl ExternalAgentConfigService {
                     ref_name: import_source.ref_name,
                     sparse_paths: Vec::new(),
                 };
-                match add_marketplace(self.codex_home.clone(), requirements.clone(), request).await
+                match add_marketplace(self.genex_home.clone(), requirements.clone(), request).await
                 {
                     Ok(add_marketplace_outcome) => {
                         let Some(marketplace_path) = find_marketplace_manifest_path(
@@ -190,10 +190,10 @@ impl ExternalAgentConfigService {
                 }
             };
             let install_config = match ConfigBuilder::default()
-                .codex_home(self.codex_home.clone())
+                .genex_home(self.genex_home.clone())
                 .fallback_cwd(Some(
                     cwd.map(Path::to_path_buf)
-                        .unwrap_or_else(|| self.codex_home.clone()),
+                        .unwrap_or_else(|| self.genex_home.clone()),
                 ))
                 .build()
                 .await

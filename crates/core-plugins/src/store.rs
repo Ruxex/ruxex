@@ -35,7 +35,7 @@ pub struct PluginInstallResult {
 
 #[derive(Debug, Clone)]
 pub struct PluginStore {
-    codex_home: AbsolutePathBuf,
+    genex_home: AbsolutePathBuf,
     root: AbsolutePathBuf,
     data_root: AbsolutePathBuf,
 }
@@ -52,22 +52,22 @@ enum InstallManifest<'a> {
 }
 
 impl PluginStore {
-    pub fn new(codex_home: PathBuf) -> Self {
-        Self::try_new(codex_home)
+    pub fn new(genex_home: PathBuf) -> Self {
+        Self::try_new(genex_home)
             .unwrap_or_else(|err| panic!("plugin cache root should be absolute: {err}"))
     }
 
-    pub fn try_new(codex_home: PathBuf) -> Result<Self, PluginStoreError> {
-        let root = AbsolutePathBuf::from_absolute_path_checked(codex_home.join(PLUGINS_CACHE_DIR))
+    pub fn try_new(genex_home: PathBuf) -> Result<Self, PluginStoreError> {
+        let root = AbsolutePathBuf::from_absolute_path_checked(genex_home.join(PLUGINS_CACHE_DIR))
             .map_err(|err| PluginStoreError::io("failed to resolve plugin cache root", err))?;
         let data_root =
-            AbsolutePathBuf::from_absolute_path_checked(codex_home.join(PLUGINS_DATA_DIR))
+            AbsolutePathBuf::from_absolute_path_checked(genex_home.join(PLUGINS_DATA_DIR))
                 .map_err(|err| PluginStoreError::io("failed to resolve plugin data root", err))?;
-        let codex_home = AbsolutePathBuf::from_absolute_path_checked(codex_home)
-            .map_err(|err| PluginStoreError::io("failed to resolve Codex home", err))?;
+        let genex_home = AbsolutePathBuf::from_absolute_path_checked(genex_home)
+            .map_err(|err| PluginStoreError::io("failed to resolve Genex home", err))?;
 
         Ok(Self {
-            codex_home,
+            genex_home,
             root,
             data_root,
         })
@@ -77,8 +77,8 @@ impl PluginStore {
         &self.root
     }
 
-    pub(crate) fn codex_home(&self) -> &AbsolutePathBuf {
-        &self.codex_home
+    pub(crate) fn genex_home(&self) -> &AbsolutePathBuf {
+        &self.genex_home
     }
 
     pub fn plugin_base_root(&self, plugin_id: &PluginId) -> AbsolutePathBuf {

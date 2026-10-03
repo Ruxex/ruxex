@@ -78,7 +78,7 @@ decision = "prompt"
     .await;
 
     let mut app = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized_with_timeout(read_timeout)
         .await?;
     let environment_id = app.auto_env_params()?.environment_id;

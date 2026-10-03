@@ -179,11 +179,11 @@ async fn assert_policy_violation_completes_turn_with_typed_terminal_error(
     let server = responses::start_mock_server().await;
     let response_mock = responses::mount_response_once(&server, response).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = app_server

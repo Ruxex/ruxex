@@ -391,18 +391,18 @@ async fn apply_patch_shell_heredoc_preserves_crlf_with_preserve_line_endings_fea
 
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn apply_patch_cli_uses_codex_self_exe_with_linux_sandbox_helper_alias() -> Result<()> {
+async fn apply_patch_cli_uses_genex_self_exe_with_linux_sandbox_helper_alias() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let harness = apply_patch_harness().await?;
-    let codex_linux_sandbox_exe = harness
+    let genex_linux_sandbox_exe = harness
         .test()
         .config
-        .codex_linux_sandbox_exe
+        .genex_linux_sandbox_exe
         .as_ref()
         .expect("linux test config should include codex-linux-sandbox helper");
     assert_eq!(
-        codex_linux_sandbox_exe
+        genex_linux_sandbox_exe
             .file_name()
             .and_then(|name| name.to_str()),
         Some(CODEX_LINUX_SANDBOX_ARG0),

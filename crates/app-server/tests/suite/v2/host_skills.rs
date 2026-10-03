@@ -46,7 +46,7 @@ async fn host_skill_catalog_refreshes_once_when_skills_change() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let extra_root = TempDir::new()?;
     let extra_skills_root = extra_root.path().join("skills");
     write_skill(
@@ -55,7 +55,7 @@ async fn host_skill_catalog_refreshes_once_when_skills_change() -> Result<()> {
         INITIAL_SKILL_DESCRIPTION,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -81,7 +81,7 @@ stream_max_retries = 0
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     timeout(READ_TIMEOUT, app_server.initialize()).await??;

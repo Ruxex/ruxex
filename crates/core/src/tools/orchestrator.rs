@@ -139,11 +139,11 @@ impl ToolOrchestrator {
         let environment = tool.turn_environment(req);
         let sandbox_manager = SandboxManager::new();
         #[cfg(target_os = "macos")]
-        let sandbox_manager = sandbox_manager.with_allowed_symlinked_codex_home(
+        let sandbox_manager = sandbox_manager.with_allowed_symlinked_genex_home(
             environment
                 .environment
                 .local_runtime_paths()
-                .and_then(|paths| paths.allowed_symlinked_codex_home.clone()),
+                .and_then(|paths| paths.allowed_symlinked_genex_home.clone()),
         );
         let sandbox_config = environment.config();
         let owner_network_policy = sandbox_config.network_policy.is_some();
@@ -262,9 +262,9 @@ impl ToolOrchestrator {
             .cloned()
             .unwrap_or_else(|| environment.cwd().clone());
         let codex_sandbox_exe = if cfg!(windows) {
-            turn_ctx.config.codex_self_exe.as_ref()
+            turn_ctx.config.genex_self_exe.as_ref()
         } else {
-            turn_ctx.config.codex_linux_sandbox_exe.as_ref()
+            turn_ctx.config.genex_linux_sandbox_exe.as_ref()
         };
         let initial_attempt = SandboxAttempt {
             sandbox: initial_sandbox,

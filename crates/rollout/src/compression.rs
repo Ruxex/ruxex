@@ -47,10 +47,10 @@ impl RolloutCompressionTrigger {
 /// Starts a best-effort background job that compresses cold local rollout files.
 ///
 /// The worker is fire-and-forget: failures are logged, startup is not blocked,
-/// and a run marker under `codex_home` prevents overlapping or too-frequent
+/// and a run marker under `genex_home` prevents overlapping or too-frequent
 /// compression runs from the same local store.
-pub fn spawn_rollout_compression_worker(codex_home: PathBuf, trigger: RolloutCompressionTrigger) {
-    worker::spawn(codex_home, trigger)
+pub fn spawn_rollout_compression_worker(genex_home: PathBuf, trigger: RolloutCompressionTrigger) {
+    worker::spawn(genex_home, trigger)
 }
 
 /// Returns the modified time for the existing plain or compressed rollout file.
@@ -348,8 +348,8 @@ mod worker {
     }
 
     impl CompressionRunMarker {
-        pub(super) fn try_claim(codex_home: &Path) -> io::Result<Option<Self>> {
-            let marker_dir = codex_home.join(".tmp");
+        pub(super) fn try_claim(genex_home: &Path) -> io::Result<Option<Self>> {
+            let marker_dir = genex_home.join(".tmp");
             std::fs::create_dir_all(marker_dir.as_path())?;
             let path = marker_dir.join(RUN_MARKER_FILE_NAME);
             match create_run_marker_file(path.as_path()) {
@@ -398,47 +398,47 @@ mod worker {
         }
     }
 
-    pub(super) fn spawn(codex_home: PathBuf, trigger: RolloutCompressionTrigger) {
+    pub(super) fn spawn(genex_home: PathBuf, trigger: RolloutCompressionTrigger) {
         let Ok(handle) = tokio::runtime::Handle::try_current() else {
             metrics::run(trigger, "skipped_no_runtime");
             warn!(
                 "failed to start rollout compression worker for {}: no Tokio runtime",
-                codex_home.display()
+                genex_home.display()
             );
             return;
         };
         handle.spawn(async move {
-            if let Err(err) = run(codex_home.clone(), trigger).await {
+            if let Err(err) = run(genex_home.clone(), trigger).await {
                 warn!(
                     "rollout compression worker failed for {}: {err}",
-                    codex_home.display()
+                    genex_home.display()
                 );
             }
         });
     }
 
     pub(super) async fn run(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         trigger: RolloutCompressionTrigger,
     ) -> io::Result<()> {
         let Some(_maintenance_guard) =
-            crate::try_acquire_rollout_maintenance_lock(codex_home.as_path())
+            crate::try_acquire_rollout_maintenance_lock(genex_home.as_path())
                 .inspect_err(|err| FailureMetric::Run(trigger).record("maintenance_lock", err))?
         else {
             metrics::run(trigger, "skipped_maintenance");
             debug!(
                 "rollout maintenance is already running for {}",
-                codex_home.display()
+                genex_home.display()
             );
             return Ok(());
         };
-        let marker = match CompressionRunMarker::try_claim(codex_home.as_path()) {
+        let marker = match CompressionRunMarker::try_claim(genex_home.as_path()) {
             Ok(Some(marker)) => marker,
             Ok(None) => {
                 metrics::run(trigger, "skipped_already_running");
                 debug!(
                     "rollout compression worker recently ran or is already running for {}",
-                    codex_home.display()
+                    genex_home.display()
                 );
                 return Ok(());
             }
@@ -450,17 +450,17 @@ mod worker {
 
         metrics::run(trigger, "started");
         let started_at = Instant::now();
-        let writer_locks = Arc::new(crate::WriterLockCoordinator::new(&codex_home));
+        let writer_locks = Arc::new(crate::WriterLockCoordinator::new(&genex_home));
         let mut stage = "temp_cleanup";
         let result = async {
             let mut stats = CompressionStats {
-                cleanup_errors: cleanup_stale_temps(codex_home.as_path(), trigger).await?,
+                cleanup_errors: cleanup_stale_temps(genex_home.as_path(), trigger).await?,
                 ..Default::default()
             };
             stage = "scan";
             for root in [
-                codex_home.join(ARCHIVED_SESSIONS_SUBDIR),
-                codex_home.join(SESSIONS_SUBDIR),
+                genex_home.join(ARCHIVED_SESSIONS_SUBDIR),
+                genex_home.join(SESSIONS_SUBDIR),
             ] {
                 if started_at.elapsed() >= WORKER_MAX_RUNTIME {
                     stats.time_budget_exhausted = true;
@@ -957,13 +957,13 @@ mod worker {
     }
 
     async fn cleanup_stale_temps(
-        codex_home: &Path,
+        genex_home: &Path,
         trigger: RolloutCompressionTrigger,
     ) -> io::Result<bool> {
         let mut errors = false;
         for root in [
-            codex_home.join(SESSIONS_SUBDIR),
-            codex_home.join(ARCHIVED_SESSIONS_SUBDIR),
+            genex_home.join(SESSIONS_SUBDIR),
+            genex_home.join(ARCHIVED_SESSIONS_SUBDIR),
         ] {
             errors |= cleanup_stale_temps_in_root(root.as_path(), trigger).await?;
         }

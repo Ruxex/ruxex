@@ -50,11 +50,11 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
     let (chat_widget, _, _, _) =
         crate::chatwidget::tests::make_chatwidget_manual_with_sender().await;
     let mut config = chat_widget.config_ref().clone();
-    let codex_home = tempdir()?;
-    let denied_path = codex_home.path().join("denied");
+    let genex_home = tempdir()?;
+    let denied_path = genex_home.path().join("denied");
     let denied_key = toml::Value::String(denied_path.display().to_string());
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "default_permissions = \"title-restricted\"\n\n\
              [permissions.title-restricted.filesystem]\n\
@@ -65,9 +65,9 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
              required = true\n"
         ),
     )?;
-    config.codex_home = codex_home.path().to_path_buf().abs();
+    config.genex_home = genex_home.path().to_path_buf().abs();
     config.sqlite =
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().to_path_buf().abs());
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().to_path_buf().abs());
 
     let app_server = crate::start_embedded_app_server_for_picker(&config).await?;
     let response = start_temporary_thread(

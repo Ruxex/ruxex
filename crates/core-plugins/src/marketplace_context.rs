@@ -94,7 +94,7 @@ impl PluginMarketplaceContext {
             .flat_map(|scope| {
                 configured_plugins_from_stack(
                     &scope.config.config_layer_stack,
-                    manager.codex_home.as_path(),
+                    manager.genex_home.as_path(),
                 )
                 .into_keys()
             })

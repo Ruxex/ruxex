@@ -15,7 +15,7 @@ async fn system_motion_suppresses_animations_without_changing_saved_preferences(
         let config_text = format!("[tui]\nanimations = {configured}\nwhimsy = true\n");
         std::fs::write(home.path().join("config.toml"), &config_text)?;
         let config = ConfigBuilder::default()
-            .codex_home(home.path().to_path_buf())
+            .genex_home(home.path().to_path_buf())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
                 ..LoaderOverrides::without_managed_config_for_tests()
@@ -67,7 +67,7 @@ max_bytes = 4096
         let home = tempfile::tempdir()?;
         std::fs::write(home.path().join("config.toml"), config_text)?;
         let config = ConfigBuilder::default()
-            .codex_home(home.path().to_path_buf())
+            .genex_home(home.path().to_path_buf())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
                 ..LoaderOverrides::without_managed_config_for_tests()
@@ -114,7 +114,7 @@ async fn local_writes_preserve_selected_user_file_and_home_destinations() -> any
         ..LoaderOverrides::without_managed_config_for_tests()
     };
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .loader_overrides(overrides.clone())
         .build()
         .await?;
@@ -124,12 +124,12 @@ async fn local_writes_preserve_selected_user_file_and_home_destinations() -> any
         .with_edits([crate::legacy_core::config::edit::syntax_theme_edit("nord")])
         .apply()
         .await?;
-    ConfigEditsBuilder::new(local.codex_home.as_path())
+    ConfigEditsBuilder::new(local.genex_home.as_path())
         .set_session_picker_view(SessionPickerViewMode::Comfortable)
         .apply()
         .await?;
     let reloaded = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .loader_overrides(overrides)
         .build()
         .await?;
@@ -159,7 +159,7 @@ async fn screen_reader_default_yields_to_preferences_on_reload() -> anyhow::Resu
     ] {
         std::fs::write(home.path().join("config.toml"), config_text)?;
         let config = ConfigBuilder::default()
-            .codex_home(home.path().to_path_buf())
+            .genex_home(home.path().to_path_buf())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
                 ..LoaderOverrides::without_managed_config_for_tests()

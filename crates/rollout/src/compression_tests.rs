@@ -395,7 +395,7 @@ async fn worker_skips_unreadable_metadata_without_blocking_other_compression() -
 async fn resume_materializes_compressed_rollout_path() -> anyhow::Result<()> {
     let home = TempDir::new()?;
     let config = RolloutConfig {
-        codex_home: home.path().to_path_buf(),
+        genex_home: home.path().to_path_buf(),
         sqlite: genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         cwd: home.path().to_path_buf(),
         model_provider_id: "test-provider".to_string(),

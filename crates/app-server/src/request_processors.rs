@@ -258,7 +258,7 @@ use genex_core::windows_sandbox::WindowsSandboxSetupRequest;
 use genex_core::windows_sandbox::sandbox_setup_is_complete;
 use genex_core_plugins::marketplace_add::MarketplaceAddError;
 use genex_core_plugins::marketplace_add::MarketplaceAddRequest;
-use genex_core_plugins::marketplace_add::add_marketplace as add_marketplace_to_codex_home;
+use genex_core_plugins::marketplace_add::add_marketplace as add_marketplace_to_genex_home;
 use genex_core_plugins::marketplace_remove::MarketplaceRemoveError;
 use genex_core_plugins::marketplace_remove::MarketplaceRemoveRequest as CoreMarketplaceRemoveRequest;
 use genex_core_plugins::marketplace_remove::remove_marketplace;

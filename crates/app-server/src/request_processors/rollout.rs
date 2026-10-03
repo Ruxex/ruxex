@@ -16,7 +16,7 @@ impl ThreadRequestProcessor {
         }
 
         genex_rollout::spawn_rollout_compression_worker(
-            self.config.codex_home.to_path_buf(),
+            self.config.genex_home.to_path_buf(),
             genex_rollout::RolloutCompressionTrigger::Rpc,
         );
         Ok(Some(RolloutCompressResponse {}.into()))

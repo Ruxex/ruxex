@@ -318,9 +318,9 @@ async fn transcript_preview_for_history_mode(
         }))
         .collect();
     let server = create_mock_responses_server_sequence(model_responses).await;
-    let codex_home = tempdir().expect("tempdir");
+    let genex_home = tempdir().expect("tempdir");
     write_mock_responses_config_toml(
-        codex_home.path(),
+        genex_home.path(),
         &server.uri(),
         &Default::default(),
         /*auto_compact_limit*/ 100_000,
@@ -330,8 +330,8 @@ async fn transcript_preview_for_history_mode(
     )
     .expect("write mock config");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .genex_home(genex_home.path().to_path_buf())
+        .fallback_cwd(Some(genex_home.path().to_path_buf()))
         .build()
         .await
         .expect("build config");
@@ -345,7 +345,7 @@ async fn transcript_preview_for_history_mode(
             params: ThreadStartParams {
                 model: Some(String::from("mock-model")),
                 model_provider: Some(String::from("mock_provider")),
-                cwd: Some(codex_home.path().display().to_string()),
+                cwd: Some(genex_home.path().display().to_string()),
                 history_mode: Some(history_mode),
                 ..Default::default()
             },
@@ -417,7 +417,7 @@ async fn transcript_preview_for_history_mode(
         append_transcript_preview_lines(
             &mut first_page_lines,
             first_page.data.iter().map(|entry| &entry.item),
-            codex_home.path(),
+            genex_home.path(),
             /*inline_visualization_context*/ None,
         );
         assert_eq!(first_page_lines, Vec::new());

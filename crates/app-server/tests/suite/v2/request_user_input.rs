@@ -70,7 +70,7 @@ async fn request_user_input_round_trip_for_mode(
     enable_default_mode_feature: bool,
     expected_is_blocking: bool,
 ) -> Result<()> {
-    let codex_home = tempfile::TempDir::new()?;
+    let genex_home = tempfile::TempDir::new()?;
     let responses = vec![
         create_request_user_input_sse_response("call1")?,
         create_final_assistant_message_sse_response("done")?,
@@ -78,10 +78,10 @@ async fn request_user_input_round_trip_for_mode(
     let server = create_mock_responses_server_sequence(responses).await;
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 

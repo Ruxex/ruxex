@@ -5,7 +5,7 @@ use crate::rollout::SESSIONS_SUBDIR;
 use genex_protocol::error::GenexErr;
 use genex_thread_store::ThreadStoreError;
 
-pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> GenexErr {
+pub(crate) fn map_session_init_error(err: &anyhow::Error, genex_home: &Path) -> GenexErr {
     if let Some(store_error) = err
         .chain()
         .find_map(|cause| cause.downcast_ref::<ThreadStoreError>())
@@ -26,7 +26,7 @@ pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> 
     if let Some(mapped) = err
         .chain()
         .filter_map(|cause| cause.downcast_ref::<std::io::Error>())
-        .find_map(|io_err| map_rollout_io_error(io_err, codex_home))
+        .find_map(|io_err| map_rollout_io_error(io_err, genex_home))
     {
         return mapped;
     }
@@ -34,16 +34,16 @@ pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> 
     GenexErr::Fatal(format!("Failed to initialize session: {err:#}"))
 }
 
-fn map_rollout_io_error(io_err: &std::io::Error, codex_home: &Path) -> Option<GenexErr> {
-    let sessions_dir = codex_home.join(SESSIONS_SUBDIR);
+fn map_rollout_io_error(io_err: &std::io::Error, genex_home: &Path) -> Option<GenexErr> {
+    let sessions_dir = genex_home.join(SESSIONS_SUBDIR);
     let hint = match io_err.kind() {
         ErrorKind::PermissionDenied => format!(
             "Codex cannot access session files at {} (permission denied). If sessions were created using sudo, fix ownership: sudo chown -R $(whoami) {}",
             sessions_dir.display(),
-            codex_home.display()
+            genex_home.display()
         ),
         ErrorKind::NotFound => format!(
-            "Session storage missing at {}. Create the directory or choose a different Codex home.",
+            "Session storage missing at {}. Create the directory or choose a different Genex home.",
             sessions_dir.display()
         ),
         ErrorKind::AlreadyExists => format!(

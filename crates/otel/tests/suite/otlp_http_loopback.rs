@@ -358,7 +358,7 @@ fn otlp_http_exporter_sends_logs_to_collector()
         environment: "test".to_string(),
         service_name: "codex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: PathBuf::from("."),
+        genex_home: PathBuf::from("."),
         exporter: OtelExporter::OtlpHttp {
             endpoint: format!("http://{addr}/v1/logs"),
             headers: HashMap::new(),
@@ -417,7 +417,7 @@ fn otel_provider_rejects_header_unsafe_configured_tracestate() {
         environment: "test".to_string(),
         service_name: "codex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: PathBuf::from("."),
+        genex_home: PathBuf::from("."),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::OtlpHttp {
             endpoint: "http://127.0.0.1:1/v1/traces".to_string(),
@@ -482,7 +482,7 @@ fn otlp_http_exporter_sends_traces_to_collector()
         environment: "test".to_string(),
         service_name: "codex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: PathBuf::from("."),
+        genex_home: PathBuf::from("."),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::OtlpHttp {
             endpoint: format!("http://{addr}/v1/traces"),
@@ -627,7 +627,7 @@ async fn otlp_http_exporter_sends_traces_to_collector_with_bounded_shutdown_in_t
         environment: "test".to_string(),
         service_name: "codex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: PathBuf::from("."),
+        genex_home: PathBuf::from("."),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::OtlpHttp {
             endpoint: format!("http://{addr}/v1/traces"),
@@ -720,7 +720,7 @@ fn otlp_http_exporter_times_out_when_collector_stalls_during_bounded_shutdown() 
             environment: "test".to_string(),
             service_name: "codex-cli".to_string(),
             service_version: env!("CARGO_PKG_VERSION").to_string(),
-            codex_home: PathBuf::from("."),
+            genex_home: PathBuf::from("."),
             exporter: OtelExporter::None,
             trace_exporter: OtelExporter::OtlpHttp {
                 endpoint: format!("http://{addr}/v1/traces"),
@@ -819,7 +819,7 @@ fn otlp_http_exporter_sends_traces_to_collector_in_current_thread_tokio_runtime(
                 environment: "test".to_string(),
                 service_name: "codex-cli".to_string(),
                 service_version: env!("CARGO_PKG_VERSION").to_string(),
-                codex_home: PathBuf::from("."),
+                genex_home: PathBuf::from("."),
                 exporter: OtelExporter::None,
                 trace_exporter: OtelExporter::OtlpHttp {
                     endpoint: format!("http://{addr}/v1/traces"),

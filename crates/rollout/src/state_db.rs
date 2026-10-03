@@ -43,7 +43,7 @@ const STARTUP_BACKFILL_WAIT_TIMEOUT: Duration = Duration::from_secs(2);
 /// initialized handle.
 pub async fn init(config: &impl RolloutConfigView) -> Option<StateDbHandle> {
     let config = RolloutConfig::from_view(config);
-    match try_init_with_roots(config.codex_home, config.sqlite, config.model_provider_id).await {
+    match try_init_with_roots(config.genex_home, config.sqlite, config.model_provider_id).await {
         Ok(runtime) => Some(runtime),
         Err(err) => {
             emit_startup_warning(&format!("failed to initialize state runtime: {err:#}"));
@@ -58,16 +58,16 @@ pub async fn init(config: &impl RolloutConfigView) -> Option<StateDbHandle> {
 /// tracing or UI setup has completed.
 pub async fn try_init(config: &impl RolloutConfigView) -> anyhow::Result<StateDbHandle> {
     let config = RolloutConfig::from_view(config);
-    try_init_with_roots(config.codex_home, config.sqlite, config.model_provider_id).await
+    try_init_with_roots(config.genex_home, config.sqlite, config.model_provider_id).await
 }
 
 async fn try_init_with_roots(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     sqlite: SqliteConfig,
     default_model_provider_id: String,
 ) -> anyhow::Result<StateDbHandle> {
     try_init_with_roots_inner(
-        codex_home,
+        genex_home,
         sqlite,
         default_model_provider_id,
         /*backfill_lease_seconds*/ None,
@@ -77,13 +77,13 @@ async fn try_init_with_roots(
 
 #[cfg(test)]
 async fn try_init_with_roots_and_backfill_lease(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     sqlite: SqliteConfig,
     default_model_provider_id: String,
     backfill_lease_seconds: i64,
 ) -> anyhow::Result<StateDbHandle> {
     try_init_with_roots_inner(
-        codex_home,
+        genex_home,
         sqlite,
         default_model_provider_id,
         Some(backfill_lease_seconds),
@@ -92,7 +92,7 @@ async fn try_init_with_roots_and_backfill_lease(
 }
 
 async fn try_init_with_roots_inner(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     sqlite: SqliteConfig,
     default_model_provider_id: String,
     backfill_lease_seconds: Option<i64>,
@@ -109,7 +109,7 @@ async fn try_init_with_roots_inner(
     let backfill_gate_started = Instant::now();
     let backfill_gate_result = wait_for_backfill_gate(
         runtime.as_ref(),
-        codex_home.as_path(),
+        genex_home.as_path(),
         default_model_provider_id.as_str(),
         backfill_lease_seconds,
     )
@@ -128,7 +128,7 @@ async fn try_init_with_roots_inner(
 
 async fn wait_for_backfill_gate(
     runtime: &genex_state::StateRuntime,
-    codex_home: &Path,
+    genex_home: &Path,
     default_model_provider_id: &str,
     backfill_lease_seconds: Option<i64>,
 ) -> anyhow::Result<()> {
@@ -138,7 +138,7 @@ async fn wait_for_backfill_gate(
         let backfill_state = runtime.get_backfill_state().await.map_err(|err| {
             anyhow::anyhow!(
                 "failed to read backfill state at {}: {err}",
-                codex_home.display()
+                genex_home.display()
             )
         })?;
         if backfill_state.status == genex_state::BackfillStatus::Complete {
@@ -148,18 +148,18 @@ async fn wait_for_backfill_gate(
         if let Some(backfill_lease_seconds) = backfill_lease_seconds {
             metadata::backfill_sessions_with_lease(
                 runtime,
-                codex_home,
+                genex_home,
                 default_model_provider_id,
                 backfill_lease_seconds,
             )
             .await;
         } else {
-            metadata::backfill_sessions(runtime, codex_home, default_model_provider_id).await;
+            metadata::backfill_sessions(runtime, genex_home, default_model_provider_id).await;
         }
         let backfill_state = runtime.get_backfill_state().await.map_err(|err| {
             anyhow::anyhow!(
                 "failed to read backfill state at {} after startup backfill: {err}",
-                codex_home.display()
+                genex_home.display()
             )
         })?;
         if backfill_state.status == genex_state::BackfillStatus::Complete {
@@ -168,7 +168,7 @@ async fn wait_for_backfill_gate(
         if wait_started.elapsed() >= STARTUP_BACKFILL_WAIT_TIMEOUT {
             return Err(anyhow::anyhow!(
                 "timed out waiting for state db backfill at {} after {:?} (status: {})",
-                codex_home.display(),
+                genex_home.display(),
                 STARTUP_BACKFILL_WAIT_TIMEOUT,
                 backfill_state.status.as_str()
             ));
@@ -177,7 +177,7 @@ async fn wait_for_backfill_gate(
         let message = format!(
             "state db backfill is {} at {}; waiting up to {:?} before retrying startup initialization",
             backfill_state.status.as_str(),
-            codex_home.display(),
+            genex_home.display(),
             STARTUP_BACKFILL_WAIT_TIMEOUT,
         );
         if reported_wait {
@@ -243,14 +243,14 @@ pub fn sqlite_telemetry_recorder(
 
 async fn require_backfill_complete(
     runtime: StateDbHandle,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> Option<StateDbHandle> {
     match runtime.get_backfill_state().await {
         Ok(state) if state.status == genex_state::BackfillStatus::Complete => Some(runtime),
         Ok(state) => {
             warn!(
                 "state db backfill not complete at {} (status: {})",
-                codex_home.display(),
+                genex_home.display(),
                 state.status.as_str()
             );
             genex_state::record_fallback(
@@ -263,7 +263,7 @@ async fn require_backfill_complete(
         Err(err) => {
             warn!(
                 "failed to read backfill state at {}: {err}",
-                codex_home.display()
+                genex_home.display()
             );
             genex_state::record_fallback(
                 "get_state_db",

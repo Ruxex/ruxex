@@ -170,10 +170,10 @@ fn assert_managed_deny_probe(output: &std::process::Output, launch: usize) -> an
 }
 
 #[test]
-#[serial(codex_home)]
+#[serial(genex_home)]
 fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow::Result<()> {
-    let codex_home =
-        genex_home_for_windows_sandbox_test("windows-cli-managed-deny-read-codex-home")?;
+    let genex_home =
+        genex_home_for_windows_sandbox_test("windows-cli-managed-deny-read-genex-home")?;
 
     let fixture = TempDir::new()?;
     let fixture_root = dunce::canonicalize(fixture.path())?;
@@ -211,7 +211,7 @@ fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow:
     })?;
 
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "default_permissions = \"managed-deny-test\"\n\
              \n\
@@ -237,7 +237,7 @@ fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow:
     for launch in 1..=2 {
         let output = Command::new(&codex)
             .current_dir(&work)
-            .env("CODEX_HOME", codex_home.path())
+            .env("GENEX_HOME", genex_home.path())
             .env("CODEX_WINDOWS_ALLOWED_TEXT", &allowed_text)
             .env("CODEX_WINDOWS_DENIED_TEXT", &denied_text)
             .env("CODEX_WINDOWS_ALLOWED_MODULE", &allowed_module)
@@ -256,9 +256,9 @@ fn windows_sandbox_cli_preserves_managed_deny_reads_across_launches() -> anyhow:
 }
 
 #[tokio::test]
-#[serial(codex_home)]
+#[serial(genex_home)]
 async fn windows_elevated_setup_rejects_default_root_deny() -> anyhow::Result<()> {
-    let codex_home = genex_home_for_windows_sandbox_test("windows-elevated-root-deny-codex-home")?;
+    let genex_home = genex_home_for_windows_sandbox_test("windows-elevated-root-deny-genex-home")?;
     let workspace = TempDir::new()?;
     let cwd = dunce::canonicalize(workspace.path())?.abs();
     let file_system_sandbox_policy =
@@ -280,7 +280,7 @@ async fn windows_elevated_setup_rejects_default_root_deny() -> anyhow::Result<()
         workspace_roots: vec![cwd.clone()],
         command_cwd: cwd.to_path_buf(),
         env_map: HashMap::new(),
-        codex_home: codex_home.path().to_path_buf(),
+        genex_home: genex_home.path().to_path_buf(),
     })
     .await
     .expect_err("elevated setup should reject default root deny");
@@ -293,11 +293,11 @@ async fn windows_elevated_setup_rejects_default_root_deny() -> anyhow::Result<()
 }
 
 #[tokio::test]
-#[serial(codex_home)]
+#[serial(genex_home)]
 async fn windows_restricted_token_rejects_exact_and_glob_deny_read_policy() -> anyhow::Result<()> {
-    let codex_home =
-        genex_home_for_windows_sandbox_test("windows-restricted-token-deny-read-codex-home")?;
-    let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
+    let genex_home =
+        genex_home_for_windows_sandbox_test("windows-restricted-token-deny-read-genex-home")?;
+    let _genex_home_guard = EnvVarGuard::set("GENEX_HOME", genex_home.path().as_os_str());
     let workspace = TempDir::new()?;
     let cwd = dunce::canonicalize(workspace.path())?.abs();
     let secret = cwd.join("secret.env");
@@ -366,7 +366,7 @@ async fn windows_restricted_token_rejects_exact_and_glob_deny_read_policy() -> a
         &cwd,
         std::slice::from_ref(&cwd),
         &None,
-        /*codex_self_exe*/ &None,
+        /*genex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
@@ -381,11 +381,11 @@ async fn windows_restricted_token_rejects_exact_and_glob_deny_read_policy() -> a
 }
 
 #[tokio::test]
-#[serial(codex_home)]
+#[serial(genex_home)]
 async fn windows_elevated_does_not_create_missing_workspace_metadata() -> anyhow::Result<()> {
-    let codex_home =
-        genex_home_for_windows_sandbox_test("windows-elevated-missing-metadata-codex-home")?;
-    let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
+    let genex_home =
+        genex_home_for_windows_sandbox_test("windows-elevated-missing-metadata-genex-home")?;
+    let _genex_home_guard = EnvVarGuard::set("GENEX_HOME", genex_home.path().as_os_str());
     stage_windows_sandbox_helpers()?;
     let workspace = TempDir::new()?;
     let cwd = dunce::canonicalize(workspace.path())?.abs();
@@ -416,7 +416,7 @@ async fn windows_elevated_does_not_create_missing_workspace_metadata() -> anyhow
         &cwd,
         std::slice::from_ref(&cwd),
         &None,
-        /*codex_self_exe*/ &None,
+        /*genex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
@@ -507,10 +507,10 @@ $rules = foreach ($name in @('codex_sandbox_offline_block_inbound', 'codex_sandb
 }
 
 #[tokio::test]
-#[serial(codex_home)]
+#[serial(genex_home)]
 async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyhow::Result<()> {
-    let codex_home = genex_home_for_windows_sandbox_test("windows-elevated-deny-read-codex-home")?;
-    let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
+    let genex_home = genex_home_for_windows_sandbox_test("windows-elevated-deny-read-genex-home")?;
+    let _genex_home_guard = EnvVarGuard::set("GENEX_HOME", genex_home.path().as_os_str());
     stage_windows_sandbox_helpers()?;
     let workspace = TempDir::new()?;
     let cwd = dunce::canonicalize(workspace.path())?.abs();
@@ -520,10 +520,10 @@ async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyh
     let _user_profile_guard = EnvVarGuard::set("USERPROFILE", user_profile.path().as_os_str());
     let exact_secret = user_profile.path().join("exact-secret.txt");
     std::fs::write(&exact_secret, "exact secret\n")?;
-    let bundled_skill_dir = user_profile.path().join(".codex/plugins/cache");
+    let bundled_skill_dir = user_profile.path().join(".genex/plugins/cache");
     std::fs::create_dir_all(&bundled_skill_dir)?;
     let bundled_skill = bundled_skill_dir.join("SKILL.md");
-    let setup_marker = codex_home.path().join(".sandbox").join("setup_marker.json");
+    let setup_marker = genex_home.path().join(".sandbox").join("setup_marker.json");
     std::fs::write(&glob_secret, "glob secret\n")?;
     std::fs::write(&public, "public ok\n")?;
     std::fs::write(&bundled_skill, "bundled skill ok\n")?;
@@ -596,7 +596,7 @@ async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyh
         &cwd,
         std::slice::from_ref(&cwd),
         &None,
-        /*codex_self_exe*/ &None,
+        /*genex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
@@ -641,25 +641,25 @@ async fn windows_elevated_enforces_deny_read_and_protects_setup_marker() -> anyh
         "sandboxed command must not modify setup readiness: {stdout:?}"
     );
     assert!(
-        sandbox_setup_is_complete(codex_home.path()),
+        sandbox_setup_is_complete(genex_home.path()),
         "setup should remain ready after the tamper attempt"
     );
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[serial(codex_home)]
+#[serial(genex_home)]
 async fn windows_elevated_unified_exec_enforces_managed_deny_reads() -> anyhow::Result<()> {
-    let codex_home =
-        genex_home_for_windows_sandbox_test("windows-elevated-tool-runtime-deny-read-codex-home")?;
-    let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", codex_home.path().as_os_str());
+    let genex_home =
+        genex_home_for_windows_sandbox_test("windows-elevated-tool-runtime-deny-read-genex-home")?;
+    let _genex_home_guard = EnvVarGuard::set("GENEX_HOME", genex_home.path().as_os_str());
     stage_windows_sandbox_helpers()?;
 
-    let configured_codex_home = dunce::canonicalize(codex_home.path())?.abs();
+    let configured_genex_home = dunce::canonicalize(genex_home.path())?.abs();
     let builder = test_genex()
         .with_windows_cmd_shell()
         .with_config(move |config| {
-            config.codex_home = configured_codex_home;
+            config.genex_home = configured_genex_home;
             config.set_windows_elevated_sandbox_enabled(true);
             config
                 .features

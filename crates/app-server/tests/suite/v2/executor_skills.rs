@@ -95,7 +95,7 @@ async fn exercise_executor_skill(scenario: ExecutorSkillScenario) -> Result<()> 
     }
 
     let server = responses::start_mock_server().await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let (sandbox_config, permission_profile) = if restricted {
         (
             "default_permissions = \"workspace\"",
@@ -119,7 +119,7 @@ async fn exercise_executor_skill(scenario: ExecutorSkillScenario) -> Result<()> 
         String::new()
     };
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -144,9 +144,9 @@ stream_max_retries = 0
         ),
     )?;
     if scenario == ExecutorSkillScenario::ExplicitOnly {
-        mount_analytics_capture(&server, codex_home.path()).await?;
+        mount_analytics_capture(&server, genex_home.path()).await?;
     }
-    let local_skill_dir = codex_home.path().join("skills/local-deploy");
+    let local_skill_dir = genex_home.path().join("skills/local-deploy");
     std::fs::create_dir_all(&local_skill_dir)?;
     std::fs::write(
         local_skill_dir.join("SKILL.md"),
@@ -155,7 +155,7 @@ stream_max_retries = 0
         ),
     )?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     let auto_env = app_server.auto_env()?;
@@ -223,7 +223,7 @@ stream_max_retries = 0
     )?;
     #[cfg(unix)]
     if scenario == ExecutorSkillScenario::RestrictedDeniedReference {
-        let external_reference_dir = codex_home.path().join("external-reference");
+        let external_reference_dir = genex_home.path().join("external-reference");
         std::fs::create_dir_all(&external_reference_dir)?;
         let external_reference = external_reference_dir.join("details.md");
         std::fs::write(
@@ -239,7 +239,7 @@ stream_max_retries = 0
     }
     #[cfg(unix)]
     if scenario == ExecutorSkillScenario::RestrictedVisible && !auto_env.environment().is_remote() {
-        let denied_skill_dir = codex_home.path().join("denied-skill");
+        let denied_skill_dir = genex_home.path().join("denied-skill");
         std::fs::create_dir_all(&denied_skill_dir)?;
         std::fs::write(
             denied_skill_dir.join("SKILL.md"),
@@ -346,7 +346,7 @@ stream_max_retries = 0
         ]),
     ];
     if scenario == ExecutorSkillScenario::RestrictedDeniedReference {
-        let external_reference_dir = codex_home.path().join("external-reference");
+        let external_reference_dir = genex_home.path().join("external-reference");
         model_responses.insert(
             3,
             responses::sse(vec![

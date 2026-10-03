@@ -73,7 +73,7 @@ async fn apply_role_to_config_inner(
         return Ok(());
     };
     let role_layer_toml = load_role_layer_toml(config, config_file, is_built_in, role_name).await?;
-    let role_config = deserialize_config_toml_with_base(role_layer_toml, &config.codex_home)?;
+    let role_config = deserialize_config_toml_with_base(role_layer_toml, &config.genex_home)?;
     let mut overrides = AgentRoleOverrides {
         developer_instructions: role_config.developer_instructions,
         model: role_config.model,
@@ -132,7 +132,7 @@ async fn load_role_layer_toml(
             .map(str::to_owned)
             .ok_or(anyhow!("No corresponding config content"))?;
         let role_config_toml: TomlValue = toml::from_str(&role_config_contents)?;
-        (role_config_toml, config.codex_home.as_path())
+        (role_config_toml, config.genex_home.as_path())
     } else {
         let role_config_contents = read_sensitive_file_to_string(config_file).await?;
         let role_config_base = config_file

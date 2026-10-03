@@ -88,7 +88,7 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 #[path = "skills_extension/shadow_task_context_tests.rs"]
 mod shadow_task_context_tests;
 
-static NEXT_CODEX_HOME_ID: AtomicUsize = AtomicUsize::new(0);
+static NEXT_GENEX_HOME_ID: AtomicUsize = AtomicUsize::new(0);
 const SKILLS_INTRO_WITH_ABSOLUTE_PATHS: &str = "A skill is a set of instructions provided through a `SKILL.md` source. Below is the list of skills that can be used. Each entry includes a name, description, and source locator. `file` locators are on the host filesystem, `executor package` locators are owned by their execution environment, `orchestrator package` locators are opaque package identifiers, and `custom resource` locators use their provider's access mechanism.";
 const DEMO_SKILL_CONTENTS: &str =
     "---\nname: demo\ndescription: Demo skill.\n---\n# Demo\n\nUse the demo skill.\n";
@@ -152,8 +152,8 @@ async fn skill_world_state_fragments(
 
 #[tokio::test]
 async fn installed_extension_uses_host_service_snapshot() -> TestResult {
-    let codex_home = test_genex_home();
-    let skill_path = codex_home.join("skills").join("demo").join("SKILL.md");
+    let genex_home = test_genex_home();
+    let skill_path = genex_home.join("skills").join("demo").join("SKILL.md");
     std::fs::create_dir_all(
         skill_path
             .parent()
@@ -237,7 +237,7 @@ async fn installed_extension_uses_host_service_snapshot() -> TestResult {
         .ok_or("host skill prompt marker should be set")?;
     assert!(injected_host_skill_prompts.contains_path(&skill_path_string));
 
-    std::fs::remove_dir_all(codex_home)?;
+    std::fs::remove_dir_all(genex_home)?;
     Ok(())
 }
 
@@ -2311,16 +2311,16 @@ async fn host_catalog_compacts_shared_paths_under_budget_pressure() -> TestResul
         Default::default(),
         ConfigRequirementsToml::default(),
     )?;
-    let codex_home = AbsolutePathBuf::try_from(test_root.clone())?;
+    let genex_home = AbsolutePathBuf::try_from(test_root.clone())?;
     let service = HostSkillsService::new_with_restriction_product(
-        codex_home.clone(),
+        genex_home.clone(),
         /*bundled_skills_enabled*/ false,
         /*restriction_product*/ None,
     );
     service.set_extra_roots(vec![root]);
     let snapshot = service
         .snapshot_for_config(
-            &HostSkillsLoadInput::new(codex_home, Vec::new(), config_layer_stack),
+            &HostSkillsLoadInput::new(genex_home, Vec::new(), config_layer_stack),
             Some(Arc::clone(&LOCAL_FS)),
         )
         .await;
@@ -2671,7 +2671,7 @@ fn skills_extension_config(config: &TestConfig) -> SkillsExtensionConfig {
 }
 
 fn test_genex_home() -> PathBuf {
-    let id = NEXT_CODEX_HOME_ID.fetch_add(1, Ordering::Relaxed);
+    let id = NEXT_GENEX_HOME_ID.fetch_add(1, Ordering::Relaxed);
     std::env::temp_dir().join(format!(
         "codex-skills-extension-test-{}-{id}",
         std::process::id(),

@@ -94,7 +94,7 @@ fn managed_auth_restrictions_intersect_workspaces_and_fail_closed() {
         )
         .expect("requirements should stack"),
     };
-    let auth_config = bootstrap_auth_config(Path::new("codex-home"), &bootstrap_config)
+    let auth_config = bootstrap_auth_config(Path::new("genex-home"), &bootstrap_config)
         .expect("policy should resolve");
     assert_eq!(auth_config.forced_login_method, None);
     assert!(auth_config.is_login_method_allowed(ForcedLoginMethod::Managed));
@@ -120,7 +120,7 @@ fn managed_auth_restrictions_intersect_workspaces_and_fail_closed() {
         .expect("requirements should stack"),
     };
     assert_eq!(
-        bootstrap_auth_config(Path::new("codex-home"), &bootstrap_config)
+        bootstrap_auth_config(Path::new("genex-home"), &bootstrap_config)
             .expect_err("managed-auth policy without an allowed workspace must fail")
             .kind(),
         std::io::ErrorKind::PermissionDenied
@@ -156,7 +156,7 @@ fn bootstrap_auth_config_applies_managed_store_and_managed_auth_base_url() {
         .expect("requirements should stack"),
     };
 
-    let auth_config = bootstrap_auth_config(Path::new("codex-home"), &bootstrap_config)
+    let auth_config = bootstrap_auth_config(Path::new("genex-home"), &bootstrap_config)
         .expect("managed authentication settings should resolve");
 
     assert_eq!(auth_config.auth_credentials_store_mode, managed_store);

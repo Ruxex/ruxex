@@ -50,7 +50,7 @@ pub(super) async fn record_start(
         return;
     };
     if let Some(metrics) = otel.metrics() {
-        let mut tags = genex_app_server_daemon::telemetry::settings_tags(&config.codex_home)
+        let mut tags = genex_app_server_daemon::telemetry::settings_tags(&config.genex_home)
             .await
             .to_vec();
         tags.extend([

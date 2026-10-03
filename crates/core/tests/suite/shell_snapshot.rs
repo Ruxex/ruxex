@@ -74,7 +74,7 @@ struct SnapshotRun {
     end: ExecCommandEndEvent,
     snapshot_path: PathBuf,
     snapshot_content: String,
-    codex_home: PathBuf,
+    genex_home: PathBuf,
 }
 
 const POLICY_PATH_FOR_TEST: &str = "/codex/policy/path";
@@ -88,8 +88,8 @@ struct SnapshotRunOptions {
     shell_environment_set: HashMap<String, String>,
 }
 
-async fn wait_for_snapshot(codex_home: &Path) -> Result<PathBuf> {
-    let snapshot_dir = codex_home.join("shell_snapshots");
+async fn wait_for_snapshot(genex_home: &Path) -> Result<PathBuf> {
+    let snapshot_dir = genex_home.join("shell_snapshots");
     let deadline = Instant::now() + Duration::from_secs(5);
     loop {
         if let Ok(mut entries) = fs::read_dir(&snapshot_dir).await {
@@ -186,7 +186,7 @@ async fn run_snapshot_command_with_options(
 
     let test = harness.test();
     let codex = test.codex.clone();
-    let codex_home = test.home.path().to_path_buf();
+    let genex_home = test.home.path().to_path_buf();
     let session_model = test.session_configured.model.clone();
     let cwd = test.config.cwd.clone();
     let (sandbox_policy, permission_profile) =
@@ -221,7 +221,7 @@ async fn run_snapshot_command_with_options(
         _ => None,
     })
     .await;
-    let snapshot_path = wait_for_snapshot(&codex_home).await?;
+    let snapshot_path = wait_for_snapshot(&genex_home).await?;
     let snapshot_content = fs::read_to_string(&snapshot_path).await?;
 
     let end = wait_for_event_match(&codex, |ev| match ev {
@@ -237,7 +237,7 @@ async fn run_snapshot_command_with_options(
         end,
         snapshot_path,
         snapshot_content,
-        codex_home,
+        genex_home,
     })
 }
 
@@ -360,7 +360,7 @@ async fn run_no_shell_turn(harness: &TestGenexHarness) -> Result<()> {
         ]),
     )
     .await;
-    let codex = &harness.test().codex;
+    let codex = &harness.test().genex;
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".to_string(),
@@ -478,7 +478,7 @@ async fn shell_snapshot_v2_recovers_after_failed_prewarm() -> Result<()> {
         fs::read_to_string(profile_home.path().join("captures")).await?,
         "x"
     );
-    harness.test().codex.shutdown_and_wait().await?;
+    harness.test().genex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -512,7 +512,7 @@ async fn shell_snapshot_v2_prewarm_preserves_the_sandbox() -> Result<()> {
                 .shell_environment_policy
                 .r#set
                 .insert("OUTSIDE".to_string(), forbidden_path);
-            let rules = config.codex_home.join("rules");
+            let rules = config.genex_home.join("rules");
             std::fs::create_dir_all(&rules).expect("create rules directory");
             std::fs::write(
                 rules.join("default.rules"),
@@ -523,7 +523,7 @@ async fn shell_snapshot_v2_prewarm_preserves_the_sandbox() -> Result<()> {
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     run_no_shell_turn(&harness).await?;
     wait_for_file_contents(&profile_home.path().join("captures"), "done").await?;
-    harness.test().codex.shutdown_and_wait().await?;
+    harness.test().genex.shutdown_and_wait().await?;
     assert!(
         !forbidden.exists(),
         "profile startup must stay sandboxed even when true is allowed"
@@ -548,7 +548,7 @@ async fn shell_snapshot_v2_prewarm_stops_on_shutdown() -> Result<()> {
     wait_for_file_contents(&profile_home.path().join("captures"), "x").await?;
     let pid = fs::read_to_string(profile_home.path().join("pid")).await?;
 
-    let codex = &harness.test().codex;
+    let codex = &harness.test().genex;
     codex.submit(Op::Shutdown {}).await?;
     wait_for_event(codex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
     tokio::time::timeout(Duration::from_secs(2), async {
@@ -593,7 +593,7 @@ async fn shell_snapshot_v2_prewarm_skips_ineligible_sessions(
     let builder = shell_snapshot_v2_prewarm_builder(profile_home.path()).with_config(configure);
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     run_no_shell_turn(&harness).await?;
-    harness.test().codex.shutdown_and_wait().await?;
+    harness.test().genex.shutdown_and_wait().await?;
     assert!(!profile_home.path().join("captures").exists());
     Ok(())
 }
@@ -624,7 +624,7 @@ async fn shell_snapshot_v2_does_not_warm_a_hook_stopped_turn(hook_event: &str) -
             .with_config(trust_discovered_hooks);
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     harness.submit("do not start the model or shell").await?;
-    harness.test().codex.shutdown_and_wait().await?;
+    harness.test().genex.shutdown_and_wait().await?;
     assert!(harness.request_bodies().await.is_empty());
     assert!(!profile_home.path().join("captures").exists());
     Ok(())
@@ -652,7 +652,7 @@ async fn shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools(
                 .expect("set parent permissions");
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config.approvals_reviewer = ApprovalsReviewer::AutoReview;
-            let rules = config.codex_home.join("rules");
+            let rules = config.genex_home.join("rules");
             std::fs::create_dir_all(&rules).expect("create rules directory");
             std::fs::write(
                 rules.join("default.rules"),
@@ -841,7 +841,7 @@ async fn shell_snapshot_v2_preserves_legacy_snapshots_for_user_shell() -> Result
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     let snapshot_path = wait_for_snapshot(harness.test().home.path()).await?;
     assert_posix_snapshot_sections(&fs::read_to_string(snapshot_path).await?);
-    let codex = &harness.test().codex;
+    let codex = &harness.test().genex;
     codex
         .submit(Op::RunUserShellCommand {
             command: "printf legacy".to_string(),
@@ -869,7 +869,7 @@ async fn linux_unified_exec_uses_shell_snapshot() -> Result<()> {
     assert_eq!(run.begin.command.get(1).map(String::as_str), Some("-lc"));
     assert_eq!(run.begin.command.get(2).map(String::as_str), Some(command));
     assert_eq!(run.begin.command.len(), 3);
-    assert!(run.snapshot_path.starts_with(&run.codex_home));
+    assert!(run.snapshot_path.starts_with(&run.genex_home));
     assert_posix_snapshot_sections(&run.snapshot_content);
     assert_eq!(run.end.exit_code, 0);
     assert!(
@@ -891,7 +891,7 @@ async fn unified_exec_snapshot_preserves_shell_environment_policy_set() -> Resul
         config.permissions.shell_environment_policy.r#set = policy_set_path_for_test();
     });
     let harness = TestGenexHarness::with_builder(builder).await?;
-    let codex_home = harness.test().home.path().to_path_buf();
+    let genex_home = harness.test().home.path().to_path_buf();
     run_tool_turn_on_harness(
         &harness,
         "warm up unified exec shell snapshot",
@@ -903,7 +903,7 @@ async fn unified_exec_snapshot_preserves_shell_environment_policy_set() -> Resul
         }),
     )
     .await?;
-    let snapshot_path = wait_for_snapshot(&codex_home).await?;
+    let snapshot_path = wait_for_snapshot(&genex_home).await?;
     fs::write(&snapshot_path, snapshot_override_content_for_policy_test()).await?;
 
     let command = command_asserting_policy_after_snapshot();
@@ -924,7 +924,7 @@ async fn unified_exec_snapshot_preserves_shell_environment_policy_set() -> Resul
         POLICY_SUCCESS_OUTPUT
     );
     assert_eq!(end.exit_code, 0);
-    assert!(snapshot_path.starts_with(codex_home));
+    assert!(snapshot_path.starts_with(genex_home));
 
     Ok(())
 }
@@ -943,7 +943,7 @@ async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
     let test = harness.test();
     let codex = test.codex.clone();
     let cwd = test.config.cwd.clone();
-    let codex_home = test.home.path().to_path_buf();
+    let genex_home = test.home.path().to_path_buf();
     let target = cwd.join("snapshot-apply.txt");
 
     let script = "apply_patch <<'EOF'\n*** Begin Patch\n*** Add File: snapshot-apply.txt\n+hello from snapshot\n*** End Patch\nEOF\n";
@@ -1011,7 +1011,7 @@ async fn unified_exec_snapshot_still_intercepts_apply_patch() -> Result<()> {
     })
     .await;
 
-    let snapshot_path = wait_for_snapshot(&codex_home).await?;
+    let snapshot_path = wait_for_snapshot(&genex_home).await?;
     let snapshot_content = fs::read_to_string(&snapshot_path).await?;
     assert_posix_snapshot_sections(&snapshot_content);
 
@@ -1042,10 +1042,10 @@ async fn shell_snapshot_deleted_after_shutdown_with_skills() -> Result<()> {
     });
     let harness = TestGenexHarness::with_builder(builder).await?;
     let home = harness.test().home.clone();
-    let codex_home = home.path().to_path_buf();
-    let codex = harness.test().codex.clone();
+    let genex_home = home.path().to_path_buf();
+    let codex = harness.test().genex.clone();
 
-    let snapshot_path = wait_for_snapshot(&codex_home).await?;
+    let snapshot_path = wait_for_snapshot(&genex_home).await?;
     assert!(snapshot_path.exists());
 
     codex.submit(Op::Shutdown {}).await?;
@@ -1176,7 +1176,7 @@ async fn macos_unified_exec_uses_shell_snapshot() -> Result<()> {
     assert_eq!(run.begin.command.get(5).map(String::as_str), Some("-c"));
     assert_eq!(run.begin.command.last(), Some(&command.to_string()));
 
-    assert!(run.snapshot_path.starts_with(&run.codex_home));
+    assert!(run.snapshot_path.starts_with(&run.genex_home));
     assert_posix_snapshot_sections(&run.snapshot_content);
     assert_eq!(normalize_newlines(&run.end.stdout).trim(), "snapshot-macos");
     assert_eq!(run.end.exit_code, 0);
@@ -1207,7 +1207,7 @@ async fn windows_unified_exec_uses_shell_snapshot() -> Result<()> {
     assert!(snapshot_index > 0);
     assert_eq!(run.begin.command.last(), Some(&command.to_string()));
 
-    assert!(run.snapshot_path.starts_with(&run.codex_home));
+    assert!(run.snapshot_path.starts_with(&run.genex_home));
     assert!(run.snapshot_content.contains("# Snapshot file"));
     assert!(run.snapshot_content.contains("# aliases "));
     assert!(run.snapshot_content.contains("# exports "));

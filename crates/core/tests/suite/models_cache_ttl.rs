@@ -90,7 +90,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
         .await;
     assert_eq!(initial_models.requests().len(), 1);
     rewrite_cache_timestamp(
-        &test.config.codex_home.join(CACHE_FILE),
+        &test.config.genex_home.join(CACHE_FILE),
         Utc::now() - chrono::Duration::hours(1),
     )
     .await?;
@@ -189,7 +189,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
         )
         .await;
 
-    let cache_path = config.codex_home.join(CACHE_FILE);
+    let cache_path = config.genex_home.join(CACHE_FILE);
     let stale_time = Utc.timestamp_opt(0, 0).single().expect("valid epoch");
     rewrite_cache_timestamp(&cache_path, stale_time).await?;
 
@@ -290,7 +290,7 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
         )
         .await;
 
-    let cache_path = test.config.codex_home.join(CACHE_FILE);
+    let cache_path = test.config.genex_home.join(CACHE_FILE);
     rewrite_cache_timestamp(&cache_path, Utc::now() - chrono::Duration::seconds(60)).await?;
     let original_contents = tokio::fs::read(&cache_path).await?;
     let original_modified = tokio::fs::metadata(&cache_path).await?.modified()?;
@@ -350,7 +350,7 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
         )
         .await;
 
-    let cache_path = test.config.codex_home.join(CACHE_FILE);
+    let cache_path = test.config.genex_home.join(CACHE_FILE);
     let fetched_at = Utc::now() - chrono::Duration::seconds(180);
     rewrite_cache_timestamp(&cache_path, fetched_at).await?;
 

@@ -188,7 +188,7 @@ async fn codex_delegate_rejects_legacy_mcp_approvals_without_prompting() {
                 .permissions
                 .set_permission_profile(PermissionProfile::read_only())
                 .expect("review delegate should inherit a restricted permission profile");
-            let config_path = config.codex_home.join("config.toml").abs();
+            let config_path = config.genex_home.join("config.toml").abs();
             let app_config = toml::from_str(
                 r#"
 [apps.calendar]

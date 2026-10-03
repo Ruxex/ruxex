@@ -753,7 +753,7 @@ async fn rejected_queue_messages_are_consumed_without_retrying_or_blocking_follo
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
     assert_eq!(vec!["A", "C"], prompts);
-    let hook_log = std::fs::read_to_string(test.codex_home_path().join("queue_prompt_hook.log"))?;
+    let hook_log = std::fs::read_to_string(test.genex_home_path().join("queue_prompt_hook.log"))?;
     assert_eq!(
         vec!["A", "blocked", "C"],
         hook_log.lines().collect::<Vec<_>>()
@@ -794,7 +794,7 @@ async fn explicitly_started_rejected_queue_messages_are_consumed() -> anyhow::Re
     })
     .await;
     assert!(queue.list(thread_id).await?.is_empty());
-    let hook_log = std::fs::read_to_string(test.codex_home_path().join("queue_prompt_hook.log"))?;
+    let hook_log = std::fs::read_to_string(test.genex_home_path().join("queue_prompt_hook.log"))?;
     assert_eq!(vec!["blocked"], hook_log.lines().collect::<Vec<_>>());
     assert!(responses.requests().is_empty());
     Ok(())

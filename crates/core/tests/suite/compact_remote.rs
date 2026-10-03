@@ -371,7 +371,7 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
         phase: None,
         internal_chat_message_metadata_passthrough: None,
     };
-    let codex = &harness.test().codex;
+    let codex = &harness.test().genex;
     let rollout_path = codex.rollout_path().context("rollout path")?;
     codex
         .inject_response_items(vec![developer("INJECTED_CLIENT_DEVELOPER")])
@@ -444,7 +444,7 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
             }),
     )
     .await?;
-    let codex = &harness.test().codex;
+    let codex = &harness.test().genex;
     let rollout_path = codex.rollout_path().context("rollout path")?;
     let responses_mock = responses::mount_sse_sequence(
         harness.server(),
@@ -629,7 +629,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
             }),
     )
     .await?;
-    let codex = &harness.test().codex;
+    let codex = &harness.test().genex;
     // Each original-detail image costs 10,000 estimated patch tokens.
     let image_inputs = (1..=8)
         .map(|number| {
@@ -1162,7 +1162,7 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
             }),
     )
     .await?;
-    let codex = harness.test().codex.clone();
+    let codex = harness.test().genex.clone();
 
     let responses_mock = responses::mount_response_sequence(
         harness.server(),
@@ -1278,7 +1278,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
             }),
     )
     .await?;
-    let codex = harness.test().codex.clone();
+    let codex = harness.test().genex.clone();
 
     let initial_mock = mount_sse_once(
         harness.server(),
@@ -1496,7 +1496,7 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
             }),
     )
     .await?;
-    let codex = harness.test().codex.clone();
+    let codex = harness.test().genex.clone();
     let responses_mock = responses::mount_response_sequence(
         harness.server(),
         vec![

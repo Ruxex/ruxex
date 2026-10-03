@@ -98,12 +98,12 @@ impl MarketplacePolicy {
     pub(crate) fn validate_install(
         &self,
         config_layer_stack: &ConfigLayerStack,
-        codex_home: &Path,
+        genex_home: &Path,
         marketplace_path: &AbsolutePathBuf,
         marketplace_name: &str,
     ) -> Result<(), String> {
         let root = marketplace_root_dir(marketplace_path).map_err(|err| err.to_string())?;
-        if let Some(expected_name) = managed_marketplace_name(codex_home, &root) {
+        if let Some(expected_name) = managed_marketplace_name(genex_home, &root) {
             return validate_expected_marketplace_name(expected_name, marketplace_name);
         }
         if is_reserved_marketplace_name(marketplace_name) {
@@ -130,7 +130,7 @@ impl MarketplacePolicy {
         let configured_root = resolve_configured_marketplace_root(
             marketplace_name,
             marketplace,
-            &marketplace_install_root(codex_home),
+            &marketplace_install_root(genex_home),
         )
         .ok_or_else(|| {
             format!("configured marketplace `{marketplace_name}` does not have a usable root")
@@ -199,7 +199,7 @@ impl AllowedMarketplaceSource {
 
 pub(crate) fn policy_filtered_plugin_config(
     config_layer_stack: &ConfigLayerStack,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> Option<toml::Value> {
     let mut effective_config = config_layer_stack.effective_config();
     if effective_config.get("plugins").is_none() && effective_config.get("marketplaces").is_none() {
@@ -207,7 +207,7 @@ pub(crate) fn policy_filtered_plugin_config(
     }
     let policy = MarketplacePolicy::from_requirements(config_layer_stack.requirements());
     let allowed_marketplace_names =
-        allowed_configured_marketplace_names_with_policy(&effective_config, &policy, codex_home);
+        allowed_configured_marketplace_names_with_policy(&effective_config, &policy, genex_home);
     let configured_marketplace_names = effective_config
         .get("marketplaces")
         .and_then(toml::Value::as_table)
@@ -241,17 +241,17 @@ pub(crate) fn policy_filtered_plugin_config(
 
 pub fn allowed_configured_marketplace_names(
     config_layer_stack: &ConfigLayerStack,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> HashSet<String> {
     let effective_config = config_layer_stack.effective_config();
     let policy = MarketplacePolicy::from_requirements(config_layer_stack.requirements());
-    allowed_configured_marketplace_names_with_policy(&effective_config, &policy, codex_home)
+    allowed_configured_marketplace_names_with_policy(&effective_config, &policy, genex_home)
 }
 
 fn allowed_configured_marketplace_names_with_policy(
     effective_config: &toml::Value,
     policy: &MarketplacePolicy,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> HashSet<String> {
     let Some(marketplaces) = effective_config
         .get("marketplaces")
@@ -262,7 +262,7 @@ fn allowed_configured_marketplace_names_with_policy(
     marketplaces
         .iter()
         .filter_map(|(marketplace_name, marketplace)| {
-            let allowed = match managed_marketplace_config_name(codex_home, marketplace) {
+            let allowed = match managed_marketplace_config_name(genex_home, marketplace) {
                 Some(expected_name) => expected_name == marketplace_name,
                 None if is_reserved_marketplace_name(marketplace_name) => false,
                 None if !policy.is_restricted() => true,
@@ -277,9 +277,9 @@ fn allowed_configured_marketplace_names_with_policy(
 
 pub(crate) fn configured_plugins_from_stack(
     config_layer_stack: &ConfigLayerStack,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> HashMap<String, PluginConfig> {
-    let Some(effective_config) = policy_filtered_plugin_config(config_layer_stack, codex_home)
+    let Some(effective_config) = policy_filtered_plugin_config(config_layer_stack, genex_home)
     else {
         return HashMap::new();
     };
@@ -296,13 +296,13 @@ pub(crate) fn configured_plugins_from_stack(
 }
 
 pub(crate) fn validate_marketplace_source_for_add(
-    codex_home: &Path,
+    genex_home: &Path,
     requirements: &ConfigRequirements,
     source: &MarketplaceSource,
 ) -> Result<Option<&'static str>, String> {
     let policy = MarketplacePolicy::from_requirements(requirements);
     if let MarketplaceSource::Local { path } = source
-        && let Some(expected_name) = managed_local_marketplace_name(codex_home, path)
+        && let Some(expected_name) = managed_local_marketplace_name(genex_home, path)
     {
         return Ok(Some(expected_name));
     }
@@ -447,12 +447,12 @@ fn is_reserved_marketplace_name(marketplace_name: &str) -> bool {
     )
 }
 
-fn managed_marketplace_name(codex_home: &Path, root: &AbsolutePathBuf) -> Option<&'static str> {
-    managed_local_marketplace_name(codex_home, root.as_path())
+fn managed_marketplace_name(genex_home: &Path, root: &AbsolutePathBuf) -> Option<&'static str> {
+    managed_local_marketplace_name(genex_home, root.as_path())
 }
 
 fn managed_marketplace_config_name(
-    codex_home: &Path,
+    genex_home: &Path,
     marketplace: &toml::Value,
 ) -> Option<&'static str> {
     if marketplace.get("source_type").and_then(toml::Value::as_str) != Some("local") {
@@ -463,12 +463,12 @@ fn managed_marketplace_config_name(
         .and_then(toml::Value::as_str)
         .map(Path::new)
         .filter(|path| path.is_absolute())?;
-    managed_local_marketplace_name(codex_home, path)
+    managed_local_marketplace_name(genex_home, path)
 }
 
-fn managed_local_marketplace_name(codex_home: &Path, root: &Path) -> Option<&'static str> {
+fn managed_local_marketplace_name(genex_home: &Path, root: &Path) -> Option<&'static str> {
     for marketplace_name in [BUNDLED_MARKETPLACE_NAME, BUNDLED_ALPHA_MARKETPLACE_NAME] {
-        let expected_root = codex_home
+        let expected_root = genex_home
             .join(".tmp/bundled-marketplaces")
             .join(marketplace_name);
         if is_expected_managed_path(root, &expected_root) {

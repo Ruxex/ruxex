@@ -3,7 +3,7 @@
 //! This mirrors the minimal exec-server fixture so Cargo-backed
 //! app-server integration tests can receive `CARGO_BIN_EXE_exec-server`. It
 //! also handles the helper argv modes because exec-server re-execs
-//! `codex_self_exe` for sandboxed filesystem and process requests.
+//! `genex_self_exe` for sandboxed filesystem and process requests.
 
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_http_client::HttpClientFactory;
@@ -25,9 +25,9 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     }
 
     let current_exe = std::env::current_exe()?;
-    let codex_linux_sandbox_exe =
+    let genex_linux_sandbox_exe =
         std::env::var_os(CODEX_LINUX_SANDBOX_EXE_ENV_VAR).map(std::path::PathBuf::from);
-    let runtime_paths = ExecServerRuntimePaths::new(current_exe, codex_linux_sandbox_exe)?;
+    let runtime_paths = ExecServerRuntimePaths::new(current_exe, genex_linux_sandbox_exe)?;
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?

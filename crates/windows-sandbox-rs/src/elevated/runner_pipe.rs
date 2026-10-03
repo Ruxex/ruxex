@@ -38,8 +38,8 @@ pub const PIPE_ACCESS_INBOUND: u32 = 0x0000_0001;
 pub const PIPE_ACCESS_OUTBOUND: u32 = 0x0000_0002;
 
 /// Resolve the materialized command runner used by the elevated sandbox path.
-pub fn find_runner_exe(codex_home: &Path, log_dir: Option<&Path>) -> anyhow::Result<PathBuf> {
-    resolve_command_runner(codex_home, log_dir)
+pub fn find_runner_exe(genex_home: &Path, log_dir: Option<&Path>) -> anyhow::Result<PathBuf> {
+    resolve_command_runner(genex_home, log_dir)
 }
 
 /// Generates a unique named-pipe path used to communicate with the runner process.

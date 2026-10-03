@@ -55,7 +55,7 @@ stream_max_retries = 0
             ),
         )?;
         let config = ConfigBuilder::default()
-            .codex_home(home.path().to_path_buf())
+            .genex_home(home.path().to_path_buf())
             .build()
             .await?;
         let mut app_server = crate::start_embedded_app_server_for_picker(&config).await?;
@@ -125,7 +125,7 @@ async fn new_tui_threads_request_summaries_unless_explicitly_disabled() {
     ] {
         std::fs::write(temp_dir.path().join("config.toml"), config_text).expect("config");
         let config = ConfigBuilder::default()
-            .codex_home(temp_dir.path().to_path_buf())
+            .genex_home(temp_dir.path().to_path_buf())
             .build()
             .await
             .expect("config should build");
@@ -151,7 +151,7 @@ async fn new_tui_threads_request_summaries_unless_explicitly_disabled() {
     )
     .expect("config");
     let config = ConfigBuilder::default()
-        .codex_home(temp_dir.path().to_path_buf())
+        .genex_home(temp_dir.path().to_path_buf())
         .cli_overrides(vec![(
             "model_reasoning_summary".to_string(),
             toml::Value::String("none".to_string()),

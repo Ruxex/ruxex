@@ -195,7 +195,7 @@ fn store_lock_is_released_when_holder_process_exits() -> Result<()> {
         .arg("--exact")
         .arg(LOCK_HOLDER_CHILD_TEST)
         .arg("--ignored")
-        .env("CODEX_HOME", env.path())
+        .env("GENEX_HOME", env.path())
         .env(LOCK_HOLDER_READY_PATH_ENV, &ready_file)
         .spawn()
         .context("spawn OAuth store lock holder test process")?;
@@ -424,7 +424,7 @@ impl Subscriber for LockContentionSubscriber {
 }
 
 fn complete_after_store_lock_contention<T>(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     store: OAuthStore,
     while_locked: impl FnOnce() -> Result<()>,
     operation: impl FnOnce() -> Result<T> + Send + 'static,
@@ -434,7 +434,7 @@ where
 {
     std::thread::scope(|scope| {
         let held_lock = OAuthStoreLock::acquire_in_with_mode(
-            codex_home,
+            genex_home,
             store,
             Duration::from_millis(/*millis*/ 100),
             OAuthStoreLockMode::Exclusive,

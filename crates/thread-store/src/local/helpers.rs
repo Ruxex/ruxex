@@ -59,8 +59,8 @@ pub(super) fn scoped_rollout_path(
     }
 }
 
-pub(super) fn rollout_path_is_archived(codex_home: &Path, path: &Path) -> bool {
-    path.starts_with(codex_home.join(ARCHIVED_SESSIONS_SUBDIR))
+pub(super) fn rollout_path_is_archived(genex_home: &Path, path: &Path) -> bool {
+    path.starts_with(genex_home.join(ARCHIVED_SESSIONS_SUBDIR))
         || path
             .components()
             .any(|component| component.as_os_str() == OsStr::new(ARCHIVED_SESSIONS_SUBDIR))
@@ -71,7 +71,7 @@ pub(super) async fn owned_rollout_paths(
     store: &LocalThreadStore,
     thread_id: ThreadId,
 ) -> ThreadStoreResult<Vec<PathBuf>> {
-    RolloutReferenceIndex::scan(store.config.codex_home.as_path())
+    RolloutReferenceIndex::scan(store.config.genex_home.as_path())
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to scan thread rollout files: {err}"),

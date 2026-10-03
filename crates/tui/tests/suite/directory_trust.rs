@@ -20,16 +20,16 @@ use tokio_tungstenite::tungstenite::Message;
 async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> Result<()> {
     for trust_level in [None, Some("untrusted")] {
         let repo_root = genex_utils_cargo_bin::repo_root()?;
-        let codex_home = tempfile::tempdir_in("/tmp")?;
+        let genex_home = tempfile::tempdir_in("/tmp")?;
         // The server's trust decision must win over the client's trusted-folder setting.
-        write_test_config(codex_home.path(), &repo_root)?;
-        let config_path = codex_home.path().join("config.toml");
+        write_test_config(genex_home.path(), &repo_root)?;
+        let config_path = genex_home.path().join("config.toml");
         let config = std::fs::read_to_string(&config_path)?;
         std::fs::write(
             config_path,
             format!("{config}\n[tui]\nresume_cwd = \"current\"\n"),
         )?;
-        let socket = genex_app_server_client::app_server_control_socket_path(codex_home.path())?;
+        let socket = genex_app_server_client::app_server_control_socket_path(genex_home.path())?;
         std::fs::create_dir_all(socket.parent().unwrap())?;
         let listener = UnixListener::bind(socket.as_path())?;
         let cwd = repo_root.clone();
@@ -94,7 +94,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                                     "key": "project:test", "eventName": "sessionStart", "handlerType": "command",
                                     "command": "echo hook", "async": false, "matcher": null, "timeoutSec": 30,
                                     "statusMessage": null, "additionalContextLimit": null,
-                                    "sourcePath": cwd.join(".codex/hooks.json"), "source": "project", "pluginId": null,
+                                    "sourcePath": cwd.join(".genex/hooks.json"), "source": "project", "pluginId": null,
                                     "displayOrder": 0, "enabled": false, "isManaged": false,
                                     "currentHash": "sha256:test", "trustStatus": "untrusted"
                                 }], "warnings": [], "errors": []})]
@@ -143,7 +143,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
         });
         let mut terminal = PtyGenex::start(
             &repo_root,
-            codex_home,
+            genex_home,
             &["do not submit this launch prompt"],
         )?;
         let prompt = if trust_level.is_some() {

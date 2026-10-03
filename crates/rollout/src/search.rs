@@ -28,12 +28,12 @@ pub type RolloutSearchMatches = HashMap<PathBuf, Option<String>>;
 
 pub async fn search_rollout_paths(
     rg_command: &Path,
-    codex_home: &Path,
+    genex_home: &Path,
     archived: bool,
     search_term: &str,
 ) -> io::Result<HashSet<PathBuf>> {
     Ok(
-        search_rollout_matches(rg_command, codex_home, archived, search_term)
+        search_rollout_matches(rg_command, genex_home, archived, search_term)
             .await?
             .into_keys()
             .collect(),
@@ -42,11 +42,11 @@ pub async fn search_rollout_paths(
 
 pub async fn search_rollout_matches(
     rg_command: &Path,
-    codex_home: &Path,
+    genex_home: &Path,
     archived: bool,
     search_term: &str,
 ) -> io::Result<RolloutSearchMatches> {
-    let root = codex_home.join(if archived {
+    let root = genex_home.join(if archived {
         ARCHIVED_SESSIONS_SUBDIR
     } else {
         SESSIONS_SUBDIR

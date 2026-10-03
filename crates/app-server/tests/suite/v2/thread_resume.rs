@@ -156,18 +156,18 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_resume_paginated_model_context_preserves_original_metadata() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let saved_cwd = normalized_existing_path(codex_home.path())?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    let saved_cwd = normalized_existing_path(genex_home.path())?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let conversation_id = create_fake_paginated_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let path = rollout_path(codex_home.path(), "2025-01-05T12-00-00", &conversation_id);
+    let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &conversation_id);
     let settings: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_id": conversation_id,
         "thread_settings": {
@@ -204,7 +204,7 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
     .await?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -242,7 +242,7 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
     timeout(DEFAULT_READ_TIMEOUT, primary.shutdown_gracefully()).await??;
 
     let mut secondary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -279,7 +279,7 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
     .await??;
 
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -316,11 +316,11 @@ async fn assert_thread_resume_rejects_writer_owned_by_another_process(
     history_mode: ThreadHistoryMode,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = primary
@@ -346,9 +346,9 @@ async fn assert_thread_resume_rejects_writer_owned_by_another_process(
     let secondary_sqlite_home = TempDir::new()?;
     let secondary_sqlite_home_path = secondary_sqlite_home.path().to_string_lossy();
     let mut secondary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(
-            "CODEX_SQLITE_HOME",
+            "GENEX_SQLITE_HOME",
             Some(secondary_sqlite_home_path.as_ref()),
         )])
         .build_initialized()
@@ -436,11 +436,11 @@ async fn wait_for_responses_request_count(
 #[tokio::test]
 async fn thread_resume_rejects_unmaterialized_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -481,11 +481,11 @@ async fn thread_resume_rejects_unmaterialized_thread() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_with_empty_path_uses_running_thread_id() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -544,14 +544,14 @@ async fn thread_resume_running_thread_uses_cached_instruction_sources() -> Resul
     );
 
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let workspace = TempDir::new()?;
     let project_agents = workspace.path().join("AGENTS.md");
     std::fs::write(&project_agents, "project instructions")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         // TODO(anp): Move the cached instruction-source fixture into the auto environment cwd.
         .without_auto_env()
         .build_initialized()
@@ -615,8 +615,8 @@ async fn thread_resume_running_thread_uses_cached_instruction_sources() -> Resul
 #[tokio::test]
 async fn thread_resume_restores_startup_and_updated_runtime_workspace_roots() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let initial_workspace = TempDir::new()?;
     let initial_cwd = normalized_existing_path(initial_workspace.path())?.abs();
@@ -632,7 +632,7 @@ async fn thread_resume_restores_startup_and_updated_runtime_workspace_roots() ->
     }];
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         // These compatibility parameters carry host-native paths, not foreign environment paths.
         .without_auto_env()
         .build_initialized()
@@ -742,7 +742,7 @@ async fn thread_resume_restores_startup_and_updated_runtime_workspace_roots() ->
     );
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -768,22 +768,22 @@ async fn thread_resume_restores_startup_and_updated_runtime_workspace_roots() ->
 #[tokio::test]
 async fn cold_resume_workspace_roots_honor_owned_snapshot_and_caller_overrides() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
-    let saved_cwd = normalized_existing_path(codex_home.path())?.abs();
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let saved_cwd = normalized_existing_path(genex_home.path())?.abs();
     let new_workspace = TempDir::new()?;
     let new_cwd = normalized_existing_path(new_workspace.path())?.abs();
     let extra_workspace = TempDir::new()?;
     let extra_root = extra_workspace.path().abs();
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved workspace selection",
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let path = rollout_path(codex_home.path(), "2025-01-05T12-00-00", &thread_id);
+    let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &thread_id);
     let owned: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_id": thread_id,
         "thread_settings": {
@@ -826,7 +826,7 @@ async fn cold_resume_workspace_roots_honor_owned_snapshot_and_caller_overrides()
         (None, None, &saved_cwd, Vec::new()),
     ] {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_auto_env()
             .build_initialized()
             .await?;
@@ -871,9 +871,9 @@ async fn cold_resume_workspace_roots_honor_owned_snapshot_and_caller_overrides()
 #[tokio::test]
 async fn cold_resume_workspace_roots_validate_foreign_startup_paths() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
-    let local_cwd = normalized_existing_path(codex_home.path())?.abs();
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let local_cwd = normalized_existing_path(genex_home.path())?.abs();
     let extra_workspace = TempDir::new()?;
     let extra_root = normalized_existing_path(extra_workspace.path())?.abs();
     let extra_root_string = extra_root.to_string_lossy();
@@ -889,7 +889,7 @@ async fn cold_resume_workspace_roots_validate_foreign_startup_paths() -> Result<
         (r"C:\foreign\project", r"C:\foreign\extra")
     };
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         // Startup metadata uses the app-server host's paths, not executor paths.
         .without_auto_env()
         .build_initialized()
@@ -913,14 +913,14 @@ async fn cold_resume_workspace_roots_validate_foreign_startup_paths() -> Result<
         ),
     ] {
         let thread_id = create_fake_rollout(
-            codex_home.path(),
+            genex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Foreign startup paths",
             Some("mock_provider"),
             /*git_info*/ None,
         )?;
-        let path = rollout_path(codex_home.path(), "2025-01-05T12-00-00", &thread_id);
+        let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &thread_id);
         let contents = std::fs::read_to_string(&path)?;
         let (meta, history) = contents.split_once('\n').expect("rollout metadata line");
         let mut meta: serde_json::Value = serde_json::from_str(meta)?;
@@ -964,12 +964,12 @@ async fn cold_resume_workspace_roots_validate_foreign_startup_paths() -> Result<
 #[tokio::test]
 async fn thread_resume_preserves_persisted_approvals_reviewer() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let thread_id = {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_auto_env()
             .build_initialized()
             .await?;
@@ -1009,7 +1009,7 @@ async fn thread_resume_preserves_persisted_approvals_reviewer() -> Result<()> {
         thread.id
     };
 
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
@@ -1020,7 +1020,7 @@ async fn thread_resume_preserves_persisted_approvals_reviewer() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1075,8 +1075,8 @@ async fn assert_thread_resume_approval_policy(
     expected_approval_policy: AskForApproval,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let config_path = codex_home.path().join("config.toml");
+    let genex_home = TempDir::new()?;
+    let config_path = genex_home.path().join("config.toml");
     std::fs::write(
         &config_path,
         format!(
@@ -1098,7 +1098,7 @@ stream_max_retries = 0
 
     let thread_id = {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_auto_env()
             .build_initialized()
             .await?;
@@ -1148,7 +1148,7 @@ stream_max_retries = 0
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1170,14 +1170,14 @@ stream_max_retries = 0
 #[tokio::test]
 async fn thread_resume_preserves_goal_first_and_fork_approvals_reviewer() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let (thread_id, fork_thread_id) = {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -1260,7 +1260,7 @@ async fn thread_resume_preserves_goal_first_and_fork_approvals_reviewer() -> Res
         (thread.id, fork_thread.id)
     };
 
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
@@ -1271,7 +1271,7 @@ async fn thread_resume_preserves_goal_first_and_fork_approvals_reviewer() -> Res
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1299,12 +1299,12 @@ async fn thread_resume_preserves_goal_first_and_fork_approvals_reviewer() -> Res
 async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewer_update()
 -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let updated_workspace = TempDir::new()?;
     let persisted_cwd = normalized_existing_path(updated_workspace.path())?;
-    let live_cwd = normalized_existing_path(codex_home.path())?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
-    let config_path = codex_home.path().join("config.toml");
+    let live_cwd = normalized_existing_path(genex_home.path())?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let config_path = genex_home.path().join("config.toml");
     let config_toml = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         &config_path,
@@ -1316,7 +1316,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
 
     let (thread_id, rollout_path) = {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .build_initialized()
             .await?;
 
@@ -1408,7 +1408,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
     };
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let resume_id = mcp
@@ -1466,7 +1466,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
     append_rollout_item_to_path(&rollout_path, &frozen_context).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let resume_id = mcp
@@ -1514,11 +1514,11 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
 #[tokio::test]
 async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let fixture = setup_rollout_fixture(codex_home.path(), &server.uri()).await?;
+    let genex_home = TempDir::new()?;
+    let fixture = setup_rollout_fixture(genex_home.path(), &server.uri()).await?;
     mock_responses_config(&server.uri())
         .with_root_config("model_reasoning_effort = \"high\"")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let saved_mode = CollaborationMode {
         mode: ModeKind::Plan,
         settings: Settings {
@@ -1528,7 +1528,7 @@ async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() ->
         },
     };
     let context = serde_json::from_value(json!({
-        "cwd": codex_home.path(),
+        "cwd": genex_home.path(),
         "approval_policy": "never",
         "sandbox_policy": {"type": "read-only"},
         "model": saved_mode.settings.model,
@@ -1547,7 +1547,7 @@ async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() ->
         RolloutItem::EventMsg(EventMsg::ThreadSettingsApplied(_))
     )));
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let resume_id = mcp
@@ -1574,20 +1574,20 @@ async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() ->
 async fn cold_resume_reresolves_persisted_active_permission_profile() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     for history_mode in [ThreadHistoryMode::Paginated] {
-        let codex_home = TempDir::new()?;
+        let genex_home = TempDir::new()?;
         let previous_workspace_root = TempDir::new()?;
         let profile_workspace = TempDir::new()?;
-        write_dev_permission_config(&server.uri(), codex_home.path(), ":workspace")?;
+        write_dev_permission_config(&server.uri(), genex_home.path(), ":workspace")?;
         let profile_root = serde_json::to_string(profile_workspace.path())?;
         writeln!(
             std::fs::OpenOptions::new()
                 .append(true)
-                .open(codex_home.path().join("config.toml"))?,
+                .open(genex_home.path().join("config.toml"))?,
             "\n[permissions.dev.workspace_roots]\n{profile_root} = true"
         )?;
         let thread_id = {
             let mut mcp = TestAppServer::builder()
-                .with_codex_home(codex_home.path())
+                .with_genex_home(genex_home.path())
                 .without_managed_config()
                 .build_initialized()
                 .await?;
@@ -1610,9 +1610,9 @@ async fn cold_resume_reresolves_persisted_active_permission_profile() -> Result<
             thread_id
         };
 
-        write_dev_permission_config(&server.uri(), codex_home.path(), ":read-only")?;
+        write_dev_permission_config(&server.uri(), genex_home.path(), ":read-only")?;
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -1649,11 +1649,11 @@ async fn cold_resume_reresolves_persisted_active_permission_profile() -> Result<
 async fn cold_resume_with_removed_permission_profile_uses_configured_default() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     for history_mode in [ThreadHistoryMode::Paginated] {
-        let codex_home = TempDir::new()?;
-        write_dev_permission_config(&server.uri(), codex_home.path(), ":workspace")?;
+        let genex_home = TempDir::new()?;
+        write_dev_permission_config(&server.uri(), genex_home.path(), ":workspace")?;
         let thread_id = {
             let mut mcp = TestAppServer::builder()
-                .with_codex_home(codex_home.path())
+                .with_genex_home(genex_home.path())
                 .without_managed_config()
                 .build_initialized()
                 .await?;
@@ -1664,9 +1664,9 @@ async fn cold_resume_with_removed_permission_profile_uses_configured_default() -
             .with_root_config(&format!(
                 "default_permissions = \"{BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS}\""
             ))
-            .write(codex_home.path())?;
+            .write(genex_home.path())?;
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -1696,11 +1696,11 @@ async fn cold_resume_with_removed_permission_profile_uses_configured_default() -
 #[tokio::test]
 async fn cold_resume_permission_overrides_win_over_persisted_profile() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    write_dev_permission_config(&server.uri(), codex_home.path(), ":workspace")?;
+    let genex_home = TempDir::new()?;
+    write_dev_permission_config(&server.uri(), genex_home.path(), ":workspace")?;
     let thread_id = {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -1732,7 +1732,7 @@ async fn cold_resume_permission_overrides_win_over_persisted_profile() -> Result
             .is_none()
             .then(ActivePermissionProfile::read_only);
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -1755,11 +1755,11 @@ async fn cold_resume_permission_overrides_win_over_persisted_profile() -> Result
 #[tokio::test]
 async fn cold_resume_without_active_permission_profile_uses_current_config() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let thread_id = {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -1789,9 +1789,9 @@ async fn cold_resume_without_active_permission_profile_uses_current_config() -> 
         .with_root_config(&format!(
             "default_permissions = \"{BUILT_IN_PERMISSION_PROFILE_WORKSPACE}\""
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1820,11 +1820,11 @@ async fn cold_resume_without_active_permission_profile_uses_current_config() -> 
 #[tokio::test]
 async fn cold_resume_restores_profile_selected_by_settings_update() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let thread_id = {
         let mut mcp = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -1863,9 +1863,9 @@ async fn cold_resume_restores_profile_selected_by_settings_update() -> Result<()
         thread.id
     };
 
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1920,25 +1920,25 @@ async fn materialize_dev_permission_thread(
 
 fn write_dev_permission_config(
     server_uri: &str,
-    codex_home: &Path,
+    genex_home: &Path,
     dev_extends: &str,
 ) -> std::io::Result<()> {
     MockResponsesConfig::new(server_uri)
         .with_root_config("default_permissions = \":danger-full-access\"")
         .with_extra_config(&format!("[permissions.dev]\nextends = \"{dev_extends}\""))
-        .write(codex_home)
+        .write(genex_home)
 }
 
 #[tokio::test]
 async fn thread_goal_get_rejects_unmaterialized_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1982,11 +1982,11 @@ async fn thread_goal_get_rejects_unmaterialized_thread() -> Result<()> {
 async fn unloaded_thread_goal_mutations_respect_parent_ownership() -> Result<()> {
     const TIMESTAMP: &str = "2026-08-20T12-00-00";
     let server = responses::start_mock_server().await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Goals)
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let child_source = RolloutSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
         parent_thread_id: ThreadId::new(),
         depth: 1,
@@ -1995,7 +1995,7 @@ async fn unloaded_thread_goal_mutations_respect_parent_ownership() -> Result<()>
         agent_role: None,
     });
     let mut app = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2008,7 +2008,7 @@ async fn unloaded_thread_goal_mutations_respect_parent_ownership() -> Result<()>
         let rejects_mutation = matches!(source, RolloutSessionSource::SubAgent(_))
             && version == Some(MultiAgentVersion::V2);
         let thread_id = create_fake_rollout_with_source(
-            codex_home.path(),
+            genex_home.path(),
             TIMESTAMP,
             "2026-08-20T12:00:00Z",
             "Saved task",
@@ -2016,7 +2016,7 @@ async fn unloaded_thread_goal_mutations_respect_parent_ownership() -> Result<()>
             /*git_info*/ None,
             source,
         )?;
-        let path = rollout_path(codex_home.path(), TIMESTAMP, &thread_id);
+        let path = rollout_path(genex_home.path(), TIMESTAMP, &thread_id);
         let params = json!({
             "threadId": thread_id,
             "objective": "Original goal",
@@ -2096,12 +2096,12 @@ async fn unloaded_thread_goal_mutations_respect_parent_ownership() -> Result<()>
 #[tokio::test]
 async fn thread_goal_mutations_preserve_authoritative_sqlite_metadata() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Rollout preview",
@@ -2110,12 +2110,12 @@ async fn thread_goal_mutations_preserve_authoritative_sqlite_metadata() -> Resul
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -2182,12 +2182,12 @@ async fn thread_goal_mutations_preserve_authoritative_sqlite_metadata() -> Resul
 #[tokio::test]
 async fn thread_goal_set_repairs_missing_sqlite_metadata() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Rollout preview",
@@ -2196,12 +2196,12 @@ async fn thread_goal_set_repairs_missing_sqlite_metadata() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -2228,20 +2228,20 @@ async fn thread_goal_set_repairs_missing_sqlite_metadata() -> Result<()> {
 #[tokio::test]
 async fn goal_first_live_thread_appears_in_state_db_thread_list() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let codex_home_path = normalized_existing_path(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    let genex_home_path = normalized_existing_path(genex_home.path())?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(&codex_home_path)?;
+        .write(&genex_home_path)?;
 
-    let sqlite_home = codex_home_path
+    let sqlite_home = genex_home_path
         .as_path()
         .to_str()
-        .expect("test codex home should be utf-8");
+        .expect("test genex home should be utf-8");
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home_path)
+        .with_genex_home(&genex_home_path)
         .without_managed_config()
-        .with_env_overrides(&[("CODEX_SQLITE_HOME", Some(sqlite_home))])
+        .with_env_overrides(&[("GENEX_SQLITE_HOME", Some(sqlite_home))])
         .build_initialized()
         .await?;
 
@@ -2302,14 +2302,14 @@ async fn goal_first_live_thread_appears_in_state_db_thread_list() -> Result<()> 
 async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -2317,7 +2317,7 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
         /*git_info*/ None,
     )?;
     set_session_meta_on_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         &conversation_id,
         "user",
@@ -2325,7 +2325,7 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -2363,14 +2363,14 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
 async fn thread_resume_running_thread_tracks_thread_originator_in_analytics() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -2438,13 +2438,13 @@ async fn thread_resume_running_thread_tracks_thread_originator_in_analytics() ->
 }
 
 fn set_session_meta_on_fake_rollout(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     filename_ts: &str,
     thread_id: &str,
     thread_source: &str,
     originator: &str,
 ) -> Result<()> {
-    let path = rollout_path(codex_home, filename_ts, thread_id);
+    let path = rollout_path(genex_home, filename_ts, thread_id);
     let contents = std::fs::read_to_string(&path)?;
     let mut lines = contents.lines();
     let session_meta = lines
@@ -2461,9 +2461,9 @@ fn set_session_meta_on_fake_rollout(
 #[tokio::test]
 async fn thread_resume_returns_rollout_history() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let saved_cwd = normalized_existing_path(codex_home.path())?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    let saved_cwd = normalized_existing_path(genex_home.path())?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let preview = "Saved user message";
     let text_elements = vec![TextElement::new(
@@ -2471,7 +2471,7 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
         Some("<note>".into()),
     )];
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
@@ -2495,13 +2495,13 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
         },
     }))?;
     append_rollout_item_to_path(
-        &rollout_path(codex_home.path(), "2025-01-05T12-00-00", &conversation_id),
+        &rollout_path(genex_home.path(), "2025-01-05T12-00-00", &conversation_id),
         &RolloutItem::EventMsg(EventMsg::ThreadSettingsApplied(settings)),
     )
     .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2552,11 +2552,11 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_can_skip_turns_for_metadata_only_resume() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -2566,7 +2566,7 @@ async fn thread_resume_can_skip_turns_for_metadata_only_resume() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2589,11 +2589,11 @@ async fn thread_resume_can_skip_turns_for_metadata_only_resume() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_warns_for_paginated_full_history_hydration() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let conversation_id = create_fake_paginated_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -2601,7 +2601,7 @@ async fn thread_resume_warns_for_paginated_full_history_hydration() -> Result<()
         /*git_info*/ None,
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -2663,12 +2663,12 @@ async fn thread_resume_warns_for_paginated_full_history_hydration() -> Result<()
 #[tokio::test]
 async fn thread_resume_rejects_archived_session_by_id() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        genex_home.path(),
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Archived saved user message",
@@ -2676,8 +2676,8 @@ async fn thread_resume_rejects_archived_session_by_id() -> Result<()> {
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let active_rollout_path = rollout_path(codex_home.path(), filename_ts, &conversation_id);
-    let archived_dir = codex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
+    let active_rollout_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
+    let archived_dir = genex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
     std::fs::create_dir_all(&archived_dir)?;
     std::fs::rename(
         &active_rollout_path,
@@ -2685,7 +2685,7 @@ async fn thread_resume_rejects_archived_session_by_id() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2733,13 +2733,13 @@ async fn thread_resume_keeps_tool_paused_goal_paused() -> Result<()> {
         create_final_assistant_message_sse_response("The goal is paused.")?,
     ])
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -2817,14 +2817,14 @@ async fn thread_resume_keeps_tool_paused_goal_paused() -> Result<()> {
 #[tokio::test]
 async fn thread_goal_set_enforces_configured_maximum_token_budget() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
         .with_extra_config("[goals]\nmax_goal_token_budget = 200")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -2910,13 +2910,13 @@ async fn thread_goal_set_enforces_configured_maximum_token_budget() -> Result<()
 #[tokio::test]
 async fn thread_goal_set_preserves_budget_limited_same_objective() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -2996,13 +2996,13 @@ async fn thread_goal_set_preserves_budget_limited_same_objective() -> Result<()>
 #[tokio::test]
 async fn thread_goal_set_persists_resumable_stopped_statuses() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -3074,12 +3074,12 @@ async fn thread_goal_set_persists_resumable_stopped_statuses() -> Result<()> {
 #[tokio::test]
 async fn thread_goal_set_edits_objective_without_resetting_usage() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "",
@@ -3088,7 +3088,7 @@ async fn thread_goal_set_edits_objective_without_resetting_usage() -> Result<()>
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -3113,7 +3113,7 @@ async fn thread_goal_set_edits_objective_without_resetting_usage() -> Result<()>
     .await??;
 
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -3215,12 +3215,12 @@ async fn thread_goal_keeps_original_root_until_external_objective_edit() -> Resu
         ])),
     ])
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(server.uri())
         .enable_feature(Feature::Goals)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -3398,15 +3398,15 @@ async fn thread_goal_lifecycle_emits_analytics_and_clear_deletes_goal() -> Resul
         ]),
     ])
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Goals)
         .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT.saturating_mul(2))
         .await?;
@@ -3593,11 +3593,11 @@ async fn thread_goal_lifecycle_emits_analytics_and_clear_deletes_goal() -> Resul
 #[tokio::test]
 async fn thread_resume_emits_restored_token_usage_before_next_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let conversation_id = create_fake_rollout_with_token_usage(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -3605,7 +3605,7 @@ async fn thread_resume_emits_restored_token_usage_before_next_turn() -> Result<(
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -3644,17 +3644,17 @@ async fn thread_resume_emits_restored_token_usage_before_next_turn() -> Result<(
 #[tokio::test]
 async fn cold_paginated_resume_restores_usage_without_loading_turns() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let conversation_id = create_fake_paginated_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let path = rollout_path(codex_home.path(), "2025-01-05T12-00-00", &conversation_id);
+    let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &conversation_id);
     let canonical_turn_id = "persisted-token-usage-turn";
     append_rollout_item_to_path(
         &path,
@@ -3691,7 +3691,7 @@ async fn cold_paginated_resume_restores_usage_without_loading_turns() -> Result<
     )
     .await?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -3737,18 +3737,18 @@ async fn cold_paginated_resume_restores_usage_without_loading_turns() -> Result<
 #[tokio::test]
 async fn cold_paginated_resume_omits_usage_when_its_turn_is_ambiguous() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let filename_ts = "2025-01-05T12-00-00";
     let conversation_id = create_fake_paginated_rollout(
-        codex_home.path(),
+        genex_home.path(),
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let path = rollout_path(codex_home.path(), filename_ts, &conversation_id);
+    let path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     append_rollout_item_to_path(
         &path,
         &RolloutItem::EventMsg(EventMsg::TokenCount(TokenCountEvent {
@@ -3781,7 +3781,7 @@ async fn cold_paginated_resume_omits_usage_when_its_turn_is_ambiguous() -> Resul
     )
     .await?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -3823,11 +3823,11 @@ async fn cold_paginated_resume_omits_usage_when_its_turn_is_ambiguous() -> Resul
 #[tokio::test]
 async fn thread_resume_skips_restored_token_usage_when_turns_are_excluded() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let conversation_id = create_fake_rollout_with_token_usage(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -3835,7 +3835,7 @@ async fn thread_resume_skips_restored_token_usage_when_turns_are_excluded() -> R
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -3894,19 +3894,19 @@ async fn thread_resume_skips_restored_token_usage_when_turns_are_excluded() -> R
 #[tokio::test]
 async fn thread_resume_token_usage_replay_ignores_stale_interrupted_tail_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let meta_rfc3339 = "2025-01-05T12:00:00Z";
     let conversation_id = create_fake_rollout_with_token_usage(
-        codex_home.path(),
+        genex_home.path(),
         filename_ts,
         meta_rfc3339,
         "Saved user message",
         Some("mock_provider"),
     )?;
-    let rollout_file_path = rollout_path(codex_home.path(), filename_ts, &conversation_id);
+    let rollout_file_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
     let stale_turn_id = "incomplete-turn-after-token-usage";
     let appended_rollout = [
@@ -3942,7 +3942,7 @@ async fn thread_resume_token_usage_replay_ignores_stale_interrupted_tail_turn() 
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -3982,19 +3982,19 @@ async fn thread_resume_token_usage_replay_ignores_stale_interrupted_tail_turn() 
 #[tokio::test]
 async fn thread_resume_token_usage_replay_can_belong_to_interrupted_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let meta_rfc3339 = "2025-01-05T12:00:00Z";
     let conversation_id = create_fake_rollout_with_token_usage(
-        codex_home.path(),
+        genex_home.path(),
         filename_ts,
         meta_rfc3339,
         "Saved user message",
         Some("mock_provider"),
     )?;
-    let rollout_file_path = rollout_path(codex_home.path(), filename_ts, &conversation_id);
+    let rollout_file_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
     let interrupted_turn_id = "interrupted-turn-with-token-usage";
     let appended_rollout = [
@@ -4071,7 +4071,7 @@ async fn thread_resume_token_usage_replay_can_belong_to_interrupted_turn() -> Re
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4110,12 +4110,12 @@ async fn thread_resume_token_usage_replay_can_belong_to_interrupted_turn() -> Re
 #[tokio::test]
 async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
-    let repo_path = codex_home.path().join("repo");
+    let repo_path = genex_home.path().join("repo");
     std::fs::create_dir_all(&repo_path)?;
     assert!(
         Command::new("git")
@@ -4172,7 +4172,7 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
 
     let thread_id = Uuid::new_v4().to_string();
     let conversation_id = ThreadId::from_string(&thread_id)?;
-    let rollout_path = rollout_path(codex_home.path(), "2025-01-05T12-00-00", &thread_id);
+    let rollout_path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &thread_id);
     let rollout_dir = rollout_path.parent().expect("rollout parent directory");
     std::fs::create_dir_all(rollout_dir)?;
     let session_meta = SessionMeta {
@@ -4238,7 +4238,7 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
             + "\n",
     )?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         "mock_provider".into(),
     )
     .await?;
@@ -4247,7 +4247,7 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
         .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4292,13 +4292,13 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
 async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is_idle() -> Result<()>
 {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let meta_rfc3339 = "2025-01-05T12:00:00Z";
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        genex_home.path(),
         filename_ts,
         meta_rfc3339,
         "Saved user message",
@@ -4306,7 +4306,7 @@ async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let rollout_file_path = rollout_path(codex_home.path(), filename_ts, &conversation_id);
+    let rollout_file_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
     let turn_id = "incomplete-turn";
     let appended_rollout = [
@@ -4342,7 +4342,7 @@ async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4399,12 +4399,12 @@ async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is
 #[tokio::test]
 async fn thread_resume_checkpoints_settings_without_advancing_recency() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let rollout = setup_rollout_fixture(codex_home.path(), &server.uri()).await?;
+    let genex_home = TempDir::new()?;
+    let rollout = setup_rollout_fixture(genex_home.path(), &server.uri()).await?;
     let thread_id = rollout.conversation_id.clone();
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4454,13 +4454,13 @@ async fn thread_resume_checkpoints_settings_without_advancing_recency() -> Resul
         .send_thread_resume_request(ThreadResumeParams {
             thread_id: "not-a-valid-thread-id".to_string(),
             path: Some(normalized_existing_path(&rollout.rollout_file_path)?),
-            cwd: Some(codex_home.path().to_string_lossy().to_string()),
+            cwd: Some(genex_home.path().to_string_lossy().to_string()),
             ..Default::default()
         })
         .await?;
     let ThreadResumeResponse { cwd, .. } =
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(resume_id)).await??;
-    assert_eq!(cwd, AbsolutePathBuf::from_absolute_path(codex_home.path())?);
+    assert_eq!(cwd, AbsolutePathBuf::from_absolute_path(genex_home.path())?);
 
     let turn_id = mcp
         .send_turn_start_request(TurnStartParams {
@@ -4507,11 +4507,11 @@ async fn thread_resume_checkpoints_settings_without_advancing_recency() -> Resul
 #[tokio::test]
 async fn thread_resume_keeps_in_flight_turn_streaming() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4605,11 +4605,11 @@ async fn thread_resume_rejects_history_when_thread_is_running() -> Result<()> {
     .set_delay(std::time::Duration::from_millis(500));
     let _first_response_mock = responses::mount_sse_once(&server, first_body).await;
     let _second_response_mock = responses::mount_response_once(&server, second_response).await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4722,11 +4722,11 @@ async fn thread_resume_rejects_mismatched_path_for_running_thread_id() -> Result
     .set_delay(std::time::Duration::from_millis(500));
     let _first_response_mock = responses::mount_sse_once(&server, first_body).await;
     let _second_response_mock = responses::mount_response_once(&server, second_response).await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4818,7 +4818,7 @@ async fn thread_resume_rejects_mismatched_path_for_running_thread_id() -> Result
     }
 
     let stale_thread_id = Uuid::new_v4().to_string();
-    let stale_path = rollout_path(codex_home.path(), "2025-01-01T00-00-00", &stale_thread_id);
+    let stale_path = rollout_path(genex_home.path(), "2025-01-01T00-00-00", &stale_thread_id);
     std::fs::create_dir_all(stale_path.parent().expect("stale path parent"))?;
     let thread_uuid = Uuid::parse_str(&stale_thread_id)?;
     let mut stale_file = std::fs::File::create(&stale_path)?;
@@ -4829,7 +4829,7 @@ async fn thread_resume_rejects_mismatched_path_for_running_thread_id() -> Result
             "session_id": thread_uuid,
             "id": thread_uuid,
             "timestamp": "2025-01-01T00:00:00Z",
-            "cwd": codex_home.path(),
+            "cwd": genex_home.path(),
             "originator": "test_originator",
             "cli_version": "test_version",
             "source": "cli",
@@ -4895,11 +4895,11 @@ async fn thread_resume_rejoins_running_paginated_thread_with_initial_page() -> R
         }],
     ])
     .await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(server.uri()).write(genex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -5072,11 +5072,11 @@ async fn thread_resume_can_skip_turns_when_thread_is_running() -> Result<()> {
         ]),
     )
     .await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -5152,11 +5152,11 @@ async fn thread_resume_replays_pending_command_execution_request_approval() -> R
         create_final_assistant_message_sse_response("done")?,
     ];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -5275,8 +5275,8 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
     );
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -5293,10 +5293,10 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
     mock_responses_config(&server.uri())
         .disable_feature(Feature::ShellSnapshot)
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut primary = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -5459,15 +5459,15 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
 #[tokio::test]
 async fn thread_resume_with_overrides_preserves_recency_and_checkpoints_model() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let RestartedThreadFixture {
         mut mcp,
         thread_id,
         rollout_file_path,
         recency_at,
-    } = start_materialized_thread_and_restart(codex_home.path(), "materialize").await?;
+    } = start_materialized_thread_and_restart(genex_home.path(), "materialize").await?;
 
     let resume_id = mcp
         .send_thread_resume_request(ThreadResumeParams {
@@ -5523,18 +5523,18 @@ async fn thread_resume_with_overrides_preserves_recency_and_checkpoints_model() 
 #[tokio::test]
 async fn thread_resume_fails_when_required_mcp_server_fails_to_initialize() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let rollout = setup_rollout_fixture(codex_home.path(), &server.uri()).await?;
+    let genex_home = TempDir::new()?;
+    let rollout = setup_rollout_fixture(genex_home.path(), &server.uri()).await?;
     mock_responses_config(&server.uri())
         .with_extra_config(
             r#"[mcp_servers.required_broken]
 command = "codex-definitely-not-a-real-binary"
 required = true"#,
         )
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -5586,14 +5586,14 @@ async fn thread_resume_surfaces_cloud_config_bundle_load_errors() -> Result<()> 
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     mock_responses_config(&model_server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{managed_auth_base_url}""#))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .refresh_token("stale-refresh-token")
             .plan_type("business")
@@ -5603,7 +5603,7 @@ async fn thread_resume_surfaces_cloud_config_bundle_load_errors() -> Result<()> 
         AuthCredentialsStoreMode::File,
     )?;
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -5613,7 +5613,7 @@ async fn thread_resume_surfaces_cloud_config_bundle_load_errors() -> Result<()> 
     )?;
     let refresh_token_url = format!("{}/oauth/token", server.uri());
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", None),
             (
@@ -5658,15 +5658,15 @@ async fn thread_resume_surfaces_cloud_config_bundle_load_errors() -> Result<()> 
 #[tokio::test]
 async fn thread_resume_uses_path_over_non_running_thread_id() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let RestartedThreadFixture {
         mut mcp,
         thread_id,
         rollout_file_path,
         ..
-    } = start_materialized_thread_and_restart(codex_home.path(), "materialize").await?;
+    } = start_materialized_thread_and_restart(genex_home.path(), "materialize").await?;
 
     let resume_id = mcp
         .send_thread_resume_request(ThreadResumeParams {
@@ -5687,9 +5687,9 @@ async fn thread_resume_uses_path_over_non_running_thread_id() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_can_load_source_by_external_path() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let external_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
     let thread_id = create_fake_rollout(
         external_home.path(),
         "2025-01-05T12-00-00",
@@ -5701,7 +5701,7 @@ async fn thread_resume_can_load_source_by_external_path() -> Result<()> {
     let thread_path = rollout_path(external_home.path(), "2025-01-05T12-00-00", &thread_id);
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let resume_id = mcp
@@ -5730,12 +5730,12 @@ async fn thread_resume_can_load_source_by_external_path() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_supports_history_and_overrides() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(genex_home.path())?;
 
     let RestartedThreadFixture {
         mut mcp, thread_id, ..
-    } = start_materialized_thread_and_restart(codex_home.path(), "seed history").await?;
+    } = start_materialized_thread_and_restart(genex_home.path(), "seed history").await?;
 
     let history_text = "Hello from history";
     let history = vec![ResponseItem::Message {
@@ -5779,11 +5779,11 @@ struct RestartedThreadFixture {
 }
 
 async fn start_materialized_thread_and_restart(
-    codex_home: &Path,
+    genex_home: &Path,
     seed_text: &str,
 ) -> Result<RestartedThreadFixture> {
     let mut first_mcp = TestAppServer::builder()
-        .with_codex_home(codex_home)
+        .with_genex_home(genex_home)
         .build_initialized()
         .await?;
 
@@ -5836,7 +5836,7 @@ async fn start_materialized_thread_and_restart(
     drop(first_mcp);
 
     let second_mcp = TestAppServer::builder()
-        .with_codex_home(codex_home)
+        .with_genex_home(genex_home)
         .build_initialized()
         .await?;
 
@@ -5869,15 +5869,15 @@ struct RolloutFixture {
     rollout_file_path: PathBuf,
 }
 
-async fn setup_rollout_fixture(codex_home: &Path, server_uri: &str) -> Result<RolloutFixture> {
-    mock_responses_config(server_uri).write(codex_home)?;
+async fn setup_rollout_fixture(genex_home: &Path, server_uri: &str) -> Result<RolloutFixture> {
+    mock_responses_config(server_uri).write(genex_home)?;
 
     let preview = "Saved user message";
     let filename_ts = "2025-01-05T12-00-00";
     let meta_rfc3339 = "2025-01-05T12:00:00Z";
     let expected_updated_at_rfc3339 = "2025-01-07T00:00:00Z";
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home,
+        genex_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -5885,7 +5885,7 @@ async fn setup_rollout_fixture(codex_home: &Path, server_uri: &str) -> Result<Ro
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let rollout_file_path = rollout_path(codex_home, filename_ts, &conversation_id);
+    let rollout_file_path = rollout_path(genex_home, filename_ts, &conversation_id);
     let mut session_meta = read_session_meta_line(&rollout_file_path).await?;
     session_meta.meta.multi_agent_version = Some(MultiAgentVersion::V1);
     append_rollout_item_to_path(&rollout_file_path, &RolloutItem::SessionMeta(session_meta))

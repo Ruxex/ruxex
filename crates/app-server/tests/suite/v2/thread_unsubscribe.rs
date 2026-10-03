@@ -41,14 +41,14 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_unsubscribe_keeps_thread_loaded_until_idle_timeout() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("danger-full-access")
         .with_root_config("thread_unload_delay_secs = 2")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -204,8 +204,8 @@ async fn thread_unsubscribe_during_turn_keeps_turn_running(delay_secs: u64) -> R
     let tool_call_arguments = serde_json::to_string(&tool_args)?;
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
 
     let (server, mut completions) = start_streaming_sse_server(vec![
         vec![StreamingSseChunk {
@@ -231,10 +231,10 @@ async fn thread_unsubscribe_during_turn_keeps_turn_running(delay_secs: u64) -> R
     MockResponsesConfig::new(server.uri())
         .with_sandbox_mode("danger-full-access")
         .with_root_config(&format!("thread_unload_delay_secs = {delay_secs}"))
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -375,13 +375,13 @@ async fn thread_unsubscribe_preserves_cached_status_before_idle_unload() -> Resu
         responses::sse_failed("resp-1", "server_error", "simulated failure"),
     )
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("danger-full-access")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -447,7 +447,7 @@ async fn thread_unsubscribe_preserves_cached_status_before_idle_unload() -> Resu
             request_id,
             params: ThreadResumeParams {
                 thread_id,
-                cwd: Some(codex_home.path().to_string_lossy().to_string()),
+                cwd: Some(genex_home.path().to_string_lossy().to_string()),
                 ..Default::default()
             },
         })
@@ -460,13 +460,13 @@ async fn thread_unsubscribe_preserves_cached_status_before_idle_unload() -> Resu
 #[tokio::test]
 async fn thread_unsubscribe_reports_not_subscribed_before_idle_unload() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("danger-full-access")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 

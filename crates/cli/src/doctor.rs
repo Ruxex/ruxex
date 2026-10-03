@@ -37,7 +37,7 @@ use genex_config::types::McpServerTransportConfig;
 use genex_core::config::Config;
 use genex_core::config::ConfigOverrides;
 use genex_core::config::LoaderOverrides;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_features::FEATURES;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
@@ -607,8 +607,8 @@ fn config_overrides_from_interactive(
         sandbox_mode,
         cwd: interactive.cwd.clone(),
         model_provider: None,
-        codex_self_exe: arg0_paths.codex_self_exe.clone(),
-        codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
+        genex_self_exe: arg0_paths.genex_self_exe.clone(),
+        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
         show_raw_agent_reasoning: None,
         additional_writable_roots: interactive.add_dir.clone(),
@@ -1051,7 +1051,7 @@ fn config_check(config: &Config) -> DoctorCheck {
     details
         .push("configuration scope: invocation config, including cloud-managed policy".to_string());
     details.push("active thread overrides: not inspected".to_string());
-    details.push(format!("CODEX_HOME: {}", config.codex_home.display()));
+    details.push(format!("GENEX_HOME: {}", config.genex_home.display()));
     details.push(format!("cwd: {}", config.cwd.display()));
     details.push(format!(
         "model: {}",
@@ -1131,7 +1131,7 @@ fn feature_flag_details(config: &Config, details: &mut Vec<String>) {
 }
 
 fn config_toml_details(config: &Config, details: &mut Vec<String>) {
-    let config_path = config.codex_home.join(genex_config::CONFIG_TOML_FILE);
+    let config_path = config.genex_home.join(genex_config::CONFIG_TOML_FILE);
     details.push(format!("config.toml: {}", config_path.display()));
     match std::fs::read_to_string(&config_path) {
         Ok(contents) => match toml::from_str::<toml::Value>(&contents) {
@@ -1147,7 +1147,7 @@ fn config_toml_details(config: &Config, details: &mut Vec<String>) {
 
 fn auth_check(config: &Config) -> DoctorCheck {
     let mut details = Vec::new();
-    let auth_path = config.codex_home.join("auth.json");
+    let auth_path = config.genex_home.join("auth.json");
     details.push(format!(
         "auth storage mode: {:?}",
         config.cli_auth_credentials_store_mode
@@ -1175,7 +1175,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
     }
 
     match load_auth_dot_json(
-        &config.codex_home,
+        &config.genex_home,
         config.cli_auth_credentials_store_mode,
         config.auth_keyring_backend_kind(),
     ) {
@@ -1977,7 +1977,7 @@ fn terminal_size_issues(inputs: &TerminalCheckInputs) -> Vec<DoctorIssue> {
 
 async fn state_check(config: &Config) -> DoctorCheck {
     let mut details = Vec::new();
-    path_readiness(&mut details, "CODEX_HOME", &config.codex_home);
+    path_readiness(&mut details, "GENEX_HOME", &config.genex_home);
     path_readiness(&mut details, "log dir", &config.log_dir);
     path_readiness(&mut details, "sqlite home", config.sqlite_config().home());
     let mut status = CheckStatus::Ok;
@@ -1994,7 +1994,7 @@ async fn state_check(config: &Config) -> DoctorCheck {
             .await,
         );
     }
-    rollout_stats_details(&mut details, &config.codex_home);
+    rollout_stats_details(&mut details, &config.genex_home);
     standalone_release_cache_details(&mut details);
 
     let summary = match status {
@@ -2048,9 +2048,9 @@ async fn sqlite_integrity_detail(
     }
 }
 
-fn rollout_stats_details(details: &mut Vec<String>, codex_home: &Path) {
-    let active = collect_rollout_stats(&codex_home.join("sessions"));
-    let archived = collect_rollout_stats(&codex_home.join("archived_sessions"));
+fn rollout_stats_details(details: &mut Vec<String>, genex_home: &Path) {
+    let active = collect_rollout_stats(&genex_home.join("sessions"));
+    let archived = collect_rollout_stats(&genex_home.join("archived_sessions"));
     push_rollout_stats_detail(details, "active rollout files", active);
     push_rollout_stats_detail(details, "archived rollout files", archived);
 }
@@ -2329,20 +2329,20 @@ async fn dns_address_family_details(host: &str, port: u16) -> Vec<String> {
 }
 
 fn fallback_state_check() -> DoctorCheck {
-    let codex_home = find_codex_home();
-    match codex_home {
+    let genex_home = find_genex_home();
+    match genex_home {
         Ok(path) => DoctorCheck::new(
             "state.paths",
             "state",
             CheckStatus::Ok,
-            "CODEX_HOME was resolved without config",
+            "GENEX_HOME was resolved without config",
         )
-        .detail(format!("CODEX_HOME: {}", path.display())),
+        .detail(format!("GENEX_HOME: {}", path.display())),
         Err(err) => DoctorCheck::new(
             "state.paths",
             "state",
             CheckStatus::Warning,
-            "CODEX_HOME could not be resolved",
+            "GENEX_HOME could not be resolved",
         )
         .detail(err.to_string()),
     }
@@ -2386,7 +2386,7 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
             .collect::<HashMap<_, _>>()
     });
     let stored_auth = load_auth_dot_json(
-        &config.codex_home,
+        &config.genex_home,
         config.cli_auth_credentials_store_mode,
         config.auth_keyring_backend_kind(),
     )

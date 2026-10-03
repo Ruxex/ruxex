@@ -18,7 +18,7 @@ pub(crate) struct LocalSettings {
     pub(crate) tui: Tui,
     pub(crate) history: History,
     pub(crate) notices: Notice,
-    pub(crate) codex_home: AbsolutePathBuf,
+    pub(crate) genex_home: AbsolutePathBuf,
     pub(crate) user_config_path: AbsolutePathBuf,
 }
 
@@ -82,12 +82,12 @@ impl LocalSettings {
             },
             history: config.history.clone(),
             notices: config.notices.clone(),
-            codex_home: config.codex_home.clone(),
+            genex_home: config.genex_home.clone(),
             user_config_path: config
                 .config_layer_stack
                 .get_user_config_file()
                 .cloned()
-                .unwrap_or_else(|| config.codex_home.join("config.toml")),
+                .unwrap_or_else(|| config.genex_home.join("config.toml")),
         }
     }
 }

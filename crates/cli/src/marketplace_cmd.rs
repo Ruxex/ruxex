@@ -261,7 +261,7 @@ async fn run_add(config: Config, args: AddMarketplaceArgs) -> Result<()> {
     } = args;
 
     let outcome = add_marketplace(
-        config.codex_home.to_path_buf(),
+        config.genex_home.to_path_buf(),
         config.config_layer_stack.requirements().clone(),
         MarketplaceAddRequest {
             source,
@@ -321,7 +321,7 @@ async fn run_list(config: Config, args: ListMarketplaceArgs) -> Result<()> {
         .discover_marketplaces_for_config(&plugins_input, &[])
         .context("failed to list plugin marketplaces")?;
     let mut load_issues = configured_marketplace_snapshot_issues(
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         &plugins_input,
         &marketplace_listing.errors,
         /*marketplace_name*/ None,
@@ -357,7 +357,7 @@ async fn run_list(config: Config, args: ListMarketplaceArgs) -> Result<()> {
     let marketplaces = marketplace_listing.marketplaces;
     if args.json {
         let marketplace_sources =
-            configured_marketplace_sources_by_root(config.codex_home.as_path(), &plugins_input);
+            configured_marketplace_sources_by_root(config.genex_home.as_path(), &plugins_input);
         let output =
             JsonMarketplaceListOutput::from_marketplaces(marketplaces, &marketplace_sources);
         println!("{}", serde_json::to_string_pretty(&output)?);
@@ -441,10 +441,10 @@ struct JsonMarketplaceListEntry {
 }
 
 fn configured_marketplace_sources_by_root(
-    codex_home: &Path,
+    genex_home: &Path,
     plugins_input: &PluginsConfigInput,
 ) -> HashMap<PathBuf, JsonMarketplaceSource> {
-    let marketplace_sources = configured_marketplace_sources(plugins_input, codex_home);
+    let marketplace_sources = configured_marketplace_sources(plugins_input, genex_home);
     let effective_config = plugins_input.config_layer_stack.effective_config();
     let Some(marketplaces) = effective_config
         .get("marketplaces")
@@ -453,7 +453,7 @@ fn configured_marketplace_sources_by_root(
         return HashMap::new();
     };
 
-    let default_install_root = marketplace_install_root(codex_home);
+    let default_install_root = marketplace_install_root(genex_home);
     marketplaces
         .iter()
         .filter_map(|(marketplace_name, marketplace)| {
@@ -508,7 +508,7 @@ async fn run_remove(config: Config, args: RemoveMarketplaceArgs) -> Result<()> {
         json,
     } = args;
     let outcome = remove_marketplace(
-        config.codex_home.to_path_buf(),
+        config.genex_home.to_path_buf(),
         config.config_layer_stack,
         MarketplaceRemoveRequest { marketplace_name },
     )

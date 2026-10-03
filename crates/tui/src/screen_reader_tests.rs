@@ -109,7 +109,7 @@ async fn temporary_cli_override_does_not_suppress_the_saved_default() -> anyhow:
 
     let home = tempfile::tempdir()?;
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .cli_overrides(vec![("tui.animations".into(), toml::Value::Boolean(true))])
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
         .build()
@@ -131,7 +131,7 @@ async fn detected_preference_survives_failed_persistence() -> anyhow::Result<()>
 
     let home = tempfile::tempdir()?;
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
         .build()
         .await?;

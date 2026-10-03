@@ -67,8 +67,8 @@ pub fn auth_manager_from_auth(auth: GenexAuth) -> Arc<AuthManager> {
     AuthManager::from_auth_for_testing(auth)
 }
 
-pub fn auth_manager_from_auth_with_home(auth: GenexAuth, codex_home: PathBuf) -> Arc<AuthManager> {
-    AuthManager::from_auth_for_testing_with_home(auth, codex_home)
+pub fn auth_manager_from_auth_with_home(auth: GenexAuth, genex_home: PathBuf) -> Arc<AuthManager> {
+    AuthManager::from_auth_for_testing_with_home(auth, genex_home)
 }
 
 pub fn with_code_mode_host_program(
@@ -121,12 +121,12 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
 }
 
 pub fn models_manager_with_provider(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     auth_manager: Arc<AuthManager>,
     provider: ModelProviderInfo,
 ) -> SharedModelsManager {
     let provider = create_model_provider(provider, Some(auth_manager));
-    provider.models_manager(codex_home, /*config_model_catalog*/ None)
+    provider.models_manager(genex_home, /*config_model_catalog*/ None)
 }
 
 pub fn default_http_client_factory() -> HttpClientFactory {

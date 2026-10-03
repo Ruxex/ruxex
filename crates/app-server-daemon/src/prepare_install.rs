@@ -94,7 +94,7 @@ async fn prepare_from_package(
         .settings_file
         .parent()
         .and_then(Path::parent)
-        .context("daemon settings path has no Codex home")?;
+        .context("daemon settings path has no Genex home")?;
     let previous_root = managed_install::package_root(home);
     let root = home.join("packages/app-server-daemon");
     anyhow::ensure!(
@@ -148,7 +148,7 @@ async fn prepare_from_package(
     )?;
     anyhow::ensure!(
         !root.canonicalize()?.starts_with(source.canonicalize()?),
-        "CODEX_HOME must be outside the source CLI package"
+        "GENEX_HOME must be outside the source CLI package"
     );
     let manifest_bytes = std::fs::read(source.join("genex-package.json"))?;
     let manifest: GenexPackageManifest = serde_json::from_slice(&manifest_bytes)?;

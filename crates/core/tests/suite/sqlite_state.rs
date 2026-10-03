@@ -406,8 +406,8 @@ async fn backfill_scans_existing_rollouts() -> Result<()> {
     let rollout_rel_path_for_hook = rollout_rel_path.clone();
 
     let mut builder = test_genex()
-        .with_pre_build_hook(move |codex_home| {
-            let rollout_path = codex_home.join(&rollout_rel_path_for_hook);
+        .with_pre_build_hook(move |genex_home| {
+            let rollout_path = genex_home.join(&rollout_rel_path_for_hook);
             let parent = rollout_path
                 .parent()
                 .expect("rollout path should have parent");
@@ -420,7 +420,7 @@ async fn backfill_scans_existing_rollouts() -> Result<()> {
                     forked_from_ordinal_exclusive: None,
                     parent_thread_id: None,
                     timestamp: "2026-01-27T12:00:00Z".to_string(),
-                    cwd: codex_home.to_path_buf(),
+                    cwd: genex_home.to_path_buf(),
                     runtime_workspace_roots: None,
                     originator: "test".to_string(),
                     cli_version: "test".to_string(),
@@ -479,7 +479,7 @@ async fn backfill_scans_existing_rollouts() -> Result<()> {
     let test = builder.build(&server).await?;
 
     let db_path = test.config.sqlite.state_db_path();
-    let rollout_path = test.config.codex_home.join(&rollout_rel_path);
+    let rollout_path = test.config.genex_home.join(&rollout_rel_path);
     let default_provider = test.config.model_provider_id.clone();
 
     for _ in 0..20 {

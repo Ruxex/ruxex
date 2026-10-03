@@ -366,7 +366,7 @@ fn managed_mitm_ca_bundle_becomes_readable_for_restricted_sandbox() {
 
 #[cfg(target_os = "linux")]
 fn transform_linux_seccomp_request(
-    codex_linux_sandbox_exe: &std::path::Path,
+    genex_linux_sandbox_exe: &std::path::Path,
 ) -> super::SandboxExecRequest {
     let manager = SandboxManager::new();
     let cwd = AbsolutePathBuf::current_dir().expect("current dir");
@@ -388,7 +388,7 @@ fn transform_linux_seccomp_request(
             environment_id: None,
             network: None,
             sandbox_policy_cwd: &cwd_uri,
-            sandbox_exe: Some(codex_linux_sandbox_exe),
+            sandbox_exe: Some(genex_linux_sandbox_exe),
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
@@ -470,20 +470,20 @@ fn wsl1_allows_non_bubblewrap_linux_paths() {
 #[cfg(target_os = "linux")]
 #[test]
 fn transform_linux_seccomp_preserves_helper_path_in_arg0_when_available() {
-    let codex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/codex-linux-sandbox");
-    let exec_request = transform_linux_seccomp_request(&codex_linux_sandbox_exe);
+    let genex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/codex-linux-sandbox");
+    let exec_request = transform_linux_seccomp_request(&genex_linux_sandbox_exe);
 
     assert_eq!(
         exec_request.arg0,
-        Some(codex_linux_sandbox_exe.to_string_lossy().into_owned())
+        Some(genex_linux_sandbox_exe.to_string_lossy().into_owned())
     );
 }
 
 #[cfg(target_os = "linux")]
 #[test]
 fn transform_linux_seccomp_uses_helper_alias_when_launcher_is_not_helper_path() {
-    let codex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/codex");
-    let exec_request = transform_linux_seccomp_request(&codex_linux_sandbox_exe);
+    let genex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/codex");
+    let exec_request = transform_linux_seccomp_request(&genex_linux_sandbox_exe);
 
     assert_eq!(exec_request.arg0, Some("codex-linux-sandbox".to_string()));
 }
@@ -654,7 +654,7 @@ fn transform_for_direct_spawn_windows_preserves_only_wrapper_setup_environment()
 #[cfg(target_os = "windows")]
 #[test]
 fn transform_for_direct_spawn_windows_materializes_inner_helper() {
-    let codex_home = tempfile::TempDir::new().expect("codex home");
+    let genex_home = tempfile::TempDir::new().expect("genex home");
     let helper_dir = tempfile::TempDir::new().expect("helper dir");
     let configured_helper = helper_dir.path().join("configured-codex-helper.exe");
     std::fs::write(&configured_helper, b"helper").expect("write configured helper");
@@ -692,7 +692,7 @@ fn transform_for_direct_spawn_windows_materializes_inner_helper() {
     let workspace_roots = vec![cwd, other_workspace_root];
     let manager = SandboxManager::new();
     let exec_request = manager
-        .transform_for_direct_spawn_with_codex_home(
+        .transform_for_direct_spawn_with_genex_home(
             SandboxDirectSpawnTransformRequest {
                 workspace_roots: workspace_roots.as_slice(),
                 windows_sandbox_proxy_settings_mode:
@@ -721,7 +721,7 @@ fn transform_for_direct_spawn_windows_materializes_inner_helper() {
                     windows_sandbox_private_desktop: false,
                 },
             },
-            codex_home.path(),
+            genex_home.path(),
         )
         .expect("transform for direct spawn");
 

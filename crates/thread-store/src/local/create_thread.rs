@@ -20,7 +20,7 @@ pub(super) async fn create_thread(
             message: "local thread store requires a cwd".to_string(),
         })?;
     let config = RolloutConfig {
-        codex_home: store.config.codex_home.clone(),
+        genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd,
         model_provider_id: params.metadata.model_provider.clone(),

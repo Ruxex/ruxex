@@ -89,22 +89,22 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
     ]);
     let requests = responses::mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut config = compaction_config(&server.uri(), /*auto_compact_limit*/ 200_000);
     if let CompactionRoute::Remote = route {
         config = config
             .with_provider_name("provider")
             .with_provider_config("requires_auth = true");
         write_api_key_auth(
-            codex_home.path(),
+            genex_home.path(),
             ApiKeyAuthFixture::new("test-token").plan_type("pro"),
             AuthCredentialsStoreMode::File,
         )?;
     }
-    config.write(codex_home.path())?;
+    config.write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -179,16 +179,16 @@ async fn thread_compact_start_triggers_compaction_and_returns_empty_response() -
     ]);
     let _responses = responses::mount_sse_sequence(&server, vec![seed, sse, followup]).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let initial_cwd = TempDir::new()?;
     let updated_cwd = TempDir::new()?;
     let extra_root = TempDir::new()?;
     let updated_roots = vec![updated_cwd.path().abs(), extra_root.path().abs()];
-    compaction_config(&server.uri(), /*auto_compact_limit*/ 1_000_000).write(codex_home.path())?;
+    compaction_config(&server.uri(), /*auto_compact_limit*/ 1_000_000).write(genex_home.path())?;
 
     // Top-level cwd restoration uses host-native paths, not a foreign executor's paths.
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -276,7 +276,7 @@ async fn thread_compact_start_triggers_compaction_and_returns_empty_response() -
     timeout(DEFAULT_READ_TIMEOUT, mcp.shutdown_gracefully()).await??;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -305,11 +305,11 @@ async fn thread_compact_start_rejects_invalid_thread_id() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let codex_home = TempDir::new()?;
-    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -335,11 +335,11 @@ async fn thread_compact_start_rejects_unknown_thread_id() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let codex_home = TempDir::new()?;
-    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

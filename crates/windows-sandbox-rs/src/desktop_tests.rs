@@ -98,7 +98,7 @@ fn shared_desktop_reuses_only_equivalent_permissions() -> Result<()> {
     for path in [&workspace, &readable, &writable] {
         std::fs::create_dir(path)?;
     }
-    let codex_home = temp.path().join("codex-home");
+    let genex_home = temp.path().join("genex-home");
     let permissions = workspace_permissions(&workspace)?;
     let env = HashMap::new();
     let account = current_account_name()?;
@@ -115,7 +115,7 @@ fn shared_desktop_reuses_only_equivalent_permissions() -> Result<()> {
                 permissions: &permissions,
                 command_cwd: &workspace,
                 env_map: &env,
-                codex_home: &codex_home,
+                genex_home: &genex_home,
                 proxy_enforced: true,
             },
             overrides,
@@ -186,14 +186,14 @@ fn legacy_desktop_reuses_only_equivalent_permissions() -> Result<()> {
     let temp = TempDir::new()?;
     let workspace = temp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
-    let codex_home = temp.path().join("codex-home");
+    let genex_home = temp.path().join("genex-home");
     let permissions = workspace_permissions(&workspace)?;
     let env = HashMap::new();
     let security = prepare_legacy_session_security(
         /*uses_write_capabilities*/ true,
-        &codex_home,
+        &genex_home,
         &workspace,
-        legacy_session_capability_roots(&permissions, &workspace, &env, &codex_home),
+        legacy_session_capability_roots(&permissions, &workspace, &env, &genex_home),
     )?;
     let _token = unsafe { OwnedHandle::from_raw_handle(security.h_token as *mut _) };
     let desktop = |deny_write_paths| {

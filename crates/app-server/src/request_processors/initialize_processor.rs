@@ -112,7 +112,7 @@ impl InitializeRequestProcessor {
         let originator = name.clone();
         let user_agent_suffix = format!("{name}; {version}");
         let mutates_global_identity = !NON_ORIGINATING_CLIENT_NAMES.contains(&name.as_str());
-        let codex_home = self.config.codex_home.clone();
+        let genex_home = self.config.genex_home.clone();
         if session
             .initialize(InitializedConnectionSessionState {
                 experimental_api_enabled,
@@ -159,7 +159,7 @@ impl InitializeRequestProcessor {
         let user_agent = get_codex_user_agent();
         let response = InitializeResponse {
             user_agent,
-            genex_home: codex_home,
+            genex_home: genex_home,
             platform_family: std::env::consts::FAMILY.to_string(),
             platform_os: std::env::consts::OS.to_string(),
         };

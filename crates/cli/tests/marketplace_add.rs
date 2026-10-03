@@ -8,9 +8,9 @@ use serde_json::json;
 use std::path::Path;
 use tempfile::TempDir;
 
-fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
-    cmd.env("CODEX_HOME", codex_home);
+    cmd.env("GENEX_HOME", genex_home);
     Ok(cmd)
 }
 
@@ -42,22 +42,22 @@ fn write_marketplace_source(source: &Path, marker: &str) -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_add_local_directory_source() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
     write_marketplace_source(source.path(), "local ref")?;
     let source_parent = source.path().parent().unwrap();
     let source_arg = format!("./{}", source.path().file_name().unwrap().to_string_lossy());
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .current_dir(source_parent)
         .args(["plugin", "marketplace", "add", source_arg.as_str()])
         .assert()
         .success();
 
-    let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+    let installed_root = marketplace_install_root(genex_home.path()).join("debug");
     assert!(!installed_root.exists());
 
-    let config = std::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE))?;
+    let config = std::fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE))?;
     let config: toml::Value = toml::from_str(&config)?;
     let expected_source = source.path().canonicalize()?.display().to_string();
     assert_eq!(
@@ -74,13 +74,13 @@ async fn marketplace_add_local_directory_source() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_add_json_prints_add_outcome() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
     write_marketplace_source(source.path(), "local ref")?;
     let source_parent = source.path().parent().unwrap();
     let source_arg = format!("./{}", source.path().file_name().unwrap().to_string_lossy());
 
-    let assert = genex_command(codex_home.path())?
+    let assert = genex_command(genex_home.path())?
         .current_dir(source_parent)
         .args([
             "plugin",
@@ -109,12 +109,12 @@ async fn marketplace_add_json_prints_add_outcome() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_add_rejects_local_manifest_file_source() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
     write_marketplace_source(source.path(), "local ref")?;
     let manifest_path = source.path().join(".agents/plugins/marketplace.json");
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args([
             "plugin",
             "marketplace",
@@ -132,11 +132,11 @@ async fn marketplace_add_rejects_local_manifest_file_source() -> Result<()> {
 
 #[tokio::test]
 async fn marketplace_add_rejects_sparse_for_local_directory_source() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let source = TempDir::new()?;
     write_marketplace_source(source.path(), "local ref")?;
 
-    genex_command(codex_home.path())?
+    genex_command(genex_home.path())?
         .args([
             "plugin",
             "marketplace",

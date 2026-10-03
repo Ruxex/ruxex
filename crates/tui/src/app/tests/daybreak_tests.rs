@@ -18,7 +18,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
     app.config.managed_auth_base_url = backend.uri();
     app.config.cli_auth_credentials_store_mode = AuthCredentialsStoreMode::File;
     write_api_key_auth(
-        &app.config.codex_home,
+        &app.config.genex_home,
         ApiKeyAuthFixture::new("test-token")
             .account_id("account")
             .user_id("user"),
@@ -43,7 +43,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
         (200, false, "gpt-5.6-sol", true, Notice::Limited),
     ] {
         backend.reset().await;
-        let codex_home = app.config.codex_home.clone();
+        let genex_home = app.config.genex_home.clone();
         let response = wiremock::ResponseTemplate::new(status)
             .set_delay(if model == "gpt-5.6-sol" && enrolled { Duration::from_secs(1) } else { Duration::ZERO })
             .set_body_json(json!({"programs": [{"program":"cyber", "state": if enrolled { "active" } else { "inactive" }, "grants": if enrolled { json!([{"level":"tac2"}]) } else { json!([]) }}]}));
@@ -55,7 +55,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
             .respond_with(move |_: &wiremock::Request| {
                 if replace_account {
                     write_api_key_auth(
-                        &codex_home,
+                        &genex_home,
                         ApiKeyAuthFixture::new("test-token").account_id("other-account"),
                         AuthCredentialsStoreMode::File,
                     )

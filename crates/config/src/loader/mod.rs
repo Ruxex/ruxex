@@ -102,11 +102,11 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// - admin:    managed preferences (*)
 /// - system    `/etc/codex/config.toml` (Unix) or
 ///   `%ProgramData%\provider\Codex\config.toml` (Windows)
-/// - user      `${CODEX_HOME}/config.toml`
-/// - profile   `${CODEX_HOME}/<name>.config.toml`, when selected
+/// - user      `${GENEX_HOME}/config.toml`
+/// - profile   `${GENEX_HOME}/<name>.config.toml`, when selected
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
-/// - tree      parent directories up to root looking for `./.codex/config.toml` (loaded but disabled when untrusted)
-/// - repo      `$(git rev-parse --show-toplevel)/.codex/config.toml` (loaded but disabled when untrusted)
+/// - tree      parent directories up to root looking for `./.genex/config.toml` (loaded but disabled when untrusted)
+/// - repo      `$(git rev-parse --show-toplevel)/.genex/config.toml` (loaded but disabled when untrusted)
 /// - runtime   e.g., --config flags, model selector in UI
 ///
 /// (*) Only available on macOS via managed device profiles.
@@ -120,7 +120,7 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 #[allow(clippy::too_many_arguments)]
 pub async fn load_config_layers_state(
     fs: &dyn ExecutorFileSystem,
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: Option<AbsolutePathBuf>,
     cli_overrides: &[(String, TomlValue)],
     options: impl Into<ConfigLoadOptions>,
@@ -170,7 +170,7 @@ pub async fn load_config_layers_state(
             ConfigLayerSource::PackagedDefaults { file },
             config,
             raw_toml.to_owned(),
-            AbsolutePathBuf::from_absolute_path(codex_home)?,
+            AbsolutePathBuf::from_absolute_path(genex_home)?,
         )
     };
     let active_user_profile = overrides.user_config_profile.clone();
@@ -181,7 +181,7 @@ pub async fn load_config_layers_state(
     let (config_requirements_toml, loaded_config_layers, requirements_layers) =
         managed_requirements::load_requirements_from_sources(
             fs,
-            codex_home,
+            genex_home,
             &overrides,
             strict_config,
         )
@@ -207,7 +207,7 @@ pub async fn load_config_layers_state(
         let base_dir = cwd
             .as_ref()
             .map(AbsolutePathBuf::as_path)
-            .unwrap_or(codex_home);
+            .unwrap_or(genex_home);
         if strict_config {
             validate_cli_overrides_strictly(&cli_overrides_layer, base_dir)?;
         }
@@ -239,8 +239,8 @@ pub async fn load_config_layers_state(
     // Add the base user config layer. When profile-v2 is selected, add the
     // profile config as a second user layer on top so the profile only needs to
     // contain overrides.
-    let active_user_file = overrides.user_config_path(codex_home)?;
-    let base_user_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, codex_home);
+    let active_user_file = overrides.user_config_path(genex_home)?;
+    let base_user_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, genex_home);
     let base_user_layer = load_user_config_layer(
         fs,
         &base_user_file,
@@ -304,7 +304,7 @@ pub async fn load_config_layers_state(
         project_discovery::merge_managed_config_for_discovery(
             &mut merged_so_far,
             &loaded_config_layers,
-            codex_home,
+            genex_home,
         )?;
 
         let project_root_markers = match project_root_markers_from_config(&merged_so_far) {
@@ -326,7 +326,7 @@ pub async fn load_config_layers_state(
             &trusted_broker_config,
             &cwd,
             &project_root_markers,
-            codex_home,
+            genex_home,
             &active_user_file,
         )
         .await
@@ -353,7 +353,7 @@ pub async fn load_config_layers_state(
             &cwd,
             &project_trust_context.project_root,
             &project_trust_context,
-            codex_home,
+            genex_home,
             strict_config,
         )
         .await?;
@@ -384,7 +384,7 @@ pub async fn load_config_layers_state(
         // relies on AbsolutePathBufGuard to resolve `~/`, we must supply a
         // value for base_dir. Preserve that same base on the layer so later
         // raw-TOML diagnostics parse with the same path semantics.
-        let raw_toml_base_dir = AbsolutePathBuf::from_absolute_path(codex_home)?;
+        let raw_toml_base_dir = AbsolutePathBuf::from_absolute_path(genex_home)?;
         let managed_config = resolve_relative_paths_in_config_toml(
             config.managed_config,
             raw_toml_base_dir.as_path(),
@@ -671,20 +671,20 @@ fn system_requirements_toml_file_with_overrides(
 ///
 /// Filesystem or managed-preference errors are returned so callers can conservatively avoid
 /// assuming that administrator-controlled configuration is absent.
-pub fn has_local_managed_configuration(codex_home: &Path) -> io::Result<bool> {
+pub fn has_local_managed_configuration(genex_home: &Path) -> io::Result<bool> {
     let system_requirements_file = system_requirements_toml_file()?;
     has_local_managed_configuration_with_system_requirements_path(
-        codex_home,
+        genex_home,
         system_requirements_file.as_path(),
     )
 }
 
 fn has_local_managed_configuration_with_system_requirements_path(
-    _codex_home: &Path,
+    _genex_home: &Path,
     system_requirements_path: &Path,
 ) -> io::Result<bool> {
     #[cfg(windows)]
-    let _ = codex_home;
+    let _ = genex_home;
 
     #[cfg(not(windows))]
     if system_requirements_path.try_exists()? {
@@ -928,7 +928,7 @@ impl ProjectTrustContext {
         }
 
         let relative_dir = dir.as_path().strip_prefix(checkout_root.as_path()).ok()?;
-        Some(repo_root.join(relative_dir).join(".codex"))
+        Some(repo_root.join(relative_dir).join(".genex"))
     }
 }
 
@@ -1392,7 +1392,7 @@ async fn load_project_layers(
     cwd: &AbsolutePathBuf,
     project_root: &AbsolutePathBuf,
     trust_context: &ProjectTrustContext,
-    codex_home: &Path,
+    genex_home: &Path,
     strict_config: bool,
 ) -> io::Result<LoadedProjectLayers> {
     let discovered = discover_project_layers(
@@ -1400,7 +1400,7 @@ async fn load_project_layers(
         cwd,
         project_root,
         trust_context,
-        codex_home,
+        genex_home,
         strict_config,
     )
     .await?;
@@ -1438,12 +1438,12 @@ async fn discover_project_layers(
     cwd: &AbsolutePathBuf,
     project_root: &AbsolutePathBuf,
     trust_context: &ProjectTrustContext,
-    codex_home: &Path,
+    genex_home: &Path,
     strict_config: bool,
 ) -> io::Result<DiscoveredProjectLayers> {
-    let codex_home_abs = AbsolutePathBuf::from_absolute_path(codex_home)?;
-    let codex_home_normalized =
-        normalize_path(codex_home_abs.as_path()).unwrap_or_else(|_| codex_home_abs.to_path_buf());
+    let genex_home_abs = AbsolutePathBuf::from_absolute_path(genex_home)?;
+    let genex_home_normalized =
+        normalize_path(genex_home_abs.as_path()).unwrap_or_else(|_| genex_home_abs.to_path_buf());
     let mut dirs = cwd
         .ancestors()
         .scan(false, |done, a| {
@@ -1462,7 +1462,7 @@ async fn discover_project_layers(
     let mut layers = Vec::new();
     let mut startup_warnings = Vec::new();
     for dir in dirs {
-        let dot_codex_abs = dir.join(".codex");
+        let dot_codex_abs = dir.join(".genex");
         let dot_codex_uri = PathUri::from_abs_path(&dot_codex_abs);
         if !fs
             .get_metadata(&dot_codex_uri, Default::default(), /*sandbox*/ None)
@@ -1478,7 +1478,7 @@ async fn discover_project_layers(
         let hooks_config_folder_override = trust_context.root_checkout_hooks_folder_for_dir(&dir);
         let dot_codex_normalized =
             normalize_path(dot_codex_abs.as_path()).unwrap_or_else(|_| dot_codex_abs.to_path_buf());
-        if dot_codex_abs == codex_home_abs || dot_codex_normalized == codex_home_normalized {
+        if dot_codex_abs == genex_home_abs || dot_codex_normalized == genex_home_normalized {
             continue;
         }
         let config_file = dot_codex_abs.join(CONFIG_TOML_FILE);

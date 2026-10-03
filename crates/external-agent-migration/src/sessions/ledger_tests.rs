@@ -29,7 +29,7 @@ fn empty_ledger_does_not_read_source() {
 #[test]
 fn completed_imports_do_not_read_source_files() {
     let root = TempDir::new().expect("tempdir");
-    let codex_home = root.path().join("codex-home");
+    let genex_home = root.path().join("genex-home");
     let source_path = root.path().join("session.jsonl");
     let contents = b"session contents";
     std::fs::write(&source_path, contents).expect("source");
@@ -38,7 +38,7 @@ fn completed_imports_do_not_read_source_files() {
     let imported_thread_id = ThreadId::new();
 
     record_completed_session_imports(
-        &codex_home,
+        &genex_home,
         vec![CompletedExternalAgentSessionImport {
             source_path: source_path.clone(),
             source_content_sha256: format!("{:x}", Sha256::digest(contents)),
@@ -49,7 +49,7 @@ fn completed_imports_do_not_read_source_files() {
     )
     .expect("record completed imports");
 
-    let ledger = super::load_import_ledger(&codex_home).expect("ledger");
+    let ledger = super::load_import_ledger(&genex_home).expect("ledger");
     assert_eq!(ledger.records.len(), 1);
     assert_eq!(ledger.records[0].source_path, source_path);
     assert_eq!(ledger.records[0].imported_thread_id, imported_thread_id);
@@ -60,7 +60,7 @@ fn completed_imports_do_not_read_source_files() {
 #[test]
 fn completed_import_refreshes_existing_record_metadata() {
     let root = TempDir::new().expect("tempdir");
-    let codex_home = root.path().join("codex-home");
+    let genex_home = root.path().join("genex-home");
     let source_path = root.path().join("session.jsonl");
     let contents = b"session contents";
     std::fs::write(&source_path, contents).expect("source");
@@ -70,7 +70,7 @@ fn completed_import_refreshes_existing_record_metadata() {
     let second_thread_id = ThreadId::new();
 
     record_completed_session_imports(
-        &codex_home,
+        &genex_home,
         vec![CompletedExternalAgentSessionImport {
             source_path: source_path.clone(),
             source_content_sha256: content_sha256.clone(),
@@ -81,7 +81,7 @@ fn completed_import_refreshes_existing_record_metadata() {
     )
     .expect("record first import");
     record_completed_session_imports(
-        &codex_home,
+        &genex_home,
         vec![CompletedExternalAgentSessionImport {
             source_path: source_path.clone(),
             source_content_sha256: content_sha256,
@@ -92,7 +92,7 @@ fn completed_import_refreshes_existing_record_metadata() {
     )
     .expect("record replacement import");
 
-    let ledger = super::load_import_ledger(&codex_home).expect("ledger");
+    let ledger = super::load_import_ledger(&genex_home).expect("ledger");
     assert_eq!(ledger.records.len(), 1);
     assert_eq!(ledger.records[0].source_path, source_path);
     assert_eq!(ledger.records[0].imported_thread_id, second_thread_id);
@@ -104,7 +104,7 @@ fn completed_import_refreshes_existing_record_metadata() {
 #[test]
 fn checkpoint_is_compare_and_swap_and_preserves_record_metadata() {
     let root = TempDir::new().expect("tempdir");
-    let codex_home = root.path().join("codex-home");
+    let genex_home = root.path().join("genex-home");
     let source_path = root.path().join("session.jsonl");
     std::fs::write(&source_path, "old").expect("initial source");
     let source_path = std::fs::canonicalize(source_path).expect("canonical source");
@@ -112,7 +112,7 @@ fn checkpoint_is_compare_and_swap_and_preserves_record_metadata() {
     let old_hash = format!("{:x}", Sha256::digest("old"));
     let new_hash = format!("{:x}", Sha256::digest("new"));
     record_completed_session_imports(
-        &codex_home,
+        &genex_home,
         vec![CompletedExternalAgentSessionImport {
             source_path: source_path.clone(),
             source_content_sha256: old_hash.clone(),
@@ -123,7 +123,7 @@ fn checkpoint_is_compare_and_swap_and_preserves_record_metadata() {
     )
     .expect("record initial import");
     std::fs::write(&source_path, "new").expect("updated source");
-    let ledger_before = ledger_bytes(&codex_home);
+    let ledger_before = ledger_bytes(&genex_home);
     for (candidate_thread_id, expected_hash, candidate_hash) in [
         (ThreadId::new(), old_hash.as_str(), new_hash.as_str()),
         (thread_id, "stale", new_hash.as_str()),
@@ -131,7 +131,7 @@ fn checkpoint_is_compare_and_swap_and_preserves_record_metadata() {
     ] {
         assert!(
             !checkpoint_existing_session_import(
-                &codex_home,
+                &genex_home,
                 &source_path,
                 candidate_thread_id,
                 expected_hash,
@@ -140,11 +140,11 @@ fn checkpoint_is_compare_and_swap_and_preserves_record_metadata() {
             .expect("rejected checkpoint")
         );
     }
-    assert_eq!(ledger_bytes(&codex_home), ledger_before);
+    assert_eq!(ledger_bytes(&genex_home), ledger_before);
 
     assert!(
         checkpoint_existing_session_import(
-            &codex_home,
+            &genex_home,
             &source_path,
             thread_id,
             &old_hash,
@@ -152,7 +152,7 @@ fn checkpoint_is_compare_and_swap_and_preserves_record_metadata() {
         )
         .expect("checkpoint")
     );
-    let ledger = super::load_import_ledger(&codex_home).expect("updated ledger");
+    let ledger = super::load_import_ledger(&genex_home).expect("updated ledger");
     let [record] = ledger.records.as_slice() else {
         panic!("checkpoint must preserve one record");
     };
@@ -173,12 +173,12 @@ fn checkpoint_is_compare_and_swap_and_preserves_record_metadata() {
 #[test]
 fn connector_candidates_accumulate_imports_for_each_source() {
     let root = TempDir::new().expect("tempdir");
-    let codex_home = root.path().join("codex-home");
+    let genex_home = root.path().join("genex-home");
     let first_source = root.path().join("first.jsonl");
     let second_source = root.path().join("second.jsonl");
 
     record_completed_session_imports(
-        &codex_home,
+        &genex_home,
         vec![
             CompletedExternalAgentSessionImport {
                 source_path: first_source.clone(),
@@ -206,7 +206,7 @@ fn connector_candidates_accumulate_imports_for_each_source() {
     .expect("record imports");
 
     assert_eq!(
-        read_imported_connector_candidates(&codex_home).expect("read connector candidates"),
+        read_imported_connector_candidates(&genex_home).expect("read connector candidates"),
         vec![
             ImportedConnectorCandidate {
                 name: "Gmail".to_string(),
@@ -223,18 +223,18 @@ fn connector_candidates_accumulate_imports_for_each_source() {
 #[test]
 fn connector_candidates_accumulate_detected_and_imported_session_clues() {
     let root = TempDir::new().expect("tempdir");
-    let codex_home = root.path().join("codex-home");
+    let genex_home = root.path().join("genex-home");
     let source_path = root.path().join("session.jsonl");
     std::fs::write(&source_path, "session contents").expect("source");
     let source_path = std::fs::canonicalize(source_path).expect("canonical source");
 
     record_detected_session_connectors(
-        &codex_home,
+        &genex_home,
         BTreeMap::from([(source_path.clone(), vec!["Figma".to_string()])]),
     )
     .expect("record detected connectors");
     assert_eq!(
-        read_imported_connector_candidates(&codex_home).expect("read detected connectors"),
+        read_imported_connector_candidates(&genex_home).expect("read detected connectors"),
         vec![ImportedConnectorCandidate {
             name: "Figma".to_string(),
             session_count: 1,
@@ -242,7 +242,7 @@ fn connector_candidates_accumulate_detected_and_imported_session_clues() {
     );
 
     record_completed_session_imports(
-        &codex_home,
+        &genex_home,
         vec![CompletedExternalAgentSessionImport {
             source_path: source_path.clone(),
             source_content_sha256: "content-sha".to_string(),
@@ -253,7 +253,7 @@ fn connector_candidates_accumulate_detected_and_imported_session_clues() {
     )
     .expect("record completed import");
     assert_eq!(
-        read_imported_connector_candidates(&codex_home).expect("read imported connectors"),
+        read_imported_connector_candidates(&genex_home).expect("read imported connectors"),
         vec![
             ImportedConnectorCandidate {
                 name: "Figma".to_string(),
@@ -267,12 +267,12 @@ fn connector_candidates_accumulate_detected_and_imported_session_clues() {
     );
 
     append_imported_session_connector_names(
-        &codex_home,
+        &genex_home,
         BTreeMap::from([(source_path, vec!["Gmail".to_string(), "FIGMA".to_string()])]),
     )
     .expect("append imported connector names");
     assert_eq!(
-        read_imported_connector_candidates(&codex_home).expect("read appended connectors"),
+        read_imported_connector_candidates(&genex_home).expect("read appended connectors"),
         vec![
             ImportedConnectorCandidate {
                 name: "Figma".to_string(),
@@ -290,6 +290,6 @@ fn connector_candidates_accumulate_detected_and_imported_session_clues() {
     );
 }
 
-fn ledger_bytes(codex_home: &Path) -> Vec<u8> {
-    std::fs::read(super::import_ledger_path(codex_home)).expect("ledger")
+fn ledger_bytes(genex_home: &Path) -> Vec<u8> {
+    std::fs::read(super::import_ledger_path(genex_home)).expect("ledger")
 }

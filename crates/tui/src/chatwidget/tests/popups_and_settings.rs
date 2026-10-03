@@ -15,9 +15,9 @@ use pretty_assertions::assert_eq;
 
 #[tokio::test]
 async fn experimental_mode_plan_is_ignored_on_startup() {
-    let codex_home = tempdir().expect("tempdir");
+    let genex_home = tempdir().expect("tempdir");
     let cfg = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .cli_overrides(vec![
             (
                 "features.collaboration_modes".to_string(),

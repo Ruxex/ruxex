@@ -453,11 +453,11 @@ mod tests {
 
     #[tokio::test]
     async fn sqlite_integrity_check_can_be_interrupted_and_retried() {
-        let codex_home = unique_temp_dir();
-        tokio::fs::create_dir_all(&codex_home)
+        let genex_home = unique_temp_dir();
+        tokio::fs::create_dir_all(&genex_home)
             .await
-            .expect("create codex home");
-        let sqlite = crate::SqliteConfig::new_for_testing(codex_home.as_path().abs());
+            .expect("create genex home");
+        let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
         let path = sqlite.state_db_path();
         let pool = sqlite
             .open_read_write_pool(&path)
@@ -535,16 +535,16 @@ mod tests {
                 "row 1 missing from index sample_value".to_string()
             ]),
         );
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(genex_home).await;
     }
 
     #[tokio::test]
     async fn open_state_sqlite_tolerates_newer_applied_migrations() {
-        let codex_home = unique_temp_dir();
-        tokio::fs::create_dir_all(&codex_home)
+        let genex_home = unique_temp_dir();
+        tokio::fs::create_dir_all(&genex_home)
             .await
-            .expect("create codex home");
-        let sqlite = crate::SqliteConfig::new_for_testing(codex_home.as_path().abs());
+            .expect("create genex home");
+        let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
         let state_path = sqlite.state_db_path();
         let pool = sqlite
             .open_read_write_pool(&state_path)
@@ -582,16 +582,16 @@ mod tests {
             .expect("runtime migrator should tolerate newer applied migrations");
         tolerant_pool.close().await;
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(genex_home).await;
     }
 
     #[tokio::test]
     async fn init_records_successful_sqlite_init_phases_to_explicit_telemetry() {
-        let codex_home = unique_temp_dir();
+        let genex_home = unique_temp_dir();
         let telemetry = TestTelemetry::default();
 
         let runtime = StateRuntime::init_with_telemetry_for_tests(
-            crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
             "test-provider".to_string(),
             &telemetry,
         )
@@ -623,13 +623,13 @@ mod tests {
         assert_eq!(phases, expected);
 
         runtime.close().await;
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(genex_home).await;
     }
 
     #[tokio::test]
     async fn init_restores_independent_thread_timestamp_maxima() {
-        let codex_home = unique_temp_dir();
-        let sqlite = crate::SqliteConfig::new_for_testing(codex_home.as_path().abs());
+        let genex_home = unique_temp_dir();
+        let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
         let runtime = StateRuntime::init(sqlite.clone(), "test-provider".to_string())
             .await
             .expect("state runtime should initialize");
@@ -641,9 +641,9 @@ mod tests {
             let thread_id = ThreadId::from_string(thread_id).expect("valid thread id");
             runtime
                 .upsert_thread(&test_thread_metadata(
-                    &codex_home,
+                    &genex_home,
                     thread_id,
-                    codex_home.clone(),
+                    genex_home.clone(),
                 ))
                 .await
                 .expect("thread should be stored");
@@ -671,6 +671,6 @@ mod tests {
         );
 
         runtime.close().await;
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(genex_home).await;
     }
 }

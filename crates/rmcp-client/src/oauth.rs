@@ -14,7 +14,7 @@
 //! keystore that always encrypts secrets when they are transferred across the bus. If DBus isn't installed the keystore will fall back to the json
 //! file because we don't use the "vendored" feature.
 //!
-//! If the keyring is not available or fails, we fall back to CODEX_HOME/.credentials.json which is consistent with other coding CLI agents.
+//! If the keyring is not available or fails, we fall back to GENEX_HOME/.credentials.json which is consistent with other coding CLI agents.
 
 mod credential_store;
 mod ema_identity;
@@ -73,7 +73,7 @@ use genex_keyring_store::KeyringStore;
 use rmcp::transport::auth::AuthorizationManager;
 use tokio::sync::Mutex;
 
-use genex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_genex_home;
 
 pub(crate) use self::credential_store::OAuthCredentialStore;
 pub(crate) use self::ema_identity::stored_oidc_identity;
@@ -410,9 +410,9 @@ fn load_oauth_tokens_from_secrets_keyring_with_lock_held<K: KeyringStore + Clone
     server_name: &str,
     url: &str,
 ) -> std::result::Result<Option<StoredOAuthTokens>, OAuthKeyringLoadError> {
-    let codex_home = find_codex_home().map_err(anyhow::Error::from)?;
+    let genex_home = find_genex_home().map_err(anyhow::Error::from)?;
     let manager = SecretsManager::new_with_keyring_store_and_namespace(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         SecretsBackendKind::Local,
         Arc::new(keyring_store.clone()),
         LocalSecretsNamespace::McpOAuth,
@@ -541,9 +541,9 @@ fn save_oauth_tokens_to_secrets_keyring_with_lock_held<K: KeyringStore + Clone +
     tokens: &StoredOAuthTokens,
     serialized: &str,
 ) -> Result<()> {
-    let codex_home = find_codex_home()?;
+    let genex_home = find_genex_home()?;
     let manager = SecretsManager::new_with_keyring_store_and_namespace(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         SecretsBackendKind::Local,
         Arc::new(keyring_store.clone()),
         LocalSecretsNamespace::McpOAuth,
@@ -693,9 +693,9 @@ fn delete_oauth_tokens_from_secrets_keyring<K: KeyringStore + Clone + 'static>(
     url: &str,
 ) -> Result<bool> {
     let _store_lock = OAuthStoreLock::acquire_for_write(OAuthStore::Secrets)?;
-    let codex_home = find_codex_home()?;
+    let genex_home = find_genex_home()?;
     let manager = SecretsManager::new_with_keyring_store_and_namespace(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         SecretsBackendKind::Local,
         Arc::new(keyring_store.clone()),
         LocalSecretsNamespace::McpOAuth,
@@ -1023,11 +1023,11 @@ fn compute_store_key(server_name: &str, server_url: &str) -> Result<String> {
     let payload = if enterprise_owned {
         // The OS keyring is shared across homes. Keep enterprise sessions
         // isolated by Codex profile as well as authenticated user and workspace.
-        let codex_home = find_codex_home()?;
-        fs::create_dir_all(&codex_home)?;
+        let genex_home = find_genex_home()?;
+        fs::create_dir_all(&genex_home)?;
         payload.insert(
-            "codex_home".to_string(),
-            serde_json::to_value(codex_home.as_path().canonicalize()?)?,
+            "genex_home".to_string(),
+            serde_json::to_value(genex_home.as_path().canonicalize()?)?,
         );
         // Different binaries can enable different serde_json ordering features.
         serde_json::to_value(payload.into_iter().collect::<BTreeMap<_, _>>())?
@@ -1055,7 +1055,7 @@ fn compute_secret_name(server_name: &str, server_url: &str) -> Result<SecretName
 }
 
 fn fallback_file_path() -> Result<PathBuf> {
-    Ok(find_codex_home()?.join(FALLBACK_FILENAME).to_path_buf())
+    Ok(find_genex_home()?.join(FALLBACK_FILENAME).to_path_buf())
 }
 
 fn read_fallback_file_unlocked() -> Result<Option<FallbackFile>> {

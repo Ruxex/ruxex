@@ -111,11 +111,11 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new()?;
-    let config = load_default_config_for_test(&codex_home).await;
+    let genex_home = TempDir::new()?;
+    let config = load_default_config_for_test(&genex_home).await;
     let mut model = genex_core::test_support::construct_model_info_offline("mock-model", &config);
     model.supports_experimental_context = true;
-    let catalog_path = codex_home.path().join("models.json");
+    let catalog_path = genex_home.path().join("models.json");
     std::fs::write(
         &catalog_path,
         serde_json::to_vec(&json!({"models": [model]}))?,
@@ -134,11 +134,11 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
             "[features.token_budget]\nenabled = true\nuse_history_notes_extension = {use_history_notes_extension}\n\n[mcp_servers.notes]\nurl = \"{}/mcp\"\nstartup_timeout_sec = 10\n",
             server.uri(),
         ))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized()
         .await?;
@@ -330,14 +330,14 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
     sequence.push(responses::sse(vec![responses::ev_completed("resp-final")]));
     let response_mock = responses::mount_sse_sequence(&server, sequence).await;
 
-    let codex_home = TempDir::new()?;
-    let config = load_default_config_for_test(&codex_home).await;
+    let genex_home = TempDir::new()?;
+    let config = load_default_config_for_test(&genex_home).await;
     let mut model = genex_core::test_support::construct_model_info_offline("mock-model", &config);
     model.supports_experimental_context = true;
     model
         .experimental_supported_tools
         .push("send_user_message_async".to_string());
-    let catalog_path = codex_home.path().join("models.json");
+    let catalog_path = genex_home.path().join("models.json");
     std::fs::write(
         &catalog_path,
         serde_json::to_vec(&json!({"models": [model]}))?,
@@ -355,11 +355,11 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
         .with_extra_config(
             "[features.token_budget]\nenabled = true\nuse_history_notes_extension = true",
         )
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .without_managed_config()
         .build_initialized()

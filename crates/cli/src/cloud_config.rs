@@ -4,7 +4,7 @@ use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
 use genex_core::config::LoaderOverrides;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_cli::CliConfigOverrides;
 
@@ -31,14 +31,14 @@ pub(crate) async fn config_builder(
     let cli_overrides = config_overrides
         .parse_overrides()
         .map_err(anyhow::Error::msg)?;
-    let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
+    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
     let cwd = match harness_overrides.cwd.as_deref() {
         Some(cwd) => AbsolutePathBuf::relative_to_current_dir(cwd),
         None => AbsolutePathBuf::current_dir(),
     }
     .context("failed to resolve current directory")?;
     Ok(ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
+        .genex_home(genex_home.to_path_buf())
         .cli_overrides(cli_overrides)
         .loader_overrides(loader_overrides)
         .harness_overrides(harness_overrides)

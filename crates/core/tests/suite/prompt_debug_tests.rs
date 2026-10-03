@@ -18,20 +18,20 @@ const TEST_INSTRUCTIONS: &str = "Global test instructions";
 
 #[tokio::test]
 async fn build_prompt_input_includes_context_and_user_message() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
-    std::fs::write(codex_home.path().join("AGENTS.md"), TEST_INSTRUCTIONS)?;
+    std::fs::write(genex_home.path().join("AGENTS.md"), TEST_INSTRUCTIONS)?;
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd.path().to_path_buf()),
-            codex_self_exe: Some(std::env::current_exe()?),
+            genex_self_exe: Some(std::env::current_exe()?),
             ..ConfigOverrides::default()
         })
         .build()
         .await?;
     let user_instructions_provider = Arc::new(GenexHomeUserInstructionsProvider::new(
-        config.codex_home.clone(),
+        config.genex_home.clone(),
     ));
     let input = build_prompt_input(
         config,

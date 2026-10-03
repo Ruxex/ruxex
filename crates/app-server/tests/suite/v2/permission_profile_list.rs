@@ -18,9 +18,9 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[tokio::test]
 async fn permission_profile_list_returns_builtin_and_configured_profiles() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 default_permissions = "dev"
 
@@ -39,7 +39,7 @@ description = "Inspect without writes."
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -91,12 +91,12 @@ description = "Inspect without writes."
 
 #[tokio::test]
 async fn permission_profile_list_resolves_project_profiles_and_paginates() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let workspace = TempDir::new()?;
-    let project_config_dir = workspace.path().join(".codex");
+    let project_config_dir = workspace.path().join(".genex");
     std::fs::create_dir_all(&project_config_dir)?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 default_permissions = ":workspace"
 "#,
@@ -111,10 +111,10 @@ description = "Project-scoped profile."
 ":workspace_roots" = "write"
 "#,
     )?;
-    set_project_trust_level(codex_home.path(), workspace.path(), TrustLevel::Trusted)?;
+    set_project_trust_level(genex_home.path(), workspace.path(), TrustLevel::Trusted)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -177,9 +177,9 @@ description = "Project-scoped profile."
 #[tokio::test]
 async fn permission_profile_list_discovers_project_profiles_without_default_selection() -> Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let workspace = TempDir::new()?;
-    let project_config_dir = workspace.path().join(".codex");
+    let project_config_dir = workspace.path().join(".genex");
     std::fs::create_dir_all(&project_config_dir)?;
     std::fs::write(
         project_config_dir.join("config.toml"),
@@ -191,10 +191,10 @@ description = "Project-scoped profile."
 ":workspace_roots" = "write"
 "#,
     )?;
-    set_project_trust_level(codex_home.path(), workspace.path(), TrustLevel::Trusted)?;
+    set_project_trust_level(genex_home.path(), workspace.path(), TrustLevel::Trusted)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -241,12 +241,12 @@ description = "Project-scoped profile."
 
 #[tokio::test]
 async fn permission_profile_list_resolves_roots_against_requested_cwd() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let workspace = TempDir::new()?;
     let unsafe_cwd = workspace.path().join("[workspace]");
     std::fs::create_dir_all(&unsafe_cwd)?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 default_permissions = ":workspace"
 
@@ -258,7 +258,7 @@ default_permissions = ":workspace"
 "#,
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;

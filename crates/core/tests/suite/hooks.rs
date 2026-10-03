@@ -1373,7 +1373,7 @@ async fn stop_hook_can_block_multiple_times_in_same_turn() -> Result<()> {
         "third request should retain hook prompts in user history",
     );
 
-    let hook_inputs = read_stop_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_stop_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 3);
     let stop_turn_ids = hook_inputs
         .iter()
@@ -1450,7 +1450,7 @@ async fn session_start_hook_sees_materialized_transcript_path() -> Result<()> {
 
     test.submit_turn("hello").await?;
 
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     let transcript_path = hook_inputs[0]["transcript_path"]
         .as_str()
@@ -1484,7 +1484,7 @@ async fn session_start_hook_skips_persistence_for_non_local_thread_store() -> Re
     test.submit_turn("run the non-local session start hook")
         .await?;
 
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["transcript_path"], Value::Null);
     assert_eq!(store.calls().await.persist_thread, 0);
@@ -1517,7 +1517,7 @@ async fn session_end_flushes_transcript_and_ignores_control_output() -> Result<(
     test.codex.shutdown_and_wait().await?;
 
     let inputs = read_hook_inputs_from_log(
-        test.codex_home_path()
+        test.genex_home_path()
             .join("session_end_hook_log.jsonl")
             .as_path(),
     )?;
@@ -1568,7 +1568,7 @@ async fn session_end_skips_subagents() -> Result<()> {
 
     assert!(
         !test
-            .codex_home_path()
+            .genex_home_path()
             .join("session_end_hook_log.jsonl")
             .exists(),
         "subagents must not run SessionEnd hooks"
@@ -1601,7 +1601,7 @@ async fn session_start_runs_before_user_prompt_submit_on_first_turn() -> Result<
 
     test.submit_turn("hello").await?;
 
-    let hook_inputs = read_hook_order_inputs(test.codex_home_path())?;
+    let hook_inputs = read_hook_order_inputs(test.genex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -1754,7 +1754,7 @@ async fn explicit_history_runs_resume_session_start_hook() -> Result<()> {
         .await?;
     wait_for_event(&resumed, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -1834,7 +1834,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
         .await?;
 
     let finished_path = test
-        .codex_home_path()
+        .genex_home_path()
         .join("async_user_prompt_submit_finished");
     fs_wait::wait_for_path_exists(finished_path, Duration::from_secs(5))
         .await
@@ -1930,21 +1930,21 @@ async fn async_hook_finishing_while_idle_waits_for_the_next_turn(
         .context("first model request should include its turn ID")?
         .to_string();
     let started_path = test
-        .codex_home_path()
+        .genex_home_path()
         .join("async_user_prompt_submit_started");
     fs_wait::wait_for_path_exists(started_path, Duration::from_secs(5))
         .await
         .context("timed out waiting for the async hook to start")?;
 
     fs::write(
-        test.codex_home_path()
+        test.genex_home_path()
             .join("async_user_prompt_submit_release"),
         "ready",
     )
     .context("release gated async hook")?;
 
     let finished_path = test
-        .codex_home_path()
+        .genex_home_path()
         .join("async_user_prompt_submit_finished");
     fs_wait::wait_for_path_exists(finished_path, Duration::from_secs(5))
         .await
@@ -2261,7 +2261,7 @@ async fn compact_session_start_hook_records_additional_context_for_next_turn() -
         "compact matcher should inject additional context before the next model turn",
     );
 
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(
         hook_inputs[0].get("source").and_then(Value::as_str),
@@ -2376,7 +2376,7 @@ async fn mid_turn_auto_compact_session_start_hooks_run_before_each_continuation(
         "the second compact hook context should reach the immediate continuation request",
     );
 
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2396,7 +2396,7 @@ async fn mid_turn_auto_compact_session_start_hooks_run_before_each_continuation(
             .any(|message| message == "compact hook context 3"),
         "the next user turn should not receive a stale compact hook",
     );
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2466,7 +2466,7 @@ async fn mid_turn_auto_compact_session_start_hook_stop_blocks_continuation() -> 
         unexpected_continuation.requests().is_empty(),
         "a compact SessionStart stop should prevent the next sampling request",
     );
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2556,7 +2556,7 @@ async fn resumed_thread_runs_resume_then_compact_session_start_hooks() -> Result
         "compact matcher should inject additional context before the next model turn",
     );
 
-    let hook_inputs = read_session_start_hook_inputs(resumed.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(resumed.genex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2785,7 +2785,7 @@ async fn blocked_user_prompt_submit_persists_additional_context_for_next_turn() 
         "second request should include the accepted prompt",
     );
 
-    let hook_inputs = read_user_prompt_submit_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_user_prompt_submit_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 2);
     assert_eq!(
         hook_inputs
@@ -2945,7 +2945,7 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
         json!(if thread_context_enabled { 3 } else { 0 })
     );
 
-    let hook_inputs = read_user_prompt_submit_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_user_prompt_submit_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 3);
     assert_eq!(
         hook_inputs
@@ -3049,7 +3049,7 @@ async fn permission_request_hook_allows_exec_command_without_user_approval() -> 
     );
 
     let hook_inputs = assert_single_permission_request_hook_input(
-        test.codex_home_path(),
+        test.genex_home_path(),
         &command,
         /*description*/ None,
     )?;
@@ -3206,7 +3206,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         "hook-approved command should remove marker without Guardian review"
     );
     assert_single_permission_request_hook_input(
-        test.codex_home_path(),
+        test.genex_home_path(),
         &command,
         /*description*/ None,
     )?;
@@ -3277,7 +3277,7 @@ async fn permission_request_hook_allows_apply_patch_with_write_alias() -> Result
     );
 
     assert_single_permission_request_hook_input_for_tool(
-        test.codex_home_path(),
+        test.genex_home_path(),
         "apply_patch",
         &patch,
         /*description*/ None,
@@ -3350,7 +3350,7 @@ async fn permission_request_hook_sees_raw_exec_command_input() -> Result<()> {
     );
 
     assert_single_permission_request_hook_input(
-        test.codex_home_path(),
+        test.genex_home_path(),
         &command,
         Some(justification),
     )?;
@@ -3464,7 +3464,7 @@ allow_local_binding = true
         timeout(Duration::from_secs(10), async {
             loop {
                 if test
-                    .codex_home_path()
+                    .genex_home_path()
                     .join("permission_request_hook_log.jsonl")
                     .exists()
                 {
@@ -3490,7 +3490,7 @@ allow_local_binding = true
     }
 
     assert_single_permission_request_hook_input(
-        test.codex_home_path(),
+        test.genex_home_path(),
         command,
         Some("network-access http://codex-network-test.invalid:80"),
     )?;
@@ -3587,7 +3587,7 @@ async fn pre_tool_use_json_deny_blocks_exec_command_before_execution() -> Result
         "blocked command should not initialize the marker repository"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["hook_event_name"], "PreToolUse");
     assert_eq!(hook_inputs[0]["tool_name"], "Bash");
@@ -3743,7 +3743,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
     })
     .await;
     assert_eq!(responses.requests().len(), 3);
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["model"], model_b);
 
@@ -4107,7 +4107,7 @@ async fn pre_tool_use_rewrites_exec_command_before_execution() -> Result<()> {
         "rewritten {slug} command should initialize the marker repository"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], original_command);
 
@@ -4189,7 +4189,7 @@ text(output.output);
         "rewritten nested command should initialize the marker repository"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], original_command);
 
@@ -4264,7 +4264,7 @@ try {{
         "PreToolUse-blocked nested command should not execute"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
 
@@ -4348,7 +4348,7 @@ try {{
         "PostToolUse should run after the nested command executes"
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
     assert_eq!(
@@ -4873,7 +4873,7 @@ async fn pre_tool_use_blocks_shell_when_defined_in_config_toml() -> Result<()> {
     );
 
     let hook_inputs = read_hook_inputs_from_log(
-        test.codex_home_path()
+        test.genex_home_path()
             .join("pre_tool_use_config_hook_log.jsonl")
             .as_path(),
     )?;
@@ -4946,7 +4946,7 @@ async fn pre_tool_use_merges_hooks_json_and_config_toml() -> Result<()> {
         "shell command output should still reach the model",
     );
 
-    let json_hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?
+    let json_hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?
         .into_iter()
         .map(|hook_input| {
             serde_json::json!({
@@ -4958,7 +4958,7 @@ async fn pre_tool_use_merges_hooks_json_and_config_toml() -> Result<()> {
         })
         .collect::<Vec<_>>();
     let toml_hook_inputs = read_hook_inputs_from_log(
-        test.codex_home_path()
+        test.genex_home_path()
             .join("pre_tool_use_toml_hook_log.jsonl")
             .as_path(),
     )?
@@ -5049,7 +5049,7 @@ async fn pre_tool_use_blocks_exec_command_before_execution() -> Result<()> {
     );
     assert!(!marker.exists(), "blocked exec command should not execute");
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
@@ -5125,7 +5125,7 @@ async fn pre_tool_use_blocks_apply_patch_before_execution() -> Result<()> {
         "blocked apply_patch should not create the file"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
@@ -5197,7 +5197,7 @@ async fn pre_tool_use_rewrites_apply_patch_before_execution() -> Result<()> {
         "rewritten\n"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], original_patch);
 
@@ -5263,7 +5263,7 @@ async fn pre_tool_use_blocks_apply_patch_with_write_alias() -> Result<()> {
         "blocked apply_patch should not create the file"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
@@ -5323,7 +5323,7 @@ async fn pre_tool_use_blocks_local_function_tool_before_execution() -> Result<()
         "blocked local function output should surface the hook reason and tool name",
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["hook_event_name"], "PreToolUse");
     assert_eq!(hook_inputs[0]["tool_name"], "test_sync_tool");
@@ -5388,7 +5388,7 @@ async fn pre_tool_use_rewrites_local_function_tool_before_execution() -> Result<
         .expect("rewritten local function tool output string");
     assert_eq!(output, "ok");
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"], original_args);
 
@@ -5454,7 +5454,7 @@ async fn post_tool_use_records_additional_context_for_exec_command() -> Result<(
         "shell command output should still reach the model",
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["hook_event_name"], "PostToolUse");
     assert_eq!(hook_inputs[0]["tool_name"], "Bash");
@@ -5534,7 +5534,7 @@ async fn post_tool_use_block_decision_replaces_exec_command_output_with_reason()
         .expect("shell command output string");
     assert_eq!(output, reason);
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(
         hook_inputs[0]["tool_response"],
@@ -5595,7 +5595,7 @@ async fn post_tool_use_continue_false_replaces_exec_command_output_with_stop_rea
         .expect("shell command output string");
     assert_eq!(output, stop_reason);
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(
         hook_inputs[0]["tool_response"],
@@ -5657,7 +5657,7 @@ async fn post_tool_use_exit_two_replaces_one_shot_exec_command_output_with_feedb
         .expect("exec command output string");
     assert_eq!(output, "blocked by post hook");
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
@@ -5803,13 +5803,13 @@ async fn post_tool_use_blocks_when_exec_session_completes_via_write_stdin() -> R
         .expect("write_stdin output string");
     assert_eq!(output, feedback);
 
-    let pre_hook_inputs = read_pre_tool_use_hook_inputs(test.codex_home_path())?;
+    let pre_hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(pre_hook_inputs.len(), 1);
     assert_eq!(pre_hook_inputs[0]["tool_name"], "Bash");
     assert_eq!(pre_hook_inputs[0]["tool_use_id"], start_call_id);
     assert_eq!(pre_hook_inputs[0]["tool_input"]["command"], command);
 
-    let post_hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let post_hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(post_hook_inputs.len(), 1);
     assert_eq!(post_hook_inputs[0]["hook_event_name"], "PostToolUse");
     assert_eq!(post_hook_inputs[0]["tool_name"], "Bash");
@@ -5882,7 +5882,7 @@ async fn post_tool_use_records_additional_context_for_apply_patch() -> Result<()
         "apply_patch should create the file"
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
@@ -5954,7 +5954,7 @@ async fn post_tool_use_records_apply_patch_context_with_edit_alias() -> Result<(
         "apply_patch should create the file"
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);

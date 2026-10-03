@@ -100,12 +100,12 @@ pub fn legacy_windows_sandbox_mode_from_entries(
 }
 
 #[cfg(target_os = "windows")]
-pub fn sandbox_setup_is_complete(codex_home: &Path) -> bool {
-    genex_windows_sandbox::sandbox_setup_is_complete(codex_home)
+pub fn sandbox_setup_is_complete(genex_home: &Path) -> bool {
+    genex_windows_sandbox::sandbox_setup_is_complete(genex_home)
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn sandbox_setup_is_complete(_codex_home: &Path) -> bool {
+pub fn sandbox_setup_is_complete(_genex_home: &Path) -> bool {
     false
 }
 
@@ -115,9 +115,9 @@ pub fn prepare_elevated_sandbox(
     workspace_roots: &[AbsolutePathBuf],
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> anyhow::Result<()> {
-    if !sandbox_setup_is_complete(codex_home) {
+    if !sandbox_setup_is_complete(genex_home) {
         let permissions =
             genex_windows_sandbox::ResolvedWindowsSandboxPermissions::try_from_permission_profile_for_workspace_roots(
                 permission_profile,
@@ -127,7 +127,7 @@ pub fn prepare_elevated_sandbox(
             permissions: &permissions,
             command_cwd,
             env_map,
-            codex_home,
+            genex_home,
             proxy_enforced: false,
         })?;
     }
@@ -136,7 +136,7 @@ pub fn prepare_elevated_sandbox(
         workspace_roots,
         command_cwd,
         env_map,
-        codex_home,
+        genex_home,
         /*proxy_enforced*/ false,
     )
 }
@@ -156,12 +156,12 @@ fn provisioning_settings(
 
 #[cfg(target_os = "windows")]
 pub fn run_elevated_provisioning_setup(
-    codex_home: &Path,
+    genex_home: &Path,
     real_user: &str,
     network: Option<&crate::config::NetworkProxySpec>,
 ) -> anyhow::Result<()> {
     genex_windows_sandbox::run_elevated_provisioning_setup(
-        codex_home,
+        genex_home,
         real_user,
         provisioning_settings(network)?,
     )
@@ -173,14 +173,14 @@ pub fn prepare_elevated_sandbox(
     _workspace_roots: &[AbsolutePathBuf],
     _command_cwd: &Path,
     _env_map: &HashMap<String, String>,
-    _codex_home: &Path,
+    _genex_home: &Path,
 ) -> anyhow::Result<()> {
     anyhow::bail!("elevated Windows sandbox setup is only supported on Windows")
 }
 
 #[cfg(not(target_os = "windows"))]
 pub fn run_elevated_provisioning_setup(
-    _codex_home: &Path,
+    _genex_home: &Path,
     _real_user: &str,
     _network: Option<&crate::config::NetworkProxySpec>,
 ) -> anyhow::Result<()> {
@@ -193,12 +193,12 @@ pub fn run_legacy_setup_preflight(
     workspace_roots: &[AbsolutePathBuf],
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> anyhow::Result<()> {
     genex_windows_sandbox::run_windows_sandbox_legacy_preflight(
         permission_profile,
         workspace_roots,
-        codex_home,
+        genex_home,
         command_cwd,
         env_map,
     )
@@ -210,7 +210,7 @@ pub fn run_setup_refresh_with_extra_read_roots(
     workspace_roots: &[AbsolutePathBuf],
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    genex_home: &Path,
     extra_read_roots: Vec<PathBuf>,
 ) -> anyhow::Result<()> {
     genex_windows_sandbox::run_setup_refresh_with_extra_read_roots(
@@ -218,7 +218,7 @@ pub fn run_setup_refresh_with_extra_read_roots(
         workspace_roots,
         command_cwd,
         env_map,
-        codex_home,
+        genex_home,
         extra_read_roots,
         /*proxy_enforced*/ false,
     )
@@ -230,7 +230,7 @@ pub fn run_legacy_setup_preflight(
     _workspace_roots: &[AbsolutePathBuf],
     _command_cwd: &Path,
     _env_map: &HashMap<String, String>,
-    _codex_home: &Path,
+    _genex_home: &Path,
 ) -> anyhow::Result<()> {
     anyhow::bail!("legacy Windows sandbox setup is only supported on Windows")
 }
@@ -241,7 +241,7 @@ pub fn run_setup_refresh_with_extra_read_roots(
     _workspace_roots: &[AbsolutePathBuf],
     _command_cwd: &Path,
     _env_map: &HashMap<String, String>,
-    _codex_home: &Path,
+    _genex_home: &Path,
     _extra_read_roots: Vec<PathBuf>,
 ) -> anyhow::Result<()> {
     anyhow::bail!("Windows sandbox read-root refresh is only supported on Windows")
@@ -260,7 +260,7 @@ pub struct WindowsSandboxSetupRequest {
     pub workspace_roots: Vec<AbsolutePathBuf>,
     pub command_cwd: PathBuf,
     pub env_map: HashMap<String, String>,
-    pub codex_home: PathBuf,
+    pub genex_home: PathBuf,
 }
 
 pub async fn run_windows_sandbox_setup(request: WindowsSandboxSetupRequest) -> anyhow::Result<()> {
@@ -293,8 +293,8 @@ async fn run_windows_sandbox_setup_and_persist(
     let workspace_roots = request.workspace_roots;
     let command_cwd = request.command_cwd;
     let env_map = request.env_map;
-    let codex_home = request.codex_home;
-    let setup_codex_home = codex_home.clone();
+    let genex_home = request.genex_home;
+    let setup_genex_home = genex_home.clone();
 
     let setup_result = tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
         match mode {
@@ -304,7 +304,7 @@ async fn run_windows_sandbox_setup_and_persist(
                     workspace_roots.as_slice(),
                     command_cwd.as_path(),
                     &env_map,
-                    setup_codex_home.as_path(),
+                    setup_genex_home.as_path(),
                 )?;
             }
             WindowsSandboxSetupMode::Unelevated => {
@@ -313,7 +313,7 @@ async fn run_windows_sandbox_setup_and_persist(
                     workspace_roots.as_slice(),
                     command_cwd.as_path(),
                     &env_map,
-                    setup_codex_home.as_path(),
+                    setup_genex_home.as_path(),
                 )?;
             }
         }
@@ -324,7 +324,7 @@ async fn run_windows_sandbox_setup_and_persist(
 
     setup_result?;
 
-    ConfigEditsBuilder::new(codex_home.as_path())
+    ConfigEditsBuilder::new(genex_home.as_path())
         .set_windows_sandbox_mode(windows_sandbox_setup_mode_tag(mode))
         .clear_legacy_windows_sandbox_keys()
         .apply()

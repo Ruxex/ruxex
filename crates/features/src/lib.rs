@@ -160,7 +160,7 @@ pub enum Feature {
     /// Enable runtime metrics snapshots via a manual reader.
     RuntimeMetrics,
     /// Compress cold local thread-store rollout files, including shared histories.
-    /// Requires every reader of the Codex home to support compressed shared histories.
+    /// Requires every reader of the Genex home to support compressed shared histories.
     LocalThreadStoreCompression,
     /// Enable the Chronicle sidecar for passive screen-context memories.
     Chronicle,

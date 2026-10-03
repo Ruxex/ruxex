@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 pub trait RolloutConfigView {
-    fn codex_home(&self) -> &Path;
+    fn genex_home(&self) -> &Path;
     fn sqlite_config(&self) -> &SqliteConfig;
     fn cwd(&self) -> &Path;
     fn model_provider_id(&self) -> &str;
@@ -12,7 +12,7 @@ pub trait RolloutConfigView {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RolloutConfig {
-    pub codex_home: PathBuf,
+    pub genex_home: PathBuf,
     pub sqlite: SqliteConfig,
     pub cwd: PathBuf,
     pub model_provider_id: String,
@@ -23,7 +23,7 @@ pub type Config = RolloutConfig;
 impl RolloutConfig {
     pub fn from_view(view: &impl RolloutConfigView) -> Self {
         Self {
-            codex_home: view.codex_home().to_path_buf(),
+            genex_home: view.genex_home().to_path_buf(),
             sqlite: view.sqlite_config().clone(),
             cwd: view.cwd().to_path_buf(),
             model_provider_id: view.model_provider_id().to_string(),
@@ -32,8 +32,8 @@ impl RolloutConfig {
 }
 
 impl RolloutConfigView for RolloutConfig {
-    fn codex_home(&self) -> &Path {
-        self.codex_home.as_path()
+    fn genex_home(&self) -> &Path {
+        self.genex_home.as_path()
     }
 
     fn sqlite_config(&self) -> &SqliteConfig {
@@ -50,8 +50,8 @@ impl RolloutConfigView for RolloutConfig {
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
-    fn codex_home(&self) -> &Path {
-        (*self).codex_home()
+    fn genex_home(&self) -> &Path {
+        (*self).genex_home()
     }
 
     fn sqlite_config(&self) -> &SqliteConfig {
@@ -68,8 +68,8 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
-    fn codex_home(&self) -> &Path {
-        self.as_ref().codex_home()
+    fn genex_home(&self) -> &Path {
+        self.as_ref().genex_home()
     }
 
     fn sqlite_config(&self) -> &SqliteConfig {

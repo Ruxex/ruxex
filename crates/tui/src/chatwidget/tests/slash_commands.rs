@@ -731,7 +731,7 @@ async fn goal_slash_command_emits_attached_images() {
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
     let remote_url = "https://example.com/goal.png".to_string();
-    let local_image = chat.config.codex_home.join("goal-local.png");
+    let local_image = chat.config.genex_home.join("goal-local.png");
     std::fs::write(&local_image, b"png bytes").expect("write local image");
     let placeholder = "[Image #2]";
     let command = format!("/goal literal {placeholder} describe {placeholder}");

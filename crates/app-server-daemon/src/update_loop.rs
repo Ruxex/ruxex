@@ -324,10 +324,10 @@ async fn update_once(
         return Ok((UpdateLoopControl::Continue, None));
     }
     let (package_root, previous_selection, previous_release) = selected_release(daemon)?;
-    let codex_home = package_root
+    let genex_home = package_root
         .parent()
         .and_then(Path::parent)
-        .context("daemon package root has no Codex home")?;
+        .context("daemon package root has no Genex home")?;
     let (installer_mode, installer_guard) =
         if let UpdateTrigger::RestoreProduction(expected) = trigger {
             anyhow::ensure!(
@@ -373,7 +373,7 @@ async fn update_once(
         return Ok((UpdateLoopControl::Continue, None));
     }
     anyhow::ensure!(
-        crate::managed_install::package_root(codex_home) == package_root,
+        crate::managed_install::package_root(genex_home) == package_root,
         "daemon package root changed during the update; retry the command"
     );
     #[cfg(unix)]
@@ -494,7 +494,7 @@ fn selected_release(daemon: &Daemon) -> Result<(std::path::PathBuf, std::path::P
         .settings_file
         .parent()
         .and_then(Path::parent)
-        .context("daemon settings path has no Codex home")?;
+        .context("daemon settings path has no Genex home")?;
     let root = crate::managed_install::package_root(home);
     let release = std::fs::canonicalize(root.join("current"))?;
     let name = release
@@ -558,11 +558,11 @@ async fn run_installer_script(
     };
     let mut child = command
         .env(
-            "CODEX_HOME",
+            "GENEX_HOME",
             package_root
                 .parent()
                 .and_then(Path::parent)
-                .context("package root has no Codex home")?,
+                .context("package root has no Genex home")?,
         )
         .env("CODEX_INSTALL_DEFER_SELECTION", defer_selection)
         .env(

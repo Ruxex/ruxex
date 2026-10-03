@@ -31,12 +31,12 @@ def _request(url: str) -> bytes:
     return github_request(url, "codex-skill-list")
 
 
-def _codex_home() -> str:
-    return os.environ.get("CODEX_HOME", os.path.expanduser("~/.codex"))
+def _genex_home() -> str:
+    return os.environ.get("GENEX_HOME", os.path.expanduser("~/.genex"))
 
 
 def _installed_skills() -> set[str]:
-    root = os.path.join(_codex_home(), "skills")
+    root = os.path.join(_genex_home(), "skills")
     if not os.path.isdir(root):
         return set()
     entries = set()

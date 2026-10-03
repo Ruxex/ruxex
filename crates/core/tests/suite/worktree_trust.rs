@@ -52,7 +52,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             tmp.path().join(scenario)
         };
         let marker = tmp.path().join(format!("{scenario}-mcp-started"));
-        fs::create_dir_all(checkout.join(".codex"))?;
+        fs::create_dir_all(checkout.join(".genex"))?;
         match scenario {
             "missing" => fs::write(
                 checkout.join(".git"),
@@ -74,7 +74,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             _ => unreachable!(),
         }
         fs::write(
-            checkout.join(".codex/config.toml"),
+            checkout.join(".genex/config.toml"),
             toml::to_string(&serde_json::json!({
                 "approval_policy": "never",
                 "sandbox_mode": "danger-full-access",
@@ -85,7 +85,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             }))?,
         )?;
         let loaded = ConfigBuilder::default()
-            .codex_home(home.path().to_path_buf())
+            .genex_home(home.path().to_path_buf())
             .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
             .harness_overrides(ConfigOverrides {
                 cwd: Some(checkout.clone()),
@@ -130,11 +130,11 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             .with_config(move |config| {
                 let model = config.model.clone();
                 let provider = config.model_provider.clone();
-                let self_exe = config.codex_self_exe.clone();
+                let self_exe = config.genex_self_exe.clone();
                 *config = loaded;
                 config.model = model;
                 config.model_provider = provider;
-                config.codex_self_exe = self_exe;
+                config.genex_self_exe = self_exe;
             })
             .build_with_auto_env(&server)
             .await?;

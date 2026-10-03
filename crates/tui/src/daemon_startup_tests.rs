@@ -53,7 +53,7 @@ async fn daemon_startup_falls_back_only_for_implicit_endpoints() -> color_eyre::
     ] {
         let home = TempDir::new()?;
         let config = ConfigBuilder::default()
-            .codex_home(home.path().to_path_buf())
+            .genex_home(home.path().to_path_buf())
             .build()
             .await?;
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;

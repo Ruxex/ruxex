@@ -1116,7 +1116,7 @@ async fn active_model_switch_updates_core_context_from_captured_settings(
 
     if reload_user_config {
         std::fs::write(
-            test.codex_home_path().join("config.toml"),
+            test.genex_home_path().join("config.toml"),
             "[features.token_budget]\nenabled = true\nreminder_message_template = \"Reloaded reminder\"\n",
         )?;
         test.codex.submit(Op::ReloadUserConfig).await?;

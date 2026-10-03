@@ -28,7 +28,7 @@ use std::path::PathBuf;
 pub struct WindowsSandboxSessionRequest<'a> {
     pub permission_profile: &'a PermissionProfile,
     pub workspace_roots: &'a [AbsolutePathBuf],
-    pub codex_home: &'a Path,
+    pub genex_home: &'a Path,
     pub command: Vec<String>,
     pub cwd: &'a Path,
     pub env_map: HashMap<String, String>,
@@ -61,7 +61,7 @@ pub(crate) async fn spawn_windows_sandbox_session_with_desktop(
         backends::elevated::spawn_windows_sandbox_session_elevated_for_permission_profile(
             request.permission_profile,
             request.workspace_roots,
-            request.codex_home,
+            request.genex_home,
             request.command,
             request.cwd,
             request.env_map,
@@ -90,7 +90,7 @@ pub(crate) async fn spawn_windows_sandbox_session_with_desktop(
         backends::legacy::spawn_windows_sandbox_session_legacy(
             request.permission_profile,
             request.workspace_roots,
-            request.codex_home,
+            request.genex_home,
             request.command,
             request.cwd,
             request.env_map,
@@ -110,7 +110,7 @@ pub(crate) async fn spawn_windows_sandbox_session_with_desktop(
 pub async fn spawn_windows_sandbox_session_legacy(
     permission_profile: &PermissionProfile,
     workspace_roots: &[AbsolutePathBuf],
-    codex_home: &Path,
+    genex_home: &Path,
     command: Vec<String>,
     cwd: &Path,
     env_map: HashMap<String, String>,
@@ -124,7 +124,7 @@ pub async fn spawn_windows_sandbox_session_legacy(
     backends::legacy::spawn_windows_sandbox_session_legacy(
         permission_profile,
         workspace_roots,
-        codex_home,
+        genex_home,
         command,
         cwd,
         env_map,
@@ -143,7 +143,7 @@ pub async fn spawn_windows_sandbox_session_legacy(
 pub async fn spawn_windows_sandbox_session_elevated_for_permission_profile(
     permission_profile: &PermissionProfile,
     workspace_roots: &[AbsolutePathBuf],
-    codex_home: &Path,
+    genex_home: &Path,
     command: Vec<String>,
     cwd: &Path,
     env_map: HashMap<String, String>,
@@ -162,7 +162,7 @@ pub async fn spawn_windows_sandbox_session_elevated_for_permission_profile(
     backends::elevated::spawn_windows_sandbox_session_elevated_for_permission_profile(
         permission_profile,
         workspace_roots,
-        codex_home,
+        genex_home,
         command,
         cwd,
         env_map,

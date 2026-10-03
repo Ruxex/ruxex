@@ -150,14 +150,14 @@ async fn run_local_image_turn(detail: Option<ImageDetail>) -> Result<Vec<Value>>
     // cover image-bearing request payloads.
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
     let mut model = model_info_from_slug("mock-model");
     model.supports_image_detail_original = true;
-    write_models_cache_with_models(codex_home.path(), vec![model]).await?;
+    write_models_cache_with_models(genex_home.path(), vec![model]).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -168,7 +168,7 @@ async fn run_local_image_turn(detail: Option<ImageDetail>) -> Result<Vec<Value>>
         })
         .await?;
 
-    let image_path = codex_home.path().join("image.png");
+    let image_path = genex_home.path().join("image.png");
     std::fs::write(&image_path, TINY_PNG_BYTES)?;
 
     let TurnStartResponse { turn } = mcp
@@ -238,13 +238,13 @@ async fn turn_start_omits_notification_media_without_changing_model_input() -> R
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::OmitAppServerNotificationMedia)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -408,7 +408,7 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
         .expect(1)
         .mount(&server)
         .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut config = MockResponsesConfig::new(&server.uri())
         .with_provider_name("provider")
         .with_provider_config("supports_websockets = false")
@@ -421,9 +421,9 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
     if let Some(enabled) = metrics_enabled {
         config = config.with_extra_config(&format!("[metrics]\nenabled = {enabled}"));
     }
-    config.write(codex_home.path())?;
+    config.write(genex_home.path())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .workspace_id("account-123")
@@ -433,7 +433,7 @@ async fn tool_call_metadata_stays_out_of_raw_response_item_notifications(
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -551,14 +551,14 @@ async fn turn_start_with_empty_input_runs_model_request() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -667,21 +667,21 @@ async fn turn_start_steers_active_turn_and_returns_active_turn_id() -> Result<()
         }],
     ])
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "model = \"gpt-5.5\"\napproval_policy = \"never\"\n[model_providers.provider]\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n[features]\nenable_request_compression = false\n",
             server.uri()
         ),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -782,11 +782,11 @@ async fn turn_start_additional_context_flows_to_model_input() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -848,11 +848,11 @@ async fn turn_start_sends_originator_header() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     timeout(
@@ -915,11 +915,11 @@ async fn turn_start_emits_user_message_item_with_text_elements() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -991,10 +991,10 @@ async fn turn_start_emits_thread_scoped_warning_notification_for_trimmed_skills(
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
-    let cache_path = codex_home.path().join("models_cache.json");
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
+    let cache_path = genex_home.path().join("models_cache.json");
     let mut cache: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(&cache_path)?)?;
     let models = cache["models"]
@@ -1009,18 +1009,18 @@ async fn turn_start_emits_thread_scoped_warning_notification_for_trimmed_skills(
         .to_string();
     entry["context_window"] = serde_json::Value::from(100);
     std::fs::write(&cache_path, serde_json::to_string_pretty(&cache)?)?;
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         &config_path,
         config.replace("model = \"mock-model\"", &format!("model = \"{model}\"")),
     )?;
-    write_test_skill(codex_home.path(), "alpha-skill")?;
-    write_test_skill(codex_home.path(), "beta-skill")?;
+    write_test_skill(genex_home.path(), "alpha-skill")?;
+    write_test_skill(genex_home.path(), "beta-skill")?;
 
-    let isolated_home = codex_home.path().to_string_lossy();
+    let isolated_home = genex_home.path().to_string_lossy();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[
             ("HOME", Some(isolated_home.as_ref())),
             ("USERPROFILE", Some(isolated_home.as_ref())),
@@ -1088,9 +1088,9 @@ async fn turn_start_sends_service_tier_id_to_model_request() -> Result<()> {
     ]);
     let response_mock = responses::mount_sse_once(&server, body.clone()).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
     let service_tier_model = all_model_presets()
         .iter()
         .find(|preset| preset.show_in_picker && !preset.service_tiers.is_empty())
@@ -1098,7 +1098,7 @@ async fn turn_start_sends_service_tier_id_to_model_request() -> Result<()> {
     let service_tier_id = service_tier_model.service_tiers[0].id.clone();
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -1212,12 +1212,12 @@ async fn turn_start_emits_raw_response_completed_with_upstream_usage(
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -1293,11 +1293,11 @@ async fn thread_start_omits_empty_instruction_overrides_from_model_request() -> 
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -1380,20 +1380,20 @@ async fn turn_start_tracks_thread_originator_in_analytics() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        codex_home.path(),
+        genex_home.path(),
         &server.uri(),
         &server.uri(),
     )?;
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?
         .replace("stream_max_retries = 0", "stream_max_retries = 1");
     std::fs::write(config_path, config)?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1546,15 +1546,15 @@ async fn code_mode_exec_emits_correlated_production_analytics() -> Result<()> {
         ],
     )
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::CodeModeOnly)
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1640,18 +1640,18 @@ async fn turn_profile_tracks_blocking_tool_and_follow_up_sampling() -> Result<()
     responses.push(create_final_assistant_message_sse_response("Done")?);
     let server = create_mock_responses_server_sequence(responses).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Goals)
         .with_root_config(&format!(
             "managed_auth_base_url = \"{}\"\ntools.update_plan.enabled = true",
             server.uri()
         ))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1826,11 +1826,11 @@ async fn turn_start_accepts_text_at_limit_with_mention_item() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -1874,11 +1874,11 @@ async fn turn_start_accepts_text_at_limit_with_mention_item() -> Result<()> {
 
 #[tokio::test]
 async fn turn_start_rejects_combined_oversized_text_input() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new("http://localhost/unused").write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new("http://localhost/unused").write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -1965,15 +1965,15 @@ async fn turn_start_rejects_combined_oversized_text_input() -> Result<()> {
 
 #[tokio::test]
 async fn turn_start_rejects_invalid_permission_selection_before_starting_turn() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new("http://localhost/unused").write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new("http://localhost/unused").write(genex_home.path())?;
     std::fs::write(
-        codex_home.path().join("managed_config.toml"),
+        genex_home.path().join("managed_config.toml"),
         "sandbox_mode = \"read-only\"\n",
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2034,12 +2034,12 @@ async fn turn_start_accepts_managed_network_profile_from_requirements() -> Resul
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::NetworkProxy)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         r#"
 default_permissions = "managed-network"
 
@@ -2060,7 +2060,7 @@ allow_local_binding = false
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2115,13 +2115,13 @@ async fn turn_start_enforces_managed_network_sandbox() -> Result<()> {
     );
 
     let server = responses::start_mock_server().await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::NetworkProxy)
         .enable_feature(Feature::UnifiedExec)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         r#"
 default_permissions = "managed-network"
 
@@ -2143,7 +2143,7 @@ allow_upstream_proxy = false
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
@@ -2330,11 +2330,11 @@ fn managed_network_sandbox_probe() -> Result<()> {
 #[tokio::test]
 async fn turn_start_rejects_unknown_environment_before_starting_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2356,7 +2356,7 @@ async fn turn_start_rejects_unknown_environment_before_starting_turn() -> Result
             environments: Some(vec![TurnEnvironmentParams {
                 environment_id: "missing".to_string(),
                 cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(
-                    codex_home.path().to_path_buf(),
+                    genex_home.path().to_path_buf(),
                 )?
                 .into(),
                 runtime_workspace_roots: None,
@@ -2397,11 +2397,11 @@ async fn turn_start_emits_notifications_and_accepts_model_override() -> Result<(
     ];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2503,11 +2503,11 @@ async fn turn_start_accepts_collaboration_mode_override_v2() -> Result<()> {
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2577,11 +2577,11 @@ async fn turn_start_uses_thread_feature_overrides_for_request_user_input_tool_de
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2663,13 +2663,13 @@ async fn turn_start_ignores_deprecated_multi_agent_mode() -> Result<()> {
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::MultiAgentV2)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2730,13 +2730,13 @@ async fn thread_start_ignores_deprecated_multi_agent_mode() -> Result<()> {
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::MultiAgentV2)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -2828,7 +2828,7 @@ async fn turn_start_exec_approval_toggle_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().to_path_buf();
+    let genex_home = tmp.path().to_path_buf();
     let bearer_token = "example_bearer_token_1234567890";
     let first_shell_command = vec![
         "python3".to_string(),
@@ -2868,10 +2868,10 @@ async fn turn_start_exec_approval_toggle_v2() -> Result<()> {
     // The first tool call explicitly requests escalation to force elicitation.
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
-        .write(codex_home.as_path())?;
+        .write(genex_home.as_path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.as_path())
+        .with_genex_home(genex_home.as_path())
         .build_initialized()
         .await?;
     let expected_environment_id = mcp.auto_env_params()?.environment_id;
@@ -3069,7 +3069,7 @@ async fn run_turn_start_exec_approval_rejection_v2(
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().to_path_buf();
+    let genex_home = tmp.path().to_path_buf();
     let bearer_token = "example_bearer_token_1234567890";
     let shell_command = vec![
         "python3".to_string(),
@@ -3095,10 +3095,10 @@ async fn run_turn_start_exec_approval_rejection_v2(
     let server = create_mock_responses_server_sequence(responses).await;
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
-        .write(codex_home.as_path())?;
+        .write(genex_home.as_path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.as_path())
+        .with_genex_home(genex_home.as_path())
         .build_initialized()
         .await?;
 
@@ -3228,9 +3228,9 @@ async fn turn_start_explicit_local_environment_updates_legacy_cwd_between_turns(
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
-    let rules_dir = codex_home.join("rules");
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
+    let rules_dir = genex_home.join("rules");
     std::fs::create_dir(&rules_dir)?;
     std::fs::write(
         rules_dir.join("default.rules"),
@@ -3262,10 +3262,10 @@ async fn turn_start_explicit_local_environment_updates_legacy_cwd_between_turns(
     let server = create_mock_responses_server_sequence(responses).await;
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -3413,8 +3413,8 @@ async fn turn_start_permission_profile_rebinds_runtime_workspace_roots_between_t
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let old_root = tmp.path().join("old-root");
     let new_root = tmp.path().join("new-root");
     std::fs::create_dir(&old_root)?;
@@ -3443,7 +3443,7 @@ async fn turn_start_permission_profile_rebinds_runtime_workspace_roots_between_t
     .await;
     let server_uri = server.uri();
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -3470,7 +3470,7 @@ stream_max_retries = 0
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -3556,15 +3556,15 @@ stream_max_retries = 0
 #[tokio::test]
 async fn turn_start_resolves_sticky_thread_local_environment_and_turn_overrides() -> Result<()> {
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
     let server = create_mock_responses_server_repeating_assistant("done").await;
-    MockResponsesConfig::new(&server.uri()).write(&codex_home)?;
+    MockResponsesConfig::new(&server.uri()).write(&genex_home)?;
     std::fs::write(
-        codex_home.join("environments.toml"),
+        genex_home.join("environments.toml"),
         r#"
 [[environments]]
 id = "remote"
@@ -3573,7 +3573,7 @@ url = "ws://127.0.0.1:1"
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         // This test owns environments.toml and explicitly compares local selections
         // with a configured remote environment, so auto env would change its subject.
         .without_auto_env()
@@ -3697,8 +3697,8 @@ async fn turn_start_file_change_approval_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -3717,10 +3717,10 @@ async fn turn_start_file_change_approval_v2() -> Result<()> {
         .with_sandbox_mode("read-only")
         // Snapshot startup is unrelated to the file-approval behavior under test.
         .disable_feature(Feature::ShellSnapshot)
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -3874,8 +3874,8 @@ async fn turn_start_does_not_stream_apply_patch_change_updates_without_feature_v
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -3916,10 +3916,10 @@ async fn turn_start_does_not_stream_apply_patch_change_updates_without_feature_v
         create_final_assistant_message_sse_response("patch applied")?,
     ];
     let server = create_mock_responses_server_sequence(responses).await;
-    MockResponsesConfig::new(&server.uri()).write(&codex_home)?;
+    MockResponsesConfig::new(&server.uri()).write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -3971,8 +3971,8 @@ async fn turn_start_streams_apply_patch_change_updates_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -4034,9 +4034,9 @@ async fn turn_start_streams_apply_patch_change_updates_v2() -> Result<()> {
         .disable_feature(Feature::Plugins)
         .disable_feature(Feature::RemoteModels)
         .disable_feature(Feature::ShellSnapshot)
-        .write(&codex_home)?;
-    write_models_cache(&codex_home).await?;
-    let cache_path = codex_home.join("models_cache.json");
+        .write(&genex_home)?;
+    write_models_cache(&genex_home).await?;
+    let cache_path = genex_home.join("models_cache.json");
     let mut cache: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(&cache_path)?)?;
     let models = cache["models"]
@@ -4051,7 +4051,7 @@ async fn turn_start_streams_apply_patch_change_updates_v2() -> Result<()> {
     std::fs::write(&cache_path, serde_json::to_string_pretty(&cache)?)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -4176,18 +4176,18 @@ async fn turn_start_emits_spawn_agent_item_with_model_metadata_v2() -> Result<()
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Collab)
         .with_root_config(&format!(
             "managed_auth_base_url = \"{}\"\ntools.update_plan.enabled = true",
             server.uri()
         ))
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4418,17 +4418,17 @@ async fn direct_input_to_multi_agent_v2_subagent_is_rejected(
         ]),
     )
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::MultiAgentV2)
         .enable_feature(Feature::Goals)
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
-        .write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4589,7 +4589,7 @@ async fn direct_input_to_multi_agent_v2_subagent_is_rejected(
                         "type": "command",
                         "source": "shell",
                         "command": "echo blocked",
-                        "cwd": codex_home.path(),
+                        "cwd": genex_home.path(),
                     },
                 },
             })),
@@ -4799,15 +4799,15 @@ async fn turn_start_emits_spawn_agent_item_with_effective_role_model_metadata_v2
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Collab)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     std::fs::write(
-        codex_home.path().join("custom-role.toml"),
+        genex_home.path().join("custom-role.toml"),
         format!("model = \"{ROLE_MODEL}\"\nmodel_reasoning_effort = \"{ROLE_REASONING_EFFORT}\"\n",),
     )?;
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let base_config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         &config_path,
@@ -4822,7 +4822,7 @@ config_file = "./custom-role.toml"
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -4924,8 +4924,8 @@ async fn turn_start_file_change_approval_accept_for_session_persists_v2() -> Res
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -4952,10 +4952,10 @@ async fn turn_start_file_change_approval_accept_for_session_persists_v2() -> Res
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .with_sandbox_mode("read-only")
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -5163,8 +5163,8 @@ async fn run_turn_start_file_change_approval_rejection_v2(
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -5181,10 +5181,10 @@ async fn run_turn_start_file_change_approval_rejection_v2(
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .with_sandbox_mode("read-only")
-        .write(&codex_home)?;
+        .write(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(&codex_home)
+        .with_genex_home(&genex_home)
         .build_initialized()
         .await?;
 
@@ -5313,14 +5313,14 @@ async fn command_execution_notifications_include_process_id() -> Result<()> {
         create_final_assistant_message_sse_response("done")?,
     ];
     let server = create_mock_responses_server_sequence(responses).await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("danger-full-access")
         .enable_feature(Feature::UnifiedExec)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -5421,13 +5421,13 @@ async fn turn_start_with_elevated_override_does_not_persist_project_trust() -> R
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
 
     let workspace = TempDir::new()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -5459,15 +5459,15 @@ async fn turn_start_with_elevated_override_does_not_persist_project_trust() -> R
     )
     .await??;
 
-    let config_toml = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config_toml = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert!(!config_toml.contains("trust_level = \"trusted\""));
     assert!(!config_toml.contains(&workspace.path().display().to_string()));
 
     Ok(())
 }
 
-fn write_test_skill(codex_home: &Path, name: &str) -> std::io::Result<()> {
-    let skill_dir = codex_home.join("skills").join(name);
+fn write_test_skill(genex_home: &Path, name: &str) -> std::io::Result<()> {
+    let skill_dir = genex_home.join("skills").join(name);
     std::fs::create_dir_all(&skill_dir)?;
     std::fs::write(
         skill_dir.join("SKILL.md"),

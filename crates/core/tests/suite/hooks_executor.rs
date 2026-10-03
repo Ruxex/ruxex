@@ -306,7 +306,7 @@ async fn executor_stop_hook_rejects_mismatched_environment() -> Result<()> {
             drop(listener);
             let runtime_paths = ExecServerRuntimePaths::new(
                 std::env::current_exe()?,
-                /*codex_linux_sandbox_exe*/ None,
+                /*genex_linux_sandbox_exe*/ None,
             )?;
             let http_client_factory = fixture.test.config.http_client_factory();
             let executor_url_for_server = executor_url.clone();

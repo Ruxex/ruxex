@@ -23,16 +23,16 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn thread_status_changed_emits_runtime_updates() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let responses = vec![create_final_assistant_message_sse_response("done")?];
     let server = create_mock_responses_server_sequence(responses).await;
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .enable_feature(Feature::CollaborationModes)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("RUST_LOG", Some("info"))])
         .build_initialized()
         .await?;
@@ -127,16 +127,16 @@ async fn thread_status_changed_emits_runtime_updates() -> Result<()> {
 
 #[tokio::test]
 async fn thread_status_changed_can_be_opted_out() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let responses = vec![create_final_assistant_message_sse_response("done")?];
     let server = create_mock_responses_server_sequence(responses).await;
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .enable_feature(Feature::CollaborationModes)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     let message = timeout(

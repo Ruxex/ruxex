@@ -267,7 +267,7 @@ pub use ipc_framed::write_frame;
 #[cfg(target_os = "windows")]
 pub use logging::current_log_file_path;
 #[cfg(target_os = "windows")]
-pub use logging::current_log_file_path_for_codex_home;
+pub use logging::current_log_file_path_for_genex_home;
 #[cfg(target_os = "windows")]
 pub use logging::log_file_path_for_utc_date;
 #[cfg(target_os = "windows")]
@@ -445,7 +445,7 @@ mod windows_impl {
     use super::logging::log_success;
     use super::process::ConsoleMode;
     use super::process::create_process_as_user;
-    use super::sandbox_utils::ensure_codex_home_exists;
+    use super::sandbox_utils::ensure_genex_home_exists;
     use super::spawn_prep::LegacyAclSids;
     use super::spawn_prep::SpawnPrepOptions;
     use super::spawn_prep::allow_null_device_for_workspace_write;
@@ -559,7 +559,7 @@ mod windows_impl {
     pub fn run_windows_sandbox_capture(
         permission_profile: &PermissionProfile,
         workspace_roots: &[AbsolutePathBuf],
-        codex_home: &Path,
+        genex_home: &Path,
         command: Vec<String>,
         cwd: &Path,
         env_map: HashMap<String, String>,
@@ -570,7 +570,7 @@ mod windows_impl {
         run_windows_sandbox_capture_with_filesystem_overrides(
             permission_profile,
             workspace_roots,
-            codex_home,
+            genex_home,
             command,
             cwd,
             env_map,
@@ -586,7 +586,7 @@ mod windows_impl {
     pub fn run_windows_sandbox_capture_with_filesystem_overrides(
         permission_profile: &PermissionProfile,
         workspace_roots: &[AbsolutePathBuf],
-        codex_home: &Path,
+        genex_home: &Path,
         command: Vec<String>,
         cwd: &Path,
         mut env_map: HashMap<String, String>,
@@ -607,7 +607,7 @@ mod windows_impl {
         let common = prepare_legacy_spawn_context(
             permission_profile,
             workspace_roots,
-            codex_home,
+            genex_home,
             cwd,
             &mut env_map,
             &command,
@@ -631,17 +631,17 @@ mod windows_impl {
             anyhow::bail!("deny-read overrides require the elevated Windows sandbox backend");
         }
         let capability_roots =
-            legacy_session_capability_roots(&permissions, &current_dir, &env_map, codex_home);
+            legacy_session_capability_roots(&permissions, &current_dir, &env_map, genex_home);
         let security = prepare_legacy_session_security(
             uses_write_capabilities,
-            codex_home,
+            genex_home,
             cwd,
             capability_roots,
         )?;
         allow_null_device_for_workspace_write(uses_write_capabilities);
         apply_legacy_session_acl_rules(
             &permissions,
-            codex_home,
+            genex_home,
             &current_dir,
             &env_map,
             &additional_deny_read_paths,
@@ -817,7 +817,7 @@ mod windows_impl {
     pub fn run_windows_sandbox_legacy_preflight(
         permission_profile: &PermissionProfile,
         workspace_roots: &[AbsolutePathBuf],
-        codex_home: &Path,
+        genex_home: &Path,
         cwd: &Path,
         env_map: &HashMap<String, String>,
     ) -> Result<()> {
@@ -831,14 +831,14 @@ mod windows_impl {
             return Ok(());
         }
 
-        ensure_codex_home_exists(codex_home)?;
+        ensure_genex_home_exists(genex_home)?;
         let current_dir = cwd.to_path_buf();
         let capability_roots =
-            legacy_session_capability_roots(&permissions, &current_dir, env_map, codex_home);
-        let write_root_sids = root_capability_sids(codex_home, cwd, capability_roots)?;
+            legacy_session_capability_roots(&permissions, &current_dir, env_map, genex_home);
+        let write_root_sids = root_capability_sids(genex_home, cwd, capability_roots)?;
         apply_legacy_session_acl_rules(
             &permissions,
-            codex_home,
+            genex_home,
             &current_dir,
             env_map,
             &[],
@@ -941,7 +941,7 @@ mod stub {
     pub fn run_windows_sandbox_capture(
         _permission_profile: &PermissionProfile,
         _workspace_roots: &[AbsolutePathBuf],
-        _codex_home: &Path,
+        _genex_home: &Path,
         _command: Vec<String>,
         _cwd: &Path,
         _env_map: HashMap<String, String>,
@@ -955,7 +955,7 @@ mod stub {
     pub fn run_windows_sandbox_legacy_preflight(
         _permission_profile: &PermissionProfile,
         _workspace_roots: &[AbsolutePathBuf],
-        _codex_home: &Path,
+        _genex_home: &Path,
         _cwd: &Path,
         _env_map: &HashMap<String, String>,
     ) -> Result<()> {

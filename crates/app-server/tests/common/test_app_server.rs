@@ -129,10 +129,10 @@ pub struct TestAppServer {
     auto_env: Option<TestEnv>,
     json_logs: JsonLogCapture,
     // Fields drop in declaration order. Tear down the delayed child before
-    // removing an owned CODEX_HOME that may still be its cwd on Windows.
+    // removing an owned GENEX_HOME that may still be its cwd on Windows.
     _delayed_exec_server: Option<()>,
     _attribution_settings_server: Option<MockServer>,
-    _owned_codex_home: Option<TempDir>,
+    _owned_genex_home: Option<TempDir>,
 }
 
 pub const DEFAULT_CLIENT_NAME: &str = "codex-app-server-tests";
@@ -144,11 +144,11 @@ const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(25);
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 impl TestAppServer {
-    /// Starts building a server with a temporary CODEX_HOME and the standard
+    /// Starts building a server with a temporary GENEX_HOME and the standard
     /// automatic test environment.
     pub fn builder() -> TestAppServerBuilder {
         TestAppServerBuilder {
-            codex_home: None,
+            genex_home: None,
             environment: TestAppServerEnvironment::Auto,
             program: None,
             env_overrides: Vec::new(),
@@ -221,7 +221,7 @@ impl TestAppServer {
     }
 
     async fn new_with_program_env_and_args(
-        codex_home: &Path,
+        genex_home: &Path,
         program: &Path,
         env_overrides: &[(&str, Option<&str>)],
         args: &[&str],
@@ -231,13 +231,13 @@ impl TestAppServer {
         cmd.stdin(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
-        cmd.current_dir(codex_home);
-        cmd.env("CODEX_HOME", codex_home);
+        cmd.current_dir(genex_home);
+        cmd.env("GENEX_HOME", genex_home);
         cmd.env("RUST_LOG", "warn");
         // Keep integration tests isolated from host managed configuration.
         cmd.env(
             "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            codex_home.join("managed_config.toml"),
+            genex_home.join("managed_config.toml"),
         );
         cmd.env_remove(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR);
         cmd.args(args);
@@ -300,7 +300,7 @@ impl TestAppServer {
             json_logs,
             _delayed_exec_server: None,
             _attribution_settings_server: None,
-            _owned_codex_home: None,
+            _owned_genex_home: None,
         })
     }
 
@@ -1543,7 +1543,7 @@ impl TestAppServer {
 
 /// Builder for TestAppServer.
 pub struct TestAppServerBuilder {
-    codex_home: Option<PathBuf>,
+    genex_home: Option<PathBuf>,
     environment: TestAppServerEnvironment,
     program: Option<PathBuf>,
     env_overrides: Vec<(String, Option<String>)>,
@@ -1557,9 +1557,9 @@ enum TestAppServerEnvironment {
 }
 
 impl TestAppServerBuilder {
-    /// Uses this existing CODEX_HOME instead of a temporary one.
-    pub fn with_codex_home(mut self, codex_home: &Path) -> Self {
-        self.codex_home = Some(codex_home.to_path_buf());
+    /// Uses this existing GENEX_HOME instead of a temporary one.
+    pub fn with_genex_home(mut self, genex_home: &Path) -> Self {
+        self.genex_home = Some(genex_home.to_path_buf());
         self
     }
 
@@ -1641,29 +1641,29 @@ impl TestAppServerBuilder {
         Ok(server)
     }
 
-    /// Builds a server with a temporary CODEX_HOME and automatic environment
+    /// Builds a server with a temporary GENEX_HOME and automatic environment
     /// by default.
     pub async fn build(self) -> anyhow::Result<TestAppServer> {
         let Self {
-            codex_home,
+            genex_home,
             environment,
             program,
             env_overrides,
             args,
             exec_server_delay,
         } = self;
-        let (codex_home, owned_codex_home) = match codex_home {
-            Some(codex_home) => (codex_home, None),
+        let (genex_home, owned_genex_home) = match genex_home {
+            Some(genex_home) => (genex_home, None),
             None => {
-                let owned_codex_home = TempDir::new()?;
+                let owned_genex_home = TempDir::new()?;
                 (
-                    owned_codex_home.path().to_path_buf(),
-                    Some(owned_codex_home),
+                    owned_genex_home.path().to_path_buf(),
+                    Some(owned_genex_home),
                 )
             }
         };
-        let attribution_settings_server = if codex_home.join("auth.json").is_file() {
-            let config_path = codex_home.join("config.toml");
+        let attribution_settings_server = if genex_home.join("auth.json").is_file() {
+            let config_path = genex_home.join("config.toml");
             let config = std::fs::read_to_string(&config_path)?;
             if config
                 .lines()
@@ -1698,7 +1698,7 @@ impl TestAppServerBuilder {
         };
         let (auto_env, delayed_exec_server) = match environment {
             TestAppServerEnvironment::Auto => {
-                let environments_toml = codex_home.join("environments.toml");
+                let environments_toml = genex_home.join("environments.toml");
                 ensure!(
                     !environments_toml.try_exists().with_context(|| format!(
                         "check whether {} exists",
@@ -1738,14 +1738,14 @@ impl TestAppServerBuilder {
             .collect::<Vec<_>>();
         let args = args.iter().map(String::as_str).collect::<Vec<_>>();
         let mut app_server = TestAppServer::new_with_program_env_and_args(
-            &codex_home,
+            &genex_home,
             &program,
             &env_overrides,
             &args,
         )
         .await?;
         app_server.auto_env = auto_env;
-        app_server._owned_codex_home = owned_codex_home;
+        app_server._owned_genex_home = owned_genex_home;
         app_server._delayed_exec_server = delayed_exec_server;
         app_server._attribution_settings_server = attribution_settings_server;
         Ok(app_server)

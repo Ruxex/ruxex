@@ -144,7 +144,7 @@ async fn create_replacement_recorder(
     writer_lock: super::WriterLockGuard,
 ) -> ThreadStoreResult<RolloutRecorder> {
     let config = RolloutConfig {
-        codex_home: store.config.codex_home.clone(),
+        genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd: source_meta.cwd.clone(),
         model_provider_id: source_meta

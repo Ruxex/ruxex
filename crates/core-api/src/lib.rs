@@ -58,7 +58,7 @@ pub use genex_core::config::NetworkProxySpec;
 pub use genex_core::config::Permissions;
 pub use genex_core::config::TerminalResizeReflowConfig;
 pub use genex_core::config::ThreadStoreConfig;
-pub use genex_core::config::find_codex_home;
+pub use genex_core::config::find_genex_home;
 pub use genex_core::init_state_db;
 pub use genex_core::local_agent_graph_store_from_state_db;
 pub use genex_core::passthrough_image_store;

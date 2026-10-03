@@ -64,7 +64,7 @@ pub fn resolve_sandbox_users_group_sid() -> Result<Vec<u8>> {
 }
 
 pub(super) fn provision_sandbox_users(
-    codex_home: &Path,
+    genex_home: &Path,
     offline_username: &str,
     online_username: &str,
     new_user_flags: u32,
@@ -88,7 +88,7 @@ pub(super) fn provision_sandbox_users(
     ensure_sandbox_user(offline_username, &offline_password, new_user_flags, log)?;
     ensure_sandbox_user(online_username, &online_password, new_user_flags, log)?;
     write_secrets(
-        codex_home,
+        genex_home,
         offline_username,
         &offline_password,
         online_username,
@@ -312,14 +312,14 @@ struct SetupMarker {
 }
 
 fn write_secrets(
-    codex_home: &Path,
+    genex_home: &Path,
     offline_user: &str,
     offline_pwd: &str,
     online_user: &str,
     online_pwd: &str,
     mode: SetupMode,
 ) -> Result<()> {
-    let secrets_dir = sandbox_secrets_dir(codex_home);
+    let secrets_dir = sandbox_secrets_dir(genex_home);
     std::fs::create_dir_all(&secrets_dir).map_err(|err| {
         anyhow::Error::new(SetupFailure::new(
             SetupErrorCode::HelperUsersFileWriteFailed,
@@ -386,11 +386,11 @@ pub(super) enum PreparedSetupMarker {
 // Create the final marker with its protected ACL. The empty file intentionally fails readiness
 // checks until setup succeeds. Only service provisioning pins it for the entire operation.
 pub(super) fn prepare_setup_marker(
-    codex_home: &Path,
+    genex_home: &Path,
     real_user: &str,
     mode: SetupMode,
 ) -> Result<PreparedSetupMarker> {
-    let marker_path = sandbox_dir(codex_home).join("setup_marker.json");
+    let marker_path = sandbox_dir(genex_home).join("setup_marker.json");
     match std::fs::remove_file(&marker_path) {
         Ok(()) => {}
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
@@ -478,7 +478,7 @@ pub(super) fn prepare_setup_marker(
 
 pub(super) fn commit_setup_marker(
     file: PreparedSetupMarker,
-    codex_home: &Path,
+    genex_home: &Path,
     offline_user: &str,
     online_user: &str,
     proxy_ports: &[u16],
@@ -494,7 +494,7 @@ pub(super) fn commit_setup_marker(
         read_roots: Vec::new(),
         write_roots: Vec::new(),
     };
-    let marker_path = sandbox_dir(codex_home).join("setup_marker.json");
+    let marker_path = sandbox_dir(genex_home).join("setup_marker.json");
     let marker_json = serde_json::to_vec_pretty(&marker).map_err(|err| {
         anyhow::Error::new(SetupFailure::new(
             SetupErrorCode::HelperSetupMarkerWriteFailed,

@@ -53,13 +53,13 @@ async fn turn_start_forwards_client_metadata_to_responses_request_v2() -> Result
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -163,13 +163,13 @@ async fn turn_start_sends_fork_lineage_in_turn_metadata_for_thread_fork_v2() -> 
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let source_thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -178,7 +178,7 @@ async fn turn_start_sends_fork_lineage_in_turn_metadata_for_thread_fork_v2() -> 
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -245,13 +245,13 @@ async fn review_start_sends_parent_lineage_in_turn_metadata_for_thread_fork_v2()
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let source_thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -260,7 +260,7 @@ async fn review_start_sends_parent_lineage_in_turn_metadata_for_thread_fork_v2()
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -336,19 +336,19 @@ async fn turn_start_sends_nested_subagent_lineage_after_cold_thread_resume_v2() 
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let root_thread_id = CoreThreadId::new();
     let root_thread_id_str = root_thread_id.to_string();
     let parent_thread_id = CoreThreadId::new();
     let parent_thread_id_str = parent_thread_id.to_string();
     let subagent_thread_id = create_fake_parented_rollout_with_source(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved subagent message",
@@ -360,7 +360,7 @@ async fn turn_start_sends_nested_subagent_lineage_after_cold_thread_resume_v2() 
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -453,7 +453,7 @@ async fn turn_start_sends_nested_subagent_lineage_after_cold_thread_resume_v2() 
 async fn turn_steer_updates_client_metadata_on_follow_up_responses_request_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
     let server = responses::start_mock_server().await;
     let first_response = responses::sse_response(responses::sse(vec![
@@ -473,11 +473,11 @@ async fn turn_steer_updates_client_metadata_on_follow_up_responses_request_v2() 
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
-    mount_analytics_capture(&server, codex_home.path()).await?;
+        .write(genex_home.path())?;
+    mount_analytics_capture(&server, genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -601,13 +601,13 @@ async fn turn_start_forwards_client_metadata_to_responses_websocket_request_body
     ]])
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&websocket_server.uri().replacen("ws://", "http://", 1))
         .with_provider_config("supports_websockets = true")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

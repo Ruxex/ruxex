@@ -414,7 +414,7 @@ async fn run_outbound_router(
 async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClientHandle> {
     args.config.auth_config().validate()?;
     let channel_capacity = args.channel_capacity.max(1);
-    let installation_id = resolve_installation_id(&args.config.codex_home).await?;
+    let installation_id = resolve_installation_id(&args.config.genex_home).await?;
     let auth_manager =
         AuthManager::shared_from_config(args.config.as_ref(), args.enable_codex_api_key_env)
             .await
@@ -451,7 +451,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
 
         let processor_outgoing = Arc::clone(&outgoing_message_sender);
         let config_manager = ConfigManager::new(
-            args.config.codex_home.to_path_buf(),
+            args.config.genex_home.to_path_buf(),
             args.cli_overrides,
             args.loader_overrides,
             args.strict_config,
@@ -797,15 +797,15 @@ mod tests {
     use std::path::Path;
     use tempfile::TempDir;
 
-    async fn build_test_config(codex_home: &Path) -> Config {
+    async fn build_test_config(genex_home: &Path) -> Config {
         match ConfigBuilder::default()
-            .codex_home(codex_home.to_path_buf())
+            .genex_home(genex_home.to_path_buf())
             .build()
             .await
         {
             Ok(config) => config,
-            Err(_) => Config::load_default_with_cli_overrides_for_codex_home(
-                codex_home.to_path_buf(),
+            Err(_) => Config::load_default_with_cli_overrides_for_genex_home(
+                genex_home.to_path_buf(),
                 Vec::new(),
             )
             .await
@@ -817,8 +817,8 @@ mod tests {
         session_source: SessionSource,
         channel_capacity: usize,
     ) -> InProcessClientHandle {
-        let codex_home = TempDir::new().expect("temp dir");
-        let config = Arc::new(build_test_config(codex_home.path()).await);
+        let genex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config(genex_home.path()).await);
         let state_db = genex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
@@ -846,7 +846,7 @@ mod tests {
             channel_capacity,
         };
         let mut client = start(args).await.expect("in-process runtime should start");
-        client._test_genex_home = Some(codex_home);
+        client._test_genex_home = Some(genex_home);
         client
     }
 

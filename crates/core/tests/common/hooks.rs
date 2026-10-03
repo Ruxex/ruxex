@@ -26,12 +26,12 @@ pub fn trust_discovered_hooks(config: &mut Config) {
 
 pub fn trust_hooks(config: &mut Config, hooks: Vec<HookListEntry>) {
     config.config_layer_stack =
-        trusted_config_layer_stack(&config.config_layer_stack, &config.codex_home, hooks);
+        trusted_config_layer_stack(&config.config_layer_stack, &config.genex_home, hooks);
 }
 
 pub fn trusted_config_layer_stack(
     config_layer_stack: &ConfigLayerStack,
-    codex_home: &AbsolutePathBuf,
+    genex_home: &AbsolutePathBuf,
     hooks: Vec<HookListEntry>,
 ) -> ConfigLayerStack {
     let mut user_config = config_layer_stack
@@ -64,6 +64,6 @@ pub fn trusted_config_layer_stack(
     }
 
     config_layer_stack
-        .with_user_config(&codex_home.join(CONFIG_TOML_FILE), user_config)
+        .with_user_config(&genex_home.join(CONFIG_TOML_FILE), user_config)
         .expect("hook user config should be valid")
 }

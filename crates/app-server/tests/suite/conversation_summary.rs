@@ -72,9 +72,9 @@ fn normalized_summary_path(mut summary: ConversationSummary) -> Result<Conversat
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_conversation_summary_by_thread_id_reads_rollout() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         FILENAME_TS,
         META_RFC3339,
         PREVIEW,
@@ -85,14 +85,14 @@ async fn get_conversation_summary_by_thread_id_reads_rollout() -> Result<()> {
     let expected = expected_summary(
         thread_id,
         normalized_canonical_path(rollout_path(
-            codex_home.path(),
+            genex_home.path(),
             FILENAME_TS,
             &conversation_id,
         ))?,
     );
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -112,9 +112,9 @@ async fn get_conversation_summary_by_thread_id_reads_rollout() -> Result<()> {
 
 #[tokio::test]
 async fn get_conversation_summary_by_thread_id_reads_pathless_store_thread() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
-    create_config_toml_with_in_memory_thread_store(codex_home.path(), &store_id)?;
+    create_config_toml_with_in_memory_thread_store(genex_home.path(), &store_id)?;
     let store = InMemoryThreadStore::for_id(store_id.clone());
     let _in_memory_store = InMemoryThreadStoreId { store_id };
     let thread_id = ThreadId::from_string("00000000-0000-4000-8000-000000000125")?;
@@ -146,8 +146,8 @@ async fn get_conversation_summary_by_thread_id_reads_pathless_store_thread() -> 
 
     let loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .genex_home(genex_home.path().to_path_buf())
+        .fallback_cwd(Some(genex_home.path().to_path_buf()))
         .loader_overrides(loader_overrides.clone())
         .build()
         .await?;
@@ -201,11 +201,11 @@ async fn get_conversation_summary_by_thread_id_reads_pathless_store_thread() -> 
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn get_conversation_summary_by_relative_rollout_path_resolves_from_codex_home() -> Result<()>
+async fn get_conversation_summary_by_relative_rollout_path_resolves_from_genex_home() -> Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         FILENAME_TS,
         META_RFC3339,
         PREVIEW,
@@ -213,12 +213,12 @@ async fn get_conversation_summary_by_relative_rollout_path_resolves_from_codex_h
         /*git_info*/ None,
     )?;
     let thread_id = ThreadId::from_string(&conversation_id)?;
-    let rollout_path = rollout_path(codex_home.path(), FILENAME_TS, &conversation_id);
-    let relative_path = rollout_path.strip_prefix(codex_home.path())?.to_path_buf();
+    let rollout_path = rollout_path(genex_home.path(), FILENAME_TS, &conversation_id);
+    let relative_path = rollout_path.strip_prefix(genex_home.path())?.to_path_buf();
     let expected = expected_summary(thread_id, normalized_canonical_path(rollout_path)?);
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -247,12 +247,12 @@ impl Drop for InMemoryThreadStoreId {
 }
 
 fn create_config_toml_with_in_memory_thread_store(
-    codex_home: &Path,
+    genex_home: &Path,
     store_id: &str,
 ) -> std::io::Result<()> {
     MockResponsesConfig::new("http://127.0.0.1:1")
         .with_root_config(&format!(
             "experimental_thread_store = {{ type = \"in_memory\", id = \"{store_id}\" }}"
         ))
-        .write(codex_home)
+        .write(genex_home)
 }

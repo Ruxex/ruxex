@@ -17,7 +17,7 @@ use tempfile::TempDir;
 
 struct RepositoryFixture {
     _temp_dir: TempDir,
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     repository: PathBuf,
 }
 
@@ -25,21 +25,21 @@ impl RepositoryFixture {
     fn new() -> Self {
         let temp_dir = tempfile::tempdir().expect("create temporary test directory");
         let temp_root = dunce::canonicalize(temp_dir.path()).expect("canonicalize temporary root");
-        let codex_home = temp_root.join("codex-home");
+        let genex_home = temp_root.join("genex-home");
         let repository = temp_root.join("project");
-        fs::create_dir_all(&codex_home).expect("create Codex home");
+        fs::create_dir_all(&genex_home).expect("create Genex home");
         initialize_repository(&repository);
 
         Self {
             _temp_dir: temp_dir,
-            codex_home,
+            genex_home,
             repository,
         }
     }
 
     fn manager(&self) -> WorktreeManager {
         let settings =
-            WorktreeSettings::from_desktop_config(&self.codex_home, /*desktop*/ None)
+            WorktreeSettings::from_desktop_config(&self.genex_home, /*desktop*/ None)
                 .expect("load default worktree settings");
         WorktreeManager::new(settings)
     }
@@ -169,17 +169,17 @@ fn run_git(repository: &Path, args: &[&str]) -> String {
 #[test]
 fn cli_creation_shares_default_and_custom_desktop_pools_without_enabling_cleanup() {
     let fixture = RepositoryFixture::new();
-    for root in [None, Some(fixture.codex_home.join("custom-desktop"))] {
+    for root in [None, Some(fixture.genex_home.join("custom-desktop"))] {
         let desktop =
             root.map(|root| HashMap::from([("git-worktree-root".to_owned(), json!(root))]));
         let desktop_settings =
-            WorktreeSettings::from_desktop_config(&fixture.codex_home, desktop.as_ref())
+            WorktreeSettings::from_desktop_config(&fixture.genex_home, desktop.as_ref())
                 .expect("resolve desktop settings");
         let mut cli_desktop = desktop.unwrap_or_default();
         cli_desktop.insert("worktree-auto-cleanup-enabled".to_owned(), json!("unused"));
         cli_desktop.insert("worktree-keep-count".to_owned(), json!(0));
         let manager = WorktreeManager::new(
-            WorktreeSettings::for_cli(&fixture.codex_home, Some(&cli_desktop))
+            WorktreeSettings::for_cli(&fixture.genex_home, Some(&cli_desktop))
                 .expect("resolve CLI settings"),
         );
         let worktree = create_worktree(&manager, &fixture.repository, /*base*/ None)
@@ -299,7 +299,7 @@ fn creation_uses_desktop_hash_bucket_layout_and_detached_head() {
     );
     assert_eq!(
         worktree.root.parent().and_then(Path::parent),
-        Some(fixture.codex_home.join("worktrees").as_path())
+        Some(fixture.genex_home.join("worktrees").as_path())
     );
     assert_eq!(
         worktree.root.file_name(),
@@ -399,7 +399,7 @@ fn creation_rejects_a_working_directory_that_escapes_through_a_base_symlink() {
     let fixture = RepositoryFixture::new();
     let manager = fixture.manager();
     let original = run_git(&fixture.repository, &["rev-parse", "HEAD"]);
-    let outside = fixture.codex_home.join("outside-worktree");
+    let outside = fixture.genex_home.join("outside-worktree");
     fs::create_dir_all(&outside).expect("create outside directory");
     let linked_directory = fixture.repository.join("nested/component");
     fs::remove_dir_all(&linked_directory).expect("remove existing tracked directory");
@@ -433,7 +433,7 @@ fn creation_ignores_inherited_git_environment() {
         let source = root.join("project");
         let source_cwd = source.join("nested/component");
         let settings =
-            WorktreeSettings::from_desktop_config(&root.join("codex-home"), /*desktop*/ None)
+            WorktreeSettings::from_desktop_config(&root.join("genex-home"), /*desktop*/ None)
                 .expect("fixture operation succeeds");
         let base = default_worktree_base(&source_cwd).expect("resolve source default");
         assert_eq!(base, "refs/remotes/origin/source-default");
@@ -449,7 +449,7 @@ fn creation_ignores_inherited_git_environment() {
     }
 
     let fixture = RepositoryFixture::new();
-    let other = fixture.codex_home.join("other-repository");
+    let other = fixture.genex_home.join("other-repository");
     initialize_repository(&other);
     fs::write(other.join("other.txt"), "different repository").expect("fixture operation succeeds");
     run_git(&other, &["add", "."]);
@@ -504,7 +504,7 @@ fn creation_disables_filters_from_destination_conditional_config() {
     .expect("write checkout attributes");
     run_git(&fixture.repository, &["add", "."]);
     commit(&fixture.repository, "checkout attributes");
-    let config = fixture.codex_home.join("destination.gitconfig");
+    let config = fixture.genex_home.join("destination.gitconfig");
     fs::write(
         &config,
         "[filter \"late\"]\nsmudge = codex-worktree-nonexistent-filter\nrequired = true\n",
@@ -621,7 +621,7 @@ fn creation_rejects_relative_roots_before_resolving_the_source() {
     let directory = TempDir::new().expect("create temporary directory");
     let source = directory.path().join("missing-source");
     let settings = WorktreeSettings::from_desktop_config(
-        Path::new("relative-codex-home"),
+        Path::new("relative-genex-home"),
         /*desktop*/ None,
     )
     .expect("load settings with a relative default root");
@@ -638,7 +638,7 @@ fn creation_rejects_relative_roots_before_resolving_the_source() {
 fn creation_fails_for_a_directory_outside_a_git_repository() {
     let fixture = RepositoryFixture::new();
     let manager = fixture.manager();
-    let non_repository = fixture.codex_home.join("not-a-repository");
+    let non_repository = fixture.genex_home.join("not-a-repository");
     fs::create_dir_all(&non_repository).expect("create non-repository directory");
 
     assert!(
@@ -662,7 +662,7 @@ fn listing_rejects_a_primary_checkout_even_when_its_path_matches_the_layout() {
         "a primary checkout under a matching path is not a managed linked worktree",
     );
 
-    let git_dir = fixture.codex_home.join("separate-git-dir");
+    let git_dir = fixture.genex_home.join("separate-git-dir");
     run_git(
         &primary,
         &[
@@ -717,7 +717,7 @@ fn listing_rejects_a_stale_registration_reused_by_another_repository() {
     let stale = create_worktree(&manager, &fixture.repository, /*base*/ None)
         .expect("fixture operation succeeds");
     fs::remove_dir_all(&stale.root).expect("fixture operation succeeds");
-    let other = fixture.codex_home.join("other-repository");
+    let other = fixture.genex_home.join("other-repository");
     initialize_repository(&other);
     run_git(
         &other,
@@ -818,7 +818,7 @@ fn listing_rejects_checkout_and_bucket_aliases_but_allows_a_root_alias() {
         expected,
     );
 
-    let aliased_root = fixture.codex_home.join("aliased-worktrees");
+    let aliased_root = fixture.genex_home.join("aliased-worktrees");
     std::os::unix::fs::symlink(&manager.settings().root, &aliased_root)
         .expect("alias managed root");
     let aliased_manager = WorktreeManager::new(WorktreeSettings {
@@ -888,7 +888,7 @@ fn listing_only_includes_managed_worktrees_for_the_requested_repository() {
     let second = create_worktree(&manager, &fixture.repository, /*base*/ None)
         .expect("create second worktree");
 
-    let other_repository = fixture.codex_home.join("other-project");
+    let other_repository = fixture.genex_home.join("other-project");
     initialize_repository(&other_repository);
     let unrelated = create_worktree(&manager, &other_repository, /*base*/ None)
         .expect("create unrelated repository worktree");
@@ -954,7 +954,7 @@ fn creation_listing_and_thread_binding_preserve_native_repository_paths() {
         #[cfg(not(target_os = "macos"))]
         OsString::from_vec(b"project-\xff".to_vec()),
     ] {
-        let repository = fixture.codex_home.join(&name);
+        let repository = fixture.genex_home.join(&name);
         initialize_repository(&repository);
         let worktree = create_worktree(&manager, &repository, /*base*/ None)
             .expect("create managed worktree with a native repository path");

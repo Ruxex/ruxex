@@ -315,9 +315,9 @@ fn executor_catalog(skills: &[(&str, &str)]) -> SkillCatalog {
     }
 }
 
-fn write_host_skills(codex_home: &std::path::Path, skills: &[(&str, &str)]) -> Result<()> {
+fn write_host_skills(genex_home: &std::path::Path, skills: &[(&str, &str)]) -> Result<()> {
     for (name, description) in skills {
-        let skill_dir = codex_home.join("skills").join(name);
+        let skill_dir = genex_home.join("skills").join(name);
         std::fs::create_dir_all(&skill_dir)?;
         std::fs::write(
             skill_dir.join("SKILL.md"),
@@ -392,7 +392,7 @@ fn configure_catalog_test(config: &mut Config) {
         .expect("executor capability discovery should be configurable in tests");
     // A user layer also discovers the real `$HOME/.agents/skills`. Use a temporary system layer so
     // exact catalog and omission assertions only see the skills written under this test's home.
-    let system_config_path = config.codex_home.join("config.toml");
+    let system_config_path = config.genex_home.join("config.toml");
     config.config_layer_stack = ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::System {
@@ -520,14 +520,14 @@ async fn rendered_catalogs_for_turns(
             .collect(),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     if !host_skills.is_empty() {
-        write_host_skills(codex_home.path(), host_skills)?;
+        write_host_skills(genex_home.path(), host_skills)?;
     }
     let (extensions, event_rx) =
         catalog_extensions(executor_catalog(executor_skills), !host_skills.is_empty());
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", move |model_info| {
             model_info.context_window = Some(context_window);
@@ -563,7 +563,7 @@ async fn rendered_catalogs_for_turns(
         CapturedExtensionEvent::Warning(warning) => Some(warning.message),
         CapturedExtensionEvent::Event(_) => None,
     }));
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     Ok((developer_texts, client_warning_messages))
 }
 
@@ -587,8 +587,8 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
-    let host_skill_dir = codex_home.path().join("skills/host-search");
+    let genex_home = Arc::new(TempDir::new()?);
+    let host_skill_dir = genex_home.path().join("skills/host-search");
     std::fs::create_dir_all(&host_skill_dir)?;
     let host_skill_path = host_skill_dir.join("SKILL.md");
     std::fs::write(
@@ -598,7 +598,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
         ),
     )?;
     let host_skill_path = dunce::canonicalize(host_skill_path)?;
-    let plugin_root = codex_home.path().join("plugins/cache/test/sample/local");
+    let plugin_root = genex_home.path().join("plugins/cache/test/sample/local");
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
     std::fs::write(
         plugin_root.join(".codex-plugin/plugin.json"),
@@ -617,7 +617,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
         r#"{"apps":{"sample":{"id":"calendar"}}}"#,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\nplugins = true\n\n[plugins.\"sample@test\"]\nenabled = true\n",
     )?;
 
@@ -630,7 +630,7 @@ async fn capability_sections_render_in_order_with_host_repo_and_plugin_skills() 
         shadow_selection_enabled: config.features.enabled(Feature::SkillSearch),
     });
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(Arc::new(extensions.build()))
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_workspace_setup(|cwd, fs| async move {
@@ -770,8 +770,8 @@ async fn agent_plugin_skill_prompt_stays_bounded_without_skills_extension() -> R
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
-    let plugin_root = codex_home
+    let genex_home = Arc::new(TempDir::new()?);
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache/test/acme.tools/local");
     let skill_dir = plugin_root.join("skills/review");
@@ -788,11 +788,11 @@ async fn agent_plugin_skill_prompt_stays_bounded_without_skills_extension() -> R
         ),
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\nplugins = true\n\n[plugins.\"acme.tools@test\"]\nenabled = true\n",
     )?;
     let skill_path = dunce::canonicalize(skill_dir.join("SKILL.md"))?;
-    let mut builder = test_genex().with_home(codex_home);
+    let mut builder = test_genex().with_home(genex_home);
     let test = builder.build_with_auto_env(&server).await?;
 
     test.codex
@@ -838,8 +838,8 @@ async fn explicit_skill_prompt_precedes_plugin_instructions() -> Result<()> {
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
-    let plugin_root = codex_home.path().join("plugins/cache/test/sample/local");
+    let genex_home = Arc::new(TempDir::new()?);
+    let plugin_root = genex_home.path().join("plugins/cache/test/sample/local");
     let skill_dir = plugin_root.join("skills/sample-search");
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
     std::fs::create_dir_all(&skill_dir)?;
@@ -852,14 +852,14 @@ async fn explicit_skill_prompt_precedes_plugin_instructions() -> Result<()> {
         "---\ndescription: inspect sample data\n---\n\n# body\n",
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\nplugins = true\n\n[plugins.\"sample@test\"]\nenabled = true\n",
     )?;
     let skill_path = dunce::canonicalize(skill_dir.join("SKILL.md"))?;
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_extensions(extensions);
     let test = builder.build_with_auto_env(&server).await?;
 
@@ -1623,12 +1623,12 @@ async fn opted_in_executor_provider_skips_host_discovery_but_injects_discovered_
         vec![ev_response_created("resp-2"), ev_completed("resp-2")],
     ]])
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     write_host_skills(
-        codex_home.path(),
+        genex_home.path(),
         &[(HOST_SKILL_NAME, HOST_SKILL_DESCRIPTION)],
     )?;
-    let host_skill_path = codex_home
+    let host_skill_path = genex_home
         .path()
         .join("skills")
         .join(HOST_SKILL_NAME)
@@ -1651,7 +1651,7 @@ async fn opted_in_executor_provider_skips_host_discovery_but_injects_discovered_
         },
     );
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_extensions(Arc::new(extensions.build()))
         .with_workspace_setup(|cwd, fs| async move {
             for (skill_dir, name, description, body) in [
@@ -2385,8 +2385,8 @@ async fn executor_skill_invocation_is_environment_scoped_and_deduplicated() -> R
     const SELECTED_RESOURCE: &str = "skill://selected-root/demo/SKILL.md";
 
     let server = responses::start_mock_server().await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let skill_path = codex_home.path().join("executor-skill/SKILL.md");
+    let genex_home = Arc::new(TempDir::new()?);
+    let skill_path = genex_home.path().join("executor-skill/SKILL.md");
     std::fs::create_dir_all(
         skill_path
             .parent()
@@ -2444,7 +2444,7 @@ async fn executor_skill_invocation_is_environment_scoped_and_deduplicated() -> R
     let (extensions, _) = catalog_extensions(catalog, /*include_host_provider*/ false);
     let managed_auth_base_url = server.uri();
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(extensions)
         .with_config(move |config| {
@@ -2488,13 +2488,13 @@ async fn production_turn_aliases_combined_skill_catalogs_under_shared_budget() -
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let codex_home = Arc::new(
+    let genex_home = Arc::new(
         tempfile::Builder::new()
             .prefix("codex-integration-shared-skill-catalog-roots-")
             .tempdir()?,
     );
     write_host_skills(
-        codex_home.path(),
+        genex_home.path(),
         &[
             ("host-search", "Inspect host resources."),
             ("host-review", "Review host resources."),
@@ -2553,7 +2553,7 @@ async fn production_turn_aliases_combined_skill_catalogs_under_shared_budget() -
         },
     );
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_exec_server_url("none")
         .with_extensions(Arc::new(extensions.build()))
         .with_model_info_override("gpt-5.5", |model_info| {
@@ -2572,7 +2572,7 @@ async fn production_turn_aliases_combined_skill_catalogs_under_shared_budget() -
         .single_request()
         .message_input_texts("developer")
         .join("\n");
-    let host_root = dunce::canonicalize(codex_home.path().join("skills"))?
+    let host_root = dunce::canonicalize(genex_home.path().join("skills"))?
         .to_string_lossy()
         .replace('\\', "/");
     for (alias, root) in [
@@ -2630,13 +2630,13 @@ async fn assert_catalog_model_switch(max_context_tokens: Option<usize>) -> Resul
         ],
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     // Use the normal metrics sink to verify core's model attribution.
     let telemetry = OtelProvider::try_new(&OtelSettings {
         environment: "test".to_string(),
         service_name: "skills-model-switch".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: codex_home.path().to_path_buf(),
+        genex_home: genex_home.path().to_path_buf(),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::None,
         metrics_exporter: OtelExporter::OtlpHttp {
@@ -2690,7 +2690,7 @@ async fn assert_catalog_model_switch(max_context_tokens: Option<usize>) -> Resul
         },
     );
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_model(MODEL_A)
         .with_extensions(Arc::new(extensions.build()))
         .with_config(move |config| {
@@ -2917,18 +2917,18 @@ async fn production_turn_uses_configured_skill_catalog_token_budget() -> Result<
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[skills]\nmax_context_tokens = 800\n",
     )?;
-    write_host_skills(codex_home.path(), &HOST_CATALOG)?;
+    write_host_skills(genex_home.path(), &HOST_CATALOG)?;
     let (extensions, _event_rx) = catalog_extensions(
         executor_catalog(&EXECUTOR_CATALOG),
         /*include_host_provider*/ true,
     );
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", |model_info| {
             model_info.context_window = Some(SHORTENING_CONTEXT_WINDOW);
@@ -2988,9 +2988,9 @@ async fn production_turn_preserves_host_alias_root_order_across_turns() -> Resul
     let temp_parent = TempDir::new()?;
     let long_parent = temp_parent
         .path()
-        .join("codex-home-with-long-shared-prefix-for-production-alias-order-test");
+        .join("genex-home-with-long-shared-prefix-for-production-alias-order-test");
     std::fs::create_dir_all(&long_parent)?;
-    let codex_home = Arc::new(TempDir::new_in(&long_parent)?);
+    let genex_home = Arc::new(TempDir::new_in(&long_parent)?);
     let first_root_path = long_parent.join("first-discovered-skills-root-with-long-shared-prefix");
     let second_root_path =
         long_parent.join("second-discovered-skills-root-with-long-shared-prefix");
@@ -3013,7 +3013,7 @@ async fn production_turn_preserves_host_alias_root_order_across_turns() -> Resul
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(extensions)
         .with_model_info_override("gpt-5.5", |model_info| {
             model_info.context_window = Some(SHORTENING_CONTEXT_WINDOW);
@@ -3083,11 +3083,11 @@ async fn production_turn_uses_provider_host_catalog_and_core_snapshot_injection(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     let skill_name = "snapshot-backed";
     let snapshot_description = "This description comes from Core's host skills snapshot.";
-    write_host_skills(codex_home.path(), &[(skill_name, snapshot_description)])?;
-    let skill_path = codex_home
+    write_host_skills(genex_home.path(), &[(skill_name, snapshot_description)])?;
+    let skill_path = genex_home
         .path()
         .join("skills")
         .join(skill_name)
@@ -3128,7 +3128,7 @@ async fn production_turn_uses_provider_host_catalog_and_core_snapshot_injection(
         },
     );
     let mut builder = apps_enabled_builder(apps_server.managed_auth_base_url)
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
@@ -3192,16 +3192,16 @@ async fn production_turn_suppresses_only_the_superseded_host_skill_prompt() -> R
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     write_host_skills(
-        codex_home.path(),
+        genex_home.path(),
         &[
             ("first-host", "First host skill."),
             ("second-host", "Second host skill."),
         ],
     )?;
-    let first_skill_path = codex_home.path().join("skills/first-host/SKILL.md");
-    let second_skill_path = codex_home.path().join("skills/second-host/SKILL.md");
+    let first_skill_path = genex_home.path().join("skills/first-host/SKILL.md");
+    let second_skill_path = genex_home.path().join("skills/second-host/SKILL.md");
     let first_host_contents =
         "---\nname: first-host\ndescription: First host skill.\n---\n\nFIRST_HOST_BODY\n";
     let second_host_contents =
@@ -3248,7 +3248,7 @@ async fn production_turn_suppresses_only_the_superseded_host_skill_prompt() -> R
         },
     );
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
@@ -3292,23 +3292,23 @@ async fn production_turn_warns_and_omits_unreadable_host_skill() -> Result<()> {
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     write_host_skills(
-        codex_home.path(),
+        genex_home.path(),
         &[
             ("missing-host", "Missing host skill."),
             ("available-host", "Available host skill."),
         ],
     )?;
     let missing_skill_path =
-        dunce::canonicalize(codex_home.path().join("skills/missing-host/SKILL.md"))?;
+        dunce::canonicalize(genex_home.path().join("skills/missing-host/SKILL.md"))?;
     let available_skill_path =
-        dunce::canonicalize(codex_home.path().join("skills/available-host/SKILL.md"))?;
+        dunce::canonicalize(genex_home.path().join("skills/available-host/SKILL.md"))?;
     let available_skill_contents = std::fs::read_to_string(&available_skill_path)?;
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(extensions)
         .with_config(configure_catalog_test);
     let test = builder.build_with_auto_env(&server).await?;
@@ -3371,8 +3371,8 @@ async fn production_turn_keeps_full_snapshot_host_skill_prompt() -> Result<()> {
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let skill_dir = codex_home.path().join("skills").join("long-host");
+    let genex_home = Arc::new(TempDir::new()?);
+    let skill_dir = genex_home.path().join("skills").join("long-host");
     std::fs::create_dir_all(&skill_dir)?;
     let prompt_tail = "full host prompt tail";
     let skill_contents = format!(
@@ -3383,7 +3383,7 @@ async fn production_turn_keeps_full_snapshot_host_skill_prompt() -> Result<()> {
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(extensions)
         .with_config(|config| {
             configure_catalog_test(config);
@@ -3418,8 +3418,8 @@ async fn production_turn_keeps_core_host_injection_when_catalog_listings_are_dis
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let skill_dir = codex_home.path().join("skills").join("long-host");
+    let genex_home = Arc::new(TempDir::new()?);
+    let skill_dir = genex_home.path().join("skills").join("long-host");
     std::fs::create_dir_all(&skill_dir)?;
     let prompt_tail = "full host prompt tail";
     let skill_contents = format!(
@@ -3430,7 +3430,7 @@ async fn production_turn_keeps_core_host_injection_when_catalog_listings_are_dis
     let (extensions, _) =
         catalog_extensions(SkillCatalog::default(), /*include_host_provider*/ true);
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(extensions)
         .with_config(configure_catalog_test)
         .with_config(|config| {

@@ -55,20 +55,20 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
     }])
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     create_authenticated_websocket_config(
-        codex_home.path(),
+        genex_home.path(),
         &websocket_server.uri().replacen("ws://", "http://", 1),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
-    write_models_cache(codex_home.path()).await?;
+    write_models_cache(genex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build()
         .await?;
@@ -168,11 +168,11 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
 }
 
 fn create_authenticated_websocket_config(
-    codex_home: &Path,
+    genex_home: &Path,
     server_uri: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"

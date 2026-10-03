@@ -39,7 +39,7 @@ pub(crate) fn unique_temp_dir() -> PathBuf {
 
 #[cfg(test)]
 pub(super) fn test_thread_metadata(
-    codex_home: &Path,
+    genex_home: &Path,
     thread_id: ThreadId,
     cwd: PathBuf,
 ) -> ThreadMetadata {
@@ -47,7 +47,7 @@ pub(super) fn test_thread_metadata(
     ThreadMetadata {
         originator: None,
         id: thread_id,
-        rollout_path: codex_home.join(format!("rollout-{thread_id}.jsonl")),
+        rollout_path: genex_home.join(format!("rollout-{thread_id}.jsonl")),
         created_at: now,
         updated_at: now,
         recency_at: now,

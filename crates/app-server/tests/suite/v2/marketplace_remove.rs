@@ -28,8 +28,8 @@ fn configured_marketplace_update() -> MarketplaceConfigUpdate<'static> {
     }
 }
 
-fn write_installed_marketplace(codex_home: &std::path::Path, marketplace_name: &str) -> Result<()> {
-    let root = marketplace_install_root(codex_home).join(marketplace_name);
+fn write_installed_marketplace(genex_home: &std::path::Path, marketplace_name: &str) -> Result<()> {
+    let root = marketplace_install_root(genex_home).join(marketplace_name);
     std::fs::create_dir_all(root.join(".agents/plugins"))?;
     std::fs::write(root.join(".agents/plugins/marketplace.json"), "{}")?;
     Ok(())
@@ -50,15 +50,15 @@ fn canonicalize_path_with_existing_parent(path: &std::path::Path) -> Result<std:
 #[test_case(true; "user entry and snapshot")]
 #[tokio::test]
 async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     if user_entry {
-        record_user_marketplace(codex_home.path(), "debug", &configured_marketplace_update())?;
+        record_user_marketplace(genex_home.path(), "debug", &configured_marketplace_update())?;
     }
-    write_installed_marketplace(codex_home.path(), "debug")?;
-    let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+    write_installed_marketplace(genex_home.path(), "debug")?;
+    let installed_root = marketplace_install_root(genex_home.path()).join("debug");
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let response: MarketplaceRemoveResponse = mcp
@@ -78,7 +78,7 @@ async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) 
         canonicalize_path_with_existing_parent(&installed_root)?,
     );
 
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     if user_entry {
         let config = std::fs::read_to_string(config_path)?;
         assert!(!config.contains("[marketplaces.debug]"));
@@ -86,7 +86,7 @@ async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) 
         assert!(!config_path.exists());
     }
     assert!(
-        !marketplace_install_root(codex_home.path())
+        !marketplace_install_root(genex_home.path())
             .join("debug")
             .exists()
     );
@@ -95,10 +95,10 @@ async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) 
 
 #[tokio::test]
 async fn marketplace_remove_rejects_unknown_marketplace() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -127,24 +127,24 @@ async fn marketplace_remove_rejects_unknown_marketplace() -> Result<()> {
 #[test_case(true; "project and user")]
 #[tokio::test]
 async fn marketplace_remove_preserves_project_marketplace(user_entry: bool) -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     if user_entry {
-        record_user_marketplace(codex_home.path(), "debug", &configured_marketplace_update())?;
+        record_user_marketplace(genex_home.path(), "debug", &configured_marketplace_update())?;
     }
-    // TestAppServer starts in CODEX_HOME, so make it a trusted project as well.
-    std::fs::create_dir_all(codex_home.path().join(".git"))?;
-    std::fs::create_dir_all(codex_home.path().join(".codex"))?;
-    let project_config_path = codex_home.path().join(".codex/config.toml");
+    // TestAppServer starts in GENEX_HOME, so make it a trusted project as well.
+    std::fs::create_dir_all(genex_home.path().join(".git"))?;
+    std::fs::create_dir_all(genex_home.path().join(".genex"))?;
+    let project_config_path = genex_home.path().join(".genex/config.toml");
     let project_config = "[marketplaces.debug]\nsource_type = \"git\"\nsource = \"https://github.com/owner/repo.git\"\n";
     std::fs::write(&project_config_path, project_config)?;
-    set_project_trust_level(codex_home.path(), codex_home.path(), TrustLevel::Trusted)?;
-    write_installed_marketplace(codex_home.path(), "debug")?;
+    set_project_trust_level(genex_home.path(), genex_home.path(), TrustLevel::Trusted)?;
+    write_installed_marketplace(genex_home.path(), "debug")?;
     let snapshot_path =
-        marketplace_install_root(codex_home.path()).join("debug/.agents/plugins/marketplace.json");
-    let user_config_path = codex_home.path().join("config.toml");
+        marketplace_install_root(genex_home.path()).join("debug/.agents/plugins/marketplace.json");
+    let user_config_path = genex_home.path().join("config.toml");
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let user_config = std::fs::read_to_string(&user_config_path)?;

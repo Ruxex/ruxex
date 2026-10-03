@@ -42,25 +42,25 @@ use toml::Value;
 pub(crate) const TEST_CURATED_PLUGIN_SHA: &str = "0123456789abcdef0123456789abcdef01234567";
 pub(crate) const TEST_CURATED_PLUGIN_CACHE_VERSION: &str = "01234567";
 
-pub(crate) fn curated_plugins_repo_path(codex_home: &Path) -> PathBuf {
-    codex_home.join(".tmp/plugins")
+pub(crate) fn curated_plugins_repo_path(genex_home: &Path) -> PathBuf {
+    genex_home.join(".tmp/plugins")
 }
 
-pub(crate) fn test_plugins_manager(codex_home: PathBuf) -> PluginsManager {
+pub(crate) fn test_plugins_manager(genex_home: PathBuf) -> PluginsManager {
     PluginsManager::new(
-        codex_home,
+        genex_home,
         test_auth_manager(/*auth_mode*/ None),
         test_skill_root_loader(),
     )
 }
 
 pub(crate) fn test_plugins_manager_with_options(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     restriction_product: Option<Product>,
     auth_mode: Option<AuthMode>,
 ) -> PluginsManager {
     PluginsManager::new_with_options(
-        codex_home,
+        genex_home,
         restriction_product,
         test_auth_manager(auth_mode),
         test_skill_root_loader(),
@@ -68,12 +68,12 @@ pub(crate) fn test_plugins_manager_with_options(
 }
 
 pub(crate) fn test_plugins_manager_with_auth_manager(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     restriction_product: Option<Product>,
     auth_manager: Arc<AuthManager>,
 ) -> PluginsManager {
     PluginsManager::new_with_options(
-        codex_home,
+        genex_home,
         restriction_product,
         auth_manager,
         test_skill_root_loader(),
@@ -386,16 +386,16 @@ fn write_curated_marketplace(
     }
 }
 
-pub(crate) fn write_curated_plugin_sha_with(codex_home: &Path, sha: &str) {
-    write_file(&codex_home.join(".tmp/plugins.sha"), &format!("{sha}\n"));
+pub(crate) fn write_curated_plugin_sha_with(genex_home: &Path, sha: &str) {
+    write_file(&genex_home.join(".tmp/plugins.sha"), &format!("{sha}\n"));
 }
 
-pub(crate) async fn load_plugins_config(codex_home: &Path, cwd: &Path) -> PluginsConfigInput {
-    let codex_home = AbsolutePathBuf::try_from(codex_home).expect("codex home should be absolute");
+pub(crate) async fn load_plugins_config(genex_home: &Path, cwd: &Path) -> PluginsConfigInput {
+    let genex_home = AbsolutePathBuf::try_from(genex_home).expect("genex home should be absolute");
     let cwd = AbsolutePathBuf::try_from(cwd).expect("cwd should be absolute");
     let config_layer_stack = load_config_layers_state(
         LOCAL_FS.as_ref(),
-        codex_home.as_path(),
+        genex_home.as_path(),
         Some(cwd),
         &[],
         LoaderOverrides::without_managed_config_for_tests(),

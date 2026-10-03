@@ -249,7 +249,7 @@ if sys.argv[6] == 'host-proc' and not os.path.isdir('/run/WSL'):
     );
     let mut env = create_env_from_core_vars();
     env.insert(
-        "CODEX_HOME".to_string(),
+        "GENEX_HOME".to_string(),
         workspace.path().display().to_string(),
     );
     env.insert("TMPDIR".to_string(), workspace.path().display().to_string());

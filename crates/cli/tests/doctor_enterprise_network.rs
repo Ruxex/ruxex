@@ -22,7 +22,7 @@ use wiremock::matchers::path;
 async fn doctor_reports_cloud_filesystem_policy_and_rejects_invalid_requirements() -> Result<()> {
     for valid_requirements in [true, false] {
         let server = MockServer::start().await;
-        let codex_home = TempDir::new()?;
+        let genex_home = TempDir::new()?;
         let workspace = TempDir::new()?;
         let workspace_key = serde_json::to_string(workspace.path())?;
         let private_path = workspace.path().join("private-doctor-control");
@@ -33,7 +33,7 @@ async fn doctor_reports_cloud_filesystem_policy_and_rejects_invalid_requirements
             "[permissions.filesystem]\ndeny_read = false\n".to_string()
         };
         std::fs::write(
-            codex_home.path().join("config.toml"),
+            genex_home.path().join("config.toml"),
             format!(
                 r#"
 cli_auth_credentials_store = "ephemeral"
@@ -53,13 +53,13 @@ trust_level = "trusted"
             ),
         )?;
         // Cloud authentication must use the project selected by --cd.
-        std::fs::create_dir(workspace.path().join(".codex"))?;
+        std::fs::create_dir(workspace.path().join(".genex"))?;
         std::fs::write(
-            workspace.path().join(".codex/config.toml"),
+            workspace.path().join(".genex/config.toml"),
             "cli_auth_credentials_store = \"file\"\n",
         )?;
         write_api_key_auth(
-            codex_home.path(),
+            genex_home.path(),
             ApiKeyAuthFixture::new("doctor-test-token")
                 .account_id("doctor-workspace")
                 .workspace_id("doctor-workspace")
@@ -83,8 +83,8 @@ trust_level = "trusted"
             .await;
 
         let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-            .current_dir(codex_home.path())
-            .env("CODEX_HOME", codex_home.path())
+            .current_dir(genex_home.path())
+            .env("GENEX_HOME", genex_home.path())
             .env("NO_PROXY", "127.0.0.1,localhost")
             .env("no_proxy", "127.0.0.1,localhost")
             .env_remove("CODEX_ACCESS_TOKEN")
@@ -148,11 +148,11 @@ async fn invalid_custom_ca_falls_back_to_system_roots() -> Result<()> {
             .await;
     }
 
-    let codex_home = TempDir::new()?;
-    let certificate = codex_home.path().join("invalid-ca.pem");
+    let genex_home = TempDir::new()?;
+    let certificate = genex_home.path().join("invalid-ca.pem");
     std::fs::write(&certificate, "not a certificate")?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "model_provider = \"local\"\n[model_providers.local]\nname = \"local\"\nbase_url = \"{}/v1\"\nwire_api = \"responses\"\n",
             server.uri()
@@ -162,7 +162,7 @@ async fn invalid_custom_ca_falls_back_to_system_roots() -> Result<()> {
         let mut command = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
         command
             .args(["doctor", "--json"])
-            .env("CODEX_HOME", codex_home.path())
+            .env("GENEX_HOME", genex_home.path())
             .env("CODEX_CA_CERTIFICATE", &certificate)
             .stdin(Stdio::null());
         if let Some(sandbox) = sandbox {
@@ -198,8 +198,8 @@ async fn invalid_custom_ca_falls_back_to_system_roots() -> Result<()> {
 #[cfg(target_os = "macos")]
 #[test]
 fn doctor_reports_macos_system_proxy_configuration_and_policy() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let report = doctor_report(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    let report = doctor_report(genex_home.path())?;
     let details = &report["checks"]["network.env"]["details"];
 
     assert_eq!(details["respect system proxy"], json!("disabled"));
@@ -209,10 +209,10 @@ fn doctor_reports_macos_system_proxy_configuration_and_policy() -> Result<()> {
     ));
 
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\nrespect_system_proxy = true\n",
     )?;
-    let report = doctor_report(codex_home.path())?;
+    let report = doctor_report(genex_home.path())?;
     assert_eq!(
         report["checks"]["network.env"]["details"]["respect system proxy"],
         json!("enabled")
@@ -222,10 +222,10 @@ fn doctor_reports_macos_system_proxy_configuration_and_policy() -> Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-fn doctor_report(codex_home: &Path) -> Result<Value> {
+fn doctor_report(genex_home: &Path) -> Result<Value> {
     let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
         .args(["doctor", "--json"])
-        .env("CODEX_HOME", codex_home)
+        .env("GENEX_HOME", genex_home)
         .stdin(Stdio::null())
         .output()
         .context("failed to run the doctor")?;

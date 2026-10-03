@@ -42,7 +42,7 @@ use super::DoctorIssue;
 use super::push_path_detail;
 
 #[cfg(target_os = "windows")]
-const WINDOWS_SETUP_REMEDIATION: &str = "run genex sandbox setup --elevated --user <end-user> --codex-home <authoritative-home> from an elevated shell";
+const WINDOWS_SETUP_REMEDIATION: &str = "run genex sandbox setup --elevated --user <end-user> --genex-home <authoritative-home> from an elevated shell";
 
 pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> DoctorCheck {
     let mut details = Vec::new();
@@ -96,7 +96,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
     push_path_detail(
         &mut details,
         "codex-linux-sandbox helper",
-        arg0_paths.codex_linux_sandbox_exe.as_deref(),
+        arg0_paths.genex_linux_sandbox_exe.as_deref(),
     );
     push_path_detail(
         &mut details,
@@ -106,7 +106,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
 
     let mut status = CheckStatus::Ok;
     let mut summary = "sandbox configuration is readable".to_string();
-    if let Some(helper) = arg0_paths.codex_linux_sandbox_exe.as_deref()
+    if let Some(helper) = arg0_paths.genex_linux_sandbox_exe.as_deref()
         && !helper.exists()
     {
         status = CheckStatus::Warning;
@@ -150,7 +150,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
         }
 
         if elevated {
-            let home = config.codex_home.as_path();
+            let home = config.genex_home.as_path();
             let path = genex_windows_sandbox::setup_error_path(home);
             let report = match fs::metadata(&path) {
                 Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),

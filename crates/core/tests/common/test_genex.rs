@@ -574,15 +574,15 @@ impl TestGenexBuilder {
             .clone()
             .or_else(|| test_env.exec_server_url.clone());
         #[cfg(target_os = "linux")]
-        let codex_linux_sandbox_exe = Some(
-            crate::find_codex_linux_sandbox_exe()
+        let genex_linux_sandbox_exe = Some(
+            crate::find_genex_linux_sandbox_exe()
                 .context("should find binary for codex-linux-sandbox")?,
         );
         #[cfg(not(target_os = "linux"))]
-        let codex_linux_sandbox_exe = None;
+        let genex_linux_sandbox_exe = None;
         let local_runtime_paths = genex_exec_server::ExecServerRuntimePaths::new(
             std::env::current_exe()?,
-            codex_linux_sandbox_exe,
+            genex_linux_sandbox_exe,
         )?;
         let environment_manager = Arc::new(if include_local_environment {
             genex_exec_server::EnvironmentManager::create_for_tests_with_local(
@@ -630,16 +630,16 @@ impl TestGenexBuilder {
             .thread_store
             .clone()
             .unwrap_or_else(|| thread_store_from_config(&config, state_db.clone()));
-        let installation_id = resolve_installation_id(&config.codex_home).await?;
+        let installation_id = resolve_installation_id(&config.genex_home).await?;
         let user_instructions_provider =
             self.user_instructions_provider.clone().unwrap_or_else(|| {
                 Arc::new(GenexHomeUserInstructionsProvider::new(
-                    config.codex_home.clone(),
+                    config.genex_home.clone(),
                 ))
             });
         let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
             auth.clone(),
-            config.codex_home.to_path_buf(),
+            config.genex_home.to_path_buf(),
         );
         let models_manager = self
             .models_manager
@@ -685,7 +685,7 @@ impl TestGenexBuilder {
             (Some(path), Some(user_shell_override)) => {
                 let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
                     auth,
-                    config.codex_home.to_path_buf(),
+                    config.genex_home.to_path_buf(),
                 );
                 Box::pin(
                     genex_core::test_support::resume_thread_from_rollout_with_user_shell_override(
@@ -702,7 +702,7 @@ impl TestGenexBuilder {
             (Some(path), None) => {
                 let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
                     auth,
-                    config.codex_home.to_path_buf(),
+                    config.genex_home.to_path_buf(),
                 );
                 Box::pin(thread_manager.resume_thread_from_rollout(
                     config.clone(),
@@ -784,20 +784,20 @@ impl TestGenexBuilder {
         config.cwd = cwd_override;
         config.model_provider = model_provider;
         if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex") {
-            config.codex_self_exe = Some(path);
+            config.genex_self_exe = Some(path);
         } else if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex-exec") {
             // `genex-exec` also supports `--genex-run-as-apply-patch`, so use it
             // when the multitool binary is not available in test builds.
-            config.codex_self_exe = Some(path);
+            config.genex_self_exe = Some(path);
         } else if let Ok(exe) = std::env::current_exe()
             && let Some(bin_dir) = exe.parent().and_then(|parent| parent.parent())
         {
             let codex = bin_dir.join("genex");
             let codex_exec = bin_dir.join("codex-exec");
             if codex.is_file() {
-                config.codex_self_exe = Some(codex);
+                config.genex_self_exe = Some(codex);
             } else if codex_exec.is_file() {
-                config.codex_self_exe = Some(codex_exec);
+                config.genex_self_exe = Some(codex_exec);
             }
         }
 
@@ -858,8 +858,8 @@ impl TestGenex {
         self.cwd.path()
     }
 
-    pub fn codex_home_path(&self) -> &Path {
-        self.config.codex_home.as_path()
+    pub fn genex_home_path(&self) -> &Path {
+        self.config.genex_home.as_path()
     }
 
     pub fn workspace_path(&self, rel: impl AsRef<Path>) -> PathBuf {

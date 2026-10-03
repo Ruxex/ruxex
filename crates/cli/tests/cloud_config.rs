@@ -40,7 +40,7 @@ const MOCK_REFRESH_TOKEN: &str = "mock-managed-refresh-token";
 
 struct CloudManagedConfigFixture {
     server: MockServer,
-    codex_home: TempDir,
+    genex_home: TempDir,
     user_config: String,
     mcp_url: String,
 }
@@ -49,15 +49,15 @@ impl CloudManagedConfigFixture {
     async fn new() -> Result<Option<Self>> {
         let server = MockServer::start().await;
         let managed_auth_base_url = format!("{}/backend-api", server.uri());
-        let codex_home = TempDir::new()?;
+        let genex_home = TempDir::new()?;
         let user_config = format!(
             "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\"\n"
         );
-        std::fs::write(codex_home.path().join("config.toml"), &user_config)?;
+        std::fs::write(genex_home.path().join("config.toml"), &user_config)?;
 
         let bootstrap_config = load_config_toml_with_layer_stack(
-            codex_home.path(),
-            Some(&AbsolutePathBuf::from_absolute_path(codex_home.path())?),
+            genex_home.path(),
+            Some(&AbsolutePathBuf::from_absolute_path(genex_home.path())?),
             Vec::new(),
             ConfigLoadOptions::default(),
         )
@@ -77,7 +77,7 @@ impl CloudManagedConfigFixture {
         }
 
         write_api_key_auth(
-            codex_home.path(),
+            genex_home.path(),
             ApiKeyAuthFixture::new("test-token")
                 .account_id("workspace-123")
                 .workspace_id("workspace-123")
@@ -117,7 +117,7 @@ impl CloudManagedConfigFixture {
 
         Ok(Some(Self {
             server,
-            codex_home,
+            genex_home,
             user_config,
             mcp_url,
         }))
@@ -127,8 +127,8 @@ impl CloudManagedConfigFixture {
         let mut command = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
         command
             .kill_on_drop(true)
-            .current_dir(self.codex_home.path())
-            .env("CODEX_HOME", self.codex_home.path())
+            .current_dir(self.genex_home.path())
+            .env("GENEX_HOME", self.genex_home.path())
             .env("NO_PROXY", "127.0.0.1,localhost")
             .env("no_proxy", "127.0.0.1,localhost")
             .env_remove("CODEX_ACCESS_TOKEN")
@@ -153,7 +153,7 @@ impl CloudManagedConfigFixture {
 
     fn assert_user_config_unchanged(&self) -> Result<()> {
         assert_eq!(
-            std::fs::read_to_string(self.codex_home.path().join("config.toml"))?,
+            std::fs::read_to_string(self.genex_home.path().join("config.toml"))?,
             self.user_config
         );
         Ok(())
@@ -180,7 +180,7 @@ async fn list_and_get_resolve_cloud_managed_mcp_without_writing_user_config() ->
     assert_eq!(entry["transport"]["url"], fixture.mcp_url);
     assert!(
         fixture
-            .codex_home
+            .genex_home
             .path()
             .join("cloud-config-bundle-cache.json")
             .exists()
@@ -350,7 +350,7 @@ async fn login_and_logout_persist_only_cloud_managed_mcp_oauth_credentials() -> 
     .await
     .context("timed out waiting for the managed MCP login success message")??;
 
-    let credentials_path = fixture.codex_home.path().join(".credentials.json");
+    let credentials_path = fixture.genex_home.path().join(".credentials.json");
     let credentials: Value = serde_json::from_slice(&std::fs::read(&credentials_path)?)?;
     let entries = credentials
         .as_object()
@@ -393,7 +393,7 @@ async fn add_and_remove_preserve_cloud_managed_resources() -> Result<()> {
         return Ok(());
     };
 
-    let installed_root = marketplace_install_root(fixture.codex_home.path()).join("managed");
+    let installed_root = marketplace_install_root(fixture.genex_home.path()).join("managed");
     std::fs::create_dir_all(&installed_root)?;
     let marker = installed_root.join("marker.txt");
     std::fs::write(&marker, "installed")?;
@@ -417,7 +417,7 @@ async fn add_and_remove_preserve_cloud_managed_resources() -> Result<()> {
     fixture
         .output(&["mcp", "add", "local-docs", "--", "echo", "hello"])
         .await?;
-    let local_servers = load_global_mcp_servers(fixture.codex_home.path()).await?;
+    let local_servers = load_global_mcp_servers(fixture.genex_home.path()).await?;
     assert!(local_servers.contains_key("local-docs"));
     assert!(!local_servers.contains_key(MANAGED_SERVER_NAME));
 
@@ -427,13 +427,13 @@ async fn add_and_remove_preserve_cloud_managed_resources() -> Result<()> {
     assert!(
         String::from_utf8(output.stdout)?.contains("No MCP server named 'managed-slack' found.")
     );
-    let local_servers = load_global_mcp_servers(fixture.codex_home.path()).await?;
+    let local_servers = load_global_mcp_servers(fixture.genex_home.path()).await?;
     assert!(local_servers.contains_key("local-docs"));
     assert!(!local_servers.contains_key(MANAGED_SERVER_NAME));
 
     fixture.output(&["mcp", "remove", "local-docs"]).await?;
     assert!(
-        load_global_mcp_servers(fixture.codex_home.path())
+        load_global_mcp_servers(fixture.genex_home.path())
             .await?
             .is_empty()
     );

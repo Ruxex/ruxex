@@ -79,7 +79,7 @@ fn lock_sandbox_dir_blocks_inherited_write_for_runner_files() {
             version: SETUP_VERSION,
             offline_username: String::new(),
             online_username: String::new(),
-            codex_home: workspace.clone(),
+            genex_home: workspace.clone(),
             command_cwd: workspace.clone(),
             read_roots: Vec::new(),
             write_roots: Vec::new(),

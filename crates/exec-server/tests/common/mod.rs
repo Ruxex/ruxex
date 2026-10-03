@@ -69,15 +69,15 @@ pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
 
 pub(crate) fn current_test_binary_helper_paths() -> anyhow::Result<(PathBuf, Option<PathBuf>)> {
     let current_exe = env::current_exe()?;
-    let codex_linux_sandbox_exe = if cfg!(target_os = "linux") {
+    let genex_linux_sandbox_exe = if cfg!(target_os = "linux") {
         TEST_BINARY_DISPATCH_GUARD
             .as_ref()
-            .and_then(|guard| guard.paths().codex_linux_sandbox_exe.clone())
+            .and_then(|guard| guard.paths().genex_linux_sandbox_exe.clone())
             .or_else(|| Some(current_exe.clone()))
     } else {
         None
     };
-    Ok((current_exe, codex_linux_sandbox_exe))
+    Ok((current_exe, genex_linux_sandbox_exe))
 }
 
 fn maybe_run_delayed_output_after_exit_from_test_binary() {
@@ -242,7 +242,7 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
     let exit_code = match runtime.block_on(async {
         #[cfg(target_os = "macos")]
         let runtime_paths = {
-            let home = genex_utils_home_dir::find_codex_home()?;
+            let home = genex_utils_home_dir::find_genex_home()?;
             let config = genex_config::loader::load_config_layers_state(
                 &genex_exec_server::LocalFileSystem::unsandboxed(),
                 home.as_path(),
@@ -252,8 +252,8 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
                 &genex_config::NoopThreadConfigLoader,
             )
             .await?;
-            runtime_paths.with_allowed_symlinked_codex_home(
-                genex_config::allowed_symlinked_codex_home(&config, &home),
+            runtime_paths.with_allowed_symlinked_genex_home(
+                genex_config::allowed_symlinked_genex_home(&config, &home),
             )
         };
         genex_exec_server::run_main_with_telemetry(
@@ -281,7 +281,7 @@ fn linux_sandbox_exe(
     #[cfg(target_os = "linux")]
     {
         guard
-            .and_then(|guard| guard.paths().codex_linux_sandbox_exe.clone())
+            .and_then(|guard| guard.paths().genex_linux_sandbox_exe.clone())
             .or_else(|| Some(current_exe.to_path_buf()))
     }
     #[cfg(not(target_os = "linux"))]

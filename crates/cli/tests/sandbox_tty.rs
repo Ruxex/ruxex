@@ -54,11 +54,11 @@ async fn sandbox_blocks_terminal_input_injection() -> anyhow::Result<()> {
     }
     assert!(availability.status.success(), "{availability:?}");
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut env: HashMap<String, String> = std::env::vars().collect();
     env.insert(
-        "CODEX_HOME".to_string(),
-        codex_home.path().to_string_lossy().into_owned(),
+        "GENEX_HOME".to_string(),
+        genex_home.path().to_string_lossy().into_owned(),
     );
 
     // The control proves this is a readable, foreground controlling terminal on
@@ -66,7 +66,7 @@ async fn sandbox_blocks_terminal_input_injection() -> anyhow::Result<()> {
     run_probe(
         "/usr/bin/python3",
         vec!["-c".to_string(), PROBE.to_string(), "allow".to_string()],
-        codex_home.path(),
+        genex_home.path(),
         &env,
     )
     .await?;
@@ -84,7 +84,7 @@ async fn sandbox_blocks_terminal_input_injection() -> anyhow::Result<()> {
             PROBE.to_string(),
             "deny".to_string(),
         ],
-        codex_home.path(),
+        genex_home.path(),
         &env,
     )
     .await

@@ -211,7 +211,7 @@ impl LiveWriterLocks {
 /// as cwd, provider, and memory mode is supplied when live persistence is opened.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LocalThreadStoreConfig {
-    pub codex_home: PathBuf,
+    pub genex_home: PathBuf,
     pub sqlite: SqliteConfig,
     /// Provider used only when older local metadata does not contain one.
     pub default_model_provider_id: String,
@@ -220,7 +220,7 @@ pub struct LocalThreadStoreConfig {
 impl LocalThreadStoreConfig {
     pub fn from_config(config: &impl genex_rollout::RolloutConfigView) -> Self {
         Self {
-            codex_home: config.codex_home().to_path_buf(),
+            genex_home: config.genex_home().to_path_buf(),
             sqlite: config.sqlite_config().clone(),
             default_model_provider_id: config.model_provider_id().to_string(),
         }
@@ -238,7 +238,7 @@ impl std::fmt::Debug for LocalThreadStore {
 impl LocalThreadStore {
     /// Create a local store using an already initialized state DB handle.
     pub fn new(config: LocalThreadStoreConfig, state_db: Option<StateDbHandle>) -> Self {
-        let writer_lock_coordinator = Arc::new(WriterLockCoordinator::new(&config.codex_home));
+        let writer_lock_coordinator = Arc::new(WriterLockCoordinator::new(&config.genex_home));
         Self {
             config,
             live_recorders: Arc::new(Mutex::new(HashMap::new())),
@@ -367,7 +367,7 @@ impl LocalThreadStore {
         if let Ok(rollout_path) = live_writer::rollout_path(self, params.thread_id).await {
             if !params.include_archived
                 && helpers::rollout_path_is_archived(
-                    self.config.codex_home.as_path(),
+                    self.config.genex_home.as_path(),
                     rollout_path.as_path(),
                 )
             {
@@ -1750,7 +1750,7 @@ mod tests {
             })
             .await
             .expect_err("external rollouts cannot be referenced by thread id");
-        assert!(error.to_string().contains("must be in Codex home"));
+        assert!(error.to_string().contains("must be in Genex home"));
     }
 
     #[tokio::test]

@@ -259,7 +259,7 @@ impl From<PluginDetail> for PluginCapabilitySummary {
 }
 
 pub struct PluginsManager {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     store: PluginStore,
     configured_marketplace_upgrade_state: RwLock<ConfiguredMarketplaceUpgradeState>,
     non_curated_cache_refresh_state: RwLock<NonCuratedCacheRefreshState>,
@@ -320,11 +320,11 @@ struct PluginLoadCacheKey {
 }
 
 impl PluginLoadCacheKey {
-    fn from_config(config: &PluginsConfigInput, codex_home: &Path) -> Self {
+    fn from_config(config: &PluginsConfigInput, genex_home: &Path) -> Self {
         Self {
             configured_plugins: configured_plugins_from_stack(
                 &config.config_layer_stack,
-                codex_home,
+                genex_home,
             ),
             skill_config_rules: skill_config_rules_from_stack(&config.config_layer_stack),
         }
@@ -333,12 +333,12 @@ impl PluginLoadCacheKey {
 
 impl PluginsManager {
     pub fn new(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         auth_manager: Arc<AuthManager>,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
         Self::new_with_options(
-            codex_home,
+            genex_home,
             Some(Product::Codex),
             auth_manager,
             skill_root_loader,
@@ -346,21 +346,21 @@ impl PluginsManager {
     }
 
     pub fn new_with_options(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         restriction_product: Option<Product>,
         auth_manager: Arc<AuthManager>,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
-        // Product restrictions are enforced at marketplace admission time for a given CODEX_HOME:
+        // Product restrictions are enforced at marketplace admission time for a given GENEX_HOME:
         // listing, install, and curated refresh all consult this restriction context before new
         // plugins enter local config or cache. After admission, runtime plugin loading trusts the
-        // contents of that CODEX_HOME and does not re-filter configured plugins by product, so
+        // contents of that GENEX_HOME and does not re-filter configured plugins by product, so
         // already-admitted plugins may continue exposing MCP servers/tools from shared local state.
         //
-        // This assumes a single CODEX_HOME is only used by one product.
+        // This assumes a single GENEX_HOME is only used by one product.
         Self {
-            codex_home: codex_home.clone(),
-            store: PluginStore::new(codex_home),
+            genex_home: genex_home.clone(),
+            store: PluginStore::new(genex_home),
             configured_marketplace_upgrade_state: RwLock::new(
                 ConfiguredMarketplaceUpgradeState::default(),
             ),
@@ -401,7 +401,7 @@ impl PluginsManager {
             return None;
         }
         let _auth = self.auth_manager.auth_cached();
-        let key = PluginLoadCacheKey::from_config(config, self.codex_home.as_path());
+        let key = PluginLoadCacheKey::from_config(config, self.genex_home.as_path());
         self.loaded_plugins_cache
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -423,7 +423,7 @@ impl PluginsManager {
             return PluginLoadOutcome::default();
         }
         let mut cache_outcome = RequestOutcome::Hit;
-        let cache_key = PluginLoadCacheKey::from_config(config, self.codex_home.as_path());
+        let cache_key = PluginLoadCacheKey::from_config(config, self.genex_home.as_path());
         if let Some(plugins) = self.cached_loaded_plugins(&cache_key) {
             cache_outcome.record();
             return PluginLoadOutcome::from_plugins(plugins);
@@ -589,7 +589,7 @@ impl PluginsManager {
             MarketplacePolicy::from_requirements(config_layer_stack.requirements())
                 .validate_install(
                     config_layer_stack,
-                    self.codex_home.as_path(),
+                    self.genex_home.as_path(),
                     &request.marketplace_path,
                     &resolved.plugin_id.marketplace_name,
                 )
@@ -660,14 +660,14 @@ impl PluginsManager {
     ) -> Result<PluginInstallOutcome, PluginInstallError> {
         let auth_policy = resolved.policy.authentication;
         let store = self.store.clone();
-        let codex_home = self.codex_home.clone();
+        let genex_home = self.genex_home.clone();
         let manifest_fallback_contents = resolved
             .manifest_fallback
             .contents_if_has_metadata()
             .map(str::to_string);
         let result: StorePluginInstallResult = tokio::task::spawn_blocking(move || {
             let materialized =
-                materialize_marketplace_plugin_source(codex_home.as_path(), &resolved.source)
+                materialize_marketplace_plugin_source(genex_home.as_path(), &resolved.source)
                     .map_err(PluginStoreError::Invalid)?;
             let source_path = materialized.path;
             match manifest_fallback_contents.as_deref() {
@@ -683,7 +683,7 @@ impl PluginsManager {
         .map_err(PluginInstallError::join)??;
 
         set_user_plugin_enabled(
-            &self.codex_home,
+            &self.genex_home,
             result.plugin_id.as_key(),
             /*enabled*/ true,
         )
@@ -710,7 +710,7 @@ impl PluginsManager {
             .await
             .map_err(PluginUninstallError::join)??;
 
-        clear_user_plugin(&self.codex_home, plugin_id.as_key())
+        clear_user_plugin(&self.genex_home, plugin_id.as_key())
             .await
             .map_err(anyhow::Error::from)?;
 
@@ -868,7 +868,7 @@ impl PluginsManager {
         MarketplacePolicy::from_requirements(config.config_layer_stack.requirements())
             .validate_install(
                 &config.config_layer_stack,
-                self.codex_home.as_path(),
+                self.genex_home.as_path(),
                 &request.marketplace_path,
                 &plugin.plugin_id.marketplace_name,
             )
@@ -958,10 +958,10 @@ impl PluginsManager {
                 ))
             })?
         } else {
-            let codex_home = self.codex_home.clone();
+            let genex_home = self.genex_home.clone();
             let source = plugin.source.clone();
             let materialized = tokio::task::spawn_blocking(move || {
-                materialize_marketplace_plugin_source(codex_home.as_path(), &source)
+                materialize_marketplace_plugin_source(genex_home.as_path(), &source)
             })
             .await
             .map_err(|err| {
@@ -1165,7 +1165,7 @@ impl PluginsManager {
         reload_config: &ConfigLayerReload,
     ) -> Result<ConfiguredMarketplaceUpgradeOutcome, String> {
         let mut outcome = upgrade_configured_git_marketplaces_with_mode(
-            self.codex_home.as_path(),
+            self.genex_home.as_path(),
             &config.config_layer_stack,
             marketplace_name,
             mode,
@@ -1181,13 +1181,13 @@ impl PluginsManager {
         if !outcome.upgraded_roots.is_empty() {
             let mut configured_plugin_keys = configured_plugins_from_stack(
                 &config.config_layer_stack,
-                self.codex_home.as_path(),
+                self.genex_home.as_path(),
             )
             .into_keys()
             .collect::<Vec<_>>();
             configured_plugin_keys.sort_unstable();
             match refresh_non_curated_plugin_cache_force_reinstall_detailed(
-                self.codex_home.as_path(),
+                self.genex_home.as_path(),
                 &outcome.upgraded_roots,
                 &configured_plugin_keys,
                 mode,
@@ -1350,7 +1350,7 @@ impl PluginsManager {
             let refresh_result = match request.mode {
                 NonCuratedCacheRefreshMode::IfVersionChanged => {
                     refresh_non_curated_plugin_cache_detailed(
-                        self.codex_home.as_path(),
+                        self.genex_home.as_path(),
                         &request.roots,
                         &request.configured_plugin_keys,
                         request.git_mode,
@@ -1358,7 +1358,7 @@ impl PluginsManager {
                 }
                 NonCuratedCacheRefreshMode::ForceReinstall => {
                     refresh_non_curated_plugin_cache_force_reinstall_detailed(
-                        self.codex_home.as_path(),
+                        self.genex_home.as_path(),
                         &request.roots,
                         &request.configured_plugin_keys,
                         request.git_mode,
@@ -1416,7 +1416,7 @@ impl PluginsManager {
 
     fn configured_plugin_states(&self, config: &PluginsConfigInput) -> ConfiguredPluginStates {
         let configured_plugins =
-            configured_plugins_from_stack(&config.config_layer_stack, self.codex_home.as_path());
+            configured_plugins_from_stack(&config.config_layer_stack, self.genex_home.as_path());
         let installed = configured_plugins
             .keys()
             .filter(|plugin_key| {
@@ -1441,7 +1441,7 @@ impl PluginsManager {
         let mut roots = additional_roots.to_vec();
         roots.extend(installed_marketplace_roots_from_layer_stack(
             &config.config_layer_stack,
-            self.codex_home.as_path(),
+            self.genex_home.as_path(),
         ));
         roots.sort_unstable();
         roots.dedup();
@@ -1459,7 +1459,7 @@ impl PluginsManager {
             policy
                 .validate_install(
                     &config.config_layer_stack,
-                    self.codex_home.as_path(),
+                    self.genex_home.as_path(),
                     &marketplace.path,
                     &marketplace.name,
                 )

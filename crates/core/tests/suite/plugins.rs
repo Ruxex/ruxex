@@ -277,11 +277,11 @@ fn write_plugin_app_plugin_with_name(home: &TempDir, app_name: &str) {
 
 async fn build_analytics_plugin_test_genex(
     server: &MockServer,
-    codex_home: Arc<TempDir>,
+    genex_home: Arc<TempDir>,
 ) -> Result<TestGenex> {
     let managed_auth_base_url = server.uri();
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| {
@@ -292,11 +292,11 @@ async fn build_analytics_plugin_test_genex(
 
 async fn build_apps_enabled_plugin_test_genex(
     server: &MockServer,
-    codex_home: Arc<TempDir>,
+    genex_home: Arc<TempDir>,
     managed_auth_base_url: String,
 ) -> Result<TestGenex> {
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
@@ -367,12 +367,12 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
     skip_if_no_network!(Ok(()));
     skip_if_remote!(
         Ok(()),
-        "remote plugin attribution fixture uses a local Codex home cache"
+        "remote plugin attribution fixture uses a local Genex home cache"
     );
 
     let server = start_mock_server().await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let script_path = write_remote_plugin_script_and_config(codex_home.as_ref());
+    let genex_home = Arc::new(TempDir::new()?);
+    let script_path = write_remote_plugin_script_and_config(genex_home.as_ref());
     std::fs::write(
         &script_path,
         r#"printf '%s' '{"version":1,"measurements":[{"name":"files_scanned","value":7}]}' > "$CODEX_PLUGIN_METRICS_OUTPUT"
@@ -419,7 +419,7 @@ async fn persisted_remote_plugin_command_attribution_flows_through_turn_context(
 
     let managed_auth_base_url = server.uri();
     let mut builder = builder
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model("gpt-5.2")
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
@@ -652,10 +652,10 @@ async fn agent_plugin_skills_use_shared_catalog_and_direct_child_discovery() -> 
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let skill_path = dunce::canonicalize(write_agent_plugin_skill_plugin(codex_home.as_ref()))?;
+    let genex_home = Arc::new(TempDir::new()?);
+    let skill_path = dunce::canonicalize(write_agent_plugin_skill_plugin(genex_home.as_ref()))?;
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(skills_extensions());
     let test_genex = builder.build_with_auto_env(&server).await?;
 
@@ -715,8 +715,8 @@ async fn plugin_skill_product_policy_and_migrated_command_precedence_reach_agent
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let plugin_root = write_sample_plugin_manifest_and_config(codex_home.as_ref());
+    let genex_home = Arc::new(TempDir::new()?);
+    let plugin_root = write_sample_plugin_manifest_and_config(genex_home.as_ref());
     let native_skill_dir = plugin_root.join("skills/review");
     std::fs::create_dir_all(native_skill_dir.join("agents"))?;
     std::fs::write(
@@ -738,7 +738,7 @@ async fn plugin_skill_product_policy_and_migrated_command_precedence_reach_agent
     }
 
     let mut builder = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_extensions(skills_extensions());
     let test = builder.build_with_auto_env(&server).await?;
     let plugin_outcome = test
@@ -804,8 +804,8 @@ async fn legacy_plugin_skill_prompt_remains_complete() -> Result<()> {
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let skill_path = write_plugin_skill_plugin(codex_home.as_ref());
+    let genex_home = Arc::new(TempDir::new()?);
+    let skill_path = write_plugin_skill_plugin(genex_home.as_ref());
     let skill_contents = format!(
         "---\nname: sample-search\ndescription: inspect sample data\n---\n\n{}\nLEGACY_SKILL_FULL_TAIL\n",
         "x".repeat(9_000)
@@ -813,7 +813,7 @@ async fn legacy_plugin_skill_prompt_remains_complete() -> Result<()> {
     std::fs::write(&skill_path, &skill_contents)?;
     let skill_path = dunce::canonicalize(skill_path)?;
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_extensions(skills_extensions());
     let test_genex = builder.build_with_auto_env(&server).await?;
 
@@ -876,9 +876,9 @@ async fn sites_compatibility_guard_in_agent_turn(
         .mount(&server)
         .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 remote_plugin = true
@@ -894,7 +894,7 @@ enabled = true
         if marketplace == "test-remote" && !cache_remote_sites {
             continue;
         }
-        let root = codex_home
+        let root = genex_home
             .path()
             .join(format!("plugins/cache/{marketplace}/sites/local"));
         std::fs::create_dir_all(root.join(".codex-plugin"))?;
@@ -912,7 +912,7 @@ enabled = true
 
     let managed_auth_base_url = server.uri();
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_extensions(skills_extensions())
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| config.managed_auth_base_url = managed_auth_base_url);
@@ -992,9 +992,9 @@ async fn agent_plugin_root_mcp_stdio_tool_round_trip_expands_reserved_paths_and_
         ],
     )
     .await;
-    let codex_home = Arc::new(TempDir::new()?);
-    write_agent_plugin_skill_plugin(codex_home.as_ref());
-    let plugin_root = codex_home
+    let genex_home = Arc::new(TempDir::new()?);
+    write_agent_plugin_skill_plugin(genex_home.as_ref());
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache/test/acme.tools/local");
     let stdio_server = match stdio_server_bin() {
@@ -1025,11 +1025,11 @@ async fn agent_plugin_root_mcp_stdio_tool_round_trip_expands_reserved_paths_and_
         plugin_root.join(".codex-plugin/plugin.json"),
         r#"{"name":"acme.tools","mcpServers":{"agent":{"command":"ignored","env_vars":["INSTA_WORKSPACE_ROOT"]}}}"#,
     )?;
-    let mut builder = test_genex().with_home(Arc::clone(&codex_home));
+    let mut builder = test_genex().with_home(Arc::clone(&genex_home));
     let test_genex = builder.build_with_remote_and_local_env(&server).await?;
     wait_for_mcp_server(&test_genex.codex, "agent").await?;
     let data_root = dunce::canonicalize(
-        std::fs::read_dir(codex_home.path().join("plugins/data/agent-plugins"))?
+        std::fs::read_dir(genex_home.path().join("plugins/data/agent-plugins"))?
             .next()
             .expect("Agent Plugin data root")?
             .path(),
@@ -1213,9 +1213,9 @@ async fn curated_plugin_skills_follow_auth_switch() -> Result<()> {
     for fixture in FIXTURES {
         let server = start_mock_server().await;
 
-        let codex_home = Arc::new(TempDir::new()?);
+        let genex_home = Arc::new(TempDir::new()?);
         std::fs::write(
-            codex_home.path().join("config.toml"),
+            genex_home.path().join("config.toml"),
             r#"[features]
 plugins = true
 remote_plugin = false
@@ -1241,7 +1241,7 @@ enabled = true
                 "api description before",
             ),
         ] {
-            let plugin_root = codex_home
+            let plugin_root = genex_home
                 .path()
                 .join("plugins/cache")
                 .join(marketplace_name)
@@ -1261,7 +1261,7 @@ enabled = true
         }
 
         let mut builder = test_genex()
-            .with_home(Arc::clone(&codex_home))
+            .with_home(Arc::clone(&genex_home))
             .with_extensions(skills_extensions())
             .with_auth(GenexAuth::from_api_key("test-api-key"));
         let test_genex = builder.build_with_auto_env(&server).await?;
@@ -1275,7 +1275,7 @@ enabled = true
         assert!(initial_skills.contains("managed description"));
 
         std::fs::write(
-            codex_home.path().join(
+            genex_home.path().join(
                 "plugins/cache/provider-api-curated/api-plugin/local/skills/api-skill/SKILL.md",
             ),
             "---\ndescription: api description after\n---\n\n# body\n",
@@ -1284,7 +1284,7 @@ enabled = true
         let expected_auth_mode = match fixture.target_auth {
             TargetAuth::ApiKey => {
                 genex_login::login_with_api_key(
-                    codex_home.path(),
+                    genex_home.path(),
                     "test-api-key",
                     genex_login::AuthCredentialsStoreMode::File,
                     genex_login::AuthKeyringBackendKind::default(),
@@ -1294,7 +1294,7 @@ enabled = true
             }
             TargetAuth::BedrockApiKey => {
                 genex_login::login_with_bedrock_api_key(
-                    codex_home.path(),
+                    genex_home.path(),
                     "test-bedrock-api-key",
                     "us-east-1",
                     genex_login::AuthCredentialsStoreMode::File,
@@ -1345,7 +1345,7 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
     let apps_server = AppsTestServer::mount_with_connector_name(&server, "Google Calendar").await?;
     let mock = mount_plugin_tool_search_turn(&server).await;
 
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     let rmcp_test_server_bin = match stdio_server_bin() {
         Ok(bin) => bin,
         Err(err) => {
@@ -1353,10 +1353,10 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
             return Ok(());
         }
     };
-    write_plugin_skill_plugin(codex_home.as_ref());
-    write_plugin_mcp_plugin(codex_home.as_ref(), &rmcp_test_server_bin);
-    write_plugin_app_plugin(codex_home.as_ref());
-    let config_path = codex_home.path().join("config.toml");
+    write_plugin_skill_plugin(genex_home.as_ref());
+    write_plugin_mcp_plugin(genex_home.as_ref(), &rmcp_test_server_bin);
+    write_plugin_app_plugin(genex_home.as_ref());
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
@@ -1364,7 +1364,7 @@ async fn explicit_plugin_mentions_use_apps_for_managed_dual_surface_plugins(
     )?;
 
     let test_genex =
-        build_apps_enabled_plugin_test_genex(&server, codex_home, apps_server.managed_auth_base_url)
+        build_apps_enabled_plugin_test_genex(&server, genex_home, apps_server.managed_auth_base_url)
             .await?;
     let codex = Arc::clone(&test_genex.codex);
     wait_for_mcp_server(&codex, CODEX_APPS_MCP_SERVER_NAME).await?;
@@ -1438,7 +1438,7 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() ->
     let apps_server = AppsTestServer::mount_with_connector_name(&server, "Google Calendar").await?;
     let mock = mount_plugin_tool_search_turn(&server).await;
 
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     let rmcp_test_server_bin = match stdio_server_bin() {
         Ok(bin) => bin,
         Err(err) => {
@@ -1446,12 +1446,12 @@ async fn explicit_plugin_mentions_keep_non_conflicting_mcp_for_managed_auth() ->
             return Ok(());
         }
     };
-    write_plugin_skill_plugin(codex_home.as_ref());
-    write_plugin_mcp_plugin(codex_home.as_ref(), &rmcp_test_server_bin);
-    write_plugin_app_plugin_with_name(codex_home.as_ref(), "sample_app");
+    write_plugin_skill_plugin(genex_home.as_ref());
+    write_plugin_mcp_plugin(genex_home.as_ref(), &rmcp_test_server_bin);
+    write_plugin_app_plugin_with_name(genex_home.as_ref(), "sample_app");
 
     let test_genex =
-        build_apps_enabled_plugin_test_genex(&server, codex_home, apps_server.managed_auth_base_url)
+        build_apps_enabled_plugin_test_genex(&server, genex_home, apps_server.managed_auth_base_url)
             .await?;
     let codex = Arc::clone(&test_genex.codex);
     wait_for_mcp_server(&codex, "sample").await?;
@@ -1509,10 +1509,10 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
     skip_if_no_network!(Ok(()));
     let server = start_mock_server().await;
     let mock = mount_plugin_tool_search_turn(&server).await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     let project = TempDir::new()?;
-    write_plugin_mcp_plugin(codex_home.as_ref(), &stdio_server_bin()?);
-    let user_config_path = codex_home.path().join("config.toml");
+    write_plugin_mcp_plugin(genex_home.as_ref(), &stdio_server_bin()?);
+    let user_config_path = genex_home.path().join("config.toml");
     let user_config = std::fs::read_to_string(&user_config_path)?;
     std::fs::write(
         &user_config_path,
@@ -1520,7 +1520,7 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
             "{user_config}\n[plugins.\"{SAMPLE_PLUGIN_CONFIG_NAME}\".mcp_servers.sample]\ndisabled_tools = [\"echo\"]\n"
         ),
     )?;
-    let system_config_path = codex_home.path().join("system.toml");
+    let system_config_path = genex_home.path().join("system.toml");
     let marketplace = TempDir::new()?;
     std::fs::create_dir_all(marketplace.path().join(".agents/plugins"))?;
     std::fs::write(
@@ -1536,7 +1536,7 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
     )?;
     // The cached plugin may activate only through this system-defined marketplace.
     // Without the definition, source restrictions exclude it from the real turn.
-    let requirements_path = codex_home.path().join("requirements.toml");
+    let requirements_path = genex_home.path().join("requirements.toml");
     std::fs::write(
         &requirements_path,
         format!(
@@ -1544,18 +1544,18 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
         ),
     )?;
     std::fs::create_dir_all(project.path().join(".git"))?;
-    std::fs::create_dir_all(project.path().join(".codex"))?;
+    std::fs::create_dir_all(project.path().join(".genex"))?;
     std::fs::write(
-        project.path().join(".codex/config.toml"),
+        project.path().join(".genex/config.toml"),
         format!(
             "[plugins.\"{SAMPLE_PLUGIN_CONFIG_NAME}\"]\nenabled = {plugin_enabled}\n[plugins.\"{SAMPLE_PLUGIN_CONFIG_NAME}\".mcp_servers.sample]\nenabled = {project_enabled}\ndisabled_tools = [\"echo-tool\"]\n"
         ),
     )?;
-    set_project_trust_level(codex_home.path(), project.path(), trust_level)?;
+    set_project_trust_level(genex_home.path(), project.path(), trust_level)?;
     // Exercise the real layer loader and trust checks while keeping the test harness's
     // mock model provider and automatically selected executor environment.
     let layered_config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .fallback_cwd(Some(project.path().to_path_buf()))
         .loader_overrides(LoaderOverrides {
             system_config_path: Some(system_config_path),
@@ -1565,7 +1565,7 @@ async fn system_marketplace_plugin_honors_layered_activation_and_mcp_policy(
         .build()
         .await?;
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_config(move |config| config.config_layer_stack = layered_config.config_layer_stack);
     let test = builder.build_with_remote_and_local_env(&server).await?;
     let startup = wait_for_event_match(&test.codex, |event| match event {
@@ -1625,7 +1625,7 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
     let server = start_mock_server().await;
     let mock = mount_plugin_tool_search_turn(&server).await;
 
-    let codex_home = Arc::new(TempDir::new()?);
+    let genex_home = Arc::new(TempDir::new()?);
     let rmcp_test_server_bin = match stdio_server_bin() {
         Ok(bin) => bin,
         Err(err) => {
@@ -1633,13 +1633,13 @@ async fn explicitly_requested_mcp_waits_for_startup(request: ExplicitMcpRequest)
             return Ok(());
         }
     };
-    let skill_path = dunce::canonicalize(write_plugin_skill_plugin(codex_home.as_ref()))?;
-    write_plugin_mcp_plugin(codex_home.as_ref(), &rmcp_test_server_bin);
-    write_plugin_app_plugin(codex_home.as_ref());
-    let initialize_barrier = block_plugin_mcp_startup(codex_home.as_ref(), &rmcp_test_server_bin);
+    let skill_path = dunce::canonicalize(write_plugin_skill_plugin(genex_home.as_ref()))?;
+    write_plugin_mcp_plugin(genex_home.as_ref(), &rmcp_test_server_bin);
+    write_plugin_app_plugin(genex_home.as_ref());
+    let initialize_barrier = block_plugin_mcp_startup(genex_home.as_ref(), &rmcp_test_server_bin);
 
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_auth(GenexAuth::from_api_key("Test API Key"))
         .with_config(move |config| {
             config
@@ -1738,9 +1738,9 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
-    write_plugin_skill_plugin(codex_home.as_ref());
-    let test_genex = build_analytics_plugin_test_genex(&server, codex_home).await?;
+    let genex_home = Arc::new(TempDir::new()?);
+    write_plugin_skill_plugin(genex_home.as_ref());
+    let test_genex = build_analytics_plugin_test_genex(&server, genex_home).await?;
     let codex = Arc::clone(&test_genex.codex);
 
     codex
@@ -1788,10 +1788,10 @@ async fn explicit_plugin_skill_invocation_tracks_remote_plugin_id() -> Result<()
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
-    let skill_path = dunce::canonicalize(write_remote_plugin_skill_plugin(codex_home.as_ref()))?;
-    persist_sample_remote_plugin_id(codex_home.as_ref());
-    let test_genex = build_analytics_plugin_test_genex(&server, codex_home).await?;
+    let genex_home = Arc::new(TempDir::new()?);
+    let skill_path = dunce::canonicalize(write_remote_plugin_skill_plugin(genex_home.as_ref()))?;
+    persist_sample_remote_plugin_id(genex_home.as_ref());
+    let test_genex = build_analytics_plugin_test_genex(&server, genex_home).await?;
     let codex = Arc::clone(&test_genex.codex);
 
     codex
@@ -1832,9 +1832,9 @@ async fn implicit_plugin_skill_invocation_tracks_remote_plugin_id(
     skip_if_remote!(Ok(()), "shell commands use host plugin-cache paths");
     skip_if_no_network!(Ok(()));
     let server = start_mock_server().await;
-    let codex_home = Arc::new(TempDir::new()?);
-    let skill_path = write_remote_plugin_skill_plugin(codex_home.as_ref());
-    persist_sample_remote_plugin_id(codex_home.as_ref());
+    let genex_home = Arc::new(TempDir::new()?);
+    let skill_path = write_remote_plugin_skill_plugin(genex_home.as_ref());
+    persist_sample_remote_plugin_id(genex_home.as_ref());
     let command = match invocation {
         ImplicitPluginSkillInvocation::SkillDocumentRead => {
             format!("cat {}", skill_path.display())
@@ -1870,7 +1870,7 @@ async fn implicit_plugin_skill_invocation_tracks_remote_plugin_id(
         ],
     )
     .await;
-    let test_genex = build_analytics_plugin_test_genex(&server, codex_home).await?;
+    let test_genex = build_analytics_plugin_test_genex(&server, genex_home).await?;
     let codex = Arc::clone(&test_genex.codex);
 
     codex

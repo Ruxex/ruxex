@@ -417,7 +417,7 @@ pub fn build_models_manager(
 ) -> SharedModelsManager {
     let provider = create_model_provider(config.model_provider.clone(), Some(auth_manager));
     let manager = provider.models_manager(
-        config.codex_home.to_path_buf(),
+        config.genex_home.to_path_buf(),
         config.model_catalog.clone(),
     );
     manager.set_api_key_model_discovery_enabled(
@@ -441,7 +441,7 @@ pub fn thread_store_from_config(
             ));
             if compression_enabled {
                 genex_rollout::spawn_rollout_compression_worker(
-                    config.codex_home.to_path_buf(),
+                    config.genex_home.to_path_buf(),
                     genex_rollout::RolloutCompressionTrigger::Startup,
                 );
             }
@@ -484,16 +484,16 @@ impl ThreadManager {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         external_time_provider: Option<Arc<dyn TimeProvider>>,
     ) -> Self {
-        let codex_home = config.codex_home.clone();
+        let genex_home = config.genex_home.clone();
         let restriction_product = session_source.restriction_product();
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
         let skills_service = Arc::new(HostSkillsService::new_with_restriction_product(
-            codex_home.clone(),
+            genex_home.clone(),
             config.bundled_skills_enabled(),
             restriction_product,
         ));
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
-            codex_home.to_path_buf(),
+            genex_home.to_path_buf(),
             restriction_product,
             Arc::clone(&auth_manager),
             skills_service.clone(),
@@ -585,34 +585,34 @@ impl ThreadManager {
         provider: ModelProviderInfo,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
-        let codex_home = std::env::temp_dir().join(format!(
+        let genex_home = std::env::temp_dir().join(format!(
             "codex-thread-manager-test-{}",
             uuid::Uuid::new_v4()
         ));
-        std::fs::create_dir_all(&codex_home)
-            .unwrap_or_else(|err| panic!("temp codex home dir create failed: {err}"));
+        std::fs::create_dir_all(&genex_home)
+            .unwrap_or_else(|err| panic!("temp genex home dir create failed: {err}"));
         let mut manager = Self::with_models_provider_and_home_for_tests(
             auth,
             provider,
-            codex_home.clone(),
+            genex_home.clone(),
             Arc::new(EnvironmentManager::default_for_tests()),
         );
-        manager._test_genex_home_guard = Some(TempGenexHomeGuard { path: codex_home });
+        manager._test_genex_home_guard = Some(TempGenexHomeGuard { path: genex_home });
         manager
     }
 
-    /// Construct with a dummy AuthManager containing the provided GenexAuth and codex home.
+    /// Construct with a dummy AuthManager containing the provided GenexAuth and genex home.
     /// Used for integration tests: should not be used by ordinary business logic.
     pub(crate) fn with_models_provider_and_home_for_tests(
         auth: GenexAuth,
         provider: ModelProviderInfo,
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,
     ) -> Self {
         Self::with_models_provider_home_and_state_for_tests(
             auth,
             provider,
-            codex_home,
+            genex_home,
             environment_manager,
             /*state_db*/ None,
         )
@@ -621,26 +621,26 @@ impl ThreadManager {
     pub(crate) fn with_models_provider_home_and_state_for_tests(
         auth: GenexAuth,
         provider: ModelProviderInfo,
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,
         state_db: Option<StateDbHandle>,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
         let auth_manager = AuthManager::from_auth_for_testing(auth);
         let installation_id = uuid::Uuid::new_v4().to_string();
-        let absolute_codex_home = match AbsolutePathBuf::from_absolute_path_checked(&codex_home) {
-            Ok(codex_home) => codex_home,
-            Err(err) => panic!("test codex_home should be absolute: {err}"),
+        let absolute_genex_home = match AbsolutePathBuf::from_absolute_path_checked(&genex_home) {
+            Ok(genex_home) => genex_home,
+            Err(err) => panic!("test genex_home should be absolute: {err}"),
         };
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
         let restriction_product = SessionSource::Exec.restriction_product();
         let skills_service = Arc::new(HostSkillsService::new_with_restriction_product(
-            absolute_codex_home.clone(),
+            absolute_genex_home.clone(),
             /*bundled_skills_enabled*/ true,
             restriction_product,
         ));
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
-            codex_home.clone(),
+            genex_home.clone(),
             restriction_product,
             Arc::clone(&auth_manager),
             skills_service.clone(),
@@ -650,8 +650,8 @@ impl ThreadManager {
         // process store should construct ThreadManager::new with an explicit store.
         let thread_store: Arc<dyn ThreadStore> = Arc::new(LocalThreadStore::new(
             LocalThreadStoreConfig {
-                codex_home: codex_home.clone(),
-                sqlite: genex_state::SqliteConfig::new_for_testing(absolute_codex_home),
+                genex_home: genex_home.clone(),
+                sqlite: genex_state::SqliteConfig::new_for_testing(absolute_genex_home),
                 default_model_provider_id: "test".to_string(),
             },
             state_db.clone(),
@@ -663,7 +663,7 @@ impl ThreadManager {
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
                 models_manager: create_model_provider(provider, Some(auth_manager.clone()))
-                    .models_manager(codex_home, /*config_model_catalog*/ None),
+                    .models_manager(genex_home, /*config_model_catalog*/ None),
                 git_root_discovery: Arc::default(),
                 environment_manager,
                 starting_mcp_runtimes: std::sync::Mutex::new(Vec::new()),

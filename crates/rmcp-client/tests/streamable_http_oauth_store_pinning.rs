@@ -231,7 +231,7 @@ async fn transport_provided_bearer_token_avoids_placeholder_headers_and_redirect
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn auto_store_remains_pinned_across_session_recovery() -> anyhow::Result<()> {
     let (_server, base_url) = spawn_streamable_http_server().await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
     let status = Command::new(std::env::current_exe()?)
         .args([
@@ -240,7 +240,7 @@ async fn auto_store_remains_pinned_across_session_recovery() -> anyhow::Result<(
             "--ignored",
             "--nocapture",
         ])
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .env(CHILD_SERVER_URL_ENV, &base_url)
         .status()
         .await?;

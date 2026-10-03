@@ -7,23 +7,23 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
 
-fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
-    cmd.env("CODEX_HOME", codex_home);
+    cmd.env("GENEX_HOME", genex_home);
     Ok(cmd)
 }
 
 #[test]
 fn strict_config_rejects_unknown_config_fields_for_app_server() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 foo = "bar"
 "#,
     )?;
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     cmd.args(["app-server", "--strict-config", "--listen", "off"])
         .assert()
         .failure()
@@ -34,7 +34,7 @@ foo = "bar"
 
 #[test]
 fn agents_accept_interactive_configuration_overrides() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
     for args in [
         ["--yolo", "agents"].as_slice(),
@@ -43,7 +43,7 @@ fn agents_accept_interactive_configuration_overrides() -> Result<()> {
         ["--approve-for-me", "agents"].as_slice(),
         ["--cd", ".", "agents"].as_slice(),
     ] {
-        let mut cmd = genex_command(codex_home.path())?;
+        let mut cmd = genex_command(genex_home.path())?;
         cmd.env("TERM", "xterm-256color").args(args);
         #[cfg(not(any(unix, windows)))]
         cmd.args(["--remote", "ws://127.0.0.1:4512"]);
@@ -58,7 +58,7 @@ fn agents_accept_interactive_configuration_overrides() -> Result<()> {
 
 #[test]
 fn agents_reject_inputs_that_cannot_be_applied() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
     for (args, expected_error) in [
         (
@@ -92,7 +92,7 @@ fn agents_reject_inputs_that_cannot_be_applied() -> Result<()> {
             "cannot apply local provider or additional-directory overrides",
         ),
     ] {
-        let mut cmd = genex_command(codex_home.path())?;
+        let mut cmd = genex_command(genex_home.path())?;
         cmd.args(args)
             .assert()
             .failure()
@@ -104,8 +104,8 @@ fn agents_reject_inputs_that_cannot_be_applied() -> Result<()> {
 
 #[test]
 fn app_server_emits_json_info_events() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let event = app_server_json_shutdown_event("codex", &["app-server"], codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    let event = app_server_json_shutdown_event("codex", &["app-server"], genex_home.path())?;
 
     assert_eq!(
         event,

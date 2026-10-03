@@ -38,20 +38,20 @@ pub async fn build_prompt_input(
             .map_err(|err| GenexErr::Fatal(err.to_string()))?;
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        config.codex_self_exe.clone(),
-        config.codex_linux_sandbox_exe.clone(),
+        config.genex_self_exe.clone(),
+        config.genex_linux_sandbox_exe.clone(),
     )?;
 
     let thread_store = thread_store_from_config(&config, state_db.clone());
-    let installation_id = resolve_installation_id(&config.codex_home).await?;
+    let installation_id = resolve_installation_id(&config.genex_home).await?;
     let thread_manager = ThreadManager::new(
         &config,
         Arc::clone(&auth_manager),
         crate::thread_manager::build_models_manager(&config, Arc::clone(&auth_manager)),
         SessionSource::Exec,
         Arc::new(
-            EnvironmentManager::from_codex_home(
-                config.codex_home.clone(),
+            EnvironmentManager::from_genex_home(
+                config.genex_home.clone(),
                 Some(local_runtime_paths),
                 config.http_client_factory(),
             )

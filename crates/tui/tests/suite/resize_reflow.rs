@@ -27,13 +27,13 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
     let genex = genex_binary(&repo_root)?;
-    let codex_home = tempdir()?;
+    let genex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config =
         format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
-    write_config(codex_home.path(), &repo_root)?;
-    write_auth(codex_home.path())?;
+    write_config(genex_home.path(), &repo_root)?;
+    write_auth(genex_home.path())?;
 
     let session_name = format!("codex-resize-reflow-smoke-{}", std::process::id());
     let _session = TmuxSession {
@@ -56,7 +56,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("CODEX_HOME={}", codex_home.path().display()))
+            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
             .arg(genex)
             .arg("-c")
@@ -195,13 +195,13 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
     let genex = genex_binary(&repo_root)?;
-    let codex_home = tempdir()?;
+    let genex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config =
         format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
-    write_config(codex_home.path(), &repo_root)?;
-    write_auth(codex_home.path())?;
+    write_config(genex_home.path(), &repo_root)?;
+    write_auth(genex_home.path())?;
 
     let session_name = format!("codex-resize-width-{}", std::process::id());
     let _session = TmuxSession {
@@ -224,7 +224,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("CODEX_HOME={}", codex_home.path().display()))
+            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
             .arg(genex)
             .arg("-c")
@@ -327,12 +327,12 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
 
     let repo_root = genex_utils_cargo_bin::repo_root()?;
     let genex = genex_binary(&repo_root)?;
-    let codex_home = tempdir()?;
+    let genex_home = tempdir()?;
     let server = MockServer::start().await;
     let provider_base_url_config =
         format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
-    write_config(codex_home.path(), &repo_root)?;
-    write_auth(codex_home.path())?;
+    write_config(genex_home.path(), &repo_root)?;
+    write_auth(genex_home.path())?;
 
     let session_name = format!("codex-resize-scrolled-composer-{}", std::process::id());
     let _session = TmuxSession {
@@ -354,7 +354,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("CODEX_HOME={}", codex_home.path().display()))
+            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
             .arg(genex)
             .arg("--model")
@@ -454,13 +454,13 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
 async fn run_repeated_resize_smoke() -> Result<()> {
     let repo_root = genex_utils_cargo_bin::repo_root()?;
     let genex = genex_binary(&repo_root)?;
-    let codex_home = tempdir()?;
+    let genex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config =
         format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
-    write_config(codex_home.path(), &repo_root)?;
-    write_auth(codex_home.path())?;
+    write_config(genex_home.path(), &repo_root)?;
+    write_auth(genex_home.path())?;
 
     let session_name = format!("codex-resize-repeat-{}", std::process::id());
     let _session = TmuxSession {
@@ -483,7 +483,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("CODEX_HOME={}", codex_home.path().display()))
+            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
             .arg(genex)
             .arg("-c")
@@ -602,7 +602,7 @@ fn genex_binary(repo_root: &Path) -> Result<PathBuf> {
     Ok(fallback)
 }
 
-fn write_config(codex_home: &Path, repo_root: &Path) -> Result<()> {
+fn write_config(genex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root_display = repo_root.display();
     let config = format!(
         r#"model = "gpt-5.4"
@@ -613,13 +613,13 @@ suppress_unstable_features_warning = true
 trust_level = "trusted"
 "#
     );
-    std::fs::write(codex_home.join("config.toml"), config)?;
+    std::fs::write(genex_home.join("config.toml"), config)?;
     Ok(())
 }
 
-fn write_auth(codex_home: &Path) -> Result<()> {
+fn write_auth(genex_home: &Path) -> Result<()> {
     std::fs::write(
-        codex_home.join("auth.json"),
+        genex_home.join("auth.json"),
         r#"{"PROVIDER_API_KEY":"dummy","tokens":null,"last_refresh":null}"#,
     )?;
     Ok(())

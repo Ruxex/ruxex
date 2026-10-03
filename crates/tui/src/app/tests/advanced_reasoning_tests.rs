@@ -6,12 +6,12 @@ use pretty_assertions::assert_eq;
 #[tokio::test]
 async fn fork_current_session_preserves_conversation_ultra() -> Result<()> {
     let mut app = make_test_app().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.path().abs());
     let source_thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            codex_home.path(),
+            genex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",

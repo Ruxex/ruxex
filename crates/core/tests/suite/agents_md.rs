@@ -890,11 +890,11 @@ async fn symlinked_writable_root_reports_sandbox_failure_instead_of_session_corr
         "sandbox preparation failure should not be diagnosed as session corruption: {error}"
     );
     let error = error
-        .replace(&canonical_home_path, "$CODEX_HOME")
-        .replace(&home_path, "$CODEX_HOME");
+        .replace(&canonical_home_path, "$GENEX_HOME")
+        .replace(&home_path, "$GENEX_HOME");
     insta::assert_snapshot!(error, @"
-    failed to load AGENTS.md instructions for environment `local`: failed to prepare fs sandbox: failed to prepare Seatbelt sandbox: writable root $CODEX_HOME/visualizations contains symlink component $CODEX_HOME/visualizations; symlinked writable roots are not supported.
-    If this writable root is at or beneath CODEX_HOME and you trust its symlink targets, set `allow_symlinked_codex_home = true` at the top level of `$CODEX_HOME/config.toml` (normally `~/.codex/config.toml`) on the execution host, then restart Codex or its executor. This opt-out trusts targets outside CODEX_HOME and targets changed between commands. It does not apply to other writable roots.
+    failed to load AGENTS.md instructions for environment `local`: failed to prepare fs sandbox: failed to prepare Seatbelt sandbox: writable root $GENEX_HOME/visualizations contains symlink component $GENEX_HOME/visualizations; symlinked writable roots are not supported.
+    If this writable root is at or beneath GENEX_HOME and you trust its symlink targets, set `allow_symlinked_genex_home = true` at the top level of `$GENEX_HOME/config.toml` (normally `~/.genex/config.toml`) on the execution host, then restart Codex or its executor. This opt-out trusts targets outside GENEX_HOME and targets changed between commands. It does not apply to other writable roots.
     ");
 
     Ok(())
@@ -1143,7 +1143,7 @@ async fn thread_provider_composes_and_clears_only_its_instructions() -> Result<(
     .await;
     let fixture = ThreadInstructionsFixture::new(&server).await?;
     let sources = vec![
-        PathUri::from_abs_path(&fixture.test.config.codex_home.join(GLOBAL_AGENTS_FILENAME)),
+        PathUri::from_abs_path(&fixture.test.config.genex_home.join(GLOBAL_AGENTS_FILENAME)),
         fixture.test.workspace_path_uri(GLOBAL_AGENTS_FILENAME)?,
     ];
     assert_eq!(fixture.thread.instruction_sources().await, sources);
@@ -2228,7 +2228,7 @@ async fn fork_injects_changed_agents_md_once() -> Result<()> {
     fork_config.model = parent.config.model.clone();
     fork_config.model_provider = parent.config.model_provider.clone();
     fork_config.model_catalog = parent.config.model_catalog.clone();
-    fork_config.codex_self_exe = parent.config.codex_self_exe.clone();
+    fork_config.genex_self_exe = parent.config.genex_self_exe.clone();
     fork_config
         .features
         .enable(Feature::ContentItemKinds)

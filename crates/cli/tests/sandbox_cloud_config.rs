@@ -42,16 +42,16 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         "contents": CLOUD_MANAGED_PERMISSION_PROFILE_REQUIREMENTS,
     }]);
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\"\n",
         ),
     )?;
     let bootstrap_config = load_config_toml_with_layer_stack(
-        codex_home.path(),
-        Some(&AbsolutePathBuf::from_absolute_path(codex_home.path())?),
+        genex_home.path(),
+        Some(&AbsolutePathBuf::from_absolute_path(genex_home.path())?),
         vec![
             (
                 "cli_auth_credentials_store".to_string(),
@@ -80,7 +80,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
     }
 
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("workspace-123")
             .workspace_id("workspace-123")
@@ -104,8 +104,8 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
     let managed_auth_base_url_override =
         format!("managed_auth_base_url=\"{managed_auth_base_url}\"");
     let output = Command::new(&codex)
-        .current_dir(codex_home.path())
-        .env("CODEX_HOME", codex_home.path())
+        .current_dir(genex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .env("NO_PROXY", "127.0.0.1,localhost")
         .env("no_proxy", "127.0.0.1,localhost")
         .env_remove("CODEX_ACCESS_TOKEN")
@@ -149,7 +149,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
     }
 
     let cache: Value = serde_json::from_slice(&std::fs::read(
-        codex_home.path().join("cloud-config-bundle-cache.json"),
+        genex_home.path().join("cloud-config-bundle-cache.json"),
     )?)?;
     assert_eq!(
         json!({

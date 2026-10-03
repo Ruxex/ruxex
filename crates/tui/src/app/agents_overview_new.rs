@@ -243,14 +243,14 @@ impl App {
                 "The source project is not trusted."
             );
             let host = crate::legacy_core::config::load_config_toml_with_layer_stack(
-                &self.config.codex_home,
+                &self.config.genex_home,
                 /*cwd*/ None,
                 Vec::new(),
                 genex_config::ConfigLoadOptions::default(),
             )
             .await?;
             let settings = genex_worktree::WorktreeSettings::for_cli(
-                &self.config.codex_home,
+                &self.config.genex_home,
                 host.config_toml.desktop.as_ref(),
             )?;
             anyhow::Ok(genex_worktree::WorktreeManager::new(settings))

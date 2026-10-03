@@ -81,10 +81,10 @@ async fn complete_managed_worktree_creation(
 
 #[tokio::test]
 async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()> {
-    let (mut app, codex_home) = make_history_test_app().await?;
+    let (mut app, genex_home) = make_history_test_app().await?;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            codex_home.path(),
+            genex_home.path(),
             "2026-01-01T00-00-00",
             "2026-01-01T00:00:00Z",
             "Saved user message",
@@ -94,7 +94,7 @@ async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()>
         .expect("create rollout"),
     )?;
     let path = Some(rollout_path(
-        codex_home.path(),
+        genex_home.path(),
         "2026-01-01T00-00-00",
         &thread_id.to_string(),
     ));
@@ -113,7 +113,7 @@ async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()>
     app.chat_widget.insert_str("Retained draft");
     app.chat_widget.show_external_writer_thread();
     crate::legacy_core::config::set_project_trust_level(
-        app.config.codex_home.as_path(),
+        app.config.genex_home.as_path(),
         app.config.cwd.as_path(),
         genex_protocol::config_types::TrustLevel::Trusted,
     )
@@ -277,7 +277,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
         Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
     )
     .await?;
-    let codex_home = config.codex_home.display().to_string();
+    let genex_home = config.genex_home.display().to_string();
     let requests = Arc::new(Mutex::new(Vec::new()));
     let request_sink = Arc::clone(&requests);
     let listener = TcpListener::bind("127.0.0.1:0").await?;
@@ -323,7 +323,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
                                 id: request.id,
                                 result: serde_json::json!({
                                     "userAgent": "codex-tui-test",
-                                    "genexHome": codex_home,
+                                    "genexHome": genex_home,
                                 }),
                             }))?
                             .into(),
@@ -626,7 +626,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
 
     Ok((
         AppServerSession::new(app_server, thread_params_mode)
-            .with_local_codex_home(&config.codex_home),
+            .with_local_genex_home(&config.genex_home),
         requests,
         proxy,
     ))
@@ -639,7 +639,7 @@ fn create_history_rollout(
 ) -> Result<ThreadId> {
     let create_rollout = create_fake_paginated_rollout;
     let thread_id = create_rollout(
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         "2026-01-02T00-00-00",
         "2026-01-02T00:00:00Z",
         preview,
@@ -662,10 +662,10 @@ pub(super) fn recorded_params(requests: &RecordedRequests, method: &str) -> Vec<
 
 async fn make_history_test_app() -> Result<(App, tempfile::TempDir)> {
     let mut app = make_test_app().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
-    Ok((app, codex_home))
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
+    Ok((app, genex_home))
 }
 
 #[tokio::test]
@@ -679,7 +679,7 @@ async fn delete_current_thread_navigates_only_after_success() -> Result<()> {
         },
         AppServerTarget::Remote { endpoint },
     ] {
-        let (mut app, _codex_home) = make_history_test_app().await?;
+        let (mut app, _genex_home) = make_history_test_app().await?;
         let thread_id =
             create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "delete me")?;
         let (mut server, requests, proxy) = start_recording_app_server(
@@ -833,7 +833,7 @@ fn spawn_approved_task_tool_call(
 
 #[tokio::test]
 async fn external_transport_registers_dynamic_tools_and_finds_task_mentions() -> Result<()> {
-    let (app, _codex_home) = make_history_test_app().await?;
+    let (app, _genex_home) = make_history_test_app().await?;
     let (mut app_server, requests, proxy) = Box::pin(start_recording_app_server(
         &app.config,
         /*blocked_thread_list*/ None,
@@ -944,10 +944,10 @@ async fn external_transport_registers_dynamic_tools_and_finds_task_mentions() ->
 
 #[tokio::test]
 async fn archive_current_thread_reports_success_only_after_archiving() -> Result<()> {
-    let (mut app, _codex_home) = make_history_test_app().await?;
+    let (mut app, _genex_home) = make_history_test_app().await?;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            &app.config.codex_home,
+            &app.config.genex_home,
             "2026-08-25T01-00-00",
             "2026-08-25T01:00:00Z",
             "archive me",
@@ -980,14 +980,14 @@ async fn archive_current_thread_reports_success_only_after_archiving() -> Result
 #[tokio::test]
 async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() -> Result<()> {
     let (mut app, events, _ops) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
     app.config
         .web_search_mode
         .set(genex_protocol::config_types::WebSearchMode::Live)?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "web_search = \"disabled\"\n",
     )?;
     // Keep the large lifecycle futures off the Windows test thread's stack.
@@ -1263,7 +1263,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
 #[tokio::test]
 async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Result<()> {
     for scenario in ["conflicting", "blocked", "mismatched", "allowed"] {
-        let (mut app, _codex_home) = make_history_test_app().await?;
+        let (mut app, _genex_home) = make_history_test_app().await?;
         if scenario == "conflicting" {
             let raw = serde_json::from_value::<genex_config::RawMcpServerConfig>(
                 serde_json::json!({"url": "http://127.0.0.1:1/mcp", "enabled": false}),
@@ -1354,7 +1354,7 @@ async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Res
 
 #[tokio::test]
 async fn older_external_server_starts_without_unsupported_dynamic_tools_or_history() -> Result<()> {
-    let (app, _codex_home) = make_history_test_app().await?;
+    let (app, _genex_home) = make_history_test_app().await?;
     let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
         &app.config,
         HistoryCapabilities::LegacyDynamicToolsAndHistory,
@@ -1398,9 +1398,9 @@ async fn older_external_server_starts_without_unsupported_dynamic_tools_or_histo
 #[tokio::test]
 async fn embedded_server_rejects_unowned_dynamic_tool_calls() -> Result<()> {
     let (mut app, mut events, _ops) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
     let app_server = crate::start_embedded_app_server_for_picker(&app.config).await?;
     app.handle_app_server_event(
         &app_server,
@@ -1433,9 +1433,9 @@ async fn embedded_server_rejects_unowned_dynamic_tool_calls() -> Result<()> {
 #[tokio::test]
 async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespace() -> Result<()> {
     let (mut app, mut events, _ops) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
     app.config
         .permissions
         .set_permission_profile(PermissionProfile::workspace_write_with(
@@ -1827,12 +1827,12 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
 #[tokio::test]
 async fn transcript_home_loads_every_older_history_page() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
     app.local_settings.tui.terminal_resize_reflow_max_rows = Some(2);
     let thread_id = create_fake_paginated_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2026-01-02T00-00-00",
         "2026-01-02T00:00:00Z",
         "multi-page transcript",
@@ -1842,7 +1842,7 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
     .map_err(|error| color_eyre::eyre::eyre!("failed to create paginated rollout: {error}"))?;
     let thread_id = ThreadId::from_string(&thread_id)?;
     let path = rollout_path(
-        codex_home.path(),
+        genex_home.path(),
         "2026-01-02T00-00-00",
         &thread_id.to_string(),
     );
@@ -1917,7 +1917,7 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
     while app_event_rx.try_recv().is_ok() {}
     let initial_turn_requests = recorded_params(&requests, "thread/turns/list").len();
     let initial_item_requests = recorded_params(&requests, "thread/items/list").len();
-    let export_path = codex_home.path().join("complete-export.md");
+    let export_path = genex_home.path().join("complete-export.md");
     app.chat_widget
         .set_queue_autosend_suppressed(/*suppressed*/ true);
     app.chat_widget.insert_str("queued after export");
@@ -2004,7 +2004,7 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
 
 #[tokio::test]
 async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Result<()> {
-    let (app, _codex_home) = make_history_test_app().await?;
+    let (app, _genex_home) = make_history_test_app().await?;
     let legacy_thread_id =
         create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "legacy history")?;
     let paginated_thread_id = create_history_rollout(
@@ -2104,7 +2104,7 @@ async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Re
 
 #[tokio::test]
 async fn remote_legacy_history_start_retries_unsupported_paginated_variant() -> Result<()> {
-    let (app, _codex_home) = make_history_test_app().await?;
+    let (app, _genex_home) = make_history_test_app().await?;
     let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
         &app.config,
         HistoryCapabilities::LegacyOnlyUnsupportedVariant,
@@ -2134,7 +2134,7 @@ enum LegacyHistoryRequest {
 }
 
 async fn assert_remote_legacy_history_retry(request: LegacyHistoryRequest) -> Result<()> {
-    let (app, _codex_home) = make_history_test_app().await?;
+    let (app, _genex_home) = make_history_test_app().await?;
     let legacy_thread_id =
         create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "legacy history")?;
     let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
@@ -2199,7 +2199,7 @@ async fn remote_legacy_history_fork_avoids_unsupported_fields() -> Result<()> {
 
 #[tokio::test]
 async fn paginated_fork_survives_post_response_hydration_failure() -> Result<()> {
-    let (app, _codex_home) = make_history_test_app().await?;
+    let (app, _genex_home) = make_history_test_app().await?;
     let parent_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2240,9 +2240,9 @@ async fn paginated_fork_survives_post_response_hydration_failure() -> Result<()>
 #[tokio::test]
 async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcript() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
     app.local_settings.tui.terminal_resize_reflow_max_rows = Some(8);
     let thread_id = create_history_rollout(
         &app.config,
@@ -2250,7 +2250,7 @@ async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcri
         "scrollback pagination",
     )?;
     let path = rollout_path(
-        codex_home.path(),
+        genex_home.path(),
         "2026-01-02T00-00-00",
         &thread_id.to_string(),
     );
@@ -2424,7 +2424,7 @@ async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcri
 
 #[tokio::test]
 async fn paginated_workflows_never_request_full_thread_history() -> Result<()> {
-    let (app, _codex_home) = make_history_test_app().await?;
+    let (app, _genex_home) = make_history_test_app().await?;
     let paginated_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2522,7 +2522,7 @@ async fn paginated_workflows_never_request_full_thread_history() -> Result<()> {
 
 #[tokio::test]
 async fn agents_overview_stop_uses_history_mode_for_turn_lookup() -> Result<()> {
-    let (mut app, _codex_home) = make_history_test_app().await?;
+    let (mut app, _genex_home) = make_history_test_app().await?;
     let paginated_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2586,7 +2586,7 @@ async fn agents_overview_seeds_loaded_threads_when_recent_listing_is_unavailable
             vec!["recency_at", "recency_at", "recency_at", "recency_at"],
         ),
     ] {
-        let (mut app, _codex_home) = make_history_test_app().await?;
+        let (mut app, _genex_home) = make_history_test_app().await?;
         let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
             &app.config,
             capabilities,
@@ -2660,7 +2660,7 @@ async fn agents_overview_seeds_loaded_threads_when_recent_listing_is_unavailable
 
 #[tokio::test]
 async fn agents_overview_stop_uses_full_history_after_legacy_negotiation() -> Result<()> {
-    let (mut app, _codex_home) = make_history_test_app().await?;
+    let (mut app, _genex_home) = make_history_test_app().await?;
     let thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2694,7 +2694,7 @@ async fn agents_overview_stop_uses_full_history_after_legacy_negotiation() -> Re
 
 #[tokio::test]
 async fn cold_paginated_subagent_transcript_excludes_inherited_parent_history() -> Result<()> {
-    let (app, codex_home) = make_history_test_app().await?;
+    let (app, genex_home) = make_history_test_app().await?;
     let parent_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2703,7 +2703,7 @@ async fn cold_paginated_subagent_transcript_excludes_inherited_parent_history() 
     let child_timestamp = "2026-01-02T00-00-01";
     let child_thread_id = ThreadId::from_string(
         &create_fake_parented_rollout_with_source(
-            codex_home.path(),
+            genex_home.path(),
             child_timestamp,
             "2026-01-02T00:00:01Z",
             "child-only paginated history",
@@ -2724,7 +2724,7 @@ async fn cold_paginated_subagent_transcript_excludes_inherited_parent_history() 
         .map_err(|err| color_eyre::eyre::eyre!("failed to create subagent rollout: {err}"))?,
     )?;
     let child_rollout_path = rollout_path(
-        codex_home.path(),
+        genex_home.path(),
         child_timestamp,
         &child_thread_id.to_string(),
     );
@@ -2896,9 +2896,9 @@ fn fresh_session_applies_requested_name() -> Result<()> {
                 .build()?;
             runtime.block_on(async {
                 let mut app = make_test_app().await;
-                let codex_home = tempdir()?;
-                app.config.codex_home = codex_home.path().to_path_buf().abs();
-                app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
+                let genex_home = tempdir()?;
+                app.config.genex_home = genex_home.path().to_path_buf().abs();
+                app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
                 let (mut app_server, requests, proxy) = start_recording_app_server(
                     &app.config,
                     /*blocked_thread_list*/ None,
@@ -2959,7 +2959,7 @@ async fn external_writer_escape_preserves_snapshot_and_explicit_quits() -> Resul
         },
         AppServerTarget::Remote { endpoint },
     ] {
-        let (mut app, _codex_home) = make_history_test_app().await?;
+        let (mut app, _genex_home) = make_history_test_app().await?;
         let thread_id =
             create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "owned elsewhere")?;
         let (mut server, requests, proxy) = start_recording_app_server(

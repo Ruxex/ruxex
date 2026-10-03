@@ -81,7 +81,7 @@ base_url = "{}/v1"
     let requirements_path = home.path().join("requirements.toml");
     std::fs::write(&requirements_path, &requirements)?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .with_json_logging("warn")
         .build_initialized()
         .await?;
@@ -264,7 +264,7 @@ async fn local_config_changes_do_not_block_existing_threads() -> Result<()> {
     let home = TempDir::new()?;
     MockResponsesConfig::new(&provider.uri()).write(home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized()
         .await?;
     let started = server.start_thread(ThreadStartParams::default()).await?;
@@ -307,7 +307,7 @@ async fn malformed_system_defaults_do_not_block_existing_thread_turn() -> Result
     overrides.system_config_path = Some(system_config_path.clone());
     let config = Arc::new(
         ConfigBuilder::default()
-            .codex_home(home.path().to_path_buf())
+            .genex_home(home.path().to_path_buf())
             .fallback_cwd(Some(home.path().to_path_buf()))
             .loader_overrides(overrides.clone())
             .build()

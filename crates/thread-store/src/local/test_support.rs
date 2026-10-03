@@ -10,10 +10,10 @@ use uuid::Uuid;
 
 use super::LocalThreadStoreConfig;
 
-pub(super) fn test_config(codex_home: &Path) -> LocalThreadStoreConfig {
+pub(super) fn test_config(genex_home: &Path) -> LocalThreadStoreConfig {
     LocalThreadStoreConfig {
-        codex_home: codex_home.to_path_buf(),
-        sqlite: genex_state::SqliteConfig::new_for_testing(codex_home.abs()),
+        genex_home: genex_home.to_path_buf(),
+        sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
         default_model_provider_id: "test-provider".to_string(),
     }
 }

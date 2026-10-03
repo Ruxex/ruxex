@@ -68,8 +68,8 @@ impl ExternalAgentConfigService {
         let source_settings = self.source_settings(scope);
         let settings = self.effective_source_settings(scope)?;
         let target_config = repo_root.map_or_else(
-            || self.codex_home.join("config.toml"),
-            |repo_root| repo_root.join(".codex").join("config.toml"),
+            || self.genex_home.join("config.toml"),
+            |repo_root| repo_root.join(".genex").join("config.toml"),
         );
         if let Some(settings) = settings.as_ref() {
             let migrated = self.source.build_config(settings)?;
@@ -149,8 +149,8 @@ impl ExternalAgentConfigService {
 
         let source_external_agent_dir = self.source_config_dir(scope);
         let target_hooks = repo_root.map_or_else(
-            || self.codex_home.join("hooks.json"),
-            |repo_root| repo_root.join(".codex").join("hooks.json"),
+            || self.genex_home.join("hooks.json"),
+            |repo_root| repo_root.join(".genex").join("hooks.json"),
         );
         let hook_event_names = self
             .source
@@ -252,8 +252,8 @@ impl ExternalAgentConfigService {
 
         let source_subagents = source_external_agent_dir.join("agents");
         let target_subagents = repo_root.map_or_else(
-            || self.codex_home.join("agents"),
-            |repo_root| repo_root.join(".codex").join("agents"),
+            || self.genex_home.join("agents"),
+            |repo_root| repo_root.join(".genex").join("agents"),
         );
         let subagents_count = count_missing_subagents(&source_subagents, &target_subagents)?;
         if subagents_count > 0 {
@@ -284,7 +284,7 @@ impl ExternalAgentConfigService {
             let sources = self.home_agents_md_sources()?;
             (!sources.is_empty())
                 .then(|| InstructionSourceGroup {
-                    scope: self.codex_home.clone(),
+                    scope: self.genex_home.clone(),
                     sources,
                 })
                 .into_iter()
@@ -317,8 +317,8 @@ impl ExternalAgentConfigService {
         // settings must never be treated as plugin installation authority.
         if scope.is_home() && self.source.supports_plugin_migration(settings.as_ref()) {
             match ConfigBuilder::default()
-                .codex_home(self.codex_home.clone())
-                .fallback_cwd(Some(self.codex_home.clone()))
+                .genex_home(self.genex_home.clone())
+                .fallback_cwd(Some(self.genex_home.clone()))
                 .build()
                 .await
             {
@@ -380,7 +380,7 @@ impl ExternalAgentConfigService {
         if scope.is_home() {
             let sessions = self.source.recent_sessions(
                 &self.external_agent_home,
-                &self.codex_home,
+                &self.genex_home,
                 self.session_import_limits,
             )?;
             if !sessions.is_empty() {

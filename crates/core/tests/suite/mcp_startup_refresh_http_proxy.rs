@@ -410,7 +410,7 @@ async fn skill_mcp_dependency_oauth_uses_configured_http_client() -> Result<()> 
     })
     .await;
 
-    let servers = genex_config::load_global_mcp_servers(&fixture.config.codex_home).await?;
+    let servers = genex_config::load_global_mcp_servers(&fixture.config.genex_home).await?;
     assert_eq!(
         servers
             .get(SERVER_NAME)

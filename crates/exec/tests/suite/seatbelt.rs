@@ -16,7 +16,7 @@ use std::time::Duration;
 use tempfile::TempDir;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn codex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<()> {
+async fn genex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<()> {
     use core_test_support::responses;
     use core_test_support::test_genex_exec::test_genex_exec;
     use serde_json::json;
@@ -24,13 +24,13 @@ async fn codex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
     core_test_support::skip_if_sandbox!(Ok(()));
     for (home_env, root_alias, enabled, ignore_user_config) in [
         ("user-home", Some("user-home"), true, false),
-        ("home-link/../.codex", Some(".codex"), false, false),
-        ("home-link/../.codex", None, true, false),
+        ("home-link/../.genex", Some(".genex"), false, false),
+        ("home-link/../.genex", None, true, false),
         ("user-home", Some("user-home"), true, true),
     ] {
         let test = test_genex_exec();
-        let home = test.home_path().join(".codex");
-        let project_home = test.cwd_path().join(".codex");
+        let home = test.home_path().join(".genex");
+        let project_home = test.cwd_path().join(".genex");
         let child = test.home_path().join("child");
         for directory in [&home, &project_home, &child] {
             fs::create_dir(directory)?;
@@ -39,12 +39,12 @@ async fn codex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
         symlink(&child, test.cwd_path().join("home-link"))?;
         fs::write(
             home.join("config.toml"),
-            format!("allow_symlinked_codex_home = {enabled}\n"),
+            format!("allow_symlinked_genex_home = {enabled}\n"),
         )?;
         // The checkout must not enable the opt-out, even when `..` follows a symlink.
         fs::write(
             project_home.join("config.toml"),
-            "allow_symlinked_codex_home = true\n",
+            "allow_symlinked_genex_home = true\n",
         )?;
         let target = TempDir::new()?;
         for root in [&home, &project_home] {
@@ -83,12 +83,12 @@ async fn codex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
             .env_remove("CODEX_API_KEY")
             .env_remove("PROVIDER_API_KEY")
             .env_remove("CODEX_ACCESS_TOKEN")
-            .env("CODEX_HOME", home_env)
+            .env("GENEX_HOME", home_env)
             .args(["--skip-git-repo-check", "--sandbox", "workspace-write", "--add-dir"])
             .arg(&visualizations)
             .args(["-c", "approvals_reviewer=\"user\"", "-c", "features.shell_snapshot_v2=false"])
             // Session overrides cannot authorize the host's exception either.
-            .args(["-c", "allow_symlinked_codex_home=true"])
+            .args(["-c", "allow_symlinked_genex_home=true"])
             .args(["-c", "model_provider=\"test\"", "-c"])
             .arg(format!(
                 "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",requires_auth=false,supports_websockets=false}}",

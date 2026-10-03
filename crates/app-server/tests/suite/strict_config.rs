@@ -25,7 +25,7 @@ async fn ignored_config_fields_emit_startup_and_project_warnings() -> Result<()>
     )?;
     let read_timeout = Duration::from_secs(30);
     let mut server = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized_with_timeout(read_timeout)
         .await?;
     let startup_warning: ConfigWarningNotification =
@@ -53,9 +53,9 @@ async fn ignored_config_fields_emit_startup_and_project_warnings() -> Result<()>
 
     let project = TempDir::new()?;
     std::fs::create_dir(project.path().join(".git"))?;
-    std::fs::create_dir(project.path().join(".codex"))?;
+    std::fs::create_dir(project.path().join(".genex"))?;
     std::fs::write(
-        project.path().join(".codex/config.toml"),
+        project.path().join(".genex/config.toml"),
         "project_setting = 'private_value'",
     )?;
     set_project_trust_level(home.path(), project.path(), TrustLevel::Trusted)?;
@@ -74,19 +74,19 @@ async fn ignored_config_fields_emit_startup_and_project_warnings() -> Result<()>
 
 #[test]
 fn strict_config_rejects_unknown_config_fields_for_standalone_app_server() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 foo = "bar"
 "#,
     )?;
 
     let output = Command::new(genex_utils_cargo_bin::cargo_bin("codex-app-server")?)
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .env(
             "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            codex_home.path().join("managed_config.toml"),
+            genex_home.path().join("managed_config.toml"),
         )
         .args(["--strict-config", "--listen", "off"])
         .output()?;
@@ -118,15 +118,15 @@ fn managed_auth_requirements_fail_closed_for_standalone_app_server() -> Result<(
             "forced_managed_workspace_id = ['other']",
         ),
     ] {
-        let codex_home = TempDir::new()?;
-        std::fs::write(codex_home.path().join("requirements.toml"), requirements)?;
-        std::fs::write(codex_home.path().join("config.toml"), config)?;
+        let genex_home = TempDir::new()?;
+        std::fs::write(genex_home.path().join("requirements.toml"), requirements)?;
+        std::fs::write(genex_home.path().join("config.toml"), config)?;
 
         let output = Command::new(genex_utils_cargo_bin::cargo_bin("codex-app-server")?)
-            .env("CODEX_HOME", codex_home.path())
+            .env("GENEX_HOME", genex_home.path())
             .env(
                 "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
-                codex_home.path().join("managed_config.toml"),
+                genex_home.path().join("managed_config.toml"),
             )
             .args(["--listen", "off"])
             .output()?;

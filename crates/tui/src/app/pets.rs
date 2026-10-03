@@ -78,7 +78,7 @@ impl App {
     pub(super) fn handle_pet_selected(&mut self, tui: &mut tui::Tui, pet_id: String) {
         let request_id = self.chat_widget.show_pet_selection_loading_popup();
         tui.frame_requester().schedule_frame();
-        let codex_home = self.local_settings.codex_home.clone();
+        let genex_home = self.local_settings.genex_home.clone();
         let frame_requester = tui.frame_requester();
         let animations_enabled = self.local_settings.tui.animations;
         let tx = self.app_event_tx.clone();
@@ -86,7 +86,7 @@ impl App {
         std::mem::drop(tokio::spawn(async move {
             let result = crate::pets::load_pet_with_assets(
                 pet_id.clone(),
-                codex_home,
+                genex_home,
                 frame_requester,
                 animations_enabled,
                 &pet_http_client,
@@ -104,7 +104,7 @@ impl App {
 
     pub(super) async fn handle_pet_disabled(&mut self, tui: &mut tui::Tui) {
         let edit = crate::legacy_core::config::edit::tui_pet_edit(crate::pets::DISABLED_PET_ID);
-        let apply_result = ConfigEditsBuilder::new(&self.local_settings.codex_home)
+        let apply_result = ConfigEditsBuilder::new(&self.local_settings.genex_home)
             .with_edits([edit])
             .apply()
             .await;
@@ -147,7 +147,7 @@ impl App {
         match result {
             Ok(ambient_pet) => {
                 let edit = crate::legacy_core::config::edit::tui_pet_edit(&pet_id);
-                match ConfigEditsBuilder::new(&self.local_settings.codex_home)
+                match ConfigEditsBuilder::new(&self.local_settings.genex_home)
                     .with_edits([edit])
                     .apply()
                     .await

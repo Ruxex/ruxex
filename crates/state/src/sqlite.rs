@@ -42,8 +42,8 @@ struct RuntimeDbSpec {
 }
 
 impl RuntimeDbSpec {
-    fn path(self, codex_home: &Path) -> PathBuf {
-        codex_home.join(self.filename)
+    fn path(self, genex_home: &Path) -> PathBuf {
+        genex_home.join(self.filename)
     }
 }
 

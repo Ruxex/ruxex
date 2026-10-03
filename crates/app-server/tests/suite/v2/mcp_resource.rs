@@ -154,7 +154,7 @@ async fn mcp_resource_read_returns_resource_contents() -> Result<()> {
     let (apps_server_url, _apps_server_calls, apps_server_handle) =
         start_resource_apps_mcp_server().await?;
     let responses_server_uri = responses_server.uri();
-    let (_codex_home, mut mcp) = start_resource_test_app_server(
+    let (_genex_home, mut mcp) = start_resource_test_app_server(
         &apps_server_url,
         &responses_server_uri,
         ResourceTestEnvironment::Auto,
@@ -192,7 +192,7 @@ async fn mcp_resource_read_returns_resource_contents() -> Result<()> {
 async fn mcp_resource_read_preserves_protocol_errors(protocol: ProtocolVersion) -> Result<()> {
     let responses_server = responses::start_mock_server().await;
     let (apps_server_url, _calls, apps_server_handle) = start_resource_apps_mcp_server().await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let config = MockResponsesConfig::new(&responses_server.uri()).with_extra_config(&format!(
         "[mcp_servers.resource_server]\nurl = \"{apps_server_url}/api/codex/ps/mcp\""
     ));
@@ -201,9 +201,9 @@ async fn mcp_resource_read_preserves_protocol_errors(protocol: ProtocolVersion) 
     } else {
         config.disable_feature(Feature::Mcp20260728)
     };
-    config.write(codex_home.path())?;
+    config.write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp.start_thread(ThreadStartParams::default()).await?;
@@ -263,7 +263,7 @@ async fn orchestrator_skill_can_read_referenced_resource_without_an_executor() -
     let (apps_server_url, apps_server_calls, apps_server_handle) =
         start_resource_apps_mcp_server().await?;
     let responses_server_uri = responses_server.uri();
-    let (_codex_home, mut mcp) = start_resource_test_app_server(
+    let (_genex_home, mut mcp) = start_resource_test_app_server(
         &apps_server_url,
         &responses_server_uri,
         ResourceTestEnvironment::Auto,
@@ -538,7 +538,7 @@ async fn local_executor_does_not_expose_orchestrator_skills() -> Result<()> {
     let (apps_server_url, _apps_server_calls, apps_server_handle) =
         start_resource_apps_mcp_server().await?;
     let responses_server_uri = responses_server.uri();
-    let (_codex_home, mut mcp) = start_resource_test_app_server(
+    let (_genex_home, mut mcp) = start_resource_test_app_server(
         &apps_server_url,
         &responses_server_uri,
         // This test exercises the implicit local executor.
@@ -609,7 +609,7 @@ async fn disabled_orchestrator_skills_do_not_expose_skills_namespace() -> Result
     let (apps_server_url, apps_server_calls, apps_server_handle) =
         start_resource_apps_mcp_server().await?;
     let responses_server_uri = responses_server.uri();
-    let (_codex_home, mut mcp) = start_resource_test_app_server_with_extra_config(
+    let (_genex_home, mut mcp) = start_resource_test_app_server_with_extra_config(
         &apps_server_url,
         &responses_server_uri,
         r#"
@@ -689,9 +689,9 @@ async fn mcp_resource_read_returns_contents_and_declines_elicitation_without_thr
     let (apps_server_url, _apps_server_calls, apps_server_handle) =
         start_resource_apps_mcp_server().await?;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{apps_server_url}"
@@ -705,7 +705,7 @@ apps = true
         ),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -714,7 +714,7 @@ apps = true
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -763,11 +763,11 @@ apps = true
 
 #[tokio::test]
 async fn mcp_resource_read_returns_error_for_unknown_thread() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     // This negative-path test does not need the stdio subprocess; keeping it
     // in-process avoids child-process teardown timing in nextest leak detection.
     let client = start_resource_in_process_client(
-        codex_home.path(),
+        genex_home.path(),
         Arc::new(genex_config::NoopThreadConfigLoader),
     )
     .await?;
@@ -803,14 +803,14 @@ async fn metadata_and_mcp_requests_complete_while_unrelated_resume_loads_config(
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, calls, mcp_server_handle) = start_resource_apps_mcp_server().await?;
     calls.tools_enabled.store(/*val*/ true, Ordering::Relaxed);
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_extra_config(&format!(
             "[mcp_servers.resource_server]\nurl = \"{mcp_server_url}/api/codex/ps/mcp\""
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -825,7 +825,7 @@ async fn metadata_and_mcp_requests_complete_while_unrelated_resume_loads_config(
         release: Notify::new(),
     });
     let client =
-        start_resource_in_process_client(codex_home.path(), blocked_resume.clone()).await?;
+        start_resource_in_process_client(genex_home.path(), blocked_resume.clone()).await?;
     let sender = client.sender();
     let ThreadResumeResponse { thread, .. } = serde_json::from_value(
         timeout(
@@ -834,7 +834,7 @@ async fn metadata_and_mcp_requests_complete_while_unrelated_resume_loads_config(
                 request_id: RequestId::Integer(1),
                 params: ThreadResumeParams {
                     thread_id,
-                    cwd: Some(codex_home.path().to_string_lossy().into_owned()),
+                    cwd: Some(genex_home.path().to_string_lossy().into_owned()),
                     ..Default::default()
                 },
             }),
@@ -1013,11 +1013,11 @@ async fn resume_revalidates_persisted_thread_after_config_load(
     mutation: ResumeMutation,
 ) -> Result<()> {
     let responses_server = create_mock_responses_server_repeating_assistant("Ready").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&responses_server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&responses_server.uri()).write(genex_home.path())?;
     let filename_timestamp = "2025-01-05T12-00-00";
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         filename_timestamp,
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -1030,7 +1030,7 @@ async fn resume_revalidates_persisted_thread_after_config_load(
             }
         }),
     )?;
-    let path = rollout_path(codex_home.path(), filename_timestamp, &thread_id);
+    let path = rollout_path(genex_home.path(), filename_timestamp, &thread_id);
     let resume_cwd = TempDir::new()?;
     let blocked_resume = Arc::new(BlockedResumeConfig {
         cwd: AbsolutePathBuf::from_absolute_path(resume_cwd.path())?,
@@ -1039,7 +1039,7 @@ async fn resume_revalidates_persisted_thread_after_config_load(
         release: Notify::new(),
     });
     let mut client =
-        start_resource_in_process_client(codex_home.path(), blocked_resume.clone()).await?;
+        start_resource_in_process_client(genex_home.path(), blocked_resume.clone()).await?;
     let sender = client.sender();
     let project_id = if matches!(
         mutation,
@@ -1213,7 +1213,7 @@ async fn resume_revalidates_persisted_thread_after_config_load(
             // Check persisted metadata after the resumed writer appends a turn
             // and shuts down; an in-memory response alone can hide stale writes.
             let reader = start_resource_in_process_client(
-                codex_home.path(),
+                genex_home.path(),
                 Arc::new(genex_config::NoopThreadConfigLoader),
             )
             .await?;
@@ -1242,7 +1242,7 @@ async fn resume_revalidates_persisted_thread_after_config_load(
                 !path.exists(),
                 "resume must not recreate the active rollout"
             );
-            let archived_path = codex_home
+            let archived_path = genex_home
                 .path()
                 .join(ARCHIVED_SESSIONS_SUBDIR)
                 .join(path.file_name().expect("rollout filename"));
@@ -1267,18 +1267,18 @@ async fn resume_revalidates_persisted_thread_after_config_load(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn resume_reloads_config_when_saved_workspace_roots_change() -> Result<()> {
     let responses_server = create_mock_responses_server_repeating_assistant("Ready").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&responses_server.uri()).write(codex_home.path())?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&responses_server.uri()).write(genex_home.path())?;
     let filename_timestamp = "2025-01-05T12-00-00";
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         filename_timestamp,
         "2025-01-05T12:00:00Z",
         "Saved user message",
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let path = rollout_path(codex_home.path(), filename_timestamp, &thread_id);
+    let path = rollout_path(genex_home.path(), filename_timestamp, &thread_id);
     let resume_cwd = TempDir::new()?;
     let saved_workspace = TempDir::new()?;
     let cwd = AbsolutePathBuf::from_absolute_path(resume_cwd.path())?;
@@ -1309,7 +1309,7 @@ async fn resume_reloads_config_when_saved_workspace_roots_change() -> Result<()>
         release: Notify::new(),
     });
     let client =
-        start_resource_in_process_client(codex_home.path(), blocked_resume.clone()).await?;
+        start_resource_in_process_client(genex_home.path(), blocked_resume.clone()).await?;
     let sender = client.sender();
     let mut resume = pin!(sender.request(ClientRequest::ThreadResume {
         request_id: RequestId::Integer(1),
@@ -1424,15 +1424,15 @@ impl ThreadConfigLoader for BlockedResumeConfig {
 }
 
 async fn start_resource_in_process_client(
-    codex_home: &Path,
+    genex_home: &Path,
     thread_config_loader: Arc<dyn ThreadConfigLoader>,
 ) -> Result<in_process::InProcessClientHandle> {
     let loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     // Keep unrelated plugin repository syncs out of these in-process RPC tests.
     let cli_overrides = vec![("features.plugins".to_string(), toml::Value::Boolean(false))];
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
-        .fallback_cwd(Some(codex_home.to_path_buf()))
+        .genex_home(genex_home.to_path_buf())
+        .fallback_cwd(Some(genex_home.to_path_buf()))
         .cli_overrides(cli_overrides.clone())
         .loader_overrides(loader_overrides.clone())
         .build()
@@ -1492,7 +1492,7 @@ async fn start_resource_test_app_server_with_extra_config(
     extra_config: &str,
     environment: ResourceTestEnvironment,
 ) -> Result<(TempDir, TestAppServer)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(responses_server_uri)
         .with_approval_policy("on-request")
         .with_root_config(&format!(
@@ -1502,9 +1502,9 @@ async fn start_resource_test_app_server_with_extra_config(
         .with_extra_config(&format!(
             "[skills]\ninclude_instructions = true\n{extra_config}"
         ))
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1512,14 +1512,14 @@ async fn start_resource_test_app_server_with_extra_config(
         AuthCredentialsStoreMode::File,
     )?;
 
-    let builder = TestAppServer::builder().with_codex_home(codex_home.path());
+    let builder = TestAppServer::builder().with_genex_home(genex_home.path());
     let builder = match environment {
         ResourceTestEnvironment::Auto => builder,
         // The Local caller explicitly exercises the implicit local executor.
         ResourceTestEnvironment::Local => builder.without_auto_env(),
     };
     let mcp = builder.build_initialized().await?;
-    Ok((codex_home, mcp))
+    Ok((genex_home, mcp))
 }
 
 pub(super) enum ResourceTestEnvironment {

@@ -667,12 +667,12 @@ impl AppServerClient {
         }
     }
 
-    pub fn codex_home(&self, local_codex_home: &AbsolutePathBuf) -> Option<AppServerPath> {
+    pub fn genex_home(&self, local_genex_home: &AbsolutePathBuf) -> Option<AppServerPath> {
         match self {
             Self::InProcess(_) => Some(AppServerPath::from_app_server(
-                local_codex_home.display().to_string(),
+                local_genex_home.display().to_string(),
             )),
-            Self::Remote(client) => client.codex_home().map(AppServerPath::from_app_server),
+            Self::Remote(client) => client.genex_home().map(AppServerPath::from_app_server),
         }
     }
 
@@ -776,15 +776,15 @@ mod tests {
         }
     }
 
-    async fn build_test_config_for_codex_home(codex_home: &Path) -> Config {
+    async fn build_test_config_for_genex_home(genex_home: &Path) -> Config {
         match ConfigBuilder::default()
-            .codex_home(codex_home.to_path_buf())
+            .genex_home(genex_home.to_path_buf())
             .build()
             .await
         {
             Ok(config) => config,
-            Err(_) => Config::load_default_with_cli_overrides_for_codex_home(
-                codex_home.to_path_buf(),
+            Err(_) => Config::load_default_with_cli_overrides_for_genex_home(
+                genex_home.to_path_buf(),
                 Vec::new(),
             )
             .await
@@ -793,7 +793,7 @@ mod tests {
     }
 
     struct TestClient {
-        _codex_home: TempDir,
+        _genex_home: TempDir,
         client: InProcessAppServerClient,
     }
 
@@ -815,8 +815,8 @@ mod tests {
         session_source: SessionSource,
         channel_capacity: usize,
     ) -> TestClient {
-        let codex_home = TempDir::new().expect("temp dir");
-        let config = Arc::new(build_test_config_for_codex_home(codex_home.path()).await);
+        let genex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config_for_genex_home(genex_home.path()).await);
         let state_db = init_state_db(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
@@ -842,7 +842,7 @@ mod tests {
         .expect("in-process app-server client should start");
 
         TestClient {
-            _codex_home: codex_home,
+            _genex_home: genex_home,
             client,
         }
     }
@@ -907,7 +907,7 @@ mod tests {
             websocket,
             serde_json::json!({
                 "userAgent": "codex_cli_rs/9.8.7-test (Test OS; x86_64) rust",
-                "genexHome": "/server/.codex",
+                "genexHome": "/server/.genex",
             }),
         )
         .await;
@@ -1050,7 +1050,7 @@ mod tests {
     #[tokio::test]
     async fn typed_request_roundtrip_works() {
         let TestClient {
-            _codex_home,
+            _genex_home,
             client,
         } = start_test_client(SessionSource::Exec).await;
         let client = AppServerClient::InProcess(client);
@@ -1219,7 +1219,7 @@ mod tests {
             .expect("remote client should connect");
 
         assert_eq!(client.server_version(), Some("9.8.7-test"));
-        assert_eq!(client.codex_home(), Some("/server/.codex"));
+        assert_eq!(client.genex_home(), Some("/server/.genex"));
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),

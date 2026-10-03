@@ -2,9 +2,9 @@ use predicates::prelude::*;
 
 #[test]
 fn missing_session_fails_before_delete_confirmation() -> anyhow::Result<()> {
-    let codex_home = tempfile::tempdir()?;
+    let genex_home = tempfile::tempdir()?;
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
-    cmd.env("CODEX_HOME", codex_home.path())
+    cmd.env("GENEX_HOME", genex_home.path())
         .args(["delete", "123e4567-e89b-12d3-a456-426614174000"]);
 
     cmd.assert()

@@ -42,7 +42,7 @@ async fn plugin_reconcile_syncs_bundles_and_reports_changes(
 ) -> Result<()> {
     let server = MockServer::start().await;
     // Both scopes must retain background-sync behavior with remote_plugin disabled.
-    let (mut app_server, codex_home) = start_app_server(&server).await?;
+    let (mut app_server, genex_home) = start_app_server(&server).await?;
     let thread = app_server.start_thread(Default::default()).await?.thread;
     let bundle_url = format!("{}/bundle", server.uri());
     let plugin_id = format!("linear@{marketplace}");
@@ -174,7 +174,7 @@ async fn plugin_reconcile_syncs_bundles_and_reports_changes(
     server.reset().await;
 
     // The next RPC must honor the latest config without contacting the plugin service.
-    let config_path = codex_home.path().join("config.toml");
+    let config_path = genex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
@@ -237,7 +237,7 @@ async fn reconcile(app_server: &mut TestAppServer) -> Result<PluginReconcileResp
 }
 
 async fn start_app_server(server: &MockServer) -> Result<(TestAppServer, TempDir)> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let base_url = format!("{}/backend-api/", server.uri());
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{base_url}\""))
@@ -246,9 +246,9 @@ async fn start_app_server(server: &MockServer) -> Result<(TestAppServer, TempDir
         .enable_feature(Feature::GenexHooks)
         .disable_feature(Feature::RemotePlugin)
         .disable_feature(Feature::PluginSharing)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -256,7 +256,7 @@ async fn start_app_server(server: &MockServer) -> Result<(TestAppServer, TempDir
         AuthCredentialsStoreMode::File,
     )?;
     let app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_managed_config()
         .with_env_overrides(&[(
             "CODEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS",
@@ -264,7 +264,7 @@ async fn start_app_server(server: &MockServer) -> Result<(TestAppServer, TempDir
         )])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
-    Ok((app_server, codex_home))
+    Ok((app_server, genex_home))
 }
 
 async fn mount_installed_snapshot(server: &MockServer, plugins: Vec<Value>) {

@@ -116,7 +116,7 @@ async fn misalignment_policy_blocks_queued_turns_and_goal_resumption() -> Result
         app.handle_event(&mut tui, &mut app_server, event).await?;
     }
 
-    assert!(!app.config.codex_home.join("worktrees").exists());
+    assert!(!app.config.genex_home.join("worktrees").exists());
     assert_eq!(
         app_server.next_request_id(),
         AppServerRequestId::Integer(next_request_id + 1)

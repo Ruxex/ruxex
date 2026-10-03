@@ -201,21 +201,21 @@ prefix_rule(pattern=["git", "status"], decision="allow")
 
     let server = start_mock_server().await;
     let mut migrated_builder = test_genex().with_config(|config| {
-        let policy_path = config.codex_home.join("rules/default.rules");
+        let policy_path = config.genex_home.join("rules/default.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(policy_path, LEGACY_POLICY).expect("write legacy policy");
     });
     let migrated = migrated_builder.build_with_auto_env(&server).await?;
-    let migrated_policy_path = migrated.codex_home_path().join("rules/default.rules");
+    let migrated_policy_path = migrated.genex_home_path().join("rules/default.rules");
     assert_eq!(fs::read_to_string(&migrated_policy_path)?, MIGRATED_POLICY);
     assert_eq!(
-        fs::read_to_string(migrated.codex_home_path().join(MIGRATION_MARKER_FILENAME))?,
+        fs::read_to_string(migrated.genex_home_path().join(MIGRATION_MARKER_FILENAME))?,
         "v1\n"
     );
 
     let mut ignored_builder = test_genex().with_config(|config| {
-        let policy_path = config.codex_home.join("rules/default.rules");
+        let policy_path = config.genex_home.join("rules/default.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(policy_path, LEGACY_POLICY).expect("write legacy policy");
@@ -227,11 +227,11 @@ prefix_rule(pattern=["git", "status"], decision="allow")
             );
     });
     let ignored = ignored_builder.build_with_auto_env(&server).await?;
-    let ignored_policy_path = ignored.codex_home_path().join("rules/default.rules");
+    let ignored_policy_path = ignored.genex_home_path().join("rules/default.rules");
     assert_eq!(fs::read_to_string(&ignored_policy_path)?, LEGACY_POLICY);
     assert!(
         !ignored
-            .codex_home_path()
+            .genex_home_path()
             .join(MIGRATION_MARKER_FILENAME)
             .exists()
     );
@@ -516,7 +516,7 @@ async fn unified_exec_disabled_windows_sandbox_rejects_managed_read_only_command
 #[tokio::test]
 async fn execpolicy_blocks_shell_invocation() -> Result<()> {
     let mut builder = test_genex().with_config(|config| {
-        let policy_path = config.codex_home.join("rules").join("policy.rules");
+        let policy_path = config.genex_home.join("rules").join("policy.rules");
         fs::create_dir_all(
             policy_path
                 .parent()
@@ -623,7 +623,7 @@ prefix_rules = [
                 .features
                 .enable(Feature::UnifiedExec)
                 .expect("test config should allow feature update");
-            let policy_path = config.codex_home.join("rules").join("broken.rules");
+            let policy_path = config.genex_home.join("rules").join("broken.rules");
             fs::create_dir_all(
                 policy_path
                     .parent()
@@ -690,7 +690,7 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
             .features
             .enable(Feature::UnifiedExec)
             .expect("test config should allow feature update");
-        let policy_path = config.codex_home.join("rules").join("approved.rules");
+        let policy_path = config.genex_home.join("rules").join("approved.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(
@@ -824,7 +824,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
             .set_permission_profile(PermissionProfile::Disabled)
             .expect("test config should allow unrestricted permissions");
         config.approvals_reviewer = ApprovalsReviewer::User;
-        let policy_path = config.codex_home.join("rules").join("prompt.rules");
+        let policy_path = config.genex_home.join("rules").join("prompt.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(

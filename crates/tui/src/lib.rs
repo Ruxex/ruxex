@@ -63,7 +63,7 @@ use genex_rollout::state_db;
 use genex_state::log_db;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
-use genex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_genex_home;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 pub use session_archive_commands::DeleteConfirmation;
@@ -322,10 +322,10 @@ async fn init_state_db_for_app_server_target(
 }
 
 // TODO(jif) delete after 22/11/2026.
-fn remove_legacy_tui_log_file(codex_home: &Path) {
+fn remove_legacy_tui_log_file(genex_home: &Path) {
     // Shared append-only TUI logs could grow without bound. Existing processes
     // may still hold the file open, so startup cleanup is best effort.
-    let _ = std::fs::remove_file(codex_home.join("log").join(TUI_LOG_FILE_NAME));
+    let _ = std::fs::remove_file(genex_home.join("log").join(TUI_LOG_FILE_NAME));
 }
 
 fn remote_addr_has_explicit_port(addr: &str, parsed: &Url) -> bool {
@@ -370,8 +370,8 @@ fn websocket_url_supports_auth_token(parsed: &Url) -> bool {
 pub fn resolve_remote_addr(addr: &str) -> color_eyre::Result<RemoteAppServerEndpoint> {
     if let Some(socket_path) = addr.strip_prefix("unix://") {
         let socket_path = if socket_path.is_empty() {
-            let codex_home = find_codex_home().wrap_err("failed to resolve CODEX_HOME")?;
-            genex_app_server_client::app_server_control_socket_path(&codex_home)
+            let genex_home = find_genex_home().wrap_err("failed to resolve GENEX_HOME")?;
+            genex_app_server_client::app_server_control_socket_path(&genex_home)
                 .map_err(color_eyre::Report::new)?
         } else {
             AbsolutePathBuf::relative_to_current_dir(socket_path)
@@ -431,8 +431,8 @@ async fn connect_remote_app_server(
     Ok(AppServerClient::Remote(app_server))
 }
 
-async fn maybe_probe_default_daemon_socket(codex_home: &Path) -> Option<AbsolutePathBuf> {
-    let socket_path = genex_app_server_client::app_server_control_socket_path(codex_home).ok()?;
+async fn maybe_probe_default_daemon_socket(genex_home: &Path) -> Option<AbsolutePathBuf> {
+    let socket_path = genex_app_server_client::app_server_control_socket_path(genex_home).ok()?;
     #[cfg(windows)]
     let (validated_path, _directory) =
         genex_uds::validate_private_socket_path(socket_path.as_path()).ok()?;
@@ -546,7 +546,7 @@ pub(crate) async fn start_app_server_for_picker(
     .await?;
     Ok(
         AppServerSession::new(app_server, target.thread_params_mode())
-            .with_local_codex_home(&config.codex_home),
+            .with_local_genex_home(&config.genex_home),
     )
 }
 
@@ -701,7 +701,7 @@ async fn lookup_session_target_with_app_server(
         (!app_server.uses_remote_workspace()).then_some(config.model_provider_id.as_str());
     Ok(named_session_lookup::lookup(
         app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         id_or_name,
         &[named_session_lookup::SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -1054,7 +1054,7 @@ async fn run_ratatui_app(
     let app_server_session = match startup_app_server {
         Ok(Ok(app_server)) => {
             AppServerSession::new(app_server, app_server_target.thread_params_mode())
-                .with_local_codex_home(&initial_config.codex_home)
+                .with_local_genex_home(&initial_config.genex_home)
         }
         Ok(Err(err)) => {
             terminal_restore_guard.restore_silently();
@@ -1221,7 +1221,7 @@ async fn run_ratatui_app(
     if (cli.resume_picker || cli.fork_picker)
         && let Some(name) = config.tui_theme.as_deref()
         && let Some(theme) =
-            crate::render::highlight::resolve_theme_by_name(name, Some(config.codex_home.as_path()))
+            crate::render::highlight::resolve_theme_by_name(name, Some(config.genex_home.as_path()))
     {
         crate::render::highlight::set_syntax_theme(theme);
     }
@@ -1563,7 +1563,7 @@ async fn run_ratatui_app(
                 // A picker can replace the server; account reads belong to their original session.
                 startup_account = None;
                 AppServerSession::new(app_server, app_server_target.thread_params_mode())
-                    .with_local_codex_home(&config.codex_home)
+                    .with_local_genex_home(&config.genex_home)
                     .with_remote_cwd_override(remote_cwd_override.clone())
             }
             Ok(Err(err)) => {
@@ -1638,7 +1638,7 @@ async fn run_ratatui_app(
                 )
                 .await?;
                 app_server = AppServerSession::new(client, app_server_target.thread_params_mode())
-                    .with_local_codex_home(&config.codex_home);
+                    .with_local_genex_home(&config.genex_home);
             }
             #[cfg(target_os = "windows")]
             {
@@ -1681,7 +1681,7 @@ async fn run_ratatui_app(
     // this must happen after the last possible reload.
     if let Some(w) = crate::render::highlight::set_theme_override(
         local_settings.tui.theme.clone(),
-        find_codex_home().ok().map(AbsolutePathBuf::into_path_buf),
+        find_genex_home().ok().map(AbsolutePathBuf::into_path_buf),
     ) {
         config.startup_warnings.push(w);
     }
@@ -1959,14 +1959,14 @@ async fn load_config_with_worktree_source_policy(
 
 #[allow(clippy::print_stderr)]
 async fn load_bootstrap_config_or_exit(
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_kv_overrides: Vec<(String, genex_config::TomlValue)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
 ) -> ConfigTomlLoadResult {
     match load_config_toml_with_layer_stack(
-        codex_home,
+        genex_home,
         cwd,
         cli_kv_overrides,
         genex_config::ConfigLoadOptions {

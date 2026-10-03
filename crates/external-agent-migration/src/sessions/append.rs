@@ -27,7 +27,7 @@ pub struct ExistingSessionAppend<'a> {
 ///
 /// Any unavailable, active, archived, malformed, or diverged destination fails closed.
 pub async fn append_existing_session(
-    codex_home: &Path,
+    genex_home: &Path,
     checkpoint_permits: &Semaphore,
     thread_manager: &ThreadManager,
     thread_store: &dyn ThreadStore,
@@ -138,14 +138,14 @@ pub async fn append_existing_session(
         return false;
     }
 
-    let codex_home = codex_home.to_path_buf();
+    let genex_home = genex_home.to_path_buf();
     let source_path = source_path.to_path_buf();
     let expected_source_content_sha256 = expected_source_content_sha256.to_string();
     let source_content_sha256 = source_content_sha256.to_string();
     matches!(
         tokio::task::spawn_blocking(move || {
             checkpoint_existing_session_import(
-                &codex_home,
+                &genex_home,
                 &source_path,
                 thread_id,
                 &expected_source_content_sha256,

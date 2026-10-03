@@ -79,8 +79,8 @@ use genex_utils_path as path_utils;
 /// Rollouts are recorded as JSONL and can be inspected with tools such as:
 ///
 /// ```ignore
-/// $ jq -C . ~/.codex/sessions/rollout-2025-05-07T17-24-21-5973b6c0-94b8-487b-a530-2aeb6098ae0e.jsonl
-/// $ fx ~/.codex/sessions/rollout-2025-05-07T17-24-21-5973b6c0-94b8-487b-a530-2aeb6098ae0e.jsonl
+/// $ jq -C . ~/.genex/sessions/rollout-2025-05-07T17-24-21-5973b6c0-94b8-487b-a530-2aeb6098ae0e.jsonl
+/// $ fx ~/.genex/sessions/rollout-2025-05-07T17-24-21-5973b6c0-94b8-487b-a530-2aeb6098ae0e.jsonl
 /// ```
 #[derive(Clone)]
 pub struct RolloutRecorder {
@@ -508,7 +508,7 @@ impl RolloutRecorder {
         repair_mode: ThreadListRepairMode,
         search_term: Option<&str>,
     ) -> std::io::Result<ThreadsPage> {
-        let codex_home = config.codex_home();
+        let genex_home = config.genex_home();
         let sqlite = config.sqlite_config();
         let archived = match archive_filter {
             ThreadListArchiveFilter::Active => false,
@@ -550,7 +550,7 @@ impl RolloutRecorder {
         let fs_page = match sort_direction {
             SortDirection::Asc => {
                 list_threads_from_files_asc(
-                    codex_home,
+                    genex_home,
                     page_size,
                     cursor,
                     sort_key,
@@ -565,7 +565,7 @@ impl RolloutRecorder {
             }
             SortDirection::Desc => {
                 list_threads_from_files_desc(
-                    codex_home,
+                    genex_home,
                     page_size.saturating_mul(2),
                     cursor,
                     sort_key,
@@ -774,7 +774,7 @@ impl RolloutRecorder {
         default_provider: &str,
         filter_cwd: Option<&Path>,
     ) -> std::io::Result<Option<PathBuf>> {
-        let codex_home = config.codex_home();
+        let genex_home = config.genex_home();
         let sqlite = config.sqlite_config();
         let cwd_filter = filter_cwd.map(Path::to_path_buf);
         let mut fallback_reason = state_db_ctx.is_none().then_some("db_unavailable");
@@ -825,7 +825,7 @@ impl RolloutRecorder {
         let mut cursor = cursor.cloned();
         loop {
             let page = get_threads(
-                codex_home,
+                genex_home,
                 page_size,
                 cursor.as_ref(),
                 sort_key,
@@ -859,7 +859,7 @@ impl RolloutRecorder {
     }
 
     /// Opens a recorder under existing thread-store ownership, retaining it through background IO.
-    /// The caller must supply the guard for this rollout's stable thread ID and Codex home.
+    /// The caller must supply the guard for this rollout's stable thread ID and Genex home.
     pub async fn new_with_writer_lock(
         config: &impl RolloutConfigView,
         params: RolloutRecorderParams,
@@ -1360,7 +1360,7 @@ fn fill_missing_thread_item_metadata(item: &mut ThreadItem, state_item: ThreadIt
 
 #[allow(clippy::too_many_arguments)]
 async fn list_threads_from_files_desc(
-    codex_home: &Path,
+    genex_home: &Path,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
@@ -1380,7 +1380,7 @@ async fn list_threads_from_files_desc(
 
         loop {
             let mut page = list_threads_from_files_desc_unfiltered(
-                codex_home,
+                genex_home,
                 scan_page_size,
                 page_cursor.as_ref(),
                 sort_key,
@@ -1393,7 +1393,7 @@ async fn list_threads_from_files_desc(
             .await?;
             scanned_files = scanned_files.saturating_add(page.num_scanned_files);
             reached_scan_cap |= page.reached_scan_cap;
-            filter_thread_items_by_search_term(codex_home, &mut page.items, Some(search_term))
+            filter_thread_items_by_search_term(genex_home, &mut page.items, Some(search_term))
                 .await?;
             matching_items.extend(page.items);
             page_cursor = page.next_cursor;
@@ -1422,7 +1422,7 @@ async fn list_threads_from_files_desc(
     }
 
     list_threads_from_files_desc_unfiltered(
-        codex_home,
+        genex_home,
         page_size,
         cursor,
         sort_key,
@@ -1437,7 +1437,7 @@ async fn list_threads_from_files_desc(
 
 #[allow(clippy::too_many_arguments)]
 async fn list_threads_from_files_desc_unfiltered(
-    codex_home: &Path,
+    genex_home: &Path,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
@@ -1448,7 +1448,7 @@ async fn list_threads_from_files_desc_unfiltered(
     archived: bool,
 ) -> std::io::Result<ThreadsPage> {
     if archived {
-        let root = codex_home.join(ARCHIVED_SESSIONS_SUBDIR);
+        let root = genex_home.join(ARCHIVED_SESSIONS_SUBDIR);
         get_threads_in_root(
             root,
             page_size,
@@ -1465,7 +1465,7 @@ async fn list_threads_from_files_desc_unfiltered(
         .await
     } else {
         get_threads(
-            codex_home,
+            genex_home,
             page_size,
             cursor,
             sort_key,
@@ -1480,7 +1480,7 @@ async fn list_threads_from_files_desc_unfiltered(
 
 #[allow(clippy::too_many_arguments)]
 async fn list_threads_from_files_asc(
-    codex_home: &Path,
+    genex_home: &Path,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
@@ -1498,7 +1498,7 @@ async fn list_threads_from_files_asc(
     let scan_page_size = page_size.saturating_mul(8).clamp(256, 2048);
     loop {
         let page = list_threads_from_files_desc(
-            codex_home,
+            genex_home,
             scan_page_size,
             page_cursor.as_ref(),
             sort_key,
@@ -1519,7 +1519,7 @@ async fn list_threads_from_files_asc(
         }
     }
 
-    filter_thread_items_by_search_term(codex_home, &mut all_items, search_term).await?;
+    filter_thread_items_by_search_term(genex_home, &mut all_items, search_term).await?;
 
     let mut keyed_items = all_items
         .into_iter()
@@ -1567,7 +1567,7 @@ async fn list_threads_from_files_asc(
 }
 
 async fn filter_thread_items_by_search_term(
-    codex_home: &Path,
+    genex_home: &Path,
     items: &mut Vec<ThreadItem>,
     search_term: Option<&str>,
 ) -> std::io::Result<()> {
@@ -1582,7 +1582,7 @@ async fn filter_thread_items_by_search_term(
         .iter()
         .filter_map(|item| item.thread_id)
         .collect::<HashSet<_>>();
-    let thread_names = find_thread_names_by_ids(codex_home, &thread_ids).await?;
+    let thread_names = find_thread_names_by_ids(genex_home, &thread_ids).await?;
     items.retain(|item| {
         item.thread_id
             .and_then(|thread_id| thread_names.get(&thread_id))
@@ -1631,10 +1631,10 @@ fn precompute_new_rollout_path(
     thread_id: ThreadId,
     rollout_id_override: Option<RolloutId>,
 ) -> std::io::Result<(PathBuf, OffsetDateTime)> {
-    // Resolve ~/.codex/sessions/YYYY/MM/DD path.
+    // Resolve ~/.genex/sessions/YYYY/MM/DD path.
     let timestamp = OffsetDateTime::now_local()
         .map_err(|e| IoError::other(format!("failed to get local time: {e}")))?;
-    let mut dir = config.codex_home().to_path_buf();
+    let mut dir = config.genex_home().to_path_buf();
     dir.push(SESSIONS_SUBDIR);
     dir.push(timestamp.year().to_string());
     dir.push(format!("{:02}", u8::from(timestamp.month())));

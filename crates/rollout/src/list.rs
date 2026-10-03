@@ -347,7 +347,7 @@ impl From<genex_state::Anchor> for Cursor {
 /// concurrent new sessions being appended. Ordering is stable by the requested sort key
 /// (timestamp desc).
 pub async fn get_threads(
-    codex_home: &Path,
+    genex_home: &Path,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
@@ -356,7 +356,7 @@ pub async fn get_threads(
     cwd_filters: Option<&[PathBuf]>,
     default_provider: &str,
 ) -> io::Result<ThreadsPage> {
-    let root = codex_home.join(SESSIONS_SUBDIR);
+    let root = genex_home.join(SESSIONS_SUBDIR);
     get_threads_in_root(
         root,
         page_size,
@@ -426,7 +426,7 @@ pub async fn get_threads_in_root(
 
 /// Load thread file paths from disk using directory traversal.
 ///
-/// Directory layout: `~/.codex/sessions/YYYY/MM/DD/rollout-YYYY-MM-DDThh-mm-ss-<uuid>.jsonl`
+/// Directory layout: `~/.genex/sessions/YYYY/MM/DD/rollout-YYYY-MM-DDThh-mm-ss-<uuid>.jsonl`
 /// Returned newest (based on sort key) first.
 async fn traverse_directories_for_paths(
     root: PathBuf,
@@ -1340,7 +1340,7 @@ fn truncate_to_millis(dt: OffsetDateTime) -> Option<OffsetDateTime> {
 }
 
 async fn find_thread_path_by_id_str_in_subdir(
-    codex_home: &Path,
+    genex_home: &Path,
     subdir: &str,
     id_str: &str,
     state_db_ctx: Option<&genex_state::StateRuntime>,
@@ -1423,7 +1423,7 @@ async fn find_thread_path_by_id_str_in_subdir(
         }
     }
 
-    let mut root = codex_home.to_path_buf();
+    let mut root = genex_home.to_path_buf();
     root.push(subdir);
     if !root.exists() {
         return Ok(unverified_db_path);
@@ -1593,20 +1593,20 @@ async fn find_rollout_path_by_rollout_id_from_filenames(
 /// SQLite can return its selected path directly. Returns `Ok(Some(path))` if found, `Ok(None)`
 /// if not present or the ID is invalid.
 pub async fn find_thread_path_by_id_str(
-    codex_home: &Path,
+    genex_home: &Path,
     id_str: &str,
     state_db_ctx: Option<&genex_state::StateRuntime>,
 ) -> io::Result<Option<PathBuf>> {
-    find_thread_path_by_id_str_in_subdir(codex_home, SESSIONS_SUBDIR, id_str, state_db_ctx).await
+    find_thread_path_by_id_str_in_subdir(genex_home, SESSIONS_SUBDIR, id_str, state_db_ctx).await
 }
 
 /// Locate the newest archived rollout file owned by a thread ID.
 pub async fn find_archived_thread_path_by_id_str(
-    codex_home: &Path,
+    genex_home: &Path,
     id_str: &str,
     state_db_ctx: Option<&genex_state::StateRuntime>,
 ) -> io::Result<Option<PathBuf>> {
-    find_thread_path_by_id_str_in_subdir(codex_home, ARCHIVED_SESSIONS_SUBDIR, id_str, state_db_ctx)
+    find_thread_path_by_id_str_in_subdir(genex_home, ARCHIVED_SESSIONS_SUBDIR, id_str, state_db_ctx)
         .await
 }
 
@@ -1615,12 +1615,12 @@ pub async fn find_archived_thread_path_by_id_str(
 /// Unlike [`find_thread_path_by_id_str`], this does not consult SQLite or choose among several
 /// rollout files owned by one thread. It is for following `SessionMeta.history_base`.
 pub async fn find_rollout_path_by_rollout_id(
-    codex_home: &Path,
+    genex_home: &Path,
     rollout_id: RolloutId,
 ) -> io::Result<Option<PathBuf>> {
     for subdir in [SESSIONS_SUBDIR, ARCHIVED_SESSIONS_SUBDIR] {
         let path = find_rollout_path_by_rollout_id_from_filenames(
-            codex_home.join(subdir).as_path(),
+            genex_home.join(subdir).as_path(),
             rollout_id,
         )
         .await?;

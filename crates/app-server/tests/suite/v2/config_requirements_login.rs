@@ -28,7 +28,7 @@ async fn start_server(
         std::fs::write(home.path().join("requirements.toml"), requirements)?;
     }
     let server = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized_with_timeout(READ_TIMEOUT)
         .await?;
     Ok((home, server))

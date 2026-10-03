@@ -29,7 +29,7 @@ pub(crate) async fn warm_http_client(
     Ok(())
 }
 
-/// Serializes tests that mutate process-wide CODEX_HOME.
+/// Serializes tests that mutate process-wide GENEX_HOME.
 ///
 /// Keep OAuth tests on this one guard instead of defining per-module helpers; otherwise
 /// concurrently running test modules can point File/Secrets storage at different homes.
@@ -45,9 +45,9 @@ impl TempGenexHome {
             .get_or_init(Mutex::default)
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        let dir = tempdir().expect("create CODEX_HOME temp dir");
+        let dir = tempdir().expect("create GENEX_HOME temp dir");
         unsafe {
-            std::env::set_var("CODEX_HOME", dir.path());
+            std::env::set_var("GENEX_HOME", dir.path());
         }
         Self {
             _guard: guard,
@@ -63,7 +63,7 @@ impl TempGenexHome {
 impl Drop for TempGenexHome {
     fn drop(&mut self) {
         unsafe {
-            std::env::remove_var("CODEX_HOME");
+            std::env::remove_var("GENEX_HOME");
         }
     }
 }

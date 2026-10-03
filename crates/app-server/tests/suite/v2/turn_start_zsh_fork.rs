@@ -55,8 +55,8 @@ async fn turn_start_shell_zsh_fork_executes_command_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
     let release_marker = workspace.join("interrupt-release");
@@ -91,7 +91,7 @@ async fn turn_start_shell_zsh_fork_executes_command_v2() -> Result<()> {
     let server =
         create_mock_responses_server_sequence_unchecked(vec![response, no_op_response]).await;
     create_config_toml(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         "never",
         &BTreeMap::from([
@@ -100,7 +100,7 @@ async fn turn_start_shell_zsh_fork_executes_command_v2() -> Result<()> {
         ]),
     )?;
 
-    let mut mcp = create_zsh_test_mcp_process(&codex_home, &workspace, &zsh_path).await?;
+    let mut mcp = create_zsh_test_mcp_process(&genex_home, &workspace, &zsh_path).await?;
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
@@ -157,7 +157,7 @@ async fn turn_start_shell_zsh_fork_executes_command_v2() -> Result<()> {
     };
     assert_eq!(id, "call-zsh-fork");
     assert_eq!(status, CommandExecutionStatus::InProgress);
-    assert!(command.starts_with(&command_packaged_zsh_path(&codex_home).display().to_string()));
+    assert!(command.starts_with(&command_packaged_zsh_path(&genex_home).display().to_string()));
     assert!(command.contains("/bin/sh -c"));
     assert!(command.contains("sleep 0.01"));
     assert!(command.contains(&release_marker.display().to_string()));
@@ -179,8 +179,8 @@ async fn turn_start_shell_zsh_fork_exec_approval_decline_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -205,7 +205,7 @@ async fn turn_start_shell_zsh_fork_exec_approval_decline_v2() -> Result<()> {
     ];
     let server = create_mock_responses_server_sequence(responses).await;
     create_config_toml(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         "on-request",
         &BTreeMap::from([
@@ -214,7 +214,7 @@ async fn turn_start_shell_zsh_fork_exec_approval_decline_v2() -> Result<()> {
         ]),
     )?;
 
-    let mut mcp = create_zsh_test_mcp_process(&codex_home, &workspace, &zsh_path).await?;
+    let mut mcp = create_zsh_test_mcp_process(&genex_home, &workspace, &zsh_path).await?;
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
@@ -310,8 +310,8 @@ async fn turn_start_shell_zsh_fork_exec_approval_cancel_v2() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -333,7 +333,7 @@ async fn turn_start_shell_zsh_fork_exec_approval_cancel_v2() -> Result<()> {
     )?];
     let server = create_mock_responses_server_sequence(responses).await;
     create_config_toml(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         "on-request",
         &BTreeMap::from([
@@ -342,7 +342,7 @@ async fn turn_start_shell_zsh_fork_exec_approval_cancel_v2() -> Result<()> {
         ]),
     )?;
 
-    let mut mcp = create_zsh_test_mcp_process(&codex_home, &workspace, &zsh_path).await?;
+    let mut mcp = create_zsh_test_mcp_process(&genex_home, &workspace, &zsh_path).await?;
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
@@ -436,8 +436,8 @@ async fn turn_start_shell_zsh_fork_subcommand_decline_marks_parent_declined_v2()
     skip_if_no_network!(Ok(()));
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let genex_home = tmp.path().join("genex_home");
+    std::fs::create_dir(&genex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -487,7 +487,7 @@ async fn turn_start_shell_zsh_fork_subcommand_decline_marks_parent_declined_v2()
     let server =
         create_mock_responses_server_sequence_unchecked(vec![response, no_op_response]).await;
     create_config_toml(
-        &codex_home,
+        &genex_home,
         &server.uri(),
         "on-request",
         &BTreeMap::from([
@@ -496,7 +496,7 @@ async fn turn_start_shell_zsh_fork_subcommand_decline_marks_parent_declined_v2()
         ]),
     )?;
 
-    let mut mcp = create_zsh_test_mcp_process(&codex_home, &workspace, &zsh_path).await?;
+    let mut mcp = create_zsh_test_mcp_process(&genex_home, &workspace, &zsh_path).await?;
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
@@ -583,7 +583,7 @@ async fn turn_start_shell_zsh_fork_subcommand_decline_marks_parent_declined_v2()
             approved_subcommand_strings.push(approval_command.to_string());
         }
         let is_parent_approval = approval_command
-            .contains(&command_packaged_zsh_path(&codex_home).display().to_string())
+            .contains(&command_packaged_zsh_path(&genex_home).display().to_string())
             && (approval_command.contains(&shell_command)
                 || (has_first_file && has_second_file)
                 || approval_command.contains(&parent_shell_hint));
@@ -719,24 +719,24 @@ async fn turn_start_shell_zsh_fork_subcommand_decline_marks_parent_declined_v2()
 }
 
 async fn create_zsh_test_mcp_process(
-    codex_home: &Path,
+    genex_home: &Path,
     zdotdir: &Path,
     zsh_path: &Path,
 ) -> Result<TestAppServer> {
-    let app_server = create_test_package_app_server(codex_home, zsh_path)?;
+    let app_server = create_test_package_app_server(genex_home, zsh_path)?;
     let zdotdir = zdotdir.to_string_lossy().into_owned();
     TestAppServer::builder()
-        .with_codex_home(codex_home)
+        .with_genex_home(genex_home)
         .with_program(&app_server)
         .with_env_overrides(&[("ZDOTDIR", Some(zdotdir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await
 }
 
-fn create_test_package_app_server(codex_home: &Path, zsh_path: &Path) -> Result<PathBuf> {
-    let package_dir = codex_home.join("test-package");
+fn create_test_package_app_server(genex_home: &Path, zsh_path: &Path) -> Result<PathBuf> {
+    let package_dir = genex_home.join("test-package");
     let bin_dir = package_dir.join("bin");
-    let package_zsh_path = packaged_zsh_path(codex_home);
+    let package_zsh_path = packaged_zsh_path(genex_home);
     let Some(zsh_bin_dir) = package_zsh_path.parent() else {
         anyhow::bail!("packaged zsh path should have parent");
     };
@@ -753,8 +753,8 @@ fn create_test_package_app_server(codex_home: &Path, zsh_path: &Path) -> Result<
     Ok(app_server)
 }
 
-fn packaged_zsh_path(codex_home: &Path) -> PathBuf {
-    codex_home
+fn packaged_zsh_path(genex_home: &Path) -> PathBuf {
+    genex_home
         .join("test-package")
         .join("genex-resources")
         .join("zsh")
@@ -762,8 +762,8 @@ fn packaged_zsh_path(codex_home: &Path) -> PathBuf {
         .join("zsh")
 }
 
-fn command_packaged_zsh_path(codex_home: &Path) -> PathBuf {
-    let path = packaged_zsh_path(codex_home);
+fn command_packaged_zsh_path(genex_home: &Path) -> PathBuf {
+    let path = packaged_zsh_path(genex_home);
     std::fs::canonicalize(&path).unwrap_or(path)
 }
 
@@ -773,7 +773,7 @@ fn copy_with_permissions(source: &Path, destination: &Path) -> std::io::Result<(
 }
 
 fn create_config_toml(
-    codex_home: &Path,
+    genex_home: &Path,
     server_uri: &str,
     approval_policy: &str,
     feature_flags: &BTreeMap<Feature, bool>,
@@ -782,7 +782,7 @@ fn create_config_toml(
         .with_approval_policy(approval_policy)
         .disable_feature(Feature::RemoteModels)
         .with_features(feature_flags)
-        .write(codex_home)
+        .write(genex_home)
 }
 
 fn find_test_zsh_path() -> Result<Option<std::path::PathBuf>> {

@@ -104,12 +104,12 @@ const LATE_ENVIRONMENT_ID: &str = "late-environment";
 async fn mcp_server_tool_call_returns_tool_result() -> Result<()> {
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -172,16 +172,16 @@ async fn mcp_server_tool_call_returns_tool_result() -> Result<()> {
 async fn mcp_server_tool_call_preserves_protocol_errors(protocol: ProtocolVersion) -> Result<()> {
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let config = mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT);
     let config = if protocol == ProtocolVersion::V_2026_07_28 {
         config.enable_feature(Feature::Mcp20260728)
     } else {
         config.disable_feature(Feature::Mcp20260728)
     };
-    config.write(codex_home.path())?;
+    config.write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp.start_thread(ThreadStartParams::default()).await?;
@@ -237,9 +237,9 @@ async fn mcp_server_tool_call_preserves_protocol_errors(protocol: ProtocolVersio
 async fn mcp_server_tool_call_forwards_only_server_extensions() -> Result<()> {
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let app_ui = json!({
         "mimeTypes": [
@@ -249,7 +249,7 @@ async fn mcp_server_tool_call_forwards_only_server_extensions() -> Result<()> {
         "futureField": {"preserved": true},
     });
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     mcp.initialize_with_capabilities(
@@ -332,9 +332,9 @@ async fn model_mcp_tool_call_uses_session_client_extensions() -> Result<()> {
     ];
     let responses_server = create_mock_responses_server_sequence(responses).await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let app_ui = json!({
         "mimeTypes": [
@@ -344,7 +344,7 @@ async fn model_mcp_tool_call_uses_session_client_extensions() -> Result<()> {
         "futureField": {"preserved": true},
     });
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build()
         .await?;
     mcp.initialize_with_capabilities(
@@ -419,9 +419,9 @@ async fn model_mcp_tool_call_uses_session_client_extensions() -> Result<()> {
 
 #[tokio::test]
 async fn mcp_server_tool_call_returns_error_for_unknown_thread() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -562,12 +562,12 @@ async fn assert_full_access_form_elicitation_is_declined(
 ) -> Result<()> {
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = initialize_elicitation_app_server(
-        codex_home.path(),
+        genex_home.path(),
         "vscode",
         case.client_advertises_standard_form_input,
     )
@@ -636,13 +636,13 @@ async fn mcp_server_tool_call_round_trips_elicitation_for_thread(
 ) -> Result<()> {
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     if let ElicitationThread::Resume { source, params } = &mut elicitation_thread {
         params.thread_id = create_fake_rollout_with_session_and_thread_source(
-            codex_home.path(),
+            genex_home.path(),
             "2025-02-01T10-00-00",
             "2025-02-01T10:00:00Z",
             "Saved user message",
@@ -662,7 +662,7 @@ async fn mcp_server_tool_call_round_trips_elicitation_for_thread(
         ElicitationThread::Resume { .. } => ("vscode", true),
     };
     let mut mcp = initialize_elicitation_app_server(
-        codex_home.path(),
+        genex_home.path(),
         session_source,
         client_advertises_standard_form_input,
     )
@@ -764,12 +764,12 @@ async fn mcp_server_tool_call_round_trips_elicitation_for_thread(
 }
 
 async fn initialize_elicitation_app_server(
-    codex_home: &Path,
+    genex_home: &Path,
     session_source: &str,
     client_advertises_standard_form_input: bool,
 ) -> Result<TestAppServer> {
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home)
+        .with_genex_home(genex_home)
         .with_args(&["--session-source", session_source])
         .build()
         .await?;
@@ -800,13 +800,13 @@ async fn mcp_server_elicitation_survives_environment_runtime_refresh() -> Result
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
     let exec_listener = TcpListener::bind("127.0.0.1:0").await?;
     let exec_server_url = format!("ws://{}", exec_listener.local_addr()?);
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
         .enable_feature(Feature::DeferredExecutor)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         // This test adds and refreshes an explicitly selected runtime environment.
         .without_auto_env()
         .build_initialized()
@@ -918,12 +918,12 @@ async fn mcp_server_elicitation_survives_environment_runtime_refresh() -> Result
 async fn mcp_server_tool_call_forwards_url_elicitation() -> Result<()> {
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -1015,16 +1015,16 @@ async fn mcp_tool_call_completion_notification_contains_truncated_large_result()
     ];
     let responses_server = create_mock_responses_server_sequence(responses).await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(
         &responses_server.uri(),
         &mcp_server_url,
         LARGE_OUTPUT_AUTO_COMPACT_LIMIT,
     )
-    .write(codex_home.path())?;
+    .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -1129,12 +1129,12 @@ async fn mcp_tool_call_hint_survives_mid_call_thread_read_and_resume() -> Result
     ];
     let responses_server = create_mock_responses_server_sequence(responses).await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     mcp_tool_config(&responses_server.uri(), &mcp_server_url, AUTO_COMPACT_LIMIT)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp

@@ -23,19 +23,19 @@ async fn import_repo_mcp_preserves_existing_same_named_server() {
         }"#,
     )
     .expect("write mcp");
-    fs::create_dir_all(repo_root.join(".codex")).expect("create codex dir");
+    fs::create_dir_all(repo_root.join(".genex")).expect("create codex dir");
     let existing_config = r#"[mcp_servers.mixedTransport]
 url = "https://example.com/mixed-transport"
 "#;
     fs::write(
-        repo_root.join(".codex").join("config.toml"),
+        repo_root.join(".genex").join("config.toml"),
         existing_config,
     )
     .expect("write config");
 
     let service = service_for_paths(
         root.path().join(EXTERNAL_AGENT_DIR),
-        root.path().join(".codex"),
+        root.path().join(".genex"),
     );
     assert_eq!(
         service
@@ -58,7 +58,7 @@ url = "https://example.com/mixed-transport"
         .await;
 
     assert_eq!(
-        fs::read_to_string(repo_root.join(".codex").join("config.toml")).expect("read config"),
+        fs::read_to_string(repo_root.join(".genex").join("config.toml")).expect("read config"),
         existing_config
     );
 }
@@ -78,9 +78,9 @@ async fn detect_repo_mcp_lists_only_missing_servers() {
         }"#,
     )
     .expect("write mcp");
-    fs::create_dir_all(repo_root.join(".codex")).expect("create codex dir");
+    fs::create_dir_all(repo_root.join(".genex")).expect("create codex dir");
     fs::write(
-        repo_root.join(".codex").join("config.toml"),
+        repo_root.join(".genex").join("config.toml"),
         r#"[mcp_servers.mixedTransport]
 url = "https://example.com/mixed-transport"
 "#,
@@ -89,7 +89,7 @@ url = "https://example.com/mixed-transport"
 
     let items = service_for_paths(
         root.path().join(EXTERNAL_AGENT_DIR),
-        root.path().join(".codex"),
+        root.path().join(".genex"),
     )
     .detect(ExternalAgentConfigDetectOptions {
         include_home: false,
@@ -105,7 +105,7 @@ url = "https://example.com/mixed-transport"
             description: format!(
                 "Migrate MCP servers from {} into {}",
                 repo_root.display(),
-                repo_root.join(".codex").join("config.toml").display()
+                repo_root.join(".genex").join("config.toml").display()
             ),
             cwd: Some(repo_root),
             details: Some(MigrationDetails {
@@ -120,8 +120,8 @@ url = "https://example.com/mixed-transport"
 
 #[tokio::test]
 async fn import_home_migrates_supported_config_fields_skills_and_agents_md() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
-    let agents_skills = codex_home
+    let (_root, external_agent_home, genex_home) = fixture_paths();
+    let agents_skills = genex_home
         .parent()
         .map(|parent| parent.join(".agents").join("skills"))
         .unwrap_or_else(|| PathBuf::from(".agents").join("skills"));
@@ -147,7 +147,7 @@ async fn import_home_migrates_supported_config_fields_skills_and_agents_md() {
     )
     .expect("write agents");
 
-    service_for_paths(external_agent_home, codex_home.clone())
+    service_for_paths(external_agent_home, genex_home.clone())
         .import(vec![
             ExternalAgentConfigMigrationItem {
                 item_type: ExternalAgentConfigMigrationItemType::AgentsMd,
@@ -171,12 +171,12 @@ async fn import_home_migrates_supported_config_fields_skills_and_agents_md() {
         .await;
 
     assert_eq!(
-        fs::read_to_string(codex_home.join("AGENTS.md")).expect("read agents"),
+        fs::read_to_string(genex_home.join("AGENTS.md")).expect("read agents"),
         "Codex guidance"
     );
 
     let config: TomlValue =
-        toml::from_str(&fs::read_to_string(codex_home.join("config.toml")).expect("read config"))
+        toml::from_str(&fs::read_to_string(genex_home.join("config.toml")).expect("read config"))
             .expect("parse config");
     let expected: TomlValue = toml::from_str(
         r#"
@@ -203,7 +203,7 @@ MY_TEAM = "codex"
 
 #[tokio::test]
 async fn import_home_config_uses_local_settings_over_project_settings() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
+    let (_root, external_agent_home, genex_home) = fixture_paths();
     fs::create_dir_all(&external_agent_home).expect("create external agent home");
     fs::write(
         external_agent_home.join("settings.json"),
@@ -216,7 +216,7 @@ async fn import_home_config_uses_local_settings_over_project_settings() {
     )
     .expect("write local settings");
 
-    service_for_paths(external_agent_home, codex_home.clone())
+    service_for_paths(external_agent_home, genex_home.clone())
         .import(vec![ExternalAgentConfigMigrationItem {
             item_type: ExternalAgentConfigMigrationItemType::Config,
             description: String::new(),
@@ -226,7 +226,7 @@ async fn import_home_config_uses_local_settings_over_project_settings() {
         .await;
 
     let config: TomlValue =
-        toml::from_str(&fs::read_to_string(codex_home.join("config.toml")).expect("read config"))
+        toml::from_str(&fs::read_to_string(genex_home.join("config.toml")).expect("read config"))
             .expect("parse config");
     let expected: TomlValue = toml::from_str(
         r#"
@@ -247,7 +247,7 @@ PROJECT_ONLY = "yes"
 
 #[tokio::test]
 async fn import_home_config_ignores_invalid_local_settings() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
+    let (_root, external_agent_home, genex_home) = fixture_paths();
     fs::create_dir_all(&external_agent_home).expect("create external agent home");
     fs::write(
         external_agent_home.join("settings.json"),
@@ -260,7 +260,7 @@ async fn import_home_config_ignores_invalid_local_settings() {
     )
     .expect("write local settings");
 
-    service_for_paths(external_agent_home, codex_home.clone())
+    service_for_paths(external_agent_home, genex_home.clone())
         .import(vec![ExternalAgentConfigMigrationItem {
             item_type: ExternalAgentConfigMigrationItemType::Config,
             description: String::new(),
@@ -270,14 +270,14 @@ async fn import_home_config_ignores_invalid_local_settings() {
         .await;
 
     assert_eq!(
-        fs::read_to_string(codex_home.join("config.toml")).expect("read config"),
+        fs::read_to_string(genex_home.join("config.toml")).expect("read config"),
         "[shell_environment_policy]\ninherit = \"core\"\n\n[shell_environment_policy.set]\nFOO = \"project\"\n"
     );
 }
 
 #[tokio::test]
 async fn import_home_skips_empty_config_migration() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
+    let (_root, external_agent_home, genex_home) = fixture_paths();
     fs::create_dir_all(&external_agent_home).expect("create external agent home");
     fs::write(
         external_agent_home.join("settings.json"),
@@ -285,7 +285,7 @@ async fn import_home_skips_empty_config_migration() {
     )
     .expect("write settings");
 
-    let outcome = service_for_paths(external_agent_home, codex_home.clone())
+    let outcome = service_for_paths(external_agent_home, genex_home.clone())
         .import(vec![ExternalAgentConfigMigrationItem {
             item_type: ExternalAgentConfigMigrationItemType::Config,
             description: String::new(),
@@ -306,18 +306,18 @@ async fn import_home_skips_empty_config_migration() {
             raw_errors: Vec::new(),
         }]
     );
-    assert!(!codex_home.join("config.toml").exists());
+    assert!(!genex_home.join("config.toml").exists());
 }
 
 #[tokio::test]
 async fn import_local_plugins_returns_completed_status() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
+    let (_root, external_agent_home, genex_home) = fixture_paths();
     let marketplace_root = external_agent_home.join("my-marketplace");
     let plugin_root = marketplace_root.join("plugins").join("cloudflare");
     fs::create_dir_all(marketplace_root.join(EXTERNAL_AGENT_PLUGIN_MANIFEST_DIR))
         .expect("create marketplace manifest dir");
     fs::create_dir_all(plugin_root.join(".codex-plugin")).expect("create plugin manifest dir");
-    fs::create_dir_all(&codex_home).expect("create codex home");
+    fs::create_dir_all(&genex_home).expect("create genex home");
 
     fs::write(
         external_agent_home.join("settings.json"),
@@ -356,7 +356,7 @@ async fn import_local_plugins_returns_completed_status() {
     )
     .expect("write plugin manifest");
 
-    let outcome = service_for_paths(external_agent_home, codex_home.clone())
+    let outcome = service_for_paths(external_agent_home, genex_home.clone())
         .import(vec![ExternalAgentConfigMigrationItem {
             item_type: ExternalAgentConfigMigrationItemType::Plugins,
             description: String::new(),
@@ -393,14 +393,14 @@ async fn import_local_plugins_returns_completed_status() {
             raw_errors: Vec::new(),
         }]
     );
-    let config = fs::read_to_string(codex_home.join("config.toml")).expect("read config");
+    let config = fs::read_to_string(genex_home.join("config.toml")).expect("read config");
     assert!(config.contains(r#"[plugins."cloudflare@my-plugins"]"#));
     assert!(config.contains("enabled = true"));
 }
 
 #[tokio::test]
 async fn import_git_plugins_returns_pending_async_status() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
+    let (_root, external_agent_home, genex_home) = fixture_paths();
     fs::create_dir_all(&external_agent_home).expect("create external agent home");
     fs::write(
         external_agent_home.join("settings.json"),
@@ -417,7 +417,7 @@ async fn import_git_plugins_returns_pending_async_status() {
     )
     .expect("write settings");
 
-    let outcome = service_for_paths(external_agent_home, codex_home.clone())
+    let outcome = service_for_paths(external_agent_home, genex_home.clone())
         .import(vec![ExternalAgentConfigMigrationItem {
             item_type: ExternalAgentConfigMigrationItemType::Plugins,
             description: String::new(),
@@ -458,21 +458,21 @@ async fn import_git_plugins_returns_pending_async_status() {
             raw_errors: Vec::new(),
         }]
     );
-    assert!(!codex_home.join("config.toml").exists());
+    assert!(!genex_home.join("config.toml").exists());
 }
 
 #[tokio::test]
 async fn detect_home_skips_config_when_target_already_has_supported_fields() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
+    let (_root, external_agent_home, genex_home) = fixture_paths();
     fs::create_dir_all(&external_agent_home).expect("create external agent home");
-    fs::create_dir_all(&codex_home).expect("create codex home");
+    fs::create_dir_all(&genex_home).expect("create genex home");
     fs::write(
         external_agent_home.join("settings.json"),
         r#"{"env":{"FOO":"bar"},"sandbox":{"enabled":true}}"#,
     )
     .expect("write settings");
     fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         r#"
             sandbox_mode = "workspace-write"
 
@@ -485,7 +485,7 @@ async fn detect_home_skips_config_when_target_already_has_supported_fields() {
     )
     .expect("write config");
 
-    let items = service_for_paths(external_agent_home, codex_home)
+    let items = service_for_paths(external_agent_home, genex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
             cwds: None,
@@ -498,15 +498,15 @@ async fn detect_home_skips_config_when_target_already_has_supported_fields() {
 
 #[tokio::test]
 async fn detect_home_skips_skills_when_all_skill_directories_exist() {
-    let (_root, external_agent_home, codex_home) = fixture_paths();
-    let agents_skills = codex_home
+    let (_root, external_agent_home, genex_home) = fixture_paths();
+    let agents_skills = genex_home
         .parent()
         .map(|parent| parent.join(".agents").join("skills"))
         .unwrap_or_else(|| PathBuf::from(".agents").join("skills"));
     fs::create_dir_all(external_agent_home.join("skills").join("skill-a")).expect("create source");
     fs::create_dir_all(agents_skills.join("skill-a")).expect("create target");
 
-    let items = service_for_paths(external_agent_home, codex_home)
+    let items = service_for_paths(external_agent_home, genex_home)
         .detect(ExternalAgentConfigDetectOptions {
             include_home: true,
             cwds: None,

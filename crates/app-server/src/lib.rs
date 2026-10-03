@@ -54,7 +54,7 @@ use genex_config::ConfigLoadError;
 use genex_config::TextRange as CoreTextRange;
 use genex_core::ExecPolicyError;
 use genex_core::check_execpolicy_for_warnings;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_exec_server::EnvironmentManager;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_features::Feature;
@@ -499,14 +499,14 @@ pub async fn run_main_with_transport_options(
             format!("error parsing -c overrides: {e}"),
         )
     })?;
-    let codex_home = find_codex_home()?;
+    let genex_home = find_genex_home()?;
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        arg0_paths.codex_self_exe.clone(),
-        arg0_paths.codex_linux_sandbox_exe.clone(),
+        arg0_paths.genex_self_exe.clone(),
+        arg0_paths.genex_linux_sandbox_exe.clone(),
     )?;
     let ignore_user_config = loader_overrides.ignore_user_config;
     let config_manager = ConfigManager::new(
-        codex_home.to_path_buf(),
+        genex_home.to_path_buf(),
         cli_kv_overrides.clone(),
         loader_overrides,
         strict_config,
@@ -555,8 +555,8 @@ pub async fn run_main_with_transport_options(
     };
     config.auth_config().validate()?;
     #[cfg(target_os = "macos")]
-    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_codex_home(
-        genex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
+        genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
     );
     let code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>> =
         match &runtime_options.code_mode_host_transport {
@@ -579,8 +579,8 @@ pub async fn run_main_with_transport_options(
     let environment_manager = if ignore_user_config {
         EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory()).await
     } else {
-        EnvironmentManager::from_codex_home(
-            codex_home.clone(),
+        EnvironmentManager::from_genex_home(
+            genex_home.clone(),
             Some(local_runtime_paths),
             config.http_client_factory(),
         )
@@ -605,7 +605,7 @@ pub async fn run_main_with_transport_options(
     genex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), OTEL_SERVICE_NAME);
     let unix_socket_startup_lock = match &transport {
         AppServerTransport::UnixSocket { .. } => {
-            let startup_lock_path = app_server_startup_lock_path(&codex_home)?;
+            let startup_lock_path = app_server_startup_lock_path(&genex_home)?;
             let startup_lock = acquire_app_server_startup_lock(startup_lock_path).await?;
             Some(startup_lock)
         }
@@ -749,7 +749,7 @@ pub async fn run_main_with_transport_options(
             "no transport configured; use --listen",
         ));
     }
-    let installation_id = resolve_installation_id(&config.codex_home).await?;
+    let installation_id = resolve_installation_id(&config.genex_home).await?;
 
     // Only the standalone server measures its local home, not embedded/cloud runtimes.
     if let Some(metrics) = otel.as_ref().and_then(genex_otel::OtelProvider::metrics) {
@@ -820,7 +820,7 @@ pub async fn run_main_with_transport_options(
         info!("outbound router task exited (channel closed)");
     });
 
-    let recovery_file = daemon_recovery_file_path(&config.codex_home);
+    let recovery_file = daemon_recovery_file_path(&config.genex_home);
     let processor_handle = tokio::spawn({
         let auth_manager = Arc::clone(&auth_manager);
         let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));

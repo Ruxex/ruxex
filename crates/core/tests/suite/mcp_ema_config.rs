@@ -126,7 +126,7 @@ async fn trusted_project_cannot_downgrade_enterprise_auth(project_auth: &str) ->
     let home = tempdir()?;
     let workspace = tempdir()?;
     std::fs::create_dir_all(workspace.path().join(".git"))?;
-    std::fs::create_dir_all(workspace.path().join(".codex"))?;
+    std::fs::create_dir_all(workspace.path().join(".genex"))?;
     set_project_trust_level(home.path(), workspace.path(), TrustLevel::Trusted)?;
     let managed_config = r#"
 [features]
@@ -144,7 +144,7 @@ client_id = "mcp-client"
 "#;
     let builder = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .fallback_cwd(Some(workspace.path().to_path_buf()))
         .cloud_config_bundle(
             CloudConfigBundleFixture::enterprise_config(managed_config.to_string())
@@ -158,7 +158,7 @@ client_id = "mcp-client"
         McpServerAuth::EmaAuth,
     );
     std::fs::write(
-        workspace.path().join(".codex/config.toml"),
+        workspace.path().join(".genex/config.toml"),
         format!("[mcp_servers.enterprise]\nauth = {project_auth:?}\n"),
     )?;
     let error = builder

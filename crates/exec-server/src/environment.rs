@@ -26,7 +26,7 @@ use crate::environment_provider::DefaultEnvironmentProvider;
 use crate::environment_provider::EnvironmentDefault;
 use crate::environment_provider::EnvironmentProvider;
 use crate::environment_provider::EnvironmentProviderSnapshot;
-use crate::environment_toml::environment_provider_from_codex_home;
+use crate::environment_toml::environment_provider_from_genex_home;
 use crate::local_file_system::LocalFileSystem;
 use crate::local_process::LocalProcess;
 use crate::process::ExecBackend;
@@ -138,21 +138,21 @@ impl EnvironmentManager {
     }
 
     /// Discovers configured environments without starting stdio connections.
-    pub async fn prepare_from_codex_home(
-        codex_home: impl AsRef<std::path::Path>,
+    pub async fn prepare_from_genex_home(
+        genex_home: impl AsRef<std::path::Path>,
     ) -> Result<PreparedEnvironmentManager, ExecServerError> {
-        let provider = environment_provider_from_codex_home(codex_home.as_ref())?;
+        let provider = environment_provider_from_genex_home(genex_home.as_ref())?;
         let source = PreparedEnvironmentSource::Snapshot(provider.snapshot().await?);
         Ok(PreparedEnvironmentManager { source })
     }
 
-    /// Builds a manager from `CODEX_HOME` with an explicit outbound HTTP policy.
-    pub async fn from_codex_home(
-        codex_home: impl AsRef<std::path::Path>,
+    /// Builds a manager from `GENEX_HOME` with an explicit outbound HTTP policy.
+    pub async fn from_genex_home(
+        genex_home: impl AsRef<std::path::Path>,
         local_runtime_paths: Option<ExecServerRuntimePaths>,
         http_client_factory: HttpClientFactory,
     ) -> Result<Self, ExecServerError> {
-        Self::prepare_from_codex_home(codex_home)
+        Self::prepare_from_genex_home(genex_home)
             .await?
             .build(local_runtime_paths, http_client_factory)
     }
@@ -716,7 +716,7 @@ mod tests {
     fn test_runtime_paths() -> ExecServerRuntimePaths {
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current exe"),
-            /*codex_linux_sandbox_exe*/ None,
+            /*genex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths")
     }

@@ -41,7 +41,7 @@ pub(super) async fn archive_threads(
     let _writer_guards = store.acquire_writer_locks(&lock_thread_ids).await?;
     // Only inspect active files whose names belong to the threads being archived.
     let reference_index = RolloutReferenceIndex::scan_unarchived_threads(
-        store.config.codex_home.as_path(),
+        store.config.genex_home.as_path(),
         &thread_ids,
     )
     .await
@@ -79,7 +79,7 @@ async fn archive_thread_with_paths(
 
     let archive_folder = store
         .config
-        .codex_home
+        .genex_home
         .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR);
     std::fs::create_dir_all(&archive_folder).map_err(|err| ThreadStoreError::Internal {
         message: format!("failed to archive thread: {err}"),
@@ -90,11 +90,11 @@ async fn archive_thread_with_paths(
     let mut archived_path = None;
     let mut rollout_moves = Vec::new();
     for rollout_path in rollout_paths {
-        if rollout_path_is_archived(store.config.codex_home.as_path(), rollout_path.as_path()) {
+        if rollout_path_is_archived(store.config.genex_home.as_path(), rollout_path.as_path()) {
             continue;
         }
         let canonical_rollout_path = scoped_rollout_path(
-            store.config.codex_home.join(genex_rollout::SESSIONS_SUBDIR),
+            store.config.genex_home.join(genex_rollout::SESSIONS_SUBDIR),
             rollout_path.as_path(),
             "sessions",
         )?;

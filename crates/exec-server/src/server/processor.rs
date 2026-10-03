@@ -500,7 +500,7 @@ mod tests {
     fn test_runtime_paths() -> ExecServerRuntimePaths {
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current exe"),
-            /*codex_linux_sandbox_exe*/ None,
+            /*genex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths")
     }

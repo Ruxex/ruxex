@@ -15,7 +15,7 @@ use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::LoaderOverrides;
 use genex_core::config::edit::ConfigEditsBuilder;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_core::config::load_global_mcp_servers;
 use genex_core::plugins_manager_for_config;
 use genex_exec_server::EnvironmentManager;
@@ -48,7 +48,7 @@ use crate::plugin_cmd::load_cli_auth_manager;
 /// Subcommands:
 /// - `list`   — list configured servers (with `--json`)
 /// - `get`    — show a single server (with `--json`)
-/// - `add`    — add a server launcher entry to `~/.codex/config.toml`
+/// - `add`    — add a server launcher entry to `~/.genex/config.toml`
 /// - `remove` — delete a server entry
 /// - `login`  — authenticate with MCP server using OAuth
 /// - `logout` — remove OAuth credentials for MCP server
@@ -289,7 +289,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
 
     validate_server_name(&name)?;
 
-    let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
+    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
 
     let (transport, oauth_client_id, client_registration, oauth_resource) = match transport_args {
         AddMcpTransportArgs {
@@ -410,17 +410,17 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
         tools: HashMap::new(),
     };
 
-    let mut servers = load_global_mcp_servers(&codex_home)
+    let mut servers = load_global_mcp_servers(&genex_home)
         .await
-        .with_context(|| format!("failed to load MCP servers from {}", codex_home.display()))?;
+        .with_context(|| format!("failed to load MCP servers from {}", genex_home.display()))?;
     let credential_name = new_entry.oauth_credential_name(&name);
     servers.insert(name.clone(), new_entry);
 
-    ConfigEditsBuilder::new(&codex_home)
+    ConfigEditsBuilder::new(&genex_home)
         .replace_mcp_servers(&servers)
         .apply()
         .await
-        .with_context(|| format!("failed to write MCP servers to {}", codex_home.display()))?;
+        .with_context(|| format!("failed to write MCP servers to {}", genex_home.display()))?;
 
     println!("Added global MCP server '{name}'.");
     if let Some(callback_url) = &callback_url {
@@ -474,19 +474,19 @@ async fn run_remove(config_overrides: &CliConfigOverrides, remove_args: RemoveAr
 
     validate_server_name(&name)?;
 
-    let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
-    let mut servers = load_global_mcp_servers(&codex_home)
+    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
+    let mut servers = load_global_mcp_servers(&genex_home)
         .await
-        .with_context(|| format!("failed to load MCP servers from {}", codex_home.display()))?;
+        .with_context(|| format!("failed to load MCP servers from {}", genex_home.display()))?;
 
     let removed = servers.remove(&name).is_some();
 
     if removed {
-        ConfigEditsBuilder::new(&codex_home)
+        ConfigEditsBuilder::new(&genex_home)
             .replace_mcp_servers(&servers)
             .apply()
             .await
-            .with_context(|| format!("failed to write MCP servers to {}", codex_home.display()))?;
+            .with_context(|| format!("failed to write MCP servers to {}", genex_home.display()))?;
     }
 
     if removed {

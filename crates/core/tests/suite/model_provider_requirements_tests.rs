@@ -21,7 +21,7 @@ use test_case::test_case;
 use wiremock::MockServer;
 
 #[tokio::test]
-async fn cloud_provider_auth_merges_before_parsing_and_resolves_cwd_from_codex_home() -> Result<()>
+async fn cloud_provider_auth_merges_before_parsing_and_resolves_cwd_from_genex_home() -> Result<()>
 {
     let home = tempdir()?;
     std::fs::write(
@@ -46,7 +46,7 @@ refresh_interval_ms = 12345
     )
     .into_loader();
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .genex_home(home.path().to_path_buf())
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
         .cloud_config_bundle(managed)
         .build()
@@ -153,7 +153,7 @@ X-Managed = "required"
     if !required_selection.is_empty() {
         for cli_provider in ["provider", "gateway"] {
             let overridden = ConfigBuilder::default()
-                .codex_home(test.config.codex_home.to_path_buf())
+                .genex_home(test.config.genex_home.to_path_buf())
                 .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
                 .cloud_config_bundle(managed.clone())
                 .cli_overrides(vec![(

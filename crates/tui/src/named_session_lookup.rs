@@ -46,7 +46,7 @@ pub(super) fn display_label(thread: &Thread) -> &str {
 /// Resolve server-listed labels and reject distinct matches before selecting an ID.
 pub(super) async fn lookup(
     app_server: &mut AppServerSession,
-    codex_home: &Path,
+    genex_home: &Path,
     name: &str,
     collections: &[SessionCollection],
     source_kind_filters: &[Vec<ThreadSourceKind>],
@@ -94,7 +94,7 @@ pub(super) async fn lookup(
                     if !app_server.uses_remote_workspace()
                         && let Some(path) = thread.path.as_ref()
                     {
-                        let expected_root = codex_home.join(match collection {
+                        let expected_root = genex_home.join(match collection {
                             SessionCollection::Active => genex_rollout::SESSIONS_SUBDIR,
                             SessionCollection::Archived => genex_rollout::ARCHIVED_SESSIONS_SUBDIR,
                         });

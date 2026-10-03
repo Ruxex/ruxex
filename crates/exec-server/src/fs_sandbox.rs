@@ -135,11 +135,11 @@ impl FileSystemSandboxRunner {
         workspace_roots: &[AbsolutePathBuf],
         sandbox_context: &FileSystemSandboxContext,
     ) -> Result<SandboxExecRequest, JSONRPCErrorError> {
-        let helper = &self.runtime_paths.codex_self_exe;
+        let helper = &self.runtime_paths.genex_self_exe;
         let sandbox_manager = SandboxManager::for_file_system_helpers();
         #[cfg(target_os = "macos")]
-        let sandbox_manager = sandbox_manager.with_allowed_symlinked_codex_home(
-            self.runtime_paths.allowed_symlinked_codex_home.clone(),
+        let sandbox_manager = sandbox_manager.with_allowed_symlinked_genex_home(
+            self.runtime_paths.allowed_symlinked_genex_home.clone(),
         );
         let (sandbox, windows_sandbox_level) = crate::sandbox_selection::select_sandbox(
             &sandbox_manager,
@@ -181,9 +181,9 @@ impl FileSystemSandboxRunner {
                     network: None,
                     sandbox_policy_cwd: &cwd.uri,
                     sandbox_exe: if cfg!(windows) {
-                        Some(self.runtime_paths.codex_self_exe.as_path())
+                        Some(self.runtime_paths.genex_self_exe.as_path())
                     } else {
-                        self.runtime_paths.codex_linux_sandbox_exe.as_deref()
+                        self.runtime_paths.genex_linux_sandbox_exe.as_deref()
                     },
                     use_legacy_landlock: sandbox_context.use_legacy_landlock,
                     windows_sandbox_level: windows_sandbox_level
@@ -217,8 +217,8 @@ fn native_workspace_root(root: &PathUri) -> Result<AbsolutePathBuf, JSONRPCError
 }
 
 fn helper_read_roots(runtime_paths: &ExecServerRuntimePaths) -> Vec<AbsolutePathBuf> {
-    let mut roots = vec![runtime_paths.codex_self_exe.clone()];
-    if let Some(path) = &runtime_paths.codex_linux_sandbox_exe
+    let mut roots = vec![runtime_paths.genex_self_exe.clone()];
+    if let Some(path) = &runtime_paths.genex_linux_sandbox_exe
         && !roots.contains(path)
     {
         roots.push(path.clone());
@@ -584,9 +584,9 @@ mod tests {
 
     #[test]
     fn helper_permissions_preserve_existing_writes() {
-        let codex_self_exe = std::env::current_exe().expect("current exe");
+        let genex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(codex_self_exe, /*codex_linux_sandbox_exe*/ None)
+            ExecServerRuntimePaths::new(genex_self_exe, /*genex_linux_sandbox_exe*/ None)
                 .expect("runtime paths");
         let cwd = AbsolutePathBuf::from_absolute_path(std::env::temp_dir().as_path())
             .expect("absolute cwd");
@@ -595,7 +595,7 @@ mod tests {
             writable.clone(),
             FileSystemAccessMode::Write,
         )]);
-        let readable = runtime_paths.codex_self_exe.clone();
+        let readable = runtime_paths.genex_self_exe.clone();
 
         add_helper_runtime_permissions(
             &mut policy,
@@ -696,9 +696,9 @@ mod tests {
         };
         let path_key = path_key.to_string_lossy().into_owned();
         let path = path.to_string_lossy().into_owned();
-        let codex_self_exe = std::env::current_exe().expect("current exe");
+        let genex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(codex_self_exe.clone(), Some(codex_self_exe))
+            ExecServerRuntimePaths::new(genex_self_exe.clone(), Some(genex_self_exe))
                 .expect("runtime paths");
         let runner = FileSystemSandboxRunner::new(runtime_paths);
         let native_cwd = AbsolutePathBuf::current_dir().expect("cwd");
@@ -752,9 +752,9 @@ mod tests {
     /// Removing the selected directory must not change permission anchoring or prevent launch.
     #[test]
     fn sandbox_exec_request_uses_filesystem_root_and_preserves_policy_cwd() {
-        let codex_self_exe = std::env::current_exe().expect("current exe");
+        let genex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(codex_self_exe.clone(), Some(codex_self_exe))
+            ExecServerRuntimePaths::new(genex_self_exe.clone(), Some(genex_self_exe))
                 .expect("runtime paths");
         let runner = FileSystemSandboxRunner::new(runtime_paths);
         let selected = tempfile::tempdir().expect("selected directory");
@@ -842,9 +842,9 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn sandbox_exec_request_binds_windows_relative_globs_to_policy_cwd() {
-        let codex_self_exe = std::env::current_exe().expect("current exe");
+        let genex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(codex_self_exe, /*codex_linux_sandbox_exe*/ None)
+            ExecServerRuntimePaths::new(genex_self_exe, /*genex_linux_sandbox_exe*/ None)
                 .expect("runtime paths");
         let runner = FileSystemSandboxRunner::new(runtime_paths);
         let selected = tempfile::tempdir().expect("selected directory");
@@ -932,15 +932,15 @@ mod tests {
 
     #[test]
     fn helper_permissions_include_only_the_helper_executable() {
-        let codex_self_exe = std::env::current_exe().expect("current exe");
+        let genex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(codex_self_exe, /*codex_linux_sandbox_exe*/ None)
+            ExecServerRuntimePaths::new(genex_self_exe, /*genex_linux_sandbox_exe*/ None)
                 .expect("runtime paths");
         let cwd = AbsolutePathBuf::from_absolute_path(std::env::temp_dir().as_path())
             .expect("absolute cwd");
         let mut policy = restricted_policy(Vec::new());
         let parent = runtime_paths
-            .codex_self_exe
+            .genex_self_exe
             .parent()
             .expect("current exe parent");
         let sibling = parent.join("credentials.json");
@@ -953,7 +953,7 @@ mod tests {
 
         assert!(
             policy.can_read_local_path_with_cwd(
-                runtime_paths.codex_self_exe.as_path(),
+                runtime_paths.genex_self_exe.as_path(),
                 cwd.as_path(),
             )
         );
@@ -964,17 +964,17 @@ mod tests {
     #[test]
     fn helper_permissions_include_only_linux_sandbox_alias_executable() {
         let root = tempfile::tempdir().expect("temp dir");
-        let codex_self_exe = root.path().join("bin").join("codex");
-        let codex_linux_sandbox_exe = root.path().join("aliases").join("codex-linux-sandbox");
+        let genex_self_exe = root.path().join("bin").join("codex");
+        let genex_linux_sandbox_exe = root.path().join("aliases").join("codex-linux-sandbox");
         let runtime_paths =
-            ExecServerRuntimePaths::new(codex_self_exe, Some(codex_linux_sandbox_exe))
+            ExecServerRuntimePaths::new(genex_self_exe, Some(genex_linux_sandbox_exe))
                 .expect("runtime paths");
         let cwd = AbsolutePathBuf::from_absolute_path(std::env::temp_dir().as_path())
             .expect("absolute cwd");
         let mut policy = restricted_policy(Vec::new());
-        let codex_parent = runtime_paths.codex_self_exe.parent().expect("codex parent");
+        let codex_parent = runtime_paths.genex_self_exe.parent().expect("codex parent");
         let alias = runtime_paths
-            .codex_linux_sandbox_exe
+            .genex_linux_sandbox_exe
             .as_ref()
             .expect("linux sandbox alias");
         let alias_parent = alias.parent().expect("alias parent");
@@ -987,7 +987,7 @@ mod tests {
 
         assert!(
             policy.can_read_local_path_with_cwd(
-                runtime_paths.codex_self_exe.as_path(),
+                runtime_paths.genex_self_exe.as_path(),
                 cwd.as_path(),
             )
         );

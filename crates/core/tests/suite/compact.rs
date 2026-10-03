@@ -837,7 +837,7 @@ async fn manual_pre_compact_block_decision_does_not_block_compaction() {
         "unsupported PreCompact block output should not prevent the compact request"
     );
 
-    let hook_inputs = read_hook_inputs(&test.codex_home_path().join("pre_compact_block_log.jsonl"));
+    let hook_inputs = read_hook_inputs(&test.genex_home_path().join("pre_compact_block_log.jsonl"));
     assert_eq!(hook_inputs.len(), 1);
     let input = &hook_inputs[0];
     assert_eq!(input["hook_event_name"], "PreCompact");
@@ -889,14 +889,14 @@ async fn compact_hooks_respect_matchers_and_post_runs_after_compaction() {
     assert_eq!(request_log.requests().len(), 2);
     assert!(
         !test
-            .codex_home_path()
+            .genex_home_path()
             .join("pre_compact_auto_log.jsonl")
             .exists(),
         "auto matcher should not run for manual compaction"
     );
 
     let hook_inputs =
-        read_hook_inputs(&test.codex_home_path().join("post_compact_manual_log.jsonl"));
+        read_hook_inputs(&test.genex_home_path().join("post_compact_manual_log.jsonl"));
     assert_eq!(hook_inputs.len(), 1);
     let input = &hook_inputs[0];
     assert_eq!(input["hook_event_name"], "PostCompact");
@@ -1251,7 +1251,7 @@ async fn manual_compact_emits_context_compaction_items() {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -1881,7 +1881,7 @@ async fn auto_compact_runs_after_token_limit_hit() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -2061,7 +2061,7 @@ async fn auto_compact_emits_context_compaction_items() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     let mut started_item = None;
     let mut completed_item = None;
@@ -2141,7 +2141,7 @@ async fn auto_compact_starts_after_turn_started() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -3801,7 +3801,7 @@ async fn manual_compact_retries_after_context_window_error() {
         set_test_compact_prompt(config);
         config.model_auto_compact_token_limit = Some(200_000);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -3989,7 +3989,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
         config.model_provider = model_provider;
         set_test_compact_prompt(config);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
@@ -4210,7 +4210,7 @@ async fn auto_compact_allows_multiple_attempts_when_interleaved_with_other_turn_
         // Leave enough headroom for per-item request metadata before the second compaction.
         config.model_auto_compact_token_limit = Some(300);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     let mut auto_compact_lifecycle_events = Vec::new();
     for user in [MULTI_AUTO_MSG, follow_up_user, final_user] {
@@ -4312,7 +4312,7 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
         config.model_context_window = Some(context_window);
         config.model_auto_compact_token_limit = Some(limit);
     });
-    let codex = builder.build(&server).await.unwrap().codex;
+    let codex = builder.build(&server).await.unwrap().genex;
 
     codex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {

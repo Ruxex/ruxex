@@ -18,9 +18,9 @@ use tokio_tungstenite::tungstenite::Message;
 async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Result<()> {
     let repo_root = genex_utils_cargo_bin::repo_root()?;
     // macOS's default temporary directory leaves too little room for the control socket path.
-    let codex_home = tempfile::tempdir_in("/tmp")?;
-    write_test_config(codex_home.path(), &repo_root)?;
-    let socket = genex_app_server_client::app_server_control_socket_path(codex_home.path())?;
+    let genex_home = tempfile::tempdir_in("/tmp")?;
+    write_test_config(genex_home.path(), &repo_root)?;
+    let socket = genex_app_server_client::app_server_control_socket_path(genex_home.path())?;
     std::fs::create_dir_all(socket.parent().unwrap())?;
     let listener = UnixListener::bind(socket.as_path())?;
     let (disconnect_tx, mut disconnect_rx) = tokio::sync::oneshot::channel();
@@ -135,7 +135,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
         }
         Ok::<_, anyhow::Error>(methods)
     });
-    let mut terminal = PtyGenex::start(&repo_root, codex_home, &[])?;
+    let mut terminal = PtyGenex::start(&repo_root, genex_home, &[])?;
     terminal.wait_for_startup()?;
     let mut disconnect_tx = Some(disconnect_tx);
     let mut restore_tx = Some(restore_tx);

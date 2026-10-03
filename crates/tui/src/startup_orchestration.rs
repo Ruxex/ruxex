@@ -64,8 +64,8 @@ pub(super) async fn run_main_inner(
 
     // we load config.toml here to determine project state.
     #[allow(clippy::print_stderr)]
-    let codex_home = match find_codex_home() {
-        Ok(codex_home) => codex_home.to_path_buf(),
+    let genex_home = match find_genex_home() {
+        Ok(genex_home) => genex_home.to_path_buf(),
         Err(err) => {
             eprintln!("Error finding genex home: {err}");
             std::process::exit(1);
@@ -74,7 +74,7 @@ pub(super) async fn run_main_inner(
 
     let mut launch_loader_overrides = loader_overrides.clone();
     if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
-        let user_config_path = resolve_profile_v2_config_path(&codex_home, profile_v2);
+        let user_config_path = resolve_profile_v2_config_path(&genex_home, profile_v2);
         launch_loader_overrides.user_config_path = Some(user_config_path);
         launch_loader_overrides.user_config_profile = Some(profile_v2.clone());
     }
@@ -86,7 +86,7 @@ pub(super) async fn run_main_inner(
         )?;
         let validation_environment_manager =
             if should_load_configured_environments(&loader_overrides, &validation_target) {
-                EnvironmentManager::prepare_from_codex_home(&codex_home).await
+                EnvironmentManager::prepare_from_genex_home(&genex_home).await
             } else {
                 EnvironmentManager::prepare_from_env().await
             }
@@ -131,9 +131,9 @@ pub(super) async fn run_main_inner(
         && (reuse_implicit_local_daemon || search_only_config_override)
         && launch_loader_overrides.packaged_defaults_path.is_none()
         && startup_preflight::should_delay_startup_composer_for_first_login(
-            &codex_home,
+            &genex_home,
             genex_config::loader::system_config_toml_file(),
-            || genex_config::loader::has_local_managed_configuration(&codex_home),
+            || genex_config::loader::has_local_managed_configuration(&genex_home),
             |name| std::env::var_os(name),
         )
     {
@@ -152,7 +152,7 @@ pub(super) async fn run_main_inner(
 
     let default_daemon = if explicit_remote_endpoint.is_none() && reuse_implicit_local_daemon {
         startup_draft
-            .run_until(maybe_probe_default_daemon_socket(&codex_home))
+            .run_until(maybe_probe_default_daemon_socket(&genex_home))
             .await?
     } else {
         None
@@ -168,13 +168,13 @@ pub(super) async fn run_main_inner(
         .filter(|_| app_server_target.uses_remote_workspace());
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        arg0_paths.codex_self_exe.clone(),
-        arg0_paths.codex_linux_sandbox_exe.clone(),
+        arg0_paths.genex_self_exe.clone(),
+        arg0_paths.genex_linux_sandbox_exe.clone(),
     )?;
     let prepared_environment_manager =
         if should_load_configured_environments(&loader_overrides, &app_server_target) {
             startup_draft
-                .run_until(EnvironmentManager::prepare_from_codex_home(&codex_home))
+                .run_until(EnvironmentManager::prepare_from_genex_home(&genex_home))
                 .await?
         } else {
             startup_draft
@@ -198,7 +198,7 @@ pub(super) async fn run_main_inner(
     )?;
     let mut loader_overrides = loader_overrides;
     if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
-        let user_config_path = resolve_profile_v2_config_path(&codex_home, profile_v2);
+        let user_config_path = resolve_profile_v2_config_path(&genex_home, profile_v2);
         loader_overrides.user_config_path = Some(user_config_path);
         loader_overrides.user_config_profile = Some(profile_v2.clone());
     }
@@ -206,7 +206,7 @@ pub(super) async fn run_main_inner(
 
     let bootstrap_config = startup_draft
         .run_until(load_bootstrap_config_or_exit(
-            &codex_home,
+            &genex_home,
             config_cwd.as_ref(),
             cli_kv_overrides.clone(),
             loader_overrides.clone(),
@@ -238,8 +238,8 @@ pub(super) async fn run_main_inner(
         sandbox_mode,
         cwd: cwd_override,
         model_provider: None,
-        codex_self_exe: arg0_paths.codex_self_exe.clone(),
-        codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
+        genex_self_exe: arg0_paths.genex_self_exe.clone(),
+        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
         show_raw_agent_reasoning: None,
         bypass_hook_trust: cli.bypass_hook_trust.then_some(true),
@@ -335,8 +335,8 @@ pub(super) async fn run_main_inner(
             )
         });
     #[cfg(target_os = "macos")]
-    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_codex_home(
-        genex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
+        genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
     );
     let environment_manager = Arc::new(
         prepared_environment_manager
@@ -344,7 +344,7 @@ pub(super) async fn run_main_inner(
             .map_err(std::io::Error::other)?,
     );
 
-    remove_legacy_tui_log_file(config.codex_home.as_path());
+    remove_legacy_tui_log_file(config.genex_home.as_path());
 
     let otel_originator = originator().value;
     let otel = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -398,7 +398,7 @@ pub(super) async fn run_main_inner(
         (AppServerTarget::Embedded, None) => "auto_start_disabled",
     };
     let daemon_settings = if metrics.is_some() {
-        genex_app_server_daemon::telemetry::settings_tags(&config.codex_home)
+        genex_app_server_daemon::telemetry::settings_tags(&config.genex_home)
             .await
             .to_vec()
     } else {

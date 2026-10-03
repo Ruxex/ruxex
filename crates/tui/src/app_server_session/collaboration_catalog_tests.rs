@@ -23,9 +23,9 @@ async fn collaboration_catalog_is_optional_and_refetched_on_bootstrap() -> Resul
         Some(json!({"result": {"data": "invalid"}})),
         None,
     ] {
-        let codex_home = tempfile::tempdir()?;
+        let genex_home = tempfile::tempdir()?;
         let mut config = ConfigBuilder::default()
-            .codex_home(codex_home.path().to_path_buf())
+            .genex_home(genex_home.path().to_path_buf())
             .build()
             .await?;
         config.model = Some("task-model".into());

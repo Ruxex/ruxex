@@ -1239,9 +1239,9 @@ async fn startup_thread_started_does_not_replay_resolved_approval() -> Result<()
 #[tokio::test]
 async fn owned_subagent_approval_before_thread_started_is_preserved() -> Result<()> {
     let (mut app, _app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let codex_home = tempdir()?;
-    app.config.codex_home = codex_home.path().to_path_buf().abs();
-    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.path().abs());
+    let genex_home = tempdir()?;
+    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.path().abs());
     let mut app_server = Box::pin(crate::start_embedded_app_server_for_picker(&app.config)).await?;
     let parent = app_server.start_thread(&app.config).await?;
     let parent_thread_id = parent.session.thread_id;
@@ -1249,7 +1249,7 @@ async fn owned_subagent_approval_before_thread_started_is_preserved() -> Result<
         .await?;
     let child_thread_id = ThreadId::from_string(
         &create_fake_parented_rollout_with_source(
-            codex_home.path(),
+            genex_home.path(),
             "2026-01-01T00-00-01",
             "2026-01-01T00:00:01Z",
             "child task",

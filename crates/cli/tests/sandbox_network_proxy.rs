@@ -11,11 +11,11 @@ const BWRAP_UNAVAILABLE_ERR: &str = "bubblewrap is unavailable";
 
 #[test]
 fn sandbox_with_network_proxy_blocks_direct_loopback_access() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let listener = TcpListener::bind("127.0.0.2:0")?;
     let port = listener.local_addr()?.port();
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 default_permissions = "network-test"
 
@@ -34,7 +34,7 @@ mode = "full"
 
     let url = format!("http://127.0.0.2:{port}/");
     let output = std::process::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .args([
             "sandbox",
             "--permission-profile",
@@ -73,7 +73,7 @@ mode = "full"
 
 #[test]
 fn sandbox_with_network_proxy_allows_explicit_loopback_access() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let listener = TcpListener::bind("127.0.0.2:0")?;
     let port = listener.local_addr()?.port();
     listener.set_nonblocking(true)?;
@@ -116,7 +116,7 @@ fn sandbox_with_network_proxy_allows_explicit_loopback_access() -> Result<()> {
         }
     });
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 default_permissions = "network-test"
 
@@ -139,7 +139,7 @@ allow_local_binding = false
 
     let url = format!("http://127.0.0.2:{port}/");
     let output = std::process::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .env("CODEX_HOME", codex_home.path())
+        .env("GENEX_HOME", genex_home.path())
         .args([
             "sandbox",
             "--permission-profile",

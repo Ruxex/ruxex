@@ -55,9 +55,9 @@ pub struct TrustedPluginRoots {
 }
 
 impl TrustedPluginRoots {
-    pub fn from_plugin_load_outcome(loaded_plugins: &PluginLoadOutcome, codex_home: &Path) -> Self {
+    pub fn from_plugin_load_outcome(loaded_plugins: &PluginLoadOutcome, genex_home: &Path) -> Self {
         let primary_runtime_marketplace_root = primary_runtime_marketplace_root();
-        let Ok(store) = PluginStore::try_new(codex_home.to_path_buf()) else {
+        let Ok(store) = PluginStore::try_new(genex_home.to_path_buf()) else {
             return Self::default();
         };
         let mut seen = HashSet::new();
@@ -69,7 +69,7 @@ impl TrustedPluginRoots {
                 let plugin_id = PluginId::parse(&plugin.config_name).ok()?;
                 let expected_root = Self::expected_plugin_root(
                     &store,
-                    codex_home,
+                    genex_home,
                     &plugin_id,
                     primary_runtime_marketplace_root.as_deref(),
                 )?;
@@ -91,7 +91,7 @@ impl TrustedPluginRoots {
 
     fn expected_plugin_root(
         store: &PluginStore,
-        _codex_home: &Path,
+        _genex_home: &Path,
         plugin_id: &PluginId,
         primary_runtime_marketplace_root: Option<&Path>,
     ) -> Option<AbsolutePathBuf> {

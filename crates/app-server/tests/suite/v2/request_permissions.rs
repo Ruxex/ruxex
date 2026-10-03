@@ -30,7 +30,7 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn request_permissions_round_trip() -> Result<()> {
-    let codex_home = tempfile::TempDir::new()?;
+    let genex_home = tempfile::TempDir::new()?;
     let project_root_entry = json!({
         "path": {
             "type": "special",
@@ -59,10 +59,10 @@ async fn request_permissions_round_trip() -> Result<()> {
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .enable_feature(Feature::RequestPermissionsTool)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let cwd = mcp.auto_env()?.selection().cwd.clone();

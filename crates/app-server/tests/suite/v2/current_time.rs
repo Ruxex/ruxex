@@ -39,7 +39,7 @@ async fn current_time_read_round_trip_adds_reminder_to_model_input() -> Result<(
         create_final_assistant_message_sse_response("Done")?,
     )
     .await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_extra_config(
             r#"[features.current_time_reminder]
@@ -48,10 +48,10 @@ reminder_interval_seconds = 1
 clock_source = "external"
 "#,
         )
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 

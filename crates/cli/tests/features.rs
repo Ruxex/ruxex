@@ -19,17 +19,17 @@ use wiremock::matchers::header;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 
-fn genex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
+fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
-    cmd.env("CODEX_HOME", codex_home);
+    cmd.env("GENEX_HOME", genex_home);
     Ok(cmd)
 }
 
 #[test]
 fn strict_config_rejects_unknown_config_override() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     cmd.args(["--strict-config", "-c", "foo=bar", "exec", "hello"])
         .assert()
         .failure()
@@ -70,12 +70,12 @@ fn interactive_validates_config_before_requiring_terminal() -> Result<()> {
     ];
 
     for &(args, config_file, contents, expected_error) in cases {
-        let codex_home = TempDir::new()?;
-        std::fs::write(codex_home.path().join(config_file), contents)?;
+        let genex_home = TempDir::new()?;
+        std::fs::write(genex_home.path().join(config_file), contents)?;
 
-        let mut cmd = genex_command(codex_home.path())?;
+        let mut cmd = genex_command(genex_home.path())?;
         cmd.env("TERM", "xterm-256color")
-            .current_dir(codex_home.path())
+            .current_dir(genex_home.path())
             .args(args)
             .assert()
             .failure()
@@ -88,10 +88,10 @@ fn interactive_validates_config_before_requiring_terminal() -> Result<()> {
 #[test]
 fn interactive_remote_default_preserves_remote_working_directory_before_requiring_terminal()
 -> Result<()> {
-    let codex_home = TempDir::new()?;
-    std::fs::write(codex_home.path().join("config.toml"), "")?;
+    let genex_home = TempDir::new()?;
+    std::fs::write(genex_home.path().join("config.toml"), "")?;
     std::fs::write(
-        codex_home.path().join("environments.toml"),
+        genex_home.path().join("environments.toml"),
         r#"default = "remote"
 include_local = false
 
@@ -100,11 +100,11 @@ id = "remote"
 url = "ws://127.0.0.1:4512"
 "#,
     )?;
-    let remote_only_cwd = codex_home.path().join("remote-only-working-directory");
+    let remote_only_cwd = genex_home.path().join("remote-only-working-directory");
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     cmd.env("TERM", "xterm-256color")
-        .current_dir(codex_home.path())
+        .current_dir(genex_home.path())
         .arg("--cd")
         .arg(remote_only_cwd)
         .assert()
@@ -116,9 +116,9 @@ url = "ws://127.0.0.1:4512"
 
 #[test]
 fn strict_config_is_not_supported_for_cloud_command() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     cmd.args(["--strict-config", "-c", "foo=bar", "cloud", "list"])
         .assert()
         .failure()
@@ -131,10 +131,10 @@ fn strict_config_is_not_supported_for_cloud_command() -> Result<()> {
 
 #[tokio::test]
 async fn features_enable_writes_feature_flag_to_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
     for feature in ["unified_exec"] {
-        let mut cmd = genex_command(codex_home.path())?;
+        let mut cmd = genex_command(genex_home.path())?;
         cmd.args(["features", "enable", feature])
             .assert()
             .success()
@@ -142,7 +142,7 @@ async fn features_enable_writes_feature_flag_to_config() -> Result<()> {
                 "Enabled feature `{feature}` in config.toml."
             )));
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
         assert!(config.contains("[features]"));
         assert!(config.contains(&format!("{feature} = true")));
     }
@@ -152,15 +152,15 @@ async fn features_enable_writes_feature_flag_to_config() -> Result<()> {
 
 #[tokio::test]
 async fn features_disable_writes_feature_flag_to_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     cmd.args(["features", "disable", "shell_tool"])
         .assert()
         .success()
         .stdout(contains("Disabled feature `shell_tool` in config.toml."));
 
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert!(config.contains("[features]"));
     assert!(config.contains("shell_tool = false"));
 
@@ -169,9 +169,9 @@ async fn features_disable_writes_feature_flag_to_config() -> Result<()> {
 
 #[tokio::test]
 async fn features_enable_under_development_feature_prints_warning() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     cmd.args(["features", "enable", "runtime_metrics"])
         .assert()
         .success()
@@ -184,9 +184,9 @@ async fn features_enable_under_development_feature_prints_warning() -> Result<()
 
 #[tokio::test]
 async fn features_list_is_sorted_alphabetically_by_feature_name() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     let output = cmd
         .args(["features", "list"])
         .assert()
@@ -216,15 +216,15 @@ async fn features_list_is_sorted_alphabetically_by_feature_name() -> Result<()> 
 async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()> {
     let server = MockServer::start().await;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let user_config = format!(
         "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\"\n\n[features]\nnetwork_proxy = true\n"
     );
-    std::fs::write(codex_home.path().join("config.toml"), &user_config)?;
+    std::fs::write(genex_home.path().join("config.toml"), &user_config)?;
 
     let bootstrap_config = load_config_toml_with_layer_stack(
-        codex_home.path(),
-        Some(&AbsolutePathBuf::from_absolute_path(codex_home.path())?),
+        genex_home.path(),
+        Some(&AbsolutePathBuf::from_absolute_path(genex_home.path())?),
         Vec::new(),
         ConfigLoadOptions::default(),
     )
@@ -244,7 +244,7 @@ async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()>
     }
 
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("workspace-123")
             .workspace_id("workspace-123")
@@ -268,9 +268,9 @@ async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()>
         .mount(&server)
         .await;
 
-    let mut cmd = genex_command(codex_home.path())?;
+    let mut cmd = genex_command(genex_home.path())?;
     let output = cmd
-        .current_dir(codex_home.path())
+        .current_dir(genex_home.path())
         .env("NO_PROXY", "127.0.0.1,localhost")
         .env("no_proxy", "127.0.0.1,localhost")
         .env_remove("CODEX_ACCESS_TOKEN")
@@ -293,7 +293,7 @@ async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()>
         ["network_proxy", "experimental", "false"]
     );
     assert_eq!(
-        std::fs::read_to_string(codex_home.path().join("config.toml"))?,
+        std::fs::read_to_string(genex_home.path().join("config.toml"))?,
         user_config
     );
     server.verify().await;

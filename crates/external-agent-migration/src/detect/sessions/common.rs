@@ -20,13 +20,13 @@ pub(super) struct SessionFileCandidate {
 }
 
 pub(super) fn detect_recent_sessions(
-    codex_home: &Path,
+    genex_home: &Path,
     candidates: impl IntoIterator<Item = SessionFileCandidate>,
     require_existing_cwd: bool,
     limits: ExternalAgentSessionImportLimits,
 ) -> io::Result<Vec<ExternalAgentSessionMigration>> {
     let now = now_unix_seconds();
-    let mut ledger = load_import_ledger(codex_home)?;
+    let mut ledger = load_import_ledger(genex_home)?;
     let source_states = ledger.source_states();
     let mut recent = BinaryHeap::new();
 
@@ -94,7 +94,7 @@ pub(super) fn detect_recent_sessions(
         migrations.push(summary.migration);
     }
     if ledger_changed {
-        save_import_ledger(codex_home, &ledger)?;
+        save_import_ledger(genex_home, &ledger)?;
     }
 
     Ok(migrations)

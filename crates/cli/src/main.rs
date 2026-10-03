@@ -70,7 +70,7 @@ use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
 use genex_core::config::edit::ConfigEditsBuilder;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_core::config::resolve_profile_v2_config_path;
 use genex_features::FEATURES;
 use genex_features::Stage;
@@ -411,7 +411,7 @@ type HostSandboxArgs = UnsupportedSandboxArgs;
 #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 #[derive(Debug, Parser)]
 struct UnsupportedSandboxArgs {
-    /// Layer $CODEX_HOME/<name>.config.toml on top of the base user config.
+    /// Layer $GENEX_HOME/<name>.config.toml on top of the base user config.
     #[arg(long = "profile", short = 'p')]
     pub config_profile: Option<ProfileV2Name>,
 
@@ -921,7 +921,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
     reject_removed_top_level_command(&subcommand, &interactive)?;
     // Retain the launch target through TUI exit, even if a launcher changes selection.
     let daemon_cli_executable = arg0_paths
-        .codex_self_exe
+        .genex_self_exe
         .as_ref()
         .and_then(|path| path.canonicalize().ok());
     interactive.daemon_cli_executable = daemon_cli_executable
@@ -1231,8 +1231,8 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     let socket_path = match proxy_cli.socket_path {
                         Some(socket_path) => socket_path,
                         None => {
-                            let codex_home = find_codex_home()?;
-                            genex_app_server::app_server_control_socket_path(&codex_home)?
+                            let genex_home = find_genex_home()?;
+                            genex_app_server::app_server_control_socket_path(&genex_home)?
                         }
                     };
                     genex_stdio_to_uds::run(socket_path.as_path()).await?;
@@ -1445,21 +1445,21 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             #[cfg(target_os = "macos")]
             genex_cli::run_command_under_seatbelt(
                 sandbox_cli,
-                arg0_paths.codex_linux_sandbox_exe.clone(),
+                arg0_paths.genex_linux_sandbox_exe.clone(),
                 loader_overrides,
             )
             .await?;
             #[cfg(target_os = "linux")]
             genex_cli::run_command_under_landlock(
                 sandbox_cli,
-                arg0_paths.codex_linux_sandbox_exe.clone(),
+                arg0_paths.genex_linux_sandbox_exe.clone(),
                 loader_overrides,
             )
             .await?;
             #[cfg(target_os = "windows")]
             genex_cli::run_command_under_windows_sandbox(
                 sandbox_cli,
-                arg0_paths.codex_linux_sandbox_exe.clone(),
+                arg0_paths.genex_linux_sandbox_exe.clone(),
                 loader_overrides,
             )
             .await?;
@@ -1629,12 +1629,12 @@ async fn run_exec_server_command(
     root_config_overrides: &CliConfigOverrides,
     strict_config: bool,
 ) -> anyhow::Result<()> {
-    let codex_self_exe = arg0_paths
-        .codex_self_exe
+    let genex_self_exe = arg0_paths
+        .genex_self_exe
         .clone()
         .ok_or_else(|| anyhow::anyhow!("Genex executable path is not configured"))?;
     let runtime_paths =
-        ExecServerRuntimePaths::new(codex_self_exe, arg0_paths.codex_linux_sandbox_exe.clone())?;
+        ExecServerRuntimePaths::new(genex_self_exe, arg0_paths.genex_linux_sandbox_exe.clone())?;
     let config_result = load_exec_server_config(root_config_overrides, strict_config).await;
     let config = if strict_config {
         Some(config_result?)
@@ -1644,10 +1644,10 @@ async fn run_exec_server_command(
     let (_otel, telemetry) = exec_server_telemetry::init(config.as_ref());
     #[cfg(target_os = "macos")]
     let runtime_paths =
-        runtime_paths.with_allowed_symlinked_codex_home(config.as_ref().and_then(|config| {
-            genex_config::allowed_symlinked_codex_home(
+        runtime_paths.with_allowed_symlinked_genex_home(config.as_ref().and_then(|config| {
+            genex_config::allowed_symlinked_genex_home(
                 &config.config_layer_stack,
-                &config.codex_home,
+                &config.genex_home,
             )
         }));
     let http_client_factory = config
@@ -1686,20 +1686,20 @@ async fn load_exec_server_config(
 
 async fn enable_feature_in_config(feature: &str) -> anyhow::Result<()> {
     FeatureToggles::validate_feature(feature)?;
-    let codex_home = find_codex_home()?;
-    ConfigEditsBuilder::new(&codex_home)
+    let genex_home = find_genex_home()?;
+    ConfigEditsBuilder::new(&genex_home)
         .set_feature_enabled(feature, /*enabled*/ true)
         .apply()
         .await?;
     println!("Enabled feature `{feature}` in config.toml.");
-    maybe_print_under_development_feature_warning(&codex_home, feature);
+    maybe_print_under_development_feature_warning(&genex_home, feature);
     Ok(())
 }
 
 async fn disable_feature_in_config(feature: &str) -> anyhow::Result<()> {
     FeatureToggles::validate_feature(feature)?;
-    let codex_home = find_codex_home()?;
-    ConfigEditsBuilder::new(&codex_home)
+    let genex_home = find_genex_home()?;
+    ConfigEditsBuilder::new(&genex_home)
         .set_feature_enabled(feature, /*enabled*/ false)
         .apply()
         .await?;
@@ -1712,23 +1712,23 @@ fn loader_overrides_for_profile(
 ) -> anyhow::Result<LoaderOverrides> {
     match profile_v2 {
         Some(profile_v2) => {
-            let codex_home = find_codex_home()?;
-            Ok(loader_overrides_for_profile_at_codex_home(
+            let genex_home = find_genex_home()?;
+            Ok(loader_overrides_for_profile_at_genex_home(
                 Some(profile_v2),
-                &codex_home,
+                &genex_home,
             ))
         }
         None => Ok(LoaderOverrides::default()),
     }
 }
 
-fn loader_overrides_for_profile_at_codex_home(
+fn loader_overrides_for_profile_at_genex_home(
     profile_v2: Option<&ProfileV2Name>,
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
 ) -> LoaderOverrides {
     match profile_v2 {
         Some(profile_v2) => LoaderOverrides {
-            user_config_path: Some(resolve_profile_v2_config_path(codex_home, profile_v2)),
+            user_config_path: Some(resolve_profile_v2_config_path(genex_home, profile_v2)),
             user_config_profile: Some(profile_v2.clone()),
             ..Default::default()
         },
@@ -1736,7 +1736,7 @@ fn loader_overrides_for_profile_at_codex_home(
     }
 }
 
-fn maybe_print_under_development_feature_warning(codex_home: &std::path::Path, feature: &str) {
+fn maybe_print_under_development_feature_warning(genex_home: &std::path::Path, feature: &str) {
     let Some(spec) = FEATURES.iter().find(|spec| spec.key == feature) else {
         return;
     };
@@ -1744,7 +1744,7 @@ fn maybe_print_under_development_feature_warning(codex_home: &std::path::Path, f
         return;
     }
 
-    let config_path = codex_home.join(genex_config::CONFIG_TOML_FILE);
+    let config_path = genex_home.join(genex_config::CONFIG_TOML_FILE);
     eprintln!(
         "Under-development features enabled: {feature}. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in {}.",
         config_path.display()
@@ -1797,8 +1797,8 @@ async fn run_debug_prompt_input_command(
         approval_policy,
         sandbox_mode,
         cwd: shared.cwd,
-        codex_self_exe: arg0_paths.codex_self_exe,
-        codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe,
+        genex_self_exe: arg0_paths.genex_self_exe,
+        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe,
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe,
         show_raw_agent_reasoning: None,
         ephemeral: Some(true),
@@ -1827,7 +1827,7 @@ async fn run_debug_prompt_input_command(
     }
 
     let user_instructions_provider = Arc::new(GenexHomeUserInstructionsProvider::new(
-        config.codex_home.clone(),
+        config.genex_home.clone(),
     ));
     let mut extensions = genex_extension_api::ExtensionRegistryBuilder::new();
     genex_skills_extension::install(&mut extensions, |config: &Config| {

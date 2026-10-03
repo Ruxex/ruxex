@@ -120,7 +120,7 @@ impl App {
         overrides.cwd = Some(cwd.clone());
         let cwd_display = cwd.display().to_string();
         let builder = ConfigBuilder::default()
-            .codex_home(self.config.codex_home.to_path_buf())
+            .genex_home(self.config.genex_home.to_path_buf())
             .cli_overrides(self.cli_kv_overrides.clone())
             .harness_overrides(overrides)
             .loader_overrides(self.loader_overrides.clone());
@@ -141,7 +141,7 @@ impl App {
         overrides.permission_profile = None;
         overrides.default_permissions = Some(profile_id.to_string());
         let builder = ConfigBuilder::default()
-            .codex_home(self.config.codex_home.to_path_buf())
+            .genex_home(self.config.genex_home.to_path_buf())
             .cli_overrides(self.cli_kv_overrides.clone())
             .harness_overrides(overrides)
             .loader_overrides(self.loader_overrides.clone());
@@ -785,7 +785,7 @@ impl App {
         if let Some(name) = self.local_settings.tui.theme.as_deref()
             && let Some(theme) = crate::render::highlight::resolve_theme_by_name(
                 name,
-                Some(&self.local_settings.codex_home),
+                Some(&self.local_settings.genex_home),
             )
         {
             crate::render::highlight::set_syntax_theme(theme);
@@ -795,7 +795,7 @@ impl App {
         let auto_theme_name = crate::render::highlight::adaptive_default_theme_name();
         if let Some(theme) = crate::render::highlight::resolve_theme_by_name(
             auto_theme_name,
-            Some(&self.local_settings.codex_home),
+            Some(&self.local_settings.genex_home),
         ) {
             crate::render::highlight::set_syntax_theme(theme);
         }

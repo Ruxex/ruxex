@@ -109,7 +109,7 @@ fn assert_request_trace_matches(body: &serde_json::Value, expected_trace: &W3cTr
 }
 
 struct WebsocketTestHarness {
-    codex_home: TempDir,
+    genex_home: TempDir,
     auth_manager: Arc<AuthManager>,
     client: ModelClient,
     outbound_proxy_policy: OutboundProxyPolicy,
@@ -917,7 +917,7 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
         for index in 1..=5 {
             if index == 3 {
                 genex_login::login_with_api_key(
-                    harness.codex_home.path(),
+                    harness.genex_home.path(),
                     "second-account-token",
                     genex_login::AuthCredentialsStoreMode::File,
                     genex_login::AuthKeyringBackendKind::default(),
@@ -2729,8 +2729,8 @@ async fn websocket_harness_with_provider_options_and_auth(
     enabled_features: &[Feature],
     auth: Option<GenexAuth>,
 ) -> WebsocketTestHarness {
-    let codex_home = TempDir::new().unwrap();
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let genex_home = TempDir::new().unwrap();
+    let mut config = load_default_config_for_test(&genex_home).await;
     config.model = Some(MODEL.to_string());
     if runtime_metrics_enabled {
         config
@@ -2760,7 +2760,7 @@ async fn websocket_harness_with_provider_options_and_auth(
     let client_auth_manager = auth.map(|auth| {
         genex_core::test_support::auth_manager_from_auth_with_home(
             auth,
-            codex_home.path().to_path_buf(),
+            genex_home.path().to_path_buf(),
         )
     });
     let auth_manager = client_auth_manager.clone().unwrap_or_else(|| {
@@ -2807,7 +2807,7 @@ async fn websocket_harness_with_provider_options_and_auth(
     );
 
     WebsocketTestHarness {
-        codex_home,
+        genex_home,
         auth_manager,
         client,
         outbound_proxy_policy,

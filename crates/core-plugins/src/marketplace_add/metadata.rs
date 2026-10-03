@@ -28,7 +28,7 @@ enum InstalledMarketplaceSource {
 }
 
 pub(super) fn record_added_marketplace_entry(
-    codex_home: &Path,
+    genex_home: &Path,
     marketplace_name: &str,
     install_metadata: &MarketplaceInstallMetadata,
 ) -> Result<(), MarketplaceAddError> {
@@ -40,7 +40,7 @@ pub(super) fn record_added_marketplace_entry(
         sparse_paths: install_metadata.sparse_paths(),
     };
 
-    record_user_marketplace(codex_home, marketplace_name, &update).map_err(|err| {
+    record_user_marketplace(genex_home, marketplace_name, &update).map_err(|err| {
         MarketplaceAddError::Internal(format!(
             "failed to add marketplace '{marketplace_name}' to user config.toml: {err}"
         ))
@@ -48,11 +48,11 @@ pub(super) fn record_added_marketplace_entry(
 }
 
 pub(super) fn installed_marketplace_root_for_source(
-    codex_home: &Path,
+    genex_home: &Path,
     install_root: &Path,
     install_metadata: &MarketplaceInstallMetadata,
 ) -> Result<Option<PathBuf>, MarketplaceAddError> {
-    let config_path = codex_home.join(CONFIG_TOML_FILE);
+    let config_path = genex_home.join(CONFIG_TOML_FILE);
     let config = match fs::read_to_string(&config_path) {
         Ok(config) => config,
         Err(err) if err.kind() == ErrorKind::NotFound => return Ok(None),
@@ -91,11 +91,11 @@ pub(super) fn installed_marketplace_root_for_source(
 }
 
 pub(super) fn find_marketplace_root_by_name(
-    codex_home: &Path,
+    genex_home: &Path,
     install_root: &Path,
     marketplace_name: &str,
 ) -> Result<Option<PathBuf>, MarketplaceAddError> {
-    let config_path = codex_home.join(CONFIG_TOML_FILE);
+    let config_path = genex_home.join(CONFIG_TOML_FILE);
     let config = match fs::read_to_string(&config_path) {
         Ok(config) => config,
         Err(err) if err.kind() == ErrorKind::NotFound => return Ok(None),
@@ -207,11 +207,11 @@ mod tests {
 
     #[test]
     fn installed_marketplace_root_for_source_propagates_config_read_errors() {
-        let codex_home = TempDir::new().unwrap();
-        let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+        let genex_home = TempDir::new().unwrap();
+        let config_path = genex_home.path().join(CONFIG_TOML_FILE);
         fs::create_dir(&config_path).unwrap();
 
-        let install_root = codex_home.path().join("marketplaces");
+        let install_root = genex_home.path().join("marketplaces");
         let source = MarketplaceSource::Git {
             url: "https://github.com/owner/repo.git".to_string(),
             ref_name: None,
@@ -219,7 +219,7 @@ mod tests {
         let install_metadata = MarketplaceInstallMetadata::from_source(&source, &[]);
 
         let err = installed_marketplace_root_for_source(
-            codex_home.path(),
+            genex_home.path(),
             &install_root,
             &install_metadata,
         )
@@ -236,9 +236,9 @@ mod tests {
 
     #[test]
     fn installed_marketplace_root_for_source_uses_local_source_root() {
-        let codex_home = TempDir::new().unwrap();
-        let install_root = codex_home.path().join("marketplaces");
-        let source_root = codex_home.path().join("source");
+        let genex_home = TempDir::new().unwrap();
+        let install_root = genex_home.path().join("marketplaces");
+        let source_root = genex_home.path().join("source");
         fs::create_dir_all(source_root.join(".agents/plugins")).unwrap();
         fs::write(
             source_root.join(".agents/plugins/marketplace.json"),
@@ -249,10 +249,10 @@ mod tests {
             path: source_root.clone(),
         };
         let install_metadata = MarketplaceInstallMetadata::from_source(&source, &[]);
-        record_added_marketplace_entry(codex_home.path(), "debug", &install_metadata).unwrap();
+        record_added_marketplace_entry(genex_home.path(), "debug", &install_metadata).unwrap();
 
         let root = installed_marketplace_root_for_source(
-            codex_home.path(),
+            genex_home.path(),
             &install_root,
             &install_metadata,
         )

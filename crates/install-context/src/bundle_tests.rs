@@ -26,7 +26,7 @@ fn bundle_executable_preserves_package_layout_and_install_method() -> std::io::R
         /*is_macos*/ true,
         /*current_exe*/ Some(&executable),
         /*method_override*/ None,
-        /*codex_home*/ Some(home.path()),
+        /*genex_home*/ Some(home.path()),
     );
     assert_eq!(
         context,

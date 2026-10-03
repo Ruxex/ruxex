@@ -24,7 +24,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_protocol::ThreadId;
 use genex_utils_cli::CliConfigOverrides;
-use genex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_genex_home;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
 use color_eyre::eyre::eyre;
@@ -76,12 +76,12 @@ pub async fn run_session_archive_command(
     target: String,
     options: SessionArchiveCommandOptions,
 ) -> Result<String> {
-    let codex_home = find_codex_home().wrap_err("failed to find Genex home")?;
+    let genex_home = find_genex_home().wrap_err("failed to find Genex home")?;
     let mut app_server =
-        start_app_server_for_session_command(options, codex_home.to_path_buf()).await?;
+        start_app_server_for_session_command(options, genex_home.to_path_buf()).await?;
     run_session_archive_action_with_app_server(
         &mut app_server,
-        codex_home.as_path(),
+        genex_home.as_path(),
         action,
         &target,
     )
@@ -90,11 +90,11 @@ pub async fn run_session_archive_command(
 
 async fn run_session_archive_action_with_app_server(
     app_server: &mut AppServerSession,
-    codex_home: &Path,
+    genex_home: &Path,
     action: SessionArchiveAction,
     target: &str,
 ) -> Result<String> {
-    let resolved = resolve_session_target(app_server, codex_home, action, target).await?;
+    let resolved = resolve_session_target(app_server, genex_home, action, target).await?;
     let session_name = match action {
         SessionArchiveAction::Archive => {
             app_server.thread_archive(resolved.session_id).await?;
@@ -123,7 +123,7 @@ async fn run_session_archive_action_with_app_server(
 
 async fn resolve_session_target(
     app_server: &mut AppServerSession,
-    codex_home: &Path,
+    genex_home: &Path,
     action: SessionArchiveAction,
     target: &str,
 ) -> Result<ResolvedSessionTarget> {
@@ -159,7 +159,7 @@ async fn resolve_session_target(
     };
     if let Some(thread) = lookup(
         app_server,
-        codex_home,
+        genex_home,
         target,
         collections,
         &[super::resume_source_kinds(
@@ -216,7 +216,7 @@ fn confirm_session_delete(target: &ResolvedSessionTarget) -> Result<bool> {
 
 pub(super) async fn start_app_server_for_session_command(
     options: SessionArchiveCommandOptions,
-    codex_home: PathBuf,
+    genex_home: PathBuf,
 ) -> Result<AppServerSession> {
     let SessionArchiveCommandOptions {
         cli,
@@ -236,7 +236,7 @@ pub(super) async fn start_app_server_for_session_command(
     let mut launch_loader_overrides = loader_overrides.clone();
     if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
         launch_loader_overrides.user_config_path = Some(resolve_profile_v2_config_path(
-            codex_home.as_path(),
+            genex_home.as_path(),
             profile_v2,
         ));
         launch_loader_overrides.user_config_profile = Some(profile_v2.clone());
@@ -251,7 +251,7 @@ pub(super) async fn start_app_server_for_session_command(
         )
         .is_none();
     let default_daemon = if explicit_remote_endpoint.is_none() && reuse_implicit_local_daemon {
-        super::maybe_probe_default_daemon_socket(codex_home.as_path()).await
+        super::maybe_probe_default_daemon_socket(genex_home.as_path()).await
     } else {
         None
     };
@@ -266,8 +266,8 @@ pub(super) async fn start_app_server_for_session_command(
         .filter(|_| app_server_target.uses_remote_workspace());
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        arg0_paths.codex_self_exe.clone(),
-        arg0_paths.codex_linux_sandbox_exe.clone(),
+        arg0_paths.genex_self_exe.clone(),
+        arg0_paths.genex_linux_sandbox_exe.clone(),
     )
     .wrap_err("failed to resolve local runtime paths")?;
     let prepared_environment_manager = EnvironmentManager::prepare_from_env()
@@ -276,7 +276,7 @@ pub(super) async fn start_app_server_for_session_command(
     let mut loader_overrides = loader_overrides;
     if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
         loader_overrides.user_config_path = Some(resolve_profile_v2_config_path(
-            codex_home.as_path(),
+            genex_home.as_path(),
             profile_v2,
         ));
         loader_overrides.user_config_profile = Some(profile_v2.clone());
@@ -295,8 +295,8 @@ pub(super) async fn start_app_server_for_session_command(
                 cwd
             },
             model_provider: None,
-            codex_self_exe: arg0_paths.codex_self_exe.clone(),
-            codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
+            genex_self_exe: arg0_paths.genex_self_exe.clone(),
+            genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
             main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
             show_raw_agent_reasoning: None,
             bypass_hook_trust: cli.bypass_hook_trust.then_some(true),

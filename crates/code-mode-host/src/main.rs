@@ -93,7 +93,7 @@ fn build_trace_provider(endpoint: &str) -> anyhow::Result<OtelProvider> {
         environment: "code-mode-host".to_string(),
         service_name: "genex-code-mode-host".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: PathBuf::from("/tmp"),
+        genex_home: PathBuf::from("/tmp"),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::OtlpHttp {
             endpoint: endpoint.to_string(),

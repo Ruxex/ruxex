@@ -51,7 +51,7 @@ enum ShellBackend {
 }
 
 fn configure_saved_prefix_and_guardian(config: &mut Config) {
-    let policy_path = config.codex_home.join("rules/default.rules");
+    let policy_path = config.genex_home.join("rules/default.rules");
     fs::create_dir_all(policy_path.parent().expect("rules directory"))
         .expect("create rules directory");
     fs::write(
@@ -202,7 +202,7 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
             config.approvals_reviewer = ApprovalsReviewer::User;
         });
     let test = builder.build_with_auto_env(&server).await?;
-    let policy_path = test.codex_home_path().join("rules/default.rules");
+    let policy_path = test.genex_home_path().join("rules/default.rules");
     let initial_policy = fs::read_to_string(&policy_path)?;
     let responses = mount_sse_sequence(
         &server,

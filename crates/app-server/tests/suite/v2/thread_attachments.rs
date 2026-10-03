@@ -41,12 +41,12 @@ use tokio::time::timeout;
 #[tokio::test]
 async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let first_thread = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "First thread",
@@ -54,7 +54,7 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
         /*git_info*/ None,
     )?;
     let unrelated_thread = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-06T10-00-00",
         "2025-01-06T10:00:00Z",
         "Unrelated thread",
@@ -62,7 +62,7 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
         /*git_info*/ None,
     )?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let request_id = server
@@ -194,12 +194,12 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
 #[tokio::test]
 async fn attachment_removal_is_idempotent_and_allows_reattachment() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "Stored thread",
@@ -207,7 +207,7 @@ async fn attachment_removal_is_idempotent_and_allows_reattachment() -> Result<()
         /*git_info*/ None,
     )?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let request_id = server
@@ -305,12 +305,12 @@ async fn attachment_removal_is_idempotent_and_allows_reattachment() -> Result<()
 #[tokio::test]
 async fn thread_attachment_requests_reject_invalid_identities_and_cursors() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -365,19 +365,19 @@ async fn thread_attachment_requests_reject_invalid_identities_and_cursors() -> R
 async fn thread_attachment_mutations_respond_before_broadcasting_updates_to_multiple_clients()
 -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "Stored thread",
         Some("mock_provider"),
         /*git_info*/ None,
     )?;
-    let (mut process, bind_addr) = spawn_websocket_server(codex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
 
     let result = async {
         let mut first_client = connect_websocket(bind_addr).await?;

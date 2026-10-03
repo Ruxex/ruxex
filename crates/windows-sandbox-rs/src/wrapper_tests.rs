@@ -8,7 +8,7 @@ use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 
-use super::CODEX_HOME_FLAG;
+use super::GENEX_HOME_FLAG;
 use super::CODEX_WINDOWS_SANDBOX_ARG1;
 use super::COMMAND_CWD_FLAG;
 use super::DENY_READ_PATHS_JSON_FLAG;
@@ -71,12 +71,12 @@ fn windows_wrapper_args_round_trip() {
         Some(write_roots_override.as_slice()),
         deny_read_paths_override.as_slice(),
         deny_write_paths_override.as_slice(),
-        Path::new(r"C:\Users\me\.codex"),
+        Path::new(r"C:\Users\me\.genex"),
     )
     .expect("build wrapper args");
 
     assert_eq!(args[0], CODEX_WINDOWS_SANDBOX_ARG1);
-    assert!(args.contains(&CODEX_HOME_FLAG.to_string()));
+    assert!(args.contains(&GENEX_HOME_FLAG.to_string()));
     assert!(args.contains(&COMMAND_CWD_FLAG.to_string()));
     assert!(args.contains(&WORKSPACE_ROOT_FLAG.to_string()));
     assert!(args.contains(&PERMISSION_PROFILE_FLAG.to_string()));

@@ -125,15 +125,15 @@ impl ExternalAgentSource {
     pub(super) fn recent_sessions(
         self,
         external_agent_home: &Path,
-        codex_home: &Path,
+        genex_home: &Path,
         limits: ExternalAgentSessionImportLimits,
     ) -> io::Result<Vec<ExternalAgentSessionMigration>> {
         match self {
             Self::Cla => {
-                detect_recent_cla_sessions_with_limits(external_agent_home, codex_home, limits)
+                detect_recent_cla_sessions_with_limits(external_agent_home, genex_home, limits)
             }
             Self::Cur => {
-                detect_recent_cur_sessions_with_limits(external_agent_home, codex_home, limits)
+                detect_recent_cur_sessions_with_limits(external_agent_home, genex_home, limits)
             }
         }
     }

@@ -8,13 +8,13 @@ use super::*;
 
 #[tokio::test]
 async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics() {
-    let codex_home =
+    let genex_home =
         std::env::temp_dir().join(format!("codex-state-log-db-filter-{}", Uuid::new_v4()));
-    let _cleanup = scopeguard::guard(codex_home.clone(), |codex_home| {
-        let _ = std::fs::remove_dir_all(codex_home);
+    let _cleanup = scopeguard::guard(genex_home.clone(), |genex_home| {
+        let _ = std::fs::remove_dir_all(genex_home);
     });
     let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(codex_home.as_path().abs()),
+        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
         "test-provider".to_string(),
     )
     .await

@@ -25,7 +25,7 @@ struct PackageSummary {
 
 #[tokio::test]
 async fn selected_plugin_package_is_contributed_without_servers() -> TestResult {
-    let codex_home = tempfile::tempdir()?;
+    let genex_home = tempfile::tempdir()?;
     let plugin_root = tempfile::tempdir()?;
     std::fs::create_dir_all(plugin_root.path().join(".codex-plugin"))?;
     std::fs::create_dir_all(plugin_root.path().join("skills/deploy"))?;
@@ -38,8 +38,8 @@ async fn selected_plugin_package_is_contributed_without_servers() -> TestResult 
         "---\nname: deploy\ndescription: Deploy the project.\n---\n",
     )?;
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .genex_home(genex_home.path().to_path_buf())
+        .fallback_cwd(Some(genex_home.path().to_path_buf()))
         .build()
         .await?;
 

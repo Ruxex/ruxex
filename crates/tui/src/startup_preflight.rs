@@ -18,7 +18,7 @@ pub(super) fn has_only_search_config_override(cli_kv_overrides: &[(String, toml:
 
 /// Hide the composer when the default file-backed account cannot already be authenticated.
 pub(super) fn should_delay_startup_composer_for_first_login(
-    codex_home: &Path,
+    genex_home: &Path,
     system_config_path: io::Result<AbsolutePathBuf>,
     managed_configuration: impl FnOnce() -> io::Result<bool>,
     _environment_variable: impl Fn(&str) -> Option<OsString>,
@@ -30,17 +30,17 @@ pub(super) fn should_delay_startup_composer_for_first_login(
         return false;
     }
 
-    match std::fs::metadata(codex_home) {
+    match std::fs::metadata(genex_home) {
         Ok(metadata) if !metadata.is_dir() => return false,
         Ok(_) => {
             for state_file in ["auth.json", "config.toml", "environments.toml"] {
-                if !matches!(codex_home.join(state_file).try_exists(), Ok(false)) {
+                if !matches!(genex_home.join(state_file).try_exists(), Ok(false)) {
                     return false;
                 }
             }
 
             let Ok(daemon_socket) =
-                genex_app_server_client::app_server_control_socket_path(codex_home)
+                genex_app_server_client::app_server_control_socket_path(genex_home)
             else {
                 return false;
             };
@@ -50,7 +50,7 @@ pub(super) fn should_delay_startup_composer_for_first_login(
         }
         Err(error)
             if error.kind() == io::ErrorKind::NotFound
-                && matches!(codex_home.try_exists(), Ok(false)) => {}
+                && matches!(genex_home.try_exists(), Ok(false)) => {}
         Err(_) => return false,
     }
 

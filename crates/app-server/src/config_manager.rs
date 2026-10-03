@@ -36,7 +36,7 @@ pub(crate) struct ModelProviderRequirementsChanged;
 /// Shared app-server entry point for loading effective Codex configuration.
 #[derive(Clone)]
 pub(crate) struct ConfigManager {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     cli_overrides: Arc<RwLock<Vec<(String, TomlValue)>>>,
     runtime_feature_enablement: Arc<RwLock<BTreeMap<String, bool>>>,
     loader_overrides: LoaderOverrides,
@@ -47,7 +47,7 @@ pub(crate) struct ConfigManager {
 
 impl ConfigManager {
     pub(crate) fn new(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
         loader_overrides: LoaderOverrides,
         strict_config: bool,
@@ -55,7 +55,7 @@ impl ConfigManager {
         thread_config_loader: Arc<dyn ThreadConfigLoader>,
     ) -> Self {
         Self {
-            codex_home,
+            genex_home,
             cli_overrides: Arc::new(RwLock::new(cli_overrides)),
             runtime_feature_enablement: Arc::new(RwLock::new(BTreeMap::new())),
             loader_overrides,
@@ -65,12 +65,12 @@ impl ConfigManager {
         }
     }
 
-    pub(crate) fn codex_home(&self) -> &Path {
-        self.codex_home.as_path()
+    pub(crate) fn genex_home(&self) -> &Path {
+        self.genex_home.as_path()
     }
 
     pub(crate) fn user_config_path(&self) -> std::io::Result<AbsolutePathBuf> {
-        self.loader_overrides.user_config_path(self.codex_home())
+        self.loader_overrides.user_config_path(self.genex_home())
     }
 
     pub(crate) fn current_cli_overrides(&self) -> Vec<(String, TomlValue)> {
@@ -149,7 +149,7 @@ impl ConfigManager {
         // requirements can invalidate it.
         let requirements = load_managed_requirements_state(
             LOCAL_FS.as_ref(),
-            &self.codex_home,
+            &self.genex_home,
             genex_config::ConfigLoadOptions {
                 loader_overrides: self.loader_overrides.clone(),
                 strict_config: self.strict_config,
@@ -199,10 +199,10 @@ impl ConfigManager {
         let mut loader_overrides = self.loader_overrides.clone();
         loader_overrides.ignore_user_config = true;
         let mut config = ConfigBuilder::default()
-            .codex_home(self.codex_home.clone())
+            .genex_home(self.genex_home.clone())
             .cli_overrides(self.current_cli_overrides())
             .loader_overrides(loader_overrides)
-            .fallback_cwd(Some(self.codex_home.clone()))
+            .fallback_cwd(Some(self.genex_home.clone()))
             .build()
             .await?;
         self.apply_runtime_feature_enablement(&mut config);
@@ -269,7 +269,7 @@ impl ConfigManager {
             ConfigOverrides {
                 cwd: Some(cwd.to_path_buf()),
                 default_permissions: Some(permission_profile),
-                codex_linux_sandbox_exe: self.arg0_paths.codex_linux_sandbox_exe.clone(),
+                genex_linux_sandbox_exe: self.arg0_paths.genex_linux_sandbox_exe.clone(),
                 main_execve_wrapper_exe: self.arg0_paths.main_execve_wrapper_exe.clone(),
                 ..Default::default()
             },
@@ -305,7 +305,7 @@ impl ConfigManager {
             )
             .collect::<Vec<_>>();
         let mut config = genex_core::config::ConfigBuilder::default()
-            .codex_home(self.codex_home.clone())
+            .genex_home(self.genex_home.clone())
             .cli_overrides(merged_cli_overrides)
             .loader_overrides(self.loader_overrides.clone())
             .strict_config(self.strict_config)
@@ -332,7 +332,7 @@ impl ConfigManager {
     ) -> std::io::Result<ConfigLayerStack> {
         load_config_layers_state(
             LOCAL_FS.as_ref(),
-            &self.codex_home,
+            &self.genex_home,
             cwd,
             &self.current_cli_overrides(),
             genex_config::ConfigLoadOptions {
@@ -356,19 +356,19 @@ impl ConfigManager {
     }
 
     fn apply_arg0_paths(&self, config: &mut Config) {
-        config.codex_self_exe = self.arg0_paths.codex_self_exe.clone();
-        config.codex_linux_sandbox_exe = self.arg0_paths.codex_linux_sandbox_exe.clone();
+        config.genex_self_exe = self.arg0_paths.genex_self_exe.clone();
+        config.genex_linux_sandbox_exe = self.arg0_paths.genex_linux_sandbox_exe.clone();
         config.main_execve_wrapper_exe = self.arg0_paths.main_execve_wrapper_exe.clone();
     }
 
     #[cfg(test)]
     pub(crate) fn new_for_tests(
-        codex_home: PathBuf,
+        genex_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
         loader_overrides: LoaderOverrides,
     ) -> Self {
         Self::new(
-            codex_home,
+            genex_home,
             cli_overrides,
             loader_overrides,
             /*strict_config*/ false,
@@ -378,9 +378,9 @@ impl ConfigManager {
     }
 
     #[cfg(test)]
-    pub(crate) fn without_managed_config_for_tests(codex_home: PathBuf) -> Self {
+    pub(crate) fn without_managed_config_for_tests(genex_home: PathBuf) -> Self {
         Self::new_for_tests(
-            codex_home,
+            genex_home,
             Vec::new(),
             LoaderOverrides::without_managed_config_for_tests(),
         )

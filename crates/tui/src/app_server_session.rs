@@ -525,11 +525,11 @@ impl AppServerSession {
         Arc::clone(&self.task_search_generation)
     }
 
-    pub(crate) fn codex_home_path(
+    pub(crate) fn genex_home_path(
         &self,
-        local_codex_home: &AbsolutePathBuf,
+        local_genex_home: &AbsolutePathBuf,
     ) -> Option<AppServerPath> {
-        self.client.codex_home(local_codex_home)
+        self.client.genex_home(local_genex_home)
     }
 
     pub(crate) fn server_version(&self) -> Option<&str> {
@@ -539,11 +539,11 @@ impl AppServerSession {
         client.server_version()
     }
 
-    pub(crate) fn server_codex_home(&self) -> Option<&str> {
+    pub(crate) fn server_genex_home(&self) -> Option<&str> {
         let AppServerClient::Remote(client) = &self.client else {
             return None;
         };
-        client.codex_home()
+        client.genex_home()
     }
 
     pub(crate) async fn bootstrap(&mut self, config: &Config) -> Result<AppServerBootstrap> {
@@ -2306,7 +2306,7 @@ async fn thread_session_state_from_thread_response(
         .transpose()
         .map_err(|err| format!("forked_from_id is invalid: {err}"))?;
     let history_config = genex_message_history::HistoryConfig::new(
-        local_settings.codex_home.clone(),
+        local_settings.genex_home.clone(),
         &local_settings.history,
     );
     let (log_id, entry_count) = genex_message_history::history_metadata(&history_config).await;

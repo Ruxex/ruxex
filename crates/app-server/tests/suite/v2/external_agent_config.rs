@@ -61,8 +61,8 @@ use super::analytics::wait_for_analytics_event;
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
 const SECONDARY_MIGRATION_SOURCE: &str = concat!("cur", "sor");
 
-fn external_agent_home(codex_home: &Path) -> PathBuf {
-    codex_home.join(concat!(".", "cla", "ude"))
+fn external_agent_home(genex_home: &Path) -> PathBuf {
+    genex_home.join(concat!(".", "cla", "ude"))
 }
 
 fn connector_metadata_root(home: &Path) -> PathBuf {
@@ -80,8 +80,8 @@ fn connector_metadata_root(home: &Path) -> PathBuf {
     }
 }
 
-fn secondary_external_agent_home(codex_home: &Path) -> PathBuf {
-    codex_home.join(concat!(".", "cur", "sor"))
+fn secondary_external_agent_home(genex_home: &Path) -> PathBuf {
+    genex_home.join(concat!(".", "cur", "sor"))
 }
 
 fn assert_import_response(response: ExternalAgentConfigImportResponse) -> String {
@@ -92,13 +92,13 @@ fn assert_import_response(response: ExternalAgentConfigImportResponse) -> String
 #[tokio::test]
 async fn external_agent_config_detect_accepts_migration_source_and_defaults_unknown_values()
 -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let source_home = external_agent_home(codex_home.path());
+    let genex_home = TempDir::new()?;
+    let source_home = external_agent_home(genex_home.path());
     std::fs::create_dir_all(&source_home)?;
     std::fs::write(source_home.join("CLAUDE.md"), "project instructions")?;
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -146,11 +146,11 @@ async fn external_agent_config_detect_accepts_migration_source_and_defaults_unkn
 #[cfg(unix)]
 #[tokio::test]
 async fn external_agent_config_import_skips_repository_redirect_after_detection() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repository = TempDir::new()?;
     let repo_root = repository.path();
-    let repo_config_dir = repo_root.join(".codex");
-    let global_config = codex_home.path().join("config.toml");
+    let repo_config_dir = repo_root.join(".genex");
+    let global_config = genex_home.path().join("config.toml");
     std::fs::create_dir(repo_root.join(".git"))?;
     std::fs::create_dir(&repo_config_dir)?;
     std::fs::write(
@@ -159,9 +159,9 @@ async fn external_agent_config_import_skips_repository_redirect_after_detection(
     )?;
     std::fs::write(&global_config, "model = \"gpt-5.4\"\n")?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -186,7 +186,7 @@ async fn external_agent_config_import_skips_repository_redirect_after_detection(
     );
 
     std::fs::remove_dir(&repo_config_dir)?;
-    std::os::unix::fs::symlink(codex_home.path(), &repo_config_dir)?;
+    std::os::unix::fs::symlink(genex_home.path(), &repo_config_dir)?;
 
     let import_request_id = mcp
         .send_raw_request(
@@ -227,9 +227,9 @@ async fn external_agent_config_import_skips_repository_redirect_after_detection(
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn external_agent_config_detect_does_not_block_configuration_reads() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let project_root = codex_home.path().join("repo");
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let genex_home = TempDir::new()?;
+    let project_root = genex_home.path().join("repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
     std::fs::create_dir_all(&project_root)?;
     std::fs::create_dir_all(&session_dir)?;
@@ -238,9 +238,9 @@ async fn external_agent_config_detect_does_not_block_configuration_reads() -> Re
         .status()?;
     assert!(status.success());
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -326,7 +326,7 @@ async fn external_agent_config_detect_does_not_block_configuration_reads() -> Re
         ExternalAgentConfigMigrationItemType::Sessions
     );
     assert!(
-        std::fs::read_to_string(codex_home.path().join("config.toml"))?
+        std::fs::read_to_string(genex_home.path().join("config.toml"))?
             .contains("model = \"gpt-concurrent\"")
     );
 
@@ -335,16 +335,16 @@ async fn external_agent_config_detect_does_not_block_configuration_reads() -> Re
 
 #[tokio::test]
 async fn external_agent_config_migration_source_drives_detect_and_import() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let source_home = secondary_external_agent_home(codex_home.path());
+    let genex_home = TempDir::new()?;
+    let source_home = secondary_external_agent_home(genex_home.path());
     std::fs::create_dir_all(&source_home)?;
     std::fs::write(
         source_home.join("cli-config.json"),
         r#"{"env":{"SOURCE":"secondary"}}"#,
     )?;
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -389,7 +389,7 @@ async fn external_agent_config_migration_source_drives_detect_and_import() -> Re
     assert_eq!(completed.item_type_results[0].successes.len(), 1);
     assert_eq!(completed.item_type_results[0].failures, Vec::new());
     assert!(
-        std::fs::read_to_string(codex_home.path().join("config.toml"))?
+        std::fs::read_to_string(genex_home.path().join("config.toml"))?
             .contains("SOURCE = \"secondary\"")
     );
 
@@ -398,13 +398,13 @@ async fn external_agent_config_migration_source_drives_detect_and_import() -> Re
 
 #[tokio::test]
 async fn external_agent_config_import_source_remains_attribution_only() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let source_home = external_agent_home(codex_home.path());
+    let genex_home = TempDir::new()?;
+    let source_home = external_agent_home(genex_home.path());
     std::fs::create_dir_all(&source_home)?;
     std::fs::write(source_home.join("CLAUDE.md"), "Claude guidance")?;
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -446,7 +446,7 @@ async fn external_agent_config_import_source_remains_attribution_only() -> Resul
     assert_eq!(completed.item_type_results[0].successes.len(), 1);
     assert_eq!(completed.item_type_results[0].failures, Vec::new());
     assert_eq!(
-        std::fs::read_to_string(codex_home.path().join("AGENTS.md"))?,
+        std::fs::read_to_string(genex_home.path().join("AGENTS.md"))?,
         "Codex guidance"
     );
 
@@ -456,9 +456,9 @@ async fn external_agent_config_import_source_remains_attribution_only() -> Resul
 #[tokio::test]
 async fn external_agent_config_secondary_source_imports_session_and_plugin_end_to_end() -> Result<()>
 {
-    let codex_home = TempDir::new()?;
-    let source_home = secondary_external_agent_home(codex_home.path());
-    let project_root = codex_home.path().join("my-project");
+    let genex_home = TempDir::new()?;
+    let source_home = secondary_external_agent_home(genex_home.path());
+    let project_root = genex_home.path().join("my-project");
     std::fs::create_dir_all(&project_root)?;
 
     let encoded_project = project_root
@@ -496,7 +496,7 @@ async fn external_agent_config_secondary_source_imports_session_and_plugin_end_t
 
     let marketplace_root = source_home.join("plugins/marketplaces/debug");
     let plugin_root = marketplace_root.join("plugins/sample");
-    let configured_marketplace_root = codex_home.path().join("configured-marketplace");
+    let configured_marketplace_root = genex_home.path().join("configured-marketplace");
     let configured_marketplace_manifest =
         configured_marketplace_root.join(".agents/plugins/marketplace.json");
     let configured_plugin_root = configured_marketplace_root.join("plugins/sample");
@@ -535,7 +535,7 @@ async fn external_agent_config_secondary_source_imports_session_and_plugin_end_t
         r#"{"name":"sample","version":"0.1.0"}"#,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"[marketplaces.debug]
 source_type = "local"
@@ -545,9 +545,9 @@ source = {:?}
         ),
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -692,16 +692,16 @@ source = {:?}
 #[tokio::test]
 async fn external_agent_config_import_sends_completion_notification_for_sync_only_import()
 -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let sqlite_home = TempDir::new()?;
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let sqlite_home_dir = sqlite_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[
             ("HOME", Some(home_dir.as_str())),
-            ("CODEX_SQLITE_HOME", Some(sqlite_home_dir.as_str())),
+            ("GENEX_SQLITE_HOME", Some(sqlite_home_dir.as_str())),
         ])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -797,16 +797,16 @@ async fn external_agent_config_import_sends_completion_notification_for_sync_onl
 
 #[tokio::test]
 async fn external_agent_config_records_externally_completed_import_history() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let sqlite_home = TempDir::new()?;
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let sqlite_home_dir = sqlite_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[
             ("HOME", Some(home_dir.as_str())),
-            ("CODEX_SQLITE_HOME", Some(sqlite_home_dir.as_str())),
+            ("GENEX_SQLITE_HOME", Some(sqlite_home_dir.as_str())),
         ])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -865,19 +865,19 @@ async fn external_agent_config_records_externally_completed_import_history() -> 
 
 #[tokio::test]
 async fn external_agent_config_detects_non_memory_items_when_config_reload_fails() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let source_home = external_agent_home(codex_home.path());
+    let genex_home = TempDir::new()?;
+    let source_home = external_agent_home(genex_home.path());
     std::fs::create_dir_all(&source_home)?;
     std::fs::write(source_home.join("CLAUDE.md"), "project instructions")?;
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "this is not valid = [toml",
     )?;
 
@@ -903,27 +903,27 @@ async fn external_agent_config_detects_non_memory_items_when_config_reload_fails
 
 #[tokio::test]
 async fn external_agent_config_import_reports_failed_sync_import_in_completion() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
-    let source_home = external_agent_home(codex_home.path());
+    let source_home = external_agent_home(genex_home.path());
     std::fs::create_dir_all(&source_home)?;
     std::fs::write(
         source_home.join("settings.json"),
         r#"{"env":{"FOO":"bar"}}"#,
     )?;
-    std::fs::write(codex_home.path().join("config.toml"), "invalid = [")?;
-    let home_dir = codex_home.path().display().to_string();
-    let analytics_capture_file = codex_home.path().join("analytics-events.jsonl");
+    std::fs::write(genex_home.path().join("config.toml"), "invalid = [")?;
+    let home_dir = genex_home.path().display().to_string();
+    let analytics_capture_file = genex_home.path().join("analytics-events.jsonl");
     let analytics_capture_file = analytics_capture_file.display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[
             ("HOME", Some(home_dir.as_str())),
@@ -1049,10 +1049,10 @@ async fn external_agent_config_import_reports_failed_sync_import_in_completion()
 #[tokio::test]
 async fn external_agent_config_import_completed_tracks_analytics_event() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
-    let codex_home = TempDir::new()?;
-    write_analytics_config(codex_home.path(), &analytics_server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_analytics_config(genex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1061,11 +1061,11 @@ async fn external_agent_config_import_completed_tracks_analytics_event() -> Resu
     )?;
 
     let missing_session_path =
-        external_agent_home(codex_home.path()).join("projects/repo/missing.jsonl");
-    let project_root = codex_home.path().join("repo");
-    let home_dir = codex_home.path().display().to_string();
+        external_agent_home(genex_home.path()).join("projects/repo/missing.jsonl");
+    let project_root = genex_home.path().join("repo");
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -1151,10 +1151,10 @@ async fn external_agent_config_import_completed_tracks_analytics_event() -> Resu
 #[tokio::test]
 async fn external_agent_config_import_reports_session_config_error_subtype() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
-    let codex_home = TempDir::new()?;
-    write_analytics_config(codex_home.path(), &analytics_server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_analytics_config(genex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1162,8 +1162,8 @@ async fn external_agent_config_import_reports_session_config_error_subtype() -> 
         AuthCredentialsStoreMode::File,
     )?;
 
-    let project_root = codex_home.path().join("repo");
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let project_root = genex_home.path().join("repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
     let recent_timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
     std::fs::create_dir_all(&project_root)?;
@@ -1179,15 +1179,15 @@ async fn external_agent_config_import_reports_session_config_error_subtype() -> 
         .to_string(),
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "managed_auth_base_url = [",
     )?;
 
@@ -1255,18 +1255,18 @@ async fn external_agent_config_import_reports_session_config_error_subtype() -> 
 
 #[tokio::test]
 async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let analytics_server = start_analytics_events_server().await?;
-    write_analytics_config(codex_home.path(), &analytics_server.uri())?;
+    write_analytics_config(genex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
-    let marketplace_root = codex_home.path().join("marketplace");
+    let marketplace_root = genex_home.path().join("marketplace");
     let plugin_root = marketplace_root.join("plugins").join("sample");
     std::fs::create_dir_all(marketplace_root.join(".agents/plugins"))?;
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
@@ -1289,7 +1289,7 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
         plugin_root.join(".codex-plugin/plugin.json"),
         r#"{"name":"sample","version":"0.1.0"}"#,
     )?;
-    let source_home = external_agent_home(codex_home.path());
+    let source_home = external_agent_home(genex_home.path());
     std::fs::create_dir_all(source_home.join("plugins"))?;
     let settings = serde_json::json!({
         "enabledPlugins": {
@@ -1323,9 +1323,9 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
         }))?,
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -1449,8 +1449,8 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
 #[tokio::test]
 async fn external_agent_config_import_sends_completion_notification_after_pending_plugins_finish()
 -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let source_home = external_agent_home(codex_home.path());
+    let genex_home = TempDir::new()?;
+    let source_home = external_agent_home(genex_home.path());
     std::fs::create_dir_all(&source_home)?;
     // This test only needs a pending non-local plugin import. Use an invalid
     // source so the background completion path cannot make a real network clone.
@@ -1468,9 +1468,9 @@ async fn external_agent_config_import_sends_completion_notification_after_pendin
 }"#,
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -1511,18 +1511,18 @@ async fn external_agent_config_import_sends_completion_notification_after_pendin
 #[tokio::test]
 async fn external_agent_config_import_creates_session_rollouts() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("follow-up answer").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let project_root = codex_home.path().join("repo");
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let project_root = genex_home.path().join("repo");
     let source_created_at_text = "2024-01-02T03:04:05Z";
     let source_updated_at_text = "2024-03-01T04:05:06Z";
     let source_created_at =
         chrono::DateTime::parse_from_rfc3339(source_created_at_text)?.timestamp();
     let source_updated_at =
         chrono::DateTime::parse_from_rfc3339(source_updated_at_text)?.timestamp();
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
-    let manifest_dir = connector_metadata_root(codex_home.path())
+    let manifest_dir = connector_metadata_root(genex_home.path())
         .join("claude-code-sessions/account/organization");
     let control_request = "<ide_selection>src/auth.rs:1-5</ide_selection>";
     let first_request = "Fix auth flow";
@@ -1569,9 +1569,9 @@ async fn external_agent_config_import_creates_session_rollouts() -> Result<()> {
         .join("\n"),
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -1787,9 +1787,9 @@ async fn external_agent_config_import_creates_session_rollouts() -> Result<()> {
 #[tokio::test]
 async fn external_agent_config_import_does_not_initialize_required_mcp() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("unused").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let mut config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let mut config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     config.push_str(
         r#"
 [mcp_servers.required_broken]
@@ -1797,10 +1797,10 @@ command = "this-command-does-not-exist"
 required = true
 "#,
     );
-    std::fs::write(codex_home.path().join("config.toml"), config)?;
-    let project_root = codex_home.path().join("repo");
+    std::fs::write(genex_home.path().join("config.toml"), config)?;
+    let project_root = genex_home.path().join("repo");
     let recent_timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
     std::fs::create_dir_all(&project_root)?;
     std::fs::create_dir_all(&session_dir)?;
@@ -1815,9 +1815,9 @@ required = true
         .to_string(),
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -1880,11 +1880,11 @@ required = true
 async fn external_agent_config_import_accepts_detected_session_payload_after_restart() -> Result<()>
 {
     let server = create_mock_responses_server_repeating_assistant("unused").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let project_root = codex_home.path().join("repo");
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let project_root = genex_home.path().join("repo");
     let recent_timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
     std::fs::create_dir_all(&project_root)?;
     std::fs::create_dir_all(&session_dir)?;
@@ -1899,9 +1899,9 @@ async fn external_agent_config_import_accepts_detected_session_payload_after_res
         .to_string(),
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -1965,11 +1965,11 @@ async fn external_agent_config_import_accepts_detected_session_payload_after_res
 #[tokio::test]
 async fn external_agent_config_import_skips_already_imported_session_versions() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("unused").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let project_root = codex_home.path().join("repo");
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let project_root = genex_home.path().join("repo");
     let recent_timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
     std::fs::create_dir_all(&project_root)?;
     std::fs::create_dir_all(&session_dir)?;
@@ -1984,9 +1984,9 @@ async fn external_agent_config_import_skips_already_imported_session_versions() 
         .to_string(),
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -2050,11 +2050,11 @@ async fn external_agent_config_import_skips_already_imported_session_versions() 
 async fn external_agent_config_import_returns_before_background_session_import_finishes()
 -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("unused").await;
-    let codex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(codex_home.path())?;
-    let project_root = codex_home.path().join("repo");
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let project_root = genex_home.path().join("repo");
     let recent_timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
     std::fs::create_dir_all(&project_root)?;
     std::fs::create_dir_all(&session_dir)?;
@@ -2067,9 +2067,9 @@ async fn external_agent_config_import_returns_before_background_session_import_f
     .to_string();
     std::fs::write(&session_path, &session_contents)?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -2192,17 +2192,17 @@ async fn external_agent_config_import_compacts_huge_session_before_first_follow_
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(
             "compact_prompt = \"Summarize the conversation.\"\nmodel_auto_compact_token_limit = 200",
         )
         .with_provider_config("supports_websockets = false")
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
 
-    let project_root = codex_home.path().join("repo");
+    let project_root = genex_home.path().join("repo");
     let recent_timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
-    let session_dir = external_agent_home(codex_home.path()).join("projects/repo");
+    let session_dir = external_agent_home(genex_home.path()).join("projects/repo");
     let session_path = session_dir.join("session.jsonl");
     std::fs::create_dir_all(&project_root)?;
     std::fs::create_dir_all(&session_dir)?;
@@ -2229,9 +2229,9 @@ async fn external_agent_config_import_compacts_huge_session_before_first_follow_
         .join("\n"),
     )?;
 
-    let home_dir = codex_home.path().display().to_string();
+    let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("HOME", Some(home_dir.as_str()))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -2329,9 +2329,9 @@ async fn external_agent_config_import_compacts_huge_session_before_first_follow_
     Ok(())
 }
 
-fn write_analytics_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
+fn write_analytics_config(genex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!("managed_auth_base_url = \"{base_url}\"\n"),
     )
 }

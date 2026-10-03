@@ -113,7 +113,7 @@ async fn resolve(
         }
     }
     if let Some(path) = find_thread_path_by_id_str(
-        store.config.codex_home.as_path(),
+        store.config.genex_home.as_path(),
         &thread_id.to_string(),
         state_db_ctx.as_deref(),
     )
@@ -128,7 +128,7 @@ async fn resolve(
         return Ok(None);
     }
     let path = find_archived_thread_path_by_id_str(
-        store.config.codex_home.as_path(),
+        store.config.genex_home.as_path(),
         &thread_id.to_string(),
         state_db_ctx.as_deref(),
     )
@@ -156,7 +156,7 @@ async fn resolve_path_in_scope(
 }
 
 fn location_for_path(store: &LocalThreadStore, path: &std::path::Path) -> RolloutLocation {
-    if rollout_path_is_archived(store.config.codex_home.as_path(), path) {
+    if rollout_path_is_archived(store.config.genex_home.as_path(), path) {
         RolloutLocation::Archived
     } else {
         RolloutLocation::Unarchived

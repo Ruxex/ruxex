@@ -45,11 +45,11 @@ async fn provider_model_header_mismatch_emits_model_rerouted_notification_v2() -
     let response = responses::sse_response(body).insert_header("provider-Model", SERVER_MODEL);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -103,11 +103,11 @@ async fn cyber_policy_response_emits_typed_error_notification_v2() -> Result<()>
     }));
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -172,11 +172,11 @@ async fn response_model_field_mismatch_emits_model_rerouted_notification_v2_when
     let response = responses::sse_response(body).insert_header("provider-Model", REQUESTED_MODEL);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -232,11 +232,11 @@ async fn model_verification_emits_typed_notification_and_warning_v2() -> Result<
     let response = responses::sse_response(body);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    create_config_toml(genex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -415,9 +415,9 @@ fn is_warning_user_message_item(item: &ThreadItem) -> bool {
     warning_text_from_item(item).is_some()
 }
 
-fn create_config_toml(codex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
+fn create_config_toml(genex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
     MockResponsesConfig::new(server_uri)
         .with_model(REQUESTED_MODEL)
         .disable_feature(Feature::RemoteModels)
-        .write(codex_home)
+        .write(genex_home)
 }

@@ -575,10 +575,10 @@ impl Session {
                 .config_layer_stack
                 .ignore_user_and_project_exec_policy_rules()
             {
-                let codex_home = config.codex_home.clone();
-                let policy_path = default_policy_path(codex_home.as_path());
+                let genex_home = config.genex_home.clone();
+                let policy_path = default_policy_path(genex_home.as_path());
                 if let Err(err) = prefix_rule_migration(
-                    codex_home.as_path(),
+                    genex_home.as_path(),
                     policy_path.as_path(),
                     BANNED_PREFIX_SUGGESTIONS,
                 )
@@ -770,7 +770,7 @@ impl Session {
             use_legacy_landlock: config.features.use_legacy_landlock(),
             legacy_fallback_cwd: config.cwd.clone(),
             runtime_workspace_roots: config.workspace_roots.clone(),
-            codex_home: config.codex_home.clone(),
+            genex_home: config.genex_home.clone(),
             thread_name: None,
             disabled_plugin_ids,
             original_config_do_not_use: Arc::clone(&config),
@@ -836,7 +836,7 @@ impl Session {
             error!("Failed to create session: {e:#}");
             match e.downcast::<GenexErr>() {
                 Ok(error) => error,
-                Err(error) => map_session_init_error(&error, &config.codex_home),
+                Err(error) => map_session_init_error(&error, &config.genex_home),
             }
         })?;
         if let Some(message) = initial_service_tier_warning {
@@ -1261,9 +1261,9 @@ impl Session {
     }
 
     #[cfg(test)]
-    pub(crate) async fn codex_home(&self) -> AbsolutePathBuf {
+    pub(crate) async fn genex_home(&self) -> AbsolutePathBuf {
         let state = self.state.lock().await;
-        state.session_configuration.codex_home().clone()
+        state.session_configuration.genex_home().clone()
     }
 
     pub(crate) fn subscribe_elicitation_pause_state(&self) -> watch::Receiver<bool> {
@@ -2076,7 +2076,7 @@ impl Session {
                 vec![
                     state
                         .session_configuration
-                        .codex_home
+                        .genex_home
                         .join(CONFIG_TOML_FILE),
                 ]
             } else {
@@ -2461,17 +2461,17 @@ impl Session {
         &self,
         amendment: &ExecPolicyAmendment,
     ) -> Result<(), ExecPolicyUpdateError> {
-        let codex_home = self
+        let genex_home = self
             .state
             .lock()
             .await
             .session_configuration
-            .codex_home()
+            .genex_home()
             .clone();
 
         self.services
             .exec_policy
-            .append_amendment_and_update(&codex_home, amendment)
+            .append_amendment_and_update(&genex_home, amendment)
             .await?;
 
         Ok(())
@@ -2510,12 +2510,12 @@ impl Session {
             .map_err(|_| anyhow::anyhow!("managed network proxy refresh semaphore closed"))?;
         let host =
             Self::validated_network_policy_amendment_host(amendment, network_approval_context)?;
-        let codex_home = self
+        let genex_home = self
             .state
             .lock()
             .await
             .session_configuration
-            .codex_home()
+            .genex_home()
             .clone();
         let execpolicy_amendment =
             execpolicy_network_rule_amendment(amendment, network_approval_context, &host);
@@ -2543,7 +2543,7 @@ impl Session {
         self.services
             .exec_policy
             .append_network_rule_and_update(
-                &codex_home,
+                &genex_home,
                 &host,
                 execpolicy_amendment.protocol,
                 execpolicy_amendment.decision,

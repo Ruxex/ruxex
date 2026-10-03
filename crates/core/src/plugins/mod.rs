@@ -30,11 +30,11 @@ pub fn plugins_manager_for_config(
     auth_manager: Arc<AuthManager>,
 ) -> PluginsManager {
     let skill_root_loader = Arc::new(HostSkillsService::new(
-        config.codex_home.clone(),
+        config.genex_home.clone(),
         /*bundled_skills_enabled*/ false,
     ));
     PluginsManager::new(
-        config.codex_home.to_path_buf(),
+        config.genex_home.to_path_buf(),
         auth_manager,
         skill_root_loader,
     )

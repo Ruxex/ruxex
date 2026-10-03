@@ -67,7 +67,7 @@ use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
 use genex_core::config::ConfigTomlLoadResult;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_core::config::load_config_toml_with_layer_stack;
 use genex_core::config::resolve_profile_v2_config_path;
 use genex_core::format_exec_policy_error_with_source;
@@ -331,16 +331,16 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
 
     // we load config.toml here to determine project state.
     #[allow(clippy::print_stderr)]
-    let codex_home = match find_codex_home() {
-        Ok(codex_home) => codex_home,
+    let genex_home = match find_genex_home() {
+        Ok(genex_home) => genex_home,
         Err(err) => {
-            eprintln!("Error finding codex home: {err}");
+            eprintln!("Error finding genex home: {err}");
             std::process::exit(1);
         }
     };
     let user_config_path = config_profile_v2
         .as_ref()
-        .map(|profile_v2| resolve_profile_v2_config_path(&codex_home, profile_v2));
+        .map(|profile_v2| resolve_profile_v2_config_path(&genex_home, profile_v2));
     let loader_overrides = LoaderOverrides {
         user_config_path,
         user_config_profile: config_profile_v2,
@@ -350,7 +350,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
     };
 
     if worktree
-        && EnvironmentManager::prepare_from_codex_home(&codex_home)
+        && EnvironmentManager::prepare_from_genex_home(&genex_home)
             .await?
             .default_environment_is_remote()
     {
@@ -359,7 +359,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
 
     let managed_worktree = if worktree {
         let _gate_bootstrap = load_bootstrap_config_or_exit(
-            &codex_home,
+            &genex_home,
             /*cwd*/ None,
             cli_kv_overrides.clone(),
             loader_overrides.clone(),
@@ -367,7 +367,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         )
         .await;
         let gate_config = ConfigBuilder::default()
-            .codex_home(codex_home.to_path_buf())
+            .genex_home(genex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
@@ -397,7 +397,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
             }
         }
         let source_config = ConfigBuilder::default()
-            .codex_home(codex_home.to_path_buf())
+            .genex_home(genex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
@@ -417,7 +417,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         }
         // Allocation belongs to the host, not this session's project, profile, or overrides.
         let host_config = load_bootstrap_config_or_exit(
-            &codex_home,
+            &genex_home,
             /*cwd*/ None,
             Vec::new(),
             LoaderOverrides::default(),
@@ -425,7 +425,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         )
         .await;
         let settings =
-            WorktreeSettings::for_cli(&codex_home, host_config.config_toml.desktop.as_ref())?;
+            WorktreeSettings::for_cli(&genex_home, host_config.config_toml.desktop.as_ref())?;
         let manager = WorktreeManager::new(settings);
         let checkout = manager.create(&CreateWorktree {
             source_cwd: config_cwd.as_path().to_path_buf(),
@@ -443,7 +443,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
     if let Some(worktree) = managed_worktree.as_ref() {
         // Destination auth can fetch source policy that the host bootstrap could not.
         let source_config = ConfigBuilder::default()
-            .codex_home(codex_home.to_path_buf())
+            .genex_home(genex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
@@ -477,8 +477,8 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         workspace_roots: None,
         model_provider: None,
         service_tier: None,
-        codex_self_exe: arg0_paths.codex_self_exe.clone(),
-        codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
+        genex_self_exe: arg0_paths.genex_self_exe.clone(),
+        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
         default_zsh_path: None,
         base_instructions: None,
@@ -493,7 +493,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
 
     let build_config = |overrides| {
         ConfigBuilder::default()
-            .codex_home(codex_home.to_path_buf())
+            .genex_home(genex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .harness_overrides(overrides)
             .loader_overrides(loader_overrides.clone())
@@ -567,20 +567,20 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         })
         .collect();
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        arg0_paths.codex_self_exe.clone(),
-        arg0_paths.codex_linux_sandbox_exe.clone(),
+        arg0_paths.genex_self_exe.clone(),
+        arg0_paths.genex_linux_sandbox_exe.clone(),
     )?;
     #[cfg(target_os = "macos")]
-    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_codex_home(
-        genex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
+        genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
     );
     let state_db = genex_core::init_state_db(&config).await;
     let environment_manager = if run_loader_overrides.ignore_user_config {
         EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory())
             .await?
     } else {
-        EnvironmentManager::from_codex_home(
-            config.codex_home.clone(),
+        EnvironmentManager::from_genex_home(
+            config.genex_home.clone(),
             Some(local_runtime_paths),
             config.http_client_factory(),
         )
@@ -627,14 +627,14 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
 
 #[allow(clippy::print_stderr)]
 async fn load_bootstrap_config_or_exit(
-    codex_home: &Path,
+    genex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_kv_overrides: Vec<(String, genex_config::TomlValue)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
 ) -> ConfigTomlLoadResult {
     match load_config_toml_with_layer_stack(
-        codex_home,
+        genex_home,
         cwd,
         cli_kv_overrides,
         ConfigLoadOptions {
@@ -1651,7 +1651,7 @@ async fn resolve_resume_thread_id(
             return Ok(Some(thread.id.to_string()));
         }
         if let Some((_, session_meta)) =
-            find_thread_meta_by_name_str(&config.codex_home, session_id, Some(state_db.as_ref()))
+            find_thread_meta_by_name_str(&config.genex_home, session_id, Some(state_db.as_ref()))
                 .await?
             && (args.all || cwds_match(config.cwd.as_path(), &session_meta.meta.cwd))
         {

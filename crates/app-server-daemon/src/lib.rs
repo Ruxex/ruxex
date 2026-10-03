@@ -24,7 +24,7 @@ use anyhow::anyhow;
 pub use backend::BackendKind;
 use backend::BackendPaths;
 use genex_app_server_transport::app_server_control_socket_path;
-use genex_utils_home_dir::find_codex_home;
+use genex_utils_home_dir::find_genex_home;
 use managed_install::managed_genex_bin;
 #[cfg(any(unix, windows))]
 use managed_install::managed_genex_version;
@@ -214,15 +214,15 @@ struct Daemon {
 
 impl Daemon {
     fn from_environment() -> Result<Self> {
-        let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
-        let socket_path = app_server_control_socket_path(codex_home.as_path())?
+        let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
+        let socket_path = app_server_control_socket_path(genex_home.as_path())?
             .as_path()
             .to_path_buf();
-        let state_dir = codex_home.as_path().join(STATE_DIR_NAME);
-        let managed_genex_bin = managed_genex_bin(codex_home.as_path());
+        let state_dir = genex_home.as_path().join(STATE_DIR_NAME);
+        let managed_genex_bin = managed_genex_bin(genex_home.as_path());
         // Old CLIs must not mistake a daemon-owned installation for their backend.
         let (pid_file, update_pid_file) =
-            if managed_genex_bin.starts_with(codex_home.as_path().join("packages/standalone")) {
+            if managed_genex_bin.starts_with(genex_home.as_path().join("packages/standalone")) {
                 (LEGACY_PID_FILE_NAME, LEGACY_UPDATE_PID_FILE_NAME)
             } else {
                 (DAEMON_PID_FILE_NAME, DAEMON_UPDATE_PID_FILE_NAME)
@@ -242,7 +242,7 @@ impl Daemon {
             self.settings_file
                 .parent()
                 .and_then(Path::parent)
-                .context("daemon settings path has no Codex home")?,
+                .context("daemon settings path has no Genex home")?,
         ))
     }
 
@@ -254,7 +254,7 @@ impl Daemon {
             .settings_file
             .parent()
             .and_then(Path::parent)
-            .context("daemon settings path has no Codex home")?;
+            .context("daemon settings path has no Genex home")?;
         let (pid, updater) = if managed_genex_bin.starts_with(home.join("packages/standalone")) {
             (LEGACY_PID_FILE_NAME, LEGACY_UPDATE_PID_FILE_NAME)
         } else {
@@ -665,13 +665,13 @@ impl Daemon {
     }
 
     fn is_stable_standalone_release(&self) -> Result<bool> {
-        let codex_home = self
+        let genex_home = self
             .settings_file
             .parent()
             .and_then(Path::parent)
-            .context("daemon settings path has no Codex home")?;
+            .context("daemon settings path has no Genex home")?;
         Ok(managed_install::is_stable_standalone_release(
-            codex_home,
+            genex_home,
             &self.current_managed_genex_bin()?,
         ))
     }
@@ -682,7 +682,7 @@ impl Daemon {
             .settings_file
             .parent()
             .and_then(Path::parent)
-            .context("daemon settings path has no Codex home")?;
+            .context("daemon settings path has no Genex home")?;
         Ok(managed_install::managed_genex_bin(home))
     }
 

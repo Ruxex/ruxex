@@ -22,12 +22,12 @@ use super::connection_handling_websocket::create_config_toml;
 
 #[tokio::test]
 async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let (_server, mut mcp) = initialized_mcp(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    let (_server, mut mcp) = initialized_mcp(genex_home.path()).await?;
 
     let process_handle = "one-shot-1".to_string();
-    let probe_file = codex_home.path().join("process-created");
-    let release_file = codex_home.path().join("process-release");
+    let probe_file = genex_home.path().join("process-created");
+    let release_file = genex_home.path().join("process-release");
     // Use a probe/release handshake instead of asserting on wall-clock timing:
     // the child proves it started by writing the probe file, then waits for the
     // test to create the release file before it can emit output and exit.
@@ -75,7 +75,7 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
             env: Some(env),
             output_bytes_cap: Some(None),
             timeout_ms: Some(None),
-            ..process_spawn_params(process_handle.clone(), codex_home.path(), command)?
+            ..process_spawn_params(process_handle.clone(), genex_home.path(), command)?
         })
         .await?;
 
@@ -105,11 +105,11 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
 
 #[tokio::test]
 async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
+    create_config_toml(genex_home.path(), &server.uri(), "never")?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[(CODEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build()
@@ -119,7 +119,7 @@ async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Res
     let process_request_id = mcp
         .send_process_spawn_request(process_spawn_params(
             "disabled-process".to_string(),
-            codex_home.path(),
+            genex_home.path(),
             vec!["sh".to_string(), "-lc".to_string(), "true".to_string()],
         )?)
         .await?;
@@ -133,8 +133,8 @@ async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Res
 
 #[tokio::test]
 async fn process_spawn_reports_buffered_output_cap_reached() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let (_server, mut mcp) = initialized_mcp(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    let (_server, mut mcp) = initialized_mcp(genex_home.path()).await?;
 
     let process_handle = "capped-one-shot-1".to_string();
     let command = if cfg!(windows) {
@@ -155,7 +155,7 @@ async fn process_spawn_reports_buffered_output_cap_reached() -> Result<()> {
     let spawn_request_id = mcp
         .send_process_spawn_request(ProcessSpawnParams {
             output_bytes_cap: Some(Some(3)),
-            ..process_spawn_params(process_handle.clone(), codex_home.path(), command)?
+            ..process_spawn_params(process_handle.clone(), genex_home.path(), command)?
         })
         .await?;
 
@@ -182,8 +182,8 @@ async fn process_spawn_reports_buffered_output_cap_reached() -> Result<()> {
 
 #[tokio::test]
 async fn process_kill_terminates_running_process() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let (_server, mut mcp) = initialized_mcp(codex_home.path()).await?;
+    let genex_home = TempDir::new()?;
+    let (_server, mut mcp) = initialized_mcp(genex_home.path()).await?;
 
     let process_handle = "sleep-process-1".to_string();
     let command = if cfg!(windows) {
@@ -200,7 +200,7 @@ async fn process_kill_terminates_running_process() -> Result<()> {
     let spawn_request_id = mcp
         .send_process_spawn_request(process_spawn_params(
             process_handle.clone(),
-            codex_home.path(),
+            genex_home.path(),
             command,
         )?)
         .await?;
@@ -231,11 +231,11 @@ async fn process_kill_terminates_running_process() -> Result<()> {
     Ok(())
 }
 
-async fn initialized_mcp(codex_home: &Path) -> Result<(MockServer, TestAppServer)> {
+async fn initialized_mcp(genex_home: &Path) -> Result<(MockServer, TestAppServer)> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    create_config_toml(codex_home, &server.uri(), "never")?;
+    create_config_toml(genex_home, &server.uri(), "never")?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home)
+        .with_genex_home(genex_home)
         .without_auto_env()
         .build()
         .await?;

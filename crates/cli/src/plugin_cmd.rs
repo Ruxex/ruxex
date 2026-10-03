@@ -3,7 +3,7 @@ use anyhow::Result;
 use anyhow::bail;
 use clap::Parser;
 use genex_core::config::Config;
-use genex_core::config::find_codex_home;
+use genex_core::config::find_genex_home;
 use genex_core::plugins_manager_for_config;
 use genex_core_plugins::BUNDLED_MARKETPLACE_NAME;
 use genex_core_plugins::ConfiguredMarketplace;
@@ -135,7 +135,7 @@ pub async fn run_plugin_add(
     let selection = parse_plugin_selection(plugin, marketplace_name)?;
     let marketplace = find_marketplace_for_plugin(
         &context.manager,
-        context.codex_home.as_path(),
+        context.genex_home.as_path(),
         &context.plugins_input,
         &selection.marketplace_name,
         &selection.plugin_name,
@@ -196,7 +196,7 @@ pub async fn run_plugin_list(
 ) -> Result<()> {
     let context = load_plugin_command_context(overrides).await?;
     let PluginCommandContext {
-        codex_home,
+        genex_home,
         plugins_input,
         manager,
         ..
@@ -205,13 +205,13 @@ pub async fn run_plugin_list(
         .list_marketplaces_for_config(&plugins_input, &[])
         .context("failed to list marketplace plugins")?;
     ensure_configured_marketplace_snapshots_loaded(
-        codex_home.as_path(),
+        genex_home.as_path(),
         &plugins_input,
         &outcome.errors,
         args.marketplace_name.as_deref(),
     )?;
 
-    let marketplace_sources = configured_marketplace_sources(&plugins_input, codex_home.as_path());
+    let marketplace_sources = configured_marketplace_sources(&plugins_input, genex_home.as_path());
     let marketplaces = outcome
         .marketplaces
         .into_iter()
@@ -483,7 +483,7 @@ pub(crate) struct JsonMarketplaceSource {
 
 pub(crate) fn configured_marketplace_sources(
     plugins_input: &PluginsConfigInput,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> HashMap<String, JsonMarketplaceSource> {
     let effective_config = plugins_input.config_layer_stack.effective_config();
     let Some(marketplaces) = effective_config
@@ -493,7 +493,7 @@ pub(crate) fn configured_marketplace_sources(
         return HashMap::new();
     };
     let allowed_marketplace_names =
-        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, codex_home);
+        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, genex_home);
 
     marketplaces
         .iter()
@@ -578,7 +578,7 @@ impl JsonPluginRemoveOutput {
 }
 
 struct PluginCommandContext {
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     plugins_input: PluginsConfigInput,
     manager: Arc<PluginsManager>,
 }
@@ -586,7 +586,7 @@ struct PluginCommandContext {
 async fn load_plugin_command_context(
     overrides: Vec<(String, toml::Value)>,
 ) -> Result<PluginCommandContext> {
-    let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
+    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
@@ -597,7 +597,7 @@ async fn load_plugin_command_context(
         Arc::clone(&auth_manager),
     ));
     Ok(PluginCommandContext {
-        codex_home: codex_home.to_path_buf(),
+        genex_home: genex_home.to_path_buf(),
         plugins_input,
         manager,
     })
@@ -653,7 +653,7 @@ fn parse_plugin_selection(
 
 fn find_marketplace_for_plugin(
     manager: &PluginsManager,
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     plugins_input: &PluginsConfigInput,
     marketplace_name: &str,
     plugin_name: &str,
@@ -662,7 +662,7 @@ fn find_marketplace_for_plugin(
         .list_marketplaces_for_config(plugins_input, &[])
         .context("failed to list marketplace plugins")?;
     ensure_configured_marketplace_snapshots_loaded(
-        codex_home,
+        genex_home,
         plugins_input,
         &outcome.errors,
         Some(marketplace_name),
@@ -695,13 +695,13 @@ pub(crate) struct ConfiguredMarketplaceSnapshotIssue {
 }
 
 fn ensure_configured_marketplace_snapshots_loaded(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     plugins_input: &PluginsConfigInput,
     load_errors: &[MarketplaceListError],
     marketplace_name: Option<&str>,
 ) -> Result<()> {
     let issues = configured_marketplace_snapshot_issues(
-        codex_home,
+        genex_home,
         plugins_input,
         load_errors,
         marketplace_name,
@@ -726,7 +726,7 @@ fn ensure_configured_marketplace_snapshots_loaded(
 }
 
 pub(crate) fn configured_marketplace_snapshot_issues(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     plugins_input: &PluginsConfigInput,
     load_errors: &[MarketplaceListError],
     marketplace_name: Option<&str>,
@@ -739,9 +739,9 @@ pub(crate) fn configured_marketplace_snapshot_issues(
         return Vec::new();
     };
     let allowed_marketplace_names =
-        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, codex_home);
+        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, genex_home);
 
-    let default_install_root = marketplace_install_root(codex_home);
+    let default_install_root = marketplace_install_root(genex_home);
     let mut manifest_paths = Vec::new();
     let mut issues = Vec::new();
     for (configured_name, marketplace) in configured_marketplaces {
@@ -790,7 +790,7 @@ pub(crate) fn configured_marketplace_snapshot_issues(
         match find_marketplace_manifest_path(&root) {
             Some(path) => manifest_paths.push((configured_name.clone(), path)),
             None => {
-                if is_implicit_system_marketplace_root(configured_name, codex_home, &root) {
+                if is_implicit_system_marketplace_root(configured_name, genex_home, &root) {
                     continue;
                 }
                 issues.push(ConfiguredMarketplaceSnapshotIssue {
@@ -819,7 +819,7 @@ pub(crate) fn configured_marketplace_snapshot_issues(
 
 fn is_implicit_system_marketplace_root(
     marketplace_name: &str,
-    _codex_home: &Path,
+    _genex_home: &Path,
     root: &Path,
 ) -> bool {
     if matches!(

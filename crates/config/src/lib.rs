@@ -57,7 +57,7 @@ pub use browser_use::BrowserUseConfigToml;
 pub use browser_use::BrowserUseOriginPolicyConfigToml;
 pub use genex_execpolicy::RequirementsExecPolicy;
 #[cfg(target_os = "macos")]
-pub use genex_home_symlink::allowed_symlinked_codex_home;
+pub use genex_home_symlink::allowed_symlinked_genex_home;
 pub use genex_protocol::config_types::ProfileV2Name;
 pub use genex_protocol::config_types::ProfileV2NameParseError;
 pub use genex_protocol::config_types::ToolExposureSurface;

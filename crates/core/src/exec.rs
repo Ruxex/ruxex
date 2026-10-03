@@ -303,8 +303,8 @@ pub async fn process_exec_tool_call(
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
     windows_sandbox_workspace_roots: &[AbsolutePathBuf],
-    codex_linux_sandbox_exe: &Option<PathBuf>,
-    codex_self_exe: &Option<PathBuf>,
+    genex_linux_sandbox_exe: &Option<PathBuf>,
+    genex_self_exe: &Option<PathBuf>,
     use_legacy_landlock: bool,
     stdout_stream: Option<StdoutStream>,
 ) -> Result<ExecToolCallOutput> {
@@ -317,8 +317,8 @@ pub async fn process_exec_tool_call(
         permission_profile,
         sandbox_cwd,
         &windows_sandbox_workspace_roots,
-        codex_linux_sandbox_exe,
-        codex_self_exe,
+        genex_linux_sandbox_exe,
+        genex_self_exe,
         use_legacy_landlock,
     )?;
 
@@ -333,8 +333,8 @@ pub fn build_exec_request(
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
     windows_sandbox_workspace_roots: &[PathUri],
-    codex_linux_sandbox_exe: &Option<PathBuf>,
-    codex_self_exe: &Option<PathBuf>,
+    genex_linux_sandbox_exe: &Option<PathBuf>,
+    genex_self_exe: &Option<PathBuf>,
     use_legacy_landlock: bool,
 ) -> Result<ExecRequest> {
     let ExecParams {
@@ -402,9 +402,9 @@ pub fn build_exec_request(
             network: network.as_ref(),
             sandbox_policy_cwd: &sandbox_policy_cwd_uri,
             sandbox_exe: if cfg!(windows) {
-                codex_self_exe.as_deref()
+                genex_self_exe.as_deref()
             } else {
-                codex_linux_sandbox_exe.as_deref()
+                genex_linux_sandbox_exe.as_deref()
             },
             use_legacy_landlock,
             windows_sandbox_level,
@@ -608,7 +608,7 @@ async fn exec_windows_sandbox(
     windows_sandbox_workspace_roots: &[AbsolutePathBuf],
     windows_sandbox_filesystem_overrides: Option<&WindowsSandboxFilesystemOverrides>,
 ) -> Result<RawExecToolCallOutput> {
-    use crate::config::find_codex_home;
+    use crate::config::find_genex_home;
     use genex_windows_sandbox::run_windows_sandbox_capture_for_permission_profile_elevated;
     use genex_windows_sandbox::run_windows_sandbox_capture_with_filesystem_overrides;
 
@@ -662,9 +662,9 @@ async fn exec_windows_sandbox(
         windows_sandbox_workspace_roots.to_vec()
     };
     let permission_profile = permission_profile.clone();
-    let codex_home = find_codex_home().map_err(|err| {
+    let genex_home = find_genex_home().map_err(|err| {
         GenexErr::Io(io::Error::other(format!(
-            "windows sandbox: failed to resolve codex_home: {err}"
+            "windows sandbox: failed to resolve genex_home: {err}"
         )))
     })?;
     let command_path = command.first().cloned();
@@ -689,7 +689,7 @@ async fn exec_windows_sandbox(
                 genex_windows_sandbox::ElevatedSandboxProfileCaptureRequest {
                     permission_profile: &permission_profile,
                     workspace_roots: workspace_roots.as_slice(),
-                    codex_home: codex_home.as_ref(),
+                    genex_home: genex_home.as_ref(),
                     command,
                     cwd: &cwd,
                     env_map: env,
@@ -710,7 +710,7 @@ async fn exec_windows_sandbox(
             run_windows_sandbox_capture_with_filesystem_overrides(
                 &permission_profile,
                 workspace_roots.as_slice(),
-                codex_home.as_ref(),
+                genex_home.as_ref(),
                 command,
                 &cwd,
                 env,

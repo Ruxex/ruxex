@@ -592,7 +592,7 @@ async fn augment_mcp_tool_request_meta_with_sandbox_state(
     // TurnEnvironment::sandbox_context instead of the runtime-wide Landlock value.
     let sandbox_state = serde_json::to_value(SandboxState {
         permission_profile: prepared_call.permission_profile().clone(),
-        codex_linux_sandbox_exe: prepared_call.config().codex_linux_sandbox_exe.clone(),
+        genex_linux_sandbox_exe: prepared_call.config().genex_linux_sandbox_exe.clone(),
         sandbox_cwd,
         use_legacy_landlock: prepared_call.config().use_legacy_landlock,
     })?;

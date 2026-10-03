@@ -8,8 +8,8 @@ pub const HANDOFF_ENV: &str = "CODEX_DAEMON_TELEMETRY_HANDOFF";
 
 /// Only presence and enabled state leave the settings reader, never values or contents.
 /// Missing files mean defaults; unreadable or invalid settings remain unknown.
-pub async fn settings_tags(codex_home: &Path) -> [(&'static str, &'static str); 4] {
-    let path = codex_home
+pub async fn settings_tags(genex_home: &Path) -> [(&'static str, &'static str); 4] {
+    let path = genex_home
         .join(crate::STATE_DIR_NAME)
         .join(crate::SETTINGS_FILE_NAME);
     crate::settings::telemetry_tags(&path).await.unwrap_or([

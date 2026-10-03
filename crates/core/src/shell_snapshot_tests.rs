@@ -200,9 +200,9 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     use tokio_util::sync::CancellationToken;
 
     let dir = tempdir()?;
-    std::fs::create_dir(dir.path().join(".codex"))?;
+    std::fs::create_dir(dir.path().join(".genex"))?;
     std::fs::write(
-        dir.path().join(".codex/startup.sh"),
+        dir.path().join(".genex/startup.sh"),
         "printf started > startup-ran\n",
     )?;
     let session_id = ThreadId::new();
@@ -257,7 +257,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     ] {
         let (_sender, receiver) = watch::channel(state);
         let config = Arc::new(ShellSnapshotConfig {
-            codex_home: dir.path().abs(),
+            genex_home: dir.path().abs(),
             session_id,
             session_telemetry: session_telemetry.clone(),
             state_db: None,
@@ -274,7 +274,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
                 ShellEnvironmentPolicy {
                     r#set: HashMap::from([(
                         "BASH_ENV".to_string(),
-                        "./.codex/startup.sh".to_string(),
+                        "./.genex/startup.sh".to_string(),
                     )]),
                     ..ShellEnvironmentPolicy::default()
                 },
@@ -381,13 +381,13 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
 
     // Identical concurrent captures must not share one command's cancellation.
     fs::write(
-        dir.path().join(".codex/startup.sh"),
+        dir.path().join(".genex/startup.sh"),
         "export PROVIDER_API_KEY=sk-snapshot-cache-test\nprintf started > capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
     )
     .await?;
     config.shell_environment_policy.r#set.insert(
         "BASH_ENV".into(),
-        dir.path().join(".codex/startup.sh").display().to_string(),
+        dir.path().join(".genex/startup.sh").display().to_string(),
     );
     environments.set_snapshot_credential_broker(SnapshotCredentialBrokerState::Ready(
         started_proxy.proxy(),
@@ -396,7 +396,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     let turn = environments.snapshot().await;
     let environment = turn.primary().expect("brokered environment");
     let mut tool_config = crate::config::ConfigBuilder::without_managed_config_for_tests()
-        .codex_home(dir.path().to_path_buf())
+        .genex_home(dir.path().to_path_buf())
         .build()
         .await?;
     tool_config
@@ -551,7 +551,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     fs::remove_file(dir.path().join("finish-startup")).await?;
     fs::remove_file(dir.path().join("capture-started")).await?;
     fs::write(
-        dir.path().join(".codex/startup.sh"),
+        dir.path().join(".genex/startup.sh"),
         "export PROVIDER_API_KEY=sk-snapshot-cache-test\nprintf x >> capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
     )
     .await?;
@@ -1769,8 +1769,8 @@ async fn windows_powershell_snapshot_includes_sections() -> Result<()> {
     Ok(())
 }
 
-async fn write_rollout_stub(codex_home: &Path, session_id: ThreadId) -> Result<PathBuf> {
-    let dir = codex_home
+async fn write_rollout_stub(genex_home: &Path, session_id: ThreadId) -> Result<PathBuf> {
+    let dir = genex_home
         .join("sessions")
         .join("2025")
         .join("01")
@@ -1784,8 +1784,8 @@ async fn write_rollout_stub(codex_home: &Path, session_id: ThreadId) -> Result<P
 #[tokio::test]
 async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> {
     let dir = tempdir()?;
-    let codex_home = dir.path().abs();
-    let snapshot_dir = codex_home.join(SNAPSHOT_DIR);
+    let genex_home = dir.path().abs();
+    let snapshot_dir = genex_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let live_session = ThreadId::new();
@@ -1794,12 +1794,12 @@ async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> 
     let orphan_snapshot = snapshot_dir.join(format!("{orphan_session}.456.sh"));
     let invalid_snapshot = snapshot_dir.join("not-a-snapshot.txt");
 
-    write_rollout_stub(&codex_home, live_session).await?;
+    write_rollout_stub(&genex_home, live_session).await?;
     fs::write(&live_snapshot, "live").await?;
     fs::write(&orphan_snapshot, "orphan").await?;
     fs::write(&invalid_snapshot, "invalid").await?;
 
-    cleanup_stale_snapshots(&codex_home, ThreadId::new(), /*state_db*/ None).await?;
+    cleanup_stale_snapshots(&genex_home, ThreadId::new(), /*state_db*/ None).await?;
 
     assert_eq!(live_snapshot.exists(), true);
     assert_eq!(orphan_snapshot.exists(), false);
@@ -1811,18 +1811,18 @@ async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> 
 #[tokio::test]
 async fn cleanup_stale_snapshots_removes_stale_rollouts() -> Result<()> {
     let dir = tempdir()?;
-    let codex_home = dir.path().abs();
-    let snapshot_dir = codex_home.join(SNAPSHOT_DIR);
+    let genex_home = dir.path().abs();
+    let snapshot_dir = genex_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let stale_session = ThreadId::new();
     let stale_snapshot = snapshot_dir.join(format!("{stale_session}.123.sh"));
-    let rollout_path = write_rollout_stub(&codex_home, stale_session).await?;
+    let rollout_path = write_rollout_stub(&genex_home, stale_session).await?;
     fs::write(&stale_snapshot, "stale").await?;
 
     set_file_mtime(&rollout_path, SNAPSHOT_RETENTION + Duration::from_secs(60))?;
 
-    cleanup_stale_snapshots(&codex_home, ThreadId::new(), /*state_db*/ None).await?;
+    cleanup_stale_snapshots(&genex_home, ThreadId::new(), /*state_db*/ None).await?;
 
     assert_eq!(stale_snapshot.exists(), false);
     Ok(())
@@ -1832,18 +1832,18 @@ async fn cleanup_stale_snapshots_removes_stale_rollouts() -> Result<()> {
 #[tokio::test]
 async fn cleanup_stale_snapshots_skips_active_session() -> Result<()> {
     let dir = tempdir()?;
-    let codex_home = dir.path().abs();
-    let snapshot_dir = codex_home.join(SNAPSHOT_DIR);
+    let genex_home = dir.path().abs();
+    let snapshot_dir = genex_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let active_session = ThreadId::new();
     let active_snapshot = snapshot_dir.join(format!("{active_session}.123.sh"));
-    let rollout_path = write_rollout_stub(&codex_home, active_session).await?;
+    let rollout_path = write_rollout_stub(&genex_home, active_session).await?;
     fs::write(&active_snapshot, "active").await?;
 
     set_file_mtime(&rollout_path, SNAPSHOT_RETENTION + Duration::from_secs(60))?;
 
-    cleanup_stale_snapshots(&codex_home, active_session, /*state_db*/ None).await?;
+    cleanup_stale_snapshots(&genex_home, active_session, /*state_db*/ None).await?;
 
     assert_eq!(active_snapshot.exists(), true);
     Ok(())

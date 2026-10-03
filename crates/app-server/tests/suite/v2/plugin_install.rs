@@ -87,9 +87,9 @@ const TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS: &str =
 
 #[tokio::test]
 async fn plugin_install_rejects_relative_marketplace_paths() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -116,9 +116,9 @@ async fn plugin_install_rejects_relative_marketplace_paths() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_rejects_missing_install_source() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -148,16 +148,16 @@ async fn plugin_install_rejects_missing_install_source() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_rejects_multiple_install_sources() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
     let request_id = mcp
         .send_plugin_install_request(PluginInstallParams {
             marketplace_path: Some(AbsolutePathBuf::try_from(
-                codex_home.path().join("marketplace.json"),
+                genex_home.path().join("marketplace.json"),
             )?),
             remote_marketplace_name: Some("test-remote".to_string()),
             install_attempt_id: None,
@@ -182,15 +182,15 @@ async fn plugin_install_rejects_multiple_install_sources() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_rejects_remote_marketplace_when_plugins_are_disabled() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"[features]
 plugins = false
 "#,
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -220,9 +220,9 @@ plugins = false
 
 #[tokio::test]
 async fn plugin_install_writes_remote_plugin_to_cloud_and_cache() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
-    let installed_path = codex_home
+    let installed_path = genex_home
         .path()
         .join("plugins/cache/test-remote/linear/1.2.3");
     let remote_app_manifest = json!({
@@ -241,7 +241,7 @@ async fn plugin_install_writes_remote_plugin_to_cloud_and_cache() -> Result<()> 
         )?,
     )
     .await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail_with_app_manifest(
         &server,
         REMOTE_PLUGIN_ID,
@@ -259,7 +259,7 @@ async fn plugin_install_writes_remote_plugin_to_cloud_and_cache() -> Result<()> 
     .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -304,7 +304,7 @@ async fn plugin_install_writes_remote_plugin_to_cloud_and_cache() -> Result<()> 
     assert_eq!(installed_app_manifest, remote_app_manifest);
     assert!(installed_path.join("skills/plan-work/SKILL.md").is_file());
     assert!(
-        !codex_home
+        !genex_home
             .path()
             .join(format!(
                 "plugins/cache/test-remote/{REMOTE_PLUGIN_ID}/1.2.3"
@@ -316,7 +316,7 @@ async fn plugin_install_writes_remote_plugin_to_cloud_and_cache() -> Result<()> 
 
 #[tokio::test]
 async fn plugin_install_uses_remote_apps_needing_auth_response() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let remote_app_manifest = json!({
         "apps": {
@@ -332,7 +332,7 @@ async fn plugin_install_uses_remote_apps_needing_auth_response() -> Result<()> {
         remote_plugin_bundle_tar_gz_bytes("linear")?,
     )
     .await;
-    configure_remote_plugin_with_apps_test(codex_home.path(), &server)?;
+    configure_remote_plugin_with_apps_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail_with_app_manifest(
         &server,
         REMOTE_PLUGIN_ID,
@@ -360,7 +360,7 @@ async fn plugin_install_uses_remote_apps_needing_auth_response() -> Result<()> {
         .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -401,9 +401,9 @@ async fn plugin_install_uses_remote_apps_needing_auth_response() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_rejects_missing_remote_bundle_url() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(
         &server,
         REMOTE_PLUGIN_ID,
@@ -414,7 +414,7 @@ async fn plugin_install_rejects_missing_remote_bundle_url() -> Result<()> {
     mount_empty_remote_installed_plugins(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -439,7 +439,7 @@ async fn plugin_install_rejects_missing_remote_bundle_url() -> Result<()> {
     )
     .await?;
     assert!(
-        !codex_home
+        !genex_home
             .path()
             .join("plugins/cache/test-remote/linear")
             .exists()
@@ -449,15 +449,15 @@ async fn plugin_install_rejects_missing_remote_bundle_url() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_rejects_plain_http_remote_bundle_url() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let bundle_url = format!("{}/bundles/linear.tar.gz", server.uri());
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;
     mount_empty_remote_installed_plugins(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -482,7 +482,7 @@ async fn plugin_install_rejects_plain_http_remote_bundle_url() -> Result<()> {
     )
     .await?;
     assert!(
-        !codex_home
+        !genex_home
             .path()
             .join("plugins/cache/test-remote/linear")
             .exists()
@@ -492,9 +492,9 @@ async fn plugin_install_rejects_plain_http_remote_bundle_url() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_rejects_invalid_remote_release_version() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(
         &server,
         REMOTE_PLUGIN_ID,
@@ -505,7 +505,7 @@ async fn plugin_install_rejects_invalid_remote_release_version() -> Result<()> {
     mount_empty_remote_installed_plugins(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -526,7 +526,7 @@ async fn plugin_install_rejects_invalid_remote_release_version() -> Result<()> {
     )
     .await?;
     assert!(
-        !codex_home
+        !genex_home
             .path()
             .join("plugins/cache/test-remote/linear")
             .exists()
@@ -536,10 +536,10 @@ async fn plugin_install_rejects_invalid_remote_release_version() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_rejects_invalid_remote_plugin_name() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_remote_plugin_catalog_config(codex_home.path(), "https://example.invalid/backend-api/")?;
+    let genex_home = TempDir::new()?;
+    write_remote_plugin_catalog_config(genex_home.path(), "https://example.invalid/backend-api/")?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -565,14 +565,14 @@ async fn plugin_install_rejects_invalid_remote_plugin_name() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_tracks_analytics_when_remote_detail_fetch_fails() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_empty_remote_installed_plugins(&server).await;
     mount_backend_analytics_events(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -607,7 +607,7 @@ async fn plugin_install_tracks_analytics_when_remote_detail_fetch_fails() -> Res
 
 #[tokio::test]
 async fn plugin_install_tracks_analytics_when_remote_install_is_rate_limited() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let bundle_url = mount_remote_plugin_bundle(
         &server,
@@ -615,7 +615,7 @@ async fn plugin_install_tracks_analytics_when_remote_install_is_rate_limited() -
         remote_plugin_bundle_tar_gz_bytes("linear")?,
     )
     .await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;
     mount_empty_remote_installed_plugins(&server).await;
     Mock::given(method("POST"))
@@ -629,7 +629,7 @@ async fn plugin_install_tracks_analytics_when_remote_install_is_rate_limited() -
     mount_backend_analytics_events(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -677,7 +677,7 @@ async fn plugin_install_tracks_analytics_when_remote_install_is_rate_limited() -
 
 #[tokio::test]
 async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let bundle_url = mount_remote_plugin_bundle(
         &server,
@@ -685,7 +685,7 @@ async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download(
         remote_plugin_bundle_tar_gz_bytes("linear")?,
     )
     .await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail_with_status(
         &server,
         REMOTE_PLUGIN_ID,
@@ -698,7 +698,7 @@ async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download(
     mount_backend_analytics_events(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -727,7 +727,7 @@ async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download(
     )
     .await?;
     assert!(
-        !codex_home
+        !genex_home
             .path()
             .join("plugins/cache/test-remote/linear")
             .exists()
@@ -747,9 +747,9 @@ async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download(
 
 #[tokio::test]
 async fn plugin_install_rejects_remote_plugin_not_available() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail_with_install_policy(
         &server,
         REMOTE_PLUGIN_ID,
@@ -761,7 +761,7 @@ async fn plugin_install_rejects_remote_plugin_not_available() -> Result<()> {
     mount_backend_analytics_events(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -799,16 +799,16 @@ async fn plugin_install_rejects_remote_plugin_not_available() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_returns_invalid_request_for_missing_marketplace_file() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
     let request_id = mcp
         .send_plugin_install_request(PluginInstallParams {
             marketplace_path: Some(AbsolutePathBuf::try_from(
-                codex_home.path().join("missing-marketplace.json"),
+                genex_home.path().join("missing-marketplace.json"),
             )?),
             remote_marketplace_name: None,
             install_attempt_id: None,
@@ -831,21 +831,21 @@ async fn plugin_install_returns_invalid_request_for_missing_marketplace_file() -
 #[tokio::test]
 async fn plugin_install_tracks_analytics_when_marketplace_file_cannot_be_read() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
-    let codex_home = TempDir::new()?;
-    write_analytics_config(codex_home.path(), &analytics_server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_analytics_config(genex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
             .workspace_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
-    let marketplace_path = codex_home.path().join("marketplace-dir");
+    let marketplace_path = genex_home.path().join("marketplace-dir");
     std::fs::create_dir_all(&marketplace_path)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -889,7 +889,7 @@ async fn plugin_install_tracks_analytics_when_marketplace_file_cannot_be_read() 
 
 #[tokio::test]
 async fn plugin_install_returns_invalid_request_for_not_available_plugin() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     write_plugin_marketplace(
         repo_root.path(),
@@ -904,7 +904,7 @@ async fn plugin_install_returns_invalid_request_for_not_available_plugin() -> Re
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -930,7 +930,7 @@ async fn plugin_install_returns_invalid_request_for_not_available_plugin() -> Re
 
 #[tokio::test]
 async fn plugin_install_returns_invalid_request_for_disallowed_product_plugin() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
     std::fs::write(
@@ -956,7 +956,7 @@ async fn plugin_install_returns_invalid_request_for_disallowed_product_plugin() 
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_args(&["--session-source", "external"])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -984,10 +984,10 @@ async fn plugin_install_returns_invalid_request_for_disallowed_product_plugin() 
 #[tokio::test]
 async fn plugin_install_tracks_analytics_event() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
-    let codex_home = TempDir::new()?;
-    write_analytics_config(codex_home.path(), &analytics_server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_analytics_config(genex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1009,7 +1009,7 @@ async fn plugin_install_tracks_analytics_event() -> Result<()> {
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -1051,10 +1051,10 @@ async fn plugin_install_tracks_analytics_event() -> Result<()> {
 #[tokio::test]
 async fn plugin_install_failure_tracks_analytics_event() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
-    let codex_home = TempDir::new()?;
-    write_analytics_config(codex_home.path(), &analytics_server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_analytics_config(genex_home.path(), &analytics_server.uri())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1075,7 +1075,7 @@ async fn plugin_install_failure_tracks_analytics_event() -> Result<()> {
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -1116,7 +1116,7 @@ async fn plugin_install_failure_tracks_analytics_event() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_tracks_remote_plugin_analytics_event() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let bundle_url = mount_remote_plugin_bundle(
         &server,
@@ -1124,14 +1124,14 @@ async fn plugin_install_tracks_remote_plugin_analytics_event() -> Result<()> {
         remote_plugin_bundle_tar_gz_bytes("linear")?,
     )
     .await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;
     mount_empty_remote_installed_plugins(&server).await;
     mount_remote_plugin_install(&server, REMOTE_PLUGIN_ID).await;
     mount_backend_analytics_events(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1177,18 +1177,18 @@ async fn plugin_install_tracks_remote_plugin_analytics_event() -> Result<()> {
 #[tokio::test]
 async fn plugin_install_preserves_status_when_remote_bundle_error_body_is_too_large() -> Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let bundle_url =
         mount_remote_plugin_bundle(&server, /*status_code*/ 503, vec![b'x'; 8 * 1024 + 1]).await;
-    configure_remote_plugin_test(codex_home.path(), &server)?;
+    configure_remote_plugin_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;
     mount_empty_remote_installed_plugins(&server).await;
     mount_remote_plugin_install(&server, REMOTE_PLUGIN_ID).await;
     mount_backend_analytics_events(&server).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1243,7 +1243,7 @@ async fn plugin_install_preserves_status_when_remote_bundle_error_body_is_too_la
     assert_eq!(event_params["error_type"], "remote_bundle_download_status");
     assert_eq!(event_params["sub_error_type"], "http_5xx");
     assert!(
-        !codex_home
+        !genex_home
             .path()
             .join("plugins/cache/test-remote/linear")
             .exists()
@@ -1292,10 +1292,10 @@ async fn plugin_install_returns_apps_needing_auth() -> Result<()> {
     let tools = vec![connector_tool("beta", "Beta App")?];
     let (server_url, server_handle, server_control) = start_apps_server(connectors, tools).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let genex_home = TempDir::new()?;
+    write_connectors_config(genex_home.path(), &server_url)?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1321,7 +1321,7 @@ async fn plugin_install_returns_apps_needing_auth() -> Result<()> {
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let directory_requests_before_install = server_control.directory_request_count();
@@ -1389,10 +1389,10 @@ async fn plugin_install_skips_mcp_oauth_for_managed_dual_surface_plugin() -> Res
         start_apps_server(connectors, Vec::new()).await?;
     let oauth_server = MockServer::start().await;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &apps_server_url)?;
+    let genex_home = TempDir::new()?;
+    write_connectors_config(genex_home.path(), &apps_server_url)?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1415,7 +1415,7 @@ async fn plugin_install_skips_mcp_oauth_for_managed_dual_surface_plugin() -> Res
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -1441,13 +1441,13 @@ async fn plugin_install_skips_mcp_oauth_for_managed_dual_surface_plugin() -> Res
 #[tokio::test]
 async fn plugin_install_skips_mcp_oauth_disabled_by_plugin_requirements() -> Result<()> {
     let oauth_server = MockServer::start().await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\nplugins = true\n",
     )?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         r#"[plugins."sample-plugin@debug".mcp_servers.allowed.identity]
 url = "https://example.com/allowed-mcp"
 "#,
@@ -1468,7 +1468,7 @@ url = "https://example.com/allowed-mcp"
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -1506,9 +1506,9 @@ async fn plugin_install_skips_mcp_oauth_managed_by_plugin_config(case: &str) -> 
         ),
         _ => unreachable!("unknown test case"),
     };
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"[features]
 plugins = true
@@ -1534,7 +1534,7 @@ plugins = true
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -1556,7 +1556,7 @@ plugins = true
             .unwrap_or_default()
             .is_empty()
     );
-    let persisted_config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let persisted_config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     let persisted_config = toml::from_str::<toml::Value>(&persisted_config)?;
     assert_eq!(
         persisted_config
@@ -1574,9 +1574,9 @@ async fn plugin_install_skips_mcp_oauth_for_unowned_environment() -> Result<()> 
     const UNOWNED_ENVIRONMENT_ID: &str = "plugin-unowned-executor";
 
     let oauth_server = MockServer::start().await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\nplugins = true\n",
     )?;
     let mut executor =
@@ -1595,7 +1595,7 @@ async fn plugin_install_skips_mcp_oauth_for_unowned_environment() -> Result<()> 
         .ok_or_else(|| anyhow::anyhow!("exec-server fixture did not emit its WebSocket URL"))?;
     let executor_url = toml::Value::String(executor_url);
     std::fs::write(
-        codex_home.path().join("environments.toml"),
+        genex_home.path().join("environments.toml"),
         format!(
             r#"include_local = true
 
@@ -1632,7 +1632,7 @@ url = {executor_url}
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1664,10 +1664,10 @@ async fn plugin_install_starts_mcp_oauth_with_formerly_disallowed_plugin_app() -
         start_apps_server(Vec::new(), Vec::new()).await?;
     let oauth_server = MockServer::start().await;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &apps_server_url)?;
+    let genex_home = TempDir::new()?;
+    write_connectors_config(genex_home.path(), &apps_server_url)?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1694,7 +1694,7 @@ async fn plugin_install_starts_mcp_oauth_with_formerly_disallowed_plugin_app() -
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -1777,9 +1777,9 @@ async fn plugin_install_starts_mcp_oauth_through_configured_http_proxy() -> Resu
     let global_callback_port = global_callback_listener.local_addr()?.port();
     drop(plugin_callback_listener);
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!("mcp_oauth_callback_port = {global_callback_port}\n\n[features]\nplugins = true\n"),
     )?;
     let repo_root = TempDir::new()?;
@@ -1812,7 +1812,7 @@ async fn plugin_install_starts_mcp_oauth_through_configured_http_proxy() -> Resu
 
     let proxy_uri = proxy.uri();
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[
             ("HTTP_PROXY", Some(proxy_uri.as_str())),
             ("http_proxy", Some(proxy_uri.as_str())),
@@ -1897,12 +1897,12 @@ async fn plugin_oauth_login_preserves_registered_callbacks_or_uses_legacy_fallba
         "http://127.0.0.1/callback/registered".to_string()
     };
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let global_callback_config = global_callback
         .map(|callback| format!("mcp_oauth_callback_url = \"{callback}\"\n"))
         .unwrap_or_default();
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             "mcp_oauth_credentials_store = \"file\"\n{global_callback_config}\n[features]\nplugins = true\n"
         ),
@@ -1937,7 +1937,7 @@ async fn plugin_oauth_login_preserves_registered_callbacks_or_uses_legacy_fallba
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let install_id = mcp
@@ -2060,9 +2060,9 @@ async fn plugin_oauth_login_preserves_registered_callbacks_or_uses_legacy_fallba
 #[tokio::test]
 async fn plugin_install_starts_mcp_oauth_for_api_key_dual_surface_plugin() -> Result<()> {
     let oauth_server = MockServer::start().await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"
 mcp_oauth_credentials_store = "file"
 
@@ -2087,7 +2087,7 @@ connectors = true
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", Some("test-api-key"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2110,7 +2110,7 @@ connectors = true
 
 #[tokio::test]
 async fn plugin_install_starts_remote_mcp_oauth_for_install_response_only_app() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let oauth_server = MockServer::start().await;
     let bundle_url = mount_remote_plugin_bundle(
@@ -2119,13 +2119,13 @@ async fn plugin_install_starts_remote_mcp_oauth_for_install_response_only_app() 
         remote_plugin_bundle_tar_gz_bytes_with_mcp_config("linear", &oauth_server.uri())?,
     )
     .await;
-    configure_remote_plugin_with_apps_test(codex_home.path(), &server)?;
+    configure_remote_plugin_with_apps_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;
     mount_empty_remote_installed_plugins(&server).await;
     mount_remote_plugin_install_with_apps_needing_auth(&server, REMOTE_PLUGIN_ID, &["alpha"]).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2153,7 +2153,7 @@ async fn plugin_install_starts_remote_mcp_oauth_for_install_response_only_app() 
 
 #[tokio::test]
 async fn plugin_install_skips_remote_mcp_oauth_disabled_by_requirements() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let oauth_server = MockServer::start().await;
     let bundle_url = mount_remote_plugin_bundle(
@@ -2162,9 +2162,9 @@ async fn plugin_install_skips_remote_mcp_oauth_disabled_by_requirements() -> Res
         remote_plugin_bundle_tar_gz_bytes_with_mcp_config("linear", &oauth_server.uri())?,
     )
     .await;
-    configure_remote_plugin_with_apps_test(codex_home.path(), &server)?;
+    configure_remote_plugin_with_apps_test(genex_home.path(), &server)?;
     std::fs::write(
-        codex_home.path().join("requirements.toml"),
+        genex_home.path().join("requirements.toml"),
         "[mcp_servers]\n",
     )?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;
@@ -2172,7 +2172,7 @@ async fn plugin_install_skips_remote_mcp_oauth_disabled_by_requirements() -> Res
     mount_remote_plugin_install_with_apps_needing_auth(&server, REMOTE_PLUGIN_ID, &["alpha"]).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2193,7 +2193,7 @@ async fn plugin_install_skips_remote_mcp_oauth_disabled_by_requirements() -> Res
 
 #[tokio::test]
 async fn plugin_install_skips_remote_mcp_oauth_disabled_by_plugin_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let oauth_server = MockServer::start().await;
     let bundle_url = mount_remote_plugin_bundle(
@@ -2202,8 +2202,8 @@ async fn plugin_install_skips_remote_mcp_oauth_disabled_by_plugin_config() -> Re
         remote_plugin_bundle_tar_gz_bytes_with_mcp_config("linear", &oauth_server.uri())?,
     )
     .await;
-    configure_remote_plugin_with_apps_test(codex_home.path(), &server)?;
-    let config_path = codex_home.path().join("config.toml");
+    configure_remote_plugin_with_apps_test(genex_home.path(), &server)?;
+    let config_path = genex_home.path().join("config.toml");
     let existing_config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         config_path,
@@ -2216,7 +2216,7 @@ async fn plugin_install_skips_remote_mcp_oauth_disabled_by_plugin_config() -> Re
     mount_remote_plugin_install_with_apps_needing_auth(&server, REMOTE_PLUGIN_ID, &["alpha"]).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2237,7 +2237,7 @@ async fn plugin_install_skips_remote_mcp_oauth_disabled_by_plugin_config() -> Re
 
 #[tokio::test]
 async fn plugin_install_skips_remote_mcp_oauth_for_bundled_same_name_app() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     let oauth_server = MockServer::start().await;
     let bundle_url = mount_remote_plugin_bundle(
@@ -2250,13 +2250,13 @@ async fn plugin_install_skips_remote_mcp_oauth_for_bundled_same_name_app() -> Re
         )?,
     )
     .await;
-    configure_remote_plugin_with_apps_test(codex_home.path(), &server)?;
+    configure_remote_plugin_with_apps_test(genex_home.path(), &server)?;
     mount_remote_plugin_detail(&server, REMOTE_PLUGIN_ID, "1.2.3", Some(&bundle_url)).await;
     mount_empty_remote_installed_plugins(&server).await;
     mount_remote_plugin_install_with_apps_needing_auth(&server, REMOTE_PLUGIN_ID, &["alpha"]).await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2304,10 +2304,10 @@ async fn plugin_install_includes_formerly_disallowed_apps_needing_auth() -> Resu
     let (server_url, server_handle, server_control) =
         start_apps_server(connectors, Vec::new()).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let genex_home = TempDir::new()?;
+    write_connectors_config(genex_home.path(), &server_url)?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -2333,7 +2333,7 @@ async fn plugin_install_includes_formerly_disallowed_apps_needing_auth() -> Resu
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let directory_requests_before_install =
@@ -2391,9 +2391,9 @@ async fn plugin_install_includes_formerly_disallowed_apps_needing_auth() -> Resu
 
 #[tokio::test]
 async fn plugin_install_makes_bundled_mcp_servers_available_to_followup_requests() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\nplugins = true\n",
     )?;
     let repo_root = TempDir::new()?;
@@ -2420,7 +2420,7 @@ async fn plugin_install_makes_bundled_mcp_servers_available_to_followup_requests
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         // The bundled stdio MCP fixture is a host-local executable.
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -2443,7 +2443,7 @@ async fn plugin_install_makes_bundled_mcp_servers_available_to_followup_requests
     let response: PluginInstallResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
     assert_eq!(response.apps_needing_auth, Vec::<AppSummary>::new());
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
     assert!(!config.contains("[mcp_servers.sample-mcp]"));
 
     let request_id = mcp
@@ -2725,9 +2725,9 @@ fn connector_tool(connector_id: &str, connector_name: &str) -> Result<Tool> {
     Ok(tool)
 }
 
-fn write_connectors_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
+fn write_connectors_config(genex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{base_url}"
@@ -2740,9 +2740,9 @@ connectors = true
     )
 }
 
-fn write_analytics_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
+fn write_analytics_config(genex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!("managed_auth_base_url = \"{base_url}\"\n"),
     )
 }
@@ -2829,11 +2829,11 @@ async fn oauth_discovery_request_count(server: &MockServer) -> usize {
 }
 
 fn write_remote_plugin_catalog_config(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     base_url: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{base_url}"
@@ -2845,10 +2845,10 @@ plugins = true
     )
 }
 
-fn configure_remote_plugin_test(codex_home: &std::path::Path, server: &MockServer) -> Result<()> {
-    write_remote_plugin_catalog_config(codex_home, &format!("{}/backend-api/", server.uri()))?;
+fn configure_remote_plugin_test(genex_home: &std::path::Path, server: &MockServer) -> Result<()> {
+    write_remote_plugin_catalog_config(genex_home, &format!("{}/backend-api/", server.uri()))?;
     write_api_key_auth(
-        codex_home,
+        genex_home,
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -2858,11 +2858,11 @@ fn configure_remote_plugin_test(codex_home: &std::path::Path, server: &MockServe
 }
 
 fn configure_remote_plugin_with_apps_test(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     server: &MockServer,
 ) -> Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{}/backend-api/"
@@ -2875,7 +2875,7 @@ connectors = true
         ),
     )?;
     write_api_key_auth(
-        codex_home,
+        genex_home,
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")

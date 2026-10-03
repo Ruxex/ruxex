@@ -61,9 +61,9 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn plugin_read_rejects_missing_read_source() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -93,9 +93,9 @@ async fn plugin_read_rejects_missing_read_source() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_rejects_multiple_read_sources() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -103,7 +103,7 @@ async fn plugin_read_rejects_multiple_read_sources() -> Result<()> {
     let request_id = mcp
         .send_plugin_read_request(PluginReadParams {
             marketplace_path: Some(AbsolutePathBuf::try_from(
-                codex_home.path().join("marketplace.json"),
+                genex_home.path().join("marketplace.json"),
             )?),
             remote_marketplace_name: Some("test-remote".to_string()),
             plugin_name: "sample-plugin".to_string(),
@@ -127,10 +127,10 @@ async fn plugin_read_rejects_multiple_read_sources() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_returns_remote_mcp_servers_when_uninstalled() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{}/backend-api/"
@@ -143,7 +143,7 @@ apps = true
         ),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -257,7 +257,7 @@ apps = true
         .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -355,14 +355,14 @@ apps = true
 
 #[tokio::test]
 async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_catalog_config(
-        codex_home.path(),
+        genex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -429,7 +429,7 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
         .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -505,14 +505,14 @@ async fn plugin_read_returns_share_context_for_shared_remote_plugin() -> Result<
 
 #[tokio::test]
 async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_catalog_config(
-        codex_home.path(),
+        genex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -636,7 +636,7 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
         .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -745,14 +745,14 @@ async fn plugin_read_includes_share_url_for_admin_disabled_remote_plugin() -> Re
 
 #[tokio::test]
 async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enabled() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_catalog_config(
-        codex_home.path(),
+        genex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -780,7 +780,7 @@ async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enable
         .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -807,14 +807,14 @@ async fn plugin_skill_read_reads_remote_skill_contents_when_remote_plugin_enable
 
 #[tokio::test]
 async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_catalog_config(
-        codex_home.path(),
+        genex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -830,7 +830,7 @@ async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<(
         .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -860,10 +860,10 @@ async fn plugin_read_maps_missing_remote_plugin_to_invalid_request() -> Result<(
 
 #[tokio::test]
 async fn plugin_read_rejects_remote_marketplace_when_plugins_are_disabled() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let server = MockServer::start().await;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{}/backend-api/"
@@ -876,7 +876,7 @@ remote_plugin = true
         ),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -885,7 +885,7 @@ remote_plugin = true
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -915,10 +915,10 @@ remote_plugin = true
 
 #[tokio::test]
 async fn plugin_read_rejects_invalid_remote_plugin_name() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_remote_plugin_catalog_config(codex_home.path(), "https://example.invalid/backend-api/")?;
+    let genex_home = TempDir::new()?;
+    write_remote_plugin_catalog_config(genex_home.path(), "https://example.invalid/backend-api/")?;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -949,8 +949,8 @@ async fn plugin_read_rejects_invalid_remote_plugin_name() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_returns_canonical_provider_curated_marketplace_name() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let repo_root = codex_home.path().join(".tmp/plugins");
+    let genex_home = TempDir::new()?;
+    let repo_root = genex_home.path().join(".tmp/plugins");
     write_plugin_marketplace(&repo_root, "test-curated", "demo-plugin", "./demo-plugin")?;
     std::fs::create_dir_all(repo_root.join("demo-plugin/.codex-plugin"))?;
     std::fs::write(
@@ -961,7 +961,7 @@ async fn plugin_read_returns_canonical_provider_curated_marketplace_name() -> Re
 }"#,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -969,10 +969,10 @@ plugins = true
 enabled = true
 "#,
     )?;
-    write_installed_plugin(&codex_home, "test-curated", "demo-plugin")?;
+    write_installed_plugin(&genex_home, "test-curated", "demo-plugin")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1004,15 +1004,15 @@ enabled = true
 
 #[tokio::test]
 async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_catalog_config(
-        codex_home.path(),
+        genex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1037,7 +1037,7 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
         r#"{"mcpServers":{"demo":{"command":"demo-mcp"}}}"#,
     )?;
     let plugin_path = AbsolutePathBuf::try_from(repo_root.path().join("demo-plugin"))?;
-    write_plugin_share_local_path_mapping(codex_home.path(), "plugins_123", &plugin_path)?;
+    write_plugin_share_local_path_mapping(genex_home.path(), "plugins_123", &plugin_path)?;
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins_123"))
         .and(header("authorization", "Bearer test-token"))
@@ -1079,7 +1079,7 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
         .mount(&server)
         .await;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1145,15 +1145,15 @@ async fn plugin_read_returns_share_context_for_shared_local_plugin() -> Result<(
 
 #[tokio::test]
 async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let server = MockServer::start().await;
     write_remote_plugin_catalog_config(
-        codex_home.path(),
+        genex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1178,7 +1178,7 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
         r#"{"mcpServers":{"demo":{"command":"demo-mcp"}}}"#,
     )?;
     let plugin_path = AbsolutePathBuf::try_from(repo_root.path().join("demo-plugin"))?;
-    write_plugin_share_local_path_mapping(codex_home.path(), "plugins_123", &plugin_path)?;
+    write_plugin_share_local_path_mapping(genex_home.path(), "plugins_123", &plugin_path)?;
     Mock::given(method("GET"))
         .and(path("/backend-api/ps/plugins/plugins_123"))
         .and(header("authorization", "Bearer test-token"))
@@ -1207,7 +1207,7 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
         .mount(&server)
         .await;
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1248,9 +1248,9 @@ async fn plugin_read_keeps_remote_version_when_share_principals_are_missing() ->
 
 #[tokio::test]
 async fn plugin_read_falls_back_to_local_share_context_without_remote_auth() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&genex_home)?;
     write_plugin_marketplace(
         repo_root.path(),
         "codex-curated",
@@ -1259,10 +1259,10 @@ async fn plugin_read_falls_back_to_local_share_context_without_remote_auth() -> 
     )?;
     write_plugin_source(repo_root.path(), "demo-plugin", &[])?;
     let plugin_path = AbsolutePathBuf::try_from(repo_root.path().join("demo-plugin"))?;
-    write_plugin_share_local_path_mapping(codex_home.path(), "plugins_123", &plugin_path)?;
+    write_plugin_share_local_path_mapping(genex_home.path(), "plugins_123", &plugin_path)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1300,9 +1300,9 @@ async fn plugin_read_falls_back_to_local_share_context_without_remote_auth() -> 
 
 #[tokio::test]
 async fn plugin_read_fails_on_malformed_share_mapping() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&genex_home)?;
     write_plugin_marketplace(
         repo_root.path(),
         "codex-curated",
@@ -1310,16 +1310,16 @@ async fn plugin_read_fails_on_malformed_share_mapping() -> Result<()> {
         "./demo-plugin",
     )?;
     write_plugin_source(repo_root.path(), "demo-plugin", &[])?;
-    std::fs::create_dir_all(codex_home.path().join(".tmp"))?;
+    std::fs::create_dir_all(genex_home.path().join(".tmp"))?;
     std::fs::write(
-        codex_home
+        genex_home
             .path()
             .join(".tmp/plugin-share-local-paths-v1.json"),
         "not valid json\n",
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1352,10 +1352,10 @@ async fn plugin_read_fails_on_malformed_share_mapping() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_agent_plugin_excludes_nested_skills() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&genex_home)?;
     write_plugin_marketplace(
         repo_root.path(),
         "codex-curated",
@@ -1379,7 +1379,7 @@ async fn plugin_read_agent_plugin_excludes_nested_skills() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1413,9 +1413,9 @@ async fn plugin_read_agent_plugin_excludes_nested_skills() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_returns_plugin_details_with_bundle_contents() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1567,7 +1567,7 @@ description: Visible only for another product
 }"#,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -1582,10 +1582,10 @@ enabled = true
 enabled = false
 "#,
     )?;
-    write_installed_plugin(&codex_home, "codex-curated", "demo-plugin")?;
+    write_installed_plugin(&genex_home, "codex-curated", "demo-plugin")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1737,10 +1737,10 @@ async fn plugin_read_batches_large_app_metadata_requests() -> Result<()> {
         .collect::<Vec<_>>();
     let (server_url, server_handle) = start_apps_server(connectors).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let genex_home = TempDir::new()?;
+    write_connectors_config(genex_home.path(), &server_url)?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1764,7 +1764,7 @@ async fn plugin_read_batches_large_app_metadata_requests() -> Result<()> {
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -1832,10 +1832,10 @@ async fn plugin_read_stops_batching_after_app_metadata_failure() -> Result<()> {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server.uri())?;
+    let genex_home = TempDir::new()?;
+    write_connectors_config(genex_home.path(), &server.uri())?;
     write_api_key_auth(
-        codex_home.path(),
+        genex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -1859,7 +1859,7 @@ async fn plugin_read_stops_batching_after_app_metadata_failure() -> Result<()> {
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -1947,10 +1947,10 @@ async fn plugin_read_hides_apps_for_api_key_auth() -> Result<()> {
     }];
     let (server_url, server_handle) = start_apps_server(connectors).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let genex_home = TempDir::new()?;
+    write_connectors_config(genex_home.path(), &server_url)?;
     std::fs::write(
-        codex_home.path().join("auth.json"),
+        genex_home.path().join("auth.json"),
         r#"{"PROVIDER_API_KEY":"sk-test-key","tokens":null,"last_refresh":null}"#,
     )?;
 
@@ -1970,7 +1970,7 @@ async fn plugin_read_hides_apps_for_api_key_auth() -> Result<()> {
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[
             ("CODEX_ACCESS_TOKEN", None),
@@ -2001,7 +2001,7 @@ async fn plugin_read_hides_apps_for_api_key_auth() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_accepts_legacy_string_default_prompt() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -2031,10 +2031,10 @@ async fn plugin_read_accepts_legacy_string_default_prompt() -> Result<()> {
   }
 }"##,
     )?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2066,7 +2066,7 @@ async fn plugin_read_accepts_legacy_string_default_prompt() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_describes_uninstalled_git_source_without_cloning() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let missing_remote_repo = repo_root.path().join("missing-remote-plugin-repo");
     let missing_remote_repo_url = url::Url::from_directory_path(&missing_remote_repo)
@@ -2092,10 +2092,10 @@ async fn plugin_read_describes_uninstalled_git_source_without_cloning() -> Resul
 }}"#
         ),
     )?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2125,7 +2125,7 @@ async fn plugin_read_describes_uninstalled_git_source_without_cloning() -> Resul
     assert!(response.plugin.apps.is_empty());
     assert!(response.plugin.mcp_servers.is_empty());
     assert!(
-        !codex_home
+        !genex_home
             .path()
             .join("plugins/.marketplace-plugin-source-staging")
             .exists()
@@ -2135,7 +2135,7 @@ async fn plugin_read_describes_uninstalled_git_source_without_cloning() -> Resul
 
 #[tokio::test]
 async fn plugin_read_returns_invalid_request_when_plugin_is_missing() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
     std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
@@ -2154,10 +2154,10 @@ async fn plugin_read_returns_invalid_request_when_plugin_is_missing() -> Result<
   ]
 }"#,
     )?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2189,7 +2189,7 @@ async fn plugin_read_returns_invalid_request_when_plugin_is_missing() -> Result<
 
 #[tokio::test]
 async fn plugin_read_returns_invalid_request_when_plugin_manifest_is_missing() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -2210,10 +2210,10 @@ async fn plugin_read_returns_invalid_request_when_plugin_manifest_is_missing() -
   ]
 }"#,
     )?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&genex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -2240,11 +2240,11 @@ async fn plugin_read_returns_invalid_request_when_plugin_manifest_is_missing() -
 }
 
 fn write_installed_plugin(
-    codex_home: &TempDir,
+    genex_home: &TempDir,
     marketplace_name: &str,
     plugin_name: &str,
 ) -> Result<()> {
-    let plugin_root = codex_home
+    let plugin_root = genex_home
         .path()
         .join("plugins/cache")
         .join(marketplace_name)
@@ -2258,9 +2258,9 @@ fn write_installed_plugin(
     Ok(())
 }
 
-fn write_plugins_enabled_config(codex_home: &TempDir) -> Result<()> {
+fn write_plugins_enabled_config(genex_home: &TempDir) -> Result<()> {
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 "#,
@@ -2335,9 +2335,9 @@ async fn batch_apps(
     }
 }
 
-fn write_connectors_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
+fn write_connectors_config(genex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{base_url}"
@@ -2353,11 +2353,11 @@ connectors = true
 }
 
 fn write_remote_plugin_catalog_config(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     base_url: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        genex_home.join("config.toml"),
         format!(
             r#"
 managed_auth_base_url = "{base_url}"
@@ -2420,7 +2420,7 @@ fn write_plugin_source(
 }
 
 fn write_plugin_share_local_path_mapping(
-    codex_home: &std::path::Path,
+    genex_home: &std::path::Path,
     remote_plugin_id: &str,
     plugin_path: &AbsolutePathBuf,
 ) -> std::io::Result<()> {
@@ -2433,9 +2433,9 @@ fn write_plugin_share_local_path_mapping(
         "localPluginPathsByRemotePluginId": local_plugin_paths_by_remote_plugin_id,
     }))
     .map_err(std::io::Error::other)?;
-    std::fs::create_dir_all(codex_home.join(".tmp"))?;
+    std::fs::create_dir_all(genex_home.join(".tmp"))?;
     std::fs::write(
-        codex_home.join(".tmp/plugin-share-local-paths-v1.json"),
+        genex_home.join(".tmp/plugin-share-local-paths-v1.json"),
         format!("{contents}\n"),
     )
 }

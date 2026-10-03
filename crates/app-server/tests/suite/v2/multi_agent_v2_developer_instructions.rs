@@ -184,7 +184,7 @@ async fn spawned_subagents_apply_configured_developer_instruction_precedence(
                 "\n\n[agents.custom]\ndescription = \"configured role\"\nconfig_file = \"./config.toml\"\n\n[agents.default]\ndescription = \"configured default role\"\nconfig_file = \"./config.toml\"",
             );
     }
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let configured_model = if case == "full history configured role" {
         "gpt-5.5"
     } else {
@@ -197,10 +197,10 @@ async fn spawned_subagents_apply_configured_developer_instruction_precedence(
     }
     config
         .with_extra_config(&feature_config)
-        .write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
+        .write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
@@ -369,7 +369,7 @@ async fn compacted_full_history_fork_replaces_parent_developer_instructions() ->
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_model("gpt-5.4")
         .with_root_config(&format!(
@@ -378,11 +378,11 @@ async fn compacted_full_history_fork_replaces_parent_developer_instructions() ->
         .with_extra_config(&format!(
             "[features.multi_agent_v2]\nenabled = true\nsubagent_developer_instructions = {CHILD_INSTRUCTIONS:?}"
         ))
-        .write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
+        .write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
@@ -621,8 +621,8 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
         ),
         None => "[features.multi_agent_v2]\nenabled = true".to_string(),
     };
-    let codex_home = TempDir::new()?;
-    let role_path = codex_home.path().join("worker.toml");
+    let genex_home = TempDir::new()?;
+    let role_path = genex_home.path().join("worker.toml");
     if let Some(agent_type) = agent_type {
         std::fs::write(
             &role_path,
@@ -640,12 +640,12 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
             "developer_instructions = {PARENT_INSTRUCTIONS:?}\nmodel_reasoning_effort = \"high\""
         ))
         .with_extra_config(&feature_config)
-        .write(codex_home.path())?;
-    write_models_cache(codex_home.path()).await?;
+        .write(genex_home.path())?;
+    write_models_cache(genex_home.path()).await?;
 
     let (thread_id, child_resume_params, baseline) = {
         let mut app_server = TestAppServer::builder()
-            .with_codex_home(codex_home.path())
+            .with_genex_home(genex_home.path())
             .build_initialized()
             .await?;
         let ThreadStartResponse { thread, .. } = app_server
@@ -809,7 +809,7 @@ features.shell_tool = false
     .await;
 
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let child_thread_id = child_resume_params.thread_id.clone();
@@ -866,7 +866,7 @@ features.shell_tool = false
     let expected = baseline;
     if history_mode == ThreadHistoryMode::Paginated {
         let state_db = StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(codex_home.path().abs()),
+            genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
             "mock_provider".into(),
         )
         .await?;

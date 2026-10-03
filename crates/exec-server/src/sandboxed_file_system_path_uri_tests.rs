@@ -131,7 +131,7 @@ fn sandbox_routing_uses_independent_read_write_policies_and_executor_temp_rules(
 async fn sandboxed_file_system_rejects_non_native_uri_as_invalid_input() {
     let runtime_paths = ExecServerRuntimePaths::new(
         std::env::current_exe().expect("current exe"),
-        /*codex_linux_sandbox_exe*/ None,
+        /*genex_linux_sandbox_exe*/ None,
     )
     .expect("runtime paths");
     let file_system = SandboxedFileSystem::new(runtime_paths.clone());

@@ -71,7 +71,7 @@ fn configure_flex_role(config: &mut Config) {
     }
     config.model_provider.request_max_retries = Some(0);
     config.model_provider.stream_max_retries = Some(0);
-    let role_path = config.codex_home.join("flex-worker.toml");
+    let role_path = config.genex_home.join("flex-worker.toml");
     std::fs::write(&role_path, "service_tier = \"flex\"\n")
         .expect("flex role should be written");
     config.agent_roles.insert(

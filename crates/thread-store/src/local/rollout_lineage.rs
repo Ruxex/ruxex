@@ -94,28 +94,28 @@ impl LocalThreadStore {
             let rollout_path = match representation {
                 LineageRepresentation::Existing => rollout_path,
                 LineageRepresentation::PlainForReference => {
-                    let outside_codex_home = || ThreadStoreError::InvalidRequest {
+                    let outside_genex_home = || ThreadStoreError::InvalidRequest {
                         message: format!(
-                            "rollout path `{}` must be in Codex home directory",
+                            "rollout path `{}` must be in Genex home directory",
                             rollout_path.display()
                         ),
                     };
                     let canonical_rollout_path = std::fs::canonicalize(rollout_path.as_path())
-                        .map_err(|_| outside_codex_home())?;
-                    // Resume can retain either the logical Codex home path or its canonical
+                        .map_err(|_| outside_genex_home())?;
+                    // Resume can retain either the logical Genex home path or its canonical
                     // target. Keep references inside canonical managed roots so nested symlinks
                     // cannot escape them.
                     let is_managed_rollout = [
-                        self.config.codex_home.join(genex_rollout::SESSIONS_SUBDIR),
+                        self.config.genex_home.join(genex_rollout::SESSIONS_SUBDIR),
                         self.config
-                            .codex_home
+                            .genex_home
                             .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR),
                     ]
                     .into_iter()
                     .filter_map(|root| std::fs::canonicalize(root).ok())
                     .any(|root| canonical_rollout_path.starts_with(root));
                     if !is_managed_rollout {
-                        return Err(outside_codex_home());
+                        return Err(outside_genex_home());
                     }
                     canonical_rollout_path
                 }
@@ -186,7 +186,7 @@ async fn resolve_rollout_path_by_id(
     store: &LocalThreadStore,
     rollout_id: ThreadId,
 ) -> ThreadStoreResult<Option<PathBuf>> {
-    genex_rollout::find_rollout_path_by_rollout_id(store.config.codex_home.as_path(), rollout_id)
+    genex_rollout::find_rollout_path_by_rollout_id(store.config.genex_home.as_path(), rollout_id)
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to locate rollout {rollout_id}: {err}"),

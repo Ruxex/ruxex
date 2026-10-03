@@ -14,18 +14,18 @@ const CUR_PROJECT_SEPARATORS: [&str; 11] =
 
 pub fn detect_recent_cur_sessions(
     external_agent_home: &Path,
-    codex_home: &Path,
+    genex_home: &Path,
 ) -> io::Result<Vec<ExternalAgentSessionMigration>> {
     detect_recent_cur_sessions_with_limits(
         external_agent_home,
-        codex_home,
+        genex_home,
         ExternalAgentSessionImportLimits::default(),
     )
 }
 
 pub(crate) fn detect_recent_cur_sessions_with_limits(
     external_agent_home: &Path,
-    codex_home: &Path,
+    genex_home: &Path,
     limits: ExternalAgentSessionImportLimits,
 ) -> io::Result<Vec<ExternalAgentSessionMigration>> {
     let projects_root = external_agent_home.join("projects");
@@ -52,7 +52,7 @@ pub(crate) fn detect_recent_cur_sessions_with_limits(
         }
     }
     detect_recent_sessions(
-        codex_home, candidates, /*require_existing_cwd*/ false, limits,
+        genex_home, candidates, /*require_existing_cwd*/ false, limits,
     )
 }
 

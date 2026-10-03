@@ -37,7 +37,7 @@ pub(crate) struct SkillsWatcher {
 impl SkillsWatcher {
     pub(crate) fn new(
         skills_service: Arc<HostSkillsService>,
-        codex_home: &AbsolutePathBuf,
+        genex_home: &AbsolutePathBuf,
         outgoing: Arc<OutgoingMessageSender>,
     ) -> Arc<Self> {
         let file_watcher = match FileWatcher::new() {
@@ -50,7 +50,7 @@ impl SkillsWatcher {
         let (subscriber, rx) = file_watcher.add_subscriber();
         let shutdown_token = CancellationToken::new();
         let shutdown_drop_guard = shutdown_token.clone().drop_guard();
-        let system_skills_root = system_cache_root_dir(codex_home);
+        let system_skills_root = system_cache_root_dir(genex_home);
         Self::spawn_event_loop(
             rx,
             skills_service,

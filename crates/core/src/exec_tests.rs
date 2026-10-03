@@ -515,7 +515,7 @@ async fn process_exec_tool_call_preserves_full_buffer_capture_policy(
         &cwd,
         std::slice::from_ref(&cwd),
         &None,
-        /*codex_self_exe*/ &None,
+        /*genex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
@@ -792,7 +792,7 @@ fn windows_restricted_token_supports_full_read_split_write_read_carveouts() {
     );
 
     // The workspace-write compatibility projection already protects top-level
-    // `.codex`, so the restricted-token overlay only needs the extra read-only
+    // `.genex`, so the restricted-token overlay only needs the extra read-only
     // docs carveout.
     let expected_deny_write_paths = vec![docs];
 
@@ -1218,7 +1218,7 @@ fn build_exec_request_projects_workspace_roots_only_for_windows_sandbox() -> Res
             &cwd,
             roots,
             &Some(temp_dir.path().join("codex-linux-sandbox")),
-            /*codex_self_exe*/ &None,
+            /*genex_self_exe*/ &None,
             /*use_legacy_landlock*/ false,
         )
     };
@@ -1373,7 +1373,7 @@ async fn process_exec_tool_call_respects_cancellation_token() -> Result<()> {
             &cwd,
             std::slice::from_ref(&cwd),
             &None,
-            /*codex_self_exe*/ &None,
+            /*genex_self_exe*/ &None,
             /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),
@@ -1455,7 +1455,7 @@ while :; do sleep 1; done"#
             &cwd,
             std::slice::from_ref(&cwd),
             &None,
-            /*codex_self_exe*/ &None,
+            /*genex_self_exe*/ &None,
             /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),

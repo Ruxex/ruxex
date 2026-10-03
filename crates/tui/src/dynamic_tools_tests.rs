@@ -10,13 +10,13 @@ use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
 async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String, String)> {
-    let codex_home = tempfile::tempdir()?;
+    let genex_home = tempfile::tempdir()?;
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .genex_home(genex_home.path().to_path_buf())
         .build()
         .await?;
     let target = create_fake_paginated_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2026-01-02T00-00-00",
         "2026-01-02T00:00:00Z",
         "Persisted test task",
@@ -24,7 +24,7 @@ async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String,
         /*git_info*/ None,
     )
     .map_err(|error| color_eyre::eyre::eyre!("failed to create test rollout: {error}"))?;
-    let path = rollout_path(codex_home.path(), "2026-01-02T00-00-00", &target);
+    let path = rollout_path(genex_home.path(), "2026-01-02T00-00-00", &target);
     let mut records = std::fs::read_to_string(&path)?
         .lines()
         .map(serde_json::from_str::<Value>)
@@ -96,7 +96,7 @@ async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String,
             ResumeModelSettings::RestoreFromThread,
         )
         .await?;
-    Ok((codex_home, server, source, target))
+    Ok((genex_home, server, source, target))
 }
 
 async fn call_tool(
@@ -377,7 +377,7 @@ fn activity_metadata_is_retained_without_including_outputs() -> color_eyre::Resu
 
 #[tokio::test]
 async fn task_management_tools_use_existing_app_server_operations() -> color_eyre::Result<()> {
-    let (codex_home, server, source, target) = test_server().await?;
+    let (genex_home, server, source, target) = test_server().await?;
 
     let listed = response_json(call_tool(&server, &source, "list_threads", json!({})).await);
     assert!(
@@ -387,7 +387,7 @@ async fn task_management_tools_use_existing_app_server_operations() -> color_eyr
     );
 
     let legacy = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2026-01-03T00-00-00",
         "2026-01-03T00:00:00Z",
         "Legacy test task",
@@ -460,7 +460,7 @@ async fn task_management_tools_use_existing_app_server_operations() -> color_eyr
     let mut expected_archived = vec![target.clone()];
     for day in 4..12 {
         let archived_id = create_fake_paginated_rollout(
-            codex_home.path(),
+            genex_home.path(),
             &format!("2026-01-{day:02}T00-00-00"),
             &format!("2026-01-{day:02}T00:00:00Z"),
             "Archived task with a deliberately descriptive pagination title",
@@ -528,7 +528,7 @@ async fn task_management_tools_use_existing_app_server_operations() -> color_eyr
 
 #[tokio::test]
 async fn wait_threads_returns_bounded_snapshots_and_rejects_self_wait() -> color_eyre::Result<()> {
-    let (_codex_home, server, source, target) = test_server().await?;
+    let (_genex_home, server, source, target) = test_server().await?;
 
     let snapshot = response_json(
         call_tool(
@@ -622,7 +622,7 @@ async fn wait_threads_returns_bounded_snapshots_and_rejects_self_wait() -> color
 
 #[tokio::test]
 async fn task_creation_and_followup_start_background_turns() -> color_eyre::Result<()> {
-    let (_codex_home, server, source, target) = test_server().await?;
+    let (_genex_home, server, source, target) = test_server().await?;
 
     for (tool, arguments) in [
         (

@@ -96,7 +96,7 @@ async fn create_process_context(_use_remote: bool) -> Result<ProcessContext> {
 
 #[cfg(target_os = "macos")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn codex_home_symlink_opt_out_respects_host_config_and_scope() -> Result<()> {
+async fn genex_home_symlink_opt_out_respects_host_config_and_scope() -> Result<()> {
     use genex_exec_server::WriteFileOptions;
     use common::exec_server::exec_server_with_env;
     use std::os::unix::fs::symlink;
@@ -105,23 +105,23 @@ async fn codex_home_symlink_opt_out_respects_host_config_and_scope() -> Result<(
     let home = TempDir::new()?;
     let target = TempDir::new()?;
     let alias = home.path().join("visualizations");
-    let other_alias = workspace.path().join(".codex/visualizations");
-    std::fs::create_dir(workspace.path().join(".codex"))?;
+    let other_alias = workspace.path().join(".genex/visualizations");
+    std::fs::create_dir(workspace.path().join(".genex"))?;
     symlink(target.path(), &alias)?;
     symlink(target.path(), &other_alias)?;
     std::fs::write(
-        workspace.path().join(".codex/config.toml"),
-        "allow_symlinked_codex_home = true\n",
+        workspace.path().join(".genex/config.toml"),
+        "allow_symlinked_genex_home = true\n",
     )?;
 
     for enabled in [None, Some(false), Some(true)] {
         std::fs::write(
             home.path().join("config.toml"),
             enabled.map_or_else(String::new, |enabled| {
-                format!("allow_symlinked_codex_home = {enabled}\n")
+                format!("allow_symlinked_genex_home = {enabled}\n")
             }),
         )?;
-        let mut server = exec_server_with_env([("CODEX_HOME", home.path())], &[]).await?;
+        let mut server = exec_server_with_env([("GENEX_HOME", home.path())], &[]).await?;
         let environment = Environment::create_for_tests(Some(server.websocket_url().to_string()))?;
         for root in [alias.as_path(), other_alias.as_path(), workspace.path()] {
             let mut policy = FileSystemSandboxPolicy::read_only();
@@ -355,7 +355,7 @@ async fn shell_snapshot_v2_filters_profile_exports_and_stays_in_memory(
     assert_eq!(std::fs::read_to_string(home.path().join("captures"))?, "x");
     assert!(!std::fs::read(home.path().join("tool-captures"))?.is_empty());
     if let Some(server) = context._server {
-        assert!(!server.codex_home().join("shell_snapshots").exists());
+        assert!(!server.genex_home().join("shell_snapshots").exists());
     }
     Ok(())
 }

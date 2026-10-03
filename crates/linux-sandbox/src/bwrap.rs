@@ -3,7 +3,7 @@
 //! This module mirrors the semantics used by the macOS Seatbelt sandbox:
 //! - the filesystem is read-only by default,
 //! - explicit writable roots are layered on top, and
-//! - sensitive subpaths such as `.git`, `.agents`, and `.codex` remain
+//! - sensitive subpaths such as `.git`, `.agents`, and `.genex` remain
 //!   read-only even when their parent root is writable.
 //!
 //! Restricted execution also hides WSLg's duplicate distro root so it cannot
@@ -465,7 +465,7 @@ fn create_filesystem_args(
                 };
                 // Automatic repo-metadata read masks are skipped here so the
                 // metadata handling below can apply the root-scoped
-                // protection consistently for `.git`, `.agents`, and `.codex`.
+                // protection consistently for `.git`, `.agents`, and `.genex`.
                 // User-authored `read` rules for other subpaths and `none`
                 // rules should keep their normal bwrap behavior, which can mask
                 // the first missing component to prevent creation under writable
@@ -473,7 +473,7 @@ fn create_filesystem_args(
                 let project_subpath = Path::new(subpath);
                 if project_subpath != Path::new(".git")
                     && project_subpath != Path::new(".agents")
-                    && project_subpath != Path::new(".codex")
+                    && project_subpath != Path::new(".genex")
                 {
                     return None;
                 }
@@ -1838,7 +1838,7 @@ mod tests {
         assert_empty_file_bound_without_perms(&args.args, &blocked);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".git"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".codex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
         assert_eq!(args.preserved_files.len(), 1);
         assert_eq!(
             synthetic_mount_target_paths(&args),
@@ -1846,7 +1846,7 @@ mod tests {
                 blocked.clone(),
                 workspace.join(".git"),
                 workspace.join(".agents"),
-                workspace.join(".codex"),
+                workspace.join(".genex"),
             ]
         );
         assert!(
@@ -1877,13 +1877,13 @@ mod tests {
 
         assert_empty_file_bound_without_perms(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".codex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
             vec![
                 dot_git.clone(),
                 workspace.join(".agents"),
-                workspace.join(".codex"),
+                workspace.join(".genex"),
             ]
         );
         assert!(
@@ -1922,10 +1922,10 @@ mod tests {
             .expect("filesystem args");
         assert_empty_directory_mounted_read_only(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".codex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
-            vec![workspace.join(".codex"), dot_git, workspace.join(".agents")],
+            vec![workspace.join(".genex"), dot_git, workspace.join(".agents")],
         );
         assert!(
             protected_create_target_paths(&args).is_empty(),
@@ -1959,10 +1959,10 @@ mod tests {
             .expect("filesystem args");
         assert_empty_directory_mounted_read_only(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".codex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
-            vec![workspace.join(".codex"), dot_git, workspace.join(".agents")],
+            vec![workspace.join(".genex"), dot_git, workspace.join(".agents")],
         );
         assert!(
             protected_create_target_paths(&args).is_empty(),
@@ -2037,7 +2037,7 @@ mod tests {
             },
             FileSystemSandboxEntry {
                 path: FileSystemPath::Special {
-                    value: FileSystemSpecialPath::project_roots(Some(".codex".into())),
+                    value: FileSystemSpecialPath::project_roots(Some(".genex".into())),
                 },
                 access: FileSystemAccessMode::Read,
                 missing_path_behavior: None,
@@ -2048,7 +2048,7 @@ mod tests {
             .expect("filesystem args");
         let dot_git = path_to_string(&temp_dir.path().join(".git"));
         let dot_agents = path_to_string(&temp_dir.path().join(".agents"));
-        let dot_codex = path_to_string(&temp_dir.path().join(".codex"));
+        let dot_codex = path_to_string(&temp_dir.path().join(".genex"));
 
         assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_git));
         assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_agents));
@@ -2124,10 +2124,10 @@ mod tests {
             vec![
                 PathBuf::from("/.git"),
                 PathBuf::from("/.agents"),
-                PathBuf::from("/.codex"),
+                PathBuf::from("/.genex"),
                 PathBuf::from("/dev/.git"),
                 PathBuf::from("/dev/.agents"),
-                PathBuf::from("/dev/.codex"),
+                PathBuf::from("/dev/.genex"),
             ]
         );
         let daemon_directory =
@@ -2176,9 +2176,9 @@ mod tests {
                 "--perms".to_string(),
                 "555".to_string(),
                 "--tmpfs".to_string(),
-                "/.codex".to_string(),
+                "/.genex".to_string(),
                 "--remount-ro".to_string(),
-                "/.codex".to_string(),
+                "/.genex".to_string(),
                 "--ro-bind".to_string(),
                 path_to_string(&synthetic_mount_registry_root()),
                 path_to_string(&synthetic_mount_registry_root()),
@@ -2204,9 +2204,9 @@ mod tests {
                 "--perms".to_string(),
                 "555".to_string(),
                 "--tmpfs".to_string(),
-                "/dev/.codex".to_string(),
+                "/dev/.genex".to_string(),
                 "--remount-ro".to_string(),
-                "/dev/.codex".to_string(),
+                "/dev/.genex".to_string(),
             ]
         );
     }

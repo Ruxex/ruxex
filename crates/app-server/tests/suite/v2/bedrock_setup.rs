@@ -20,11 +20,11 @@ use tokio::time::timeout;
 const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 60);
 
 async fn bedrock_app_server(
-    codex_home: &Path,
+    genex_home: &Path,
     environment: &[(&str, Option<&str>)],
 ) -> Result<TestAppServer> {
-    let aws_config = codex_home.join("aws-config");
-    let aws_credentials = codex_home.join("aws-credentials");
+    let aws_config = genex_home.join("aws-config");
+    let aws_credentials = genex_home.join("aws-credentials");
     std::fs::write(&aws_config, "[profile engineering]\nregion = us-west-2\n")?;
     std::fs::write(
         &aws_credentials,
@@ -34,7 +34,7 @@ async fn bedrock_app_server(
     let aws_config_path = aws_config.to_string_lossy();
     let aws_credentials_path = aws_credentials.to_string_lossy();
     TestAppServer::builder()
-        .with_codex_home(codex_home)
+        .with_genex_home(genex_home)
         .with_env_overrides(&[
             ("AWS_CONFIG_FILE", Some(aws_config_path.as_ref())),
             (
@@ -57,9 +57,9 @@ async fn bedrock_app_server(
 
 #[tokio::test]
 async fn discover_bedrock_profiles_and_environment_credentials() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut app_server = bedrock_app_server(
-        codex_home.path(),
+        genex_home.path(),
         &[
             ("AWS_PROFILE", Some("engineering")),
             ("AWS_ACCESS_KEY_ID", Some("environment-id")),
@@ -102,7 +102,7 @@ async fn discover_bedrock_profiles_and_environment_credentials() -> Result<()> {
     assert_eq!(response, BedrockSetupResponse {});
 
     let config: toml::Value = toml::from_str(&std::fs::read_to_string(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
     )?)?;
     assert_eq!(
         config,
@@ -113,16 +113,16 @@ async fn discover_bedrock_profiles_and_environment_credentials() -> Result<()> {
         }
         .into()
     );
-    assert!(!codex_home.path().join(".env").exists());
+    assert!(!genex_home.path().join(".env").exists());
 
     Ok(())
 }
 
 #[tokio::test]
 async fn setup_bedrock_profile_and_environment() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let config_path = codex_home.path().join("config.toml");
-    let dotenv_path = codex_home.path().join(".env");
+    let genex_home = TempDir::new()?;
+    let config_path = genex_home.path().join("config.toml");
+    let dotenv_path = genex_home.path().join(".env");
     let existing_config = "[model_providers.amazon-bedrock]\nhttp_headers = { X-Existing = \"preserved\" }\n\
          [model_providers.amazon-bedrock.aws]\nprofile = \"old\"\nregion = \"us-east-1\"\n\
          auth_refresh = { command = \"aws\", args = [\"login\"] }\n";
@@ -131,7 +131,7 @@ async fn setup_bedrock_profile_and_environment() -> Result<()> {
          export AWS_SECRET_ACCESS_KEY=old-secret\nAWS_SESSION_TOKEN=stale-token\n";
     std::fs::write(&dotenv_path, existing_dotenv)?;
     let mut app_server = bedrock_app_server(
-        codex_home.path(),
+        genex_home.path(),
         &[
             ("AWS_ACCESS_KEY_ID", Some("environment-id")),
             ("AWS_SECRET_ACCESS_KEY", Some("environment-secret")),
@@ -270,8 +270,8 @@ async fn setup_bedrock_profile_and_environment() -> Result<()> {
 
 #[tokio::test]
 async fn setup_bedrock_rejects_invalid_or_conflicting_credentials() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let mut app_server = bedrock_app_server(codex_home.path(), &[]).await?;
+    let genex_home = TempDir::new()?;
+    let mut app_server = bedrock_app_server(genex_home.path(), &[]).await?;
 
     for (params, expected_error) in [
         (
@@ -305,8 +305,8 @@ async fn setup_bedrock_rejects_invalid_or_conflicting_credentials() -> Result<()
             error.error.message
         );
     }
-    assert!(!codex_home.path().join(".env").exists());
-    assert!(!codex_home.path().join("config.toml").exists());
+    assert!(!genex_home.path().join(".env").exists());
+    assert!(!genex_home.path().join("config.toml").exists());
 
     let home = TempDir::new()?;
     std::fs::write(

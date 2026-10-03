@@ -34,7 +34,7 @@ async fn thread_environments_follow_the_loaded_thread_selection() -> Result<()> 
     let home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri()).write(home.path())?;
     let mut first = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized()
         .await?;
     let selection = first.auto_env_params()?;
@@ -95,7 +95,7 @@ async fn thread_environments_follow_the_loaded_thread_selection() -> Result<()> 
 
     // Unloaded reads have no live selection. Resume reports its newly selected defaults.
     let mut second = TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized()
         .await?;
     assert_read_and_list_environments(&mut second, &thread_id, &None).await?;

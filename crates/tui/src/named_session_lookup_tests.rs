@@ -30,14 +30,14 @@ use crate::tests::start_test_embedded_app_server;
 
 async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
     ConfigBuilder::default()
-        .codex_home(temp_dir.path().to_path_buf())
+        .genex_home(temp_dir.path().to_path_buf())
         .build()
         .await
 }
 
 async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::StateRuntime>> {
     let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(config.codex_home.as_path().abs()),
+        genex_state::SqliteConfig::new_for_testing(config.genex_home.as_path().abs()),
         config.model_provider_id.clone(),
     )
     .await
@@ -64,7 +64,7 @@ async fn lookup_name(
     );
     let target = lookup(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         name,
         collections,
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -101,7 +101,7 @@ fn thread_metadata(
         serde_json::from_value(serde_json::json!("cli"))
             .expect("cli session source should deserialize"),
     );
-    builder.cwd = config.codex_home.join("project").to_path_buf();
+    builder.cwd = config.genex_home.join("project").to_path_buf();
     let mut metadata = builder.build(config.model_provider_id.as_str());
     metadata.title = title.to_string();
     metadata.first_user_message = Some("preview text".to_string());
@@ -118,7 +118,7 @@ fn write_rollout(
     history_mode: ThreadHistoryMode,
 ) -> color_eyre::Result<PathBuf> {
     let rollout_path = config
-        .codex_home
+        .genex_home
         .join("sessions/2025/02/01")
         .join(format!("rollout-2025-02-01T10-00-00-{thread_id}.jsonl"));
     std::fs::create_dir_all(rollout_path.parent().expect("rollout parent"))?;
@@ -127,7 +127,7 @@ fn write_rollout(
             session_id: thread_id.into(),
             id: thread_id,
             timestamp: timestamp.to_string(),
-            cwd: config.codex_home.join("project").to_path_buf(),
+            cwd: config.genex_home.join("project").to_path_buf(),
             originator: "codex".to_string(),
             cli_version: "0.0.0".to_string(),
             source,
@@ -311,7 +311,7 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
     );
     let error = lookup(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         "same-label",
         &[SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -321,7 +321,7 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
     .expect_err("duplicate labels should require an ID");
     let unverified = lookup(
         &mut app_server,
-        config.codex_home.as_path(),
+        config.genex_home.as_path(),
         "other-1",
         &[SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -503,7 +503,7 @@ async fn uses_listed_thread_when_older_server_cannot_read_it() -> color_eyre::Re
         );
         let found = lookup(
             &mut remote,
-            config.codex_home.as_path(),
+            config.genex_home.as_path(),
             "saved-session",
             &[SessionCollection::Active],
             &[resume_source_kinds(/*include_non_interactive*/ false)],

@@ -14,7 +14,7 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 60);
 
 async fn start_server(home: &TempDir) -> Result<TestAppServer> {
     TestAppServer::builder()
-        .with_codex_home(home.path())
+        .with_genex_home(home.path())
         .build_initialized_with_timeout(READ_TIMEOUT)
         .await
 }

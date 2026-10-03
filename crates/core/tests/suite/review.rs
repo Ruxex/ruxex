@@ -87,8 +87,8 @@ async fn review_op_emits_lifecycle_and_review_output() {
         /*expected_requests*/ 1,
     )
     .await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, codex_home.clone(), |_| {}).await;
+    let genex_home = Arc::new(TempDir::new().unwrap());
+    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     // Submit review request.
     codex
@@ -292,7 +292,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         "assistant review output contains user_action markup"
     );
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -309,8 +309,8 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
         .set_delay(Duration::from_secs(30)),
     )
     .await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, codex_home.clone(), |_| {}).await;
+    let genex_home = Arc::new(TempDir::new().unwrap());
+    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     // Consume the parent session's own empty startup round before starting the review.
     wait_for_event(&codex, |event| {
@@ -381,7 +381,7 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
 
     assert_eq!(request_log.requests().len(), 1);
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -399,8 +399,8 @@ async fn review_op_with_plain_text_emits_review_fallback() {
         /*expected_requests*/ 1,
     )
     .await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, codex_home.clone(), |_| {}).await;
+    let genex_home = Arc::new(TempDir::new().unwrap());
+    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     codex
         .submit(Op::Review {
@@ -431,7 +431,7 @@ async fn review_op_with_plain_text_emits_review_fallback() {
     assert_eq!(expected, review);
     let _complete = wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -455,8 +455,8 @@ async fn review_filters_agent_message_related_events() {
         /*expected_requests*/ 1,
     )
     .await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, codex_home.clone(), |_| {}).await;
+    let genex_home = Arc::new(TempDir::new().unwrap());
+    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     codex
         .submit(Op::Review {
@@ -493,7 +493,7 @@ async fn review_filters_agent_message_related_events() {
     .await;
     assert!(saw_entered && saw_exited, "missing review lifecycle events");
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -529,8 +529,8 @@ async fn review_does_not_emit_agent_message_on_structured_output() {
         /*expected_requests*/ 1,
     )
     .await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, codex_home.clone(), |_| {}).await;
+    let genex_home = Arc::new(TempDir::new().unwrap());
+    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     codex
         .submit(Op::Review {
@@ -569,7 +569,7 @@ async fn review_does_not_emit_agent_message_on_structured_output() {
     assert_eq!(1, agent_messages, "expected exactly one AgentMessage event");
     assert!(saw_entered && saw_exited, "missing review lifecycle events");
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -592,9 +592,9 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
 
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let genex_home = Arc::new(TempDir::new().unwrap());
     let test = test_genex()
-        .with_home(codex_home.clone())
+        .with_home(genex_home.clone())
         .with_model_info_override("gpt-5.2", |model_info| {
             model_info.service_tiers.clear();
             model_info
@@ -744,7 +744,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .expect("review request should include its thread ID")
         .to_string();
     let review_rollout_path = find_thread_path_by_id_str(
-        codex_home.path(),
+        genex_home.path(),
         &review_thread_id,
         /*state_db_ctx*/ None,
     )
@@ -794,7 +794,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         })
     );
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -873,9 +873,9 @@ async fn review_uses_custom_review_model_from_config() {
 
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let genex_home = Arc::new(TempDir::new().unwrap());
     let test = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("gpt-4.1".to_string());
@@ -886,7 +886,7 @@ async fn review_uses_custom_review_model_from_config() {
         .await
         .expect("custom review conversation should be created");
     let codex = Arc::clone(&test.codex);
-    std::fs::remove_file(codex_home.path().join("models_cache.json"))
+    std::fs::remove_file(genex_home.path().join("models_cache.json"))
         .expect("initial empty model catalog should be cached");
     let mut models = genex_models_manager::test_support::test_models_response()
         .expect("bundled model catalog should parse");
@@ -942,7 +942,7 @@ async fn review_uses_custom_review_model_from_config() {
     assert_eq!(turn_metadata["node_repl_disabled"], true);
     assert_eq!(models_mock.requests().len(), 1);
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -954,9 +954,9 @@ async fn review_uses_session_model_when_review_model_unset() {
 
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let genex_home = Arc::new(TempDir::new().unwrap());
     let test = test_genex()
-        .with_home(Arc::clone(&codex_home))
+        .with_home(Arc::clone(&genex_home))
         .with_config(|config| {
             config.model = Some("gpt-5.4".to_string());
             config.review_model = None;
@@ -1003,7 +1003,7 @@ async fn review_uses_session_model_when_review_model_unset() {
     );
     assert!(!request.has_content_kinds(&["current_time.reminder"]));
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -1020,9 +1020,9 @@ async fn review_input_isolated_from_parent_history() {
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
 
     // Seed a parent session history via resume file with both user + assistant items.
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let genex_home = Arc::new(TempDir::new().unwrap());
 
-    let session_file = codex_home.path().join("resume.jsonl");
+    let session_file = genex_home.path().join("resume.jsonl");
     {
         let mut f = tokio::fs::File::create(&session_file).await.unwrap();
         let convo_id = Uuid::new_v4();
@@ -1085,7 +1085,7 @@ async fn review_input_isolated_from_parent_history() {
             .unwrap();
     }
     let codex =
-        resume_conversation_for_server(&server, codex_home.clone(), session_file.clone(), |_| {})
+        resume_conversation_for_server(&server, genex_home.clone(), session_file.clone(), |_| {})
             .await;
 
     // Submit review request; it must start fresh (no parent history in `input`).
@@ -1185,7 +1185,7 @@ async fn review_input_isolated_from_parent_history() {
         "expected user interruption message in rollout"
     );
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -1200,8 +1200,8 @@ async fn review_history_surfaces_in_parent_session() {
         /*expected_requests*/ 2,
     )
     .await;
-    let codex_home = Arc::new(TempDir::new().unwrap());
-    let codex = new_conversation_for_server(&server, codex_home.clone(), |_| {}).await;
+    let genex_home = Arc::new(TempDir::new().unwrap());
+    let codex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
 
     // 1) Run a review turn that produces an assistant message (isolated in child).
     codex
@@ -1278,7 +1278,7 @@ async fn review_history_surfaces_in_parent_session() {
         "review assistant output missing from parent turn input"
     );
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -1331,9 +1331,9 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
         .trim()
         .to_string();
 
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let genex_home = Arc::new(TempDir::new().unwrap());
     let initial_cwd_path = initial_cwd.path().to_path_buf();
-    let codex = new_conversation_for_server(&server, codex_home.clone(), move |config| {
+    let codex = new_conversation_for_server(&server, genex_home.clone(), move |config| {
         config.cwd = initial_cwd_path.abs();
     })
     .await;
@@ -1380,7 +1380,7 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
         "expected review prompt to include merge-base sha {head_sha}"
     );
 
-    let _codex_home_guard = codex_home;
+    let _genex_home_guard = genex_home;
     server.verify().await;
 }
 
@@ -1410,7 +1410,7 @@ async fn start_responses_server_with_sse(
 /// Create a conversation configured to talk to the provided mock server.
 async fn new_conversation_for_server<F>(
     server: &MockServer,
-    codex_home: Arc<TempDir>,
+    genex_home: Arc<TempDir>,
     mutator: F,
 ) -> Arc<GenexThread>
 where
@@ -1418,7 +1418,7 @@ where
 {
     let base_url = format!("{}/v1", server.uri());
     let mut builder = test_genex()
-        .with_home(codex_home)
+        .with_home(genex_home)
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url.clone());
             mutator(config);
@@ -1433,7 +1433,7 @@ where
 /// Create a conversation resuming from a rollout file, configured to talk to the provided mock server.
 async fn resume_conversation_for_server<F>(
     server: &MockServer,
-    codex_home: Arc<TempDir>,
+    genex_home: Arc<TempDir>,
     resume_path: std::path::PathBuf,
     mutator: F,
 ) -> Arc<GenexThread>
@@ -1442,13 +1442,13 @@ where
 {
     let base_url = format!("{}/v1", server.uri());
     let mut builder = test_genex()
-        .with_home(codex_home.clone())
+        .with_home(genex_home.clone())
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url.clone());
             mutator(config);
         });
     builder
-        .resume(server, codex_home, resume_path)
+        .resume(server, genex_home, resume_path)
         .await
         .expect("resume conversation")
         .codex

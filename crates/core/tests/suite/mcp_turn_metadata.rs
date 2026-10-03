@@ -389,7 +389,7 @@ fn set_calendar_approval_mode(config: &mut Config, approval_mode: AppToolApprova
         AppToolApproval::Writes => "writes",
         AppToolApproval::Approve => "approve",
     };
-    let user_config_path = config.codex_home.join("config.toml").abs();
+    let user_config_path = config.genex_home.join("config.toml").abs();
     let user_config = toml::from_str(&format!(
         r#"
 [apps.calendar]
@@ -414,7 +414,7 @@ fn set_default_app_approval_mode_and_reviewer(
         AppToolApproval::Writes => "writes",
         AppToolApproval::Approve => "approve",
     };
-    let user_config_path = config.codex_home.join("config.toml").abs();
+    let user_config_path = config.genex_home.join("config.toml").abs();
     let user_config = toml::from_str(&format!(
         r#"
 [apps._default]
@@ -879,7 +879,7 @@ approvals_reviewer = "auto_review"
                 .expect("apps config should parse");
                 config.config_layer_stack = config
                     .config_layer_stack
-                    .with_user_config(&config.codex_home.join("config.toml").abs(), user_config)
+                    .with_user_config(&config.genex_home.join("config.toml").abs(), user_config)
                     .expect("apps user config should be valid");
             } else {
                 set_default_app_approval_mode_and_reviewer(
@@ -1101,7 +1101,7 @@ default_tools_approval_mode = "{selected_link_mode}"
                 .expect("test config should allow feature update");
             config.config_layer_stack = config
                 .config_layer_stack
-                .with_user_config(&config.codex_home.join("config.toml").abs(), user_config)
+                .with_user_config(&config.genex_home.join("config.toml").abs(), user_config)
                 .expect("apps user config should be valid");
         });
     let test = builder.build_with_auto_env(&server).await?;

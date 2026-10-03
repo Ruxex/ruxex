@@ -44,7 +44,7 @@ const EXEC_SERVER_START_TIMEOUT: Duration = Duration::from_secs(30);
 const TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 
 pub(super) struct ExecServerProcess {
-    _codex_home: TempDir,
+    _genex_home: TempDir,
     child: Child,
     _stdout: BufReader<ChildStdout>,
     pub(super) websocket_url: String,
@@ -52,10 +52,10 @@ pub(super) struct ExecServerProcess {
 
 impl ExecServerProcess {
     pub(super) async fn start() -> Result<Self> {
-        let codex_home = TempDir::new()?;
+        let genex_home = TempDir::new()?;
         let mut child = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
             .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
-            .env("CODEX_HOME", codex_home.path())
+            .env("GENEX_HOME", genex_home.path())
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -85,7 +85,7 @@ impl ExecServerProcess {
         };
 
         Ok(Self {
-            _codex_home: codex_home,
+            _genex_home: genex_home,
             child,
             _stdout: stdout,
             websocket_url,

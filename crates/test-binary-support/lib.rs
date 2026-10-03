@@ -8,7 +8,7 @@ use tempfile::TempDir;
 pub struct TestBinaryDispatchGuard {
     _genex_home: TempDir,
     arg0: Arg0PathEntryGuard,
-    _previous_codex_home: Option<std::ffi::OsString>,
+    _previous_genex_home: Option<std::ffi::OsString>,
 }
 
 impl TestBinaryDispatchGuard {
@@ -46,31 +46,31 @@ where
         TestBinaryDispatchMode::InstallAliases => {
             let genex_home = match tempfile::Builder::new().prefix(genex_home_prefix).tempdir() {
                 Ok(genex_home) => genex_home,
-                Err(error) => panic!("failed to create test CODEX_HOME: {error}"),
+                Err(error) => panic!("failed to create test GENEX_HOME: {error}"),
             };
-            let previous_codex_home = std::env::var_os("CODEX_HOME");
+            let previous_genex_home = std::env::var_os("GENEX_HOME");
             // Safety: this runs from a test ctor before test threads begin.
             unsafe {
-                std::env::set_var("CODEX_HOME", genex_home.path());
+                std::env::set_var("GENEX_HOME", genex_home.path());
             }
 
             let arg0 = match arg0_dispatch() {
                 Some(arg0) => arg0,
                 None => panic!("failed to configure arg0 dispatch aliases for test binary"),
             };
-            match previous_codex_home.as_ref() {
+            match previous_genex_home.as_ref() {
                 Some(value) => unsafe {
-                    std::env::set_var("CODEX_HOME", value);
+                    std::env::set_var("GENEX_HOME", value);
                 },
                 None => unsafe {
-                    std::env::remove_var("CODEX_HOME");
+                    std::env::remove_var("GENEX_HOME");
                 },
             }
 
             Some(TestBinaryDispatchGuard {
                 _genex_home: genex_home,
                 arg0,
-                _previous_codex_home: previous_codex_home,
+                _previous_genex_home: previous_genex_home,
             })
         }
     }

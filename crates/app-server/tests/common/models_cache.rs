@@ -71,11 +71,11 @@ fn preset_to_info(preset: &ModelPreset, priority: i32) -> ModelInfo {
     }
 }
 
-/// Write a models_cache.json file to the codex home directory.
+/// Write a models_cache.json file to the genex home directory.
 /// This prevents ModelsManager from making network requests to refresh models.
 /// The cache will be treated as fresh (within TTL) and used instead of fetching from the network.
 /// Uses bundled-catalog-derived presets, converted to ModelInfo format.
-pub async fn write_models_cache(codex_home: &Path) -> std::io::Result<()> {
+pub async fn write_models_cache(genex_home: &Path) -> std::io::Result<()> {
     // Get a stable bundled-catalog-derived preset list and filter for picker-visible entries.
     let presets: Vec<&ModelPreset> = all_model_presets()
         .iter()
@@ -93,22 +93,22 @@ pub async fn write_models_cache(codex_home: &Path) -> std::io::Result<()> {
         })
         .collect();
 
-    write_models_cache_with_models(codex_home, models).await
+    write_models_cache_with_models(genex_home, models).await
 }
 
 /// Write a models_cache.json file with specific models.
 /// Useful when tests need specific models to be available.
 pub async fn write_models_cache_with_models(
-    codex_home: &Path,
+    genex_home: &Path,
     models: Vec<ModelInfo>,
 ) -> std::io::Result<()> {
     let config = genex_core::config::ConfigBuilder::default()
         .loader_overrides(genex_config::LoaderOverrides::without_managed_config_for_tests())
-        .codex_home(codex_home.to_path_buf())
+        .genex_home(genex_home.to_path_buf())
         .build()
         .await?;
     let auth = genex_login::GenexAuth::from_auth_storage(
-        codex_home,
+        genex_home,
         config.cli_auth_credentials_store_mode,
         Some(&config.managed_auth_base_url),
         config.auth_keyring_backend_kind(),
@@ -120,6 +120,6 @@ pub async fn write_models_cache_with_models(
         auth.as_ref(),
         models,
     );
-    let cache_path = codex_home.join("models_cache.json");
+    let cache_path = genex_home.join("models_cache.json");
     std::fs::write(cache_path, serde_json::to_string_pretty(&cache)?)
 }

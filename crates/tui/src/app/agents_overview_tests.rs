@@ -281,7 +281,7 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
         };
         ids.push(ThreadId::from_string(
             &app_test_support::create_fake_rollout_with_source(
-                &app.config.codex_home,
+                &app.config.genex_home,
                 &format!("2025-01-{day:02}T12-00-00"),
                 &format!("2025-01-{day:02}T12:00:00Z"),
                 &format!("Task {day}"),
@@ -297,7 +297,7 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
         )?);
     }
     let message_path = app_test_support::rollout_path(
-        &app.config.codex_home,
+        &app.config.genex_home,
         "2025-01-21T12-00-00",
         &ids[20].to_string(),
     );
@@ -326,7 +326,7 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
     }
     // A newer rollout missing from the index must not trigger a startup filesystem scan.
     app_test_support::create_fake_rollout_with_source(
-        &app.config.codex_home,
+        &app.config.genex_home,
         "2025-01-23T12-00-00",
         "2025-01-23T12:00:00Z",
         "Unindexed task",
@@ -413,11 +413,11 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
 
     // An unloaded row can be selected through the same flow as a loaded row.
     std::fs::write(
-        app.config.codex_home.join("config.toml"),
+        app.config.genex_home.join("config.toml"),
         "[tui]\nresume_cwd = \"session\"\n",
     )?;
     crate::legacy_core::config::set_project_trust_level(
-        app.config.codex_home.as_path(),
+        app.config.genex_home.as_path(),
         &test_path_buf("/"),
         genex_protocol::config_types::TrustLevel::Trusted,
     )
@@ -697,7 +697,7 @@ async fn root_switch_loads_local_preferences_from_disk() -> Result<()> {
         .await?;
     let target_thread_id = ThreadId::from_string(
         &app_test_support::create_fake_rollout(
-            app.config.codex_home.as_path(),
+            app.config.genex_home.as_path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Target task",
@@ -738,7 +738,7 @@ async fn root_switch_preserves_idle_root_with_running_subagent() -> Result<()> {
         .await?;
     let target_thread_id = ThreadId::from_string(
         &app_test_support::create_fake_rollout(
-            app.config.codex_home.as_path(),
+            app.config.genex_home.as_path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Target task",
@@ -803,7 +803,7 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
     let mut app = make_test_app().await;
     trust_fixture_folders(&mut app);
     std::fs::write(
-        app.config.codex_home.join("config.toml"),
+        app.config.genex_home.join("config.toml"),
         "[tui]\nresume_cwd = \"session\"\n",
     )?;
     let mut server_config = app.config.clone();
@@ -818,7 +818,7 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
     for day in 1..=5 {
         thread_ids.push(ThreadId::from_string(
             &app_test_support::create_fake_rollout(
-                &server_config.codex_home,
+                &server_config.genex_home,
                 &format!("2025-01-{day:02}T12-00-00"),
                 &format!("2025-01-{day:02}T12:00:00Z"),
                 "Historical session",
@@ -876,7 +876,7 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
         if thread_id == thread_ids[2] {
             // A session-only /permissions choice must survive subsequent cold resumes.
             std::fs::write(
-                app.config.codex_home.join("config.toml"),
+                app.config.genex_home.join("config.toml"),
                 "approvals_reviewer = \"auto_review\"\n[tui]\nresume_cwd = \"session\"\n",
             )?;
             app.harness_overrides.sandbox_mode =
@@ -915,7 +915,7 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
             ),
         );
     }
-    let requirements = app.config.codex_home.join("requirements.toml");
+    let requirements = app.config.genex_home.join("requirements.toml");
     std::fs::write(
         &requirements,
         "allowed_approvals_reviewers = [\"auto_review\"]\n",
@@ -944,10 +944,10 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
 #[tokio::test]
 async fn restored_server_permission_profile_survives_cd_without_turn_override() -> Result<()> {
     let mut app = make_test_app().await;
-    let destination = app.config.codex_home.join("destination");
+    let destination = app.config.genex_home.join("destination");
     std::fs::create_dir(&destination)?;
     crate::legacy_core::config::set_project_trust_level(
-        app.config.codex_home.as_path(),
+        app.config.genex_home.as_path(),
         &destination,
         genex_protocol::config_types::TrustLevel::Trusted,
     )
@@ -1154,7 +1154,7 @@ async fn resume_picker_round_trip_preserves_each_threads_input() -> Result<()> {
     let mut app = make_test_app().await;
     trust_fixture_folders(&mut app);
     std::fs::write(
-        app.config.codex_home.join("config.toml"),
+        app.config.genex_home.join("config.toml"),
         "[tui]\nresume_cwd = \"current\"\n",
     )?;
     let mut targets = Vec::new();
@@ -1163,7 +1163,7 @@ async fn resume_picker_round_trip_preserves_each_threads_input() -> Result<()> {
         ("2025-01-05T13-00-00", "Second task"),
     ] {
         let id = app_test_support::create_fake_rollout(
-            app.config.codex_home.as_path(),
+            app.config.genex_home.as_path(),
             timestamp,
             "2025-01-05T12:00:00Z",
             name,
@@ -1173,7 +1173,7 @@ async fn resume_picker_round_trip_preserves_each_threads_input() -> Result<()> {
         .expect("saved rollout");
         targets.push(SessionTarget {
             path: Some(app_test_support::rollout_path(
-                app.config.codex_home.as_path(),
+                app.config.genex_home.as_path(),
                 timestamp,
                 &id,
             )),
@@ -1253,12 +1253,12 @@ async fn command_center_handles_resume_failure_and_success() -> Result<()> {
     let mut app = make_test_app().await;
     trust_fixture_folders(&mut app);
     std::fs::write(
-        app.config.codex_home.join("config.toml"),
+        app.config.genex_home.join("config.toml"),
         "[tui]\nresume_cwd = \"current\"\n",
     )?;
     let timestamp = "2025-01-05T12-00-00";
     let id = app_test_support::create_fake_rollout(
-        app.config.codex_home.as_path(),
+        app.config.genex_home.as_path(),
         timestamp,
         "2025-01-05T12:00:00Z",
         "Saved task",
@@ -1267,7 +1267,7 @@ async fn command_center_handles_resume_failure_and_success() -> Result<()> {
     )
     .expect("saved rollout");
     let thread_id = ThreadId::from_string(&id)?;
-    let path = app_test_support::rollout_path(app.config.codex_home.as_path(), timestamp, &id);
+    let path = app_test_support::rollout_path(app.config.genex_home.as_path(), timestamp, &id);
     let view = app.agents_overview_view(Vec::new(), /*selected_thread_id*/ None);
     app.chat_widget.show_bottom_pane_view(Box::new(view));
     let mut tui = crate::tui::test_support::make_test_tui()?;

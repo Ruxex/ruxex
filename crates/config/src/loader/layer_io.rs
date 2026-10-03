@@ -31,11 +31,11 @@ pub(super) struct LoadedConfigLayers {
 
 pub(super) async fn load_config_layers_internal(
     fs: &dyn ExecutorFileSystem,
-    codex_home: &Path,
+    genex_home: &Path,
     overrides: LoaderOverrides,
     strict_config: bool,
 ) -> io::Result<LoadedConfigLayers> {
-    let _ = (&fs, codex_home, &overrides, strict_config);
+    let _ = (&fs, genex_home, &overrides, strict_config);
     #[cfg(target_os = "macos")]
     let LoaderOverrides {
         managed_preferences_base64,
@@ -47,7 +47,7 @@ pub(super) async fn load_config_layers_internal(
     let managed_preferences = load_managed_admin_config_layer(
         managed_preferences_base64.as_deref(),
         strict_config,
-        codex_home,
+        genex_home,
     )
     .await?
     .map(map_managed_admin_layer);

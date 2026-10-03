@@ -34,9 +34,9 @@ async fn environment_add_applies_connect_timeout() -> Result<()> {
         anyhow::ensure!(!request.is_empty(), "expected a WebSocket handshake");
         Ok::<_, anyhow::Error>(())
     });
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -68,13 +68,13 @@ async fn selected_environment_emits_connection_lifecycle_notifications() -> Resu
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let exec_server_url = format!("ws://{}", listener.local_addr()?);
 
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        genex_home.path().join("config.toml"),
         "[features]\ndeferred_executor = true\n",
     )?;
     let mut app_server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -98,7 +98,7 @@ async fn selected_environment_emits_connection_lifecycle_notifications() -> Resu
 
     let environment = TurnEnvironmentParams {
         environment_id: "remote-a".to_string(),
-        cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(codex_home.path().to_path_buf())?
+        cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(genex_home.path().to_path_buf())?
             .into(),
         runtime_workspace_roots: None,
     };

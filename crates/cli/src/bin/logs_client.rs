@@ -17,11 +17,11 @@ use owo_colors::OwoColorize;
 #[command(name = "codex-state-logs")]
 #[command(about = "Tail Codex logs from the dedicated logs SQLite DB with simple filters")]
 struct Args {
-    /// Path to CODEX_HOME. Defaults to $CODEX_HOME or ~/.codex.
-    #[arg(long, env = "CODEX_HOME")]
-    codex_home: Option<PathBuf>,
+    /// Path to GENEX_HOME. Defaults to $GENEX_HOME or ~/.genex.
+    #[arg(long, env = "GENEX_HOME")]
+    genex_home: Option<PathBuf>,
 
-    /// Direct path to the logs SQLite database. Overrides --codex-home.
+    /// Direct path to the logs SQLite database. Overrides --genex-home.
     #[arg(long)]
     db: Option<PathBuf>,
 
@@ -140,8 +140,8 @@ async fn resolve_sqlite_config(args: &Args) -> anyhow::Result<SqliteConfig> {
     }
 
     let mut config_builder = ConfigBuilder::default();
-    if let Some(codex_home) = args.codex_home.as_ref() {
-        config_builder = config_builder.codex_home(codex_home.clone());
+    if let Some(genex_home) = args.genex_home.as_ref() {
+        config_builder = config_builder.genex_home(genex_home.clone());
     }
     let config = config_builder.build().await?;
     Ok(config.sqlite_config().clone())
@@ -416,18 +416,18 @@ mod tests {
         assert_eq!(args.level, Some(LogLevelThreshold::Warn));
     }
 
-    /// Explicit database selection must not parse an overridden Codex home.
+    /// Explicit database selection must not parse an overridden Genex home.
     #[tokio::test]
-    async fn direct_db_skips_codex_home_config() {
-        let codex_home = tempfile::tempdir().expect("create Codex home");
-        std::fs::write(codex_home.path().join("config.toml"), "model = [")
+    async fn direct_db_skips_genex_home_config() {
+        let genex_home = tempfile::tempdir().expect("create Genex home");
+        std::fs::write(genex_home.path().join("config.toml"), "model = [")
             .expect("write invalid config");
         let sqlite_home = tempfile::tempdir().expect("create SQLite home");
         let db_path = sqlite_home.path().join("logs_2.sqlite");
         let args = Args::try_parse_from([
             OsString::from("codex-state-logs"),
-            OsString::from("--codex-home"),
-            codex_home.path().as_os_str().to_owned(),
+            OsString::from("--genex-home"),
+            genex_home.path().as_os_str().to_owned(),
             OsString::from("--db"),
             db_path.as_os_str().to_owned(),
         ])

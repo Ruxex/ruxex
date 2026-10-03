@@ -54,12 +54,12 @@ async fn section_request_error(
 #[tokio::test]
 async fn custom_sections_remain_discoverable_across_ordered_updates_and_restart() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
 
@@ -143,7 +143,7 @@ async fn custom_sections_remain_discoverable_across_ordered_updates_and_restart(
 
     drop(server);
     let mut restarted = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let persisted: ThreadSectionListResponse = restarted
@@ -186,12 +186,12 @@ async fn custom_sections_remain_discoverable_across_ordered_updates_and_restart(
 #[tokio::test]
 async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let first_thread = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "First thread",
@@ -199,7 +199,7 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
         /*git_info*/ None,
     )?;
     let archived_thread = create_fake_rollout(
-        codex_home.path(),
+        genex_home.path(),
         "2025-01-06T09-00-00",
         "2025-01-06T09:00:00Z",
         "Archived thread",
@@ -207,7 +207,7 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
         /*git_info*/ None,
     )?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let request_id = server
@@ -309,7 +309,7 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
 
     drop(server);
     let mut restarted = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let restored_after_restart: ThreadReadResponse = restarted
@@ -336,12 +336,12 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
 async fn custom_section_management_rejects_empty_names_missing_ids_and_pinned_mutations()
 -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
+    let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
         .enable_feature(Feature::Sqlite)
-        .write(codex_home.path())?;
+        .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_codex_home(codex_home.path())
+        .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
     let missing_id = Uuid::now_v7().to_string();

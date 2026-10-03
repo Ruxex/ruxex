@@ -6,20 +6,20 @@ use pretty_assertions::assert_eq;
 
 pub(super) async fn test_config() -> Config {
     // Start from the built-in defaults so tests do not inherit host/system config.
-    let codex_home = tempfile::Builder::new()
+    let genex_home = tempfile::Builder::new()
         .prefix("chatwidget-tests-")
         .tempdir()
         .expect("tempdir")
         .keep();
     let mut config =
-        Config::load_default_with_cli_overrides_for_codex_home(codex_home.clone(), Vec::new())
+        Config::load_default_with_cli_overrides_for_genex_home(genex_home.clone(), Vec::new())
             .await
             .expect("config");
     // Keep generic UI snapshots stable when the bundled catalog default changes.
     config.model = Some("gpt-5.6-sol".to_string());
-    config.codex_home = codex_home.abs();
-    config.sqlite = genex_state::SqliteConfig::new_for_testing(codex_home.as_path().abs());
-    config.log_dir = codex_home.join("log");
+    config.genex_home = genex_home.abs();
+    config.sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs());
+    config.log_dir = genex_home.join("log");
     config.cwd = PathBuf::from(test_path_display("/tmp/project")).abs();
     config.config_layer_stack = ConfigLayerStack::default();
     config.startup_warnings.clear();

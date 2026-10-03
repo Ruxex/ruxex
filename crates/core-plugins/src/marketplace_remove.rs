@@ -33,12 +33,12 @@ pub enum MarketplaceRemoveError {
 /// Removes a marketplace's snapshot and any base-user entry only when no other
 /// enabled layer in the current operation's config stack references its name.
 pub async fn remove_marketplace(
-    codex_home: PathBuf,
+    genex_home: PathBuf,
     config_layer_stack: ConfigLayerStack,
     request: MarketplaceRemoveRequest,
 ) -> Result<MarketplaceRemoveOutcome, MarketplaceRemoveError> {
     tokio::task::spawn_blocking(move || {
-        remove_marketplace_sync(codex_home.as_path(), &config_layer_stack, request)
+        remove_marketplace_sync(genex_home.as_path(), &config_layer_stack, request)
     })
     .await
     .map_err(|err| {
@@ -47,7 +47,7 @@ pub async fn remove_marketplace(
 }
 
 fn remove_marketplace_sync(
-    codex_home: &Path,
+    genex_home: &Path,
     config_layer_stack: &ConfigLayerStack,
     request: MarketplaceRemoveRequest,
 ) -> Result<MarketplaceRemoveOutcome, MarketplaceRemoveError> {
@@ -57,7 +57,7 @@ fn remove_marketplace_sync(
 
     // Removing a user override must not delete a snapshot still referenced by
     // another enabled layer, including a lower-precedence layer it shadows.
-    let user_config_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, codex_home);
+    let user_config_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, genex_home);
     if let Some(layer) = config_layer_stack.layers_high_to_low().find(|layer| {
         !matches!(
             &layer.name,
@@ -78,9 +78,9 @@ fn remove_marketplace_sync(
         )));
     }
 
-    let destination = marketplace_install_root(codex_home).join(&marketplace_name);
+    let destination = marketplace_install_root(genex_home).join(&marketplace_name);
     let config_outcome =
-        remove_user_marketplace_config(codex_home, &marketplace_name).map_err(|err| {
+        remove_user_marketplace_config(genex_home, &marketplace_name).map_err(|err| {
             MarketplaceRemoveError::Internal(format!(
                 "failed to remove marketplace '{marketplace_name}' from user config.toml: {err}"
             ))
@@ -148,9 +148,9 @@ mod tests {
 
     #[test]
     fn remove_marketplace_sync_removes_config_and_installed_root() {
-        let codex_home = TempDir::new().unwrap();
+        let genex_home = TempDir::new().unwrap();
         record_user_marketplace(
-            codex_home.path(),
+            genex_home.path(),
             "debug",
             &MarketplaceConfigUpdate {
                 source_type: "git",
@@ -160,7 +160,7 @@ mod tests {
             },
         )
         .unwrap();
-        let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+        let installed_root = marketplace_install_root(genex_home.path()).join("debug");
         fs::create_dir_all(installed_root.join(".agents/plugins")).unwrap();
         fs::write(
             installed_root.join(".agents/plugins/marketplace.json"),
@@ -169,7 +169,7 @@ mod tests {
         .unwrap();
 
         let outcome = remove_marketplace_sync(
-            codex_home.path(),
+            genex_home.path(),
             &ConfigLayerStack::default(),
             MarketplaceRemoveRequest {
                 marketplace_name: "debug".to_string(),
@@ -183,17 +183,17 @@ mod tests {
             Some(AbsolutePathBuf::try_from(installed_root.clone()).unwrap())
         );
         let config =
-            fs::read_to_string(codex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
+            fs::read_to_string(genex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
         assert!(!config.contains("[marketplaces.debug]"));
         assert!(!installed_root.exists());
     }
 
     #[test]
     fn remove_marketplace_sync_rejects_unknown_marketplace() {
-        let codex_home = TempDir::new().unwrap();
+        let genex_home = TempDir::new().unwrap();
 
         let err = remove_marketplace_sync(
-            codex_home.path(),
+            genex_home.path(),
             &ConfigLayerStack::default(),
             MarketplaceRemoveRequest {
                 marketplace_name: "debug".to_string(),
@@ -209,15 +209,15 @@ mod tests {
 
     #[test]
     fn remove_marketplace_sync_preserves_shadowed_system_marketplace() {
-        let codex_home = TempDir::new().unwrap();
+        let genex_home = TempDir::new().unwrap();
         let config = "[marketplaces.debug]\nsource_type = \"git\"\nsource = \"https://github.com/owner/repo.git\"\n";
         let user_file =
-            AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, codex_home.path());
+            AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, genex_home.path());
         let system_file =
-            AbsolutePathBuf::resolve_path_against_base("system.toml", codex_home.path());
+            AbsolutePathBuf::resolve_path_against_base("system.toml", genex_home.path());
         fs::write(&user_file, config).unwrap();
         fs::write(&system_file, config).unwrap();
-        let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+        let installed_root = marketplace_install_root(genex_home.path()).join("debug");
         fs::create_dir_all(&installed_root).unwrap();
         let marker = installed_root.join("marker.txt");
         fs::write(&marker, "installed").unwrap();
@@ -243,7 +243,7 @@ mod tests {
         .unwrap();
 
         let err = remove_marketplace_sync(
-            codex_home.path(),
+            genex_home.path(),
             &stack,
             MarketplaceRemoveRequest {
                 marketplace_name: "debug".to_string(),
@@ -265,9 +265,9 @@ mod tests {
 
     #[test]
     fn remove_marketplace_sync_rejects_case_mismatched_configured_name() {
-        let codex_home = TempDir::new().unwrap();
+        let genex_home = TempDir::new().unwrap();
         record_user_marketplace(
-            codex_home.path(),
+            genex_home.path(),
             "debug",
             &MarketplaceConfigUpdate {
                 source_type: "git",
@@ -277,11 +277,11 @@ mod tests {
             },
         )
         .unwrap();
-        let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+        let installed_root = marketplace_install_root(genex_home.path()).join("debug");
         fs::create_dir_all(&installed_root).unwrap();
 
         let err = remove_marketplace_sync(
-            codex_home.path(),
+            genex_home.path(),
             &ConfigLayerStack::default(),
             MarketplaceRemoveRequest {
                 marketplace_name: "Debug".to_string(),
@@ -295,23 +295,23 @@ mod tests {
         );
         assert!(installed_root.exists());
         let config =
-            fs::read_to_string(codex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
+            fs::read_to_string(genex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
         assert!(config.contains("[marketplaces.debug]"));
     }
 
     #[test]
     fn remove_marketplace_sync_keeps_installed_root_when_config_removal_fails() {
-        let codex_home = TempDir::new().unwrap();
+        let genex_home = TempDir::new().unwrap();
         fs::write(
-            codex_home.path().join(genex_config::CONFIG_TOML_FILE),
+            genex_home.path().join(genex_config::CONFIG_TOML_FILE),
             "[marketplaces.debug\n",
         )
         .unwrap();
-        let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+        let installed_root = marketplace_install_root(genex_home.path()).join("debug");
         fs::create_dir_all(&installed_root).unwrap();
 
         let err = remove_marketplace_sync(
-            codex_home.path(),
+            genex_home.path(),
             &ConfigLayerStack::default(),
             MarketplaceRemoveRequest {
                 marketplace_name: "debug".to_string(),
@@ -328,9 +328,9 @@ mod tests {
 
     #[test]
     fn remove_marketplace_sync_removes_file_installed_root() {
-        let codex_home = TempDir::new().unwrap();
+        let genex_home = TempDir::new().unwrap();
         record_user_marketplace(
-            codex_home.path(),
+            genex_home.path(),
             "debug",
             &MarketplaceConfigUpdate {
                 source_type: "git",
@@ -340,12 +340,12 @@ mod tests {
             },
         )
         .unwrap();
-        let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+        let installed_root = marketplace_install_root(genex_home.path()).join("debug");
         fs::create_dir_all(installed_root.parent().unwrap()).unwrap();
         fs::write(&installed_root, "corrupt install root").unwrap();
 
         let outcome = remove_marketplace_sync(
-            codex_home.path(),
+            genex_home.path(),
             &ConfigLayerStack::default(),
             MarketplaceRemoveRequest {
                 marketplace_name: "debug".to_string(),
@@ -364,25 +364,25 @@ mod tests {
         );
         assert!(!installed_root.exists());
         let config =
-            fs::read_to_string(codex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
+            fs::read_to_string(genex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
         assert!(!config.contains("[marketplaces.debug]"));
     }
 
     #[test]
     fn remove_marketplace_sync_removes_inline_config_entry() {
-        let codex_home = TempDir::new().unwrap();
+        let genex_home = TempDir::new().unwrap();
         fs::write(
-            codex_home.path().join(genex_config::CONFIG_TOML_FILE),
+            genex_home.path().join(genex_config::CONFIG_TOML_FILE),
             r#"
 marketplaces = { debug = { source_type = "git", source = "https://github.com/owner/repo.git" } }
 "#,
         )
         .unwrap();
-        let installed_root = marketplace_install_root(codex_home.path()).join("debug");
+        let installed_root = marketplace_install_root(genex_home.path()).join("debug");
         fs::create_dir_all(&installed_root).unwrap();
 
         let outcome = remove_marketplace_sync(
-            codex_home.path(),
+            genex_home.path(),
             &ConfigLayerStack::default(),
             MarketplaceRemoveRequest {
                 marketplace_name: "debug".to_string(),
@@ -397,7 +397,7 @@ marketplaces = { debug = { source_type = "git", source = "https://github.com/own
         );
         assert!(!installed_root.exists());
         let config =
-            fs::read_to_string(codex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
+            fs::read_to_string(genex_home.path().join(genex_config::CONFIG_TOML_FILE)).unwrap();
         assert!(!config.contains("debug"));
     }
 }
