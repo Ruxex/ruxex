@@ -35,7 +35,7 @@ impl TestDaemon {
         let managed = standalone
             .join("releases")
             .join(&release_name)
-            .join("bin/codex");
+            .join("bin/genex");
         std::fs::create_dir_all(managed.parent().context("managed bin parent")?)?;
         std::fs::hard_link(&codex_source, &managed)
             .or_else(|_| std::fs::copy(&codex_source, managed).map(|_| ()))?;
@@ -456,7 +456,7 @@ fn manual_update_rejects_an_unowned_installation() -> Result<()> {
         daemon
             .home
             .path()
-            .join("packages/standalone/current/bin/codex"),
+            .join("packages/standalone/current/bin/genex"),
     )?;
 
     assert_eq!(daemon.lifecycle("update")?["status"], "unsupported");
@@ -480,15 +480,15 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
     } else {
         daemon.home.path().join("cli-package")
     };
-    for directory in ["bin", "codex-path", "codex-resources"] {
+    for directory in ["bin", "genex-path", "genex-resources"] {
         std::fs::create_dir_all(package.join(directory))?;
     }
-    std::fs::copy(&daemon.codex, package.join("bin/codex"))?;
-    daemon.codex = package.join("bin/codex");
+    std::fs::copy(&daemon.codex, package.join("bin/genex"))?;
+    daemon.codex = package.join("bin/genex");
     for helper in [
         "bin/genex-code-mode-host",
-        "codex-path/rg",
-        "codex-resources/bwrap",
+        "genex-path/rg",
+        "genex-resources/bwrap",
     ] {
         std::fs::write(package.join(helper), b"runtime fixture")?;
         std::fs::set_permissions(package.join(helper), std::fs::Permissions::from_mode(0o755))?;
@@ -505,9 +505,9 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
         }
     );
     std::fs::write(
-        package.join("codex-package.json"),
+        package.join("genex-package.json"),
         serde_json::to_vec(&serde_json::json!({
-            "version": env!("CARGO_PKG_VERSION"), "target": target, "entrypoint": "bin/codex"
+            "version": env!("CARGO_PKG_VERSION"), "target": target, "entrypoint": "bin/genex"
         }))?,
     )?;
     if action == "start" && initial == InitialDaemon::Missing {
@@ -551,7 +551,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
         output["managedCodexPath"],
         initial_root
             .canonicalize()?
-            .join("current/bin/codex")
+            .join("current/bin/genex")
             .to_str()
             .context("managed path is not UTF-8")?
     );
@@ -623,7 +623,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
         assert_eq!(
             output["managedCodexPath"],
             current
-                .join("bin/codex")
+                .join("bin/genex")
                 .to_str()
                 .context("managed path is not UTF-8")?
         );

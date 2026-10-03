@@ -23,26 +23,26 @@ fn daemon(home: &std::path::Path) -> crate::Daemon {
 
 fn package(root: &Path, version: &str) -> PathBuf {
     let target = super::platform_target().expect("target");
-    for dir in ["bin", "codex-path", "codex-resources/nested"] {
+    for dir in ["bin", "genex-path", "genex-resources/nested"] {
         std::fs::create_dir_all(root.join(dir)).expect("package directory");
     }
-    let bin = root.join("bin/codex");
+    let bin = root.join("bin/genex");
     std::fs::write(&bin, format!("#!/bin/sh\necho 'codex {version}'\n")).expect("codex executable");
     for file in [
         "bin/genex-code-mode-host",
-        "codex-path/rg",
-        "codex-resources/nested/runtime",
+        "genex-path/rg",
+        "genex-resources/nested/runtime",
     ] {
         std::fs::write(root.join(file), b"runtime").expect("package file");
-        if file != "codex-resources/nested/runtime" {
+        if file != "genex-resources/nested/runtime" {
             std::fs::set_permissions(root.join(file), std::fs::Permissions::from_mode(0o755))
                 .expect("executable helper");
         }
     }
     if cfg!(target_os = "linux") {
-        std::fs::write(root.join("codex-resources/bwrap"), b"runtime").expect("bwrap");
+        std::fs::write(root.join("genex-resources/bwrap"), b"runtime").expect("bwrap");
         std::fs::set_permissions(
-            root.join("codex-resources/bwrap"),
+            root.join("genex-resources/bwrap"),
             std::fs::Permissions::from_mode(0o755),
         )
         .expect("executable bwrap");
@@ -50,9 +50,9 @@ fn package(root: &Path, version: &str) -> PathBuf {
     std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755))
         .expect("executable permission");
     std::fs::write(
-        root.join("codex-package.json"),
+        root.join("genex-package.json"),
         serde_json::json!({
-            "version": version, "target": target, "entrypoint": "bin/codex"
+            "version": version, "target": target, "entrypoint": "bin/genex"
         })
         .to_string(),
     )
@@ -82,7 +82,7 @@ async fn seeds_full_package() {
     let standalone = home.join("packages/app-server-daemon");
     let selected = std::fs::canonicalize(standalone.join("current")).expect("selected");
     assert_eq!(
-        std::fs::read(selected.join("codex-resources/nested/runtime")).expect("runtime"),
+        std::fs::read(selected.join("genex-resources/nested/runtime")).expect("runtime"),
         b"runtime"
     );
     assert_eq!(
@@ -120,7 +120,7 @@ async fn provisioned_macos_bundle_seeds_from_its_running_executable() {
     let source = temp.path().join("package");
     let launcher = package(&source, "0.1.0-internal-test.202609091200.1");
     std::fs::write(&launcher, b"#!/bin/sh\necho codex 0.0.0\n").expect("launcher");
-    let bundle = source.join("CodexCLI.app/Contents/MacOS/codex");
+    let bundle = source.join("GenexCLI.app/Contents/MacOS/codex");
     std::fs::create_dir_all(bundle.parent().expect("bundle parent")).expect("bundle dir");
     std::fs::write(&bundle, b"provisioned executable").expect("bundle executable");
     let home = temp.path().join("home");
@@ -137,7 +137,7 @@ async fn provisioned_macos_bundle_seeds_from_its_running_executable() {
     let selected = std::fs::canonicalize(home.join("packages/app-server-daemon/current"))
         .expect("selected release");
     assert_eq!(
-        std::fs::read(selected.join("CodexCLI.app/Contents/MacOS/codex"))
+        std::fs::read(selected.join("GenexCLI.app/Contents/MacOS/codex"))
             .expect("bundled executable"),
         b"provisioned executable"
     );
@@ -293,11 +293,11 @@ async fn explicit_selection_requires_unchanged_cli_and_pins_all_versions() {
             let previous_root = crate::managed_install::package_root(&home);
             package(&source, version);
             std::fs::write(
-                source.join("codex-resources/nested/runtime"),
+                source.join("genex-resources/nested/runtime"),
                 previous.to_string_lossy().as_bytes(),
             )
             .unwrap();
-            let before = std::fs::read(previous.join("bin/codex")).unwrap();
+            let before = std::fs::read(previous.join("bin/genex")).unwrap();
             assert!(
                 !prepare_from_package(
                     &daemon,
@@ -342,10 +342,10 @@ async fn explicit_selection_requires_unchanged_cli_and_pins_all_versions() {
             }
             assert_ne!(selected, previous);
             assert_eq!(
-                std::fs::read(selected.join("bin/codex")).unwrap(),
+                std::fs::read(selected.join("bin/genex")).unwrap(),
                 std::fs::read(&bin).unwrap()
             );
-            assert_eq!(std::fs::read(previous.join("bin/codex")).unwrap(), before);
+            assert_eq!(std::fs::read(previous.join("bin/genex")).unwrap(), before);
             assert!(!root.join("auto-update-version").exists());
             assert!(daemon.running_backend(&settings).await.unwrap().is_none());
             previous = selected;

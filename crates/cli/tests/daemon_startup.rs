@@ -84,7 +84,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
         // A selected package with a stopped daemon avoids installing a release.
         let managed = home
             .path()
-            .join("packages/app-server-daemon/current/bin/codex");
+            .join("packages/app-server-daemon/current/bin/genex");
         fs::create_dir_all(home.path().join("packages/app-server-daemon/current/bin"))?;
         fs::hard_link(&codex, &managed).or_else(|_| fs::copy(&codex, &managed).map(|_| ()))?;
         fs::create_dir(home.path().join("app-server-daemon"))?;

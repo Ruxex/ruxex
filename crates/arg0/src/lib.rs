@@ -580,7 +580,7 @@ mod tests {
         let arg0_dir = temp_dir.path().join("arg0");
         let package_dir = temp_dir.path().join("package");
         let bin_dir = package_dir.join("bin");
-        let path_dir = package_dir.join("codex-path");
+        let path_dir = package_dir.join("genex-path");
         let existing_dir = temp_dir.path().join("existing-bin");
         fs::create_dir_all(&arg0_dir)?;
         fs::create_dir_all(&bin_dir)?;
@@ -659,14 +659,14 @@ mod tests {
             temp_dir,
             lock_file,
             Arg0DispatchPaths {
-                codex_self_exe: Some(PathBuf::from("/usr/bin/codex")),
+                codex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
                 codex_linux_sandbox_exe: Some(alias_path.clone()),
                 main_execve_wrapper_exe: None,
             },
         );
 
         assert_eq!(
-            linux_sandbox_exe_path(Some(&path_entry), Some(PathBuf::from("/usr/bin/codex"))),
+            linux_sandbox_exe_path(Some(&path_entry), Some(PathBuf::from("/usr/bin/genex"))),
             Some(alias_path),
         );
         Ok(())
@@ -740,7 +740,7 @@ mod tests {
             temp_dir,
             lock_file,
             Arg0DispatchPaths {
-                codex_self_exe: Some(PathBuf::from("/usr/bin/codex")),
+                codex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
                 codex_linux_sandbox_exe: Some(alias_path.clone()),
                 main_execve_wrapper_exe: Some(alias_path),
             },
@@ -748,7 +748,7 @@ mod tests {
 
         super::build_runtime()?.block_on(run_main_with_arg0_guard(
             /*path_entry_guard*/ Some(path_entry),
-            Some(PathBuf::from("/usr/bin/codex")),
+            Some(PathBuf::from("/usr/bin/genex")),
             |paths| async move {
                 let alias_path = paths
                     .codex_linux_sandbox_exe

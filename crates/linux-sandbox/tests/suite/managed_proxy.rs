@@ -334,7 +334,7 @@ async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
         std::fs::copy(original_executable, &sandbox_executable).expect("copy sandbox executable");
     }
 
-    let resources_dir = tempdir.path().join("codex-resources");
+    let resources_dir = tempdir.path().join("genex-resources");
     std::fs::create_dir(&resources_dir).expect("create bundled resource directory");
     std::os::unix::fs::symlink(&system_bwrap, resources_dir.join("bwrap"))
         .expect("install bundled bubblewrap");

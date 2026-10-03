@@ -50,7 +50,7 @@ pub(crate) fn exec_bwrap(mut argv: Vec<String>, preserved_files: Vec<File>) -> !
         BubblewrapLauncher::Unavailable => {
             panic!(
                 "bubblewrap is unavailable: no system bwrap was found on PATH and no bundled \
-                 codex-resources/bwrap binary was found next to the Codex executable"
+                 genex-resources/bwrap binary was found next to the Codex executable"
             )
         }
     }
@@ -328,7 +328,7 @@ mod tests {
             "7".to_string(),
             "/tmp/socket-root".to_string(),
             "--".to_string(),
-            "/usr/bin/codex-linux-sandbox".to_string(),
+            "/usr/bin/genex-linux-sandbox".to_string(),
             "--apply-seccomp-then-exec".to_string(),
             "--".to_string(),
             "echo".to_string(),
@@ -345,7 +345,7 @@ mod tests {
                 "/proc/self/fd/7".to_string(),
                 "/tmp/socket-root".to_string(),
                 "--".to_string(),
-                "/usr/bin/codex-linux-sandbox".to_string(),
+                "/usr/bin/genex-linux-sandbox".to_string(),
                 "--verify-fd-mount".to_string(),
                 "7:/tmp/socket-root".to_string(),
                 "--apply-seccomp-then-exec".to_string(),

@@ -101,7 +101,7 @@ channel, and the managed binary supports the updater command.
 
 ## Installation and update cases
 
-New daemons use `CODEX_HOME/packages/app-server-daemon/current/bin/codex`
+New daemons use `CODEX_HOME/packages/app-server-daemon/current/bin/genex`
 (`codex.exe` on Windows). The package contains the executable and its helpers.
 Daemon-only installer updates leave the user's CLI command and shell setup alone.
 

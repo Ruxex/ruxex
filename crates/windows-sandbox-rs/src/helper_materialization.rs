@@ -19,7 +19,7 @@ use crate::sandbox_bin_dir;
 const DEV_BUILD_VERSION_SENTINEL: &str = "0.0.0";
 const COMMAND_RUNNER_EXE: &str = "codex-command-runner.exe";
 pub(crate) const BIN_DIRNAME: &str = "bin";
-pub(crate) const RESOURCES_DIRNAME: &str = "codex-resources";
+pub(crate) const RESOURCES_DIRNAME: &str = "genex-resources";
 
 pub(crate) fn helper_bin_dir(codex_home: &Path) -> PathBuf {
     sandbox_bin_dir(codex_home)

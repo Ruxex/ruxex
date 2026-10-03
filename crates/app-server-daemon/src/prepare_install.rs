@@ -150,15 +150,15 @@ async fn prepare_from_package(
         !root.canonicalize()?.starts_with(source.canonicalize()?),
         "CODEX_HOME must be outside the source CLI package"
     );
-    let manifest_bytes = std::fs::read(source.join("codex-package.json"))?;
+    let manifest_bytes = std::fs::read(source.join("genex-package.json"))?;
     let manifest: GenexPackageManifest = serde_json::from_slice(&manifest_bytes)?;
     let version = manifest.version.to_string();
     let target = platform_target()?;
     let metadata: serde_json::Value = serde_json::from_slice(&manifest_bytes)?;
     let entrypoint = if cfg!(windows) {
-        "bin/codex.exe"
+        "bin/genex.exe"
     } else {
-        "bin/codex"
+        "bin/genex"
     };
     anyhow::ensure!(
         metadata["target"] == target && metadata["entrypoint"] == entrypoint,
@@ -228,14 +228,14 @@ async fn prepare_from_package(
         .tempdir_in(&releases)?;
     let digest = package_tree(source, Some(stage.path()))?;
     validate_package(stage.path())?;
-    let staged_exe = if cfg!(target_os = "macos") && stage.path().join("CodexCLI.app").is_dir() {
-        stage.path().join("CodexCLI.app/Contents/MacOS/codex")
+    let staged_exe = if cfg!(target_os = "macos") && stage.path().join("GenexCLI.app").is_dir() {
+        stage.path().join("GenexCLI.app/Contents/MacOS/codex")
     } else {
         stage.path().join(entrypoint)
     };
     anyhow::ensure!(
         package_tree(source, /*destination*/ None)? == digest
-            && std::fs::read(stage.path().join("codex-package.json"))? == manifest_bytes
+            && std::fs::read(stage.path().join("genex-package.json"))? == manifest_bytes
             && managed_install::executable_identity(&staged_exe).await? == running_identity,
         "the CLI package changed while preparing the daemon or differs from the running executable"
     );
@@ -260,7 +260,7 @@ async fn prepare_from_package(
     } else {
         #[cfg(unix)]
         if !stage.path().join("codex").exists() {
-            std::os::unix::fs::symlink("bin/codex", stage.path().join("codex"))?;
+            std::os::unix::fs::symlink("bin/genex", stage.path().join("codex"))?;
         }
         std::fs::rename(stage.path(), &release)?;
     }
@@ -369,7 +369,7 @@ fn package_tree(root: &Path, destination: Option<&Path>) -> Result<String> {
         // The Unix installer adds this alias outside the package layout.
         if cfg!(unix)
             && relative == Path::new("codex")
-            && std::fs::read_link(&path).ok().as_deref() == Some(Path::new("bin/codex"))
+            && std::fs::read_link(&path).ok().as_deref() == Some(Path::new("bin/genex"))
         {
             continue;
         }
@@ -426,11 +426,11 @@ fn stable_version(value: &str) -> Option<semver::Version> {
 
 fn validate_package(root: &Path) -> Result<()> {
     let mut names = vec![
-        "codex-package.json",
+        "genex-package.json",
         if cfg!(windows) {
-            "bin/codex.exe"
+            "bin/genex.exe"
         } else {
-            "bin/codex"
+            "bin/genex"
         },
         if cfg!(windows) {
             "bin/genex-code-mode-host.exe"
@@ -438,18 +438,18 @@ fn validate_package(root: &Path) -> Result<()> {
             "bin/genex-code-mode-host"
         },
         if cfg!(windows) {
-            "codex-path/rg.exe"
+            "genex-path/rg.exe"
         } else {
-            "codex-path/rg"
+            "genex-path/rg"
         },
     ];
     if cfg!(windows) {
         names.extend([
-            "codex-resources/codex-command-runner.exe",
-            "codex-resources/codex-windows-sandbox-setup.exe",
+            "genex-resources/codex-command-runner.exe",
+            "genex-resources/codex-windows-sandbox-setup.exe",
         ]);
     } else if cfg!(target_os = "linux") {
-        names.push("codex-resources/bwrap");
+        names.push("genex-resources/bwrap");
     }
     for name in names {
         if !root.join(name).is_file() {
@@ -458,7 +458,7 @@ fn validate_package(root: &Path) -> Result<()> {
             ));
         }
         #[cfg(unix)]
-        if name != "codex-package.json" {
+        if name != "genex-package.json" {
             use std::os::unix::fs::PermissionsExt;
             if std::fs::metadata(root.join(name))?.permissions().mode() & 0o111 == 0 {
                 return Err(anyhow!(

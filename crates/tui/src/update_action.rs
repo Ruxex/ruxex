@@ -113,7 +113,7 @@ mod tests {
                 method: InstallMethod::Standalone {
                     platform: StandalonePlatform::Unix,
                     release_dir: native_release_dir.clone(),
-                    resources_dir: Some(native_release_dir.join("codex-resources")),
+                    resources_dir: Some(native_release_dir.join("genex-resources")),
                 },
                 package_layout: None,
             }),
@@ -124,7 +124,7 @@ mod tests {
                 method: InstallMethod::Standalone {
                     platform: StandalonePlatform::Windows,
                     release_dir: native_release_dir.clone(),
-                    resources_dir: Some(native_release_dir.join("codex-resources")),
+                    resources_dir: Some(native_release_dir.join("genex-resources")),
                 },
                 package_layout: None,
             }),

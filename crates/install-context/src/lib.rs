@@ -13,10 +13,10 @@ const CODE_MODE_HOST_EXECUTABLE_NAME: &str = if cfg!(windows) {
 } else {
     "genex-code-mode-host"
 };
-const PACKAGE_METADATA_FILENAME: &str = "codex-package.json";
-const PATH_DIRNAME: &str = "codex-path";
+const PACKAGE_METADATA_FILENAME: &str = "genex-package.json";
+const PATH_DIRNAME: &str = "genex-path";
 const RELEASES_DIRNAME: &str = "releases";
-const RESOURCES_DIRNAME: &str = "codex-resources";
+const RESOURCES_DIRNAME: &str = "genex-resources";
 const STANDALONE_PACKAGES_DIRNAME: &str = "standalone";
 const ZSH_DIRNAME: &str = "zsh";
 static INSTALL_CONTEXT: OnceLock<InstallContext> = OnceLock::new();
@@ -58,7 +58,7 @@ pub enum InstallMethod {
         /// such as
         /// `~/.codex/packages/standalone/releases/0.111.0-x86_64-unknown-linux-musl`.
         /// Package-layout installs use the package root that contains `bin/`,
-        /// `codex-resources/`, and `codex-path/`.
+        /// `genex-resources/`, and `genex-path/`.
         release_dir: AbsolutePathBuf,
         /// The bundled resource directory for managed dependencies.
         resources_dir: Option<AbsolutePathBuf>,
@@ -174,7 +174,7 @@ impl InstallContext {
     }
 
     pub fn code_mode_host_program(&self) -> PathBuf {
-        // prefer the one packed under codex-resources
+        // prefer the one packed under genex-resources
         self.bundled_resource(CODE_MODE_HOST_EXECUTABLE_NAME)
             .map_or_else(
                 || self.code_mode_host_program_from_exe(std::env::current_exe().ok().as_deref()),
@@ -269,11 +269,11 @@ impl GenexPackageLayout {
             }
             Some(name) if name == OsStr::new("MacOS") => {
                 // A provisioned CLI keeps helpers and metadata in the outer
-                // package. current_exe points inside the bundle, not at bin/codex.
+                // package. current_exe points inside the bundle, not at bin/genex.
                 let contents = exe_dir.parent()?;
                 let bundle = contents.parent()?;
                 if contents.file_name()? != OsStr::new("Contents")
-                    || bundle.file_name()? != OsStr::new("CodexCLI.app")
+                    || bundle.file_name()? != OsStr::new("GenexCLI.app")
                 {
                     return None;
                 }
@@ -561,9 +561,9 @@ mod tests {
   "version": "1.2.3",
   "target": "x86_64-unknown-linux-musl",
   "variant": "codex",
-  "entrypoint": "bin/codex",
-  "resourcesDir": "codex-resources",
-  "pathDir": "codex-path"
+  "entrypoint": "bin/genex",
+  "resourcesDir": "genex-resources",
+  "pathDir": "genex-path"
 }
 "#,
         )?;
@@ -823,7 +823,7 @@ mod tests {
         };
 
         assert_eq!(
-            context.code_mode_host_program_from_exe(Some(Path::new("/opt/codex/bin/codex"))),
+            context.code_mode_host_program_from_exe(Some(Path::new("/opt/codex/bin/genex"))),
             PathBuf::from("/opt/codex/bin").join(CODE_MODE_HOST_EXECUTABLE_NAME)
         );
     }
@@ -900,7 +900,7 @@ mod tests {
     fn brew_is_detected_on_macos_prefixes() {
         let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ true,
-            /*current_exe*/ Some(Path::new("/opt/homebrew/bin/codex")),
+            /*current_exe*/ Some(Path::new("/opt/homebrew/bin/genex")),
             /*method_override*/ None,
             /*codex_home*/ None,
         );

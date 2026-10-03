@@ -2179,7 +2179,7 @@ fn zsh_snapshot_restores_tied_path() -> Result<()> {
     let readonly_restored = Command::new("/bin/zsh")
         .arg("-f")
         .arg("-c")
-        .arg("set -e; . \"$1\"; export PATH='/codex-path':\"$PATH\"; print -r -- \"$PATH\"")
+        .arg("set -e; . \"$1\"; export PATH='/genex-path':\"$PATH\"; print -r -- \"$PATH\"")
         .arg("zsh")
         .arg(&snapshot_path)
         .env_clear()
@@ -2188,7 +2188,7 @@ fn zsh_snapshot_restores_tied_path() -> Result<()> {
     assert!(readonly_restored.status.success());
     assert_eq!(
         String::from_utf8(readonly_restored.stdout)?.trim_end(),
-        "/codex-path:/usr/bin:/bin"
+        "/genex-path:/usr/bin:/bin"
     );
 
     assert!(
