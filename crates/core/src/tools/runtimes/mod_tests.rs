@@ -662,7 +662,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS='stale'\n",
+        "# Snapshot file\nexport GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS='stale'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -670,10 +670,10 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printenv CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS".to_string(),
+        "printenv GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS".to_string(),
     ];
     let env = HashMap::from([(
-        CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
         "1".to_string(),
     )]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -686,7 +686,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1")
+        .env(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1")
         .output()
         .expect("run rewritten command");
 
@@ -703,7 +703,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env_remove(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR)
+        .env_remove(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR)
         .output()
         .expect("run rewritten command");
 

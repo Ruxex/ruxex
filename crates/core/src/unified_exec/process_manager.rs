@@ -142,7 +142,7 @@ pub(super) fn exec_env_policy_from_shell_policy(
     exclude.extend([
         CODEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
         CODEX_VERSION_ENV_VAR.to_string(),
-        genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
         PLUGIN_METRICS_OUTPUT_ENV_VAR.to_string(),
     ]);
     let mut r#set = policy.r#set.clone();
@@ -150,7 +150,7 @@ pub(super) fn exec_env_policy_from_shell_policy(
         ![
             CODEX_PERMISSION_PROFILE_ENV_VAR,
             CODEX_VERSION_ENV_VAR,
-            genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+                genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ]
         .iter()
@@ -182,7 +182,7 @@ fn env_overlay_for_exec_server(
                     key.as_str(),
                     CODEX_PERMISSION_PROFILE_ENV_VAR
                         | CODEX_VERSION_ENV_VAR
-                        | genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR
+                        | genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR
                 ) || local_policy_env.get(*key) != Some(*value))
         })
         .map(|(key, value)| (key.clone(), value.clone()))

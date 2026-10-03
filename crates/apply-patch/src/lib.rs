@@ -44,19 +44,19 @@ pub use standalone_executable::main;
 
 use crate::invocation::ExtractHeredocError;
 
-/// Special argv[1] flag used when the Codex executable self-invokes to run the
+/// Special argv[1] flag used when the Genex executable self-invokes to run the
 /// internal `apply_patch` path.
 ///
-/// Although this constant lives in `codex-apply-patch` (to avoid forcing
-/// `codex-arg0` to depend on `codex-core`), it remains part of the "codex core"
+/// Although this constant lives in `genex-apply-patch` (to avoid forcing
+/// `genex-arg0` to depend on `genex-core`), it remains part of the "genex core"
 /// process-invocation contract for the standalone `apply_patch` command
 /// surface.
-pub const CODEX_CORE_APPLY_PATCH_ARG1: &str = "--codex-run-as-apply-patch";
+pub const GENEX_CORE_APPLY_PATCH_ARG1: &str = "--genex-run-as-apply-patch";
 
 /// Internal environment variable used to carry the selected update mode
 /// through the arg0-dispatched standalone executable.
-pub const CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR: &str =
-    "CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS";
+pub const GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR: &str =
+    "GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS";
 
 /// Controls how updates reconstruct the target file after matching a patch.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -88,7 +88,7 @@ impl Default for ApplyPatchOptions {
 /// Reads the update mode selected for an arg0-dispatched `apply_patch` process.
 #[doc(hidden)]
 pub fn apply_patch_file_update_mode_from_env() -> ApplyPatchFileUpdateMode {
-    match std::env::var(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR).as_deref() {
+    match std::env::var(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR).as_deref() {
         Ok("1") => ApplyPatchFileUpdateMode::PreserveLineEndings,
         _ => ApplyPatchFileUpdateMode::NormalizeToLf,
     }

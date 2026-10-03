@@ -1,4 +1,4 @@
-pub use genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+pub use genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use genex_features::Feature;
 use genex_features::Features;
 use genex_protocol::SessionId;
@@ -77,10 +77,10 @@ pub(crate) fn inject_permission_profile_env(
 /// active feature configuration remains authoritative. The in-process
 /// apply-patch path reads the feature directly.
 pub fn inject_apply_patch_env(env: &mut HashMap<String, String>, features: &Features) {
-    env.retain(|key, _| !key.eq_ignore_ascii_case(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR));
+    env.retain(|key, _| !key.eq_ignore_ascii_case(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR));
     if features.enabled(Feature::ApplyPatchPreserveLineEndings) {
         env.insert(
-            CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+            GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
             "1".to_string(),
         );
     }

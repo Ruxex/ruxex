@@ -786,7 +786,7 @@ impl TestGenexBuilder {
         if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex") {
             config.codex_self_exe = Some(path);
         } else if let Ok(path) = genex_utils_cargo_bin::cargo_bin("codex-exec") {
-            // `codex-exec` also supports `--codex-run-as-apply-patch`, so use it
+            // `genex-exec` also supports `--genex-run-as-apply-patch`, so use it
             // when the multitool binary is not available in test builds.
             config.codex_self_exe = Some(path);
         } else if let Ok(exe) = std::env::current_exe()

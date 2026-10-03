@@ -4,7 +4,7 @@ use std::future::Future;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
+use genex_apply_patch::GENEX_CORE_APPLY_PATCH_ARG1;
 use genex_async_utils::THREAD_STACK_SIZE_BYTES;
 #[cfg(unix)]
 use genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
@@ -114,7 +114,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
     if argv1 == CODEX_WINDOWS_SANDBOX_ARG1 {
         genex_windows_sandbox::run_windows_sandbox_wrapper_main();
     }
-    if argv1 == CODEX_CORE_APPLY_PATCH_ARG1 {
+    if argv1 == GENEX_CORE_APPLY_PATCH_ARG1 {
         let patch_arg = args.next().and_then(|s| s.to_str().map(str::to_owned));
         let exit_code = match patch_arg {
             Some(patch_arg) => {
@@ -150,7 +150,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
                 }
             }
             None => {
-                eprintln!("Error: {CODEX_CORE_APPLY_PATCH_ARG1} requires a UTF-8 PATCH argument.");
+                eprintln!("Error: {GENEX_CORE_APPLY_PATCH_ARG1} requires a UTF-8 PATCH argument.");
                 1
             }
         };
@@ -329,7 +329,7 @@ where
 ///
 /// - UNIX: `apply_patch` symlink to the current executable
 /// - WINDOWS: `apply_patch.bat` batch script to invoke the current executable
-///   with the hidden `--codex-run-as-apply-patch` flag.
+///   with the hidden `--genex-run-as-apply-patch` flag.
 ///
 /// Returns the temporary directory guard and the PATH value that prepends the
 /// temporary directory so `apply_patch` can be on the PATH without requiring the
@@ -411,7 +411,7 @@ fn prepare_path_entry_for_codex_aliases(
                 &batch_script,
                 format!(
                     r#"@echo off
-"{exe}" {CODEX_CORE_APPLY_PATCH_ARG1} %*
+"{exe}" {GENEX_CORE_APPLY_PATCH_ARG1} %*
 "#,
                 ),
             )?;

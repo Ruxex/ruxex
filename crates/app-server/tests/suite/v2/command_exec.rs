@@ -16,7 +16,7 @@ use genex_app_server_protocol::JSONRPCMessage;
 use genex_app_server_protocol::JSONRPCNotification;
 use genex_app_server_protocol::RequestId;
 use genex_app_server_protocol::SandboxPolicy;
-use genex_core::exec_env::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use genex_core::exec_env::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use genex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR;
 use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
 use pretty_assertions::assert_eq;
@@ -234,7 +234,7 @@ async fn assert_command_exec_apply_patch_rollout(
     let mut mcp = TestAppServer::builder()
         .with_codex_home(codex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, Some("1"))])
+        .with_env_overrides(&[(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, Some("1"))])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -252,7 +252,7 @@ async fn assert_command_exec_apply_patch_rollout(
             timeout_ms: None,
             cwd: Some(workspace.path().to_path_buf()),
             env: Some(HashMap::from([(
-                CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+                GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
                 Some(client_override.to_string()),
             )])),
             size: None,

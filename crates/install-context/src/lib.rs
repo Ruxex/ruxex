@@ -88,26 +88,26 @@ impl InstallContext {
         current_exe: Option<&Path>,
         method_override: Option<InstallMethod>,
     ) -> Self {
-        let codex_home = genex_utils_home_dir::find_codex_home().ok();
-        Self::from_exe_with_codex_home(
+        let genex_home = genex_utils_home_dir::find_codex_home().ok();
+        Self::from_exe_with_genex_home(
             is_macos,
             current_exe,
             method_override,
-            codex_home.as_deref(),
+            genex_home.as_deref(),
         )
     }
 
-    fn from_exe_with_codex_home(
+    fn from_exe_with_genex_home(
         is_macos: bool,
         current_exe: Option<&Path>,
         method_override: Option<InstallMethod>,
-        codex_home: Option<&Path>,
+        genex_home: Option<&Path>,
     ) -> Self {
         let package_layout = current_exe.and_then(GenexPackageLayout::from_exe);
         let method = if let Some(method) = method_override {
             method
         } else if let Some(exe_path) = current_exe {
-            install_method_from_exe(exe_path, codex_home, package_layout.as_ref(), is_macos)
+            install_method_from_exe(exe_path, genex_home, package_layout.as_ref(), is_macos)
         } else {
             InstallMethod::Other
         };
@@ -489,7 +489,7 @@ mod tests {
         let canonical_resources_dir =
             AbsolutePathBuf::from_absolute_path(resources_dir.canonicalize()?)?;
 
-        let context = InstallContext::from_exe_with_codex_home(
+        let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
@@ -535,7 +535,7 @@ mod tests {
         let exe_path = release_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
         fs::write(&exe_path, "")?;
 
-        let context = InstallContext::from_exe_with_codex_home(
+        let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
@@ -590,7 +590,7 @@ mod tests {
             path_dir: Some(canonical_path_dir.clone()),
         };
 
-        let context = InstallContext::from_exe_with_codex_home(
+        let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
@@ -701,7 +701,7 @@ mod tests {
             AbsolutePathBuf::from_absolute_path(resources_dir.canonicalize()?)?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
 
-        let context = InstallContext::from_exe_with_codex_home(
+        let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
@@ -774,7 +774,7 @@ mod tests {
         let exe_path = bin_dir.join(if cfg!(windows) { "codex.exe" } else { "codex" });
         fs::write(&exe_path, "")?;
 
-        let context = InstallContext::from_exe_with_codex_home(
+        let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
@@ -800,7 +800,7 @@ mod tests {
         let fallback_exe_path = package_dir.path().join("fallback-codex");
         fs::write(&fallback_exe_path, "")?;
 
-        let context = InstallContext::from_exe_with_codex_home(
+        let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
@@ -898,7 +898,7 @@ mod tests {
 
     #[test]
     fn brew_is_detected_on_macos_prefixes() {
-        let context = InstallContext::from_exe_with_codex_home(
+        let context = InstallContext::from_exe_with_genex_home(
             /*is_macos*/ true,
             /*current_exe*/ Some(Path::new("/opt/homebrew/bin/codex")),
             /*method_override*/ None,

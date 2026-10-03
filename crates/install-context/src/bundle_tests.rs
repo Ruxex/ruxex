@@ -22,7 +22,7 @@ fn bundle_executable_preserves_package_layout_and_install_method() -> std::io::R
     let bin_dir = package.join(BIN_DIRNAME);
     let resources_dir = package.join(RESOURCES_DIRNAME);
     let path_dir = package.join(PATH_DIRNAME);
-    let context = InstallContext::from_exe_with_codex_home(
+    let context = InstallContext::from_exe_with_genex_home(
         /*is_macos*/ true,
         /*current_exe*/ Some(&executable),
         /*method_override*/ None,

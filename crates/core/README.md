@@ -80,5 +80,5 @@ instead of running with weaker enforcement.
 ### All Platforms
 
 Expects the binary containing `genex-core` to simulate the virtual
-`apply_patch` CLI when `arg1` is `--codex-run-as-apply-patch`. See the
+`apply_patch` CLI when `arg1` is `--genex-run-as-apply-patch`. See the
 `genex-arg0` crate for details.

@@ -11,7 +11,7 @@ use crate::exec_env::CODEX_VERSION_ENV_VAR;
 use crate::sandboxing::SandboxPermissions;
 use crate::shell::Shell;
 use crate::shell::ShellType;
-use genex_apply_patch::CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use genex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
 #[cfg(unix)]
 use genex_install_context::InstallContext;
@@ -354,7 +354,7 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         CODEX_THREAD_ID_ENV_VAR,
         CODEX_VERSION_ENV_VAR,
         CODEX_PERMISSION_PROFILE_ENV_VAR,
-        CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
         PLUGIN_METRICS_OUTPUT_ENV_VAR,
     ] {
         if let Some(value) = env.get(key) {
@@ -366,7 +366,7 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         &override_env,
         &[
             CODEX_PERMISSION_PROFILE_ENV_VAR,
-            CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+            GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ],
     );

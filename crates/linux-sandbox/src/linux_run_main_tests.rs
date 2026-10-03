@@ -151,7 +151,7 @@ fn rewrites_bwrap_helper_command_not_nested_user_command_when_current_exe_appear
         "/tmp/cwd".to_string(),
         "--".to_string(),
         nested_current_exe.clone(),
-        "--codex-run-as-apply-patch".to_string(),
+        "--genex-run-as-apply-patch".to_string(),
         "patch".to_string(),
     ];
 
@@ -171,7 +171,7 @@ fn rewrites_bwrap_helper_command_not_nested_user_command_when_current_exe_appear
             "/tmp/cwd".to_string(),
             "--".to_string(),
             nested_current_exe,
-            "--codex-run-as-apply-patch".to_string(),
+        "--genex-run-as-apply-patch".to_string(),
             "patch".to_string(),
         ]
     );

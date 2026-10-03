@@ -44,7 +44,7 @@ fn inject_permission_profile_env_removes_stale_value_without_active_profile() {
 #[test]
 fn inject_apply_patch_env_follows_preserve_line_endings_feature() {
     let mut env = HashMap::from([(
-        CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_ascii_lowercase(),
+        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_ascii_lowercase(),
         "stale".to_string(),
     )]);
     let mut features = Features::with_defaults();
@@ -57,7 +57,7 @@ fn inject_apply_patch_env_follows_preserve_line_endings_feature() {
     assert_eq!(
         env,
         HashMap::from([(
-            CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
             "1".to_string(),
         )])
     );
