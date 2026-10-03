@@ -35,7 +35,7 @@ const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "codex-primary-runtime";
 use crate::marketplace_cmd::MarketplaceCli;
 
 #[derive(Debug, Parser)]
-#[command(bin_name = "codex plugin")]
+#[command(bin_name = "genex plugin")]
 pub struct PluginCli {
     #[clap(flatten)]
     pub config_overrides: CliConfigOverrides,
@@ -67,8 +67,8 @@ pub enum PluginSubcommand {
 
 #[derive(Debug, Parser)]
 #[command(
-    bin_name = "codex plugin add",
-    after_help = "Examples:\n  codex plugin add sample@debug\n  codex plugin add sample --marketplace debug"
+    bin_name = "genex plugin add",
+    after_help = "Examples:\n  genex plugin add sample@debug\n  genex plugin add sample --marketplace debug"
 )]
 pub struct AddPluginArgs {
     /// Plugin selector to install: either PLUGIN@MARKETPLACE or PLUGIN with --marketplace.
@@ -86,8 +86,8 @@ pub struct AddPluginArgs {
 
 #[derive(Debug, Parser)]
 #[command(
-    bin_name = "codex plugin list",
-    after_help = "Examples:\n  codex plugin list\n  codex plugin list --marketplace debug\n  codex plugin list --json\n  codex plugin list --available --json"
+    bin_name = "genex plugin list",
+    after_help = "Examples:\n  genex plugin list\n  genex plugin list --marketplace debug\n  genex plugin list --json\n  genex plugin list --available --json"
 )]
 pub struct ListPluginsArgs {
     /// Only list plugins from this marketplace name.
@@ -105,8 +105,8 @@ pub struct ListPluginsArgs {
 
 #[derive(Debug, Parser)]
 #[command(
-    bin_name = "codex plugin remove",
-    after_help = "Examples:\n  codex plugin remove sample@debug\n  codex plugin remove sample --marketplace debug"
+    bin_name = "genex plugin remove",
+    after_help = "Examples:\n  genex plugin remove sample@debug\n  genex plugin remove sample --marketplace debug"
 )]
 pub struct RemovePluginArgs {
     /// Plugin selector to remove: either PLUGIN@MARKETPLACE or PLUGIN with --marketplace.

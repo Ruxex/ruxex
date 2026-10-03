@@ -136,7 +136,7 @@ fn terminal_title_item_id(item: &str) -> Option<&'static str> {
         "weekly-limit" => Some("weekly-limit"),
         "thread-credits" => Some("thread-credits"),
         "estimated-thread-cost" => Some("estimated-thread-cost"),
-        "codex-version" => Some("codex-version"),
+        "genex-version" => Some("genex-version"),
         "used-tokens" => Some("used-tokens"),
         "total-input-tokens" => Some("total-input-tokens"),
         "total-output-tokens" => Some("total-output-tokens"),

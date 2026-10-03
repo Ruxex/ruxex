@@ -100,10 +100,10 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         .mount(&server)
         .await;
 
-    let codex = genex_utils_cargo_bin::cargo_bin("genex")?;
+    let genex = genex_utils_cargo_bin::cargo_bin("genex")?;
     let managed_auth_base_url_override =
         format!("managed_auth_base_url=\"{managed_auth_base_url}\"");
-    let output = Command::new(&codex)
+    let output = Command::new(&genex)
         .current_dir(genex_home.path())
         .env("GENEX_HOME", genex_home.path())
         .env("NO_PROXY", "127.0.0.1,localhost")
@@ -119,7 +119,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
             "--include-managed-config",
             "--",
         ])
-        .arg(&codex)
+        .arg(&genex)
         .arg("--version")
         .output()?;
     let cloud_bundle_request_paths: Vec<_> = server

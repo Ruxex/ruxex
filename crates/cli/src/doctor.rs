@@ -143,7 +143,7 @@ const REMOTE_TERMINAL_ENV_VARS: &[&str] = &[
 const NARROW_TERMINAL_COLUMNS: u16 = 80;
 const NARROW_TERMINAL_ROWS: u16 = 24;
 
-/// Options for building a local Codex diagnostic report.
+/// Options for building a local Genex diagnostic report.
 ///
 /// The command always runs the full diagnostic set. Human output includes
 /// detailed diagnostics by default; --summary keeps the terminal output compact.
@@ -584,7 +584,7 @@ async fn load_config(
     .await?
     .build()
     .await
-    .context("failed to load Codex config")
+    .context("failed to load Genex config")
 }
 
 fn config_overrides_from_interactive(
@@ -875,20 +875,20 @@ fn installation_check(show_details: bool) -> DoctorCheck {
         "CODEX_MANAGED_PACKAGE_ROOT",
     );
 
-    let path_entries = codex_path_entries();
+    let path_entries = genex_path_entries();
     let mut status = CheckStatus::Ok;
     let mut summary = "installation looks consistent".to_string();
     let mut remediation = None;
 
     if path_entries.len() > 1 {
-        details.push(format!("PATH codex entries: {}", path_entries.len()));
+        details.push(format!("PATH genex entries: {}", path_entries.len()));
     }
     if show_details || path_entries.len() > 1 {
         details.extend(
             path_entries
                 .iter()
                 .enumerate()
-                .map(|(index, path)| format!("PATH codex #{}: {path}", index + 1)),
+                .map(|(index, path)| format!("PATH genex #{}: {path}", index + 1)),
         );
     }
 
@@ -899,7 +899,7 @@ fn installation_check(show_details: bool) -> DoctorCheck {
             status = status.max(CheckStatus::Warning);
             summary = "npm-managed launch is missing package-root provenance".to_string();
             remediation = Some(
-                "Reinstall or update Codex so the JS shim provides CODEX_MANAGED_PACKAGE_ROOT."
+                "Reinstall or update Genex so the JS shim provides CODEX_MANAGED_PACKAGE_ROOT."
                     .to_string(),
             );
         }
@@ -1035,8 +1035,8 @@ fn display_list<T: AsRef<str>>(items: &[T]) -> String {
     }
 }
 
-fn codex_path_entries() -> Vec<String> {
-    let Ok(candidates) = which::which_all("codex") else {
+fn genex_path_entries() -> Vec<String> {
+    let Ok(candidates) = which::which_all("genex") else {
         return Vec::new();
     };
     let mut seen = BTreeSet::new();
@@ -1225,7 +1225,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
             "auth.credentials",
             "auth",
             CheckStatus::Fail,
-            "no Codex credentials were found",
+            "no Genex credentials were found",
         )
         .details(details)
         .remediation(

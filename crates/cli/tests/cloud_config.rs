@@ -142,7 +142,7 @@ impl CloudManagedConfigFixture {
         let output = self.command(args)?.output().await?;
         ensure!(
             output.status.success(),
-            "codex {} failed with status {}: stdout={}; stderr={}",
+            "genex {} failed with status {}: stdout={}; stderr={}",
             args.join(" "),
             output.status,
             String::from_utf8_lossy(&output.stdout),

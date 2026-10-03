@@ -1,0 +1,13 @@
+---
+source: cli/src/main.rs
+assertion_line: 3324
+expression: "errors.join(\"\\n\")"
+---
+genex --worktree login: `--worktree` supports new interactive sessions, `genex fork`, `genex exec`, and `genex exec fork`
+genex fork --worktree: `genex fork --worktree` requires an explicit session ID
+genex fork --worktree --last: `genex fork --worktree` requires an explicit session ID
+genex exec resume --worktree session: `--worktree` cannot resume an existing session; use `genex exec fork --worktree`
+genex exec review --worktree: `--worktree` is not supported for code review
+genex resume --worktree session: `--worktree` supports new interactive sessions, `genex fork`, `genex exec`, and `genex exec fork`
+genex archive session --worktree: `--worktree` supports new interactive sessions, `genex fork`, `genex exec`, and `genex exec fork`
+genex queue --thread session --message hi --worktree: `--worktree` supports new interactive sessions, `genex fork`, `genex exec`, and `genex exec fork`

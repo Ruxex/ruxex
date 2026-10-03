@@ -231,7 +231,7 @@ fn install_details(parsed: &[ParsedDetail], options: HumanOutputOptions) -> Vec<
         expected: None,
     });
 
-    let path_entries = numbered_values(parsed, "PATH codex #");
+    let path_entries = numbered_values(parsed, "PATH genex #");
     if !path_entries.is_empty() {
         let total = path_entries.len();
         let shown = if options.show_all {
@@ -270,9 +270,9 @@ fn install_details(parsed: &[ParsedDetail], options: HumanOutputOptions) -> Vec<
             "managed by pnpm",
             "managed by Vite+",
             "managed package root",
-            "PATH codex entries",
+            "PATH genex entries",
         ],
-        &["PATH codex #"],
+        &["PATH genex #"],
     );
     out
 }
@@ -747,7 +747,7 @@ fn value<'a>(parsed: &'a [ParsedDetail], label: &str) -> Option<&'a str> {
 
 fn display_label(label: &str) -> String {
     match label {
-        "codex-linux-sandbox helper" => "linux helper",
+        "genex-linux-sandbox helper" => "linux helper",
         "optional reachability failed" => "optional reachability",
         "check for update on startup" => "startup update check",
         other => other,

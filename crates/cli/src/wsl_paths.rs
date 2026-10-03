@@ -42,14 +42,14 @@ mod tests {
     #[test]
     fn win_to_wsl_basic() {
         assert_eq!(
-            win_path_to_wsl(r"C:\Temp\codex.zip").as_deref(),
-            Some("/mnt/c/Temp/codex.zip")
+            win_path_to_wsl(r"C:\Temp\genex.zip").as_deref(),
+            Some("/mnt/c/Temp/genex.zip")
         );
         assert_eq!(
-            win_path_to_wsl("D:/Work/codex.tgz").as_deref(),
-            Some("/mnt/d/Work/codex.tgz")
+            win_path_to_wsl("D:/Work/genex.tgz").as_deref(),
+            Some("/mnt/d/Work/genex.tgz")
         );
-        assert!(win_path_to_wsl("/home/user/codex").is_none());
+        assert!(win_path_to_wsl("/home/user/genex").is_none());
     }
 
     #[test]

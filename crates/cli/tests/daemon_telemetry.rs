@@ -15,7 +15,7 @@ async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow:
         ("analytics.enabled = true\n", false, 1),
         ("analytics.enabled = false\n", true, 0),
     ] {
-        let codex = genex_utils_cargo_bin::cargo_bin("genex")?;
+        let genex = genex_utils_cargo_bin::cargo_bin("genex")?;
         let server = MockServer::start().await;
         Mock::given(wiremock::matchers::path("/metrics"))
             .respond_with(ResponseTemplate::new(200))
@@ -30,7 +30,7 @@ async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow:
             ),
         )?;
         // No managed installation exists, so the command cannot confirm an applied update.
-        let mut command = tokio::process::Command::new(&codex);
+        let mut command = tokio::process::Command::new(&genex);
         command
             .current_dir(home.path())
             .env("GENEX_HOME", home.path())

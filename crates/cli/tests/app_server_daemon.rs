@@ -16,15 +16,15 @@ use tempfile::TempDir;
 
 struct TestDaemon {
     home: TempDir,
-    codex: PathBuf,
+    genex: PathBuf,
     unmanaged: Option<Child>,
 }
 
 impl TestDaemon {
     fn new() -> Result<Self> {
         let home = tempfile::Builder::new().tempdir_in("/tmp")?;
-        let codex = genex_utils_cargo_bin::cargo_bin("genex")?;
-        let codex_source = std::fs::canonicalize(&codex)?;
+        let genex = genex_utils_cargo_bin::cargo_bin("genex")?;
+        let genex_source = std::fs::canonicalize(&genex)?;
         let target = if cfg!(target_os = "macos") {
             format!("{}-apple-darwin", std::env::consts::ARCH)
         } else {
@@ -37,8 +37,8 @@ impl TestDaemon {
             .join(&release_name)
             .join("bin/genex");
         std::fs::create_dir_all(managed.parent().context("managed bin parent")?)?;
-        std::fs::hard_link(&codex_source, &managed)
-            .or_else(|_| std::fs::copy(&codex_source, managed).map(|_| ()))?;
+        std::fs::hard_link(&genex_source, &managed)
+            .or_else(|_| std::fs::copy(&genex_source, managed).map(|_| ()))?;
         std::fs::write(standalone.join("auto-update-version"), &release_name)?;
         std::os::unix::fs::symlink(
             PathBuf::from("releases").join(release_name),
@@ -50,13 +50,13 @@ impl TestDaemon {
         std::fs::write(state.join("app-server.stderr.log"), b"")?;
         Ok(Self {
             home,
-            codex,
+            genex,
             unmanaged: None,
         })
     }
 
     fn command(&self) -> Command {
-        let mut command = Command::new(&self.codex);
+        let mut command = Command::new(&self.genex);
         command.env("GENEX_HOME", self.home.path());
         command
     }
@@ -483,8 +483,8 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
     for directory in ["bin", "genex-path", "genex-resources"] {
         std::fs::create_dir_all(package.join(directory))?;
     }
-    std::fs::copy(&daemon.codex, package.join("bin/genex"))?;
-    daemon.codex = package.join("bin/genex");
+    std::fs::copy(&daemon.genex, package.join("bin/genex"))?;
+    daemon.genex = package.join("bin/genex");
     for helper in [
         "bin/genex-code-mode-host",
         "genex-path/rg",
@@ -523,7 +523,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
         state.join("settings.json"),
         br#"{"shutdownGraceSeconds":0}"#,
     )?;
-    let cli_before = daemon.codex.canonicalize()?;
+    let cli_before = daemon.genex.canonicalize()?;
     let result = daemon
         .command()
         .args(["app-server", "daemon", action])
@@ -555,7 +555,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
             .to_str()
             .context("managed path is not UTF-8")?
     );
-    assert_eq!(daemon.codex.canonicalize()?, cli_before);
+    assert_eq!(daemon.genex.canonicalize()?, cli_before);
     assert_eq!(standalone.join("current").canonicalize()?, cli_selection);
     assert!(state.join(initial_pid_file).exists());
     let legacy_updater = match initial {

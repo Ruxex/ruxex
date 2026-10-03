@@ -1231,7 +1231,7 @@ mod tests {
             )
             .detail("terminal title source: default")
             .detail("terminal title items: activity, project-name")
-            .detail("terminal title project value: codex"),
+            .detail("terminal title project value: genex"),
             DoctorCheck::new(
                 "state.paths",
                 "state",
@@ -1317,10 +1317,10 @@ Environment
       version                  git version 2.54.0
       repo detected            true
   ⚠ terminal     narrow terminal
-  ✓ title        default · project codex
+  ✓ title        default · project genex
       title source             default
       title items              activity, project-name
-      project value            codex
+      project value            genex
   ✓ state        state paths inspectable
 
 Configuration
@@ -1436,7 +1436,7 @@ Environment
   ✓ search       search is OK (bundled)
   ✓ git          git version 2.54.0
   ⚠ terminal     narrow terminal
-  ✓ title        default · project codex
+  ✓ title        default · project genex
   ✓ state        state paths inspectable
 
 Configuration
@@ -1513,7 +1513,7 @@ Environment
   [ok] search       search is OK (bundled)
   [ok] git          git version 2.54.0
   [!!] terminal     narrow terminal
-  [ok] title        default | project codex
+  [ok] title        default | project genex
   [ok] state        state paths inspectable
 
 Configuration
@@ -1701,14 +1701,14 @@ Run genex doctor without --summary for detailed diagnostics.
     #[test]
     fn detail_value_colors_inline_statuses_and_low_signal_values() {
         let rendered = detail_value(
-            "npm: no · commit unknown · integrity ok · ~/code/codex/target/debug/genex · <redacted>",
+            "npm: no · commit unknown · integrity ok · ~/code/genex/target/debug/genex · <redacted>",
             detailed_color_unicode_options(),
         );
 
         assert!(rendered.contains("npm: \u{1b}[38;5;240mno"));
         assert!(rendered.contains("\u{1b}[38;5;240munknown"));
         assert!(rendered.contains("\u{1b}[38;5;10mok"));
-        assert!(rendered.contains("\u{1b}[38;5;117m~/code/codex/target/debug/genex"));
+        assert!(rendered.contains("\u{1b}[38;5;117m~/code/genex/target/debug/genex"));
         assert!(rendered.contains("\u{1b}[38;5;244m"));
     }
 

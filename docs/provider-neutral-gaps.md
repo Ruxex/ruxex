@@ -54,7 +54,7 @@ server 側通知を自動的に refresh へ変換する producer はまだなく
 - local marketplace の利用
 - Git marketplace の追加・upgrade・remove
 - marketplace 内 plugin の local/Git/npm source
-- CLI の `codex plugin marketplace add/list/upgrade/remove`
+- CLI の `genex plugin marketplace add/list/upgrade/remove`
 
 [`plugin_bundle_archive.rs`](../crates/core-plugins/src/plugin_bundle_archive.rs) には、manifest を検証して tar.gz bundle を作る pack 処理がある。削除前の hosted 実装は、この bundle を署名付き upload URL に PUT してから backend API で finalize していた。
 
@@ -68,7 +68,7 @@ server 側通知を自動的に refresh へ変換する producer はまだなく
 
 ### 対応済み（client-side publish）
 
-`codex plugin marketplace publish` は、次の provider-neutral な三段階契約を利用する。
+`genex plugin marketplace publish` は、次の provider-neutral な三段階契約を利用する。
 
 1. `POST {registry}/v1/plugins/uploads`
 2. 応答の `upload_url` に `application/gzip` の bundle を `PUT`
@@ -125,7 +125,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 
 - Responses API の request/item/event 形式
 - Responses HTTP と Responses WebSocket
-- `codex_protocol::model_types::ModelInfo`
+- `genex_protocol::model_types::ModelInfo`
 - Responses 用の compaction、retry、metadata
 
 現在は `wire_api = "chat"` を指定した provider に対して、Chat Completions の `/chat/completions`、function tool payload、SSE 応答を専用 adapter 経由で利用できる。テキスト、画像入力、function tool、tool call/output、複数ターン履歴、共通の認証復旧も現行スコープに含まれる。対応範囲と request/SSE の変換は [ChatCompletionAPI のアーキテクチャ](cli-architecture/chat-completions.md) に整理している。

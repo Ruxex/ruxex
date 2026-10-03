@@ -95,7 +95,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
     ));
     push_path_detail(
         &mut details,
-        "codex-linux-sandbox helper",
+        "genex-linux-sandbox helper",
         arg0_paths.genex_linux_sandbox_exe.as_deref(),
     );
     push_path_detail(
@@ -278,7 +278,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
                         | SetupErrorCode::OrchestratorHelperReportReadFailed
                         | SetupErrorCode::OrchestratorHelperIncomplete
                         | SetupErrorCode::HelperReadAclHelperSpawnFailed => {
-                            "repair the installed Codex helpers or ask IT to allow their execution"
+                            "repair the installed Genex helpers or ask IT to allow their execution"
                         }
                         SetupErrorCode::HelperUserProvisionFailed
                         | SetupErrorCode::HelperUsersGroupCreateFailed
@@ -301,7 +301,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
                         | SetupErrorCode::HelperFirewallPolicyIneffective
                         | SetupErrorCode::HelperFirewallRuleCreateOrAddFailed
                         | SetupErrorCode::HelperFirewallRuleVerifyFailed => {
-                            "ask IT to allow Codex sandbox rules in managed Windows Firewall policy"
+                            "ask IT to allow Genex sandbox rules in managed Windows Firewall policy"
                         }
                         SetupErrorCode::OrchestratorPayloadSerializeFailed
                         | SetupErrorCode::HelperRequestArgsFailed

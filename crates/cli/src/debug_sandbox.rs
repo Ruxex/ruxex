@@ -399,7 +399,7 @@ async fn run_command_under_sandbox(
             .map_err(|err| anyhow::anyhow!(err))?;
             // This CLI inherits the user's controlling terminal. Keep this deny
             // after every shared policy allowance so the child cannot queue input
-            // for the unsandboxed shell that resumes when Codex exits.
+            // for the unsandboxed shell that resumes when Genex exits.
             match args.as_mut_slice() {
                 [flag, policy, ..] if flag.as_str() == "-p" => {
                     policy.push_str("\n(deny file-ioctl (ioctl-command TIOCSTI))");

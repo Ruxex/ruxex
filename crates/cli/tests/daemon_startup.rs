@@ -36,7 +36,7 @@ async fn bedrock_onboarding_leaves_a_running_daemon_untouched() -> Result<()> {
 }
 
 async fn daemon_startup(command: &str) -> Result<()> {
-    let codex = genex_utils_cargo_bin::cargo_bin("genex")?.canonicalize()?;
+    let genex = genex_utils_cargo_bin::cargo_bin("genex")?.canonicalize()?;
     let workspace = tempfile::tempdir()?;
     let workspace_path = workspace.path().canonicalize()?;
     #[cfg(unix)]
@@ -86,7 +86,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
             .path()
             .join("packages/app-server-daemon/current/bin/genex");
         fs::create_dir_all(home.path().join("packages/app-server-daemon/current/bin"))?;
-        fs::hard_link(&codex, &managed).or_else(|_| fs::copy(&codex, &managed).map(|_| ()))?;
+        fs::hard_link(&genex, &managed).or_else(|_| fs::copy(&genex, &managed).map(|_| ()))?;
         fs::create_dir(home.path().join("app-server-daemon"))?;
         fs::write(
             home.path().join("app-server-daemon/settings.json"),
@@ -96,7 +96,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
     let pid_file = home.path().join("app-server-daemon/daemon.pid");
     let result = async {
         let existing_daemon = if command == "bedrock-running" {
-            let started = Command::new(&codex)
+            let started = Command::new(&genex)
                 .env_clear()
                 .envs(&env)
                 .current_dir(&workspace_path)
@@ -124,7 +124,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
             "Runningwithoutthesharedbackgroundserver:--strict-config"
         };
         let spawned = genex_utils_pty::spawn_pty_process(
-            &codex.to_string_lossy(),
+            &genex.to_string_lossy(),
             &args,
             &workspace_path,
             &env,
@@ -197,7 +197,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
     }
     .await;
     // Always stop the detached daemon, including on timeout or failed assertions.
-    let stopped = Command::new(&codex)
+    let stopped = Command::new(&genex)
         .env_clear()
         .envs(&env)
         .args(["app-server", "daemon", "stop"])

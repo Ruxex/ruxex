@@ -2,7 +2,7 @@
 source: cli/src/doctor/output.rs
 expression: "render_human_report(&report, detailed_no_color_unicode_options())"
 ---
-Codex Doctor v0.0.0
+Genex Doctor v0.0.0
 
 Notes
    ↑ desktop      build 123 available (ready to install)
@@ -38,10 +38,10 @@ Environment
       repo detected            true
   ⚠ git          this worktree is not on a Windows Dev Drive — create a trusted Windows Dev Drive: https://learn.microsoft.com/en-us/windows/dev-drive/
   ⚠ terminal     narrow terminal
-  ✓ title        default · project codex
+  ✓ title        default · project genex
       title source             default
       title items              activity, project-name
-      project value            codex
+      project value            genex
   ✓ state        state paths inspectable
 
 Configuration

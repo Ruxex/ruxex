@@ -89,7 +89,7 @@ pub struct GetArgs {
 }
 
 #[derive(Debug, clap::Parser)]
-#[command(override_usage = "codex mcp add [OPTIONS] <NAME> (--url <URL> | -- <COMMAND>...)")]
+#[command(override_usage = "genex mcp add [OPTIONS] <NAME> (--url <URL> | -- <COMMAND>...)")]
 pub struct AddArgs {
     /// Name for the MCP server configuration.
     pub name: String,
@@ -458,7 +458,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
         }
         McpOAuthLoginSupport::Unsupported => {}
         McpOAuthLoginSupport::Unknown(_) => println!(
-            "MCP server may or may not require login. Run `codex mcp login {name}` to login."
+            "MCP server may or may not require login. Run `genex mcp login {name}` to login."
         ),
     }
 
@@ -526,7 +526,7 @@ async fn run_login(config: &Config, login_args: LoginArgs) -> Result<()> {
 
     if matches!(server.auth, genex_config::types::McpServerAuth::EmaAuth) {
         bail!(
-            "Enterprise MCP authorization is managed by Codex account sign-in. Open Codex to sign in."
+            "Enterprise MCP authorization is managed by Genex account sign-in. Open Genex to sign in."
         );
     }
 
@@ -714,7 +714,7 @@ async fn run_list(config: &Config, list_args: ListArgs) -> Result<()> {
     }
 
     if entries.is_empty() {
-        println!("No MCP servers configured yet. Try `codex mcp add my-tool -- my-command`.");
+        println!("No MCP servers configured yet. Try `genex mcp add my-tool -- my-command`.");
         return Ok(());
     }
 
@@ -1054,7 +1054,7 @@ async fn run_get(config: &Config, get_args: GetArgs) -> Result<()> {
         };
         println!("  default_tools_approval_mode: {approval_mode}");
     }
-    println!("  remove: codex mcp remove {}", get_args.name);
+    println!("  remove: genex mcp remove {}", get_args.name);
 
     Ok(())
 }

@@ -43,7 +43,7 @@ async fn marketplace_upgrade_json_prints_upgrade_outcome() -> Result<()> {
             "-c",
             "user.name=Genex Tests",
             "-c",
-            "user.email=codex@example.com",
+            "user.email=genex@example.com",
             "commit",
             "-m",
             "marketplace",
