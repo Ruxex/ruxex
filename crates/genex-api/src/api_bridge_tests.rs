@@ -32,7 +32,7 @@ fn map_api_error_preserves_retry_delay() {
         let err = map_api_error(error);
         assert_eq!(
             (
-                err.to_codex_protocol_error(),
+                err.to_genex_protocol_error(),
                 err.retry_delay(),
                 err.is_retryable(),
                 err.http_status_code_value(),
@@ -69,7 +69,7 @@ fn map_api_error_distinguishes_capacity_from_slow_down() {
             ),
         }));
         assert_eq!(
-            (err.to_codex_protocol_error(), err.is_retryable()),
+            (err.to_genex_protocol_error(), err.is_retryable()),
             (expected, retryable)
         );
     }
@@ -352,7 +352,7 @@ fn map_api_error_distinguishes_http_quota_errors_from_rate_limits() {
             body: Some(serde_json::json!({"error": error}).to_string()),
         }));
 
-        assert_eq!(err.to_codex_protocol_error(), expected, "{error}");
+        assert_eq!(err.to_genex_protocol_error(), expected, "{error}");
     }
 }
 

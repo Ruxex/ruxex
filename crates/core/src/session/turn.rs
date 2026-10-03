@@ -179,7 +179,7 @@ pub(crate) async fn run_turn(
         if matches!(err.details(), GenexErrorDetails::ToolCollision(_)) {
             return Err(err);
         }
-        let error = err.to_codex_protocol_error();
+        let error = err.to_genex_protocol_error();
         sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
             .await;
         // Publish the failure only after prompt hooks finish, so clients cannot react to
@@ -555,7 +555,7 @@ pub(crate) async fn run_turn(
                         if matches!(err.details(), GenexErrorDetails::TurnAborted) {
                             return Err(err);
                         }
-                        let error = err.to_codex_protocol_error();
+                        let error = err.to_genex_protocol_error();
                         sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                             .await;
                         return Ok(None);
@@ -648,7 +648,7 @@ pub(crate) async fn run_turn(
                     e.details(),
                     GenexErrorDetails::MisalignmentPolicyViolation { .. }
                 ) {}
-                let error = e.to_codex_protocol_error();
+                        let error = e.to_genex_protocol_error();
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                     .await;
                 let event = EventMsg::Error(e.to_error_event(/*message_prefix*/ None));

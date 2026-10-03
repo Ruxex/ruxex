@@ -577,7 +577,7 @@ impl Session {
                 warn!(%err, "session task returned an unexpected error");
                 self.emit_turn_error_lifecycle(
                     turn_context.as_ref(),
-                    err.to_codex_protocol_error(),
+                    err.to_genex_protocol_error(),
                 )
                 .await;
                 self.send_event(

@@ -104,7 +104,7 @@ pub enum GenexErrorDetails {
     #[error("request timed out")]
     RequestTimeout,
     /// Returned by run_command_stream when the child could not be spawned (its stdout/stderr pipes
-    /// could not be captured). Analogous to the previous `CodexError::Spawn` variant.
+    /// could not be captured). Analogous to the previous `GenexError::Spawn` variant.
     #[error("spawn failed: child stdout/stderr not captured")]
     Spawn,
     /// Returned by run_command_stream when the user pressed Ctrl-C (SIGINT). Session uses this to
@@ -404,7 +404,7 @@ impl GenexErr {
     }
 
     /// Translate core error to client-facing protocol error.
-    pub fn to_codex_protocol_error(&self) -> GenexErrorInfo {
+    pub fn to_genex_protocol_error(&self) -> GenexErrorInfo {
         match &self.details {
             GenexErrorDetails::ContextWindowExceeded => GenexErrorInfo::ContextWindowExceeded,
             GenexErrorDetails::SessionBudgetExceeded => GenexErrorInfo::SessionBudgetExceeded,
@@ -446,7 +446,7 @@ impl GenexErr {
         };
         ErrorEvent {
             message,
-            genex_error_info: Some(self.to_codex_protocol_error()),
+            genex_error_info: Some(self.to_genex_protocol_error()),
             misalignment: match &self.details {
                 GenexErrorDetails::MisalignmentPolicyViolation { misalignment, .. } => {
                     misalignment.clone()

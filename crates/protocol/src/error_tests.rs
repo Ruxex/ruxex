@@ -73,7 +73,7 @@ fn retryability_preserves_error_details_distinctions() {
 fn server_overloaded_maps_to_protocol() {
     let err = GenexErr::ServerOverloaded;
     assert_eq!(
-        err.to_codex_protocol_error(),
+        err.to_genex_protocol_error(),
         GenexErrorInfo::ServerOverloaded
     );
 }
