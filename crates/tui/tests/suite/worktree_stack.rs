@@ -77,7 +77,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
         genex_home.path(),
         /*desktop*/ None,
     )?);
-    // The launcher gives codex-main and Tokio workers explicit 16 MiB stacks.
+    // The launcher gives genex-main and Tokio workers explicit 16 MiB stacks.
     let mut terminal = PtyGenex::start(
         &root,
         genex_home,

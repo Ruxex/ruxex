@@ -26,7 +26,7 @@ const LOCK_FILENAME: &str = ".lock";
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Arg0DispatchPaths {
-    /// Stable path to the current Codex executable for child re-execs.
+    /// Stable path to the current Genex executable for child re-execs.
     ///
     /// Prefer this over [`std::env::current_exe()`] in code that may run under
     /// a test harness, where `current_exe()` can point at the harness binary
@@ -164,7 +164,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
     let (path_entry_guard, updated_path_env_var) = prepare_path_env_var_with_aliases(
         InstallContext::current(),
         std::env::var_os("PATH"),
-        prepare_path_entry_for_codex_aliases,
+        prepare_path_entry_for_genex_aliases,
     );
     if let Some(updated_path_env_var) = updated_path_env_var {
         // It is safe to call set_var() because our process is single-threaded at
@@ -187,7 +187,7 @@ fn prepare_path_env_var_with_aliases(
     match prepare_aliases(path_for_aliases) {
         Ok((path_entry, updated_path_env_var)) => (Some(path_entry), Some(updated_path_env_var)),
         Err(err) => {
-            // It is possible that Codex will proceed successfully even if
+            // It is possible that Genex will proceed successfully even if
             // creating helper aliases fails, so warn the user and move on.
             eprintln!("WARNING: proceeding, even though we could not create PATH aliases: {err}");
             (None, package_path)
@@ -234,7 +234,7 @@ where
     // stack budget as Tokio workers; `Runtime::block_on` otherwise runs the
     // top-level future on the caller's OS stack.
     let handle = std::thread::Builder::new()
-        .name("codex-main".to_string())
+        .name("genex-main".to_string())
         .stack_size(THREAD_STACK_SIZE_BYTES)
         .spawn(move || {
             let runtime = build_runtime()?;
@@ -297,12 +297,12 @@ fn build_runtime() -> anyhow::Result<tokio::runtime::Runtime> {
     Ok(builder.build()?)
 }
 
-const ILLEGAL_ENV_VAR_PREFIX: &str = "CODEX_";
+const PROTECTED_ENV_VAR_PREFIX: &str = "CODEX_";
 
 /// Load env vars from ~/.genex/.env.
 ///
-/// Security: Do not allow `.env` files to create or modify any variables
-/// with names starting with `CODEX_`.
+/// Security: Do not allow `.env` files to create or modify protected runtime
+/// variables with names starting with `CODEX_`.
 fn load_dotenv() {
     if let Ok(genex_home) = find_genex_home()
         && let Ok(iter) = dotenvy::from_path_iter(genex_home.join(".env"))
@@ -311,13 +311,13 @@ fn load_dotenv() {
     }
 }
 
-/// Helper to set vars from a dotenvy iterator while filtering out `CODEX_` keys.
+/// Helper to set vars from a dotenvy iterator while filtering protected keys.
 fn set_filtered<I>(iter: I)
 where
     I: IntoIterator<Item = Result<(String, String), dotenvy::Error>>,
 {
     for (key, value) in iter.into_iter().flatten() {
-        if !key.to_ascii_uppercase().starts_with(ILLEGAL_ENV_VAR_PREFIX) {
+        if !key.to_ascii_uppercase().starts_with(PROTECTED_ENV_VAR_PREFIX) {
             // It is safe to call set_var() because our process is
             // single-threaded at this point in its execution.
             unsafe { std::env::set_var(&key, &value) };
@@ -333,12 +333,12 @@ where
 ///
 /// Returns the temporary directory guard and the PATH value that prepends the
 /// temporary directory so `apply_patch` can be on the PATH without requiring the
-/// user to install a separate executable, simplifying the deployment of Codex
+/// user to install a separate executable, simplifying the deployment of Genex
 /// CLI.
 /// Note: In debug builds the temp-dir guard is disabled to ease local testing.
 ///
 /// IMPORTANT: Callers must update PATH before multiple threads are spawned.
-fn prepare_path_entry_for_codex_aliases(
+fn prepare_path_entry_for_genex_aliases(
     existing_path: Option<OsString>,
 ) -> std::io::Result<(Arg0PathEntryGuard, OsString)> {
     let genex_home = find_genex_home()?;
@@ -374,7 +374,7 @@ fn prepare_path_entry_for_codex_aliases(
     }
 
     let temp_dir = tempfile::Builder::new()
-        .prefix("codex-arg0")
+        .prefix("genex-arg0")
         .tempdir_in(&temp_root)?;
     let path = temp_dir.path();
 
@@ -651,7 +651,7 @@ mod tests {
     }
 
     #[test]
-    fn linux_sandbox_exe_path_prefers_codex_linux_sandbox_alias() -> std::io::Result<()> {
+    fn linux_sandbox_exe_path_prefers_genex_linux_sandbox_alias() -> std::io::Result<()> {
         let temp_dir = TempDir::new()?;
         let lock_file = create_lock(temp_dir.path())?;
         let alias_path = temp_dir.path().join("codex-linux-sandbox");
@@ -733,7 +733,7 @@ mod tests {
     #[test]
     fn run_main_with_arg0_guard_keeps_aliases_alive_until_main_returns() -> anyhow::Result<()> {
         let temp_dir = TempDir::new()?;
-        let alias_path = temp_dir.path().join("codex-helper-alias");
+        let alias_path = temp_dir.path().join("genex-helper-alias");
         fs::write(&alias_path, b"")?;
         let lock_file = create_lock(temp_dir.path())?;
         let path_entry = Arg0PathEntryGuard::new(
