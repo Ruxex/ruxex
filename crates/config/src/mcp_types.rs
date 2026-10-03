@@ -168,7 +168,7 @@ pub struct McpServerOAuthConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub callback_url: Option<String>,
 
-    /// Fixed callback port that takes precedence over Codex's global OAuth callback port.
+    /// Fixed callback port that takes precedence over Genex's global OAuth callback port.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub callback_port: Option<u16>,
 
@@ -218,14 +218,14 @@ pub struct McpServerConfig {
     #[serde(default, skip_serializing_if = "McpServerAuth::is_default")]
     pub auth: McpServerAuth,
 
-    /// Effective environment id for where Codex should start this MCP server.
+    /// Effective environment id for where Genex should start this MCP server.
     pub environment_id: String,
 
-    /// When `false`, Codex skips initializing this MCP server.
+    /// When `false`, Genex skips initializing this MCP server.
     #[serde(default = "default_enabled")]
     pub enabled: bool,
 
-    /// When `true`, `codex exec` exits with an error if this MCP server fails to initialize.
+    /// When `true`, `genex exec` exits with an error if this MCP server fails to initialize.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub required: bool,
 

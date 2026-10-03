@@ -1,6 +1,6 @@
 # `genex-config` loader
 
-This module is the canonical place to **load and describe Codex configuration layers** (user config, CLI/session overrides, cloud-managed config, system config, and MDM-managed preferences) and to produce:
+This module is the canonical place to **load and describe Genex configuration layers** (user config, CLI/session overrides, cloud-managed config, system config, and MDM-managed preferences) and to produce:
 
 - An **effective merged** TOML config.
 - **Per-key origins** metadata (which layer “wins” for a given key).
@@ -8,7 +8,7 @@ This module is the canonical place to **load and describe Codex configuration la
 
 ## Public surface
 
-Exported from `codex_config::loader`:
+Exported from `genex_config::loader`:
 
 - `load_config_layers_state(fs, genex_home, cwd_opt, cli_overrides, options, thread_config_loader) -> ConfigLayerStack`
 - `ConfigLayerStack`
@@ -53,11 +53,11 @@ computing the effective config and origins metadata. This is what
 Most callers want the effective config plus metadata:
 
 ```rust
-use codex_config::LoaderOverrides;
-use codex_config::NoopThreadConfigLoader;
-use codex_config::loader::load_config_layers_state;
-use codex_exec_server::LOCAL_FS;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use genex_config::LoaderOverrides;
+use genex_config::NoopThreadConfigLoader;
+use genex_config::loader::load_config_layers_state;
+use genex_exec_server::LOCAL_FS;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use toml::Value as TomlValue;
 
 let cli_overrides: Vec<(String, TomlValue)> = Vec::new();

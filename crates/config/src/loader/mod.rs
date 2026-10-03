@@ -98,7 +98,7 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 ///
 /// Configuration is built up from multiple layers in the following order:
 ///
-/// - package:  optional default configuration supplied with the Codex package
+/// - package:  optional default configuration supplied with the Genex package
 /// - admin:    managed preferences (*)
 /// - system    `/etc/codex/config.toml` (Unix) or
 ///   `%ProgramData%\provider\Codex\config.toml` (Windows)
@@ -163,7 +163,7 @@ pub async fn load_config_layers_state(
         let config = toml::from_str(raw_toml).map_err(|error| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("invalid embedded packaged defaults; this is a Codex build error: {error}"),
+                format!("invalid embedded packaged defaults; this is a Genex build error: {error}"),
             )
         })?;
         ConfigLayerEntry::new_with_raw_toml(
@@ -719,7 +719,7 @@ fn system_config_toml_file_with_overrides(
 }
 
 #[cfg(windows)]
-fn windows_codex_system_dir() -> PathBuf {
+fn windows_genex_system_dir() -> PathBuf {
     let program_data = windows_program_data_dir_from_known_folder().unwrap_or_else(|err| {
         tracing::warn!(
             error = %err,
@@ -732,13 +732,13 @@ fn windows_codex_system_dir() -> PathBuf {
 
 #[cfg(windows)]
 fn windows_system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    let requirements_toml_file = windows_codex_system_dir().join("requirements.toml");
+    let requirements_toml_file = windows_genex_system_dir().join("requirements.toml");
     AbsolutePathBuf::try_from(requirements_toml_file)
 }
 
 #[cfg(windows)]
 fn windows_system_config_toml_file() -> io::Result<AbsolutePathBuf> {
-    let config_toml_file = windows_codex_system_dir().join("config.toml");
+    let config_toml_file = windows_genex_system_dir().join("config.toml");
     AbsolutePathBuf::try_from(config_toml_file)
 }
 
@@ -1462,10 +1462,10 @@ async fn discover_project_layers(
     let mut layers = Vec::new();
     let mut startup_warnings = Vec::new();
     for dir in dirs {
-        let dot_codex_abs = dir.join(".genex");
-        let dot_codex_uri = PathUri::from_abs_path(&dot_codex_abs);
+        let dot_genex_abs = dir.join(".genex");
+        let dot_genex_uri = PathUri::from_abs_path(&dot_genex_abs);
         if !fs
-            .get_metadata(&dot_codex_uri, Default::default(), /*sandbox*/ None)
+            .get_metadata(&dot_genex_uri, Default::default(), /*sandbox*/ None)
             .await
             .map(|metadata| metadata.is_directory)
             .unwrap_or(false)
@@ -1476,12 +1476,12 @@ async fn discover_project_layers(
         let decision = trust_context.decision_for_dir(&dir);
         let disabled_reason = trust_context.disabled_reason_for_decision(&decision);
         let hooks_config_folder_override = trust_context.root_checkout_hooks_folder_for_dir(&dir);
-        let dot_codex_normalized =
-            normalize_path(dot_codex_abs.as_path()).unwrap_or_else(|_| dot_codex_abs.to_path_buf());
-        if dot_codex_abs == genex_home_abs || dot_codex_normalized == genex_home_normalized {
+        let dot_genex_normalized =
+            normalize_path(dot_genex_abs.as_path()).unwrap_or_else(|_| dot_genex_abs.to_path_buf());
+        if dot_genex_abs == genex_home_abs || dot_genex_normalized == genex_home_normalized {
             continue;
         }
-        let config_file = dot_codex_abs.join(CONFIG_TOML_FILE);
+        let config_file = dot_genex_abs.join(CONFIG_TOML_FILE);
         let config_file_uri = PathUri::from_abs_path(&config_file);
         match fs
             .read_file_text(&config_file_uri, Default::default(), /*sandbox*/ None)
@@ -1501,7 +1501,7 @@ async fn discover_project_layers(
                             ));
                         }
                         layers.push(DiscoveredProjectLayer {
-                            dot_genex_folder: dot_codex_abs,
+                            dot_genex_folder: dot_genex_abs,
                             config: TomlValue::Table(toml::map::Map::new()),
                             disabled_reason,
                             hooks_config_folder_override,
@@ -1516,7 +1516,7 @@ async fn discover_project_layers(
                         config_file.as_path(),
                         &contents,
                         &config,
-                        dot_codex_abs.as_path(),
+                        dot_genex_abs.as_path(),
                     )?;
                 }
                 let ignored_project_config_keys = sanitize_project_config(
@@ -1526,12 +1526,12 @@ async fn discover_project_layers(
                 );
                 if disabled_reason.is_none() && !ignored_project_config_keys.is_empty() {
                     startup_warnings.push(project_ignored_config_keys_warning(
-                        &dot_codex_abs,
+                        &dot_genex_abs,
                         &ignored_project_config_keys,
                     ));
                 }
                 layers.push(DiscoveredProjectLayer {
-                    dot_genex_folder: dot_codex_abs,
+                    dot_genex_folder: dot_genex_abs,
                     config,
                     disabled_reason,
                     hooks_config_folder_override,
@@ -1544,7 +1544,7 @@ async fn discover_project_layers(
                     // for this project layer, as this may still have subfolders
                     // that are significant in the overall ConfigLayerStack.
                     layers.push(DiscoveredProjectLayer {
-                        dot_genex_folder: dot_codex_abs,
+                        dot_genex_folder: dot_genex_abs,
                         config: TomlValue::Table(toml::map::Map::new()),
                         disabled_reason,
                         hooks_config_folder_override,

@@ -870,10 +870,10 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     let tmp = tempdir().expect("tempdir");
     let genex_home = tmp.path().join("genex-home");
     let project = tmp.path().join("project");
-    let dot_codex = project.join(".genex");
+    let dot_genex = project.join(".genex");
     let system_dir = tmp.path().join("system");
     let managed_dir = tmp.path().join("managed");
-    for dir in [&genex_home, &dot_codex, &system_dir, &managed_dir] {
+    for dir in [&genex_home, &dot_genex, &system_dir, &managed_dir] {
         std::fs::create_dir_all(dir).expect("create fixture directory");
     }
     std::fs::write(project.join(".project-root"), "").expect("write project marker");
@@ -898,7 +898,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     std::fs::write(&system_file, "model_instructions_file = \"./system.md\"")
         .expect("write system config");
     std::fs::write(
-        dot_codex.join(CONFIG_TOML_FILE),
+        dot_genex.join(CONFIG_TOML_FILE),
         "model_instructions_file = \"./project.md\"\nmanaged_auth_base_url = \"https://ignored\"",
     )
     .expect("write project config");
@@ -929,7 +929,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             .iter()
             .map(|layer| layer.base_dir.to_path_buf())
             .collect::<Vec<_>>(),
-        vec![system_dir.clone(), genex_home.clone(), dot_codex.clone(),]
+        vec![system_dir.clone(), genex_home.clone(), dot_genex.clone(),]
     );
     assert_eq!(layers.config.cloud_insertion_index, 1);
     assert_eq!(layers.requirements.cloud_insertion_index, 1);
@@ -964,7 +964,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
         )
         .expect("write lowercase trusted GitHub host");
         std::fs::write(
-            dot_codex.join(CONFIG_TOML_FILE),
+            dot_genex.join(CONFIG_TOML_FILE),
             "[shell_environment_policy]\ninherit='none'\n",
         )
         .expect("write project environment policy");

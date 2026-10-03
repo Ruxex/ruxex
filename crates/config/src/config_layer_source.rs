@@ -1,10 +1,10 @@
 use genex_utils_absolute_path::AbsolutePathBuf;
 use serde_json::Value as JsonValue;
 
-/// Provenance for one layer in the effective Codex configuration.
+/// Provenance for one layer in the effective Genex configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConfigLayerSource {
-    /// Default configuration supplied with the installed Codex package.
+    /// Default configuration supplied with the installed Genex package.
     PackagedDefaults { file: AbsolutePathBuf },
     /// Managed preferences delivered by MDM.
     Mdm { domain: String, key: String },

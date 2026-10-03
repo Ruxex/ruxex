@@ -37,7 +37,7 @@ impl From<LoaderOverrides> for ConfigLoadOptions {
 /// LoaderOverrides overrides managed configuration inputs (primarily for tests).
 #[derive(Debug, Default, Clone)]
 pub struct LoaderOverrides {
-    /// Optional configuration file supplied with the installed Codex package.
+    /// Optional configuration file supplied with the installed Genex package.
     pub packaged_defaults_path: Option<AbsolutePathBuf>,
     pub user_config_path: Option<AbsolutePathBuf>,
     pub user_config_profile: Option<ProfileV2Name>,
@@ -61,7 +61,7 @@ impl LoaderOverrides {
     ///
     /// This is intended for tests that should load only repo-controlled config fixtures.
     pub fn without_managed_config_for_tests() -> Self {
-        let base = std::env::temp_dir().join("codex-config-tests");
+        let base = std::env::temp_dir().join("genex-config-tests");
         Self {
             packaged_defaults_path: None,
             user_config_path: None,
