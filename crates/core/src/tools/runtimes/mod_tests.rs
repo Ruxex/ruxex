@@ -1126,7 +1126,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         format!("{dummy}|unset")
     );
 
-    let injection = "\"; printf CODEX_ENV_INJECTED; __codex_env_file=\"";
+    let injection = "\"; printf CODEX_ENV_INJECTED; __genex_env_file=\"";
     expanded_env.insert("ENV".to_string(), injection.to_string());
     let startup_value_snapshot = dir.path().join("startup-value-snapshot.sh").abs();
     std::fs::write(
@@ -1351,7 +1351,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
             assert!(
                 !exported_env
                     .split('\0')
-                    .any(|entry| entry.starts_with("__CODEX_SNAPSHOT_PROXY_OVERRIDE_"))
+                    .any(|entry| entry.starts_with("__GENEX_SNAPSHOT_PROXY_OVERRIDE_"))
             );
             assert!(!String::from_utf8_lossy(&output.stderr).contains("sk-system-startup-secret"));
         }

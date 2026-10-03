@@ -7,12 +7,12 @@ pub(super) fn script(shell_type: ShellType) -> String {
     let script = match shell_type {
         ShellType::Bash => {
             r#"(
-  while IFS= read -r __codex_snapshot_export_name; do
-    case "$__codex_snapshot_export_name" in
+  while IFS= read -r __genex_snapshot_export_name; do
+    case "$__genex_snapshot_export_name" in
       ""|[0-9]*|*[!A-Za-z0-9_]*|PWD|OLDPWD) continue ;;
     esac
     RECORD_START
-    declare -xp "$__codex_snapshot_export_name" 2>/dev/null || true
+    declare -xp "$__genex_snapshot_export_name" 2>/dev/null || true
     RECORD_END
   done < <(compgen -e)
 )
@@ -22,17 +22,17 @@ pub(super) fn script(shell_type: ShellType) -> String {
             r#"(
   unsetopt rcquotes
   # The bundled Zsh does not include the zsh/parameter module.
-  for __codex_snapshot_export_name in ${(f)"$(typeset +x)"}; do
-    case "$__codex_snapshot_export_name" in
+  for __genex_snapshot_export_name in ${(f)"$(typeset +x)"}; do
+    case "$__genex_snapshot_export_name" in
       ""|[0-9]*|*[!A-Za-z0-9_]*|PWD|OLDPWD) continue ;;
     esac
-    case "${(tP)__codex_snapshot_export_name}" in
+    case "${(tP)__genex_snapshot_export_name}" in
       *readonly*) continue ;;
       *export*) ;;
       *) continue ;;
     esac
     RECORD_START
-    typeset -xp "$__codex_snapshot_export_name"
+    typeset -xp "$__genex_snapshot_export_name"
     RECORD_END
   done
 )
@@ -40,7 +40,7 @@ pub(super) fn script(shell_type: ShellType) -> String {
         }
         ShellType::Sh => {
             r#"if export -p >/dev/null 2>&1; then
-export -p | __codex_snapshot_command awk '
+export -p | __genex_snapshot_command awk '
 /^(export|declare -x|typeset -x) [A-Za-z_][A-Za-z0-9_]*$/ {
   name=$0
   sub(/^(export|declare -x|typeset -x) /, "", name)
@@ -50,20 +50,20 @@ export -p | __codex_snapshot_command awk '
   if (!seen[name]++) {
     print name
   }
-}' | while IFS= read -r __codex_snapshot_export_name; do
+}' | while IFS= read -r __genex_snapshot_export_name; do
   # Only the validated identifier enters eval. Set values come from the bulk environment.
-  if eval '[ "${'"$__codex_snapshot_export_name"'+x}" = x ]'; then
+  if eval '[ "${'"$__genex_snapshot_export_name"'+x}" = x ]'; then
     continue
   fi
   # Only preserve an unset export if the native shell confirms it already exists.
   if (
     set +a
-    set -- "$__codex_snapshot_export_name" "$(export -p)"
+    set -- "$__genex_snapshot_export_name" "$(export -p)"
     export "$1"
     [ "$2" = "$(export -p)" ]
   ); then
     RECORD_START
-    printf 'export %s\n' "$__codex_snapshot_export_name"
+    printf 'export %s\n' "$__genex_snapshot_export_name"
     RECORD_END
   fi
 done
@@ -75,7 +75,7 @@ fi
     script
         .replace(
             "RECORD_START",
-            "printf '%s\\0' \"$__codex_snapshot_export_name\"",
+            "printf '%s\\0' \"$__genex_snapshot_export_name\"",
         )
         .replace("RECORD_END", "printf '\\0'")
 }

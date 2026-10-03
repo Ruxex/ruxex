@@ -323,7 +323,7 @@ fn literal_words_with_quoting(
                                     | "command_substitution"
                                     | "process_substitution"
                                     | "arithmetic_expansion" => {
-                                        word.extend_from_slice(b"${__codex_snapshot_dynamic}");
+                                        word.extend_from_slice(b"${__genex_snapshot_dynamic}");
                                     }
                                     _ => return None,
                                 }
@@ -336,8 +336,8 @@ fn literal_words_with_quoting(
                 {
                     let body = if may_initialize_array {
                         let body = body
-                            .trim_start_matches("${__codex_snapshot_dynamic}")
-                            .trim_end_matches("${__codex_snapshot_dynamic}");
+                            .trim_start_matches("${__genex_snapshot_dynamic}")
+                            .trim_end_matches("${__genex_snapshot_dynamic}");
                         if !body.starts_with('(') || !body.ends_with(')') {
                             continue;
                         }

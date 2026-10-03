@@ -308,7 +308,7 @@ mod tests {
         let mut parser = PowershellParserProcess::spawn(powershell).unwrap();
 
         let parsed = parser
-            .parse("git log --% HEAD --output=codex_poc.txt")
+            .parse("git log --% HEAD --output=genex_poc.txt")
             .unwrap();
         assert_eq!(parsed, PowershellParseOutcome::Unsupported);
     }
@@ -336,7 +336,7 @@ mod tests {
         let mut parser = PowershellParserProcess::spawn(powershell).unwrap();
 
         let parsed = parser
-            .parse("begin { Set-Content codex_poc.txt pwned } end { Get-Content Cargo.toml }")
+            .parse("begin { Set-Content genex_poc.txt pwned } end { Get-Content Cargo.toml }")
             .unwrap();
         assert_eq!(parsed, PowershellParseOutcome::Unsupported);
     }
@@ -350,7 +350,7 @@ mod tests {
         let mut parser = PowershellParserProcess::spawn(powershell).unwrap();
 
         let parsed = parser
-            .parse("using module ./codex_poc.psm1\nGet-Content Cargo.toml")
+            .parse("using module ./genex_poc.psm1\nGet-Content Cargo.toml")
             .unwrap();
         assert_eq!(parsed, PowershellParseOutcome::Unsupported);
     }
@@ -365,7 +365,7 @@ mod tests {
 
         let parsed = parser
             .parse(
-                "trap { Set-Content codex_poc.txt pwned; continue } Get-Content missing -ErrorAction Stop",
+                "trap { Set-Content genex_poc.txt pwned; continue } Get-Content missing -ErrorAction Stop",
             )
             .unwrap();
         assert_eq!(parsed, PowershellParseOutcome::Unsupported);

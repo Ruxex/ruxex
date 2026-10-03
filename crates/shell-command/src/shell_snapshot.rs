@@ -30,11 +30,11 @@ mod tests;
 /// The helper deliberately supports only non-evaluating path forms. Unsupported
 /// shell expressions are returned unchanged rather than executed.
 pub fn posix_env_path_expansion_function() -> &'static str {
-    r#"__codex_snapshot_expand_env() (
+    r#"__genex_snapshot_expand_env() (
   set +u
-  __codex_snapshot_getenv() {
+  __genex_snapshot_getenv() {
     # Preserve the value separately from lookup status and its formatting newline.
-    __codex_env_expanded=$(
+    __genex_env_expanded=$(
       if command -v printenv >/dev/null 2>&1; then
         printenv "$1"
       elif [ "$1" = PATH ]; then
@@ -43,39 +43,39 @@ pub fn posix_env_path_expansion_function() -> &'static str {
         command -p printenv "$1"
       fi && printf '.'
     ) || return 1
-    __codex_env_expanded=${__codex_env_expanded%?}
-    __codex_env_expanded=${__codex_env_expanded%?}
+    __genex_env_expanded=${__genex_env_expanded%?}
+    __genex_env_expanded=${__genex_env_expanded%?}
   }
-  __codex_env_file=$1
-  case "$__codex_env_file" in
-    '~/'*) __codex_env_file="${HOME-}/${__codex_env_file#*/}" ;;
-    '${PATH%%:*}') __codex_env_file="${PATH%%:*}" ;;
-    '${PATH%%:*}/'*) __codex_env_file="${PATH%%:*}/${__codex_env_file#*/}" ;;
+  __genex_env_file=$1
+  case "$__genex_env_file" in
+    '~/'*) __genex_env_file="${HOME-}/${__genex_env_file#*/}" ;;
+    '${PATH%%:*}') __genex_env_file="${PATH%%:*}" ;;
+    '${PATH%%:*}/'*) __genex_env_file="${PATH%%:*}/${__genex_env_file#*/}" ;;
     '${'*)
-      __codex_env_body=${__codex_env_file#\$\{}
-      case "$__codex_env_body" in
+      __genex_env_body=${__genex_env_file#\$\{}
+      case "$__genex_env_body" in
         *\}*)
-          __codex_env_name=${__codex_env_body%%\}*}
-          __codex_env_suffix=${__codex_env_body#*\}}
-          case "$__codex_env_name" in
+          __genex_env_name=${__genex_env_body%%\}*}
+          __genex_env_suffix=${__genex_env_body#*\}}
+          case "$__genex_env_name" in
             *:-*)
-              __codex_env_default=${__codex_env_name#*:-}
-              __codex_env_name=${__codex_env_name%%:-*}
-              __codex_env_has_default=1
+              __genex_env_default=${__genex_env_name#*:-}
+              __genex_env_name=${__genex_env_name%%:-*}
+              __genex_env_has_default=1
               ;;
-            *) __codex_env_has_default= ;;
+            *) __genex_env_has_default= ;;
           esac
-          case "$__codex_env_name" in
+          case "$__genex_env_name" in
             ''|[0-9]*|*[!A-Za-z0-9_]*) ;;
             *)
-              case "$__codex_env_suffix" in
+              case "$__genex_env_suffix" in
                 ''|/*)
-                  if __codex_snapshot_getenv "$__codex_env_name" 2>/dev/null &&
-                    { [ -n "$__codex_env_expanded" ] || [ -z "$__codex_env_has_default" ]; }; then
-                    __codex_env_file="$__codex_env_expanded$__codex_env_suffix"
-                  elif [ -n "$__codex_env_has_default" ]; then
-                    __codex_env_default=$(__codex_snapshot_expand_env "$__codex_env_default")
-                    __codex_env_file="$__codex_env_default$__codex_env_suffix"
+                  if __genex_snapshot_getenv "$__genex_env_name" 2>/dev/null &&
+                    { [ -n "$__genex_env_expanded" ] || [ -z "$__genex_env_has_default" ]; }; then
+                    __genex_env_file="$__genex_env_expanded$__genex_env_suffix"
+                  elif [ -n "$__genex_env_has_default" ]; then
+                    __genex_env_default=$(__genex_snapshot_expand_env "$__genex_env_default")
+                    __genex_env_file="$__genex_env_default$__genex_env_suffix"
                   fi
                   ;;
               esac
@@ -85,23 +85,23 @@ pub fn posix_env_path_expansion_function() -> &'static str {
       esac
       ;;
     '$'*)
-      __codex_env_name=${__codex_env_file%%/*}
-      __codex_env_name=${__codex_env_name#\$}
-      case "$__codex_env_name" in
+      __genex_env_name=${__genex_env_file%%/*}
+      __genex_env_name=${__genex_env_name#\$}
+      case "$__genex_env_name" in
         ''|[0-9]*|*[!A-Za-z0-9_]*) ;;
         *)
-          if __codex_snapshot_getenv "$__codex_env_name" 2>/dev/null; then
-            if [ "$__codex_env_file" = "\$$__codex_env_name" ]; then
-              __codex_env_file=$__codex_env_expanded
+          if __genex_snapshot_getenv "$__genex_env_name" 2>/dev/null; then
+            if [ "$__genex_env_file" = "\$$__genex_env_name" ]; then
+              __genex_env_file=$__genex_env_expanded
             else
-              __codex_env_file="$__codex_env_expanded/${__codex_env_file#*/}"
+              __genex_env_file="$__genex_env_expanded/${__genex_env_file#*/}"
             fi
           fi
           ;;
       esac
       ;;
   esac
-  printf '%s' "$__codex_env_file"
+  printf '%s' "$__genex_env_file"
 )"#
 }
 

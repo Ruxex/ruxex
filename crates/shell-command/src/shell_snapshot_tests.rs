@@ -272,7 +272,7 @@ fn sh_declarations_preserve_path_export_state() -> Result<()> {
 #[test]
 fn posix_startup_path_expansion_preserves_supported_forms() -> Result<()> {
     let script = format!(
-        "{}\n__codex_snapshot_expand_env \"$ENV\"",
+        "{}\n__genex_snapshot_expand_env \"$ENV\"",
         super::posix_env_path_expansion_function()
     );
     let output = Command::new("/bin/sh")
@@ -374,7 +374,7 @@ fn posix_startup_path_expansion_preserves_supported_forms() -> Result<()> {
 
     let injected_marker = dir.path().join("env-injected");
     let injected_env = format!(
-        "\"; touch '{}'; __codex_env_file=\"",
+        "\"; touch '{}'; __genex_env_file=\"",
         injected_marker.display()
     );
     let output = Command::new("/bin/sh")

@@ -389,41 +389,41 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         let expand_env_function = posix_env_path_expansion_function();
         (
             format!(
-                r#"__CODEX_SNAPSHOT_ORIGINAL_ENV_SET="${{ENV+x}}"
-__CODEX_SNAPSHOT_ORIGINAL_ENV="${{ENV-}}"
+                r#"__GENEX_SNAPSHOT_ORIGINAL_ENV_SET="${{ENV+x}}"
+__GENEX_SNAPSHOT_ORIGINAL_ENV="${{ENV-}}"
 {expand_env_function}
-__codex_snapshot_expand_env_with_zdotdir() (
+__genex_snapshot_expand_env_with_zdotdir() (
   if [ -n "${{{zdotdir_key}+x}}" ]; then
     export ZDOTDIR="${{{zdotdir_key}}}"
   elif [ -n "${{ZSH_VERSION-}}" ] && [ "${{ZDOTDIR-}}" = /dev/null ]; then
     unset ZDOTDIR
   fi
-  __codex_snapshot_expand_env "$1"
+  __genex_snapshot_expand_env "$1"
 )
-__CODEX_SNAPSHOT_PROTECTED_ENV=$(
-  __codex_snapshot_expand_env_with_zdotdir "${{{startup_env_key}-}}"
+__GENEX_SNAPSHOT_PROTECTED_ENV=$(
+  __genex_snapshot_expand_env_with_zdotdir "${{{startup_env_key}-}}"
 )
-__CODEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV=$(
-  __codex_snapshot_expand_env_with_zdotdir "${{{alternate_startup_env_key}-}}"
+__GENEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV=$(
+  __genex_snapshot_expand_env_with_zdotdir "${{{alternate_startup_env_key}-}}"
 )"#
             ),
-            "__CODEX_SNAPSHOT_REPLAYED_BASH_ENV=\"${BASH_ENV-}\"".to_string(),
+            "__GENEX_SNAPSHOT_REPLAYED_BASH_ENV=\"${BASH_ENV-}\"".to_string(),
             format!(
-                r#"__CODEX_SNAPSHOT_CURRENT_ENV=$(
-  __codex_snapshot_expand_env_with_zdotdir "${{ENV-}}"
+                r#"__GENEX_SNAPSHOT_CURRENT_ENV=$(
+  __genex_snapshot_expand_env_with_zdotdir "${{ENV-}}"
 )
-__CODEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV=$(
-  __codex_snapshot_expand_env_with_zdotdir "$__CODEX_SNAPSHOT_ORIGINAL_ENV"
+__GENEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV=$(
+  __genex_snapshot_expand_env_with_zdotdir "$__GENEX_SNAPSHOT_ORIGINAL_ENV"
 )
-__CODEX_SNAPSHOT_REPLAYED_PROTECTED_ENV=$(
-  __codex_snapshot_expand_env_with_zdotdir "$__CODEX_SNAPSHOT_REPLAYED_BASH_ENV"
+__GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV=$(
+  __genex_snapshot_expand_env_with_zdotdir "$__GENEX_SNAPSHOT_REPLAYED_BASH_ENV"
 )
-unset -f __codex_snapshot_expand_env __codex_snapshot_expand_env_with_zdotdir
-__codex_snapshot_env_is_protected() (
+unset -f __genex_snapshot_expand_env __genex_snapshot_expand_env_with_zdotdir
+__genex_snapshot_env_is_protected() (
   for __codex_protected_env in \
-    "$__CODEX_SNAPSHOT_PROTECTED_ENV" \
-    "$__CODEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV" \
-    "$__CODEX_SNAPSHOT_REPLAYED_PROTECTED_ENV"; do
+    "$__GENEX_SNAPSHOT_PROTECTED_ENV" \
+    "$__GENEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV" \
+    "$__GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV"; do
     if [ -n "$__codex_protected_env" ] &&
       {{ [ "$1" = "$__codex_protected_env" ] ||
         [ "$1" -ef "$__codex_protected_env" ] 2>/dev/null; }}; then
@@ -432,22 +432,22 @@ __codex_snapshot_env_is_protected() (
   done
   return 1
 )
-if __codex_snapshot_env_is_protected "$__CODEX_SNAPSHOT_CURRENT_ENV"; then
-  if [ -n "$__CODEX_SNAPSHOT_ORIGINAL_ENV_SET" ] &&
-    ! __codex_snapshot_env_is_protected "$__CODEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV"; then
-    builtin export ENV="$__CODEX_SNAPSHOT_ORIGINAL_ENV" 2>/dev/null ||
-      command export ENV="$__CODEX_SNAPSHOT_ORIGINAL_ENV" || exit 1
-    [ "${{ENV-}}" = "$__CODEX_SNAPSHOT_ORIGINAL_ENV" ] || exit 1
+if __genex_snapshot_env_is_protected "$__GENEX_SNAPSHOT_CURRENT_ENV"; then
+  if [ -n "$__GENEX_SNAPSHOT_ORIGINAL_ENV_SET" ] &&
+    ! __genex_snapshot_env_is_protected "$__GENEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV"; then
+    builtin export ENV="$__GENEX_SNAPSHOT_ORIGINAL_ENV" 2>/dev/null ||
+      command export ENV="$__GENEX_SNAPSHOT_ORIGINAL_ENV" || exit 1
+    [ "${{ENV-}}" = "$__GENEX_SNAPSHOT_ORIGINAL_ENV" ] || exit 1
   else
     builtin unset ENV 2>/dev/null || command unset ENV || exit 1
     [ -z "${{ENV+x}}" ] || exit 1
   fi
 fi
-unset -f __codex_snapshot_env_is_protected
-unset __CODEX_SNAPSHOT_ORIGINAL_ENV_SET __CODEX_SNAPSHOT_ORIGINAL_ENV \
-  __CODEX_SNAPSHOT_PROTECTED_ENV __CODEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV \
-  __CODEX_SNAPSHOT_REPLAYED_BASH_ENV __CODEX_SNAPSHOT_REPLAYED_PROTECTED_ENV \
-  __CODEX_SNAPSHOT_CURRENT_ENV __CODEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV \
+unset -f __genex_snapshot_env_is_protected
+unset __GENEX_SNAPSHOT_ORIGINAL_ENV_SET __GENEX_SNAPSHOT_ORIGINAL_ENV \
+  __GENEX_SNAPSHOT_PROTECTED_ENV __GENEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV \
+  __GENEX_SNAPSHOT_REPLAYED_BASH_ENV __GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV \
+  __GENEX_SNAPSHOT_CURRENT_ENV __GENEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV \
   {bash_env_key} {posix_env_key}"#
             ),
         )
@@ -577,7 +577,7 @@ fn build_brokered_credential_exports(env: &HashMap<String, String>, remove_copie
         return exports;
     }
     format!(
-        "case $- in\n  *x*) __CODEX_SNAPSHOT_BROKER_XTRACE=1; set +x ;;\n  *) __CODEX_SNAPSHOT_BROKER_XTRACE= ;;\nesac\n{exports}\nif [ -n \"$__CODEX_SNAPSHOT_BROKER_XTRACE\" ]; then\n  unset __CODEX_SNAPSHOT_BROKER_XTRACE\n  set -x\nelse\n  unset __CODEX_SNAPSHOT_BROKER_XTRACE\nfi"
+        "case $- in\n  *x*) __GENEX_SNAPSHOT_BROKER_XTRACE=1; set +x ;;\n  *) __GENEX_SNAPSHOT_BROKER_XTRACE= ;;\nesac\n{exports}\nif [ -n \"$__GENEX_SNAPSHOT_BROKER_XTRACE\" ]; then\n  unset __GENEX_SNAPSHOT_BROKER_XTRACE\n  set -x\nelse\n  unset __GENEX_SNAPSHOT_BROKER_XTRACE\nfi"
     )
 }
 
@@ -595,7 +595,7 @@ fn build_override_exports(
     keys.sort_unstable();
     keys.dedup();
 
-    build_override_exports_for_keys("__CODEX_SNAPSHOT_OVERRIDE", &keys)
+    build_override_exports_for_keys("__GENEX_SNAPSHOT_OVERRIDE", &keys)
 }
 
 fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
@@ -615,12 +615,12 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
     keys.dedup();
 
     let (captures, restores) =
-        build_override_exports_for_keys("__CODEX_SNAPSHOT_PROXY_OVERRIDE", &keys);
+        build_override_exports_for_keys("__GENEX_SNAPSHOT_PROXY_OVERRIDE", &keys);
     let key = PROXY_ACTIVE_ENV_KEY;
     let proxy_blocks = (
-        format!("{captures}\n__CODEX_SNAPSHOT_PROXY_ENV_SET=\"${{{key}+x}}\""),
+        format!("{captures}\n__GENEX_SNAPSHOT_PROXY_ENV_SET=\"${{{key}+x}}\""),
         format!(
-            "if [ -n \"$__CODEX_SNAPSHOT_PROXY_ENV_SET\" ] || [ -n \"${{{key}+x}}\" ]; then\n{restores}\nfi"
+            "if [ -n \"$__GENEX_SNAPSHOT_PROXY_ENV_SET\" ] || [ -n \"${{{key}+x}}\" ]; then\n{restores}\nfi"
         ),
     );
     let git_blocks = build_codex_proxy_git_ssh_command_exports();
@@ -636,10 +636,10 @@ fn build_codex_proxy_git_ssh_command_exports() -> (String, String) {
     let marker_pattern = format!("{}\\ *", GENEX_PROXY_GIT_SSH_COMMAND_MARKER.trim_end());
     (
         format!(
-            "__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET=\"${{{key}+x}}\"\n__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND=\"${{{key}-}}\"\ncase \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\" in\n  {marker_pattern}) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED=1 ;;\n  *) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED= ;;\nesac"
+            "__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET=\"${{{key}+x}}\"\n__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND=\"${{{key}-}}\"\ncase \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\" in\n  {marker_pattern}) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED=1 ;;\n  *) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED= ;;\nesac"
         ),
         format!(
-            "case \"${{{key}-}}\" in\n  {marker_pattern}) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED=1 ;;\n  *) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED= ;;\nesac\nif [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED\" ]; then\n  if [ -z \"${{{key}+x}}\" ] || [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n    export {key}=\"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  fi\nelif [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n  if [ -n \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET\" ]; then\n    export {key}=\"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  else\n    unset {key}\n  fi\nfi"
+            "case \"${{{key}-}}\" in\n  {marker_pattern}) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED=1 ;;\n  *) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED= ;;\nesac\nif [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED\" ]; then\n  if [ -z \"${{{key}+x}}\" ] || [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n    export {key}=\"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  fi\nelif [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n  if [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET\" ]; then\n    export {key}=\"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  else\n    unset {key}\n  fi\nfi"
         ),
     )
 }
