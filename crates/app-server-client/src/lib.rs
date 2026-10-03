@@ -67,7 +67,7 @@ pub use crate::remote::RemoteAppServerEndpoint;
 /// Transitional access to core-only embedded app-server types.
 ///
 /// New TUI behavior should prefer the app-server protocol methods. This
-/// module exists so clients can remove a direct `codex-core` dependency
+/// module exists so clients can remove a direct `genex-core` dependency
 /// while legacy startup/config paths are migrated to RPCs.
 pub mod legacy_core {
     pub mod config {
@@ -832,7 +832,7 @@ mod tests {
             config_warnings: Vec::new(),
             session_source,
             enable_api_key_env: false,
-            client_name: "codex-app-server-client-test".to_string(),
+            client_name: "genex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1039,7 +1039,7 @@ mod tests {
                 websocket_url,
                 auth_token: None,
             },
-            client_name: "codex-app-server-client-test".to_string(),
+            client_name: "genex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1269,7 +1269,7 @@ mod tests {
         });
         let client = RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
             endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
-            client_name: "codex-app-server-client-test".to_string(),
+            client_name: "genex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1357,7 +1357,7 @@ mod tests {
                 websocket_url,
                 auth_token: Some(auth_token),
             },
-            client_name: "codex-app-server-client-test".to_string(),
+            client_name: "genex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1376,7 +1376,7 @@ mod tests {
                 websocket_url: "ws://example.com:4500".to_string(),
                 auth_token: Some("remote-bearer-token".to_string()),
             },
-            client_name: "codex-app-server-client-test".to_string(),
+            client_name: "genex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
