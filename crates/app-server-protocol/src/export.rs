@@ -1066,7 +1066,7 @@ fn build_schema_bundle(schemas: Vec<GeneratedSchema>) -> Result<Value> {
     );
     root.insert(
         "title".to_string(),
-        Value::String("CodexAppServerProtocol".into()),
+        Value::String("GenexAppServerProtocol".into()),
     );
     root.insert("type".to_string(), Value::String("object".into()));
     root.insert("definitions".to_string(), Value::Object(definitions));
@@ -1103,7 +1103,7 @@ fn build_flat_v2_schema(bundle: &Value) -> Result<Value> {
     let title = root
         .get("title")
         .and_then(Value::as_str)
-        .unwrap_or("CodexAppServerProtocol");
+        .unwrap_or("GenexAppServerProtocol");
     let mut flat_definitions = v2_definitions.clone();
     let mut shared_definitions = Map::new();
     let mut non_v2_refs = HashSet::new();
@@ -2519,7 +2519,7 @@ mod tests {
     fn build_flat_v2_schema_keeps_shared_root_schemas_and_dependencies() -> Result<()> {
         let bundle = serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "title": "CodexAppServerProtocol",
+            "title": "GenexAppServerProtocol",
             "type": "object",
             "definitions": {
                 "ClientRequest": {
@@ -2635,7 +2635,7 @@ mod tests {
 
         assert_eq!(
             flat_bundle["title"],
-            serde_json::json!("CodexAppServerProtocolV2")
+            serde_json::json!("GenexAppServerProtocolV2")
         );
         assert_eq!(definitions.contains_key("v2"), false);
         assert_eq!(definitions.contains_key("ThreadStartParams"), true);
@@ -2902,7 +2902,7 @@ permissionProfile?: string | null};
         );
         assert_eq!(flat_v2_bundle_json.contains("#/definitions/v2/"), false);
         assert_eq!(
-            flat_v2_bundle_json.contains("\"title\": \"CodexAppServerProtocolV2\""),
+            flat_v2_bundle_json.contains("\"title\": \"GenexAppServerProtocolV2\""),
             true
         );
         let flat_v2_bundle =

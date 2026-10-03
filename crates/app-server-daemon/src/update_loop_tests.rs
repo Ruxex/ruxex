@@ -521,7 +521,7 @@ async fn test_control_server(
             websocket.send(tokio_tungstenite::tungstenite::Message::Text(
                 serde_json::json!({"id": 1, "result": {
                     "userAgent": format!("codex_app_server_daemon/{version}"),
-                    "codexHome": codex_home, "platformFamily": "unix", "platformOs": std::env::consts::OS,
+                    "genexHome": codex_home, "platformFamily": "unix", "platformOs": std::env::consts::OS,
                 }}).to_string().into(),
             )).await.expect("initialize response");
             websocket

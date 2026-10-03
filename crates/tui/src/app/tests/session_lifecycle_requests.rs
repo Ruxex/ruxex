@@ -323,7 +323,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
                                 id: request.id,
                                 result: serde_json::json!({
                                     "userAgent": "codex-tui-test",
-                                    "codexHome": codex_home,
+                                    "genexHome": codex_home,
                                 }),
                             }))?
                             .into(),

@@ -847,7 +847,7 @@ where
                                 });
                             metadata.codex_home = response
                                 .result
-                                .get("codexHome")
+                                .get("genexHome")
                                 .and_then(serde_json::Value::as_str)
                                 .filter(|codex_home| !codex_home.is_empty())
                                 .map(str::to_string);

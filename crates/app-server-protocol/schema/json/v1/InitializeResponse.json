@@ -7,7 +7,7 @@
     }
   },
   "properties": {
-    "codexHome": {
+    "genexHome": {
       "allOf": [
         {
           "$ref": "#/definitions/AbsolutePathBuf"
@@ -28,7 +28,7 @@
     }
   },
   "required": [
-    "codexHome",
+    "genexHome",
     "platformFamily",
     "platformOs",
     "userAgent"

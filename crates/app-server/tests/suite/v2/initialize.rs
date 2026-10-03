@@ -56,7 +56,7 @@ async fn initialize_uses_client_info_name_as_originator() -> Result<()> {
     };
     let InitializeResponse {
         user_agent,
-        codex_home: response_codex_home,
+        genex_home: response_codex_home,
         platform_family,
         platform_os,
     } = to_response::<InitializeResponse>(response)?;
@@ -168,7 +168,7 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
     };
     let InitializeResponse {
         user_agent,
-        codex_home: response_codex_home,
+        genex_home: response_codex_home,
         platform_family,
         platform_os,
     } = to_response::<InitializeResponse>(response)?;

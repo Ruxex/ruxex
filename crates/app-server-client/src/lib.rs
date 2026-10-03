@@ -907,7 +907,7 @@ mod tests {
             websocket,
             serde_json::json!({
                 "userAgent": "codex_cli_rs/9.8.7-test (Test OS; x86_64) rust",
-                "codexHome": "/server/.codex",
+                "genexHome": "/server/.codex",
             }),
         )
         .await;

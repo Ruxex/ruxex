@@ -18637,6 +18637,6 @@
       "type": "string"
     }
   },
-  "title": "CodexAppServerProtocolV2",
+  "title": "GenexAppServerProtocolV2",
   "type": "object"
 }

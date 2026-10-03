@@ -45,7 +45,7 @@ where
         "id": initialize["id"],
         "result": {
             "userAgent": "codex_cli_rs/0.0.0-test",
-            "codexHome": codex_home,
+            "genexHome": codex_home,
         },
     });
     websocket
