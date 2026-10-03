@@ -43,7 +43,7 @@ pub struct ResponseItemEnvelope {
     pub metadata: Option<GenexHarnessMetadata>,
 }
 
-/// Metadata owned by the Codex harness and persisted with a response item.
+/// Metadata owned by the Genex harness and persisted with a response item.
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct GenexHarnessMetadata {
@@ -60,7 +60,7 @@ pub struct GenexHarnessMetadata {
     )]
     pub history_truncation_token_limit: Option<usize>,
 
-    /// Whether a response configuration update was created by the Codex harness itself.
+    /// Whether a response configuration update was created by the Genex harness itself.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub harness_authored_configuration: bool,
 
@@ -256,7 +256,7 @@ impl From<CompactedItem> for ResponseItem {
 /// One persisted rollout JSONL record.
 ///
 /// This intentionally does not implement Deserialize: JSONL readers must use
-/// codex_rollout's canonical parser so nested decimal values survive the flattened envelope.
+/// `genex_rollout`'s canonical parser so nested decimal values survive the flattened envelope.
 #[derive(Serialize, Clone, JsonSchema)]
 pub struct RolloutLine {
     pub timestamp: String,
