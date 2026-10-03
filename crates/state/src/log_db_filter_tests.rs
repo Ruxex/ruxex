@@ -9,7 +9,7 @@ use super::*;
 #[tokio::test]
 async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics() {
     let genex_home =
-        std::env::temp_dir().join(format!("codex-state-log-db-filter-{}", Uuid::new_v4()));
+        std::env::temp_dir().join(format!("genex-state-log-db-filter-{}", Uuid::new_v4()));
     let _cleanup = scopeguard::guard(genex_home.clone(), |genex_home| {
         let _ = std::fs::remove_dir_all(genex_home);
     });
@@ -48,18 +48,18 @@ async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics()
     tracing::info!(target: "rmcp::transport", "retained-rmcp-info");
     tracing::debug!(
         target: "genex_rmcp_client::oauth",
-        "dropped-codex-rmcp-client-debug"
+        "dropped-genex-rmcp-client-debug"
     );
     tracing::info!(
         target: "genex_rmcp_client::oauth",
-        "retained-codex-rmcp-client-info"
+        "retained-genex-rmcp-client-info"
     );
     tracing::trace!(target: "genex_http_client::transport", "dropped-request-body");
     tracing::debug!(target: "genex_http_client::transport", "retained-request-diagnostic");
     tracing::trace!(target: "genex_api::sse", "dropped-sse-parent");
     tracing::trace!(target: "genex_api::sse::responses", "dropped-sse-payload");
     tracing::debug!(target: "genex_api::sse::responses", "retained-sse-diagnostic");
-    tracing::trace!(target: "codex_state", "retained-trace");
+    tracing::trace!(target: "genex_state", "retained-trace");
     tracing::trace!(
         target: "genex_tui::streaming::controller",
         "dropped-controller-trace"
@@ -118,7 +118,7 @@ async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics()
             (
                 "INFO",
                 "genex_rmcp_client::oauth",
-                Some("retained-codex-rmcp-client-info")
+                Some("retained-genex-rmcp-client-info")
             ),
             (
                 "DEBUG",
@@ -130,7 +130,7 @@ async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics()
                 "genex_api::sse::responses",
                 Some("retained-sse-diagnostic")
             ),
-            ("TRACE", "codex_state", Some("retained-trace")),
+            ("TRACE", "genex_state", Some("retained-trace")),
             (
                 "DEBUG",
                 "genex_tui::streaming::controller",

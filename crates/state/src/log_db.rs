@@ -62,7 +62,7 @@ pub fn default_filter() -> Targets {
         .with_target("log", LevelFilter::OFF)
         // Avoid constructing backend diagnostics when no other layer needs them.
         .with_targets(SQLX_LOG_TARGETS.map(|target| (format!("{target}::"), LevelFilter::OFF)))
-        .with_target("codex_rmcp_client", LevelFilter::INFO)
+        .with_target("genex_rmcp_client", LevelFilter::INFO)
         .with_target("opentelemetry-otlp", LevelFilter::OFF)
         .with_target("opentelemetry-http", LevelFilter::OFF)
         .with_target("tonic::transport", LevelFilter::WARN)
@@ -250,7 +250,7 @@ where
         }
 
         // The SDK emits DEBUG timer meta-events every second per process; these
-        // were over 30% of retained logs in measured high-fanout Codex environments.
+        // were over 30% of retained logs in measured high-fanout Genex environments.
         if target == "opentelemetry_sdk"
             && matches!(
                 *metadata.level(),
@@ -557,7 +557,7 @@ mod tests {
     use super::*;
 
     fn temp_genex_home() -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("codex-state-log-db-{}", Uuid::new_v4()))
+        std::env::temp_dir().join(format!("genex-state-log-db-{}", Uuid::new_v4()))
     }
 
     async fn wait_for_log_count(runtime: &StateRuntime, expected: usize) -> Vec<crate::LogRow> {
