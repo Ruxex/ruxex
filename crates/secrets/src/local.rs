@@ -39,7 +39,7 @@ use super::keyring_service;
 
 const SECRETS_VERSION: u8 = 1;
 const LOCAL_SECRETS_FILENAME: &str = "local.age";
-const CODEX_AUTH_SECRETS_FILENAME: &str = "codex_auth.age";
+const GENEX_AUTH_SECRETS_FILENAME: &str = "genex_auth.age";
 const MCP_OAUTH_SECRETS_FILENAME: &str = "mcp_oauth.age";
 static MCP_OAUTH_CACHE: Mutex<Option<CachedMcpSecrets>> = Mutex::new(None);
 
@@ -49,7 +49,7 @@ pub enum LocalSecretsNamespace {
     /// General managed secrets stored in `local.age`.
     #[default]
     ManagedSecrets,
-    /// Codex authentication credentials used by the CLI, TUI, app server, and other clients.
+    /// Genex authentication credentials used by the CLI, TUI, app server, and other clients.
     GenexAuth,
     /// OAuth credentials for external MCP servers.
     McpOAuth,
@@ -154,7 +154,7 @@ impl LocalSecretsBackend {
     fn secrets_path(&self) -> PathBuf {
         let filename = match self.namespace {
             LocalSecretsNamespace::ManagedSecrets => LOCAL_SECRETS_FILENAME,
-            LocalSecretsNamespace::GenexAuth => CODEX_AUTH_SECRETS_FILENAME,
+            LocalSecretsNamespace::GenexAuth => GENEX_AUTH_SECRETS_FILENAME,
             LocalSecretsNamespace::McpOAuth => MCP_OAUTH_SECRETS_FILENAME,
         };
         self.secrets_dir().join(filename)
@@ -510,7 +510,7 @@ mod tests {
             .unwrap_or_else(PoisonError::into_inner);
         let genex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
-        let codex_auth_backend = LocalSecretsBackend::new_with_namespace(
+        let genex_auth_backend = LocalSecretsBackend::new_with_namespace(
             genex_home.path().to_path_buf(),
             keyring.clone(),
             LocalSecretsNamespace::GenexAuth,
@@ -523,19 +523,19 @@ mod tests {
         let scope = SecretScope::Global;
         let name = SecretName::new("TEST_SECRET")?;
 
-        codex_auth_backend.set(&scope, &name, "codex-auth-value")?;
+        genex_auth_backend.set(&scope, &name, "genex-auth-value")?;
         mcp_backend.set(&scope, &name, "mcp-value")?;
 
         assert_eq!(
-            codex_auth_backend.get(&scope, &name)?,
-            Some("codex-auth-value".to_string())
+            genex_auth_backend.get(&scope, &name)?,
+            Some("genex-auth-value".to_string())
         );
         assert!(
             MCP_OAUTH_CACHE
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner)
                 .as_ref()
-                .is_none_or(|cached| cached.path != codex_auth_backend.secrets_path())
+                .is_none_or(|cached| cached.path != genex_auth_backend.secrets_path())
         );
         assert_eq!(
             mcp_backend.get(&scope, &name)?,
@@ -545,7 +545,7 @@ mod tests {
             genex_home
                 .path()
                 .join("secrets")
-                .join("codex_auth.age")
+                .join("genex_auth.age")
                 .exists()
         );
         assert!(
