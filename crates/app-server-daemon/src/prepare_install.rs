@@ -433,9 +433,9 @@ fn validate_package(root: &Path) -> Result<()> {
             "bin/codex"
         },
         if cfg!(windows) {
-            "bin/codex-code-mode-host.exe"
+            "bin/genex-code-mode-host.exe"
         } else {
-            "bin/codex-code-mode-host"
+            "bin/genex-code-mode-host"
         },
         if cfg!(windows) {
             "codex-path/rg.exe"

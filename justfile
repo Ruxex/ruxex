@@ -38,7 +38,7 @@ file-search *args:
 
 # Run the standalone code-mode host from source.
 code-mode-host *args:
-    cargo run --bin codex-code-mode-host -- {args}
+    cargo run --bin genex-code-mode-host -- {args}
 
 # Build the CLI and run the app-server test client
 app-server-test-client *args:

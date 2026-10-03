@@ -486,7 +486,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
     std::fs::copy(&daemon.codex, package.join("bin/codex"))?;
     daemon.codex = package.join("bin/codex");
     for helper in [
-        "bin/codex-code-mode-host",
+        "bin/genex-code-mode-host",
         "codex-path/rg",
         "codex-resources/bwrap",
     ] {
@@ -583,7 +583,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
             assert!(!current.exists());
         }
 
-        std::fs::remove_file(package.join("bin/codex-code-mode-host"))?;
+        std::fs::remove_file(package.join("bin/genex-code-mode-host"))?;
         let invalid = daemon
             .command()
             .args(["app-server", "daemon", "update", "--from-cli", "--yes"])
@@ -595,11 +595,11 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
             assert!(!current.exists());
         }
         std::fs::write(
-            package.join("bin/codex-code-mode-host"),
+            package.join("bin/genex-code-mode-host"),
             b"replacement helper",
         )?;
         std::fs::set_permissions(
-            package.join("bin/codex-code-mode-host"),
+            package.join("bin/genex-code-mode-host"),
             std::fs::Permissions::from_mode(0o755),
         )?;
         let replaced = daemon
@@ -631,12 +631,12 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
         assert!(!dedicated.join("auto-update-version").exists());
         assert_eq!(std::fs::read(state.join("settings.json"))?, settings_before);
         assert_eq!(
-            std::fs::read(current.join("bin/codex-code-mode-host"))?,
+            std::fs::read(current.join("bin/genex-code-mode-host"))?,
             b"replacement helper"
         );
         if initial == InitialDaemon::Missing {
             assert_eq!(
-                std::fs::read(original.join("bin/codex-code-mode-host"))?,
+                std::fs::read(original.join("bin/genex-code-mode-host"))?,
                 b"runtime fixture"
             );
         }

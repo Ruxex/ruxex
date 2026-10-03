@@ -648,7 +648,7 @@ impl TestGenexBuilder {
         let code_mode_host_program = self
             .code_mode_host_program
             .take()
-            .or_else(|| genex_utils_cargo_bin::cargo_bin("codex-code-mode-host").ok());
+            .or_else(|| genex_utils_cargo_bin::cargo_bin("genex-code-mode-host").ok());
         let thread_manager = Arc::new_cyclic(|_| {
             let extensions = self.extensions.to_builder();
             let thread_manager = ThreadManager::new(
