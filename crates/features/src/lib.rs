@@ -164,7 +164,7 @@ pub enum Feature {
     LocalThreadStoreCompression,
     /// Enable the Chronicle sidecar for passive screen-context memories.
     Chronicle,
-    /// Compress request bodies (zstd) when sending streaming requests to codex-backend.
+    /// Compress request bodies (zstd) when sending streaming requests to the provider backend.
     EnableRequestCompression,
     /// Keep active sampling turns alive until a failed network connection recovers.
     UnboundedConnectionRetries,
@@ -172,7 +172,7 @@ pub enum Feature {
     NetworkProxy,
     /// Enable managed worktree creation and repository-aware sessions.
     Worktrees,
-    /// Respect host system proxy settings for Codex-owned network clients.
+    /// Respect host system proxy settings for Genex-owned network clients.
     RespectSystemProxy,
     /// Enable collab tools.
     Collab,
@@ -234,7 +234,7 @@ pub enum Feature {
     ///
     /// Requirements-only gate: this should be set from requirements, not user config.
     BrowserUseExternal,
-    /// Allow Codex Computer Use.
+    /// Allow Genex Computer Use.
     ///
     /// Requirements-only gate: this should be set from requirements, not user config.
     ComputerUse,
@@ -1038,7 +1038,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         stage: Stage::Experimental {
             name: "Network proxy",
             menu_description: "Apply network proxy restrictions to sandboxed sessions that already have network access.",
-            announcement: "NEW: Network proxy can now be enabled through feature configuration. Restart Codex after enabling it.",
+            announcement: "NEW: Network proxy can now be enabled through feature configuration. Restart Genex after enabling it.",
         },
         default_enabled: false,
     },
@@ -1358,7 +1358,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         )) {
             Stage::Experimental {
                 name: "Prevent sleep while running",
-                menu_description: "Keep your computer awake while Codex is running a thread.",
+                menu_description: "Keep your computer awake while Genex is running a thread.",
                 announcement: "NEW: Prevent sleep while running is now available through feature configuration.",
             }
         } else {
