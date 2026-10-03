@@ -1,17 +1,17 @@
 # App Server Test Client
-Quickstart for running and hitting `codex app-server`.
+Quickstart for running and hitting `genex app-server`.
 
 ## Quickstart
 
-Run from `<reporoot>/codex-rs`.
+Run from `<reporoot>/genex-rs`.
 
 ```bash
-# 1) Build debug codex binary
+# 1) Build debug genex binary
 cargo build -p genex-cli --bin genex
 
 # 2) Start websocket app-server in background
 cargo run -p genex-app-server-test-client -- \
-  --codex-bin ./target/debug/genex \
+  --genex-bin ./target/debug/genex \
   serve --listen ws://127.0.0.1:4222 --kill
 
 # 3) Call app-server (defaults to ws://127.0.0.1:4222)
@@ -19,10 +19,10 @@ cargo run -p genex-app-server-test-client -- model-list
 ```
 
 `send-message` and `send-message-v2` handle `request_user_input` server requests interactively.
-When Codex asks a question, choose a numbered option (or `o` for a free-form answer when offered)
+When Genex asks a question, choose a numbered option (or `o` for a free-form answer when offered)
 and the client will send the response and continue streaming the same turn.
 
-## Testing Codex-managed Amazon Bedrock login
+## Testing Genex-managed Amazon Bedrock login
 
 `test-login --amazon-bedrock` initializes the experimental app-server API, sends an
 `account/login/start` request with an Amazon Bedrock API key, and waits for the
@@ -36,14 +36,14 @@ printf 'cli_auth_credentials_store = "file"\n' > "$CODEX_HOME/config.toml"
 
 cargo build -p genex-cli --bin genex
 cargo run -p genex-app-server-test-client -- \
-  --codex-bin ./target/debug/genex \
+  --genex-bin ./target/debug/genex \
   test-login \
   --amazon-bedrock \
   --api-key "<BEDROCK_API_KEY>" \
   --region us-west-2
 ```
 
-The test client redacts `apiKey` from its outbound request log. After login, start a fresh Codex
+The test client redacts `apiKey` from its outbound request log. After login, start a fresh Genex
 process with the same `CODEX_HOME` to verify that it uses the persisted managed credential.
 
 ## Testing logout
@@ -54,7 +54,7 @@ isolated directory when testing credential cleanup.
 
 ```bash
 cargo run -p genex-app-server-test-client -- \
-  --codex-bin ./target/debug/genex \
+  --genex-bin ./target/debug/genex \
   test-logout
 ```
 
@@ -69,7 +69,7 @@ cargo run -p genex-app-server-test-client -- watch
 
 ## Testing Thread Rejoin Behavior
 
-Build and start an app server using commands above. The app-server log is written to `/tmp/codex-app-server-test-client/app-server.log`
+Build and start an app server using commands above. The app-server log is written to `/tmp/genex-app-server-test-client/app-server.log`
 
 ### 1) Get a thread id
 
@@ -87,12 +87,12 @@ Copy a thread id from the `thread-list` output.
 Terminal A:
 
 ```bash
-cargo run --bin codex-app-server-test-client -- \
+cargo run --bin genex-app-server-test-client -- \
   resume-message-v2 <THREAD_ID> "respond with thorough docs on the rust core"
 ```
 
 Terminal B (while Terminal A is still streaming):
 
 ```bash
-cargo run --bin codex-app-server-test-client -- thread-resume <THREAD_ID>
+cargo run --bin genex-app-server-test-client -- thread-resume <THREAD_ID>
 ```

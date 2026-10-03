@@ -101,27 +101,27 @@ const NOTIFICATIONS_TO_OPT_OUT: &[&str] = &[
 const APP_SERVER_GRACEFUL_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5);
 const APP_SERVER_GRACEFUL_SHUTDOWN_POLL_INTERVAL: Duration = Duration::from_millis(100);
 const DEFAULT_ANALYTICS_ENABLED: bool = true;
-const OTEL_SERVICE_NAME: &str = "codex-app-server-test-client";
+const OTEL_SERVICE_NAME: &str = "genex-app-server-test-client";
 const TRACE_DISABLED_MESSAGE: &str =
     "Not enabled - enable tracing in $CODEX_HOME/config.toml to get a trace URL!";
 
-/// Minimal launcher that initializes the Codex app-server and logs the handshake.
+/// Minimal launcher that initializes the Genex app-server and logs the handshake.
 #[derive(Parser)]
-#[command(author = "Codex", version, about = "Bootstrap Codex app-server", long_about = None)]
+#[command(author = "Genex", version, about = "Bootstrap Genex app-server", long_about = None)]
 struct Cli {
-    /// Path to the `codex` CLI binary. When set, requests use stdio by
-    /// spawning `codex app-server` as a child process.
-    #[arg(long, env = "CODEX_BIN", global = true)]
-    codex_bin: Option<PathBuf>,
+    /// Path to the `genex` CLI binary. When set, requests use stdio by
+    /// spawning `genex app-server` as a child process.
+    #[arg(long, env = "GENEX_BIN", global = true)]
+    genex_bin: Option<PathBuf>,
 
     /// Existing websocket server URL to connect to.
     ///
-    /// If neither `--codex-bin` nor `--url` is provided, defaults to
+    /// If neither `--genex-bin` nor `--url` is provided, defaults to
     /// `ws://127.0.0.1:4222`.
-    #[arg(long, env = "CODEX_APP_SERVER_URL", global = true)]
+    #[arg(long, env = "GENEX_APP_SERVER_URL", global = true)]
     url: Option<String>,
 
-    /// Forwarded to the `codex` CLI as `--config key=value`. Repeatable.
+    /// Forwarded to the `genex` CLI as `--config key=value`. Repeatable.
     ///
     /// Example:
     ///   `--config 'model_providers.mock.base_url="http://localhost:4010/v2"'`
@@ -149,21 +149,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum CliCommand {
-    /// Start `codex app-server` on a websocket endpoint in the background.
+    /// Start `genex app-server` on a websocket endpoint in the background.
     ///
     /// Logs are written to:
-    ///   `/tmp/codex-app-server-test-client/`
+    ///   `/tmp/genex-app-server-test-client/`
     Serve {
-        /// WebSocket listen URL passed to `codex app-server --listen`.
+        /// WebSocket listen URL passed to `genex app-server --listen`.
         #[arg(long, default_value = "ws://127.0.0.1:4222")]
         listen: String,
         /// Kill any process listening on the same port before starting.
         #[arg(long, default_value_t = false)]
         kill: bool,
     },
-    /// Send a user message through the Codex app-server.
+    /// Send a user message through the Genex app-server.
     SendMessage {
-        /// User message to send to Codex.
+        /// User message to send to Genex.
         user_message: String,
     },
     /// Send a user message through the app-server V2 thread/turn APIs.
@@ -171,14 +171,14 @@ enum CliCommand {
         /// Opt into experimental app-server methods and fields.
         #[arg(long)]
         experimental_api: bool,
-        /// User message to send to Codex.
+        /// User message to send to Genex.
         user_message: String,
     },
     /// Resume a V2 thread by id, then send a user message.
     ResumeMessageV2 {
         /// Existing thread id to resume.
         thread_id: String,
-        /// User message to send to Codex.
+        /// User message to send to Genex.
         user_message: String,
     },
     /// Resume a V2 thread and continuously stream notifications/events.
@@ -228,7 +228,7 @@ enum CliCommand {
     },
     /// Trigger an Amazon Bedrock login flow.
     TestLogin {
-        /// Use a Codex-managed Amazon Bedrock API key.
+        /// Use a Genex-managed Amazon Bedrock API key.
         #[arg(long, default_value_t = true)]
         amazon_bedrock: bool,
         /// Amazon Bedrock API key.
@@ -240,10 +240,10 @@ enum CliCommand {
     },
     /// Log out of the current account and wait for the account update.
     TestLogout,
-    /// List the available models from the Codex app-server.
+    /// List the available models from the Genex app-server.
     #[command(name = "model-list")]
     ModelList,
-    /// List stored threads from the Codex app-server.
+    /// List stored threads from the Genex app-server.
     #[command(name = "thread-list")]
     ThreadList {
         /// Number of threads to return.
@@ -267,7 +267,7 @@ enum CliCommand {
     #[command(name = "live-elicitation-timeout-pause")]
     LiveElicitationTimeoutPause {
         /// Model passed to `thread/start`.
-        #[arg(long, env = "CODEX_E2E_MODEL", default_value = "gpt-5")]
+        #[arg(long, env = "GENEX_E2E_MODEL", default_value = "gpt-5")]
         model: String,
         /// Existing workspace path used as the turn cwd.
         #[arg(long, value_name = "path", default_value = ".")]
@@ -288,7 +288,7 @@ enum TestLoginMode {
 
 pub async fn run() -> Result<()> {
     let Cli {
-        codex_bin,
+        genex_bin,
         url,
         config_overrides,
         dynamic_tools,
@@ -300,19 +300,19 @@ pub async fn run() -> Result<()> {
     match command {
         CliCommand::Serve { listen, kill } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "serve")?;
-            let codex_bin = codex_bin.unwrap_or_else(|| PathBuf::from("codex"));
-            serve(&codex_bin, &config_overrides, &listen, kill)
+            let genex_bin = genex_bin.unwrap_or_else(|| PathBuf::from("genex"));
+            serve(&genex_bin, &config_overrides, &listen, kill)
         }
         CliCommand::SendMessage { user_message } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "send-message")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             send_message(&endpoint, &config_overrides, user_message).await
         }
         CliCommand::SendMessageV2 {
             experimental_api,
             user_message,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             send_message_v2_endpoint(
                 &endpoint,
                 &config_overrides,
@@ -326,7 +326,7 @@ pub async fn run() -> Result<()> {
             thread_id,
             user_message,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             resume_message_v2(
                 &endpoint,
                 &config_overrides,
@@ -338,31 +338,31 @@ pub async fn run() -> Result<()> {
         }
         CliCommand::ThreadResume { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-resume")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             thread_resume_follow(&endpoint, &config_overrides, thread_id).await
         }
         CliCommand::Watch => {
             ensure_dynamic_tools_unused(&dynamic_tools, "watch")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             watch(&endpoint, &config_overrides).await
         }
         CliCommand::TriggerCmdApproval { user_message } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             trigger_cmd_approval(&endpoint, &config_overrides, user_message, &dynamic_tools).await
         }
         CliCommand::TriggerPatchApproval { user_message } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             trigger_patch_approval(&endpoint, &config_overrides, user_message, &dynamic_tools).await
         }
         CliCommand::NoTriggerCmdApproval => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             no_trigger_cmd_approval(&endpoint, &config_overrides, &dynamic_tools).await
         }
         CliCommand::SendFollowUpV2 {
             first_message,
             follow_up_message,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             send_follow_up_v2(
                 &endpoint,
                 &config_overrides,
@@ -377,7 +377,7 @@ pub async fn run() -> Result<()> {
             min_approvals,
             abort_on,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             trigger_zsh_fork_multi_cmd_approval(
                 &endpoint,
                 &config_overrides,
@@ -394,7 +394,7 @@ pub async fn run() -> Result<()> {
             region,
         } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "test-login")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             let mode = if amazon_bedrock {
                 let api_key = api_key.context("--api-key is required with --amazon-bedrock")?;
                 let region = region.context("--region is required with --amazon-bedrock")?;
@@ -406,27 +406,27 @@ pub async fn run() -> Result<()> {
         }
         CliCommand::TestLogout => {
             ensure_dynamic_tools_unused(&dynamic_tools, "test-logout")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             test_logout(&endpoint, &config_overrides).await
         }
         CliCommand::ModelList => {
             ensure_dynamic_tools_unused(&dynamic_tools, "model-list")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             model_list(&endpoint, &config_overrides).await
         }
         CliCommand::ThreadList { limit } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-list")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(genex_bin, url)?;
             thread_list(&endpoint, &config_overrides, limit).await
         }
         CliCommand::ThreadIncrementElicitation { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-increment-elicitation")?;
-            let url = resolve_shared_websocket_url(codex_bin, url, "thread-increment-elicitation")?;
+            let url = resolve_shared_websocket_url(genex_bin, url, "thread-increment-elicitation")?;
             thread_increment_elicitation(&url, thread_id)
         }
         CliCommand::ThreadDecrementElicitation { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-decrement-elicitation")?;
-            let url = resolve_shared_websocket_url(codex_bin, url, "thread-decrement-elicitation")?;
+            let url = resolve_shared_websocket_url(genex_bin, url, "thread-decrement-elicitation")?;
             thread_decrement_elicitation(&url, thread_id)
         }
         CliCommand::LiveElicitationTimeoutPause {
@@ -437,7 +437,7 @@ pub async fn run() -> Result<()> {
         } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "live-elicitation-timeout-pause")?;
             live_elicitation_timeout_pause(
-                codex_bin,
+                genex_bin,
                 url,
                 &config_overrides,
                 model,
@@ -450,7 +450,7 @@ pub async fn run() -> Result<()> {
 }
 
 enum Endpoint {
-    SpawnCodex(PathBuf),
+    SpawnGenex(PathBuf),
     ConnectWs(String),
 }
 
@@ -459,12 +459,12 @@ struct BackgroundAppServer {
     url: String,
 }
 
-fn resolve_endpoint(codex_bin: Option<PathBuf>, url: Option<String>) -> Result<Endpoint> {
-    if codex_bin.is_some() && url.is_some() {
-        bail!("--codex-bin and --url are mutually exclusive");
+fn resolve_endpoint(genex_bin: Option<PathBuf>, url: Option<String>) -> Result<Endpoint> {
+    if genex_bin.is_some() && url.is_some() {
+        bail!("--genex-bin and --url are mutually exclusive");
     }
-    if let Some(codex_bin) = codex_bin {
-        return Ok(Endpoint::SpawnCodex(codex_bin));
+    if let Some(genex_bin) = genex_bin {
+        return Ok(Endpoint::SpawnGenex(genex_bin));
     }
     if let Some(url) = url {
         return Ok(Endpoint::ConnectWs(url));
@@ -473,13 +473,13 @@ fn resolve_endpoint(codex_bin: Option<PathBuf>, url: Option<String>) -> Result<E
 }
 
 fn resolve_shared_websocket_url(
-    codex_bin: Option<PathBuf>,
+    genex_bin: Option<PathBuf>,
     url: Option<String>,
     command: &str,
 ) -> Result<String> {
-    if codex_bin.is_some() {
+    if genex_bin.is_some() {
         bail!(
-            "{command} requires --url or an already-running websocket app-server; --codex-bin would spawn a private stdio app-server instead"
+            "{command} requires --url or an already-running websocket app-server; --genex-bin would spawn a private stdio app-server instead"
         );
     }
 
@@ -487,16 +487,16 @@ fn resolve_shared_websocket_url(
 }
 
 impl BackgroundAppServer {
-    fn spawn(codex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
+    fn spawn(genex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
         let listener = TcpListener::bind("127.0.0.1:0")
             .context("failed to reserve a local port for websocket app-server")?;
         let addr = listener.local_addr()?;
         drop(listener);
 
         let url = format!("ws://{addr}");
-        let mut cmd = Command::new(codex_bin);
-        if let Some(codex_bin_parent) = codex_bin.parent() {
-            let mut path = OsString::from(codex_bin_parent.as_os_str());
+        let mut cmd = Command::new(genex_bin);
+        if let Some(genex_bin_parent) = genex_bin.parent() {
+            let mut path = OsString::from(genex_bin_parent.as_os_str());
             if let Some(existing_path) = std::env::var_os("PATH") {
                 path.push(":");
                 path.push(existing_path);
@@ -514,7 +514,7 @@ impl BackgroundAppServer {
             .stdout(Stdio::null())
             .stderr(Stdio::inherit())
             .spawn()
-            .with_context(|| format!("failed to start `{}` app-server", codex_bin.display()))?;
+            .with_context(|| format!("failed to start `{}` app-server", genex_bin.display()))?;
 
         Ok(Self { process, url })
     }
@@ -532,8 +532,8 @@ impl Drop for BackgroundAppServer {
     }
 }
 
-fn serve(codex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool) -> Result<()> {
-    let runtime_dir = PathBuf::from("/tmp/codex-app-server-test-client");
+fn serve(genex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool) -> Result<()> {
+    let runtime_dir = PathBuf::from("/tmp/genex-app-server-test-client");
     fs::create_dir_all(&runtime_dir)
         .with_context(|| format!("failed to create runtime dir {}", runtime_dir.display()))?;
     let log_path = runtime_dir.join("app-server.log");
@@ -551,8 +551,8 @@ fn serve(codex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool
         .with_context(|| format!("failed to clone log file handle {}", log_path.display()))?;
 
     let mut cmdline = format!(
-        "tail -f /dev/null | RUST_BACKTRACE=full RUST_LOG=warn,codex_=trace {}",
-        shell_quote(&codex_bin.display().to_string())
+        "tail -f /dev/null | RUST_BACKTRACE=full RUST_LOG=warn,genex_=trace {}",
+        shell_quote(&genex_bin.display().to_string())
     );
     for override_kv in config_overrides {
         cmdline.push_str(&format!(" --config {}", shell_quote(override_kv)));
@@ -567,11 +567,11 @@ fn serve(codex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool
         .stdout(Stdio::from(log_file))
         .stderr(Stdio::from(log_file_stderr))
         .spawn()
-        .with_context(|| format!("failed to start `{}` app-server", codex_bin.display()))?;
+        .with_context(|| format!("failed to start `{}` app-server", genex_bin.display()))?;
 
     let pid = child.id();
 
-    println!("started codex app-server");
+    println!("started genex app-server");
     println!("listen: {listen}");
     println!("pid: {pid} (launcher process)");
     println!("log: {}", log_path.display());
@@ -674,12 +674,12 @@ async fn send_message(
 }
 
 pub async fn send_message_v2(
-    codex_bin: &Path,
+    genex_bin: &Path,
     config_overrides: &[String],
     user_message: String,
     dynamic_tools: &Option<Vec<DynamicToolSpec>>,
 ) -> Result<()> {
-    let endpoint = Endpoint::SpawnCodex(codex_bin.to_path_buf());
+    let endpoint = Endpoint::SpawnGenex(genex_bin.to_path_buf());
     send_message_v2_endpoint(
         &endpoint,
         config_overrides,
@@ -1216,7 +1216,7 @@ fn thread_decrement_elicitation(url: &str, thread_id: String) -> Result<()> {
 }
 
 fn live_elicitation_timeout_pause(
-    codex_bin: Option<PathBuf>,
+    genex_bin: Option<PathBuf>,
     url: Option<String>,
     config_overrides: &[String],
     model: String,
@@ -1232,10 +1232,10 @@ fn live_elicitation_timeout_pause(
     }
 
     let mut _background_server = None;
-    let websocket_url = match (codex_bin, url) {
-        (Some(_), Some(_)) => bail!("--codex-bin and --url are mutually exclusive"),
-        (Some(codex_bin), None) => {
-            let server = BackgroundAppServer::spawn(&codex_bin, config_overrides)?;
+    let websocket_url = match (genex_bin, url) {
+        (Some(_), Some(_)) => bail!("--genex-bin and --url are mutually exclusive"),
+        (Some(genex_bin), None) => {
+            let server = BackgroundAppServer::spawn(&genex_bin, config_overrides)?;
             let websocket_url = server.url.clone();
             _background_server = Some(server);
             websocket_url
@@ -1257,7 +1257,7 @@ fn live_elicitation_timeout_pause(
         .canonicalize()
         .with_context(|| format!("failed to resolve workspace `{}`", workspace.display()))?;
     let app_server_test_client_bin = std::env::current_exe()
-        .context("failed to resolve codex-app-server-test-client binary path")?;
+        .context("failed to resolve genex-app-server-test-client binary path")?;
     let endpoint = Endpoint::ConnectWs(websocket_url.clone());
     let mut client = GenexClient::connect(&endpoint, &[])?;
 
@@ -1457,24 +1457,24 @@ fn item_started_before_helper_done_is_unexpected(
 impl GenexClient {
     fn connect(endpoint: &Endpoint, config_overrides: &[String]) -> Result<Self> {
         match endpoint {
-            Endpoint::SpawnCodex(codex_bin) => Self::spawn_stdio(codex_bin, config_overrides),
+            Endpoint::SpawnGenex(genex_bin) => Self::spawn_stdio(genex_bin, config_overrides),
             Endpoint::ConnectWs(url) => Self::connect_websocket(url),
         }
     }
 
-    fn spawn_stdio(codex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
-        Self::spawn_stdio_with_env(codex_bin, config_overrides, &[])
+    fn spawn_stdio(genex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
+        Self::spawn_stdio_with_env(genex_bin, config_overrides, &[])
     }
 
     fn spawn_stdio_with_env(
-        codex_bin: &Path,
+        genex_bin: &Path,
         config_overrides: &[String],
         environment: &[(OsString, OsString)],
     ) -> Result<Self> {
-        let codex_bin_display = codex_bin.display();
-        let mut cmd = Command::new(codex_bin);
-        if let Some(codex_bin_parent) = codex_bin.parent() {
-            let mut path = OsString::from(codex_bin_parent.as_os_str());
+        let genex_bin_display = genex_bin.display();
+        let mut cmd = Command::new(genex_bin);
+        if let Some(genex_bin_parent) = genex_bin.parent() {
+            let mut path = OsString::from(genex_bin_parent.as_os_str());
             if let Some(existing_path) = std::env::var_os("PATH") {
                 path.push(":");
                 path.push(existing_path);
@@ -1487,26 +1487,26 @@ impl GenexClient {
         for (name, value) in environment {
             cmd.env(name, value);
         }
-        let mut codex_app_server = cmd
+        let mut genex_app_server = cmd
             .arg("app-server")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
-            .with_context(|| format!("failed to start `{codex_bin_display}` app-server"))?;
+            .with_context(|| format!("failed to start `{genex_bin_display}` app-server"))?;
 
-        let stdin = codex_app_server
+        let stdin = genex_app_server
             .stdin
             .take()
-            .context("codex app-server stdin unavailable")?;
-        let stdout = codex_app_server
+            .context("genex app-server stdin unavailable")?;
+        let stdout = genex_app_server
             .stdout
             .take()
-            .context("codex app-server stdout unavailable")?;
+            .context("genex app-server stdout unavailable")?;
 
         Ok(Self {
             transport: ClientTransport::Stdio {
-                child: codex_app_server,
+                child: genex_app_server,
                 stdin: Some(stdin),
                 stdout: BufReader::new(stdout),
             },
@@ -1536,7 +1536,7 @@ impl GenexClient {
                     if Instant::now() >= deadline {
                         return Err(err).with_context(|| {
                             format!(
-                                "failed to connect to websocket app-server at `{url}`; if no server is running, start one with `codex-app-server-test-client serve --listen {url}`"
+                                "failed to connect to websocket app-server at `{url}`; if no server is running, start one with `genex-app-server-test-client serve --listen {url}`"
                             )
                         });
                     }
@@ -1588,8 +1588,8 @@ impl GenexClient {
             request_id: request_id.clone(),
             params: InitializeParams {
                 client_info: ClientInfo {
-                    name: "codex-toy-app-server".to_string(),
-                    title: Some("Codex Toy App Server".to_string()),
+                    name: "genex-toy-app-server".to_string(),
+                    title: Some("Genex Toy App Server".to_string()),
                     version: env!("CARGO_PKG_VERSION").to_string(),
                 },
                 capabilities: Some(InitializeCapabilities {
@@ -2107,10 +2107,10 @@ impl GenexClient {
                     writeln!(stdin, "{payload}")?;
                     stdin
                         .flush()
-                        .context("failed to flush payload to codex app-server")?;
+                        .context("failed to flush payload to genex app-server")?;
                     return Ok(());
                 }
-                bail!("codex app-server stdin closed")
+                bail!("genex app-server stdin closed")
             }
             ClientTransport::WebSocket { socket, url } => {
                 socket
@@ -2127,9 +2127,9 @@ impl GenexClient {
                 let mut response_line = String::new();
                 let bytes = stdout
                     .read_line(&mut response_line)
-                    .context("failed to read from codex app-server")?;
+                    .context("failed to read from genex app-server")?;
                 if bytes == 0 {
-                    bail!("codex app-server closed stdout");
+                    bail!("genex app-server closed stdout");
                 }
                 Ok(response_line)
             }
@@ -2244,14 +2244,14 @@ impl Drop for GenexClient {
         let _ = stdin.take();
 
         if let Ok(Some(status)) = child.try_wait() {
-            println!("[codex app-server exited: {status}]");
+            println!("[genex app-server exited: {status}]");
             return;
         }
 
         let deadline = SystemTime::now() + APP_SERVER_GRACEFUL_SHUTDOWN_TIMEOUT;
         loop {
             if let Ok(Some(status)) = child.try_wait() {
-                println!("[codex app-server exited: {status}]");
+                println!("[genex app-server exited: {status}]");
                 return;
             }
 
