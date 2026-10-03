@@ -530,7 +530,7 @@ async fn linux_unix_socket_grant_uses_effective_managed_policy() -> anyhow::Resu
             state,
             Arc::new(TestConfigReloader),
         )))
-        .managed_by_codex(/*managed_by_codex*/ false)
+        .managed_by_genex(/*managed_by_genex*/ false)
         .build()
         .await?;
     let prepared =

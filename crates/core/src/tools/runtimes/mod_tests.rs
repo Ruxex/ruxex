@@ -6,7 +6,7 @@ use crate::shell::ShellType;
 use crate::tools::sandboxing::SandboxAttempt;
 use crate::tools::sandboxing::managed_network_for_sandbox_permissions;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
+use genex_network_proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
 use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
 use genex_network_proxy::ConfigReloader;
 use genex_network_proxy::ConfigReloaderFuture;
@@ -83,7 +83,7 @@ async fn test_network_proxy_with_config(
             state,
             Arc::new(StaticReloader),
         )))
-        .managed_by_codex(/*managed_by_codex*/ false)
+        .managed_by_genex(/*managed_by_genex*/ false)
         .http_addr("127.0.0.1:43128".parse()?)
         .socks_addr("127.0.0.1:48081".parse()?)
         .build()
@@ -1405,10 +1405,10 @@ fn maybe_wrap_shell_lc_with_snapshot_refreshes_codex_proxy_git_ssh_command() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
     );
     let fresh_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:48081 %h %p'"
+        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:48081 %h %p'"
     );
     std::fs::write(
         &snapshot_path,
@@ -1449,7 +1449,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_custom_git_ssh_command() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
     );
     let custom_command = "ssh -o ProxyCommand='tsh proxy ssh --cluster=dev %r@%h:%p'";
     std::fs::write(
@@ -1491,7 +1491,7 @@ fn maybe_wrap_shell_lc_with_snapshot_clears_stale_codex_git_ssh_command_without_
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(
-        "{CODEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
     );
     std::fs::write(
         &snapshot_path,

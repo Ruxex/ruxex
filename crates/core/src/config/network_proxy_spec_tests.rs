@@ -87,7 +87,7 @@ async fn attachment_socket_grants_respect_configured_restrictions_at_remote_laun
         let state = Arc::new(controller.build_state_with_audit_metadata(Default::default())?);
         let proxy = NetworkProxy::builder()
             .state(Arc::clone(&state))
-            .managed_by_codex(false)
+            .managed_by_genex(false)
             .build()
             .await?;
         let scoped = proxy.for_execution(

@@ -16,7 +16,7 @@ use genex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
 #[cfg(unix)]
 use genex_install_context::InstallContext;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::CODEX_PROXY_GIT_SSH_COMMAND_MARKER;
+use genex_network_proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
 use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
 use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
 use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
@@ -633,7 +633,7 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
 #[cfg(target_os = "macos")]
 fn build_codex_proxy_git_ssh_command_exports() -> (String, String) {
     let key = PROXY_GIT_SSH_COMMAND_ENV_KEY;
-    let marker_pattern = format!("{}\\ *", CODEX_PROXY_GIT_SSH_COMMAND_MARKER.trim_end());
+    let marker_pattern = format!("{}\\ *", GENEX_PROXY_GIT_SSH_COMMAND_MARKER.trim_end());
     (
         format!(
             "__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET=\"${{{key}+x}}\"\n__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND=\"${{{key}-}}\"\ncase \"$__CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\" in\n  {marker_pattern}) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED=1 ;;\n  *) __CODEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED= ;;\nesac"

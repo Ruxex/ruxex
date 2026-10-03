@@ -147,7 +147,7 @@ for family in (socket.AF_NETLINK, getattr(socket, 'AF_VSOCK', 40)):
                 state.clone(),
                 Arc::new(TestConfigReloader(state)),
             )))
-            .managed_by_codex(/*managed_by_codex*/ false)
+            .managed_by_genex(/*managed_by_genex*/ false)
             .build()
             .await
             .expect("build managed network proxy");

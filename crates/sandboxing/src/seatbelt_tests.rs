@@ -822,7 +822,7 @@ async fn prepared_managed_network_context_takes_precedence_over_live_proxy_socke
             state,
             Arc::new(TestConfigReloader),
         )))
-        .managed_by_codex(/*managed_by_codex*/ false)
+        .managed_by_genex(/*managed_by_genex*/ false)
         .build()
         .await?;
     let prepared_socket = "/tmp/codex-prepared-use";
@@ -1531,7 +1531,7 @@ async fn create_seatbelt_args_merges_proxy_and_explicit_unix_socket_paths() -> a
             state,
             Arc::new(TestConfigReloader),
         )))
-        .managed_by_codex(/*managed_by_codex*/ false)
+        .managed_by_genex(/*managed_by_genex*/ false)
         .build()
         .await?;
     let extra_allow_unix_sockets = vec![absolute_path(explicit_socket)];

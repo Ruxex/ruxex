@@ -1174,7 +1174,7 @@ pub(crate) async fn begin_network_approval(
                 })?;
             NetworkProxy::builder()
                 .state(Arc::new(state))
-                .managed_by_codex(/*managed_by_codex*/ false)
+                .managed_by_genex(/*managed_by_genex*/ false)
                 .build()
                 .await
                 .map_err(|error| {
