@@ -223,11 +223,11 @@ region = "us-west-2"
 
 [aws.credential_export]
 command = "aws-vault"
-args = ["--profile", "codex-bedrock"]
+args = ["--profile", "genex-bedrock"]
 
 [aws.auth_refresh]
 command = "aws"
-args = ["login", "--profile", "codex-bedrock"]
+args = ["login", "--profile", "genex-bedrock"]
         "#;
 
     let provider: ModelProviderInfo = toml::from_str(provider_toml).unwrap();
@@ -239,12 +239,12 @@ args = ["login", "--profile", "codex-bedrock"]
             region: Some("us-west-2".to_string()),
             credential_export: Some(AwsCredentialExportConfig {
                 command: "aws-vault".to_string(),
-                args: vec!["--profile".into(), "codex-bedrock".into()],
+                args: vec!["--profile".into(), "genex-bedrock".into()],
                 timeout_ms: NonZeroU64::new(30_000).expect("timeout should be non-zero"),
             }),
             auth_refresh: Some(AwsAuthRefreshConfig {
                 command: "aws".to_string(),
-                args: vec!["login".into(), "--profile".into(), "codex-bedrock".into()],
+                args: vec!["login".into(), "--profile".into(), "genex-bedrock".into()],
                 timeout_ms: NonZeroU64::new(300_000).expect("timeout should be non-zero"),
             }),
         })
@@ -432,12 +432,12 @@ fn test_merge_configured_model_providers_adds_custom_provider() {
 fn test_merge_configured_model_providers_applies_amazon_bedrock_aws_override() {
     let credential_export = AwsCredentialExportConfig {
         command: "aws-vault".to_string(),
-        args: vec!["export".into(), "codex-bedrock".into()],
+        args: vec!["export".into(), "genex-bedrock".into()],
         timeout_ms: NonZeroU64::new(30_000).expect("timeout should be non-zero"),
     };
     let auth_refresh = AwsAuthRefreshConfig {
         command: "aws".to_string(),
-        args: vec!["login".into(), "--profile".into(), "codex-bedrock".into()],
+        args: vec!["login".into(), "--profile".into(), "genex-bedrock".into()],
         timeout_ms: NonZeroU64::new(10_000).expect("timeout should be non-zero"),
     };
     let configured_model_providers = std::collections::HashMap::from([(
@@ -508,7 +508,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_transport_overri
             base_url: Some("https://proxy.example.com/v1".to_string()),
             auth: Some(auth.clone()),
             aws: Some(ModelProviderAwsAuthInfo {
-                profile: Some("codex-bedrock".to_string()),
+                profile: Some("genex-bedrock".to_string()),
                 region: Some("us-west-2".to_string()),
                 credential_export: None,
                 auth_refresh: None,
@@ -527,7 +527,7 @@ fn test_merge_configured_model_providers_applies_amazon_bedrock_transport_overri
     expected_provider.base_url = Some("https://proxy.example.com/v1".to_string());
     expected_provider.auth = Some(auth);
     expected_provider.aws = Some(ModelProviderAwsAuthInfo {
-        profile: Some("codex-bedrock".to_string()),
+        profile: Some("genex-bedrock".to_string()),
         region: Some("us-west-2".to_string()),
         credential_export: None,
         auth_refresh: None,
@@ -550,7 +550,7 @@ fn test_merge_configured_model_providers_rejects_amazon_bedrock_non_default_fiel
         ModelProviderInfo {
             name: "Custom Bedrock".to_string(),
             aws: Some(ModelProviderAwsAuthInfo {
-                profile: Some("codex-bedrock".to_string()),
+                profile: Some("genex-bedrock".to_string()),
                 region: None,
                 credential_export: None,
                 auth_refresh: None,
@@ -719,7 +719,7 @@ fn test_validate_provider_aws_credential_export_command() {
 
         assert_eq!(provider.validate(), expected);
         if expected.is_ok() {
-            provider.aws.as_mut().expect("AWS config").profile = Some("codex-bedrock".to_string());
+            provider.aws.as_mut().expect("AWS config").profile = Some("genex-bedrock".to_string());
             assert_eq!(
                 provider.validate(),
                 Err("provider aws.credential_export cannot be combined with aws.profile".to_string()),

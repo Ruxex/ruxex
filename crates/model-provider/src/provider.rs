@@ -725,7 +725,7 @@ mod tests {
     fn create_model_provider_does_not_use_provider_auth_manager_for_amazon_bedrock_provider() {
         let provider = create_model_provider(
             ModelProviderInfo::create_amazon_bedrock_provider(Some(ModelProviderAwsAuthInfo {
-                profile: Some("codex-bedrock".to_string()),
+                profile: Some("genex-bedrock".to_string()),
                 region: None,
                 credential_export: None,
                 auth_refresh: None,
@@ -783,7 +783,7 @@ mod tests {
         }
         let _ = std::fs::remove_file(&counter);
         let aws = ModelProviderAwsAuthInfo {
-            profile: Some("codex-bedrock".to_string()),
+            profile: Some("genex-bedrock".to_string()),
             region: Some("us-west-2".to_string()),
             credential_export: None,
             auth_refresh: Some(AwsAuthRefreshConfig {

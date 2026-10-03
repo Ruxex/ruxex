@@ -95,13 +95,13 @@ mod tests {
     fn aws_auth_config_uses_profile_and_mantle_service() {
         assert_eq!(
             aws_auth_config(&ModelProviderAwsAuthInfo {
-                profile: Some("codex-bedrock".to_string()),
+                profile: Some("genex-bedrock".to_string()),
                 region: None,
                 credential_export: None,
                 auth_refresh: None,
             }),
             AwsAuthConfig {
-                profile: Some("codex-bedrock".to_string()),
+                profile: Some("genex-bedrock".to_string()),
                 region: None,
                 service: "bedrock-mantle".to_string(),
             }

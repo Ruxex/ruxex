@@ -181,7 +181,7 @@ fn aws_managed_bedrock_config() -> CreateConfigTomlParams {
         model_provider_id: Some("amazon-bedrock".to_string()),
         extra_provider_config: Some(
             r#"[model_providers.amazon-bedrock.aws]
-profile = "codex-bedrock"
+profile = "genex-bedrock"
 region = "us-west-2"
 "#
             .to_string(),
@@ -925,7 +925,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
         let dotenv_path = genex_home.path().join(".env");
         let aws_credentials_path = genex_home.path().join("aws-credentials");
         let dotenv = "AWS_ACCESS_KEY_ID=environment-id\nAWS_SECRET_ACCESS_KEY=environment-secret\n";
-        let aws_credentials = "[codex-bedrock]\naws_access_key_id = profile-id\naws_secret_access_key = profile-secret\n";
+        let aws_credentials = "[genex-bedrock]\naws_access_key_id = profile-id\naws_secret_access_key = profile-secret\n";
         std::fs::write(&dotenv_path, dotenv)?;
         std::fs::write(&aws_credentials_path, aws_credentials)?;
         if managed_bedrock_auth {
@@ -1362,7 +1362,7 @@ async fn get_account_with_aws_provider() -> Result<()> {
             model_provider_id: Some("amazon-bedrock".to_string()),
             extra_provider_config: Some(
                 r#"[model_providers.amazon-bedrock.aws]
-profile = "codex-bedrock"
+profile = "genex-bedrock"
 region = "us-west-2"
 "#
                 .to_string(),
@@ -1442,7 +1442,7 @@ async fn account_reads_use_startup_config_when_config_reload_fails() -> Result<(
             model_provider_id: Some("amazon-bedrock".to_string()),
             extra_provider_config: Some(
                 r#"[model_providers.amazon-bedrock.aws]
-profile = "codex-bedrock"
+profile = "genex-bedrock"
 region = "us-west-2"
 "#
                 .to_string(),
