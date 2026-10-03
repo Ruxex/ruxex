@@ -1071,9 +1071,9 @@ async fn sandboxed_file_operations_cannot_read_helper_siblings() -> Result<()> {
     std::fs::create_dir(&runtime_dir)?;
     std::fs::create_dir(&workspace)?;
 
-    let helper = runtime_dir.join("codex-test-helper");
-    std::fs::hard_link(&helper_paths.codex_exe, &helper)
-        .or_else(|_| std::fs::copy(&helper_paths.codex_exe, &helper).map(|_| ()))?;
+    let helper = runtime_dir.join("genex-test-helper");
+    std::fs::hard_link(&helper_paths.genex_exe, &helper)
+        .or_else(|_| std::fs::copy(&helper_paths.genex_exe, &helper).map(|_| ()))?;
     let linux_sandbox = if helper_paths.genex_linux_sandbox_exe.is_some() {
         let alias = runtime_dir.join("codex-linux-sandbox");
         std::fs::hard_link(&helper, &alias)

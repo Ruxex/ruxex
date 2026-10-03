@@ -627,7 +627,7 @@ mod tests {
         let env = helper_env_from_vars(
             [
                 ("PATH", "/usr/bin:/bin"),
-                ("TMPDIR", "/tmp/codex"),
+                ("TMPDIR", "/tmp/genex"),
                 ("TMP", "/tmp"),
                 ("TEMP", "/tmp"),
                 ("HOME", "/home/user"),
@@ -641,7 +641,7 @@ mod tests {
             env,
             HashMap::from([
                 ("PATH".to_string(), "/usr/bin:/bin".to_string()),
-                ("TMPDIR".to_string(), "/tmp/codex".to_string()),
+                ("TMPDIR".to_string(), "/tmp/genex".to_string()),
                 ("TMP".to_string(), "/tmp".to_string()),
                 ("TEMP".to_string(), "/tmp".to_string()),
             ])
@@ -964,7 +964,7 @@ mod tests {
     #[test]
     fn helper_permissions_include_only_linux_sandbox_alias_executable() {
         let root = tempfile::tempdir().expect("temp dir");
-        let genex_self_exe = root.path().join("bin").join("codex");
+        let genex_self_exe = root.path().join("bin").join("genex");
         let genex_linux_sandbox_exe = root.path().join("aliases").join("codex-linux-sandbox");
         let runtime_paths =
             ExecServerRuntimePaths::new(genex_self_exe, Some(genex_linux_sandbox_exe))
@@ -972,7 +972,7 @@ mod tests {
         let cwd = AbsolutePathBuf::from_absolute_path(std::env::temp_dir().as_path())
             .expect("absolute cwd");
         let mut policy = restricted_policy(Vec::new());
-        let codex_parent = runtime_paths.genex_self_exe.parent().expect("codex parent");
+        let genex_parent = runtime_paths.genex_self_exe.parent().expect("genex parent");
         let alias = runtime_paths
             .genex_linux_sandbox_exe
             .as_ref()
@@ -992,7 +992,7 @@ mod tests {
             )
         );
         assert!(policy.can_read_local_path_with_cwd(alias.as_path(), cwd.as_path()));
-        assert!(!policy.can_read_local_path_with_cwd(codex_parent.as_path(), cwd.as_path()));
+        assert!(!policy.can_read_local_path_with_cwd(genex_parent.as_path(), cwd.as_path()));
         assert!(!policy.can_read_local_path_with_cwd(alias_parent.as_path(), cwd.as_path()));
     }
 

@@ -156,7 +156,7 @@ const MAX_PENDING_PROCESS_EVENT_BYTES: usize = 1024 * 1024;
 impl Default for ExecServerClientConnectOptions {
     fn default() -> Self {
         Self {
-            client_name: "codex-core".to_string(),
+            client_name: "genex-core".to_string(),
             initialize_timeout: INITIALIZE_TIMEOUT,
             resume_session_id: None,
         }
@@ -2322,7 +2322,7 @@ mod tests {
         let client = LazyRemoteExecServerClient::new(
             ExecServerTransportParams::StdioCommand {
                 command: StdioExecServerCommand {
-                    program: "codex-missing-exec-server-for-test".to_string(),
+                    program: "genex-missing-exec-server-for-test".to_string(),
                     args: Vec::new(),
                     env: HashMap::new(),
                     cwd: None,

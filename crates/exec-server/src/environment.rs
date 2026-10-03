@@ -47,7 +47,7 @@ pub enum EnvironmentConnectionState {
     Disconnected,
 }
 
-/// Owns the execution/filesystem environments available to the Codex runtime.
+/// Owns the execution/filesystem environments available to the Genex runtime.
 ///
 /// `EnvironmentManager` is a shared registry for concrete local and stdio
 /// environments. Filesystem and execution backends share the resulting
@@ -902,7 +902,7 @@ mod tests {
         let environment = Environment::remote_with_transport(
             ExecServerTransportParams::StdioCommand {
                 command: StdioExecServerCommand {
-                    program: "codex-missing-exec-server-for-test".to_string(),
+                    program: "genex-missing-exec-server-for-test".to_string(),
                     args: Vec::new(),
                     env: HashMap::new(),
                     cwd: None,
@@ -924,7 +924,7 @@ mod tests {
     async fn environment_manager_leaves_stdio_environment_lazy() {
         let transport = ExecServerTransportParams::StdioCommand {
             command: StdioExecServerCommand {
-                program: "codex-missing-exec-server-for-test".to_string(),
+                program: "genex-missing-exec-server-for-test".to_string(),
                 args: Vec::new(),
                 env: HashMap::new(),
                 cwd: None,
@@ -955,7 +955,7 @@ mod tests {
 
         let transport = ExecServerTransportParams::StdioCommand {
             command: StdioExecServerCommand {
-                program: "codex-missing-exec-server-for-test".to_string(),
+                program: "genex-missing-exec-server-for-test".to_string(),
                 args: Vec::new(),
                 env: HashMap::new(),
                 cwd: None,

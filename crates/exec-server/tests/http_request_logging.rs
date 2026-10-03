@@ -27,12 +27,12 @@ async fn delegated_http_success_logs_do_not_expose_sensitive_request_or_response
             .with_writer(move || TestLogWriter(Arc::clone(&writer_buffer)))
             .with_filter(
                 tracing_subscriber::filter::Targets::new()
-                    .with_target("codex_http_client", tracing::Level::TRACE)
-                    .with_target("codex_exec_server", tracing::Level::TRACE),
+                    .with_target("genex_http_client", tracing::Level::TRACE)
+                    .with_target("genex_exec_server", tracing::Level::TRACE),
             ),
     );
     let _guard = tracing::subscriber::set_default(subscriber);
-    tracing::debug!(target: "codex_exec_server", "log capture sentinel");
+    tracing::debug!(target: "genex_exec_server", "log capture sentinel");
     let client =
         RouteAwareHttpClient::new(HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault));
 
@@ -119,8 +119,8 @@ async fn delegated_http_failure_warning_redacts_request_url() -> anyhow::Result<
             .with_writer(move || TestLogWriter(Arc::clone(&writer_buffer)))
             .with_filter(
                 tracing_subscriber::filter::Targets::new()
-                    .with_target("codex_http_client", tracing::Level::TRACE)
-                    .with_target("codex_exec_server", tracing::Level::TRACE),
+                    .with_target("genex_http_client", tracing::Level::TRACE)
+                    .with_target("genex_exec_server", tracing::Level::TRACE),
             ),
     );
     let _guard = tracing::subscriber::set_default(subscriber);

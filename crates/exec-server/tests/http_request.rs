@@ -70,7 +70,7 @@ async fn exec_server_http_request_buffers_response_body() -> anyhow::Result<()> 
                 url,
                 headers: vec![
                     HttpHeader {
-                        name: "x-codex-test".to_string(),
+                        name: "x-genex-test".to_string(),
                         value: "buffered".to_string(),
                         value_env_var: None,
                     },
@@ -100,7 +100,7 @@ async fn exec_server_http_request_buffers_response_body() -> anyhow::Result<()> 
     assert_eq!(
         (
             captured.request_line.as_str(),
-            captured.headers.get("x-codex-test").map(String::as_str),
+            captured.headers.get("x-genex-test").map(String::as_str),
             captured.headers.get("authorization").map(String::as_str),
             captured
                 .headers

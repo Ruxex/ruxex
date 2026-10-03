@@ -5,10 +5,10 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 /// Paths and sandbox settings initialized when creating an executor.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExecServerRuntimePaths {
-    /// Stable path to the Codex executable used to launch hidden helper modes.
+    /// Stable path to the Genex executable used to launch hidden helper modes.
     pub genex_self_exe: AbsolutePathBuf,
     /// Path to the Linux sandbox helper alias used when the platform sandbox
-    /// needs to re-enter Codex by argv0.
+    /// needs to re-enter Genex by argv0.
     pub genex_linux_sandbox_exe: Option<AbsolutePathBuf>,
     /// User-config opt-out of writable-root symlink checks beneath this host's home.
     #[cfg(target_os = "macos")]
@@ -23,7 +23,7 @@ impl ExecServerRuntimePaths {
         let genex_self_exe = genex_self_exe.ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "Codex executable path is not configured",
+                "Genex executable path is not configured",
             )
         })?;
         Self::new(genex_self_exe, genex_linux_sandbox_exe)

@@ -45,7 +45,7 @@ pub(crate) async fn create_file_system_context(
         FileSystemImplementation::Local => {
             let helper_paths = test_genex_helper_paths()?;
             let runtime_paths = ExecServerRuntimePaths::new(
-                helper_paths.codex_exe.clone(),
+                helper_paths.genex_exe.clone(),
                 helper_paths.genex_linux_sandbox_exe.clone(),
             )?;
             Ok(FileSystemContext {

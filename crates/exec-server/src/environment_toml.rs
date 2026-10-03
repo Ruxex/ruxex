@@ -305,10 +305,10 @@ mod tests {
                 program: Some(" ssh ".to_string()),
                 args: Some(vec![
                     "dev".to_string(),
-                    "codex exec-server --listen stdio".to_string(),
+                    "genex exec-server --listen stdio".to_string(),
                 ]),
                 env: Some(HashMap::from([(
-                    "CODEX_LOG".to_string(),
+                    "GENEX_LOG".to_string(),
                     "debug".to_string(),
                 )])),
                 ..Default::default()
@@ -422,7 +422,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: "local".to_string(),
-                    program: Some("codex".to_string()),
+                    program: Some("genex".to_string()),
                     ..Default::default()
                 },
                 "environment id `local` is reserved",
@@ -430,7 +430,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: " devbox ".to_string(),
-                    program: Some("codex".to_string()),
+                    program: Some("genex".to_string()),
                     ..Default::default()
                 },
                 "environment id ` devbox ` must not contain surrounding whitespace",
@@ -438,7 +438,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: "dev box".to_string(),
-                    program: Some("codex".to_string()),
+                    program: Some("genex".to_string()),
                     ..Default::default()
                 },
                 "environment id `dev box` must contain only ASCII letters, numbers, '-' or '_'",
@@ -541,12 +541,12 @@ mod tests {
             environments: vec![
                 EnvironmentToml {
                     id: "devbox".to_string(),
-                    program: Some("codex".to_string()),
+                    program: Some("genex".to_string()),
                     ..Default::default()
                 },
                 EnvironmentToml {
                     id: "devbox".to_string(),
-                    program: Some("codex".to_string()),
+                    program: Some("genex".to_string()),
                     ..Default::default()
                 },
             ],
@@ -567,7 +567,7 @@ mod tests {
             include_local: None,
             environments: vec![EnvironmentToml {
                 id: id.clone(),
-                program: Some("codex".to_string()),
+                program: Some("genex".to_string()),
                 ..Default::default()
             }],
         })
@@ -614,10 +614,10 @@ initialize_timeout_sec = 34.0
 [[environments]]
 id = "ssh-dev"
 program = "ssh"
-args = ["dev", "codex exec-server --listen stdio"]
+args = ["dev", "genex exec-server --listen stdio"]
 cwd = "/tmp"
 [environments.env]
-CODEX_LOG = "debug"
+GENEX_LOG = "debug"
 "#,
         )
         .expect("write environments.toml");
@@ -645,10 +645,10 @@ CODEX_LOG = "debug"
                 program: Some("ssh".to_string()),
                 args: Some(vec![
                     "dev".to_string(),
-                    "codex exec-server --listen stdio".to_string(),
+                    "genex exec-server --listen stdio".to_string(),
                 ]),
                 env: Some(HashMap::from([(
-                    "CODEX_LOG".to_string(),
+                    "GENEX_LOG".to_string(),
                     "debug".to_string(),
                 )])),
                 cwd: Some(PathBuf::from("/tmp")),

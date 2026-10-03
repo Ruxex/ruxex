@@ -17,7 +17,7 @@ use crate::client_api::StdioExecServerCommand;
 use crate::client_api::StdioExecServerConnectArgs;
 use crate::connection::JsonRpcConnection;
 
-const ENVIRONMENT_CLIENT_NAME: &str = "codex-environment";
+const ENVIRONMENT_CLIENT_NAME: &str = "genex-environment";
 
 pub(crate) struct ReconnectAttempt {
     connection: JsonRpcConnection,

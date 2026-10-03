@@ -1,17 +1,17 @@
 # genex-exec-server
 
-`genex-exec-server` is the library backing `codex exec-server`, a small
+`genex-exec-server` is the library backing `genex exec-server`, a small
 JSON-RPC server for spawning and controlling subprocesses through
 `genex-utils-pty`.
 
 It provides:
 
-- a CLI entrypoint: `codex exec-server`
+- a CLI entrypoint: `genex exec-server`
 - a Rust client: `ExecServerClient`
 - a small protocol module with shared request/response types
 
 This crate owns the transport, protocol, and filesystem/process handlers. The
-top-level `codex` binary owns hidden helper dispatch for sandboxed
+top-level `genex` binary owns hidden helper dispatch for sandboxed
 filesystem operations and `codex-linux-sandbox`.
 
 ## Transport
@@ -20,7 +20,7 @@ The server speaks the exec-specific `genex-exec-server-protocol` message
 envelope over standard input and standard output. The CLI accepts `stdio` or
 `stdio://` through `--listen`; this is also the default transport.
 
-The top-level `codex --remote` option belongs to the app-server client and is
+The top-level `genex --remote` option belongs to the app-server client and is
 independent of this local exec-server transport.
 
 ## Lifecycle
@@ -75,7 +75,7 @@ Response:
 `executorVersion` is the executor's package release version, or `0.0.0` when unknown.
 
 The executor caches optional `providerId` at startup using
-`codex_build_info::build_id(commit, target)`, which CI can also call for an
+`genex_build_info::build_id(commit, target)`, which CI can also call for an
 explicit build target. This opaque compatibility key excludes package version
 and requires no manifest. It identifies a standard build configuration, not exact
 executable bytes. Unstamped and legacy executors may omit it.
@@ -306,7 +306,7 @@ callers must convert them to `file:` URIs before sending requests:
 
 Each filesystem request accepts an optional `sandbox` object. When `sandbox`
 contains a `ReadOnly` or `WorkspaceWrite` policy, the operation runs in a
-hidden helper process launched from the top-level `codex` executable and
+hidden helper process launched from the top-level `genex` executable and
 prepared through the shared sandbox transform path. Helper requests and
 responses are passed over stdin/stdout.
 
@@ -341,7 +341,7 @@ The crate exports:
 - `run_main()` for embedding the stdio server
 
 Callers must pass `ExecServerRuntimePaths` to `run_main()`. The top-level
-`codex exec-server` command builds these paths from the `codex` arg0 dispatch
+`genex exec-server` command builds these paths from the `genex` arg0 dispatch
 state.
 
 ## Example session

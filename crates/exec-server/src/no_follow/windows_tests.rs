@@ -8,7 +8,7 @@ use windows_sys::Win32::System::Pipes::PIPE_WAIT;
 
 #[test]
 fn native_open_rejects_named_pipes_before_connecting() {
-    let pipe_name = format!("codex-no-follow-{}", uuid::Uuid::new_v4());
+    let pipe_name = format!("genex-no-follow-{}", uuid::Uuid::new_v4());
     let server_path = PathBuf::from(format!(r"\\.\pipe\{pipe_name}"));
     let client_path = PathBuf::from(format!(r"\\localhost\pipe\{pipe_name}"));
     let wide_path = server_path

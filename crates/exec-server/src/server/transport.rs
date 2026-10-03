@@ -102,7 +102,7 @@ where
         http_client_factory,
         request_dispatch_mode,
     );
-    tracing::info!("codex-exec-server listening on stdio");
+    tracing::info!("genex-exec-server listening on stdio");
     processor
         .run_connection(
             JsonRpcConnection::from_stdio(reader, writer, "exec-server stdio".to_string()),

@@ -24,13 +24,13 @@ pub(crate) mod exec_server;
 pub(crate) const TEST_BUILD_COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 
 pub(crate) const DELAYED_OUTPUT_AFTER_EXIT_PARENT_ARG: &str =
-    "--codex-test-delayed-output-after-exit-parent";
+    "--genex-test-delayed-output-after-exit-parent";
 pub(crate) const SYSTEM_PROXY_REQUEST_URL_ENV: &str =
-    "CODEX_EXEC_SERVER_TEST_SYSTEM_PROXY_REQUEST_URL";
-pub(crate) const SYSTEM_PROXY_URL_ENV: &str = "CODEX_EXEC_SERVER_TEST_SYSTEM_PROXY_URL";
+    "GENEX_EXEC_SERVER_TEST_SYSTEM_PROXY_REQUEST_URL";
+pub(crate) const SYSTEM_PROXY_URL_ENV: &str = "GENEX_EXEC_SERVER_TEST_SYSTEM_PROXY_URL";
 
-const CODEX_WINDOWS_SANDBOX_ARG1: &str = "--run-as-windows-sandbox";
-const DELAYED_OUTPUT_AFTER_EXIT_CHILD_ARG: &str = "--codex-test-delayed-output-after-exit-child";
+const GENEX_WINDOWS_SANDBOX_ARG1: &str = "--run-as-windows-sandbox";
+const DELAYED_OUTPUT_AFTER_EXIT_CHILD_ARG: &str = "--genex-test-delayed-output-after-exit-child";
 
 #[macro_export]
 macro_rules! skip_if_mxc_unavailable {
@@ -44,14 +44,14 @@ macro_rules! skip_if_mxc_unavailable {
 
 #[ctor]
 pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
-    let guard = configure_test_binary_dispatch("codex-exec-server-tests", |exe_name, argv1| {
+    let guard = configure_test_binary_dispatch("genex-exec-server-tests", |exe_name, argv1| {
         if argv1 == Some(CODEX_ARG0_EXEC_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         if argv1 == Some(CODEX_FS_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if argv1 == Some(CODEX_WINDOWS_SANDBOX_ARG1) {
+        if argv1 == Some(GENEX_WINDOWS_SANDBOX_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         if argv1 == Some(genex_sandboxing::GENEX_WINDOWS_MXC_ARG1) {
