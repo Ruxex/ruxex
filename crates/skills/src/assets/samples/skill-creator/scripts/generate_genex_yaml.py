@@ -156,7 +156,7 @@ def parse_interface_overrides(raw_overrides):
     return overrides, optional_order
 
 
-def write_codex_yaml(skill_dir, skill_name, raw_overrides):
+def write_genex_yaml(skill_dir, skill_name, raw_overrides):
     overrides, optional_order = parse_interface_overrides(raw_overrides)
     if overrides is None:
         return None
@@ -221,7 +221,7 @@ def main():
     if not skill_name:
         sys.exit(1)
 
-    result = write_codex_yaml(skill_dir, skill_name, args.interface)
+    result = write_genex_yaml(skill_dir, skill_name, args.interface)
     if result:
         sys.exit(0)
     sys.exit(1)

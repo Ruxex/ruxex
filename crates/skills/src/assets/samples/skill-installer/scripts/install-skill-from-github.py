@@ -48,7 +48,7 @@ def _genex_home() -> str:
 
 
 def _tmp_root() -> str:
-    base = os.path.join(tempfile.gettempdir(), "codex")
+    base = os.path.join(tempfile.gettempdir(), "genex")
     os.makedirs(base, exist_ok=True)
     return base
 

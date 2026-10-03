@@ -1,7 +1,7 @@
 """Local-only regression tests for the bundled skill-installer script.
 
 Run manually; these tests are not wired into CI:
-    python3 -B -m unittest discover -s codex-rs/skills/tests -p 'test_*.py'
+    python3 -B -m unittest discover -s crates/skills/tests -p 'test_*.py'
 """
 
 import os

@@ -1,7 +1,7 @@
 """Local-only regression tests for the bundled plugin-creator scripts.
 
 Run with:
-    python3 -B -m unittest discover -s codex-rs/skills/tests -p 'test_*.py'
+    python3 -B -m unittest discover -s crates/skills/tests -p 'test_*.py'
 """
 
 import json
