@@ -329,7 +329,7 @@ async fn malformed_system_defaults_do_not_block_existing_thread_turn() -> Result
         enable_api_key_env: false,
         initialize: InitializeParams {
             client_info: ClientInfo {
-                name: "codex-app-server-tests".to_string(),
+                name: "genex-app-server-tests".to_string(),
                 title: None,
                 version: "0.1.0".to_string(),
             },

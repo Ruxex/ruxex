@@ -860,7 +860,7 @@ async fn thread_turns_list_reads_store_history_without_rollout_path() -> Result<
         enable_api_key_env: false,
         initialize: InitializeParams {
             client_info: ClientInfo {
-                name: "codex-app-server-tests".to_string(),
+                name: "genex-app-server-tests".to_string(),
                 title: None,
                 version: "0.1.0".to_string(),
             },
@@ -929,7 +929,7 @@ async fn thread_read_loaded_include_turns_reads_store_history_without_rollout_pa
         enable_api_key_env: false,
         initialize: InitializeParams {
             client_info: ClientInfo {
-                name: "codex-app-server-tests".to_string(),
+                name: "genex-app-server-tests".to_string(),
                 title: None,
                 version: "0.1.0".to_string(),
             },
@@ -1036,7 +1036,7 @@ async fn thread_list_includes_store_thread_without_rollout_path() -> Result<()> 
         enable_api_key_env: false,
         initialize: InitializeParams {
             client_info: ClientInfo {
-                name: "codex-app-server-tests".to_string(),
+                name: "genex-app-server-tests".to_string(),
                 title: None,
                 version: "0.1.0".to_string(),
             },

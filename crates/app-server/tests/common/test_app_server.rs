@@ -135,7 +135,7 @@ pub struct TestAppServer {
     _owned_genex_home: Option<TempDir>,
 }
 
-pub const DEFAULT_CLIENT_NAME: &str = "codex-app-server-tests";
+pub const DEFAULT_CLIENT_NAME: &str = "genex-app-server-tests";
 pub const DISABLE_PLUGIN_STARTUP_TASKS_ARG: &str = "--disable-plugin-startup-tasks-for-tests";
 const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "CODEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
 #[cfg(windows)]
@@ -262,7 +262,7 @@ impl TestAppServer {
                 .is_err_and(|error| error.kind() == std::io::ErrorKind::ExecutableFileBusy)
                 || retries == 2
             {
-                break process.context("codex app-server proc should start")?;
+                break process.context("genex app-server proc should start")?;
             }
             retries += 1;
             tokio::time::sleep(Duration::from_millis(10)).await;
