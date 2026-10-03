@@ -35,7 +35,7 @@ async fn private_tmp_mount_preserves_daemon_socket_isolation() {
             "--nocapture",
             "--test-threads=1",
         ])
-        .env("CODEX_TEST_PRIVATE_TMP", private.path())
+        .env("GENEX_TEST_PRIVATE_TMP", private.path())
         .kill_on_drop(true)
         .output()
         .await
@@ -53,7 +53,7 @@ async fn private_tmp_mount_preserves_daemon_socket_isolation() {
 #[test]
 #[ignore = "invoked inside a disposable mount namespace"]
 fn private_tmp_fixture() {
-    let Some(private) = std::env::var_os("CODEX_TEST_PRIVATE_TMP") else {
+    let Some(private) = std::env::var_os("GENEX_TEST_PRIVATE_TMP") else {
         return;
     };
     let mount = std::process::Command::new("mount")
@@ -93,7 +93,7 @@ fn private_tmp_fixture() {
             "--nocapture",
             "--test-threads=1",
         ])
-        .env("CODEX_TEST_DAEMON_SOCKET", &endpoint);
+        .env("GENEX_TEST_DAEMON_SOCKET", &endpoint);
     let output = command.output().unwrap();
     assert_eq!(output.status.code(), Some(0), "{output:?}");
     assert!(String::from_utf8_lossy(&output.stdout).contains("private-tmp-isolated"));
@@ -118,7 +118,7 @@ fn private_tmp_fixture() {
 #[test]
 #[ignore = "invoked inside the private tmp sandbox"]
 fn private_tmp_client() {
-    let Some(endpoint) = std::env::var_os("CODEX_TEST_DAEMON_SOCKET") else {
+    let Some(endpoint) = std::env::var_os("GENEX_TEST_DAEMON_SOCKET") else {
         return;
     };
     println!("private-tmp-client-started");

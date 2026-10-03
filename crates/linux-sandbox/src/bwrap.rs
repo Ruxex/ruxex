@@ -2048,16 +2048,16 @@ mod tests {
             .expect("filesystem args");
         let dot_git = path_to_string(&temp_dir.path().join(".git"));
         let dot_agents = path_to_string(&temp_dir.path().join(".agents"));
-        let dot_codex = path_to_string(&temp_dir.path().join(".genex"));
+        let dot_genex = path_to_string(&temp_dir.path().join(".genex"));
 
         assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_git));
         assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_agents));
-        assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_codex));
+        assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_genex));
         assert!(args.preserved_files.is_empty());
         let synthetic_targets = synthetic_mount_target_paths(&args);
         assert!(synthetic_targets.contains(&PathBuf::from(&dot_git)));
         assert!(synthetic_targets.contains(&PathBuf::from(&dot_agents)));
-        assert!(synthetic_targets.contains(&PathBuf::from(&dot_codex)));
+        assert!(synthetic_targets.contains(&PathBuf::from(&dot_genex)));
         assert_eq!(
             protected_create_target_paths(&args),
             Vec::<PathBuf>::new(),

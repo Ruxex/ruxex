@@ -417,7 +417,7 @@ async fn managed_proxy_full_filesystem_uses_minimal_dev_nodes() {
     env.insert("HTTP_PROXY".to_string(), "http://127.0.0.1:9".to_string());
     if let Some(file) = &shared_memory_file {
         env.insert(
-            "CODEX_TEST_SHM_PATH".to_string(),
+            "GENEX_TEST_SHM_PATH".to_string(),
             file.path().to_string_lossy().into_owned(),
         );
     }
@@ -435,9 +435,9 @@ async fn managed_proxy_full_filesystem_uses_minimal_dev_nodes() {
                 "if command -v python3 >/dev/null 2>&1; then ",
                 "python3 -c 'import os; assert len(os.urandom(16)) == 16'; ",
                 "fi; ",
-                "if [ -n \"${CODEX_TEST_SHM_PATH:-}\" ]; then ",
-                "test \"$(cat \"$CODEX_TEST_SHM_PATH\")\" = host-before; ",
-                "printf sandbox-after >\"$CODEX_TEST_SHM_PATH\"; ",
+                "if [ -n \"${GENEX_TEST_SHM_PATH:-}\" ]; then ",
+                "test \"$(cat \"$GENEX_TEST_SHM_PATH\")\" = host-before; ",
+                "printf sandbox-after >\"$GENEX_TEST_SHM_PATH\"; ",
                 "fi; ",
                 "stat -c '%d:%i' /dev",
             ),
@@ -713,7 +713,7 @@ async fn managed_proxy_mode_denies_af_unix_socket_but_allows_socketpair() {
 #[test]
 #[ignore = "invoked inside the managed proxy sandbox"]
 fn handoff_client() {
-    let Ok(label) = std::env::var("CODEX_TEST_HANDOFF_LABEL") else {
+    let Ok(label) = std::env::var("GENEX_TEST_HANDOFF_LABEL") else {
         return;
     };
     assert!(std::env::var_os(PROXY_ATTRIBUTION_TOKEN_ENV_KEY).is_none());
@@ -737,9 +737,9 @@ fn handoff_client() {
         Err(error) => panic!("enumerate inherited descriptors: {error}"),
     }
 
-    let shared = std::env::var("CODEX_TEST_HANDOFF_SHARED").expect("shared directory");
+    let shared = std::env::var("GENEX_TEST_HANDOFF_SHARED").expect("shared directory");
     let shared = Path::new(&shared);
-    let peer = std::env::var("CODEX_TEST_HANDOFF_PEER").expect("peer label");
+    let peer = std::env::var("GENEX_TEST_HANDOFF_PEER").expect("peer label");
     std::fs::write(shared.join(&label), b"ready").expect("announce sandbox readiness");
     let deadline = Instant::now() + OPERATION_TIMEOUT;
     while !shared.join(&peer).exists() {
@@ -807,10 +807,10 @@ async fn handoff_isolates_concurrent_endpoints_and_closes_privileged_descriptors
             PROXY_ATTRIBUTION_TOKEN_ENV_KEY.to_string(),
             format!("handoff-{label}"),
         );
-        env.insert("CODEX_TEST_HANDOFF_LABEL".to_string(), label.to_string());
-        env.insert("CODEX_TEST_HANDOFF_PEER".to_string(), peer.to_string());
+        env.insert("GENEX_TEST_HANDOFF_LABEL".to_string(), label.to_string());
+        env.insert("GENEX_TEST_HANDOFF_PEER".to_string(), peer.to_string());
         env.insert(
-            "CODEX_TEST_HANDOFF_SHARED".to_string(),
+            "GENEX_TEST_HANDOFF_SHARED".to_string(),
             shared.path().to_string_lossy().into_owned(),
         );
 

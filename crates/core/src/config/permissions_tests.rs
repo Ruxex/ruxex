@@ -42,7 +42,7 @@ async fn restricted_read_implicitly_allows_helper_executables() -> std::io::Resu
     let genex_home = temp_dir.path().join(".genex");
     let zsh_path = temp_dir.path().join("runtime").join("zsh");
     let arg0_root = genex_home.join("tmp").join("arg0");
-    let allowed_arg0_dir = arg0_root.join("codex-arg0-session");
+    let allowed_arg0_dir = arg0_root.join("genex-arg0-session");
     let sibling_arg0_dir = arg0_root.join("codex-arg0-other-session");
     let execve_wrapper = allowed_arg0_dir.join("genex-execve-wrapper");
     std::fs::create_dir_all(&cwd)?;

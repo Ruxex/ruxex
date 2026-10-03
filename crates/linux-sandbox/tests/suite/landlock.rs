@@ -893,7 +893,7 @@ async fn sandbox_blocks_nc() {
 }
 
 #[tokio::test]
-async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
+async fn sandbox_blocks_git_and_genex_writes_inside_writable_root() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -901,12 +901,12 @@ async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
     let dot_git = tmpdir.path().join(".git");
-    let dot_codex = tmpdir.path().join(".genex");
+    let dot_genex = tmpdir.path().join(".genex");
     std::fs::create_dir_all(&dot_git).expect("create .git");
-    std::fs::create_dir_all(&dot_codex).expect("create .genex");
+    std::fs::create_dir_all(&dot_genex).expect("create .genex");
 
     let git_target = dot_git.join("config");
-    let codex_target = dot_codex.join("config.toml");
+    let genex_target = dot_genex.join("config.toml");
 
     let git_output = expect_denied(
         run_cmd_result_with_writable_roots(
@@ -924,12 +924,12 @@ async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
         ".git write should be denied under bubblewrap",
     );
 
-    let codex_output = expect_denied(
+    let genex_output = expect_denied(
         run_cmd_result_with_writable_roots(
             &[
                 "bash",
                 "-lc",
-                &format!("echo denied > {}", codex_target.to_string_lossy()),
+                &format!("echo denied > {}", genex_target.to_string_lossy()),
             ],
             &[tmpdir.path().to_path_buf()],
             LONG_TIMEOUT_MS,
@@ -940,11 +940,11 @@ async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
         ".genex write should be denied under bubblewrap",
     );
     assert_ne!(git_output.exit_code, 0);
-    assert_ne!(codex_output.exit_code, 0);
+    assert_ne!(genex_output.exit_code, 0);
 }
 
 #[tokio::test]
-async fn sandbox_blocks_codex_symlink_replacement_attack() {
+async fn sandbox_blocks_genex_symlink_replacement_attack() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -953,20 +953,20 @@ async fn sandbox_blocks_codex_symlink_replacement_attack() {
     use std::os::unix::fs::symlink;
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
-    let decoy = tmpdir.path().join("decoy-codex");
+    let decoy = tmpdir.path().join("decoy-genex");
     std::fs::create_dir_all(&decoy).expect("create decoy dir");
 
-    let dot_codex = tmpdir.path().join(".genex");
-    symlink(&decoy, &dot_codex).expect("create .genex symlink");
+    let dot_genex = tmpdir.path().join(".genex");
+    symlink(&decoy, &dot_genex).expect("create .genex symlink");
 
-    let codex_target = dot_codex.join("config.toml");
+    let genex_target = dot_genex.join("config.toml");
 
-    let codex_output = expect_denied(
+    let genex_output = expect_denied(
         run_cmd_result_with_writable_roots(
             &[
                 "bash",
                 "-lc",
-                &format!("echo denied > {}", codex_target.to_string_lossy()),
+                &format!("echo denied > {}", genex_target.to_string_lossy()),
             ],
             &[tmpdir.path().to_path_buf()],
             LONG_TIMEOUT_MS,
@@ -976,11 +976,11 @@ async fn sandbox_blocks_codex_symlink_replacement_attack() {
         .await,
         ".genex symlink replacement should be denied",
     );
-    assert_ne!(codex_output.exit_code, 0);
+    assert_ne!(genex_output.exit_code, 0);
 }
 
 #[tokio::test]
-async fn sandbox_reports_codex_symlink_build_failure_without_panicking() {
+async fn sandbox_reports_genex_symlink_build_failure_without_panicking() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -989,11 +989,11 @@ async fn sandbox_reports_codex_symlink_build_failure_without_panicking() {
     use std::os::unix::fs::symlink;
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
-    let decoy = tmpdir.path().join("decoy-codex");
+    let decoy = tmpdir.path().join("decoy-genex");
     std::fs::create_dir_all(&decoy).expect("create decoy dir");
 
-    let dot_codex = tmpdir.path().join(".genex");
-    symlink(&decoy, &dot_codex).expect("create .genex symlink");
+    let dot_genex = tmpdir.path().join(".genex");
+    symlink(&decoy, &dot_genex).expect("create .genex symlink");
 
     let output = match run_cmd_result_with_writable_roots(
         &["bash", "-lc", "true"],
@@ -1200,7 +1200,7 @@ fi
     assert_ne!(git_init_output.exit_code, 0);
     assert!(!subdir.join(".git").exists());
 
-    let mkdir_codex_output = expect_denied(
+    let mkdir_genex_output = expect_denied(
         run_cmd_result_with_cwd_and_writable_roots(
             &["mkdir", ".genex"],
             &subdir,
@@ -1212,7 +1212,7 @@ fi
         .await,
         "child .genex directory creation should be denied",
     );
-    assert_ne!(mkdir_codex_output.exit_code, 0);
+    assert_ne!(mkdir_genex_output.exit_code, 0);
     assert!(!subdir.join(".genex").exists());
 
     let script = format!(

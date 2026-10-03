@@ -50,7 +50,7 @@ pub(crate) fn exec_bwrap(mut argv: Vec<String>, preserved_files: Vec<File>) -> !
         BubblewrapLauncher::Unavailable => {
             panic!(
                 "bubblewrap is unavailable: no system bwrap was found on PATH and no bundled \
-                 genex-resources/bwrap binary was found next to the Codex executable"
+                 genex-resources/bwrap binary was found next to the Genex executable"
             )
         }
     }
