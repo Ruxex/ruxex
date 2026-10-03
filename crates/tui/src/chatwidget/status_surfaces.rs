@@ -485,8 +485,8 @@ impl ChatWidget {
             .config_layer_stack
             .all_layers_low_to_high()
             .find_map(|layer| match &layer.name {
-                ConfigLayerSource::Project { dot_codex_folder } => {
-                    dot_codex_folder.as_path().parent().map(Path::to_path_buf)
+                ConfigLayerSource::Project { dot_genex_folder } => {
+                    dot_genex_folder.as_path().parent().map(Path::to_path_buf)
                 }
                 _ => None,
             })

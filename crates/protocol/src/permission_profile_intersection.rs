@@ -177,7 +177,7 @@ pub fn intersect_effective_permission_profiles(
                     || !writable_roots.iter().any(|root| {
                         root.read_only_subpaths.contains(&path)
                             || default_read_only_subpaths_for_writable_root(
-                                &root.root, /*protect_missing_dot_codex*/ false,
+                                &root.root, /*protect_missing_dot_genex*/ false,
                             )
                             .contains(&path)
                             || path.parent().as_ref() == Some(&root.root)

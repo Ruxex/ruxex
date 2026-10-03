@@ -2803,7 +2803,7 @@
       "type": "string"
     },
     "CollaborationMode": {
-      "description": "Collaboration mode for a Codex session.",
+      "description": "Collaboration mode for a Genex session.",
       "properties": {
         "mode": {
           "$ref": "#/definitions/ModeKind"
@@ -3954,7 +3954,7 @@
         {
           "description": "Path to a .genex/ folder within a project. There could be multiple of these between `cwd` and the project/repo root.",
           "properties": {
-            "dotCodexFolder": {
+            "dotGenexFolder": {
               "$ref": "#/definitions/AbsolutePathBuf"
             },
             "type": {
@@ -3966,7 +3966,7 @@
             }
           },
           "required": [
-            "dotCodexFolder",
+            "dotGenexFolder",
             "type"
           ],
           "title": "ProjectConfigLayerSource",

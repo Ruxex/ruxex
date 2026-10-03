@@ -5,7 +5,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 
-const CHILD_MODE_ENV_VAR: &str = "CODEX_SHELL_ENVIRONMENT_SCRUBBER_TEST_MODE";
+const CHILD_MODE_ENV_VAR: &str = "GENEX_SHELL_ENVIRONMENT_SCRUBBER_TEST_MODE";
 const TEST_NAME: &str =
     "shell_environment::tests::command_scrubber_removes_names_from_real_child_environment";
 

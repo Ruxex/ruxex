@@ -18,7 +18,7 @@ pub enum ConfigLayerSource {
         profile: Option<String>,
     },
     /// Configuration loaded from a project's `.genex` directory.
-    Project { dot_codex_folder: AbsolutePathBuf },
+    Project { dot_genex_folder: AbsolutePathBuf },
     /// Overrides supplied for the current session.
     SessionFlags,
 }
@@ -86,10 +86,10 @@ pub fn format_config_layer_source(source: &ConfigLayerSource, config_toml_file: 
         ConfigLayerSource::User { file, .. } => {
             format!("user ({})", file.as_path().display())
         }
-        ConfigLayerSource::Project { dot_codex_folder } => {
+        ConfigLayerSource::Project { dot_genex_folder } => {
             format!(
                 "project ({}/{config_toml_file})",
-                dot_codex_folder.as_path().display()
+                dot_genex_folder.as_path().display()
             )
         }
         ConfigLayerSource::SessionFlags => "session-flags".to_string(),

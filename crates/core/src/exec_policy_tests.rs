@@ -38,11 +38,11 @@ use toml::Value as TomlValue;
 #[path = "exec_policy_windows_tests.rs"]
 mod windows_tests;
 
-fn config_stack_for_dot_codex_folder(dot_codex_folder: &Path) -> ConfigLayerStack {
-    let dot_codex_folder =
-        AbsolutePathBuf::from_absolute_path(dot_codex_folder).expect("absolute dot_codex_folder");
+fn config_stack_for_dot_genex_folder(dot_genex_folder: &Path) -> ConfigLayerStack {
+    let dot_genex_folder =
+        AbsolutePathBuf::from_absolute_path(dot_genex_folder).expect("absolute dot_genex_folder");
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_codex_folder },
+        ConfigLayerSource::Project { dot_genex_folder },
         TomlValue::Table(Default::default()),
     );
     ConfigLayerStack::new(
@@ -202,7 +202,7 @@ async fn child_does_not_use_parent_exec_policy_when_requirements_exec_policy_dif
 #[tokio::test]
 async fn returns_empty_policy_when_no_policy_files_exist() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
 
     let manager = ExecPolicyManager::load(&config_stack)
         .await
@@ -228,7 +228,7 @@ async fn rules_path_file_returns_read_dir_error() {
     let temp_dir = tempdir().expect("create temp dir");
     let rules_path = temp_dir.path().join(RULES_DIR_NAME);
     fs::write(&rules_path, "rules should be a directory").expect("write malformed rules path");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
 
     let err = load_exec_policy(&config_stack)
         .await
@@ -258,7 +258,7 @@ async fn collect_policy_files_returns_empty_when_dir_missing() {
 #[tokio::test]
 async fn format_exec_policy_error_with_source_renders_range() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
     let policy_dir = temp_dir.path().join(RULES_DIR_NAME);
     fs::create_dir_all(&policy_dir).expect("create policy dir");
     let broken_path = policy_dir.join("broken.rules");
@@ -303,7 +303,7 @@ fn parse_starlark_line_from_message_rejects_zero_line() {
 #[tokio::test]
 async fn loads_policies_from_policy_subdirectory() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
     let policy_dir = temp_dir.path().join(RULES_DIR_NAME);
     fs::create_dir_all(&policy_dir).expect("create policy dir");
     fs::write(
@@ -349,9 +349,9 @@ async fn merges_requirements_exec_policy_network_rules() -> anyhow::Result<()> {
         )),
         ..ConfigRequirements::default()
     };
-    let dot_codex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_genex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_codex_folder },
+        ConfigLayerSource::Project { dot_genex_folder },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -381,9 +381,9 @@ async fn malformed_custom_rules_preserve_requirements_exec_policy() -> anyhow::R
         )),
         ..ConfigRequirements::default()
     };
-    let dot_codex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_genex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_codex_folder },
+        ConfigLayerSource::Project { dot_genex_folder },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -432,9 +432,9 @@ host_executable(name = "git", paths = ["{git_path_literal}"])
         )),
         ..ConfigRequirements::default()
     };
-    let dot_codex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_genex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_codex_folder },
+        ConfigLayerSource::Project { dot_genex_folder },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -456,7 +456,7 @@ host_executable(name = "git", paths = ["{git_path_literal}"])
 #[tokio::test]
 async fn ignores_policies_outside_policy_dir() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
     fs::write(
         temp_dir.path().join("root.rules"),
         r#"prefix_rule(pattern=["ls"], decision="prompt")"#,
@@ -489,7 +489,7 @@ async fn ignores_policy_files_when_config_stack_disables_exec_policy_rules() {
         r#"prefix_rule(pattern=["curl"], decision="allow")"#,
     )
     .expect("write policy file");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path())
+    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path())
         .with_user_and_project_exec_policy_rules_ignored(
             /*ignore_user_and_project_exec_policy_rules*/ true,
         );
@@ -556,10 +556,10 @@ async fn ignores_rules_from_untrusted_project_layers() -> anyhow::Result<()> {
         r#"prefix_rule(pattern=["ls"], decision="forbidden")"#,
     )?;
 
-    let project_dot_codex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
+    let project_dot_genex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
     let layers = vec![ConfigLayerEntry::new_disabled(
         ConfigLayerSource::Project {
-            dot_codex_folder: project_dot_codex_folder,
+            dot_genex_folder: project_dot_genex_folder,
         },
         TomlValue::Table(Default::default()),
         "marked untrusted",
@@ -606,7 +606,7 @@ async fn loads_policies_from_multiple_config_layers() -> anyhow::Result<()> {
 
     let user_config_toml =
         AbsolutePathBuf::from_absolute_path(user_dir.path().join("config.toml"))?;
-    let project_dot_codex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
+    let project_dot_genex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
     let layers = vec![
         ConfigLayerEntry::new(
             ConfigLayerSource::User {
@@ -617,7 +617,7 @@ async fn loads_policies_from_multiple_config_layers() -> anyhow::Result<()> {
         ),
         ConfigLayerEntry::new(
             ConfigLayerSource::Project {
-                dot_codex_folder: project_dot_codex_folder,
+                dot_genex_folder: project_dot_genex_folder,
             },
             TomlValue::Table(Default::default()),
         ),

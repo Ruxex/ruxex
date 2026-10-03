@@ -216,9 +216,9 @@ async fn append_project_layers(
         }
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::Project {
-                dot_codex_folder: layer.dot_codex_folder.clone(),
+                dot_genex_folder: layer.dot_genex_folder.clone(),
             },
-            base_dir: layer.dot_codex_folder,
+            base_dir: layer.dot_genex_folder,
             toml: config,
         });
 
@@ -233,7 +233,7 @@ async fn append_project_layers(
         };
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::Project {
-                dot_codex_folder: hooks_config_folder.clone(),
+                dot_genex_folder: hooks_config_folder.clone(),
             },
             base_dir: hooks_config_folder,
             toml: TomlValue::Table(toml::map::Map::from_iter([(

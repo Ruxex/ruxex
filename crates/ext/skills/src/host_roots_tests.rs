@@ -202,10 +202,10 @@ fn user_layer(genex_home: &AbsolutePathBuf) -> ConfigLayerEntry {
     )
 }
 
-fn project_layer(dot_codex_folder: &AbsolutePathBuf) -> ConfigLayerEntry {
+fn project_layer(dot_genex_folder: &AbsolutePathBuf) -> ConfigLayerEntry {
     ConfigLayerEntry::new(
         ConfigLayerSource::Project {
-            dot_codex_folder: dot_codex_folder.clone(),
+            dot_genex_folder: dot_genex_folder.clone(),
         },
         empty_config(),
     )
@@ -259,7 +259,7 @@ fn layer_roots_preserve_scope_precedence_and_disabled_projects() {
         user_layer(&user_folder),
         ConfigLayerEntry::new_disabled(
             ConfigLayerSource::Project {
-                dot_codex_folder: project_folder.clone(),
+                dot_genex_folder: project_folder.clone(),
             },
             empty_config(),
             "untrusted project",

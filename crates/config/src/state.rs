@@ -201,7 +201,7 @@ impl ConfigLayerEntry {
             ConfigLayerSource::System { file } => file.parent(),
             ConfigLayerSource::EnterpriseManaged { .. } => None,
             ConfigLayerSource::User { file, .. } => file.parent(),
-            ConfigLayerSource::Project { dot_codex_folder } => Some(dot_codex_folder.clone()),
+            ConfigLayerSource::Project { dot_genex_folder } => Some(dot_genex_folder.clone()),
             ConfigLayerSource::SessionFlags => None,
         }
     }
@@ -569,21 +569,21 @@ fn verify_layer_ordering(layers: &[ConfigLayerEntry]) -> std::io::Result<()> {
     // further verify that project layers are ordered from root to cwd. Multiple
     // user layers are allowed so a profile override can layer on top of the base
     // user config.
-    let mut previous_project_dot_codex_folder: Option<&AbsolutePathBuf> = None;
+    let mut previous_project_dot_genex_folder: Option<&AbsolutePathBuf> = None;
     for layer in layers {
         if let ConfigLayerSource::Project {
-            dot_codex_folder: current_project_dot_codex_folder,
+            dot_genex_folder: current_project_dot_genex_folder,
         } = &layer.name
         {
-            if let Some(previous) = previous_project_dot_codex_folder {
+            if let Some(previous) = previous_project_dot_genex_folder {
                 let Some(parent) = previous.as_path().parent() else {
                     return Err(std::io::Error::new(
                         std::io::ErrorKind::InvalidData,
                         "project layer has no parent directory",
                     ));
                 };
-                if previous == current_project_dot_codex_folder
-                    || !current_project_dot_codex_folder
+                if previous == current_project_dot_genex_folder
+                    || !current_project_dot_genex_folder
                         .as_path()
                         .ancestors()
                         .any(|ancestor| ancestor == parent)
@@ -594,7 +594,7 @@ fn verify_layer_ordering(layers: &[ConfigLayerEntry]) -> std::io::Result<()> {
                     ));
                 }
             }
-            previous_project_dot_codex_folder = Some(current_project_dot_codex_folder);
+            previous_project_dot_genex_folder = Some(current_project_dot_genex_folder);
         }
     }
 

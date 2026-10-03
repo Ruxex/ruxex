@@ -7,17 +7,17 @@ use thiserror::Error;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Display, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthMode {
-    /// API key provided by the caller and stored by Codex.
+    /// API key provided by the caller and stored by Genex.
     ApiKey,
-    /// Codex backend auth supplied as request headers.
+    /// Provider backend auth supplied as request headers.
     #[serde(rename = "headers")]
     #[strum(serialize = "headers")]
     Headers,
-    /// Amazon Bedrock bearer token managed by Codex.
+    /// Amazon Bedrock bearer token managed by Genex.
     #[serde(rename = "bedrockApiKey")]
     #[strum(serialize = "bedrockApiKey")]
     BedrockApiKey,
-    /// Amazon Bedrock AWS access keys managed by Codex.
+    /// Amazon Bedrock AWS access keys managed by Genex.
     #[serde(rename = "bedrockAccessKeys")]
     #[strum(serialize = "bedrockAccessKeys")]
     BedrockAccessKeys,

@@ -96,7 +96,7 @@
       "type": "object"
     },
     "CollaborationMode": {
-      "description": "Collaboration mode for a Codex session.",
+      "description": "Collaboration mode for a Genex session.",
       "properties": {
         "mode": {
           "$ref": "#/definitions/ModeKind"

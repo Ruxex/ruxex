@@ -163,10 +163,10 @@ with Path(r"{hook_log_path}").open("a", encoding="utf-8") as handle:
     Ok(())
 }
 
-fn write_project_hook_config(dot_codex_folder: &std::path::Path, command: &str) -> Result<()> {
-    std::fs::create_dir_all(dot_codex_folder)?;
+fn write_project_hook_config(dot_genex_folder: &std::path::Path, command: &str) -> Result<()> {
+    std::fs::create_dir_all(dot_genex_folder)?;
     std::fs::write(
-        dot_codex_folder.join("config.toml"),
+        dot_genex_folder.join("config.toml"),
         format!(
             r#"[features]
 hooks = true

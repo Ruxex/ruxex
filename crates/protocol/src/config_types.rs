@@ -620,7 +620,7 @@ impl ModeKind {
     }
 }
 
-/// Collaboration mode for a Codex session.
+/// Collaboration mode for a Genex session.
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize, JsonSchema, TS)]
 #[serde(rename_all = "lowercase")]
 pub struct CollaborationMode {

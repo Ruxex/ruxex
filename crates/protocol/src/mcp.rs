@@ -1,8 +1,8 @@
 //! Types used when representing Model Context Protocol (MCP) values inside the
-//! Codex protocol.
+//! Genex protocol.
 //!
 //! We intentionally keep these types TS/JSON-schema friendly (via `ts-rs` and
-//! `schemars`) so they can be embedded in Codex's own protocol structures.
+//! `schemars`) so they can be embedded in Genex's own protocol structures.
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -46,7 +46,7 @@ pub fn is_node_repl_backed_tool(name: &str, namespace: Option<&str>) -> bool {
         .is_some_and(|(server, _)| is_node_repl_backed_server(server))
 }
 
-/// MCP extensions supplied by the client that created a Codex session.
+/// MCP extensions supplied by the client that created a Genex session.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ClientMcpExtensions {
     extensions: HashMap<String, serde_json::Value>,
@@ -243,7 +243,7 @@ pub struct CallToolResult {
 
 // === Adapter helpers ===
 //
-// These types and conversions intentionally live in `codex-protocol` so other crates can convert
+// These types and conversions intentionally live in `genex-protocol` so other crates can convert
 // “wire-shaped” MCP JSON (typically coming from rmcp model structs serialized with serde) into our
 // TS/JsonSchema-friendly protocol types without depending on `mcp-types`.
 

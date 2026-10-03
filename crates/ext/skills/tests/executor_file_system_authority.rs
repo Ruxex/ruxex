@@ -260,7 +260,7 @@ async fn skill_loading_and_reads_use_the_supplied_executor_file_system() {
     let config_layer_stack = ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::Project {
-                dot_codex_folder: project_folder,
+                dot_genex_folder: project_folder,
             },
             toml::from_str("[skills.bundled]\nenabled = false\n")
                 .expect("valid bundled skills config"),

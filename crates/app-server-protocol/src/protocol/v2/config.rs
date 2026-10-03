@@ -83,7 +83,7 @@ pub enum ConfigLayerSource {
     /// these between `cwd` and the project/repo root.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
-    Project { dot_codex_folder: AbsolutePathBuf },
+    Project { dot_genex_folder: AbsolutePathBuf },
 
     /// Session-layer overrides supplied via `-c`/`--config`.
     SessionFlags,

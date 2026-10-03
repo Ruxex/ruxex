@@ -788,7 +788,7 @@ access = "deny"
             .expect("project policy origin")
             .name,
         ConfigLayerSource::Project {
-            dot_codex_folder: project_config.clone(),
+            dot_genex_folder: project_config.clone(),
         }
     );
     assert_eq!(
@@ -807,7 +807,7 @@ access = "deny"
             .expect("project computer use origin")
             .name,
         ConfigLayerSource::Project {
-            dot_codex_folder: project_config,
+            dot_genex_folder: project_config,
         }
     );
 
@@ -1292,7 +1292,7 @@ model_reasoning_effort = "high"
     assert_eq!(
         origins.get("model_reasoning_effort").expect("origin").name,
         ConfigLayerSource::Project {
-            dot_codex_folder: project_config
+            dot_genex_folder: project_config
         }
     );
 
@@ -1355,8 +1355,8 @@ async fn config_read_respects_managed_project_root_markers() -> Result<()> {
         .expect("layers present")
         .into_iter()
         .filter_map(|layer| {
-            if let ConfigLayerSource::Project { dot_codex_folder } = layer.name {
-                Some((dot_codex_folder, layer.config, layer.disabled_reason))
+            if let ConfigLayerSource::Project { dot_genex_folder } = layer.name {
+                Some((dot_genex_folder, layer.config, layer.disabled_reason))
             } else {
                 None
             }

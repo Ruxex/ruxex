@@ -22,7 +22,7 @@ pub fn is_non_inheritable_env_var(name: &str) -> bool {
 /// Configures a child command to omit non-inheritable variables from the
 /// process environment and explicit command overrides.
 ///
-/// This prevents accidental propagation of Codex launch context; it is not a
+/// This prevents accidental propagation of Genex launch context; it is not a
 /// filesystem security boundary for the referenced identity-token file.
 pub fn scrub_non_inheritable_env_vars(command: &mut std::process::Command) {
     let configured_names = command
@@ -215,7 +215,7 @@ mod windows_tests {
             ("Shell", "C:\\Program Files\\Git\\bin\\bash.exe"),
             ("SystemRoot", "C:\\Windows"),
             ("WinDir", "C:\\Windows"),
-            ("AppData", "C:\\Users\\codex\\AppData\\Roaming"),
+            ("AppData", "C:\\Users\\genex\\AppData\\Roaming"),
             ("TmpDir", "C:\\Temp\\custom"),
             ("PROVIDER_API_KEY", "secret"),
         ]);
@@ -237,7 +237,7 @@ mod windows_tests {
             ("WinDir".to_string(), "C:\\Windows".to_string()),
             (
                 "AppData".to_string(),
-                "C:\\Users\\codex\\AppData\\Roaming".to_string(),
+                "C:\\Users\\genex\\AppData\\Roaming".to_string(),
             ),
             ("TmpDir".to_string(), "C:\\Temp\\custom".to_string()),
         ]);
@@ -292,7 +292,7 @@ mod non_windows_tests {
     fn core_inherit_preserves_non_windows_core_vars_case_insensitively() {
         let vars = make_vars(&[
             ("path", "/usr/bin"),
-            ("home", "/home/codex"),
+            ("home", "/home/genex"),
             ("TmpDir", "/tmp/custom"),
             ("PROVIDER_API_KEY", "secret"),
         ]);
@@ -306,7 +306,7 @@ mod non_windows_tests {
         let result = populate_env(vars, &policy, /*thread_id*/ None);
         let expected = HashMap::from([
             ("path".to_string(), "/usr/bin".to_string()),
-            ("home".to_string(), "/home/codex".to_string()),
+            ("home".to_string(), "/home/genex".to_string()),
             ("TmpDir".to_string(), "/tmp/custom".to_string()),
         ]);
 

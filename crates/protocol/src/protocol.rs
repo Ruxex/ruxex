@@ -1,4 +1,4 @@
-//! Defines the protocol for a Codex session between a client and an agent.
+//! Defines the protocol for a Genex session between a client and an agent.
 //!
 //! Uses a SQ (Submission Queue) / EQ (Event Queue) pattern to asynchronously communicate
 //! between user and agent.
@@ -123,7 +123,7 @@ pub const CONTEXT_WINDOW_OPEN_TAG: &str = "<context_window>";
 pub const CONTEXT_WINDOW_CLOSE_TAG: &str = "</context_window>";
 pub const CONTEXT_WINDOW_GUIDANCE_OPEN_TAG: &str = "<context_window_guidance>";
 pub const CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG: &str = "</context_window_guidance>";
-pub const USER_MESSAGE_BEGIN: &str = "## My request for Codex:";
+pub const USER_MESSAGE_BEGIN: &str = "## My request for Genex:";
 
 /// Removes the model-context prefix from a user message before displaying it.
 pub fn strip_user_message_prefix(text: &str) -> &str {
@@ -382,7 +382,7 @@ pub enum Op {
     /// Request a code review from the agent.
     Review { review_request: ReviewRequest },
 
-    /// Request to shut down codex instance.
+    /// Request to shut down Genex instance.
     Shutdown,
 
     /// Execute a user-initiated one-off shell command (triggered by "!cmd").
@@ -580,7 +580,7 @@ impl Op {
 }
 
 /// Determines the conditions under which the user is consulted to approve
-/// running the command proposed by Codex.
+    /// running the command proposed by Genex.
 #[derive(
     Debug,
     Clone,
@@ -931,13 +931,13 @@ impl SandboxPolicy {
                 roots
                     .into_iter()
                     .map(|writable_root| {
-                        let protect_missing_dot_codex = cwd_root
+                        let protect_missing_dot_genex = cwd_root
                             .as_ref()
                             .is_some_and(|cwd_root| cwd_root == &writable_root);
                         WritableRoot {
                             read_only_subpaths: default_read_only_subpaths_for_writable_root(
                                 &writable_root,
-                                protect_missing_dot_codex,
+                                protect_missing_dot_genex,
                             ),
                             protected_metadata_names: Vec::new(),
                             root: writable_root,
@@ -1394,7 +1394,7 @@ pub enum NonSteerableTurnKind {
     Compact,
 }
 
-/// Codex errors that we expose to clients.
+/// Genex errors that we expose to clients.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
@@ -4647,7 +4647,7 @@ mod tests {
             .expect("canonical secret");
         let expected_agents = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".agents"))
             .expect("canonical .agents");
-        let expected_codex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".genex"))
+        let expected_genex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".genex"))
             .expect("canonical .genex");
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
@@ -4702,7 +4702,7 @@ mod tests {
             writable_roots[0]
                 .read_only_subpaths
                 .iter()
-                .any(|path| path.as_path() == expected_codex.as_path())
+                .any(|path| path.as_path() == expected_genex.as_path())
         );
     }
 
@@ -4718,7 +4718,7 @@ mod tests {
         let expected_docs_public =
             AbsolutePathBuf::from_absolute_path(canonical_cwd.join("docs/public"))
                 .expect("canonical docs/public");
-        let expected_dot_codex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".genex"))
+        let expected_dot_genex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".genex"))
             .expect("canonical .genex");
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
@@ -4747,7 +4747,7 @@ mod tests {
                 (
                     canonical_cwd,
                     vec![
-                        expected_dot_codex.to_path_buf(),
+                        expected_dot_genex.to_path_buf(),
                         expected_docs.to_path_buf()
                     ],
                 ),

@@ -759,7 +759,7 @@ async fn skills_for_cwd_loads_repo_and_user_roots_with_local_fs() {
             user_config_layer(&genex_home, ""),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Project {
-                    dot_codex_folder: repo_dot_codex.abs(),
+                    dot_genex_folder: repo_dot_codex.abs(),
                 },
                 toml::Value::Table(toml::map::Map::new()),
             ),
@@ -826,7 +826,7 @@ async fn skills_for_cwd_without_fs_skips_repo_roots() {
             user_config_layer(&genex_home, ""),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Project {
-                    dot_codex_folder: repo_dot_codex.abs(),
+                    dot_genex_folder: repo_dot_codex.abs(),
                 },
                 toml::Value::Table(toml::map::Map::new()),
             ),

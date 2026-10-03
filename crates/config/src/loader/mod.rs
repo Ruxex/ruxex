@@ -933,13 +933,13 @@ impl ProjectTrustContext {
 }
 
 fn project_layer_entry(
-    dot_codex_folder: &AbsolutePathBuf,
+    dot_genex_folder: &AbsolutePathBuf,
     config: TomlValue,
     disabled_reason: Option<String>,
     hooks_config_folder_override: Option<AbsolutePathBuf>,
 ) -> ConfigLayerEntry {
     let source = ConfigLayerSource::Project {
-        dot_codex_folder: dot_codex_folder.clone(),
+        dot_genex_folder: dot_genex_folder.clone(),
     };
 
     let entry = if let Some(reason) = disabled_reason {
@@ -1044,10 +1044,10 @@ fn sanitize_project_config(
 }
 
 fn project_ignored_config_keys_warning(
-    dot_codex_folder: &AbsolutePathBuf,
+    dot_genex_folder: &AbsolutePathBuf,
     ignored_keys: &[String],
 ) -> String {
-    let config_path = dot_codex_folder.join(CONFIG_TOML_FILE);
+    let config_path = dot_genex_folder.join(CONFIG_TOML_FILE);
     let ignored_keys = ignored_keys.join(", ");
     format!(
         concat!(
@@ -1369,7 +1369,7 @@ struct LoadedProjectLayers {
 
 #[derive(Debug, Clone)]
 struct DiscoveredProjectLayer {
-    dot_codex_folder: AbsolutePathBuf,
+    dot_genex_folder: AbsolutePathBuf,
     config: TomlValue,
     disabled_reason: Option<String>,
     hooks_config_folder_override: Option<AbsolutePathBuf>,
@@ -1407,7 +1407,7 @@ async fn load_project_layers(
     let mut layers = Vec::with_capacity(discovered.layers.len());
     for layer in discovered.layers {
         let config =
-            resolve_relative_paths_in_config_toml(layer.config, layer.dot_codex_folder.as_path())?;
+            resolve_relative_paths_in_config_toml(layer.config, layer.dot_genex_folder.as_path())?;
         let config = if layer.load_root_checkout_hooks {
             merge_root_checkout_project_hooks(
                 fs,
@@ -1420,7 +1420,7 @@ async fn load_project_layers(
             config
         };
         layers.push(project_layer_entry(
-            &layer.dot_codex_folder,
+            &layer.dot_genex_folder,
             config,
             layer.disabled_reason,
             layer.hooks_config_folder_override,
@@ -1501,7 +1501,7 @@ async fn discover_project_layers(
                             ));
                         }
                         layers.push(DiscoveredProjectLayer {
-                            dot_codex_folder: dot_codex_abs,
+                            dot_genex_folder: dot_codex_abs,
                             config: TomlValue::Table(toml::map::Map::new()),
                             disabled_reason,
                             hooks_config_folder_override,
@@ -1531,7 +1531,7 @@ async fn discover_project_layers(
                     ));
                 }
                 layers.push(DiscoveredProjectLayer {
-                    dot_codex_folder: dot_codex_abs,
+                    dot_genex_folder: dot_codex_abs,
                     config,
                     disabled_reason,
                     hooks_config_folder_override,
@@ -1544,7 +1544,7 @@ async fn discover_project_layers(
                     // for this project layer, as this may still have subfolders
                     // that are significant in the overall ConfigLayerStack.
                     layers.push(DiscoveredProjectLayer {
-                        dot_codex_folder: dot_codex_abs,
+                        dot_genex_folder: dot_codex_abs,
                         config: TomlValue::Table(toml::map::Map::new()),
                         disabled_reason,
                         hooks_config_folder_override,

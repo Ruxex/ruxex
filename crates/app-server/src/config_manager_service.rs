@@ -799,9 +799,9 @@ fn override_message(layer: &ConfigLayerSource) -> String {
         ConfigLayerSource::EnterpriseManaged { id: _, name } => {
             format!("Overridden by enterprise-managed config: {name}")
         }
-        ConfigLayerSource::Project { dot_codex_folder } => format!(
+        ConfigLayerSource::Project { dot_genex_folder } => format!(
             "Overridden by project config: {}/{CONFIG_TOML_FILE}",
-            dot_codex_folder.display(),
+            dot_genex_folder.display(),
         ),
         ConfigLayerSource::SessionFlags => "Overridden by session flags".to_string(),
         ConfigLayerSource::User { file, .. } => {
