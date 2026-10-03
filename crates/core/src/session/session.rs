@@ -1172,7 +1172,7 @@ impl Session {
             let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();
             let auth_env_telemetry = collect_auth_env_telemetry(
                 session_configuration.provider.info(),
-                auth_manager.codex_api_key_env_enabled(),
+                auth_manager.api_key_env_enabled(),
             );
             let mut session_telemetry = SessionTelemetry::new(
                 thread_id,

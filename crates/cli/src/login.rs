@@ -12,7 +12,7 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
 
     let auth_config = config.auth_config();
     match auth_config
-        .load_auth(/*enable_codex_api_key_env*/ false)
+        .load_auth(/*enable_api_key_env*/ false)
         .await
     {
         Ok(Some(auth)) => match auth.auth_mode() {

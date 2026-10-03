@@ -101,7 +101,7 @@ use genex_app_server_protocol::TurnStartParams;
 use genex_app_server_protocol::TurnStartResponse;
 use genex_app_server_protocol::TurnSteerParams;
 use genex_app_server_protocol::WindowsSandboxSetupStartParams;
-use genex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use core_test_support::is_remote_test_environment;
 use core_test_support::test_genex::TestEnv;
 use core_test_support::test_genex::test_env;
@@ -239,7 +239,7 @@ impl TestAppServer {
             "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
             genex_home.join("managed_config.toml"),
         );
-        cmd.env_remove(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR);
+        cmd.env_remove(INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR);
         cmd.args(args);
 
         for (k, v) in env_overrides {

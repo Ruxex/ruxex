@@ -161,7 +161,7 @@ fn bearer_auth_for_provider(
     Ok(None)
 }
 
-/// Builds request-header auth for a stored Codex auth snapshot.
+/// Builds request-header auth for a stored Genex auth snapshot.
 pub fn auth_provider_from_auth(auth: &GenexAuth) -> SharedAuthProvider {
     match auth {
         GenexAuth::Headers(auth) => Arc::new(HeaderAuthProvider { auth: auth.clone() }),

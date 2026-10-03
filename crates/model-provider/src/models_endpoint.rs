@@ -131,11 +131,11 @@ impl ModelsEndpoint {
     }
 
     fn auth_env(&self) -> AuthEnvTelemetry {
-        let codex_api_key_env_enabled = self
+        let api_key_env_enabled = self
             .auth_manager
             .as_ref()
-            .is_some_and(|auth_manager| auth_manager.codex_api_key_env_enabled());
-        collect_auth_env_telemetry(&self.provider_info, codex_api_key_env_enabled)
+            .is_some_and(|auth_manager| auth_manager.api_key_env_enabled());
+        collect_auth_env_telemetry(&self.provider_info, api_key_env_enabled)
     }
 }
 
@@ -239,8 +239,8 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             endpoint = MODELS_ENDPOINT,
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
-            auth.env_codex_api_key_present = self.auth_env.codex_api_key_env_present,
-            auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
+            auth.env_codex_api_key_present = self.auth_env.api_key_env_present,
+            auth.env_codex_api_key_enabled = self.auth_env.api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.request_id = response_debug.request_id.as_deref(),
@@ -259,8 +259,8 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             endpoint = MODELS_ENDPOINT,
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
-            auth.env_codex_api_key_present = self.auth_env.codex_api_key_env_present,
-            auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
+            auth.env_codex_api_key_present = self.auth_env.api_key_env_present,
+            auth.env_codex_api_key_enabled = self.auth_env.api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.request_id = response_debug.request_id.as_deref(),

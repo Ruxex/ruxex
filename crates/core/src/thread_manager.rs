@@ -43,7 +43,7 @@ use genex_history::ResumedHistory;
 use genex_history::RolloutItem;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
-use genex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
@@ -1764,7 +1764,7 @@ impl ThreadManagerState {
             InitialHistory::Resumed(_) | InitialHistory::Forked(_) => None,
         };
 
-        let env_originator = std::env::var(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR)
+        let env_originator = std::env::var(INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR)
             .is_ok()
             .then(|| originator().value);
         effective_originator_value(

@@ -4,7 +4,7 @@ use std::sync::atomic::Ordering;
 use axum::http::HeaderValue;
 use genex_login::default_client::SetOriginatorError;
 use genex_login::default_client::USER_AGENT_SUFFIX;
-use genex_login::default_client::get_codex_user_agent;
+use genex_login::default_client::get_user_agent;
 use genex_login::default_client::set_default_client_residency_requirement;
 use genex_login::default_client::set_default_originator;
 use genex_protocol::mcp::ClientMcpExtensions;
@@ -156,7 +156,7 @@ impl InitializeRequestProcessor {
             *suffix = Some(user_agent_suffix);
         }
 
-        let user_agent = get_codex_user_agent();
+        let user_agent = get_user_agent();
         let response = InitializeResponse {
             user_agent,
             genex_home: genex_home,

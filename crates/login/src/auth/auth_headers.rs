@@ -4,10 +4,10 @@ use http::HeaderMap;
 
 /// Request headers returned by an external auth provider.
 ///
-/// The provider owns credential validation, rotation, and persistence. Codex
+/// The provider owns credential validation, rotation, and persistence. Genex
 /// keeps the resolved headers in memory and attaches them to backend requests.
 /// Providers may also supply an opaque identity separately from the request
-/// headers so Codex can enforce managed authentication policy without
+/// headers so Genex can enforce managed authentication policy without
 /// prescribing a wire header name.
 #[derive(Clone, PartialEq, Eq)]
 pub struct AuthHeaders {

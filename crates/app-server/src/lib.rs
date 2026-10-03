@@ -738,7 +738,7 @@ pub async fn run_main_with_transport_options(
     drop(unix_socket_startup_lock);
 
     let auth_manager =
-        AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ false)
+        AuthManager::shared_from_config(&config, /*enable_api_key_env*/ false)
             .await
             .map_err(std::io::Error::other)?;
 

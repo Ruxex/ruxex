@@ -123,7 +123,7 @@ impl Harness {
         );
         let auth = AuthManager::shared_from_config(
             config.as_ref(),
-            /*enable_codex_api_key_env*/ false,
+            /*enable_api_key_env*/ false,
         )
         .await?;
         let provider = Arc::new(BlockingProvider::default());

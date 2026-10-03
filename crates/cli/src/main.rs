@@ -1866,7 +1866,7 @@ async fn run_debug_models_command(
         .build()
         .await?;
     let auth_manager =
-        AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ true).await?;
+        AuthManager::shared_from_config(&config, /*enable_api_key_env*/ true).await?;
     let models_manager = build_models_manager(&config, auth_manager);
     let catalog = models_manager
         .raw_model_catalog(

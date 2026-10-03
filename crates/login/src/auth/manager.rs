@@ -198,7 +198,7 @@ impl GenexAuth {
     ) -> std::io::Result<Option<Self>> {
         load_auth(
             genex_home,
-            /*enable_codex_api_key_env*/ false,
+            /*enable_api_key_env*/ false,
             auth_credentials_store_mode,
             /*allowed_login_methods*/ None,
             /*forced_managed_workspace_id*/ None,
@@ -258,7 +258,7 @@ impl GenexAuth {
                 "header auth does not expose a bearer token",
             )),
             Self::BedrockApiKey(_) | Self::BedrockAccessKeys(_) => Err(std::io::Error::other(
-                "Bedrock API key auth does not expose a Codex bearer token",
+                "Bedrock API key auth does not expose a Genex bearer token",
             )),
         }
     }
@@ -283,7 +283,7 @@ impl GenexAuth {
 
 pub const CODEX_API_KEY_ENV_VAR: &str = "CODEX_API_KEY";
 
-pub fn read_codex_api_key_from_env() -> Option<String> {
+pub fn read_api_key_from_env() -> Option<String> {
     read_non_empty_env_var(CODEX_API_KEY_ENV_VAR)
 }
 
@@ -411,13 +411,13 @@ impl AuthConfig {
 
     pub async fn load_auth(
         &self,
-        enable_codex_api_key_env: bool,
+        enable_api_key_env: bool,
     ) -> std::io::Result<Option<GenexAuth>> {
         let allowed_login_methods = self.allowed_login_methods();
         let workspaces = self.effective_managed_workspaces();
         let auth = load_auth(
             &self.genex_home,
-            enable_codex_api_key_env,
+            enable_api_key_env,
             self.auth_credentials_store_mode,
             Some(&allowed_login_methods),
             workspaces.as_deref(),
@@ -498,7 +498,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 
     let Some(auth) = load_auth(
         &config.genex_home,
-        /*enable_codex_api_key_env*/ true,
+        /*enable_api_key_env*/ true,
         config.auth_credentials_store_mode,
         /*allowed_login_methods*/ None,
         /*forced_managed_workspace_id*/ None,
@@ -625,7 +625,7 @@ fn logout_all_stores(
 #[allow(clippy::too_many_arguments)]
 async fn load_auth(
     genex_home: &Path,
-    enable_codex_api_key_env: bool,
+    enable_api_key_env: bool,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     allowed_login_methods: Option<&[ForcedLoginMethod]>,
     _forced_managed_workspace_id: Option<&[String]>,
@@ -634,9 +634,9 @@ async fn load_auth(
     auth_route_config: &AuthRouteConfig,
 ) -> std::io::Result<Option<GenexAuth>> {
     // API key via env var takes precedence over any other auth method.
-    if enable_codex_api_key_env
+    if enable_api_key_env
         && auth_mode_is_allowed(allowed_login_methods, AuthMode::ApiKey)
-        && let Some(api_key) = read_codex_api_key_from_env()
+        && let Some(api_key) = read_api_key_from_env()
     {
         return Ok(Some(GenexAuth::from_api_key(api_key.as_str())));
     }
@@ -959,7 +959,7 @@ pub struct AuthManager {
     inner: RwLock<CachedAuth>,
     auth_change_tx: watch::Sender<u64>,
     auth_change_state_tx: watch::Sender<AuthChangeState>,
-    enable_codex_api_key_env: bool,
+    enable_api_key_env: bool,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
     forced_login_method: Option<ForcedLoginMethod>,
@@ -975,8 +975,8 @@ pub struct AuthManager {
 ///
 /// Implementations should return the auth-related config values for the
 /// already-resolved runtime configuration. The primary implementation is
-/// `genex_core::config::Config`, but this trait keeps `codex-login` independent
-/// from `codex-core`.
+/// `genex_core::config::Config`, but this trait keeps `genex-login` independent
+/// from `genex-core`.
 pub trait AuthManagerConfig {
     /// Returns the Genex home directory used for auth storage.
     fn genex_home(&self) -> PathBuf;
@@ -1008,7 +1008,7 @@ impl Debug for AuthManager {
         f.debug_struct("AuthManager")
             .field("genex_home", &self.genex_home)
             .field("inner", &self.inner)
-            .field("enable_codex_api_key_env", &self.enable_codex_api_key_env)
+            .field("enable_api_key_env", &self.enable_api_key_env)
             .field(
                 "auth_credentials_store_mode",
                 &self.auth_credentials_store_mode,
@@ -1034,7 +1034,7 @@ impl AuthManager {
     /// unauthenticated state.
     pub async fn new(
         genex_home: PathBuf,
-        enable_codex_api_key_env: bool,
+        enable_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         forced_managed_workspace_id: Option<Vec<String>>,
         managed_auth_base_url: Option<String>,
@@ -1052,14 +1052,14 @@ impl AuthManager {
                 managed_auth_policy: ManagedAuthPolicy::default(),
                 auth_route_config,
             },
-            enable_codex_api_key_env,
+            enable_api_key_env,
         )
         .await
     }
 
-    async fn new_from_auth_config(auth_config: AuthConfig, enable_codex_api_key_env: bool) -> Self {
+    async fn new_from_auth_config(auth_config: AuthConfig, enable_api_key_env: bool) -> Self {
         let managed_auth = auth_config
-            .load_auth(enable_codex_api_key_env)
+            .load_auth(enable_api_key_env)
             .await
             .ok()
             .flatten();
@@ -1082,7 +1082,7 @@ impl AuthManager {
             }),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
-            enable_codex_api_key_env,
+            enable_api_key_env,
             auth_credentials_store_mode,
             keyring_backend_kind,
             forced_login_method,
@@ -1113,7 +1113,7 @@ impl AuthManager {
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
-            enable_codex_api_key_env: false,
+            enable_api_key_env: false,
             auth_credentials_store_mode: AuthCredentialsStoreMode::File,
             keyring_backend_kind: AuthKeyringBackendKind::default(),
             forced_login_method: None,
@@ -1138,7 +1138,7 @@ impl AuthManager {
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
-            enable_codex_api_key_env: false,
+            enable_api_key_env: false,
             auth_credentials_store_mode: AuthCredentialsStoreMode::File,
             keyring_backend_kind: AuthKeyringBackendKind::default(),
             forced_login_method: None,
@@ -1161,7 +1161,7 @@ impl AuthManager {
             }),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
-            enable_codex_api_key_env: false,
+            enable_api_key_env: false,
             auth_credentials_store_mode: AuthCredentialsStoreMode::File,
             keyring_backend_kind: AuthKeyringBackendKind::default(),
             forced_login_method: None,
@@ -1331,7 +1331,7 @@ impl AuthManager {
         let effective_managed_workspaces = self.effective_managed_workspaces();
         load_auth(
             &self.genex_home,
-            self.enable_codex_api_key_env,
+            self.enable_api_key_env,
             self.auth_credentials_store_mode,
             Some(&allowed_login_methods),
             effective_managed_workspaces.as_deref(),
@@ -1451,14 +1451,14 @@ impl AuthManager {
         self.external_auth_provider().is_some()
     }
 
-    pub fn codex_api_key_env_enabled(&self) -> bool {
-        self.enable_codex_api_key_env
+    pub fn api_key_env_enabled(&self) -> bool {
+        self.enable_api_key_env
     }
 
     /// Convenience constructor returning an `Arc` wrapper.
     pub async fn shared(
         genex_home: PathBuf,
-        enable_codex_api_key_env: bool,
+        enable_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         forced_managed_workspace_id: Option<Vec<String>>,
         managed_auth_base_url: Option<String>,
@@ -1468,7 +1468,7 @@ impl AuthManager {
         Arc::new(
             Self::new(
                 genex_home,
-                enable_codex_api_key_env,
+                enable_api_key_env,
                 auth_credentials_store_mode,
                 forced_managed_workspace_id,
                 managed_auth_base_url,
@@ -1482,17 +1482,17 @@ impl AuthManager {
     /// Builds a shared manager from the resolved authentication configuration.
     pub async fn shared_from_config(
         config: &impl AuthManagerConfig,
-        enable_codex_api_key_env: bool,
+        enable_api_key_env: bool,
     ) -> Result<Arc<Self>, AuthManagerInitializationError> {
-        Self::shared_from_auth_config(auth_config_from(config), enable_codex_api_key_env).await
+        Self::shared_from_auth_config(auth_config_from(config), enable_api_key_env).await
     }
 
     pub async fn shared_from_auth_config(
         auth_config: AuthConfig,
-        enable_codex_api_key_env: bool,
+        enable_api_key_env: bool,
     ) -> Result<Arc<Self>, AuthManagerInitializationError> {
         Ok(Arc::new(
-            Self::new_from_auth_config(auth_config, enable_codex_api_key_env).await,
+            Self::new_from_auth_config(auth_config, enable_api_key_env).await,
         ))
     }
 
@@ -1715,7 +1715,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn token_only_auth_is_not_loaded_as_codex_auth() {
+    async fn token_only_auth_is_not_loaded_as_genex_auth() {
         let auth: AuthDotJson = serde_json::from_value(serde_json::json!({
             "auth_mode": "legacy",
             "tokens": {"access_token": "old-token"},
@@ -1724,7 +1724,7 @@ mod tests {
         .expect("legacy token fields should remain parseable as unknown fields");
 
         let result = GenexAuth::from_auth_dot_json(
-            Path::new("/tmp/codex-test"),
+            Path::new("/tmp/genex-test"),
             auth,
             AuthCredentialsStoreMode::File,
             None,

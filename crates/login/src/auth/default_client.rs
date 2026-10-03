@@ -1,4 +1,4 @@
-//! Default Codex HTTP client: shared `User-Agent`, `originator`, optional residency header, and
+//! Default Genex HTTP client: shared `User-Agent`, `originator`, optional residency header, and
 //! `HttpClient` construction.
 //!
 //! Use [`crate::default_client`] or [`genex_login::default_client`] from other crates in this
@@ -33,10 +33,10 @@ use std::sync::RwLock;
 ///
 /// A space is automatically added between the suffix and the rest of the User-Agent string.
 /// The full user agent string is returned from the mcp initialize response.
-/// Parenthesis will be added by Codex. This should only specify what goes inside of the parenthesis.
+/// Parenthesis will be added by Genex. This should only specify what goes inside of the parenthesis.
 pub static USER_AGENT_SUFFIX: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
 pub const DEFAULT_ORIGINATOR: &str = "codex_cli_rs";
-pub const CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "CODEX_INTERNAL_ORIGINATOR_OVERRIDE";
+pub const INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "CODEX_INTERNAL_ORIGINATOR_OVERRIDE";
 pub use genex_model_provider_info::RESIDENCY_HEADER_NAME;
 pub use genex_model_provider_info::ResidencyRequirement;
 pub use genex_model_provider_info::read_managed_residency_requirement as read_default_client_residency_requirement;
@@ -58,7 +58,7 @@ pub enum SetOriginatorError {
 }
 
 fn get_originator_value(provided: Option<String>) -> Originator {
-    let value = std::env::var(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR)
+    let value = std::env::var(INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR)
         .ok()
         .or(provided)
         .unwrap_or(DEFAULT_ORIGINATOR.to_string());
@@ -100,7 +100,7 @@ pub fn originator() -> Originator {
         return originator.clone();
     }
 
-    if std::env::var(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR).is_ok() {
+    if std::env::var(INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR).is_ok() {
         let originator = get_originator_value(/*provided*/ None);
         if let Ok(mut guard) = ORIGINATOR.write() {
             match guard.as_ref() {
@@ -141,7 +141,7 @@ pub fn is_first_party_originator(originator_value: &str) -> bool {
         || originator_value.starts_with("Codex ")
 }
 
-pub fn get_codex_user_agent() -> String {
+pub fn get_user_agent() -> String {
     let build_version = env!("CARGO_PKG_VERSION");
     let os_info = os_info::get();
     let originator = originator();
@@ -183,17 +183,17 @@ fn sanitize_user_agent(candidate: String, fallback: &str) -> String {
         .collect();
     if !sanitized.is_empty() && HeaderValue::from_str(sanitized.as_str()).is_ok() {
         tracing::warn!(
-            "Sanitized Codex user agent because provided suffix contained invalid header characters"
+            "Sanitized Genex user agent because provided suffix contained invalid header characters"
         );
         sanitized
     } else if HeaderValue::from_str(fallback).is_ok() {
         tracing::warn!(
-            "Falling back to base Codex user agent because provided suffix could not be sanitized"
+            "Falling back to base Genex user agent because provided suffix could not be sanitized"
         );
         fallback.to_string()
     } else {
         tracing::warn!(
-            "Falling back to default Codex originator because base user agent string is invalid"
+            "Falling back to default Genex originator because base user agent string is invalid"
         );
         originator().value
     }
@@ -202,7 +202,7 @@ fn sanitize_user_agent(candidate: String, fallback: &str) -> String {
 /// Create an HTTP client with default `originator` and `User-Agent` headers set.
 ///
 /// This supported default path preserves the transport's existing proxy behavior and does not opt into
-/// Codex's route-aware system/PAC resolution.
+/// Genex's route-aware system/PAC resolution.
 pub fn create_client() -> HttpClient {
     build_default_client(default_http_client_builder())
 }
@@ -215,9 +215,9 @@ pub fn create_client_without_request_logging() -> HttpClient {
     build_default_client(default_http_client_builder().without_request_logging())
 }
 
-/// Builds the default Codex HTTP client for a concrete outbound route.
+/// Builds the default Genex HTTP client for a concrete outbound route.
 ///
-/// When route-aware proxy handling is disabled, or the client is running inside the Codex
+/// When route-aware proxy handling is disabled, or the client is running inside the Genex
 /// sandbox, this preserves the default client's existing proxy behavior. Otherwise it resolves
 /// the destination through the shared system/PAC-aware routing policy.
 pub fn create_client_for_route(
@@ -252,7 +252,7 @@ pub enum ClientRedirectPolicy {
     Reject,
 }
 
-/// Builds the default Codex HTTP client for a concrete outbound route without blocking the
+/// Builds the default Genex HTTP client for a concrete outbound route without blocking the
 /// async runtime worker that initiated the request.
 pub async fn create_client_for_route_async(
     http_client_factory: HttpClientFactory,
@@ -293,7 +293,7 @@ fn build_default_client(builder: HttpClientBuilder) -> HttpClient {
 pub fn default_headers() -> HeaderMap {
     let mut headers = HeaderMap::new();
     headers.insert("originator", originator().header_value);
-    if let Ok(user_agent) = HeaderValue::from_str(&get_codex_user_agent()) {
+    if let Ok(user_agent) = HeaderValue::from_str(&get_user_agent()) {
         headers.insert(USER_AGENT, user_agent);
     }
     if let Some(requirement) = read_default_client_residency_requirement() {

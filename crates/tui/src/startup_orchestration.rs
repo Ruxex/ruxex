@@ -271,7 +271,7 @@ pub(super) async fn run_main_inner(
             .run_until(
                 config
                     .auth_config()
-                    .load_auth(/*enable_codex_api_key_env*/ false),
+                    .load_auth(/*enable_api_key_env*/ false),
             )
             .await?
             .ok()

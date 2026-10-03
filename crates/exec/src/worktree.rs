@@ -35,7 +35,7 @@ pub(super) async fn fork_source(
         environment_manager: std::sync::Arc::new(environment_manager),
         config_warnings: Vec::new(),
         session_source: SessionSource::Exec,
-        enable_codex_api_key_env: true,
+        enable_api_key_env: true,
         client_name: "codex_exec".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
