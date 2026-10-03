@@ -1,10 +1,10 @@
-//! Mapping from Codex protocol events into raw rollout-trace events.
+//! Mapping from Genex protocol events into raw rollout-trace events.
 //!
 //! The session layer already emits protocol events for turn lifecycle, terminal
 //! sessions, patch application, MCP calls, and collaboration tools. Rollout
 //! tracing reuses those observations instead of adding another set of hooks in
-//! `codex-core`: this module translates the protocol surface into the smaller
-//! trace vocabulary and keeps the mapping isolated inside `codex-rollout-trace`.
+//! `genex-core`: this module translates the protocol surface into the smaller
+//! trace vocabulary and keeps the mapping isolated inside `genex-rollout-trace`.
 //!
 //! The long explicit `EventMsg` matches are intentional. Most protocol events
 //! are not trace runtime boundaries, but spelling them out makes new protocol

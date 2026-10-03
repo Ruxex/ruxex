@@ -378,14 +378,14 @@ impl TraceReducer {
             return Ok(thread_id);
         }
         let Some(genex_turn_id) = genex_turn_id else {
-            bail!("tool call start did not include thread or Codex turn context");
+            bail!("tool call start did not include thread or Genex turn context");
         };
         self.rollout
             .genex_turns
             .get(genex_turn_id)
             .map(|turn| turn.thread_id.clone())
             .with_context(|| {
-                format!("tool call start referenced unknown Codex turn {genex_turn_id}")
+                format!("tool call start referenced unknown Genex turn {genex_turn_id}")
             })
     }
 
@@ -395,11 +395,11 @@ impl TraceReducer {
         }
         if let Some(genex_turn_id) = genex_turn_id {
             let Some(turn) = self.rollout.genex_turns.get(genex_turn_id) else {
-                bail!("tool call start referenced unknown Codex turn {genex_turn_id}");
+                bail!("tool call start referenced unknown Genex turn {genex_turn_id}");
             };
             if turn.thread_id != thread_id {
                 bail!(
-                    "tool call start used thread {thread_id}, but Codex turn {genex_turn_id} \
+                    "tool call start used thread {thread_id}, but Genex turn {genex_turn_id} \
                      belongs to {}",
                     turn.thread_id
                 );

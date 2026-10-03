@@ -1460,7 +1460,7 @@ impl Session {
                         EventMsg::Warning(WarningEvent {
                             message: format!(
                                 "This session was recorded with model `{prev}` but is resuming with `{curr}`. \
-                         Consider switching back to `{prev}` as it may affect Codex performance."
+                         Consider switching back to `{prev}` as it may affect Genex performance."
                             ),
                         }),
                     )
@@ -2168,7 +2168,7 @@ impl Session {
         }
         self.services
             .rollout_thread_trace
-            .record_codex_turn_event(&turn_context.sub_id, &legacy_source);
+            .record_genex_turn_event(&turn_context.sub_id, &legacy_source);
         self.services
             .rollout_thread_trace
             .record_tool_call_event(turn_context.sub_id.clone(), &legacy_source);

@@ -2,7 +2,7 @@
 //!
 //! Remote compaction is a model-facing request with a different semantic role
 //! from normal sampling. Keeping the no-op capable trace handle in this crate
-//! lets `codex-core` record exact endpoint payloads without owning trace schema
+//! lets `genex-core` record exact endpoint payloads without owning trace schema
 //! details.
 
 use std::fmt::Display;

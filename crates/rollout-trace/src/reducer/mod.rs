@@ -186,7 +186,7 @@ impl TraceReducer {
                 genex_turn_id,
                 thread_id,
             } => {
-                self.start_codex_turn(
+                self.start_genex_turn(
                     event.seq,
                     event.wall_time_unix_ms,
                     genex_turn_id,
@@ -197,7 +197,7 @@ impl TraceReducer {
                 genex_turn_id,
                 status,
             } => {
-                self.end_codex_turn(
+                self.end_genex_turn(
                     event.seq,
                     event.wall_time_unix_ms,
                     event.thread_id,
@@ -442,7 +442,7 @@ impl TraceReducer {
                 };
                 let Some(genex_turn_id) = event.genex_turn_id else {
                     bail!(
-                        "compaction installed event {compaction_id} did not include a codex turn id"
+                        "compaction installed event {compaction_id} did not include a genex turn id"
                     );
                 };
                 self.reduce_compaction_installed_event(
