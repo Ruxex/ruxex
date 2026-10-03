@@ -140,9 +140,9 @@ fn git_output(repository: &Path, args: &[&str]) -> std::process::Output {
         .current_dir(repository)
         .args([
             "-c",
-            "user.name=Codex Worktree Test",
+            "user.name=Genex Worktree Test",
             "-c",
-            "user.email=codex-worktree-test@example.invalid",
+            "user.email=genex-worktree-test@example.invalid",
             "-c",
             "commit.gpgSign=false",
             "-c",
@@ -212,7 +212,7 @@ fn thread_binding_rejects_primary_and_unmanaged_worktrees() {
             .is_err(),
     );
     assert!(
-        !fixture.repository.join(".git/codex-thread.json").exists(),
+        !fixture.repository.join(".git/genex-thread.json").exists(),
         "primary checkout ownership metadata must not be modified",
     );
 
@@ -264,7 +264,7 @@ fn thread_binding_writes_the_exact_desktop_owner_schema_into_git_metadata() {
 
     let metadata_path = checkout.join(run_git(
         &checkout,
-        &["rev-parse", "--git-path", "codex-thread.json"],
+        &["rev-parse", "--git-path", "genex-thread.json"],
     ));
     let metadata: Value = serde_json::from_slice(
         &fs::read(&metadata_path).expect("read Desktop-compatible worktree owner metadata"),
@@ -427,7 +427,7 @@ fn creation_rejects_a_working_directory_that_escapes_through_a_base_symlink() {
 
 #[test]
 fn creation_ignores_inherited_git_environment() {
-    const CHILD_ROOT: &str = "CODEX_WORKTREE_ENV_TEST_ROOT";
+    const CHILD_ROOT: &str = "GENEX_WORKTREE_ENV_TEST_ROOT";
     if let Some(root) = std::env::var_os(CHILD_ROOT) {
         let root = PathBuf::from(root);
         let source = root.join("project");
@@ -443,7 +443,7 @@ fn creation_ignores_inherited_git_environment() {
         assert_eq!(worktree.source_cwd, source_cwd);
         assert_eq!(
             worktree.head_sha,
-            std::env::var("CODEX_WORKTREE_ENV_TEST_HEAD").expect("fixture operation succeeds")
+            std::env::var("GENEX_WORKTREE_ENV_TEST_HEAD").expect("fixture operation succeeds")
         );
         return;
     }
@@ -476,7 +476,7 @@ fn creation_ignores_inherited_git_environment() {
     child
         .args(["--exact", "creation_ignores_inherited_git_environment", "--nocapture"])
         .env(CHILD_ROOT, fixture.repository.parent().expect("fixture parent"))
-        .env("CODEX_WORKTREE_ENV_TEST_HEAD", run_git(&fixture.repository, &["rev-parse", "HEAD"]))
+        .env("GENEX_WORKTREE_ENV_TEST_HEAD", run_git(&fixture.repository, &["rev-parse", "HEAD"]))
         .env("GIT_DIR", other.join(".git"))
         .env("GIT_COMMON_DIR", other.join(".git"))
         .env("GIT_CEILING_DIRECTORIES", &fixture.repository)
@@ -484,7 +484,7 @@ fn creation_ignores_inherited_git_environment() {
         .env("GIT_CONFIG_COUNT", "1")
         .env("GIT_CONFIG_KEY_0", "filter.review.required")
         .env("GIT_CONFIG_VALUE_0", "true")
-        .env("GIT_CONFIG_PARAMETERS", "'filter.review.process=codex-worktree-nonexistent-filter' 'filter.review.required=true'");
+        .env("GIT_CONFIG_PARAMETERS", "'filter.review.process=genex-worktree-nonexistent-filter' 'filter.review.required=true'");
     let output = child.output().expect("fixture operation succeeds");
     assert!(
         output.status.success(),
@@ -507,7 +507,7 @@ fn creation_disables_filters_from_destination_conditional_config() {
     let config = fixture.genex_home.join("destination.gitconfig");
     fs::write(
         &config,
-        "[filter \"late\"]\nsmudge = codex-worktree-nonexistent-filter\nrequired = true\n",
+        "[filter \"late\"]\nsmudge = genex-worktree-nonexistent-filter\nrequired = true\n",
     )
     .expect("write conditional filter config");
     let git_dir = fixture.repository.join(".git/worktrees");

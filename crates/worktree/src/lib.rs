@@ -43,7 +43,7 @@ pub struct CreateWorktree {
     pub base: Option<String>,
 }
 
-/// Creates and identifies worktrees using the existing Codex Desktop contract.
+/// Creates and identifies worktrees using the existing Genex Desktop contract.
 #[derive(Clone, Debug)]
 pub struct WorktreeManager {
     settings: WorktreeSettings,

@@ -294,7 +294,7 @@ trust_level = "trusted"
                         .to_owned();
                     let metadata = git(
                         Path::new(&checkout),
-                        &["rev-parse", "--git-path", "codex-thread.json"],
+                        &["rev-parse", "--git-path", "genex-thread.json"],
                     )?;
                     let metadata: Value =
                         serde_json::from_slice(&fs::read(Path::new(&checkout).join(metadata))?)?;
@@ -699,7 +699,7 @@ trust_level = "trusted"
             assert!(output.contains("The checkout was kept"), "{output}");
             let metadata = git(
                 Path::new(retained),
-                &["rev-parse", "--git-path", "codex-thread.json"],
+                &["rev-parse", "--git-path", "genex-thread.json"],
             )?;
             assert!(!Path::new(retained).join(metadata).exists());
             previous.push(retained.to_owned());
