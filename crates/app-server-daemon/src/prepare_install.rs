@@ -63,16 +63,16 @@ pub async fn update_from_cli(
     {
         return Ok(None);
     }
-    let managed_codex_path = daemon.current_managed_codex_bin()?;
+    let managed_genex_path = daemon.current_managed_genex_bin()?;
     Ok(Some(crate::UpdateOutput {
         status: crate::UpdateStatus::Updated,
-        installed_version: Some(managed_install::managed_codex_version(&managed_codex_path).await?),
+        installed_version: Some(managed_install::managed_genex_version(&managed_genex_path).await?),
         running_version: crate::client::probe(&daemon.socket_path)
             .await
             .ok()
             .map(|info| info.app_server_version),
-        managed_codex_path,
-        message: "The CLI package is selected and pinned. Run `codex app-server daemon update` to return to production updates.".to_string(),
+        managed_genex_path,
+        message: "The CLI package is selected and pinned. Run `genex app-server daemon update` to return to production updates.".to_string(),
     }))
 }
 
@@ -98,7 +98,7 @@ async fn prepare_from_package(
     let previous_root = managed_install::package_root(home);
     let root = home.join("packages/app-server-daemon");
     anyhow::ensure!(
-        daemon.managed_codex_bin.starts_with(&previous_root),
+        daemon.managed_genex_bin.starts_with(&previous_root),
         "daemon package location changed; retry the command"
     );
     if mode == InstallMode::Missing {
@@ -112,13 +112,13 @@ async fn prepare_from_package(
             || ["daemon.pid", "daemon.stderr.log", "daemon-updater.pid", "daemon-updater.stderr.log"]
                 .iter().any(|name| !matches!(home.join("app-server-daemon").join(name).symlink_metadata(), Err(error) if error.kind() == std::io::ErrorKind::NotFound))
         {
-            daemon.ensure_managed_codex_bin()?;
+            daemon.ensure_managed_genex_bin()?;
             return Ok(true);
         }
     } else {
         anyhow::ensure!(
             previous_root.join("current").symlink_metadata().is_ok(),
-            "no daemon package is selected; run `codex app-server daemon start` first"
+            "no daemon package is selected; run `genex app-server daemon start` first"
         );
     }
     std::fs::create_dir_all(&root)?;
@@ -129,9 +129,9 @@ async fn prepare_from_package(
     let backend = daemon.running_backend_instance(settings).await?;
     anyhow::ensure!(
         backend.is_some() || crate::client::probe(&daemon.socket_path).await.is_err(),
-        "app server is running but is not managed by codex app-server daemon"
+        "app server is running but is not managed by genex app-server daemon"
     );
-    let selected = managed_install::managed_codex_bin(home);
+    let selected = managed_install::managed_genex_bin(home);
     let previous_release = previous_root.join("current").canonicalize().ok();
     if mode == InstallMode::Missing {
         if selected.is_file() {
@@ -174,7 +174,7 @@ async fn prepare_from_package(
             destination: root.clone(),
             installed_version: tokio::time::timeout(
                 std::time::Duration::from_secs(5),
-                managed_install::managed_codex_version(&selected),
+                managed_install::managed_genex_version(&selected),
             )
             .await
             .ok()
@@ -207,7 +207,7 @@ async fn prepare_from_package(
         managed_install::package_root(home) == previous_root,
         "daemon package location changed; retry the command"
     );
-    if mode == InstallMode::Missing && managed_install::managed_codex_bin(home).is_file() {
+    if mode == InstallMode::Missing && managed_install::managed_genex_bin(home).is_file() {
         return Ok(true);
     }
     anyhow::ensure!(
@@ -240,7 +240,7 @@ async fn prepare_from_package(
         "the CLI package changed while preparing the daemon or differs from the running executable"
     );
     let binary_version =
-        managed_install::managed_codex_version(&stage.path().join(entrypoint)).await?;
+        managed_install::managed_genex_version(&stage.path().join(entrypoint)).await?;
     anyhow::ensure!(
         !stable || version == binary_version,
         "the CLI package version does not match its executable"
@@ -347,11 +347,11 @@ async fn prepare_from_package(
             update_pid_file: daemon
                 .update_pid_file
                 .with_file_name(crate::DAEMON_UPDATE_PID_FILE_NAME),
-            managed_codex_bin: root.join("current").join(entrypoint),
+            managed_genex_bin: root.join("current").join(entrypoint),
             ..daemon.clone()
         };
         selected.start_managed_backend(settings).await.context(
-            "daemon package selected but could not start; retry with `codex app-server daemon start`",
+            "daemon package selected but could not start; retry with `genex app-server daemon start`",
         )?;
         selected.wait_until_ready().await?;
     }

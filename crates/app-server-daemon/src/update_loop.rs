@@ -31,7 +31,7 @@ use crate::RestartIfRunningOutcome;
 use crate::RestartMode;
 use crate::managed_install::ExecutableIdentity;
 use crate::managed_install::executable_identity;
-use crate::managed_install::resolved_managed_codex_bin;
+use crate::managed_install::resolved_managed_genex_bin;
 #[cfg(any(target_os = "linux", target_os = "macos", windows))]
 use crate::settings::DaemonSettings;
 use crate::settings::UpdaterSettings;
@@ -130,7 +130,7 @@ async fn run_with_http(
     #[cfg(windows)]
     updater.mark_ready().await?;
     let needs_managed_handoff =
-        match resolved_managed_codex_bin(&daemon.current_managed_codex_bin()?).await {
+        match resolved_managed_genex_bin(&daemon.current_managed_genex_bin()?).await {
             Ok(managed_bin) => {
                 executable_identity(&managed_bin).await.ok().as_ref()
                     != Some(running_updater_identity)
@@ -252,7 +252,7 @@ async fn adopt_managed_updater(
     running_identity: &ExecutableIdentity,
     listener: &mut Option<genex_uds::UnixListener>,
 ) -> Result<UpdateLoopControl> {
-    let managed_bin = resolved_managed_codex_bin(&daemon.current_managed_codex_bin()?).await?;
+    let managed_bin = resolved_managed_genex_bin(&daemon.current_managed_genex_bin()?).await?;
     if executable_identity(&managed_bin).await? == *running_identity {
         return Ok(UpdateLoopControl::Continue);
     }
@@ -396,8 +396,8 @@ async fn update_once(
         return Ok((UpdateLoopControl::Continue, None));
     }
 
-    let managed_codex_bin =
-        resolved_managed_codex_bin(&daemon.current_managed_codex_bin()?).await?;
+    let managed_genex_bin =
+        resolved_managed_genex_bin(&daemon.current_managed_genex_bin()?).await?;
     let restart_mode = match trigger {
         // The package can contain different resources even when its CLI binary
         // is identical. A release change must also replace the running process.
@@ -410,7 +410,7 @@ async fn update_once(
             RestartMode::IfBinaryOrVersionChanged
         }
         UpdateTrigger::Scheduled
-            if executable_identity(&managed_codex_bin).await? != *running_updater_identity =>
+            if executable_identity(&managed_genex_bin).await? != *running_updater_identity =>
         {
             RestartMode::Always
         }
@@ -422,7 +422,7 @@ async fn update_once(
             return Ok((UpdateLoopControl::Stop, None));
         }
         match daemon
-            .try_restart_if_running(restart_mode, &managed_codex_bin)
+            .try_restart_if_running(restart_mode, &managed_genex_bin)
             .await?
         {
             RestartIfRunningOutcome::Busy => {
@@ -448,8 +448,8 @@ async fn update_once(
             {
                 anyhow::ensure!(
                     daemon.is_stable_standalone_release()?
-                        && resolved_managed_codex_bin(&daemon.current_managed_codex_bin()?).await?
-                            == managed_codex_bin,
+                        && resolved_managed_genex_bin(&daemon.current_managed_genex_bin()?).await?
+                            == managed_genex_bin,
                     "managed daemon changed during the update; retry"
                 );
                 return Ok((
@@ -512,14 +512,14 @@ async fn current_updater_identity() -> Result<ExecutableIdentity> {
 }
 
 #[cfg(unix)]
-pub(crate) fn reexec_managed_updater(managed_codex_bin: &std::path::Path) -> Result<()> {
-    let err = StdCommand::new(managed_codex_bin)
+pub(crate) fn reexec_managed_updater(managed_genex_bin: &std::path::Path) -> Result<()> {
+    let err = StdCommand::new(managed_genex_bin)
         .args(["app-server", "daemon", "pid-update-loop"])
         .exec();
     Err(err).with_context(|| {
         format!(
-            "failed to replace updater with managed Codex binary {}",
-            managed_codex_bin.display()
+            "failed to replace updater with managed Genex binary {}",
+            managed_genex_bin.display()
         )
     })
 }

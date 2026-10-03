@@ -100,7 +100,7 @@ pub(super) async fn run(http: &impl InstallerHttp, legacy: &Daemon) -> Result<Up
         "bin/genex"
     };
     let binary = release.join(entrypoint);
-    let version = managed_install::managed_codex_version(&binary).await?;
+    let version = managed_install::managed_genex_version(&binary).await?;
     anyhow::ensure!(
         name.to_string_lossy().starts_with(&format!("{version}-")),
         "prepared daemon version does not match its release"
@@ -161,19 +161,19 @@ pub(super) async fn run(http: &impl InstallerHttp, legacy: &Daemon) -> Result<Up
         update_pid_file: legacy
             .update_pid_file
             .with_file_name(crate::DAEMON_UPDATE_PID_FILE_NAME),
-        managed_codex_bin: root.join("current").join(entrypoint),
+        managed_genex_bin: root.join("current").join(entrypoint),
         ..legacy.clone()
     };
     let running_version = if running.is_some() {
         selected.start_managed_backend(&settings).await.context(
-            "daemon migrated but could not start; retry with `codex app-server daemon start`",
+            "daemon migrated but could not start; retry with `genex app-server daemon start`",
         )?;
         Some(
             selected
                 .wait_until_ready()
                 .await
                 .context(
-                    "daemon migrated but is not ready; retry with `codex app-server daemon start`",
+                    "daemon migrated but is not ready; retry with `genex app-server daemon start`",
                 )?
                 .app_server_version,
         )
@@ -187,7 +187,7 @@ pub(super) async fn run(http: &impl InstallerHttp, legacy: &Daemon) -> Result<Up
         status: UpdateStatus::Updated,
         installed_version: Some(version),
         running_version,
-        managed_codex_path: selected.managed_codex_bin,
+        managed_genex_path: selected.managed_genex_bin,
         message: "The daemon was updated and moved to its dedicated package. The legacy CLI package was left unchanged.".to_string(),
     })
 }

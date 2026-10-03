@@ -64,7 +64,7 @@ async fn explicit_update_migrates_running_and_stopped_installations() {
         if local {
             let package = root.join("releases/local-development");
             std::fs::create_dir(&package).unwrap();
-            std::fs::copy(&legacy.managed_codex_bin, package.join("genex")).unwrap();
+            std::fs::copy(&legacy.managed_genex_bin, package.join("genex")).unwrap();
             std::fs::remove_file(root.join("current")).unwrap();
             std::os::unix::fs::symlink(&package, root.join("current")).unwrap();
             std::fs::remove_file(root.join("auto-update-version")).unwrap();
@@ -76,7 +76,7 @@ async fn explicit_update_migrates_running_and_stopped_installations() {
         super::update_once(
             &scheduled,
             &legacy,
-            &executable_identity(&legacy.managed_codex_bin)
+            &executable_identity(&legacy.managed_genex_bin)
                 .await
                 .unwrap(),
             &mut test_terminate(),
@@ -109,7 +109,7 @@ async fn explicit_update_migrates_running_and_stopped_installations() {
         } else {
             None
         };
-        let legacy_bin = std::fs::read(&legacy.managed_codex_bin).unwrap();
+        let legacy_bin = std::fs::read(&legacy.managed_genex_bin).unwrap();
         let dedicated = home.path().join("packages/app-server-daemon");
         let old_installer = FakeInstallerHttp::new(InstallerResponse::Success(b"exit 99".to_vec()));
         assert!(
@@ -160,7 +160,7 @@ printf '{release}' > "$root/auto-update-version"
         status: UpdateStatus::Updated,
         installed_version: Some("1.0.0".to_string()),
         running_version: (running).then(|| "1.0.0".to_string()),
-        managed_codex_path: dedicated.join("current/bin/genex"),
+        managed_genex_path: dedicated.join("current/bin/genex"),
         message: "The daemon was updated and moved to its dedicated package. The legacy CLI package was left unchanged.".to_string(),
     });
         assert_eq!(
@@ -170,7 +170,7 @@ printf '{release}' > "$root/auto-update-version"
         assert!(!dedicated.join(".migration-current").exists());
         assert_eq!(root.join("current").canonicalize().unwrap(), previous);
         assert_eq!(
-            std::fs::read(&legacy.managed_codex_bin).unwrap(),
+            std::fs::read(&legacy.managed_genex_bin).unwrap(),
             legacy_bin
         );
         assert_eq!(
@@ -182,7 +182,7 @@ printf '{release}' > "$root/auto-update-version"
             update_pid_file: legacy
                 .update_pid_file
                 .with_file_name(crate::DAEMON_UPDATE_PID_FILE_NAME),
-            managed_codex_bin: dedicated.join("current/bin/genex"),
+            managed_genex_bin: dedicated.join("current/bin/genex"),
             ..legacy.clone()
         };
         let new_backend = crate::backend::pid_backend(selected.backend_paths(&daemon_settings));
@@ -304,7 +304,7 @@ fn manual_update_daemon(home: &TempDir) -> (Daemon, String) {
             update_pid_file: state.join("app-server-updater.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_codex_bin: standalone.join("current/codex"),
+            managed_genex_bin: standalone.join("current/codex"),
         },
         release,
     )
@@ -333,7 +333,7 @@ async fn manual_request_retries_after_updater_replacement() {
         .expect("old updater socket");
     let expected = UpdateOutput {
         status: UpdateStatus::NoUpdate,
-        managed_codex_path: daemon.managed_codex_bin.clone(),
+        managed_genex_path: daemon.managed_genex_bin.clone(),
         installed_version: None,
         running_version: None,
         message: "already current".to_string(),
@@ -396,7 +396,7 @@ async fn manual_request_recovers_when_one_shot_updater_exits() {
     });
     // Without the selected executable, the startup path reports unsupported. A
     // retry that only waits for a successor would time out instead.
-    std::fs::remove_file(&daemon.managed_codex_bin).expect("remove selected binary");
+    std::fs::remove_file(&daemon.managed_genex_bin).expect("remove selected binary");
     let result = tokio::time::timeout(
         Duration::from_secs(5),
         super::manual_update::request(&daemon),
@@ -417,7 +417,7 @@ async fn unsupported_request_preserves_updater_schedule() {
     let home = TempDir::new().expect("home");
     let (daemon, _) = manual_update_daemon(&home);
     let daemon = std::sync::Arc::new(daemon);
-    let identity = executable_identity(&daemon.managed_codex_bin)
+    let identity = executable_identity(&daemon.managed_genex_bin)
         .await
         .expect("updater identity");
     let socket_path = daemon.manual_update_socket_path();
@@ -456,7 +456,7 @@ async fn unsupported_request_preserves_updater_schedule() {
     assert_eq!(response.unwrap().status, UpdateStatus::Unsupported);
     assert!(!marker.exists());
     std::fs::write(&marker, previous_marker).unwrap();
-    std::fs::remove_file(&daemon.managed_codex_bin).expect("remove selected binary");
+    std::fs::remove_file(&daemon.managed_genex_bin).expect("remove selected binary");
     let mut malformed = genex_uds::UnixStream::connect(&socket_path)
         .await
         .expect("connect malformed request");
@@ -566,7 +566,7 @@ async fn check_manual_update_restart(package_directory: &str) {
         std::os::unix::fs::symlink(format!("releases/{local}"), standalone.join("current"))
             .unwrap();
         std::fs::remove_file(standalone.join("auto-update-version")).unwrap();
-        daemon.managed_codex_bin = standalone.join("current/codex");
+        daemon.managed_genex_bin = standalone.join("current/codex");
         release = local;
     }
     let daemon = std::sync::Arc::new(daemon);
@@ -664,7 +664,7 @@ async fn check_manual_update_restart(package_directory: &str) {
     assert_eq!(output.installed_version.as_deref(), Some(version));
     assert_eq!(output.running_version.as_deref(), Some(version));
     assert_eq!(
-        output.managed_codex_path,
+        output.managed_genex_path,
         standalone.join("current/bin/genex")
     );
     let restarted = current_pid();
@@ -694,7 +694,7 @@ async fn check_manual_update_restart(package_directory: &str) {
         .append(true)
         .open(
             daemon
-                .current_managed_codex_bin()
+                .current_managed_genex_bin()
                 .expect("current executable"),
         )
         .expect("managed executable")
@@ -773,7 +773,7 @@ async fn update_rejects_a_package_root_change_during_download() {
     }
     let home = TempDir::new().unwrap();
     let (daemon, _) = manual_update_daemon(&home);
-    let identity = executable_identity(&daemon.managed_codex_bin)
+    let identity = executable_identity(&daemon.managed_genex_bin)
         .await
         .unwrap();
     let error = manual_update_once(
@@ -795,8 +795,8 @@ async fn daemon_owned_updates_require_and_request_an_isolated_installer() {
     let (mut daemon, release) = manual_update_daemon(&home);
     let root = home.path().join("packages/app-server-daemon");
     std::fs::rename(home.path().join("packages/standalone"), &root).unwrap();
-    daemon.managed_codex_bin = root.join("current/codex");
-    let identity = executable_identity(&daemon.managed_codex_bin)
+    daemon.managed_genex_bin = root.join("current/codex");
+    let identity = executable_identity(&daemon.managed_genex_bin)
         .await
         .unwrap();
     let old = FakeInstallerHttp::new(InstallerResponse::Success(

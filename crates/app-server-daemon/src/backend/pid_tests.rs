@@ -118,7 +118,7 @@ async fn start_retries_stale_empty_pid_file_under_its_own_lock() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(temp_dir.path().join("missing-codex"), pid_file);
+    let backend = PidBackend::new(temp_dir.path().join("missing-genex"), pid_file);
 
     let err = backend.start().await.expect_err("start");
     #[cfg(windows)]
@@ -151,7 +151,7 @@ async fn legacy_launch_clears_recovery_best_effort() {
             std::fs::write(&recovery_file, "{}").expect("pending snapshot");
         }
         let backend = PidBackend::new(
-            home.path().join("missing-codex"),
+            home.path().join("missing-genex"),
             state_dir.join("app-server.pid"),
         );
 
@@ -634,7 +634,7 @@ async fn failed_updater_handoff_preserves_predecessor_record() {
         .await
         .expect("private state directory");
     let backend = PidBackend::new_update_loop(
-        temp.path().join("missing-codex.exe"),
+        temp.path().join("missing-genex.exe"),
         state_dir.join("updater.pid"),
         /*restore_release*/ None,
     );

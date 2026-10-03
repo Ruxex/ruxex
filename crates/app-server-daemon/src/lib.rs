@@ -25,9 +25,9 @@ pub use backend::BackendKind;
 use backend::BackendPaths;
 use genex_app_server_transport::app_server_control_socket_path;
 use genex_utils_home_dir::find_codex_home;
-use managed_install::managed_codex_bin;
+use managed_install::managed_genex_bin;
 #[cfg(any(unix, windows))]
-use managed_install::managed_codex_version;
+use managed_install::managed_genex_version;
 use serde::Serialize;
 use settings::DaemonSettings;
 use settings::MAX_SHUTDOWN_GRACE_SECONDS;
@@ -73,8 +73,8 @@ pub struct LifecycleOutput {
     pub backend: Option<BackendKind>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pid: Option<u32>,
-    pub managed_codex_path: PathBuf,
-    pub managed_codex_version: Option<String>,
+    pub managed_genex_path: PathBuf,
+    pub managed_genex_version: Option<String>,
     pub socket_path: PathBuf,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cli_version: Option<String>,
@@ -103,8 +103,8 @@ pub struct BootstrapOutput {
     pub status: BootstrapStatus,
     pub backend: BackendKind,
     pub auto_update_enabled: bool,
-    pub managed_codex_path: PathBuf,
-    pub managed_codex_version: Option<String>,
+    pub managed_genex_path: PathBuf,
+    pub managed_genex_version: Option<String>,
     pub socket_path: PathBuf,
     pub cli_version: String,
     pub app_server_version: String,
@@ -122,7 +122,7 @@ pub enum UpdateStatus {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateOutput {
     pub status: UpdateStatus,
-    pub managed_codex_path: PathBuf,
+    pub managed_genex_path: PathBuf,
     pub installed_version: Option<String>,
     pub running_version: Option<String>,
     pub message: String,
@@ -198,7 +198,7 @@ fn ensure_supported_platform() -> Result<()> {
 #[cfg(not(any(unix, windows)))]
 fn ensure_supported_platform() -> Result<()> {
     Err(anyhow!(
-        "codex app-server daemon lifecycle is only supported on Unix and Windows platforms"
+        "genex app-server daemon lifecycle is only supported on Unix and Windows platforms"
     ))
 }
 
@@ -209,7 +209,7 @@ struct Daemon {
     update_pid_file: PathBuf,
     operation_lock_file: PathBuf,
     settings_file: PathBuf,
-    managed_codex_bin: PathBuf,
+    managed_genex_bin: PathBuf,
 }
 
 impl Daemon {
@@ -219,10 +219,10 @@ impl Daemon {
             .as_path()
             .to_path_buf();
         let state_dir = codex_home.as_path().join(STATE_DIR_NAME);
-        let managed_codex_bin = managed_codex_bin(codex_home.as_path());
+        let managed_genex_bin = managed_genex_bin(codex_home.as_path());
         // Old CLIs must not mistake a daemon-owned installation for their backend.
         let (pid_file, update_pid_file) =
-            if managed_codex_bin.starts_with(codex_home.as_path().join("packages/standalone")) {
+            if managed_genex_bin.starts_with(codex_home.as_path().join("packages/standalone")) {
                 (LEGACY_PID_FILE_NAME, LEGACY_UPDATE_PID_FILE_NAME)
             } else {
                 (DAEMON_PID_FILE_NAME, DAEMON_UPDATE_PID_FILE_NAME)
@@ -233,7 +233,7 @@ impl Daemon {
             update_pid_file: state_dir.join(update_pid_file),
             operation_lock_file: state_dir.join(OPERATION_LOCK_FILE_NAME),
             settings_file: state_dir.join(SETTINGS_FILE_NAME),
-            managed_codex_bin,
+            managed_genex_bin,
         })
     }
 
@@ -249,19 +249,19 @@ impl Daemon {
     // Call only after taking the operation lock: an explicit update may have
     // migrated the package and PID namespace while this command was waiting.
     fn current_installation(&self) -> Result<Self> {
-        let managed_codex_bin = self.current_managed_codex_bin()?;
+        let managed_genex_bin = self.current_managed_genex_bin()?;
         let home = self
             .settings_file
             .parent()
             .and_then(Path::parent)
             .context("daemon settings path has no Codex home")?;
-        let (pid, updater) = if managed_codex_bin.starts_with(home.join("packages/standalone")) {
+        let (pid, updater) = if managed_genex_bin.starts_with(home.join("packages/standalone")) {
             (LEGACY_PID_FILE_NAME, LEGACY_UPDATE_PID_FILE_NAME)
         } else {
             (DAEMON_PID_FILE_NAME, DAEMON_UPDATE_PID_FILE_NAME)
         };
         Ok(Self {
-            managed_codex_bin,
+            managed_genex_bin,
             pid_file: self.pid_file.with_file_name(pid),
             update_pid_file: self.update_pid_file.with_file_name(updater),
             ..self.clone()
@@ -312,8 +312,8 @@ impl Daemon {
                 eprintln!("warning: failed to clear stale daemon recovery before start: {err}");
             }
             prepare_install::prepare(self, &settings).await?;
-            managed.managed_codex_bin = self.current_managed_codex_bin()?;
-            managed.ensure_managed_codex_bin()?;
+            managed.managed_genex_bin = self.current_managed_genex_bin()?;
+            managed.ensure_managed_genex_bin()?;
             let pid = managed.start_managed_backend(&settings).await?;
             (
                 LifecycleStatus::Started,
@@ -338,19 +338,19 @@ impl Daemon {
             && self.running_backend(&settings).await?.is_none()
         {
             return Err(anyhow!(
-                "app server is running but is not managed by codex app-server daemon"
+                "app server is running but is not managed by genex app-server daemon"
             ));
         }
         prepare_install::prepare(self, &settings).await?;
         let mut managed = self.clone();
-        managed.managed_codex_bin = self.current_managed_codex_bin()?;
+        managed.managed_genex_bin = self.current_managed_genex_bin()?;
         if !settings.auto_update_enabled {
             backend::pid_update_loop_backend(self.backend_paths(&settings))
                 .stop()
                 .await?;
         }
 
-        managed.ensure_managed_codex_bin()?;
+        managed.ensure_managed_genex_bin()?;
         if let Some(backend) = self.running_backend_instance(&settings).await? {
             if let Err(err) = thread_recovery::discard_pending(self) {
                 eprintln!("warning: failed to clear stale daemon recovery before restart: {err}");
@@ -381,7 +381,7 @@ impl Daemon {
     pub(crate) async fn try_restart_if_running(
         &self,
         mode: RestartMode,
-        managed_codex_bin: &Path,
+        managed_genex_bin: &Path,
     ) -> Result<RestartIfRunningOutcome> {
         let operation_lock = self.open_operation_lock_file().await?;
         if !try_lock_file(&operation_lock)? {
@@ -391,7 +391,7 @@ impl Daemon {
         let outcome = if let Some(backend) = self.running_backend_instance(&settings).await? {
             let info = client::probe(&self.socket_path).await.ok();
             let managed_version = if info.is_some() {
-                Some(managed_codex_version(managed_codex_bin).await?)
+                Some(managed_genex_version(managed_genex_bin).await?)
             } else {
                 None
             };
@@ -399,17 +399,17 @@ impl Daemon {
             // this lock or probes the running server. Never restart from a
             // release that is no longer the selected latest-channel binary.
             if !self.is_stable_standalone_release()?
-                || managed_install::resolved_managed_codex_bin(&self.current_managed_codex_bin()?)
+                || managed_install::resolved_managed_genex_bin(&self.current_managed_genex_bin()?)
                     .await
                     .ok()
                     .as_deref()
-                    != Some(managed_codex_bin)
+                    != Some(managed_genex_bin)
             {
                 return Ok(RestartIfRunningOutcome::AlreadyCurrent);
             }
             let mode = if mode == RestartMode::IfBinaryOrVersionChanged {
                 let managed_identity =
-                    managed_install::executable_identity(managed_codex_bin).await?;
+                    managed_install::executable_identity(managed_genex_bin).await?;
                 if backend.running_executable_identity().await?.as_ref() == Some(&managed_identity)
                 {
                     RestartMode::IfVersionChanged
@@ -424,7 +424,7 @@ impl Daemon {
                 RestartDecision::AlreadyCurrent => RestartIfRunningOutcome::AlreadyCurrent,
                 RestartDecision::Restart => {
                     #[cfg(windows)]
-                    backend::windows::ensure_detached_launch(managed_codex_bin)?;
+                    backend::windows::ensure_detached_launch(managed_genex_bin)?;
                     if let Err(err) = thread_recovery::discard_pending(self) {
                         eprintln!(
                             "warning: failed to clear stale daemon recovery before update: {err}"
@@ -434,7 +434,7 @@ impl Daemon {
                         .stop_with_grace(settings.shutdown_grace_seconds)
                         .await?;
                     let _ = self
-                        .start_managed_backend_with_bin(&settings, managed_codex_bin)
+                        .start_managed_backend_with_bin(&settings, managed_genex_bin)
                         .await?;
                     self.wait_until_ready().await?;
                     RestartIfRunningOutcome::Restarted
@@ -442,18 +442,18 @@ impl Daemon {
             }
         } else if client::probe(&self.socket_path).await.is_ok() {
             return Err(anyhow!(
-                "app server is running but is not managed by codex app-server daemon"
+                "app server is running but is not managed by genex app-server daemon"
             ));
         } else {
             RestartIfRunningOutcome::NotRunning
         };
 
         if !self.is_stable_standalone_release()?
-            || managed_install::resolved_managed_codex_bin(&self.current_managed_codex_bin()?)
+            || managed_install::resolved_managed_genex_bin(&self.current_managed_genex_bin()?)
                 .await
                 .ok()
                 .as_deref()
-                != Some(managed_codex_bin)
+                != Some(managed_genex_bin)
         {
             return Ok(RestartIfRunningOutcome::AlreadyCurrent);
         }
@@ -478,7 +478,7 @@ impl Daemon {
 
         if client::probe(&self.socket_path).await.is_ok() {
             return Err(anyhow!(
-                "app server is running but is not managed by codex app-server daemon"
+                "app server is running but is not managed by genex app-server daemon"
             ));
         }
 
@@ -533,13 +533,13 @@ impl Daemon {
     }
 
     async fn append_daemon_app_server_context(&self, context: &mut String) {
-        let managed_codex_version = self
-            .managed_codex_version_best_effort()
+        let managed_genex_version = self
+            .managed_genex_version_best_effort()
             .await
             .unwrap_or_else(|| "unknown".to_string());
         context.push_str(&format!(
-            "\n\nDaemon used app-server:\n  path: {}\n  version: {managed_codex_version}",
-            self.managed_codex_bin.display()
+            "\n\nDaemon used app-server:\n  path: {}\n  version: {managed_genex_version}",
+            self.managed_genex_bin.display()
         ));
     }
 
@@ -554,13 +554,13 @@ impl Daemon {
             && self.running_backend(&settings).await?.is_none()
         {
             return Err(anyhow!(
-                "app server is running but is not managed by codex app-server daemon"
+                "app server is running but is not managed by genex app-server daemon"
             ));
         }
         prepare_install::prepare(self, &settings).await?;
         let mut managed = self.clone();
-        managed.managed_codex_bin = self.current_managed_codex_bin()?;
-        managed.ensure_managed_codex_bin()?;
+        managed.managed_genex_bin = self.current_managed_genex_bin()?;
+        managed.ensure_managed_genex_bin()?;
         settings.save(&self.settings_file).await?;
 
         backend::pid_update_loop_backend(self.backend_paths(&settings))
@@ -579,13 +579,13 @@ impl Daemon {
         backend.start().await?;
         let info = self.wait_until_ready().await?;
         let auto_update_enabled = managed.ensure_managed_updater(&settings).await?;
-        let managed_codex_version = managed.managed_codex_version_best_effort().await;
+        let managed_genex_version = managed.managed_genex_version_best_effort().await;
         Ok(BootstrapOutput {
             status: BootstrapStatus::Bootstrapped,
             backend: BackendKind::Pid,
             auto_update_enabled,
-            managed_codex_path: managed.managed_codex_bin,
-            managed_codex_version,
+            managed_genex_path: managed.managed_genex_bin,
+            managed_genex_version,
             socket_path: self.socket_path.clone(),
             cli_version: env!("CARGO_PKG_VERSION").to_string(),
             app_server_version: info.app_server_version,
@@ -611,17 +611,17 @@ impl Daemon {
     }
 
     async fn start_managed_backend(&self, settings: &DaemonSettings) -> Result<Option<u32>> {
-        self.start_managed_backend_with_bin(settings, &self.managed_codex_bin)
+        self.start_managed_backend_with_bin(settings, &self.managed_genex_bin)
             .await
     }
 
     async fn start_managed_backend_with_bin(
         &self,
         settings: &DaemonSettings,
-        managed_codex_bin: &Path,
+        managed_genex_bin: &Path,
     ) -> Result<Option<u32>> {
         let backend =
-            backend::pid_backend(self.backend_paths_with_bin(settings, managed_codex_bin));
+            backend::pid_backend(self.backend_paths_with_bin(settings, managed_genex_bin));
         backend.start().await
     }
 
@@ -640,7 +640,7 @@ impl Daemon {
             return Ok(false);
         }
         let Ok(codex_bin) =
-            managed_install::resolved_managed_codex_bin(&self.managed_codex_bin).await
+            managed_install::resolved_managed_genex_bin(&self.managed_genex_bin).await
         else {
             if !self.has_latest_selection_marker() {
                 updater.stop().await?;
@@ -649,7 +649,7 @@ impl Daemon {
         };
         if !managed_install::supports_daemon_update_loop(&codex_bin).await
             || !self.is_stable_standalone_release()?
-            || !managed_install::resolved_managed_codex_bin(&self.managed_codex_bin)
+            || !managed_install::resolved_managed_genex_bin(&self.managed_genex_bin)
                 .await
                 .is_ok_and(|selected| selected == codex_bin)
         {
@@ -672,18 +672,18 @@ impl Daemon {
             .context("daemon settings path has no Codex home")?;
         Ok(managed_install::is_stable_standalone_release(
             codex_home,
-            &self.current_managed_codex_bin()?,
+            &self.current_managed_genex_bin()?,
         ))
     }
 
-    fn current_managed_codex_bin(&self) -> Result<PathBuf> {
+    fn current_managed_genex_bin(&self) -> Result<PathBuf> {
         // An installer can move a legacy binary into bin/ while this updater runs.
         let home = self
             .settings_file
             .parent()
             .and_then(Path::parent)
             .context("daemon settings path has no Codex home")?;
-        Ok(managed_install::managed_codex_bin(home))
+        Ok(managed_install::managed_genex_bin(home))
     }
 
     fn has_latest_selection_marker(&self) -> bool {
@@ -700,7 +700,7 @@ impl Daemon {
     async fn is_bootstrapped(&self, settings: &DaemonSettings) -> Result<bool> {
         if !settings.auto_update_enabled
             || !self.is_stable_standalone_release()?
-            || !managed_install::supports_daemon_update_loop(&self.managed_codex_bin).await
+            || !managed_install::supports_daemon_update_loop(&self.managed_genex_bin).await
         {
             return Ok(self.running_backend_instance(settings).await?.is_some());
         }
@@ -708,40 +708,40 @@ impl Daemon {
         updater.is_starting_or_running().await
     }
 
-    fn ensure_managed_codex_bin(&self) -> Result<()> {
-        if self.managed_codex_bin.is_file() {
+    fn ensure_managed_genex_bin(&self) -> Result<()> {
+        if self.managed_genex_bin.is_file() {
             #[cfg(windows)]
-            backend::windows::ensure_detached_launch(&self.managed_codex_bin)?;
+            backend::windows::ensure_detached_launch(&self.managed_genex_bin)?;
             return Ok(());
         }
 
-        let managed_codex_path = self.managed_codex_bin.display();
+        let managed_genex_path = self.managed_genex_bin.display();
         Err(anyhow!(
-            "daemon executable not found at {managed_codex_path}; repair the existing installation, or run `codex app-server daemon start` to install a missing daemon"
+            "daemon executable not found at {managed_genex_path}; repair the existing installation, or run `genex app-server daemon start` to install a missing daemon"
         ))
     }
 
     #[cfg(any(unix, windows))]
-    async fn managed_codex_version_best_effort(&self) -> Option<String> {
-        managed_codex_version(&self.managed_codex_bin).await.ok()
+    async fn managed_genex_version_best_effort(&self) -> Option<String> {
+        managed_genex_version(&self.managed_genex_bin).await.ok()
     }
 
     #[cfg(not(any(unix, windows)))]
-    async fn managed_codex_version_best_effort(&self) -> Option<String> {
+    async fn managed_genex_version_best_effort(&self) -> Option<String> {
         None
     }
 
     fn backend_paths(&self, _settings: &DaemonSettings) -> BackendPaths {
-        self.backend_paths_with_bin(_settings, &self.managed_codex_bin)
+        self.backend_paths_with_bin(_settings, &self.managed_genex_bin)
     }
 
     fn backend_paths_with_bin(
         &self,
         _settings: &DaemonSettings,
-        managed_codex_bin: &Path,
+        managed_genex_bin: &Path,
     ) -> BackendPaths {
         BackendPaths {
-            codex_bin: managed_codex_bin.to_path_buf(),
+            codex_bin: managed_genex_bin.to_path_buf(),
             pid_file: self.pid_file.clone(),
             update_pid_file: self.update_pid_file.clone(),
         }
@@ -806,13 +806,13 @@ impl Daemon {
         pid: Option<u32>,
         app_server_version: Option<String>,
     ) -> LifecycleOutput {
-        let managed_codex_version = self.managed_codex_version_best_effort().await;
+        let managed_genex_version = self.managed_genex_version_best_effort().await;
         LifecycleOutput {
             status,
             backend,
             pid,
-            managed_codex_path: self.managed_codex_bin.clone(),
-            managed_codex_version,
+            managed_genex_path: self.managed_genex_bin.clone(),
+            managed_genex_version,
             socket_path: self.socket_path.clone(),
             cli_version: Some(env!("CARGO_PKG_VERSION").to_string()),
             app_server_version,
@@ -925,7 +925,7 @@ mod tests {
             update_pid_file: state.join(super::LEGACY_UPDATE_PID_FILE_NAME),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_codex_bin: super::managed_codex_bin(home.path()),
+            managed_genex_bin: super::managed_genex_bin(home.path()),
         };
         let lock = daemon.acquire_operation_lock().await.expect("lock");
         let stop = daemon.run(super::LifecycleCommand::Stop);
@@ -940,10 +940,10 @@ mod tests {
         drop(lock);
         let output = stop.await.expect("stop");
         assert_eq!(
-            (output.status, output.managed_codex_path),
+            (output.status, output.managed_genex_path),
             (
                 LifecycleStatus::NotRunning,
-                super::managed_codex_bin(home.path())
+                super::managed_genex_bin(home.path())
             )
         );
     }
@@ -958,7 +958,7 @@ mod tests {
             update_pid_file: state.join("updater.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_codex_bin: state.join("missing-codex"),
+            managed_genex_bin: state.join("missing-genex"),
         };
         assert_eq!(
             daemon
@@ -983,7 +983,7 @@ mod tests {
             update_pid_file: state.join("updater.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_codex_bin: home.path().join("genex"),
+            managed_genex_bin: home.path().join("genex"),
         };
         genex_app_server_transport::daemon_recovery::write_candidates(
             &daemon.recovery_file().expect("recovery path"),
@@ -1039,7 +1039,7 @@ mod tests {
             update_pid_file: state.join("app-server-updater.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_codex_bin: standalone.join("current/bin/genex"),
+            managed_genex_bin: standalone.join("current/bin/genex"),
         };
         let settings = DaemonSettings::default();
         assert!(
@@ -1064,7 +1064,7 @@ mod tests {
             update_pid_file: temp_dir.path().join("app-server-updater.pid"),
             operation_lock_file: temp_dir.path().join("daemon.lock"),
             settings_file: temp_dir.path().join("settings.json"),
-            managed_codex_bin: temp_dir.path().join("missing-codex"),
+            managed_genex_bin: temp_dir.path().join("missing-genex"),
         };
         let stderr_log = daemon.pid_file.with_extension("stderr.log");
         tokio::fs::write(&stderr_log, "unexpected argument")
@@ -1078,7 +1078,7 @@ mod tests {
                  Daemon used app-server:\n  path: {}\n  version: unknown\n\n\
                  Managed app-server stderr ({}):\n  unexpected argument",
                 daemon.socket_path.display(),
-                daemon.managed_codex_bin.display(),
+                daemon.managed_genex_bin.display(),
                 stderr_log.display()
             )
         );

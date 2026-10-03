@@ -56,11 +56,11 @@ pub(crate) fn package_root(codex_home: &Path) -> PathBuf {
 }
 
 /// Resolve both packaged and legacy binaries without requiring a valid install.
-pub(crate) fn managed_codex_bin(codex_home: &Path) -> PathBuf {
+pub(crate) fn managed_genex_bin(codex_home: &Path) -> PathBuf {
     let root = package_root(codex_home);
     let current = root.join("current");
-    let packaged = current.join("bin").join(managed_codex_file_name());
-    let legacy = current.join(managed_codex_file_name());
+    let packaged = current.join("bin").join(managed_genex_file_name());
+    let legacy = current.join(if cfg!(windows) { "codex.exe" } else { "codex" });
     if packaged.is_file()
         || !legacy.is_file() && (cfg!(windows) || root.ends_with("app-server-daemon"))
     {
@@ -140,16 +140,16 @@ pub(crate) async fn supports_daemon_command(codex_bin: &Path, args: &[&str]) -> 
     .is_ok_and(|result| result.is_ok_and(|status| status.success()))
 }
 
-pub(crate) async fn resolved_managed_codex_bin(codex_bin: &Path) -> Result<PathBuf> {
+pub(crate) async fn resolved_managed_genex_bin(codex_bin: &Path) -> Result<PathBuf> {
     fs::canonicalize(codex_bin).await.with_context(|| {
         format!(
-            "failed to resolve managed Codex binary {}",
+            "failed to resolve managed Genex binary {}",
             codex_bin.display()
         )
     })
 }
 
-pub(crate) async fn managed_codex_version(codex_bin: &Path) -> Result<String> {
+pub(crate) async fn managed_genex_version(codex_bin: &Path) -> Result<String> {
     let mut command = Command::new(codex_bin);
     #[cfg(windows)]
     command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
@@ -160,13 +160,13 @@ pub(crate) async fn managed_codex_version(codex_bin: &Path) -> Result<String> {
         .await
         .with_context(|| {
             format!(
-                "failed to invoke managed Codex binary {}",
+                "failed to invoke managed Genex binary {}",
                 codex_bin.display()
             )
         })?;
     if !output.status.success() {
         return Err(anyhow!(
-            "managed Codex binary {} exited with status {}",
+            "managed Genex binary {} exited with status {}",
             codex_bin.display(),
             output.status
         ));
@@ -174,11 +174,11 @@ pub(crate) async fn managed_codex_version(codex_bin: &Path) -> Result<String> {
 
     let stdout = String::from_utf8(output.stdout).with_context(|| {
         format!(
-            "managed Codex version was not utf-8: {}",
+            "managed Genex version was not utf-8: {}",
             codex_bin.display()
         )
     })?;
-    parse_codex_version(&stdout)
+    parse_genex_version(&stdout)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -199,16 +199,16 @@ pub(crate) fn executable_identity_from_bytes(bytes: &[u8]) -> ExecutableIdentity
     }
 }
 
-fn managed_codex_file_name() -> &'static str {
-    if cfg!(windows) { "codex.exe" } else { "codex" }
+fn managed_genex_file_name() -> &'static str {
+    if cfg!(windows) { "genex.exe" } else { "genex" }
 }
 
-fn parse_codex_version(output: &str) -> Result<String> {
+fn parse_genex_version(output: &str) -> Result<String> {
     let version = output
         .split_whitespace()
         .nth(1)
         .filter(|version| !version.is_empty())
-        .ok_or_else(|| anyhow!("managed Codex version output was malformed"))?;
+        .ok_or_else(|| anyhow!("managed Genex version output was malformed"))?;
     Ok(version.to_string())
 }
 

@@ -1,19 +1,19 @@
 use pretty_assertions::assert_eq;
 
 use super::executable_identity_from_bytes;
-use super::parse_codex_version;
+use super::parse_genex_version;
 
 #[test]
-fn parses_codex_cli_version_output() {
+fn parses_genex_cli_version_output() {
     assert_eq!(
-        parse_codex_version("codex 1.2.3\n").expect("version"),
+        parse_genex_version("genex 1.2.3\n").expect("version"),
         "1.2.3"
     );
 }
 
 #[test]
-fn rejects_malformed_codex_cli_version_output() {
-    assert!(parse_codex_version("codex\n").is_err());
+fn rejects_malformed_genex_cli_version_output() {
+    assert!(parse_genex_version("genex\n").is_err());
 }
 
 #[test]

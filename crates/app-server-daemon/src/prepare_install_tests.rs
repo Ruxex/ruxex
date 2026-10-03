@@ -17,7 +17,7 @@ fn daemon(home: &std::path::Path) -> crate::Daemon {
         update_pid_file: state.join("app-server-updater.pid"),
         operation_lock_file: state.join("daemon.lock"),
         settings_file: state.join("settings.json"),
-        managed_codex_bin: crate::managed_install::managed_codex_bin(home),
+        managed_genex_bin: crate::managed_install::managed_genex_bin(home),
     }
 }
 
@@ -171,7 +171,7 @@ async fn legacy_selection_is_not_migrated_or_refreshed() {
     .await
     .unwrap();
     assert_eq!(
-        crate::managed_install::managed_codex_bin(&home)
+        crate::managed_install::managed_genex_bin(&home)
             .canonicalize()
             .unwrap(),
         bin.canonicalize().unwrap()

@@ -548,7 +548,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
         InitialDaemon::Legacy => (&standalone, "app-server.pid"),
     };
     assert_eq!(
-        output["managedCodexPath"],
+        output["managedGenexPath"],
         initial_root
             .canonicalize()?
             .join("current/bin/genex")
@@ -621,7 +621,7 @@ fn packaged_daemon_launch(action: &str, initial: InitialDaemon) -> Result<()> {
         assert!(!state.join("app-server.pid").exists());
         assert!(!state.join("app-server-updater.pid").exists());
         assert_eq!(
-            output["managedCodexPath"],
+            output["managedGenexPath"],
             current
                 .join("bin/genex")
                 .to_str()

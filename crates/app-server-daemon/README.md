@@ -29,12 +29,12 @@ endpoints remain authoritative and report connection failures.
 ## Commands
 
 ```sh
-codex app-server daemon start
-codex app-server daemon restart
-codex app-server daemon update
-codex app-server daemon stop
-codex app-server daemon version
-codex app-server daemon bootstrap
+genex app-server daemon start
+genex app-server daemon restart
+genex app-server daemon update
+genex app-server daemon stop
+genex app-server daemon version
+genex app-server daemon bootstrap
 ```
 
 On success, every command writes exactly one JSON object to stdout. Consumers
@@ -152,7 +152,7 @@ other tool updates the managed binary path:
   once that replacement starts successfully
 - if the updater was absent during a same-version binary replacement, a later
   managed start recovers it but cannot infer the running server's previous
-  executable identity; use `codex app-server daemon restart` to refresh the server
+  executable identity; use `genex app-server daemon restart` to refresh the server
 
 ## Lifecycle semantics
 

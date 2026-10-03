@@ -21,7 +21,7 @@ use crate::UpdateOutput;
 use crate::UpdateStatus;
 use crate::client;
 use crate::managed_install::executable_identity;
-use crate::managed_install::managed_codex_version;
+use crate::managed_install::managed_genex_version;
 
 pub(crate) async fn request(daemon: &Daemon) -> Result<UpdateOutput> {
     let socket_path = daemon.manual_update_socket_path();
@@ -151,7 +151,7 @@ pub(super) fn supported(daemon: &Daemon) -> Result<bool> {
     let Ok((root, release, _)) = selected_release(daemon) else {
         return Ok(false);
     };
-    let bin = daemon.current_managed_codex_bin()?;
+    let bin = daemon.current_managed_genex_bin()?;
     Ok(std::fs::canonicalize(root.join("releases"))
         .is_ok_and(|releases| release.parent() == Some(releases.as_path()))
         && bin.is_file()
@@ -162,15 +162,15 @@ const UNSUPPORTED_MESSAGE: &str =
     "This command requires a daemon package selected from its managed releases directory.";
 
 pub(super) async fn unsupported(daemon: &Daemon) -> Result<UpdateOutput> {
-    let managed_codex_path = daemon.current_managed_codex_bin()?;
+    let managed_genex_path = daemon.current_managed_genex_bin()?;
     Ok(UpdateOutput {
         status: UpdateStatus::Unsupported,
-        installed_version: managed_codex_version(&managed_codex_path).await.ok(),
+        installed_version: managed_genex_version(&managed_genex_path).await.ok(),
         running_version: client::probe(&daemon.socket_path)
             .await
             .ok()
             .map(|info| info.app_server_version),
-        managed_codex_path,
+        managed_genex_path,
         message: UNSUPPORTED_MESSAGE.to_string(),
     })
 }
@@ -239,18 +239,18 @@ pub(super) async fn run(
         return unsupported(daemon).await;
     }
 
-    let managed_codex_path = daemon.current_managed_codex_bin()?;
+    let managed_genex_path = daemon.current_managed_genex_bin()?;
     let (_, previous_release, _) = selected_release(daemon)?;
-    let previous_identity = executable_identity(&managed_codex_path).await?;
+    let previous_identity = executable_identity(&managed_genex_path).await?;
     let (control, restart) =
         update_once(http, daemon, running_updater_identity, terminate, trigger).await?;
     if matches!(control, UpdateLoopControl::Stop) {
         return Err(std::io::Error::from(std::io::ErrorKind::Interrupted).into());
     }
-    let current_managed_codex_path = daemon.current_managed_codex_bin()?;
-    let installed_version = Some(managed_codex_version(&current_managed_codex_path).await?);
+    let current_managed_genex_path = daemon.current_managed_genex_bin()?;
+    let installed_version = Some(managed_genex_version(&current_managed_genex_path).await?);
     let updated = previous_release != selected_release(daemon)?.1
-        || previous_identity != executable_identity(&current_managed_codex_path).await?;
+        || previous_identity != executable_identity(&current_managed_genex_path).await?;
     let running_version = client::probe(&daemon.socket_path)
         .await
         .ok()
@@ -273,7 +273,7 @@ pub(super) async fn run(
         } else {
             UpdateStatus::NoUpdate
         },
-        managed_codex_path: current_managed_codex_path,
+        managed_genex_path: current_managed_genex_path,
         installed_version,
         running_version,
         message: message.to_string(),
