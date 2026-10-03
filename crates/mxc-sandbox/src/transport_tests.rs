@@ -29,16 +29,16 @@ fn command(args: Vec<String>) -> MxcCommand {
 #[test]
 fn large_unicode_launch_roundtrips_and_never_reaches_child_environment() -> Result<()> {
     let args = vec![
-        "codex-windows-mxc".to_owned(),
+        "genex-windows-mxc".to_owned(),
         "🧊".repeat(20_000),
         "a\"\\b".to_owned(),
     ];
     let expected_env = HashMap::from([("CUSTOM".to_owned(), "value".to_owned())]);
     let mut env = expected_env.clone();
-    env.insert("codex_mxc_launch_999".to_owned(), "spoofed".to_owned());
+    env.insert("genex_mxc_launch_999".to_owned(), "spoofed".to_owned());
     let request = command(args);
     encode(&request, &mut env)?;
-    assert!(!env.contains_key("codex_mxc_launch_999"));
+    assert!(!env.contains_key("genex_mxc_launch_999"));
     assert!(
         env.values()
             .all(|value| value.encode_utf16().count() < 8192)

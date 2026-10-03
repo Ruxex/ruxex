@@ -745,6 +745,18 @@ The local `rg` audits for this slice found active launch/security, persisted-dat
 | `genex-app-server-transport` | Daemon env/socket/recovery paths, CODEX_HOME, and app-server labels are active transport contracts. | `retain/defer` | `rg -n -i 'codex' crates/app-server-transport`; `just check --tests`; `just check` |
 | `genex-thread-store` | Thread/rollout persistence, metadata/error fields, home paths, and state metrics are active; README wording migrated. | `migrate-in-place` README; `retain/defer` persisted contracts | `rg -n -i 'codex' crates/thread-store`; `just check --tests`; `just check` |
 
+### Genex crate migration ledger: dependency ranks 53–75
+
+| Crate | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| `genex-utils-approval-presets` | Complete crate scan found no `codex`/`Codex` producer, consumer, path, or generated artifact. The crate only contains provider-neutral approval preset definitions. | `no-match` | `rg -n -i 'codex' crates/utils/approval-presets` returned no matches |
+| `genex-utils-sandbox-summary` | Complete crate scan found no `codex`/`Codex` match. The `.genex` paths in sandbox-summary fixtures are already migrated and are not residual Codex identifiers. | `no-match` | `rg -n -i 'codex' crates/utils/sandbox-summary` returned no matches |
+| `genex-utils-audio` | Complete crate scan found no `codex`/`Codex` producer, consumer, path, or generated artifact. | `no-match` | `rg -n -i 'codex' crates/utils/audio` returned no matches |
+| `genex-shell-escalation` | Complete crate scan found no `codex`/`Codex` producer, consumer, path, or generated artifact. | `no-match` | `rg -n -i 'codex' crates/shell-escalation` returned no matches |
+| `genex-context-fragments` | Complete crate scan found no `codex`/`Codex` producer, consumer, path, or generated artifact. | `no-match` | `rg -n -i 'codex' crates/context-fragments` returned no matches |
+| `genex-utils-output-truncation` | Complete crate scan found no `codex`/`Codex` producer, consumer, path, or generated artifact. | `no-match` | `rg -n -i 'codex' crates/utils/output-truncation` returned no matches |
+| `genex-mxc-sandbox` | The internal MXC launcher argument, bounded launcher environment transport, tests, and README identity were migrated to Genex across `mxc-sandbox`, `sandboxing`, `arg0`, and exec-server test dispatch. The emitted `codex.windows_mxc.available` metric remains an observability contract and MXC/Windows security behavior is unchanged. | `migrate-in-place` internal launcher/test/docs identity; `retain` telemetry key and third-party MXC/security behavior | Cross-crate exact-reference audit; `just check --tests`; `just check`; `git diff --check` |
+
 ### Genex crate migration ledger: dependency ranks 76–90
 
 The dependency-ordered crate ledger records the local `rg` audit for this slice. Active persisted-data, telemetry, protocol, CLI/config, plugin, and security contracts remain unchanged; only internal documentation/comments and the stale git-utils README import were migrated.

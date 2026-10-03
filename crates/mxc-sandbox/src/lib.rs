@@ -21,7 +21,7 @@ use genex_protocol::models::PermissionProfile;
 use serde::Deserialize;
 use serde::Serialize;
 
-pub const CODEX_WINDOWS_MXC_ARG1: &str = "--__codex-windows-mxc";
+pub const GENEX_WINDOWS_MXC_ARG1: &str = "--__genex-windows-mxc";
 const CLIENT_ONLY_LOOPBACK_UNSUPPORTED: &str = "MXC cannot enforce managed networking with allow_local_binding=false: native host-loopback access is bidirectional";
 
 fn validate_managed_network(network: &ManagedNetworkSandboxContext) -> Result<()> {
@@ -83,7 +83,7 @@ pub fn create_command_args(args: CreateMxcCommandArgsParams<'_>) -> Result<Vec<S
         },
         env,
     )?;
-    Ok(vec![CODEX_WINDOWS_MXC_ARG1.to_owned()])
+    Ok(vec![GENEX_WINDOWS_MXC_ARG1.to_owned()])
 }
 
 /// Whether the executor can create a native MXC process security environment.
@@ -99,7 +99,7 @@ pub fn is_available() -> bool {
     }
 }
 
-/// Entry point dispatched before ordinary Codex CLI parsing.
+/// Entry point dispatched before ordinary Genex CLI parsing.
 pub fn run_main() -> ! {
     #[cfg(windows)]
     {

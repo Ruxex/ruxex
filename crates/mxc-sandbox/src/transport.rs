@@ -10,9 +10,9 @@ use anyhow::ensure;
 
 use crate::MxcCommand;
 
-const PREFIX: &str = "CODEX_MXC_LAUNCH_";
-const COUNT: &str = "CODEX_MXC_LAUNCH_COUNT";
-const LENGTH: &str = "CODEX_MXC_LAUNCH_BYTES";
+const PREFIX: &str = "GENEX_MXC_LAUNCH_";
+const COUNT: &str = "GENEX_MXC_LAUNCH_COUNT";
+const LENGTH: &str = "GENEX_MXC_LAUNCH_BYTES";
 const CHUNK_BYTES: usize = 4096;
 const MAX_CHUNKS: usize = 256;
 const MAX_BYTES: usize = 1_000_000;

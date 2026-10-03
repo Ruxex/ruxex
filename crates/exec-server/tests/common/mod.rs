@@ -54,7 +54,7 @@ pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
         if argv1 == Some(CODEX_WINDOWS_SANDBOX_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if argv1 == Some(genex_sandboxing::CODEX_WINDOWS_MXC_ARG1) {
+        if argv1 == Some(genex_sandboxing::GENEX_WINDOWS_MXC_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         if exe_name == CODEX_LINUX_SANDBOX_ARG0 {

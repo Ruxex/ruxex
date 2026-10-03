@@ -100,7 +100,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
     }
 
     let argv1 = args.next().unwrap_or_default();
-    if argv1 == genex_sandboxing::CODEX_WINDOWS_MXC_ARG1 {
+    if argv1 == genex_sandboxing::GENEX_WINDOWS_MXC_ARG1 {
         genex_sandboxing::run_windows_mxc_main();
     }
     #[cfg(unix)]
