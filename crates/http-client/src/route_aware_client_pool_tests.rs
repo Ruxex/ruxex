@@ -75,7 +75,7 @@ async fn request_failures_classify_real_untrusted_certificate_handshakes() {
 async fn request_failures_classify_https_proxy_authentication_challenges() {
     let (address, proxy) = spawn_response_server(vec![
         "HTTP/1.1 407 Proxy Authentication Required\r\n\
-         Proxy-Authenticate: Basic realm=\"codex\"\r\n\
+         Proxy-Authenticate: Basic realm=\"genex\"\r\n\
          Content-Length: 0\r\n\
          Connection: close\r\n\r\n"
             .to_string(),
@@ -159,7 +159,7 @@ async fn streams_request_bodies_without_exposing_reqwest_body() {
 
 #[tokio::test]
 async fn legacy_custom_ca_fallback_is_limited_to_reqwest_default() {
-    const CHILD_POLICY_ENV: &str = "CODEX_HTTP_CLIENT_POOL_INVALID_CA_TEST_POLICY";
+    const CHILD_POLICY_ENV: &str = "GENEX_HTTP_CLIENT_POOL_INVALID_CA_TEST_POLICY";
 
     let Ok(policy_name) = std::env::var(CHILD_POLICY_ENV) else {
         let temp_dir = tempfile::tempdir().expect("temporary directory should be created");

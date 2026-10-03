@@ -19,9 +19,9 @@ use std::env;
 use std::process;
 use std::time::Duration;
 
-const PROBE_TLS13_ENV: &str = "CODEX_CUSTOM_CA_PROBE_TLS13";
-const PROBE_PROXY_ENV: &str = "CODEX_CUSTOM_CA_PROBE_PROXY";
-const PROBE_URL_ENV: &str = "CODEX_CUSTOM_CA_PROBE_URL";
+const PROBE_TLS13_ENV: &str = "GENEX_CUSTOM_CA_PROBE_TLS13";
+const PROBE_PROXY_ENV: &str = "GENEX_CUSTOM_CA_PROBE_PROXY";
+const PROBE_URL_ENV: &str = "GENEX_CUSTOM_CA_PROBE_URL";
 
 fn main() {
     let runtime = match tokio::runtime::Builder::new_current_thread()
