@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run reviewer-derived MCP regressions against a real Codex app-server."""
+"""Run reviewer-derived MCP regressions against a real Genex app-server."""
 
 import argparse
 import json
@@ -18,7 +18,7 @@ _MODULE_DIR = Path(__file__).resolve().parent
 if str(_MODULE_DIR) not in sys.path:
     sys.path.insert(0, str(_MODULE_DIR))
 
-from run_codex_compliance import (  # noqa: E402 - direct scripts must first add their sibling directory.
+from run_genex_compliance import (  # noqa: E402 - direct scripts must first add their sibling directory.
     LEGACY_VERSION,
     MISMATCHED_DISCOVERY_ID_PROFILE,
     MODERN_VERSION,
@@ -114,7 +114,7 @@ def _running_review_http_fixture(mode: str, profile: str) -> Iterator[str]:
 
 
 def _review_registration_command(
-    codex_binary: Path,
+    genex_binary: Path,
     server_script: Path,
     *,
     transport: str,
@@ -122,7 +122,7 @@ def _review_registration_command(
     profile: str,
     http_url: str | None,
 ) -> list[str]:
-    command = [str(codex_binary), "mcp", "add", TEST_SERVER_NAME]
+    command = [str(genex_binary), "mcp", "add", TEST_SERVER_NAME]
     if transport == "stdio":
         protocol_environment = (
             MODERN_VERSION if mode == MODERN_VERSION else LEGACY_ENVIRONMENT_SENTINEL
@@ -651,7 +651,7 @@ def _run_sse_check(
 
 
 def _run_review_case(
-    codex_binary: Path,
+    genex_binary: Path,
     server_script: Path,
     *,
     mode: str,
@@ -676,7 +676,7 @@ def _run_review_case(
     try:
         if mode == MODERN_VERSION:
             feature = _run_command(
-                [str(codex_binary), "features", "enable", "mcp_2026_07_28"],
+                [str(genex_binary), "features", "enable", "mcp_2026_07_28"],
                 env=env,
                 cwd=workspace,
                 timeout_seconds=timeout_seconds,
@@ -691,7 +691,7 @@ def _run_review_case(
         with fixture as http_url:
             registration = _run_command(
                 _review_registration_command(
-                    codex_binary,
+                    genex_binary,
                     server_script,
                     transport=transport,
                     mode=mode,
@@ -711,7 +711,7 @@ def _run_review_case(
                 return case
 
             with AppServerClient(
-                codex_binary,
+                genex_binary,
                 env=env,
                 cwd=workspace,
                 timeout_seconds=timeout_seconds,
@@ -741,7 +741,7 @@ def _run_review_case(
     finally:
         if registered:
             removal = _run_command(
-                [str(codex_binary), "mcp", "remove", TEST_SERVER_NAME],
+                [str(genex_binary), "mcp", "remove", TEST_SERVER_NAME],
                 env=env,
                 cwd=workspace,
                 timeout_seconds=timeout_seconds,
@@ -756,7 +756,7 @@ def _run_review_case(
 
 
 def run_review_regressions(
-    codex_binary: Path,
+    genex_binary: Path,
     *,
     modes: Sequence[str] = REVIEW_MODES,
     server_script: Path | None = None,
@@ -771,7 +771,7 @@ def run_review_regressions(
         for mode in modes:
             cases.append(
                 _run_review_case(
-                    codex_binary,
+                    genex_binary,
                     server_script,
                     mode=mode,
                     profile=REVIEW_PROFILE,
@@ -792,7 +792,7 @@ def run_review_regressions(
             ):
                 cases.append(
                     _run_review_case(
-                        codex_binary,
+                        genex_binary,
                         server_script,
                         mode=mode,
                         profile=profile,
@@ -807,7 +807,7 @@ def run_review_regressions(
                 for profile in CATALOG_BOUNDARY_PROFILES:
                     cases.append(
                         _run_review_case(
-                            codex_binary,
+                            genex_binary,
                             server_script,
                             mode=mode,
                             profile=profile,
@@ -822,7 +822,7 @@ def run_review_regressions(
         return {
             "schemaVersion": REVIEW_REPORT_SCHEMA_VERSION,
             "success": bool(cases) and all(case.success for case in cases),
-            "codexBinary": str(codex_binary),
+            "genexBinary": str(genex_binary),
             "reviewer": REVIEWER,
             "modes": list(modes),
             "summary": {
@@ -1104,9 +1104,9 @@ def _write_review_json(path: Path, value: Mapping[str, object]) -> None:
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run reviewer-derived MCP client regression tests against Codex."
+        description="Run reviewer-derived MCP client regression tests against Genex."
     )
-    parser.add_argument("codex_binary", type=Path)
+    parser.add_argument("genex_binary", type=Path)
     parser.add_argument("--mode", choices=("all", *REVIEW_MODES), default="all")
     parser.add_argument("--timeout", type=float, default=8)
     parser.add_argument("--server-script", type=Path, default=_MODULE_DIR / "server.py")
@@ -1134,10 +1134,10 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def _print_report(report: Mapping[str, object]) -> None:
     print(
-        "Codex MCP reviewer regressions: "
+        "Genex MCP reviewer regressions: "
         + ("PASS" if report.get("success") is True else "FAIL")
     )
-    print(f"Binary: {report.get('codexBinary')}")
+    print(f"Binary: {report.get('genexBinary')}")
     cases = report.get("cases")
     if isinstance(cases, list):
         for case in cases:
@@ -1176,10 +1176,10 @@ def _print_report(report: Mapping[str, object]) -> None:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
-    codex_binary = args.codex_binary.expanduser().resolve()
+    genex_binary = args.genex_binary.expanduser().resolve()
     server_script = args.server_script.expanduser().resolve()
-    if not codex_binary.is_file() or not os.access(codex_binary, os.X_OK):
-        print(f"error: Codex binary is not executable: {codex_binary}", file=sys.stderr)
+    if not genex_binary.is_file() or not os.access(genex_binary, os.X_OK):
+        print(f"error: Genex binary is not executable: {genex_binary}", file=sys.stderr)
         return 2
     if not server_script.is_file():
         print(f"error: review fixture does not exist: {server_script}", file=sys.stderr)
@@ -1237,7 +1237,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     modes = REVIEW_MODES if args.mode == "all" else (args.mode,)
     report = run_review_regressions(
-        codex_binary,
+        genex_binary,
         modes=modes,
         server_script=server_script,
         timeout_seconds=args.timeout,

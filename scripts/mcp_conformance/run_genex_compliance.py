@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Black-box MCP compliance runner for a supplied Codex binary."""
+"""Black-box MCP compliance runner for a supplied Genex binary."""
 
 import argparse
 import importlib.util
@@ -153,11 +153,11 @@ class AppServerError(RuntimeError):
 
 
 class AppServerClient:
-    """Minimal JSONL client for the Codex app-server protocol."""
+    """Minimal JSONL client for the Genex app-server protocol."""
 
     def __init__(
         self,
-        codex_binary: Path,
+        genex_binary: Path,
         *,
         env: Mapping[str, str],
         cwd: Path,
@@ -176,7 +176,7 @@ class AppServerClient:
         self.events: list[dict[str, object]] = []
         self.elicitation_requests: list[dict[str, object]] = []
         self.process = subprocess.Popen(
-            [str(codex_binary), "app-server"],
+            [str(genex_binary), "app-server"],
             cwd=cwd,
             env=dict(env),
             stdin=subprocess.PIPE,
@@ -227,7 +227,7 @@ class AppServerClient:
     def _send(self, message: Mapping[str, object]) -> None:
         if self.process.poll() is not None:
             raise AppServerError(
-                f"Codex app-server exited with code {self.process.returncode}"
+                f"Genex app-server exited with code {self.process.returncode}"
             )
         assert self.process.stdin is not None
         encoded = json.dumps(message, ensure_ascii=False, separators=(",", ":"))
@@ -265,7 +265,7 @@ class AppServerClient:
                 ) from exc
             if message is None:
                 raise AppServerError(
-                    f"Codex app-server closed stdout while handling {method}"
+                    f"Genex app-server closed stdout while handling {method}"
                 )
             if message.get("id") == request_id and "method" not in message:
                 return message
@@ -303,7 +303,7 @@ class AppServerClient:
                 ) from exc
             if message is None:
                 raise AppServerError(
-                    f"Codex app-server closed stdout while waiting for {method}"
+                    f"Genex app-server closed stdout while waiting for {method}"
                 )
             if "id" in message and isinstance(message.get("method"), str):
                 self._handle_server_request(message)
@@ -451,9 +451,9 @@ def _result_detail(
     )[-2_000:]
 
 
-def _isolated_environment(codex_home: Path) -> dict[str, str]:
+def _isolated_environment(genex_home: Path) -> dict[str, str]:
     env = dict(os.environ)
-    env["CODEX_HOME"] = str(codex_home)
+    env["GENEX_HOME"] = str(genex_home)
     # Direct app-server MCP calls do not need a model or credentials.
     for name in ("CODEX_API_KEY", "CODEX_ACCESS_TOKEN", "PROVIDER_API_KEY"):
         env.pop(name, None)
@@ -484,14 +484,14 @@ def _running_http_fixture(mode: str) -> Iterator[str]:
 
 
 def _registration_command(
-    codex_binary: Path,
+    genex_binary: Path,
     server_script: Path,
     *,
     transport: str,
     mode: str,
     http_url: str | None,
 ) -> list[str]:
-    command = [str(codex_binary), "mcp", "add", TEST_SERVER_NAME]
+    command = [str(genex_binary), "mcp", "add", TEST_SERVER_NAME]
     if transport == "stdio":
         if mode == MODERN_VERSION:
             command.extend(["--env", f"CODEX_MCP_PROTOCOL_VERSION={MODERN_VERSION}"])
@@ -950,7 +950,7 @@ def _exercise_app_server(
 
 
 def _run_case(
-    codex_binary: Path,
+    genex_binary: Path,
     server_script: Path,
     *,
     transport: str,
@@ -975,7 +975,7 @@ def _run_case(
         with http_context as http_url:
             add = _run_command(
                 _registration_command(
-                    codex_binary,
+                    genex_binary,
                     server_script,
                     transport=transport,
                     mode=mode,
@@ -993,7 +993,7 @@ def _run_case(
             if registered:
                 get = _run_command(
                     [
-                        str(codex_binary),
+                        str(genex_binary),
                         "mcp",
                         "get",
                         TEST_SERVER_NAME,
@@ -1023,7 +1023,7 @@ def _run_case(
                     case.check("mcp_get", valid, detail)
 
                 client = AppServerClient(
-                    codex_binary,
+                    genex_binary,
                     env=env,
                     cwd=workspace,
                     timeout_seconds=timeout_seconds,
@@ -1053,7 +1053,7 @@ def _run_case(
             client.close()
         if registered:
             remove = _run_command(
-                [str(codex_binary), "mcp", "remove", TEST_SERVER_NAME],
+                [str(genex_binary), "mcp", "remove", TEST_SERVER_NAME],
                 env=env,
                 cwd=workspace,
                 timeout_seconds=timeout_seconds,
@@ -1064,7 +1064,7 @@ def _run_case(
                 _command_detail(remove),
             )
             listed = _run_command(
-                [str(codex_binary), "mcp", "list", "--json"],
+                [str(genex_binary), "mcp", "list", "--json"],
                 env=env,
                 cwd=workspace,
                 timeout_seconds=timeout_seconds,
@@ -1116,7 +1116,7 @@ def _official_check_result(
 
 
 def _run_official_case(
-    codex_binary: Path,
+    genex_binary: Path,
     adapter_script: Path,
     *,
     conformance_command: Sequence[str],
@@ -1131,17 +1131,17 @@ def _run_official_case(
     case = CaseResult(transport="official-http", mode=mode)
     case_home.mkdir(parents=True)
     env = _isolated_environment(case_home)
-    env["CODEX_CONFORMANCE_TIMEOUT"] = str(timeout_seconds)
-    env["CODEX_CONFORMANCE_ENABLE_MODERN_FEATURE"] = (
+    env["GENEX_CONFORMANCE_TIMEOUT"] = str(timeout_seconds)
+    env["GENEX_CONFORMANCE_ENABLE_MODERN_FEATURE"] = (
         "1" if enable_modern_feature else "0"
     )
-    env["CODEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH"] = (
+    env["GENEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH"] = (
         "1" if require_automatic_auth else "0"
     )
     results = run_official_mode(
         conformance_command=conformance_command,
         adapter_script=adapter_script,
-        codex_binary=codex_binary,
+        genex_binary=genex_binary,
         mode=mode,
         scenarios=scenarios,
         output_dir=case_home / "official-results",
@@ -1212,7 +1212,7 @@ def _run_official_case(
     if mode == MODERN_VERSION and "auth/offline-access-scope" in scenarios:
         case.checks.extend(
             _cimd_registration_checks(
-                codex_binary,
+                genex_binary,
                 adapter_script,
                 conformance_command=conformance_command,
                 case_home=case_home / "cimd-registration",
@@ -1227,7 +1227,7 @@ def _run_official_case(
 
 
 def _cimd_registration_checks(
-    codex_binary: Path,
+    genex_binary: Path,
     adapter_script: Path,
     *,
     conformance_command: Sequence[str],
@@ -1242,17 +1242,17 @@ def _cimd_registration_checks(
         ("forced_cimd", "cimd"),
     ):
         env = _isolated_environment(case_home / check_name)
-        env["CODEX_CONFORMANCE_TIMEOUT"] = str(timeout_seconds)
-        env["CODEX_CONFORMANCE_ENABLE_MODERN_FEATURE"] = (
+        env["GENEX_CONFORMANCE_TIMEOUT"] = str(timeout_seconds)
+        env["GENEX_CONFORMANCE_ENABLE_MODERN_FEATURE"] = (
             "1" if enable_modern_feature else "0"
         )
-        env["CODEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH"] = "1"
+        env["GENEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH"] = "1"
         if client_registration is not None:
-            env["CODEX_CONFORMANCE_CLIENT_REGISTRATION"] = client_registration
+            env["GENEX_CONFORMANCE_CLIENT_REGISTRATION"] = client_registration
         results = run_official_mode(
             conformance_command=conformance_command,
             adapter_script=adapter_script,
-            codex_binary=codex_binary,
+            genex_binary=genex_binary,
             mode=MODERN_VERSION,
             scenarios=("auth/offline-access-scope",),
             output_dir=case_home / check_name / "official-results",
@@ -1280,7 +1280,7 @@ def _cimd_registration_checks(
 
 
 def run_compliance(
-    codex_binary: Path,
+    genex_binary: Path,
     *,
     server_script: Path,
     adapter_script: Path,
@@ -1304,7 +1304,7 @@ def run_compliance(
     )
     version_env = _isolated_environment(run_root)
     version = _run_command(
-        [str(codex_binary), "--version"],
+        [str(genex_binary), "--version"],
         env=version_env,
         cwd=run_root,
         timeout_seconds=timeout_seconds,
@@ -1328,7 +1328,7 @@ def run_compliance(
                 case_home = run_root / f"stdio-{mode}"
                 cases.append(
                     _run_case(
-                        codex_binary,
+                        genex_binary,
                         server_script,
                         transport="stdio",
                         mode=mode,
@@ -1343,7 +1343,7 @@ def run_compliance(
                 case_home = run_root / f"official-http-{mode}"
                 cases.append(
                     _run_official_case(
-                        codex_binary,
+                        genex_binary,
                         adapter_script,
                         conformance_command=conformance_command,
                         mode=mode,
@@ -1362,7 +1362,7 @@ def run_compliance(
         "success": version.returncode == 0 and passed == len(cases),
         "startedAt": started_at.isoformat(),
         "finishedAt": finished_at.isoformat(),
-        "codexBinary": str(codex_binary),
+        "genexBinary": str(genex_binary),
         "codexVersion": version.stdout or None,
         "modernFeatureEnablement": enable_modern_feature,
         "automaticAuthRequired": require_automatic_auth,
@@ -1443,7 +1443,7 @@ def _required_regression_checks(
 
     version_check = report.get("versionCheck")
     if not isinstance(version_check, dict) or version_check.get("success") is not True:
-        errors.append(f"{label} does not contain a successful Codex version check")
+        errors.append(f"{label} does not contain a successful Genex version check")
     if report.get("modernFeatureEnablement") is not True:
         errors.append(f"{label} did not enable the modern MCP feature")
 
@@ -1815,8 +1815,8 @@ def _print_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> None:
 
 def _print_human_report(report: Mapping[str, object]) -> None:
     success = report.get("success") is True
-    print(f"Codex MCP compliance: {'PASS' if success else 'FAIL'}")
-    print(f"Binary: {report.get('codexBinary')}")
+    print(f"Genex MCP compliance: {'PASS' if success else 'FAIL'}")
+    print(f"Binary: {report.get('genexBinary')}")
     print(f"Version: {report.get('codexVersion') or 'unknown'}")
     failure_details: list[tuple[str, str, str]] = []
     cases = report.get("cases")
@@ -1956,10 +1956,10 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Run the full versioned official MCP client conformance suite against a "
-            "supplied Codex binary, plus the supplemental local stdio suite."
+            "supplied Genex binary, plus the supplemental local stdio suite."
         )
     )
-    parser.add_argument("codex_binary", type=Path)
+    parser.add_argument("genex_binary", type=Path)
     parser.add_argument(
         "--mode",
         choices=("all", SHIPPING_LEGACY_VERSION, LEGACY_VERSION, MODERN_VERSION),
@@ -1985,7 +1985,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         "--adapter-script",
         type=Path,
         default=Path(__file__).resolve().with_name("genex_conformance_adapter.py"),
-        help="Path to the Codex adapter used by the official client suite.",
+        help="Path to the Genex adapter used by the official client suite.",
     )
     parser.add_argument(
         "--conformance-cli",
@@ -2016,7 +2016,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         "--require-automatic-auth",
         action="store_true",
         help=(
-            "Require Codex to recover from OAuth scope escalation and "
+            "Require Genex to recover from OAuth scope escalation and "
             "authorization-server migration without harness-injected re-login; "
             "also exercise production client-metadata selection."
         ),
@@ -2062,12 +2062,12 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--artifact-parent",
         type=Path,
-        help="Parent directory for isolated temporary Codex homes.",
+        help="Parent directory for isolated temporary Genex homes.",
     )
     parser.add_argument(
         "--keep-artifacts",
         action="store_true",
-        help="Keep isolated Codex homes and include their path in the report.",
+        help="Keep isolated Genex homes and include their path in the report.",
     )
     parser.add_argument(
         "--enable-modern-feature",
@@ -2083,7 +2083,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
-    codex_binary = args.codex_binary.expanduser().resolve()
+    genex_binary = args.genex_binary.expanduser().resolve()
     server_script = args.server_script.expanduser().resolve()
     adapter_script = args.adapter_script.expanduser().resolve()
     modes = (
@@ -2092,8 +2092,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         else (args.mode,)
     )
     transports = ("stdio", "http") if args.transport == "all" else (args.transport,)
-    if not codex_binary.is_file() or not os.access(codex_binary, os.X_OK):
-        print(f"error: Codex binary is not executable: {codex_binary}", file=sys.stderr)
+    if not genex_binary.is_file() or not os.access(genex_binary, os.X_OK):
+        print(f"error: Genex binary is not executable: {genex_binary}", file=sys.stderr)
         return 2
     if "stdio" in transports and not server_script.is_file():
         print(f"error: fixture server does not exist: {server_script}", file=sys.stderr)
@@ -2191,7 +2191,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         artifact_parent.mkdir(parents=True, exist_ok=True)
 
     report, _ = run_compliance(
-        codex_binary,
+        genex_binary,
         server_script=server_script,
         adapter_script=adapter_script,
         conformance_command=conformance_command,

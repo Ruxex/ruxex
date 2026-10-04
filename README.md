@@ -1,7 +1,7 @@
 # General-purpose AI Agent Foundation (Rust)
 
-This repository is derived from Codex and is being developed as a general-purpose
-AI agent foundation. provider-specific features and assumptions are removed so the
+This repository is a general-purpose AI agent foundation. Provider-specific features
+and assumptions are removed so the
 runtime can provide a provider-neutral base for building a wide range of AI
 agents.
 
@@ -88,11 +88,11 @@ The pinned toolchain is selected by `rust-toolchain.toml`.
 
 ```sh
 cargo check --locked -p genex-cli
-cargo build --locked --release -p genex-cli --bin codex
-./target/release/codex
+cargo build --locked --release -p genex-cli --bin genex
+./target/release/genex
 ```
 
-On Windows, the executable is `target/release/codex.exe`.
+On Windows, the executable is `target/release/genex.exe`.
 Release artifacts are built locally and attached to releases manually. Features
 that launch helper executables or use native resources still need those resources
 beside the CLI; building the CLI alone does not assemble a complete runtime package.

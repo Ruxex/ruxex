@@ -5,7 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from run_codex_compliance import (
+from run_genex_compliance import (
     COMPACT_REGRESSION_BASELINE_KIND,
     LEGACY_VERSION,
     MODERN_VERSION,
@@ -40,7 +40,7 @@ from run_codex_compliance import (
 
 
 def test_registration_commands_select_stdio_then_http_shapes() -> None:
-    codex = Path("/opt/codex")
+    codex = Path("/opt/genex")
     server = Path("/src/server.py")
 
     stdio = _registration_command(
@@ -59,7 +59,7 @@ def test_registration_commands_select_stdio_then_http_shapes() -> None:
     )
 
     assert stdio == [
-        "/opt/codex",
+        "/opt/genex",
         "mcp",
         "add",
         TEST_SERVER_NAME,
@@ -74,7 +74,7 @@ def test_registration_commands_select_stdio_then_http_shapes() -> None:
         "stdio",
     ]
     assert http == [
-        "/opt/codex",
+        "/opt/genex",
         "mcp",
         "add",
         TEST_SERVER_NAME,
@@ -213,7 +213,7 @@ def test_isolated_environment_drops_model_credentials(
 
     env = _isolated_environment(tmp_path)
 
-    assert env["CODEX_HOME"] == str(tmp_path)
+    assert env["GENEX_HOME"] == str(tmp_path)
     assert "CODEX_API_KEY" not in env
     assert "CODEX_ACCESS_TOKEN" not in env
     assert "PROVIDER_API_KEY" not in env
@@ -445,12 +445,12 @@ def test_official_case_preserves_adapter_check_identity_on_failure_and_success(
         adapter_detail="adapter succeeded" if adapter_success else "adapter failed",
     )
     monkeypatch.setattr(
-        "run_codex_compliance.run_official_mode",
+        "run_genex_compliance.run_official_mode",
         lambda **_kwargs: [result],
     )
 
     case = _run_official_case(
-        Path("/opt/codex"),
+        Path("/opt/genex"),
         Path("/src/genex_conformance_adapter.py"),
         conformance_command=["conformance"],
         mode=mode,
@@ -489,12 +489,12 @@ def test_official_case_preserves_independent_runner_failure_with_successful_adap
         runner_detail="official runner failed",
     )
     monkeypatch.setattr(
-        "run_codex_compliance.run_official_mode",
+        "run_genex_compliance.run_official_mode",
         lambda **_kwargs: [result],
     )
 
     case = _run_official_case(
-        Path("/opt/codex"),
+        Path("/opt/genex"),
         Path("/src/genex_conformance_adapter.py"),
         conformance_command=["conformance"],
         mode=mode,
@@ -550,12 +550,12 @@ def test_official_case_keeps_cimd_registration_checks_in_regression_gated_http_c
         ]
 
     monkeypatch.setattr(
-        "run_codex_compliance.run_official_mode",
+        "run_genex_compliance.run_official_mode",
         run_official_mode,
     )
 
     case = _run_official_case(
-        Path("/opt/codex"),
+        Path("/opt/genex"),
         Path("/src/genex_conformance_adapter.py"),
         conformance_command=["conformance"],
         mode=MODERN_VERSION,
@@ -573,8 +573,8 @@ def test_official_case_keeps_cimd_registration_checks_in_regression_gated_http_c
     forced_env = calls[2]["base_env"]
     assert isinstance(auto_env, dict)
     assert isinstance(forced_env, dict)
-    assert auto_env.get("CODEX_CONFORMANCE_CLIENT_REGISTRATION") is None
-    assert forced_env["CODEX_CONFORMANCE_CLIENT_REGISTRATION"] == "cimd"
+    assert auto_env.get("GENEX_CONFORMANCE_CLIENT_REGISTRATION") is None
+    assert forced_env["GENEX_CONFORMANCE_CLIENT_REGISTRATION"] == "cimd"
 
 
 def _regression_report() -> dict[str, object]:
@@ -1090,7 +1090,7 @@ def test_regression_gate_ignores_retry_observation_renumbering() -> None:
 
 def test_regression_cli_accepts_a_baseline_report() -> None:
     args = _parse_args(
-        ["/opt/codex", "--baseline-report", "/tmp/codex-mcp-baseline.json"]
+        ["/opt/genex", "--baseline-report", "/tmp/codex-mcp-baseline.json"]
     )
 
     assert args.baseline_report == Path("/tmp/codex-mcp-baseline.json")
