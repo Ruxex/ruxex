@@ -63,7 +63,7 @@ pub(crate) async fn request_manual_update(
 const INITIAL_UPDATE_DELAY: Duration = Duration::from_secs(5 * 60);
 const RESTART_RETRY_INTERVAL: Duration = Duration::from_millis(50);
 #[cfg(not(test))]
-const INSTALLER_URL_ENV: &str = "CODEX_INSTALLER_URL";
+const INSTALLER_URL_ENV: &str = "GENEX_INSTALLER_URL";
 
 #[cfg(test)]
 const INSTALL_URL: &str = "https://example.invalid/codex/install";
@@ -336,12 +336,12 @@ async fn update_once(
             );
             (
                 InstallerMode::RestoreProduction(&previous_release),
-                "CODEX_INSTALL_IF_CURRENT",
+                "GENEX_INSTALL_IF_CURRENT",
             )
         } else {
             (
                 InstallerMode::Update(&previous_release),
-                "CODEX_INSTALL_IF_LATEST",
+                "GENEX_INSTALL_IF_LATEST",
             )
         };
     let script = tokio::select! {
@@ -357,8 +357,8 @@ async fn update_once(
     if package_root.ends_with("app-server-daemon") {
         anyhow::ensure!(
             script
-                .windows(b"CODEX_INSTALL_DAEMON_ONLY".len())
-                .any(|window| window == b"CODEX_INSTALL_DAEMON_ONLY"),
+                .windows(b"GENEX_INSTALL_DAEMON_ONLY".len())
+                .any(|window| window == b"GENEX_INSTALL_DAEMON_ONLY"),
             "installer does not support daemon-owned packages"
         );
     }
@@ -564,20 +564,20 @@ async fn run_installer_script(
                 .and_then(Path::parent)
                 .context("package root has no Genex home")?,
         )
-        .env("CODEX_INSTALL_DEFER_SELECTION", defer_selection)
+        .env("GENEX_INSTALL_DEFER_SELECTION", defer_selection)
         .env(
-            "CODEX_INSTALL_DAEMON_ONLY",
+            "GENEX_INSTALL_DAEMON_ONLY",
             if package_root.ends_with("app-server-daemon") {
                 "1"
             } else {
                 "0"
             },
         )
-        .env("CODEX_RELEASE", "latest")
-        .env("CODEX_NON_INTERACTIVE", "1")
-        .env("CODEX_INSTALL_IF_LATEST", latest_guard)
-        .env("CODEX_INSTALL_IF_CURRENT", current_guard)
-        .env("CODEX_UPDATE_FROM_RELEASE", previous_release)
+        .env("GENEX_RELEASE", "latest")
+        .env("GENEX_NON_INTERACTIVE", "1")
+        .env("GENEX_INSTALL_IF_LATEST", latest_guard)
+        .env("GENEX_INSTALL_IF_CURRENT", current_guard)
+        .env("GENEX_UPDATE_FROM_RELEASE", previous_release)
         .kill_on_drop(true)
         .stdin(Stdio::piped())
         .stdout(Stdio::null())

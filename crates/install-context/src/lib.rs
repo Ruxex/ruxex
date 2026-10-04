@@ -65,13 +65,13 @@ pub enum InstallMethod {
         /// The platform of the standalone release, either `Unix` or `Windows`.
         platform: StandalonePlatform,
     },
-    /// A Genex binary launched through the npm-managed `codex.js` shim.
+    /// A Genex binary launched through the npm-managed `genex.js` shim.
     Npm,
-    /// A Genex binary launched through the bun-managed `codex.js` shim.
+    /// A Genex binary launched through the bun-managed `genex.js` shim.
     Bun,
-    /// A Genex binary launched through the pnpm-managed `codex.js` shim.
+    /// A Genex binary launched through the pnpm-managed `genex.js` shim.
     Pnpm,
-    /// A Genex binary launched through the Vite+-managed `codex.js` shim.
+    /// A Genex binary launched through the Vite+-managed `genex.js` shim.
     VitePlus,
     /// A Codex binary that appears to come from a Homebrew install prefix.
     Brew,

@@ -906,7 +906,7 @@ mod tests {
         expect_remote_initialize_with_metadata(
             websocket,
             serde_json::json!({
-                "userAgent": "codex_cli_rs/9.8.7-test (Test OS; x86_64) rust",
+                "userAgent": "genex_cli_rs/9.8.7-test (Test OS; x86_64) rust",
                 "genexHome": "/server/.genex",
             }),
         )

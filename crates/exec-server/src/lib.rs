@@ -39,7 +39,7 @@ mod telemetry;
 
 use genex_exec_server_protocol as protocol;
 
-pub use arg0_exec_helper::CODEX_ARG0_EXEC_HELPER_ARG1;
+pub use arg0_exec_helper::GENEX_ARG0_EXEC_HELPER_ARG1;
 pub use arg0_exec_helper::main as run_arg0_exec_helper_main;
 pub use capability_discovery::CapabilityDiscoveryError;
 pub use capability_discovery::discover_capability_roots;
@@ -83,7 +83,7 @@ pub use environment_bootstrap::PreparedEnvironmentManager;
 pub use environment_provider::DefaultEnvironmentProvider;
 pub use environment_provider::EnvironmentProvider;
 pub use environment_provider::EnvironmentProviderFuture;
-pub use fs_helper::CODEX_FS_HELPER_ARG1;
+pub use fs_helper::GENEX_FS_HELPER_ARG1;
 pub use fs_helper_main::main as run_fs_helper_main;
 pub use local_file_system::LOCAL_FS;
 pub use local_file_system::LocalFileSystem;

@@ -112,7 +112,7 @@ async fn plugin_uninstall_tracks_analytics_event() -> Result<()> {
         payload,
         json!({
             "events": [{
-                "event_type": "codex_plugin_uninstalled",
+                "event_type": "genex_plugin_uninstalled",
                 "event_params": {
                     "plugin_id": "sample-plugin@debug",
                     "remote_plugin_id": null,
@@ -244,7 +244,7 @@ async fn plugin_uninstall_writes_remote_plugin_to_cloud_when_remote_plugin_enabl
         payload,
         json!({
             "events": [{
-                "event_type": "codex_plugin_uninstalled",
+                "event_type": "genex_plugin_uninstalled",
                 "event_params": {
                     "plugin_id": "linear@test-remote",
                     "remote_plugin_id": REMOTE_PLUGIN_ID,

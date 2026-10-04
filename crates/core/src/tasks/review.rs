@@ -61,7 +61,7 @@ impl SessionTask for ReviewTask {
         session
             .services
             .session_telemetry
-            .counter("codex.task.review", /*inc*/ 1, &[]);
+            .counter("genex.task.review", /*inc*/ 1, &[]);
 
         let mut user_input = Vec::new();
         for item in input {

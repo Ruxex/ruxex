@@ -87,7 +87,7 @@ impl ModelsEndpoint {
         http_client_factory: HttpClientFactory,
     ) -> CoreResult<ModelsEndpointResponse> {
         let _timer =
-            genex_otel::start_global_timer("codex.remote_models.fetch_update.duration_ms", &[]);
+            genex_otel::start_global_timer("genex.remote_models.fetch_update.duration_ms", &[]);
         let auth = self.auth().await;
         let identity = crate::models_identity::identity(&self.provider_info, auth.as_ref())?;
         let auth_mode = auth.as_ref().map(GenexAuth::auth_mode);
@@ -230,7 +230,7 @@ impl RequestTelemetry for ModelsRequestTelemetry {
         tracing::event!(
             target: "genex_otel.log_only",
             tracing::Level::INFO,
-            event.name = "codex.api_request",
+            event.name = "genex.api_request",
             duration_ms = %duration.as_millis(),
             http.response.status_code = status,
             success = success,
@@ -250,7 +250,7 @@ impl RequestTelemetry for ModelsRequestTelemetry {
         tracing::event!(
             target: "genex_otel.trace_safe",
             tracing::Level::INFO,
-            event.name = "codex.api_request",
+            event.name = "genex.api_request",
             duration_ms = %duration.as_millis(),
             http.response.status_code = status,
             success = success,

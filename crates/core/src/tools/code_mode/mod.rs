@@ -366,10 +366,10 @@ fn submit_nested_tool(
     let tool_name = tool_name.with_default_namespace();
     // A cell can outlive a turn; the broker records arrival before a dispatching turn is known.
     tracing::event!(
-        name: "codex.code_mode.nested_tool_dispatched",
+        name: "genex.code_mode.nested_tool_dispatched",
         target: "genex_otel.trace_safe",
         tracing::Level::INFO,
-        event.name = "codex.code_mode.nested_tool_dispatched",
+        event.name = "genex.code_mode.nested_tool_dispatched",
         conversation.id = %thread_id,
         turn_id = turn_id.as_str(),
         cell.id = telemetry::trace_id(cell_id.as_str()),

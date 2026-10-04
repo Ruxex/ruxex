@@ -110,7 +110,7 @@ pub(super) async fn mcp_server_elicitation_scenario(
         RequestKind::BrowserAuth => {
             // Browser credentials travel through the browser broker, so the MCP schema is empty.
             elicitation["_meta"] = json!({
-                "codex_approval_kind": "browser_auth",
+                "genex_approval_kind": "browser_auth",
                 "browser_auth_challenge_id": "test_browser_auth_challenge_0123456789",
                 "origin": "https://example.com",
                 "reason": "Sign in to continue browsing.",
@@ -119,10 +119,10 @@ pub(super) async fn mcp_server_elicitation_scenario(
         }
         RequestKind::Permission | RequestKind::StrictReview => {
             elicitation["_meta"] = json!({
-                "codex_request_type": "approval_request",
-                "codex_approval_kind": "mcp_tool_call",
-                "codex_strict_auto_review": matches!(request_kind, RequestKind::StrictReview),
-                "codex_sensitive_action": true,
+                "genex_request_type": "approval_request",
+                "genex_approval_kind": "mcp_tool_call",
+                "genex_strict_auto_review": matches!(request_kind, RequestKind::StrictReview),
+                "genex_sensitive_action": true,
                 "tool_name": "write_record",
                 "tool_params": {"value": 42}
             });

@@ -885,12 +885,12 @@ pub struct Config {
     /// file: it must be set in code via [`ConfigOverrides`].
     pub genex_self_exe: Option<PathBuf>,
 
-    /// Path to the `codex-linux-sandbox` executable. This must be set if
+    /// Path to the `genex-linux-sandbox` executable. This must be set if
     /// [`genex_sandboxing::SandboxType::LinuxSeccomp`] is used. Note that this
     /// cannot be set in the config file: it must be set in code via
     /// [`ConfigOverrides`].
     ///
-    /// When this program is invoked, arg0 will be set to `codex-linux-sandbox`.
+    /// When this program is invoked, arg0 will be set to `genex-linux-sandbox`.
     pub genex_linux_sandbox_exe: Option<PathBuf>,
 
     /// Path to the `genex-execve-wrapper` executable used for shell

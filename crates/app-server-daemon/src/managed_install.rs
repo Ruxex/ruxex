@@ -60,7 +60,7 @@ pub(crate) fn managed_genex_bin(genex_home: &Path) -> PathBuf {
     let root = package_root(genex_home);
     let current = root.join("current");
     let packaged = current.join("bin").join(managed_genex_file_name());
-    let legacy = current.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+    let legacy = current.join(if cfg!(windows) { "genex.exe" } else { "codex" });
     if packaged.is_file()
         || !legacy.is_file() && (cfg!(windows) || root.ends_with("app-server-daemon"))
     {

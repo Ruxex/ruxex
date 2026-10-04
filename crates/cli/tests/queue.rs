@@ -44,7 +44,7 @@ where
     let initialized_response = json!({
         "id": initialize["id"],
         "result": {
-            "userAgent": "codex_cli_rs/0.0.0-test",
+            "userAgent": "genex_cli_rs/0.0.0-test",
             "genexHome": genex_home,
         },
     });
@@ -166,7 +166,7 @@ async fn run_remote_queue_command(response: QueueResponse) -> Result<(Output, Va
             "--remote",
             endpoint.as_str(),
             "--remote-auth-token-env",
-            "CODEX_REMOTE_TOKEN",
+            "GENEX_REMOTE_TOKEN",
             "queue",
         ]
     } else {
@@ -175,12 +175,12 @@ async fn run_remote_queue_command(response: QueueResponse) -> Result<(Output, Va
             "--remote",
             endpoint.as_str(),
             "--remote-auth-token-env",
-            "CODEX_REMOTE_TOKEN",
+            "GENEX_REMOTE_TOKEN",
         ]
     };
     let output = tokio::process::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
         .env("GENEX_HOME", genex_home.path())
-        .env("CODEX_REMOTE_TOKEN", "test-token")
+        .env("GENEX_REMOTE_TOKEN", "test-token")
         .args(remote_args)
         .args(["--thread", THREAD_ID, "--message", "do the thing"])
         .output()

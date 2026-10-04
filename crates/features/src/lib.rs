@@ -451,7 +451,7 @@ impl Features {
             }
             if self.enabled(feature.id) != feature.default_enabled {
                 otel.counter(
-                    "codex.feature.state",
+                    "genex.feature.state",
                     /*inc*/ 1,
                     &[
                         ("feature", feature.key),

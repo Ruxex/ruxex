@@ -29,7 +29,7 @@ pub struct InterruptedTurn {
 
 // Old servers accept the array and skip this non-thread entry during best-effort
 // restoration. Keeping metadata in the same atomic file avoids stale sidecars.
-const INTERRUPTION_PREFIX: &str = "codex-interrupted-v1:";
+const INTERRUPTION_PREFIX: &str = "genex-interrupted-v1:";
 
 pub fn read_snapshot(path: &Path) -> io::Result<RecoverySnapshot> {
     let mut loaded: BTreeSet<String> = match std::fs::read(path) {

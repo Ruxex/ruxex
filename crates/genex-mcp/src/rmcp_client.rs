@@ -82,9 +82,9 @@ pub const MCP_SANDBOX_STATE_META_CAPABILITY: &str = "codex/sandbox-state-meta";
 /// not use it. Its `cacheable: false` property disables sharing tool definitions across connections.
 const MCP_TOOL_CATALOG_CACHE_CAPABILITY: &str = "codex/tool-catalog-cache";
 const MCP_TOOL_CATALOG_CACHEABLE_PROPERTY: &str = "cacheable";
-pub(crate) const MCP_TOOLS_LIST_DURATION_METRIC: &str = "codex.mcp.tools.list.duration_ms";
+pub(crate) const MCP_TOOLS_LIST_DURATION_METRIC: &str = "genex.mcp.tools.list.duration_ms";
 pub(crate) const MCP_TOOLS_FETCH_UNCACHED_DURATION_METRIC: &str =
-    "codex.mcp.tools.fetch_uncached.duration_ms";
+    "genex.mcp.tools.fetch_uncached.duration_ms";
 pub(crate) const DEFAULT_STARTUP_TIMEOUT: Duration = Duration::from_secs(30);
 pub(crate) const DEFAULT_TOOL_TIMEOUT: Duration = Duration::from_secs(300);
 
@@ -694,9 +694,9 @@ fn record_protocol_discovery_metrics(
         Err(_) => "failure",
     };
     let tags = vec![("mode", mode), ("outcome", outcome)];
-    let _ = metrics.counter("codex.mcp.protocol_discovery", /*inc*/ 1, &tags);
+    let _ = metrics.counter("genex.mcp.protocol_discovery", /*inc*/ 1, &tags);
     let _ = metrics.record_duration(
-        "codex.mcp.protocol_discovery.duration_ms",
+        "genex.mcp.protocol_discovery.duration_ms",
         started_at.elapsed(),
         &tags,
     );

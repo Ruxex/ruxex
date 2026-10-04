@@ -79,7 +79,7 @@ async fn adds_weighted_initial_and_threshold_reminders(
                             "output_tokens": 15,
                             "output_tokens_details": null,
                             "total_tokens": 75,
-                            "codex_rollout_budget_units": rollout_budget_units
+                            "genex_rollout_budget_units": rollout_budget_units
                         }
                     }
                 }),
@@ -129,7 +129,7 @@ async fn invalid_provider_rollout_budget_units_fail_without_retry() -> Result<()
 
     let server = start_mock_server().await;
     let mut completed = ev_completed_with_tokens("invalid-units", /*total_tokens*/ 11);
-    completed["response"]["usage"]["codex_rollout_budget_units"] = json!(-1.0);
+    completed["response"]["usage"]["genex_rollout_budget_units"] = json!(-1.0);
     let responses = mount_sse_sequence(
         &server,
         vec![sse(vec![ev_response_created("invalid-units"), completed])],
@@ -156,7 +156,7 @@ async fn invalid_provider_rollout_budget_units_fail_without_retry() -> Result<()
     };
     assert_eq!(
         error.message,
-        "Fatal error: response.completed usage.codex_rollout_budget_units must be finite and non-negative"
+        "Fatal error: response.completed usage.genex_rollout_budget_units must be finite and non-negative"
     );
     assert_eq!(error.genex_error_info, Some(GenexErrorInfo::Other));
     wait_for_event(&test.genex, |event| {
@@ -348,7 +348,7 @@ async fn compaction_budget_exhaustion_fails_without_retry(
         /*total_tokens*/ if provider_units { 1 } else { 10 },
     );
     if provider_units {
-        completed["response"]["usage"]["codex_rollout_budget_units"] = json!(10.0);
+        completed["response"]["usage"]["genex_rollout_budget_units"] = json!(10.0);
     }
     let compact_response = if remote_v2 {
         sse(vec![

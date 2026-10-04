@@ -1,7 +1,7 @@
 use genex_git_utils::SanitizedGitUrl;
 use genex_git_utils::collect_git_info;
-use genex_login::CODEX_ACCESS_TOKEN_ENV_VAR;
-use genex_login::CODEX_API_KEY_ENV_VAR;
+use genex_login::GENEX_ACCESS_TOKEN_ENV_VAR;
+use genex_login::GENEX_API_KEY_ENV_VAR;
 use genex_protocol::protocol::GitInfo;
 use core_test_support::fs_wait;
 use core_test_support::responses;
@@ -82,9 +82,9 @@ fn personal_access_token_exec_command(server: &MockServer, home: &TempDir) -> Co
         .arg(repo_root())
         .arg("hello?");
     cmd.env("GENEX_HOME", home.path())
-        .env(CODEX_ACCESS_TOKEN_ENV_VAR, PERSONAL_ACCESS_TOKEN)
-        .env("CODEX_AUTHAPI_BASE_URL", server.uri())
-        .env_remove(CODEX_API_KEY_ENV_VAR)
+        .env(GENEX_ACCESS_TOKEN_ENV_VAR, PERSONAL_ACCESS_TOKEN)
+        .env("GENEX_AUTHAPI_BASE_URL", server.uri())
+        .env_remove(GENEX_API_KEY_ENV_VAR)
         .env_remove("PROVIDER_API_KEY");
     cmd
 }
@@ -159,7 +159,7 @@ async fn responses_mode_stream_cli_supports_personal_access_tokens() {
 
     assert!(
         output.status.success(),
-        "codex-cli exec failed: {}",
+        "genex-cli exec failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
     let request = resp_mock.single_request();
@@ -492,12 +492,12 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg(&repo_root)
         .arg(&prompt);
     cmd.env("GENEX_HOME", home.path())
-        .env(CODEX_API_KEY_ENV_VAR, "dummy");
+        .env(GENEX_API_KEY_ENV_VAR, "dummy");
 
     let output = run_cli_command(&mut cmd).unwrap();
     assert!(
         output.status.success(),
-        "codex-cli exec failed: {}",
+        "genex-cli exec failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
 
@@ -616,7 +616,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .env("PROVIDER_API_KEY", "dummy");
 
     let output2 = run_cli_command(&mut cmd2).unwrap();
-    assert!(output2.status.success(), "resume codex-cli run failed");
+    assert!(output2.status.success(), "resume genex-cli run failed");
     assert_eq!(resp_mock.requests().len(), 2);
 
     // Find the new session file containing the resumed marker.

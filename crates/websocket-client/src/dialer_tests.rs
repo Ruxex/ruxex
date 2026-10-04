@@ -126,7 +126,7 @@ async fn tungstenite_default_tls_mode_ignores_invalid_custom_ca_in_a_subprocess(
         }
         command
             .env(
-                "CODEX_CA_CERTIFICATE",
+                "GENEX_CA_CERTIFICATE",
                 "/genex-websocket-client-nonexistent-custom-ca.pem",
             )
             .env("GENEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL", target_url)

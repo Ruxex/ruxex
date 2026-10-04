@@ -137,19 +137,19 @@ use genex_response_debug_context::extract_response_debug_context_from_api_error;
 use genex_response_debug_context::telemetry_api_error_message;
 use genex_response_debug_context::telemetry_transport_error_message;
 
-pub const X_CODEX_INSTALLATION_ID_HEADER: &str = "x-codex-installation-id";
-pub const X_CODEX_ROUTING_HINT_HEADER: &str = "x-codex-routing-hint";
-pub const X_CODEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
-pub const X_CODEX_TURN_METADATA_HEADER: &str = "x-codex-turn-metadata";
-pub const X_CODEX_PARENT_THREAD_ID_HEADER: &str = "x-codex-parent-thread-id";
-pub const X_CODEX_WINDOW_ID_HEADER: &str = "x-codex-window-id";
+pub const X_GENEX_INSTALLATION_ID_HEADER: &str = "x-codex-installation-id";
+pub const X_GENEX_ROUTING_HINT_HEADER: &str = "x-codex-routing-hint";
+pub const X_GENEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
+pub const X_GENEX_TURN_METADATA_HEADER: &str = "x-codex-turn-metadata";
+pub const X_GENEX_PARENT_THREAD_ID_HEADER: &str = "x-codex-parent-thread-id";
+pub const X_GENEX_WINDOW_ID_HEADER: &str = "x-codex-window-id";
 pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
     "x-responsesapi-include-timing-metrics";
-const X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
+const X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
     "x-codex-ws-stream-request-start-ms";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
     "ws_request_header_x_provider_internal_codex_responses_lite";
-const X_PROVIDER_INTERNAL_CODEX_RESPONSES_LITE_HEADER: &str =
+const X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER: &str =
     "x-provider-internal-codex-responses-lite";
 #[cfg(test)]
 pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
@@ -557,7 +557,7 @@ impl ModelClient {
         if activated {
             warn!("falling back to HTTP");
             session_telemetry.counter(
-                "codex.transport.fallback_to_http",
+                "genex.transport.fallback_to_http",
                 /*inc*/ 1,
                 &[("from_wire_api", "responses_websocket")],
             );
@@ -971,7 +971,7 @@ impl ModelClient {
         ));
         headers.extend(self.build_responses_compatibility_headers(responses_metadata));
         if let Some(routing_hint) = &responses_metadata.routing_hint {
-            headers.insert(X_CODEX_ROUTING_HINT_HEADER, routing_hint.clone());
+            headers.insert(X_GENEX_ROUTING_HINT_HEADER, routing_hint.clone());
         }
         if let Some(header_value) = self.generate_attestation_header_for().await {
             headers.insert(X_OAI_ATTESTATION_HEADER, header_value);
@@ -1434,7 +1434,7 @@ impl ModelClientSession {
             ) {
                 options
                     .extra_headers
-                    .insert(X_CODEX_ROUTING_HINT_HEADER, header_value);
+                    .insert(X_GENEX_ROUTING_HINT_HEADER, header_value);
             }
             request.access_programs =
                 cyber_access_program::for_program(prompt.cyber_access_program);
@@ -1622,7 +1622,7 @@ impl ModelClientSession {
                 .client
                 .build_ws_client_metadata(responses_metadata, model_info.use_responses_lite);
             if let Some(turn_state) = self.turn_state.get() {
-                client_metadata.insert(X_CODEX_TURN_STATE_HEADER.to_string(), turn_state.clone());
+                client_metadata.insert(X_GENEX_TURN_STATE_HEADER.to_string(), turn_state.clone());
             }
             let continuation = self.prepare_websocket_request(&request);
             let (mode, reason) = if continuation.is_some() {
@@ -1927,7 +1927,7 @@ fn stamp_ws_stream_request_start_ms(request: &mut ResponsesWsRequest<'_>) {
         .client_metadata
         .get_or_insert_with(HashMap::new)
         .insert(
-            X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY.to_string(),
+            X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY.to_string(),
             crate::turn_timing::now_unix_timestamp_ms().to_string(),
         );
 }
@@ -1953,7 +1953,7 @@ fn build_responses_headers(
         && let Some(state) = turn_state.get()
         && let Ok(header_value) = HeaderValue::from_str(state)
     {
-        headers.insert(X_CODEX_TURN_STATE_HEADER, header_value);
+        headers.insert(X_GENEX_TURN_STATE_HEADER, header_value);
     }
     headers
 }
@@ -1961,7 +1961,7 @@ fn build_responses_headers(
 fn add_responses_lite_header(headers: &mut ApiHeaderMap, use_responses_lite: bool) {
     if use_responses_lite {
         headers.insert(
-            X_PROVIDER_INTERNAL_CODEX_RESPONSES_LITE_HEADER,
+            X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER,
             HeaderValue::from_static("true"),
         );
     }

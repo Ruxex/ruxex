@@ -23,7 +23,7 @@ fn every_source_distinguishes_audits_from_blocks() {
         (4, 3076, 3077),
     ] {
         for (id, expected) in [(audit, CheckStatus::Warning), (block, CheckStatus::Fail)] {
-            let events = parse_events(&fixture(id, "codex.exe", &[]), CHANNELS[channel]);
+            let events = parse_events(&fixture(id, "genex.exe", &[]), CHANNELS[channel]);
             assert_eq!(events[0].0, expected, "misclassified event {id}");
         }
     }
@@ -38,7 +38,7 @@ fn defender_distinguishes_detection_and_remediation() {
         (1117, "Remove", CheckStatus::Fail),
     ] {
         let events = parse_events(
-            &fixture(id, "codex.exe", &[("Action Name", action)]),
+            &fixture(id, "genex.exe", &[("Action Name", action)]),
             CHANNELS[0],
         );
         assert_eq!(classify(&[Some(events)]).status, expected);
@@ -48,7 +48,7 @@ fn defender_distinguishes_detection_and_remediation() {
 #[test]
 fn only_trusted_codex_executables_are_reported() {
     for (path, expected) in [
-        ("codex.exe", true),
+        ("genex.exe", true),
         (r"provider.Codex_2p2nqsd0c76g0\OtherApp.exe", false),
         ("evil-codex.exe", false),
         (r"C:\Other\OtherApp.exe", false),
@@ -63,9 +63,9 @@ fn only_trusted_codex_executables_are_reported() {
 fn evidence_is_bounded_redacted_and_correctly_classified() {
     assert_eq!(classify(&[None]).status, CheckStatus::Warning);
     assert_eq!(classify(&[Some(Vec::new()), None]).status, CheckStatus::Ok);
-    let audits = fixture(/*id*/ 1122, "codex.exe", &[]).repeat(MAX_RENDERED_EVENTS);
+    let audits = fixture(/*id*/ 1122, "genex.exe", &[]).repeat(MAX_RENDERED_EVENTS);
     let secret = "private-customer-secret";
-    let block = fixture(/*id*/ 1121, "codex.exe", &[("User", secret)]);
+    let block = fixture(/*id*/ 1121, "genex.exe", &[("User", secret)]);
     let events = parse_events(&format!("{audits}{block}"), CHANNELS[0]);
     let check = classify(&[Some(events)]);
     assert_eq!(check.id, "desktop.security.enforcement");

@@ -38,7 +38,7 @@ const CREDENTIAL_NAME: &str = "ema-idp:enterprise-secret-sentinel";
 mod logout;
 
 async fn isolated_process(test_name: &str) -> Result<bool> {
-    const CHILD: &str = "CODEX_ENTERPRISE_LOGIN_TEST_CHILD";
+    const CHILD: &str = "GENEX_ENTERPRISE_LOGIN_TEST_CHILD";
     if std::env::var_os(CHILD).is_some() {
         return Ok(false);
     }

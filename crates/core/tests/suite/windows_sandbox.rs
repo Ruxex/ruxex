@@ -440,7 +440,7 @@ async fn windows_elevated_does_not_create_missing_workspace_metadata() -> anyhow
             r#"
 $ErrorActionPreference = 'Stop'
 $sid = (Get-LocalUser -Name 'CodexSandboxOffline').SID.Value
-$rules = foreach ($name in @('codex_sandbox_offline_block_inbound', 'codex_sandbox_offline_block_outbound')) {
+$rules = foreach ($name in @('genex_sandbox_offline_block_inbound', 'genex_sandbox_offline_block_outbound')) {
     $rule = @(Get-NetFirewallRule -PolicyStore ActiveStore -DisplayName $name)
     if ($rule.Count -ne 1) { throw "Expected exactly one effective rule for $name" }
     $address = $rule | Get-NetFirewallAddressFilter
@@ -477,8 +477,8 @@ $rules = foreach ($name in @('codex_sandbox_offline_block_inbound', 'codex_sandb
         .context("offline sandbox firewall rules should include their user SID")?;
     let local_user = format!("O:LSD:(A;;CC;;;{offline_sid})");
     let expected_rules: Vec<_> = [
-        ("codex_sandbox_offline_block_inbound", "Inbound"),
-        ("codex_sandbox_offline_block_outbound", "Outbound"),
+        ("genex_sandbox_offline_block_inbound", "Inbound"),
+        ("genex_sandbox_offline_block_outbound", "Outbound"),
     ]
     .into_iter()
     .map(|(name, direction)| {

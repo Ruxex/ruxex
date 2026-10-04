@@ -1,6 +1,6 @@
 //! Handshake coverage for the custom trust path retained by Windows realtime connections.
 
-use super::CODEX_CA_CERT_ENV;
+use super::GENEX_CA_CERT_ENV;
 use super::ConfiguredCaBundle;
 use super::build_rustls_client_config;
 use pretty_assertions::assert_eq;
@@ -27,7 +27,7 @@ fn custom_intermediate_trust_preserves_hostname_validation() {
     let path = temp.path().join("intermediate.pem");
     std::fs::write(&path, intermediate.pem()).unwrap();
     let config = build_rustls_client_config(Some(&ConfiguredCaBundle {
-        source_env: CODEX_CA_CERT_ENV,
+        source_env: GENEX_CA_CERT_ENV,
         path,
     }))
     .unwrap();

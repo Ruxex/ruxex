@@ -264,11 +264,11 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
             client_managed_handoffs: false,
             delegation_ack_filler: None,
             flush_transcript_tail_on_session_end: false,
-            codex_responses_as_items: false,
-            codex_response_item_prefix: None,
-            codex_response_handoff_mode:
-                genex_protocol::protocol::CodexResponseHandoffMode::Thinking,
-            codex_response_handoff_channel_prefixes: None,
+            genex_responses_as_items: false,
+            genex_response_item_prefix: None,
+            genex_response_handoff_mode:
+                genex_protocol::protocol::GenexResponseHandoffMode::Thinking,
+            genex_response_handoff_channel_prefixes: None,
             model: None,
             output_modality: genex_protocol::protocol::RealtimeOutputModality::Audio,
             include_startup_context: false,

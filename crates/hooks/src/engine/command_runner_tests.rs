@@ -17,7 +17,7 @@ use genex_protocol::protocol::HookOutputEntry;
 use genex_protocol::protocol::HookOutputEntryKind;
 use genex_protocol::protocol::HookRunStatus;
 use genex_protocol::protocol::HookSource;
-use genex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use genex_protocol::shell_environment::GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -295,7 +295,7 @@ async fn command_hook_does_not_expose_configured_noise_auth_token() {
     let command = if cfg!(windows) { "set" } else { "env" };
     let env = HashMap::from([
         (
-            CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_ascii_lowercase(),
+            GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_ascii_lowercase(),
             "configured-noise-token".to_string(),
         ),
         ("GENEX_HOOK_SAFE_ENV".to_string(), "visible".to_string()),
@@ -324,7 +324,7 @@ async fn command_hook_does_not_expose_configured_noise_auth_token() {
     assert!(result.stdout.contains("GENEX_HOOK_SAFE_ENV=visible"));
     assert!(!result.stdout.lines().any(|line| {
         line.split_once('=').is_some_and(|(name, _)| {
-            name.eq_ignore_ascii_case(CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR)
+            name.eq_ignore_ascii_case(GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR)
         })
     }));
     assert_eq!(result.error, None);
@@ -344,7 +344,7 @@ fn build_command_replays_snapshot_before_hook_overrides_and_scrubbing() {
             OsString::from("captured"),
         ),
         (
-            OsString::from(CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR),
+            OsString::from(GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR),
             OsString::from("captured-noise-token"),
         ),
         #[cfg(unix)]
@@ -357,7 +357,7 @@ fn build_command_replays_snapshot_before_hook_overrides_and_scrubbing() {
         ("GENEX_HOOK_OVERRIDE".to_string(), "configured".to_string()),
         ("GENEX_HOOK_SAFE_ENV".to_string(), "visible".to_string()),
         (
-            CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_string(),
+            GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_string(),
             "configured-noise-token".to_string(),
         ),
     ]);
@@ -384,7 +384,7 @@ fn build_command_replays_snapshot_before_hook_overrides_and_scrubbing() {
         Some(Some(OsString::from("visible")))
     );
     assert_eq!(
-        configured_environment_value(&command, CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR),
+        configured_environment_value(&command, GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR),
         None
     );
     #[cfg(unix)]

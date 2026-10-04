@@ -158,7 +158,7 @@ async fn task_context_recovers_prior_requests_and_explicit_intent_without_changi
     let metric = snapshot
         .scope_metrics()
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-        .find(|metric| metric.name() == "codex.skills.shadow_selection.invocation")
+        .find(|metric| metric.name() == "genex.skills.shadow_selection.invocation")
         .ok_or("shadow invocation metric should exist")?;
     let AggregatedMetrics::U64(MetricData::Sum(sum)) = metric.data() else {
         panic!("unexpected shadow metric: {:?}", metric.data());

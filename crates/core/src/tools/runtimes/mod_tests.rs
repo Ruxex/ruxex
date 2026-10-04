@@ -546,7 +546,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_codex_metadata_from_env() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport CODEX_THREAD_ID='parent-thread'\nexport CODEX_VERSION='old-version'\n",
+        "# Snapshot file\nexport GENEX_THREAD_ID='parent-thread'\nexport GENEX_VERSION='old-version'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -554,12 +554,12 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_codex_metadata_from_env() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printf '%s|%s' \"$CODEX_THREAD_ID\" \"$CODEX_VERSION\"".to_string(),
+        "printf '%s|%s' \"$GENEX_THREAD_ID\" \"$GENEX_VERSION\"".to_string(),
     ];
     let env = HashMap::from([
-        ("CODEX_THREAD_ID".to_string(), "nested-thread".to_string()),
+        ("GENEX_THREAD_ID".to_string(), "nested-thread".to_string()),
         (
-            "CODEX_VERSION".to_string(),
+            "GENEX_VERSION".to_string(),
             env!("CARGO_PKG_VERSION").to_string(),
         ),
     ]);
@@ -590,7 +590,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_permission_profile_from_env() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport CODEX_PERMISSION_PROFILE='parent-profile'\n",
+        "# Snapshot file\nexport GENEX_PERMISSION_PROFILE='parent-profile'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -598,10 +598,10 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_permission_profile_from_env() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printenv CODEX_PERMISSION_PROFILE".to_string(),
+        "printenv GENEX_PERMISSION_PROFILE".to_string(),
     ];
     let env = HashMap::from([(
-        CODEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
+        GENEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
         "current-profile".to_string(),
     )]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -614,7 +614,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_permission_profile_from_env() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env(CODEX_PERMISSION_PROFILE_ENV_VAR, "current-profile")
+        .env(GENEX_PERMISSION_PROFILE_ENV_VAR, "current-profile")
         .output()
         .expect("run rewritten command");
 
@@ -628,7 +628,7 @@ fn maybe_wrap_shell_lc_with_snapshot_unsets_absent_permission_profile() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport CODEX_PERMISSION_PROFILE='stale-profile'\n",
+        "# Snapshot file\nexport GENEX_PERMISSION_PROFILE='stale-profile'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -636,7 +636,7 @@ fn maybe_wrap_shell_lc_with_snapshot_unsets_absent_permission_profile() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printenv CODEX_PERMISSION_PROFILE".to_string(),
+        "printenv GENEX_PERMISSION_PROFILE".to_string(),
     ];
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
         &command,
@@ -648,7 +648,7 @@ fn maybe_wrap_shell_lc_with_snapshot_unsets_absent_permission_profile() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env_remove(CODEX_PERMISSION_PROFILE_ENV_VAR)
+        .env_remove(GENEX_PERMISSION_PROFILE_ENV_VAR)
         .output()
         .expect("run rewritten command");
 
@@ -717,7 +717,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_reserved_metrics_output_env() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport CODEX_PLUGIN_METRICS_OUTPUT='/stale/path'\n",
+        "# Snapshot file\nexport GENEX_PLUGIN_METRICS_OUTPUT='/stale/path'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -725,7 +725,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_reserved_metrics_output_env() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printf '%s' \"${CODEX_PLUGIN_METRICS_OUTPUT-unset}\"".to_string(),
+        "printf '%s' \"${GENEX_PLUGIN_METRICS_OUTPUT-unset}\"".to_string(),
     ];
 
     for (live_value, expected) in [(None, "unset"), (Some("/private/path"), "/private/path")] {
@@ -1126,7 +1126,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         format!("{dummy}|unset")
     );
 
-    let injection = "\"; printf CODEX_ENV_INJECTED; __genex_env_file=\"";
+    let injection = "\"; printf GENEX_ENV_INJECTED; __genex_env_file=\"";
     expanded_env.insert("ENV".to_string(), injection.to_string());
     let startup_value_snapshot = dir.path().join("startup-value-snapshot.sh").abs();
     std::fs::write(
@@ -1860,7 +1860,7 @@ fn maybe_wrap_shell_lc_with_snapshot_preserves_unset_override_variables() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport CODEX_TEST_UNSET_OVERRIDE='snapshot-value'\n",
+        "# Snapshot file\nexport GENEX_TEST_UNSET_OVERRIDE='snapshot-value'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -1868,10 +1868,10 @@ fn maybe_wrap_shell_lc_with_snapshot_preserves_unset_override_variables() {
     let command = vec![
             "/bin/bash".to_string(),
             "-lc".to_string(),
-            "if [ \"${CODEX_TEST_UNSET_OVERRIDE+x}\" = x ]; then printf 'set:%s' \"$CODEX_TEST_UNSET_OVERRIDE\"; else printf 'unset'; fi".to_string(),
+            "if [ \"${GENEX_TEST_UNSET_OVERRIDE+x}\" = x ]; then printf 'set:%s' \"$GENEX_TEST_UNSET_OVERRIDE\"; else printf 'unset'; fi".to_string(),
         ];
     let explicit_env_overrides = HashMap::from([(
-        "CODEX_TEST_UNSET_OVERRIDE".to_string(),
+        "GENEX_TEST_UNSET_OVERRIDE".to_string(),
         "worktree-value".to_string(),
     )]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -1885,7 +1885,7 @@ fn maybe_wrap_shell_lc_with_snapshot_preserves_unset_override_variables() {
 
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env_remove("CODEX_TEST_UNSET_OVERRIDE")
+        .env_remove("GENEX_TEST_UNSET_OVERRIDE")
         .output()
         .expect("run rewritten command");
     assert!(output.status.success(), "command failed: {output:?}");

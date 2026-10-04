@@ -32,7 +32,7 @@ use std::io;
 use std::sync::Arc;
 use toml::Value as TomlValue;
 
-const EXTERNAL_AGENT_CONFIG_DETECT_METRIC: &str = "codex.external_agent_config.detect";
+const EXTERNAL_AGENT_CONFIG_DETECT_METRIC: &str = "genex.external_agent_config.detect";
 
 impl ExternalAgentConfigService {
     pub async fn detect(

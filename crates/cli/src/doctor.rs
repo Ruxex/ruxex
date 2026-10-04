@@ -49,7 +49,7 @@ use genex_install_context::InstallMethod;
 use genex_install_context::StandalonePlatform;
 use genex_login::AuthDotJson;
 use genex_login::AuthManager;
-use genex_login::CODEX_API_KEY_ENV_VAR;
+use genex_login::GENEX_API_KEY_ENV_VAR;
 use genex_login::GenexAuth;
 use genex_login::default_client::create_client_without_request_logging;
 use genex_login::default_client::default_headers;
@@ -872,7 +872,7 @@ fn installation_check(show_details: bool) -> DoctorCheck {
     push_env_path_detail(
         &mut details,
         "managed package root",
-        "CODEX_MANAGED_PACKAGE_ROOT",
+        "GENEX_MANAGED_PACKAGE_ROOT",
     );
 
     let path_entries = genex_path_entries();
@@ -895,11 +895,11 @@ fn installation_check(show_details: bool) -> DoctorCheck {
     if doctor_managed_by_npm(current_exe.as_deref()) {
         details
             .push("npm update target: not inspected (PATH helpers are not executed)".to_string());
-        if env::var_os("CODEX_MANAGED_PACKAGE_ROOT").is_none() {
+        if env::var_os("GENEX_MANAGED_PACKAGE_ROOT").is_none() {
             status = status.max(CheckStatus::Warning);
             summary = "npm-managed launch is missing package-root provenance".to_string();
             remediation = Some(
-                "Reinstall or update Genex so the JS shim provides CODEX_MANAGED_PACKAGE_ROOT."
+                "Reinstall or update Genex so the JS shim provides GENEX_MANAGED_PACKAGE_ROOT."
                     .to_string(),
             );
         }
@@ -1154,7 +1154,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
     ));
     details.push(format!("auth file: {}", auth_path.display()));
 
-    let env_auth_vars = [CODEX_API_KEY_ENV_VAR]
+    let env_auth_vars = [GENEX_API_KEY_ENV_VAR]
         .into_iter()
         .filter(|name| env_var_present(name))
         .collect::<Vec<_>>();
@@ -1334,7 +1334,7 @@ fn stored_auth_issues(
                 .api_key
                 .as_deref()
                 .is_some_and(|key| !key.trim().is_empty());
-            let env_key_present = env_var_present(CODEX_API_KEY_ENV_VAR);
+            let env_key_present = env_var_present(GENEX_API_KEY_ENV_VAR);
             if !stored_key_present && !env_key_present {
                 issues.push("API key auth is missing an API key");
             }
@@ -2435,7 +2435,7 @@ fn provider_auth_reachability_mode_from_auth(
     if provider_base_url.is_some_and(|url| !url.trim().is_empty())
         && provider_env_key
             .is_some_and(|env_key| !env_key.trim().is_empty() && env_var_present(env_key))
-        || env_var_present(CODEX_API_KEY_ENV_VAR)
+        || env_var_present(GENEX_API_KEY_ENV_VAR)
     {
         return ProviderAuthReachabilityMode::ApiKey;
     }

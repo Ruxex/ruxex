@@ -231,7 +231,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
 
     test.cmd_with_server(&server)
         .env_remove("CODEX_API_KEY")
-        .env_remove("CODEX_ANALYTICS_EVENTS_CAPTURE_FILE")
+        .env_remove("GENEX_ANALYTICS_EVENTS_CAPTURE_FILE")
         .arg("--skip-git-repo-check")
         .arg("-s")
         .arg("danger-full-access")
@@ -285,13 +285,13 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         deliveries.load(Ordering::Acquire)
     );
     assert!(
-        event_types.iter().any(|event| event == "codex_turn_event"),
+        event_types.iter().any(|event| event == "genex_turn_event"),
         "no completed event was delivered; request paths: {request_paths:?}"
     );
     assert!(
         event_types
             .iter()
-            .any(|event| event == "codex_accepted_line_fingerprints"),
+            .any(|event| event == "genex_accepted_line_fingerprints"),
         "no accepted-line event was delivered; request paths: {request_paths:?}"
     );
 

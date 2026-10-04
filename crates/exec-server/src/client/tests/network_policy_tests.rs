@@ -476,7 +476,7 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
                 tracing::Span::current()
                     .metadata()
                     .map(tracing::Metadata::name),
-                Some("codex.exec_server.request"),
+                Some("genex.exec_server.request"),
                 "network policy decisions must run inside the inbound request span"
             );
             match request.host.as_str() {

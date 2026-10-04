@@ -4,7 +4,7 @@ use pretty_assertions::assert_eq;
 fn discovers_package_and_legacy_installs() {
     let home = tempfile::TempDir::new().expect("home");
     let current = home.path().join("packages/standalone/current");
-    let legacy = current.join(if cfg!(windows) { "codex.exe" } else { "codex" });
+    let legacy = current.join(if cfg!(windows) { "genex.exe" } else { "codex" });
     assert_eq!(
         super::managed_genex_bin(home.path()),
         home.path()

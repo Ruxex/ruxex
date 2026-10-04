@@ -14,7 +14,7 @@ use genex_app_server_protocol::FsWatchResponse;
 use genex_app_server_protocol::FsWriteFileParams;
 use genex_app_server_protocol::JSONRPCNotification;
 use genex_app_server_protocol::RequestId;
-use genex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR;
+use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -131,7 +131,7 @@ async fn fs_methods_return_error_when_local_environment_is_disabled() -> Result<
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(CODEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;

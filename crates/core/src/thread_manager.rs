@@ -343,10 +343,10 @@ impl ThreadSpawnRequest {
 fn originator_from_service_name(service_name: Option<&str>) -> Option<String> {
     let service_name = service_name?.trim();
     for originator in [
-        "codex_work_desktop",
-        "codex_work_web",
-        "codex_work_mobile",
-        "codex_work_cca",
+        "genex_work_desktop",
+        "genex_work_web",
+        "genex_work_mobile",
+        "genex_work_cca",
     ] {
         if service_name.eq_ignore_ascii_case(originator) {
             return Some(originator.to_string());

@@ -588,7 +588,7 @@ fn record_windows_sandbox_spawn_failure(
     };
     if let Some(metrics) = genex_otel::global() {
         let _ = metrics.counter(
-            "codex.windows_sandbox.createprocessasuserw_failed",
+            "genex.windows_sandbox.createprocessasuserw_failed",
             /*inc*/ 1,
             &[
                 ("error_code", error_code.as_str()),
@@ -908,7 +908,7 @@ fn aggregate_output(
 /// output consumption begins.
 ///
 /// `network_sandbox_policy` is used to determine whether
-/// CODEX_SANDBOX_NETWORK_DISABLED=1 is added to the environment of the spawned
+/// GENEX_SANDBOX_NETWORK_DISABLED=1 is added to the environment of the spawned
 /// process.
 ///
 /// Note this command does not apply any sandboxing logic. The caller is

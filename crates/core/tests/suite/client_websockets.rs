@@ -7,7 +7,7 @@ use genex_core::ModelClientSession;
 use genex_core::Prompt;
 use genex_core::ResponseEvent;
 use genex_core::TurnInputRequest;
-use genex_core::X_CODEX_ROUTING_HINT_HEADER;
+use genex_core::X_GENEX_ROUTING_HINT_HEADER;
 use genex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
 use genex_core::test_support::with_parent_turn;
 use genex_features::Feature;
@@ -79,7 +79,7 @@ const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
     "ws_request_header_x_provider_internal_codex_responses_lite";
 const TEST_INSTALLATION_ID: &str = "11111111-1111-4111-8111-111111111111";
 const TEST_WINDOW_ID: &str = "test-thread:0";
-const X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
+const X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
     "x-codex-ws-stream-request-start-ms";
 
 fn assert_request_trace_matches(body: &serde_json::Value, expected_trace: &W3cTraceContext) {
@@ -282,7 +282,7 @@ async fn responses_websocket_streams_request() {
     assert_eq!(body["input"].as_array().map(Vec::len), Some(1));
     let handshake = server.single_handshake();
     assert_eq!(
-        handshake.header(X_CODEX_ROUTING_HINT_HEADER),
+        handshake.header(X_GENEX_ROUTING_HINT_HEADER),
         Some(format!("model={MODEL}"))
     );
     assert_eq!(
@@ -306,7 +306,7 @@ async fn responses_websocket_streams_request() {
         Some(TEST_INSTALLATION_ID)
     );
     let stream_request_start_ms = body["client_metadata"]
-        [X_CODEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY]
+        [X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY]
         .as_str()
         .expect("missing websocket stream request start timestamp")
         .parse::<i64>()
@@ -347,7 +347,7 @@ async fn responses_websocket_omits_routing_hint_for_provider_with_own_credential
         handshake.header("authorization"),
         Some("Bearer provider-specific-token".to_string())
     );
-    assert_eq!(handshake.header(X_CODEX_ROUTING_HINT_HEADER), None);
+    assert_eq!(handshake.header(X_GENEX_ROUTING_HINT_HEADER), None);
 
     server.shutdown().await;
 }
@@ -1223,7 +1223,7 @@ async fn responses_websocket_prewarm_includes_model_and_tier_routing_hint() {
 
     let handshake = server.single_handshake();
     assert_eq!(
-        handshake.header(X_CODEX_ROUTING_HINT_HEADER),
+        handshake.header(X_GENEX_ROUTING_HINT_HEADER),
         Some(format!("model={MODEL};tier={service_tier}"))
     );
     let connection = server.single_connection();
@@ -1316,7 +1316,7 @@ async fn responses_websocket_preconnect_runs_when_only_v2_feature_enabled() {
     assert_eq!(
         server
             .single_handshake()
-            .header(X_CODEX_ROUTING_HINT_HEADER),
+            .header(X_GENEX_ROUTING_HINT_HEADER),
         None
     );
 
@@ -1669,7 +1669,7 @@ async fn responses_websocket_emits_rate_limit_events() {
     skip_if_no_network!();
 
     let rate_limit_event = json!({
-        "type": "codex.rate_limits",
+        "type": "genex.rate_limits",
         "plan_type": "plus",
         "rate_limits": {
             "allowed": true,
@@ -1693,7 +1693,7 @@ async fn responses_websocket_emits_rate_limit_events() {
     let server = start_websocket_server_with_headers(vec![WebSocketConnectionConfig {
         requests: vec![vec![
             json!({
-                "type": "codex.response.metadata",
+                "type": "genex.response.metadata",
                 "headers": {"x-models-etag": "etag-123"},
             }),
             rate_limit_event,

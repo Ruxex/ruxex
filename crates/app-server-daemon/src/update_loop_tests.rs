@@ -71,7 +71,7 @@ async fn explicit_update_migrates_running_and_stopped_installations() {
         }
         let previous = root.join("current").canonicalize().unwrap();
         let scheduled = FakeInstallerHttp::new(InstallerResponse::Success(
-        b"# CODEX_INSTALL_IF_LATEST\ntest \"$CODEX_INSTALL_DEFER_SELECTION\" = 0 && test \"$CODEX_INSTALL_DAEMON_ONLY\" = 0\n".to_vec(),
+        b"# GENEX_INSTALL_IF_LATEST\ntest \"$GENEX_INSTALL_DEFER_SELECTION\" = 0 && test \"$GENEX_INSTALL_DAEMON_ONLY\" = 0\n".to_vec(),
     ));
         super::update_once(
             &scheduled,
@@ -121,12 +121,12 @@ async fn explicit_update_migrates_running_and_stopped_installations() {
         );
 
         let script = format!(
-            r#"# CODEX_INSTALL_DEFER_SELECTION
+            r#"# GENEX_INSTALL_DEFER_SELECTION
 set -eu
-test "$CODEX_INSTALL_DEFER_SELECTION" = 1
-test "$CODEX_INSTALL_IF_CURRENT" = 0
-test "$CODEX_INSTALL_DAEMON_ONLY" = 1
-test "$CODEX_INSTALL_IF_LATEST" = 0
+test "$GENEX_INSTALL_DEFER_SELECTION" = 1
+test "$GENEX_INSTALL_IF_CURRENT" = 0
+test "$GENEX_INSTALL_DAEMON_ONLY" = 1
+test "$GENEX_INSTALL_IF_LATEST" = 0
 root="$GENEX_HOME/packages/app-server-daemon"
 mkdir -p "$root/releases/{release}/bin"
 printf '#!/bin/sh\nif [ "$1" = --version ]; then echo genex 1.0.0; else exit 2; fi\n' > "$root/releases/{release}/bin/genex"
@@ -595,9 +595,9 @@ async fn check_manual_update_restart(package_directory: &str) {
         .trim_start_matches("local-development-")
         .replacen("1.0.0", version, 1);
     let guard = if local_package {
-        "CODEX_INSTALL_IF_CURRENT"
+        "GENEX_INSTALL_IF_CURRENT"
     } else {
-        "CODEX_INSTALL_IF_LATEST"
+        "GENEX_INSTALL_IF_LATEST"
     };
     let install_binary = if local_package {
         // Same binary and version, but a different package: it must still restart.
@@ -614,7 +614,7 @@ async fn check_manual_update_restart(package_directory: &str) {
     let ready = home.path().join("installer-ready");
     let proceed = home.path().join("installer-proceed");
     let script = format!(
-        "#!/bin/sh\n# CODEX_INSTALL_IF_LATEST CODEX_INSTALL_IF_CURRENT CODEX_INSTALL_DAEMON_ONLY\nif [ \"$CODEX_UPDATE_FROM_RELEASE\" = '{next}' ]; then exit 0; fi\ntest \"${guard}\" = 1 || exit 4\ntest \"$CODEX_UPDATE_FROM_RELEASE\" = '{release}' || exit 5\ntouch '{ready}'\nwhile [ ! -e '{proceed}' ]; do sleep .05; done\nmkdir -p '{root}/releases/{next}/bin'\n{install_binary}\nchmod +x '{root}/releases/{next}/bin/genex'\nln -sfn 'releases/{next}' '{root}/current'\nprintf '{next}' > '{root}/auto-update-version'\n",
+        "#!/bin/sh\n# GENEX_INSTALL_IF_LATEST GENEX_INSTALL_IF_CURRENT GENEX_INSTALL_DAEMON_ONLY\nif [ \"$GENEX_UPDATE_FROM_RELEASE\" = '{next}' ]; then exit 0; fi\ntest \"${guard}\" = 1 || exit 4\ntest \"$GENEX_UPDATE_FROM_RELEASE\" = '{release}' || exit 5\ntouch '{ready}'\nwhile [ ! -e '{proceed}' ]; do sleep .05; done\nmkdir -p '{root}/releases/{next}/bin'\n{install_binary}\nchmod +x '{root}/releases/{next}/bin/genex'\nln -sfn 'releases/{next}' '{root}/current'\nprintf '{next}' > '{root}/auto-update-version'\n",
         root = standalone.display(),
         ready = ready.display(),
         proceed = proceed.display(),
@@ -687,7 +687,7 @@ async fn check_manual_update_restart(package_directory: &str) {
         .expect("updater task")
         .expect("updater loop");
     let no_op = FakeInstallerHttp::new(InstallerResponse::Success(
-        b"#!/bin/sh\n# CODEX_INSTALL_IF_LATEST CODEX_INSTALL_DAEMON_ONLY\nexit 0\n".to_vec(),
+        b"#!/bin/sh\n# GENEX_INSTALL_IF_LATEST GENEX_INSTALL_DAEMON_ONLY\nexit 0\n".to_vec(),
     ));
     use std::io::Write;
     std::fs::OpenOptions::new()
@@ -721,9 +721,9 @@ async fn powershell_installer_is_noninteractive_and_reports_script_failure() {
     let valid = FakeInstallerHttp::new(InstallerResponse::Success(
         br#"
 function Test-Installer {
-    if ($env:CODEX_NON_INTERACTIVE -ne '1') { throw 'interactive installer' }
-    if ($env:CODEX_INSTALL_DAEMON_ONLY -ne '1') { throw 'wrong package destination' }
-    if ($env:CODEX_INSTALL_IF_CURRENT -ne '1' -or $env:CODEX_INSTALL_IF_LATEST -ne '0') { throw 'wrong update guard' }
+    if ($env:GENEX_NON_INTERACTIVE -ne '1') { throw 'interactive installer' }
+    if ($env:GENEX_INSTALL_DAEMON_ONLY -ne '1') { throw 'wrong package destination' }
+    if ($env:GENEX_INSTALL_IF_CURRENT -ne '1' -or $env:GENEX_INSTALL_IF_LATEST -ne '0') { throw 'wrong update guard' }
 }
 Test-Installer
 "#
@@ -767,7 +767,7 @@ async fn update_rejects_a_package_root_change_during_download() {
                 self.0.join("packages/app-server-daemon"),
             )?;
             Ok(InstallerResponse::Success(
-                b"# CODEX_INSTALL_IF_LATEST\nexit 99\n".to_vec(),
+                b"# GENEX_INSTALL_IF_LATEST\nexit 99\n".to_vec(),
             ))
         }
     }
@@ -800,7 +800,7 @@ async fn daemon_owned_updates_require_and_request_an_isolated_installer() {
         .await
         .unwrap();
     let old = FakeInstallerHttp::new(InstallerResponse::Success(
-        b"# CODEX_INSTALL_IF_LATEST\nexit 0\n".to_vec(),
+        b"# GENEX_INSTALL_IF_LATEST\nexit 0\n".to_vec(),
     ));
     let error = manual_update_once(
         &old,
@@ -817,7 +817,7 @@ async fn daemon_owned_updates_require_and_request_an_isolated_installer() {
             .contains("does not support daemon-owned packages")
     );
     let current = FakeInstallerHttp::new(InstallerResponse::Success(
-        b"# CODEX_INSTALL_IF_LATEST\ntest \"$CODEX_INSTALL_IF_LATEST\" = 1 && test \"$CODEX_INSTALL_DAEMON_ONLY\" = 1\n".to_vec(),
+        b"# GENEX_INSTALL_IF_LATEST\ntest \"$GENEX_INSTALL_IF_LATEST\" = 1 && test \"$GENEX_INSTALL_DAEMON_ONLY\" = 1\n".to_vec(),
     ));
     let output = manual_update_once(
         &current,
@@ -834,16 +834,16 @@ async fn daemon_owned_updates_require_and_request_an_isolated_installer() {
     // Reuse the stopped daemon to verify explicit unpinning with either preference.
     let marker = root.join("auto-update-version");
     let no_op = FakeInstallerHttp::new(InstallerResponse::Success(
-        b"# CODEX_INSTALL_IF_CURRENT CODEX_INSTALL_DAEMON_ONLY\nexit 0\n".to_vec(),
+        b"# GENEX_INSTALL_IF_CURRENT GENEX_INSTALL_DAEMON_ONLY\nexit 0\n".to_vec(),
     ));
     let script = format!(
-        r#"# CODEX_INSTALL_IF_CURRENT CODEX_INSTALL_DAEMON_ONLY
+        r#"# GENEX_INSTALL_IF_CURRENT GENEX_INSTALL_DAEMON_ONLY
 set -eu
-test "$CODEX_INSTALL_IF_CURRENT" = 1
-test "$CODEX_INSTALL_IF_LATEST" = 0
-test "$CODEX_INSTALL_DAEMON_ONLY" = 1
-test "$CODEX_RELEASE" = latest
-test "$CODEX_UPDATE_FROM_RELEASE" = '{release}'
+test "$GENEX_INSTALL_IF_CURRENT" = 1
+test "$GENEX_INSTALL_IF_LATEST" = 0
+test "$GENEX_INSTALL_DAEMON_ONLY" = 1
+test "$GENEX_RELEASE" = latest
+test "$GENEX_UPDATE_FROM_RELEASE" = '{release}'
 printf '%s' '{release}' > '{marker}'
 "#,
         marker = marker.display()

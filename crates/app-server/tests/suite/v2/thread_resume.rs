@@ -2321,7 +2321,7 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
         "2025-01-05T12-00-00",
         &conversation_id,
         "user",
-        "codex_work_desktop",
+        "genex_work_desktop",
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -2350,7 +2350,7 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
         event,
         &thread.id,
         &thread.session_id,
-        "codex_work_desktop",
+        "genex_work_desktop",
         "gpt-5.4",
         "resumed",
         "user",
@@ -2379,7 +2379,7 @@ async fn thread_resume_running_thread_tracks_thread_originator_in_analytics() ->
         .send_thread_start_request_with_auto_env(ThreadStartParams {
             model: Some("mock-model".to_string()),
             thread_source: Some(ThreadSource::User),
-            service_name: Some("codex_work_desktop".to_string()),
+            service_name: Some("genex_work_desktop".to_string()),
             ..Default::default()
         })
         .await?;
@@ -2420,7 +2420,7 @@ async fn thread_resume_running_thread_tracks_thread_originator_in_analytics() ->
     } = timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(resume_id)).await??;
 
     let event = wait_for_matching_analytics_event(&server, DEFAULT_READ_TIMEOUT, |event| {
-        event["event_type"] == "codex_thread_initialized"
+        event["event_type"] == "genex_thread_initialized"
             && event["event_params"]["thread_id"] == resumed.id
             && event["event_params"]["initialization_mode"] == "resumed"
     })
@@ -2429,7 +2429,7 @@ async fn thread_resume_running_thread_tracks_thread_originator_in_analytics() ->
         &event,
         &resumed.id,
         &resumed.session_id,
-        "codex_work_desktop",
+        "genex_work_desktop",
         "mock-model",
         "resumed",
         "user",
@@ -4034,7 +4034,7 @@ async fn thread_resume_token_usage_replay_can_belong_to_interrupted_turn() -> Re
                         output_tokens: 50,
                         reasoning_output_tokens: 15,
                         total_tokens: 230,
-                        codex_rollout_budget_units: None,
+                        genex_rollout_budget_units: None,
                     },
                     last_token_usage: TokenUsage {
                         input_tokens: 90,
@@ -4043,7 +4043,7 @@ async fn thread_resume_token_usage_replay_can_belong_to_interrupted_turn() -> Re
                         output_tokens: 40,
                         reasoning_output_tokens: 12,
                         total_tokens: 130,
-                        codex_rollout_budget_units: None,
+                        genex_rollout_budget_units: None,
                     },
                     model_context_window: Some(200_000),
                 }),
@@ -4184,7 +4184,7 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
         timestamp: "2025-01-05T12:00:00Z".to_string(),
         cwd: repo_path.clone(),
         runtime_workspace_roots: None,
-        originator: "codex".to_string(),
+        originator: "genex".to_string(),
         cli_version: "0.0.0".to_string(),
         source: RolloutSessionSource::Cli,
         thread_source: None,

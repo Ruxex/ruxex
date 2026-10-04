@@ -49,7 +49,7 @@ impl JsonRpcConnectionEvent {
 
         let queued_at = Instant::now();
         let request_span = tracing::info_span!(
-            "codex.exec_server.request",
+            "genex.exec_server.request",
             otel.kind = "server",
             otel.name = "unknown",
             method = request.method.as_str(),

@@ -2924,7 +2924,7 @@ ZDOTDIR = "{}"
         workdir
     };
     let call_id = "zsh-fork-brokered-github-credential";
-    let command = r#"printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' "$GH_HOST" "$GH_ENTERPRISE_TOKEN" "$CUSTOM_HOST" "$CUSTOM_API_KEY" "$CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE" "$PWD" "$BROKERED_STARTUP_CWD" "${LOGIN_SNAPSHOT_READY-unset}" "$AUTH_HEADER""#;
+    let command = r#"printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' "$GH_HOST" "$GH_ENTERPRISE_TOKEN" "$CUSTOM_HOST" "$CUSTOM_API_KEY" "$GENEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE" "$PWD" "$BROKERED_STARTUP_CWD" "${LOGIN_SNAPSHOT_READY-unset}" "$AUTH_HEADER""#;
     let command = format!(
         "APP_SETTING=production; EXCLUDED_SETTING=denied; [ \"$(/usr/bin/printenv APP_SETTING)\" = production ] || exit 1; if /usr/bin/printenv EXCLUDED_SETTING >/dev/null; then exit 1; fi; {command}"
     );
@@ -3388,7 +3388,7 @@ ENV = "{}"
         })
         .build(&server)
         .await?;
-    let script = r#"printf '%s\n%s\n%s\n%s\n' "$GH_TOKEN" "$CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE" "${ENV-unset}" "$CORP_REGION""#;
+    let script = r#"printf '%s\n%s\n%s\n%s\n' "$GH_TOKEN" "$GENEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE" "${ENV-unset}" "$CORP_REGION""#;
     let command = format!(
         "{} 2>/dev/null",
         shlex::try_join([shell_path.as_str(), "-i", "-c", script])?
@@ -3727,7 +3727,7 @@ async fn allowed_escalated_exec_command_inherits_active_permission_profile() -> 
         format!(
             r#"#!/bin/sh
 # Print the inherited profile so the test can verify that it reached this script.
-printenv CODEX_PERMISSION_PROFILE
+printenv GENEX_PERMISSION_PROFILE
 touch {outside_path:?}
 "#
         ),
@@ -3791,7 +3791,7 @@ touch {outside_path:?}
             exit_code: Some(0),
             stdout: format!("{BUILT_IN_PERMISSION_PROFILE_WORKSPACE}\n"),
         },
-        "the unsandboxed script should inherit CODEX_PERMISSION_PROFILE from the shell command"
+        "the unsandboxed script should inherit GENEX_PERMISSION_PROFILE from the shell command"
     );
     assert!(
         outside_path.exists(),
@@ -3858,11 +3858,11 @@ def parse_args():
 
 def main():
     args = parse_args()
-    profile_name = os.environ.get("CODEX_PERMISSION_PROFILE")
+    profile_name = os.environ.get("GENEX_PERMISSION_PROFILE")
     if not profile_name:
-        raise SystemExit("CODEX_PERMISSION_PROFILE must not be empty")
+        raise SystemExit("GENEX_PERMISSION_PROFILE must not be empty")
     if profile_name not in ALLOWED_PROFILES:
-        raise SystemExit("CODEX_PERMISSION_PROFILE is not allowlisted")
+        raise SystemExit("GENEX_PERMISSION_PROFILE is not allowlisted")
 
     shell_command = shlex.join(args.command)
     sandbox_command = shlex.join(
@@ -4240,7 +4240,7 @@ allow_local_binding = true
     let call_id_first = "allow-network-first";
     // Use urllib without overriding proxy settings so managed-network sessions
     // continue to exercise the env-based proxy routing path under bubblewrap.
-    let fetch_command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://codex-network-test.invalid', timeout=30).read().decode(errors='replace'))""#
+    let fetch_command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://genex-network-test.invalid', timeout=30).read().decode(errors='replace'))""#
         .to_string();
     let first_event = shell_event(
         call_id_first,
@@ -4544,7 +4544,7 @@ allow_local_binding = true
     );
 
     let call_id = "deny-read-network-retry";
-    let fetch_command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://codex-network-test.invalid', timeout=30).read().decode(errors='replace'))""#
+    let fetch_command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://genex-network-test.invalid', timeout=30).read().decode(errors='replace'))""#
         .to_string();
     let event = shell_event(
         call_id,
@@ -4728,7 +4728,7 @@ allow_local_binding = true
     );
 
     let call_id = "allow-network-after-yolo";
-    let fetch_command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://codex-network-test.invalid', timeout=30).read().decode(errors='replace'))""#
+    let fetch_command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://genex-network-test.invalid', timeout=30).read().decode(errors='replace'))""#
         .to_string();
     let event = shell_event(
         call_id,

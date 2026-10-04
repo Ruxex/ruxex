@@ -205,7 +205,7 @@ pub async fn load_default_config_for_test(genex_home: &TempDir) -> Config {
 fn default_test_overrides() -> ConfigOverrides {
     ConfigOverrides {
         genex_linux_sandbox_exe: Some(
-            find_genex_linux_sandbox_exe().expect("should find binary for codex-linux-sandbox"),
+            find_genex_linux_sandbox_exe().expect("should find binary for genex-linux-sandbox"),
         ),
         ..ConfigOverrides::default()
     }
@@ -230,7 +230,7 @@ pub fn find_genex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
         return Ok(path);
     }
 
-    genex_utils_cargo_bin::cargo_bin("codex-linux-sandbox")
+    genex_utils_cargo_bin::cargo_bin("genex-linux-sandbox")
 }
 
 pub async fn wait_for_event<F>(
@@ -367,11 +367,11 @@ where
 }
 
 pub fn sandbox_env_var() -> &'static str {
-    genex_core::spawn::CODEX_SANDBOX_ENV_VAR
+    genex_core::spawn::GENEX_SANDBOX_ENV_VAR
 }
 
 pub fn sandbox_network_env_var() -> &'static str {
-    genex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
+    genex_core::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
 }
 
 pub fn format_with_current_shell(command: &str) -> Vec<String> {
@@ -686,7 +686,7 @@ macro_rules! genex_linux_sandbox_exe_or_skip {
             match $crate::find_genex_linux_sandbox_exe() {
                 Ok(path) => Some(path),
                 Err(err) => {
-                    eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
+                    eprintln!("genex-linux-sandbox binary not available, skipping test: {err}");
                     return;
                 }
             }
@@ -702,7 +702,7 @@ macro_rules! genex_linux_sandbox_exe_or_skip {
             match $crate::find_genex_linux_sandbox_exe() {
                 Ok(path) => Some(path),
                 Err(err) => {
-                    eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
+                    eprintln!("genex-linux-sandbox binary not available, skipping test: {err}");
                     return $return_value;
                 }
             }

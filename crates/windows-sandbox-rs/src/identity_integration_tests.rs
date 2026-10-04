@@ -163,9 +163,9 @@ fn credential_setup_reconciles_effective_firewall_policy() -> Result<()> {
             fs::write(path, bytes)?;
         }
         let env = HashMap::from([
-            ("CODEX_WINDOWS_SANDBOX_PROXY_PORTS".into(), ports.into()),
+            ("GENEX_WINDOWS_SANDBOX_PROXY_PORTS".into(), ports.into()),
             (
-                "CODEX_NETWORK_ALLOW_LOCAL_BINDING".into(),
+                "GENEX_NETWORK_ALLOW_LOCAL_BINDING".into(),
                 u8::from(desired_binding).to_string(),
             ),
         ]);

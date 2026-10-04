@@ -15,8 +15,8 @@ use super::thread_history::RolloutProjectionStep;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
 
-const SQLITE_PROJECTION_METRIC: &str = "codex.thread_history.sqlite_projection";
-const SQLITE_PROJECTION_ANOMALY_METRIC: &str = "codex.thread_history.sqlite_projection.anomaly";
+const SQLITE_PROJECTION_METRIC: &str = "genex.thread_history.sqlite_projection";
+const SQLITE_PROJECTION_ANOMALY_METRIC: &str = "genex.thread_history.sqlite_projection.anomaly";
 
 pub(super) async fn materialize_to_sqlite(
     store: &LocalThreadStore,

@@ -64,7 +64,7 @@ fn sandbox_detection_ignores_network_policy_text_in_non_sandbox_mode() {
         /*exit_code*/ 0,
         "",
         "",
-        r#"CODEX_NETWORK_POLICY_DECISION {"decision":"ask","reason":"not_allowed","source":"decider","protocol":"http","host":"google.com","port":80}"#,
+        r#"GENEX_NETWORK_POLICY_DECISION {"decision":"ask","reason":"not_allowed","source":"decider","protocol":"http","host":"google.com","port":80}"#,
     );
     assert!(!is_likely_sandbox_denied(SandboxType::None, &output));
 }
@@ -89,7 +89,7 @@ fn sandbox_detection_ignores_network_policy_text_with_zero_exit_code() {
         /*exit_code*/ 0,
         "",
         "",
-        r#"CODEX_NETWORK_POLICY_DECISION {"decision":"ask","source":"decider","protocol":"http","host":"google.com","port":80}"#,
+        r#"GENEX_NETWORK_POLICY_DECISION {"decision":"ask","source":"decider","protocol":"http","host":"google.com","port":80}"#,
     );
 
     assert!(!is_likely_sandbox_denied(
@@ -1217,7 +1217,7 @@ fn build_exec_request_projects_workspace_roots_only_for_windows_sandbox() -> Res
             profile,
             &cwd,
             roots,
-            &Some(temp_dir.path().join("codex-linux-sandbox")),
+            &Some(temp_dir.path().join("genex-linux-sandbox")),
             /*genex_self_exe*/ &None,
             /*use_legacy_landlock*/ false,
         )

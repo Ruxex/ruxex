@@ -302,7 +302,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
         .build()
         .await?;
     mcp.initialize_with_client_info(ClientInfo {
-        name: "codex_work_desktop".to_string(),
+        name: "genex_work_desktop".to_string(),
         title: None,
         version: "0.1.0".to_string(),
     })
@@ -313,7 +313,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),
             thread_source: Some(ThreadSource::User),
-            service_name: Some("codex_work_desktop".to_string()),
+            service_name: Some("genex_work_desktop".to_string()),
             ..Default::default()
         })
         .await?;
@@ -401,7 +401,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     assert_eq!(archived_notification.thread_id, thread.id);
 
     let event = wait_for_matching_analytics_event(&server, DEFAULT_READ_TIMEOUT, |event| {
-        event["event_type"] == "codex_thread_archive_event"
+        event["event_type"] == "genex_thread_archive_event"
             && event["event_params"]["thread_id"] == thread.id
     })
     .await?;
@@ -411,14 +411,14 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     assert_eq!(
         event,
         json!({
-            "event_type": "codex_thread_archive_event",
+            "event_type": "genex_thread_archive_event",
             "event_params": {
                 "thread_id": thread.id,
                 "action": "archived",
                 "occurred_at_ms": occurred_at_ms,
                 "app_server_client": {
-                    "product_client_id": "codex_work_desktop",
-                    "client_name": "codex_work_desktop",
+                    "product_client_id": "genex_work_desktop",
+                    "client_name": "genex_work_desktop",
                     "client_version": "0.1.0",
                     "rpc_transport": "stdio",
                     "experimental_api_enabled": true,
@@ -718,7 +718,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         })
         .await?;
     wait_for_matching_analytics_event(&server, DEFAULT_READ_TIMEOUT, |event| {
-        event["event_type"] == "codex_thread_archive_event"
+        event["event_type"] == "genex_thread_archive_event"
             && event["event_params"]["thread_id"] == parent_id
             && event["event_params"]["action"] == "unarchived"
     })
@@ -739,7 +739,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
             .ok_or_else(|| anyhow::anyhow!("analytics payload missing events array"))?;
         for event in events
             .iter()
-            .filter(|event| event["event_type"] == "codex_thread_archive_event")
+            .filter(|event| event["event_type"] == "genex_thread_archive_event")
         {
             for (header, expected) in [
                 ("authorization", "Bearer test-token"),
@@ -769,7 +769,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         assert_eq!(
             event,
             &json!({
-                "event_type": "codex_thread_archive_event",
+                "event_type": "genex_thread_archive_event",
                 "event_params": {
                     "thread_id": thread_id,
                     "action": action,

@@ -1,7 +1,7 @@
 use genex_model_provider_info::ModelProviderInfo;
 use genex_otel::AuthEnvTelemetryMetadata;
 
-use crate::CODEX_API_KEY_ENV_VAR;
+use crate::GENEX_API_KEY_ENV_VAR;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AuthEnvTelemetry {
@@ -27,7 +27,7 @@ pub fn collect_auth_env_telemetry(
     api_key_env_enabled: bool,
 ) -> AuthEnvTelemetry {
     AuthEnvTelemetry {
-        api_key_env_present: env_var_present(CODEX_API_KEY_ENV_VAR),
+        api_key_env_present: env_var_present(GENEX_API_KEY_ENV_VAR),
         api_key_env_enabled,
         provider_env_key_name: provider.env_key.as_ref().map(|_| "configured".to_string()),
         provider_env_key_present: provider.env_key.as_deref().map(env_var_present),

@@ -163,11 +163,11 @@ async fn invalid_custom_ca_falls_back_to_system_roots() -> Result<()> {
         command
             .args(["doctor", "--json"])
             .env("GENEX_HOME", genex_home.path())
-            .env("CODEX_CA_CERTIFICATE", &certificate)
+            .env("GENEX_CA_CERTIFICATE", &certificate)
             .stdin(Stdio::null());
         if let Some(sandbox) = sandbox {
             command
-                .env("CODEX_SANDBOX", sandbox)
+                .env("GENEX_SANDBOX", sandbox)
                 .env("HTTP_PROXY", "http://127.0.0.1:1")
                 .env("http_proxy", "http://127.0.0.1:1")
                 .env("HTTPS_PROXY", "http://127.0.0.1:1")

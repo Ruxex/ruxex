@@ -1060,17 +1060,17 @@ mod metrics {
     use super::RolloutCompressionTrigger;
     use std::time::Duration;
 
-    const FILE_COMPRESSED_BYTES_HISTOGRAM: &str = "codex.rollout_compression.file.compressed_bytes";
-    pub(super) const FILE_COUNTER: &str = "codex.rollout_compression.file";
-    const FILE_DURATION_HISTOGRAM: &str = "codex.rollout_compression.file.duration_ms";
-    const FILE_SOURCE_BYTES_HISTOGRAM: &str = "codex.rollout_compression.file.source_bytes";
+    const FILE_COMPRESSED_BYTES_HISTOGRAM: &str = "genex.rollout_compression.file.compressed_bytes";
+    pub(super) const FILE_COUNTER: &str = "genex.rollout_compression.file";
+    const FILE_DURATION_HISTOGRAM: &str = "genex.rollout_compression.file.duration_ms";
+    const FILE_SOURCE_BYTES_HISTOGRAM: &str = "genex.rollout_compression.file.source_bytes";
     const FILE_COMPRESSION_RATIO_HISTOGRAM: &str =
-        "codex.rollout_compression.file.compression_ratio";
-    pub(super) const MATERIALIZE_COUNTER: &str = "codex.rollout_compression.materialize";
-    pub(super) const RUN_COUNTER: &str = "codex.rollout_compression.run";
-    pub(super) const RUN_DURATION_HISTOGRAM: &str = "codex.rollout_compression.run.duration_ms";
+        "genex.rollout_compression.file.compression_ratio";
+    pub(super) const MATERIALIZE_COUNTER: &str = "genex.rollout_compression.materialize";
+    pub(super) const RUN_COUNTER: &str = "genex.rollout_compression.run";
+    pub(super) const RUN_DURATION_HISTOGRAM: &str = "genex.rollout_compression.run.duration_ms";
     const RATIO_BASIS_POINTS: u128 = 10_000;
-    pub(super) const TEMP_CLEANUP_COUNTER: &str = "codex.rollout_compression.temp_cleanup";
+    pub(super) const TEMP_CLEANUP_COUNTER: &str = "genex.rollout_compression.temp_cleanup";
 
     pub(super) fn file(trigger: RolloutCompressionTrigger, outcome: &'static str) {
         counter(
@@ -1139,7 +1139,7 @@ mod metrics {
 
     pub(super) fn materialize_duration(outcome: &'static str, duration: Duration) {
         duration_histogram(
-            "codex.rollout_compression.materialize.duration_ms",
+            "genex.rollout_compression.materialize.duration_ms",
             duration,
             &[("outcome", outcome)],
         );

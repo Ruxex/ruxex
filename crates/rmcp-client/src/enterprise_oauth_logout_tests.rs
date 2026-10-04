@@ -11,7 +11,7 @@ use super::*;
 
 const TEST: &str =
     "enterprise_oauth_login::tests::logout::logout_invalidates_pending_login_across_processes";
-const LOGOUT_ISSUER: &str = "CODEX_ENTERPRISE_LOGOUT_TEST_ISSUER";
+const LOGOUT_ISSUER: &str = "GENEX_ENTERPRISE_LOGOUT_TEST_ISSUER";
 
 #[tokio::test]
 async fn logout_invalidates_pending_login_across_processes() -> Result<()> {

@@ -6,14 +6,14 @@ use std::process::Command;
 use std::process::Stdio;
 use std::time::Duration;
 
-use genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
-use genex_exec_server::CODEX_FS_HELPER_ARG1;
+use genex_exec_server::GENEX_ARG0_EXEC_HELPER_ARG1;
+use genex_exec_server::GENEX_FS_HELPER_ARG1;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_exec_server::ExecServerTelemetry;
 use genex_exec_server::RequestDispatchMode;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
 use genex_test_binary_support::TestBinaryDispatchGuard;
 use genex_test_binary_support::TestBinaryDispatchMode;
 use genex_test_binary_support::configure_test_binary_dispatch;
@@ -45,10 +45,10 @@ macro_rules! skip_if_mxc_unavailable {
 #[ctor]
 pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
     let guard = configure_test_binary_dispatch("genex-exec-server-tests", |exe_name, argv1| {
-        if argv1 == Some(CODEX_ARG0_EXEC_HELPER_ARG1) {
+        if argv1 == Some(GENEX_ARG0_EXEC_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if argv1 == Some(CODEX_FS_HELPER_ARG1) {
+        if argv1 == Some(GENEX_FS_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         if argv1 == Some(GENEX_WINDOWS_SANDBOX_ARG1) {
@@ -57,7 +57,7 @@ pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
         if argv1 == Some(genex_sandboxing::GENEX_WINDOWS_MXC_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if exe_name == CODEX_LINUX_SANDBOX_ARG0 {
+        if exe_name == GENEX_LINUX_SANDBOX_ARG0 {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         TestBinaryDispatchMode::InstallAliases

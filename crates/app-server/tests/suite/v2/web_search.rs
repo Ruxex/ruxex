@@ -112,7 +112,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
 
     let thread_req = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            service_name: Some("codex_work_cca".to_string()),
+            service_name: Some("genex_work_cca".to_string()),
             ..Default::default()
         })
         .await?;
@@ -190,7 +190,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
             .context("standalone search should include the thread originator")?
             .to_str()
             .context("standalone search originator should be valid ASCII")?,
-        "codex_work_cca"
+        "genex_work_cca"
     );
     let search_body = search_request
         .body_json::<Value>()

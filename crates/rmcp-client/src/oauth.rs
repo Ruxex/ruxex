@@ -1359,7 +1359,7 @@ mod tests {
     #[test]
     fn fallback_file_is_private_at_creation() -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
-        const CHILD: &str = "CODEX_TEST_OAUTH_PERMISSIVE_UMASK";
+        const CHILD: &str = "GENEX_TEST_OAUTH_PERMISSIVE_UMASK";
 
         if std::env::var_os(CHILD).is_none() {
             // Change umask only in the child running this one test.

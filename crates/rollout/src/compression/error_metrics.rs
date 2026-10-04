@@ -20,7 +20,7 @@ impl FailureMetric {
             Self::File(trigger) => (metrics::FILE_COUNTER, "outcome", Some(trigger)),
             Self::Materialize => (metrics::MATERIALIZE_COUNTER, "outcome", None),
             Self::Run(trigger) => (metrics::RUN_COUNTER, "status", Some(trigger)),
-            Self::Scan(trigger) => ("codex.rollout_compression.scan", "outcome", Some(trigger)),
+            Self::Scan(trigger) => ("genex.rollout_compression.scan", "outcome", Some(trigger)),
             Self::TempCleanup(trigger) => (metrics::TEMP_CLEANUP_COUNTER, "outcome", Some(trigger)),
         };
         let Some(metrics) = genex_otel::global() else {

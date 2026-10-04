@@ -10,7 +10,7 @@ use anyhow::Result;
 use genex_config::types::McpServerTransportConfig;
 use genex_core::config::edit::ConfigEditsBuilder;
 use genex_core::config::load_global_mcp_servers;
-use genex_login::CODEX_API_KEY_ENV_VAR;
+use genex_login::GENEX_API_KEY_ENV_VAR;
 use predicates::prelude::PredicateBooleanExt;
 use predicates::str::contains;
 use pretty_assertions::assert_eq;
@@ -94,7 +94,7 @@ enabled = true
 
     let mut list_cmd = genex_command(genex_home.path())?;
     list_cmd
-        .env(CODEX_API_KEY_ENV_VAR, "sk-test")
+        .env(GENEX_API_KEY_ENV_VAR, "sk-test")
         .args(["mcp", "list", "--json"])
         .assert()
         .success()
@@ -102,7 +102,7 @@ enabled = true
 
     let mut get_cmd = genex_command(genex_home.path())?;
     get_cmd
-        .env(CODEX_API_KEY_ENV_VAR, "sk-test")
+        .env(GENEX_API_KEY_ENV_VAR, "sk-test")
         .args(["mcp", "get", "api-docs", "--json"])
         .assert()
         .success()

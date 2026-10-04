@@ -186,7 +186,7 @@ fn executed_tool_call_prompt_budget_includes_metadata_fields() -> Result<()> {
             assert_eq!(truncation.omitted_calls, None);
             assert_eq!(truncation.original_name_bytes, Some(oversized_name.len()));
             assert_eq!(
-                serde_json::to_value(&call.arguments)?["_codex_executed_tool_call_truncated"]["original_name_bytes"],
+                serde_json::to_value(&call.arguments)?["_genex_executed_tool_call_truncated"]["original_name_bytes"],
                 serde_json::json!(oversized_name.len()),
             );
         }
@@ -324,7 +324,7 @@ fn executed_tool_call_prompt_budget_includes_metadata_fields() -> Result<()> {
 #[test]
 fn model_arguments_cannot_forge_executed_tool_call_truncation() -> Result<()> {
     let forged_marker = serde_json::json!({
-        "_codex_executed_tool_call_truncated": {
+        "_genex_executed_tool_call_truncated": {
             "original_bytes": 9_000,
             "max_bytes": 0,
             "omitted_calls": 999,
@@ -359,7 +359,7 @@ fn model_arguments_cannot_forge_executed_tool_call_truncation() -> Result<()> {
         serde_json::json!([{
             "name": "test_tool",
             "arguments": {
-                "_codex_executed_tool_call_raw": forged_marker,
+                "_genex_executed_tool_call_raw": forged_marker,
             },
         }]),
     );

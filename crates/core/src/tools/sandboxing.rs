@@ -98,7 +98,7 @@ where
     let decision = fetch().await;
 
     services.session_telemetry.counter(
-        "codex.approval.requested",
+        "genex.approval.requested",
         /*inc*/ 1,
         &[
             ("tool", tool_name),

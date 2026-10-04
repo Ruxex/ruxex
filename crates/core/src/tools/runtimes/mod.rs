@@ -4,10 +4,10 @@ Module: runtimes
 Concrete ToolRuntime implementations for specific tools. Each runtime stays
 small and focused and reuses the orchestrator for approvals + sandbox + retry.
 */
-use crate::exec_env::CODEX_PERMISSION_PROFILE_ENV_VAR;
-use crate::exec_env::CODEX_SESSION_ID_ENV_VAR;
-use crate::exec_env::CODEX_THREAD_ID_ENV_VAR;
-use crate::exec_env::CODEX_VERSION_ENV_VAR;
+use crate::exec_env::GENEX_PERMISSION_PROFILE_ENV_VAR;
+use crate::exec_env::GENEX_SESSION_ID_ENV_VAR;
+use crate::exec_env::GENEX_THREAD_ID_ENV_VAR;
+use crate::exec_env::GENEX_VERSION_ENV_VAR;
 use crate::sandboxing::SandboxPermissions;
 use crate::shell::Shell;
 use crate::shell::ShellType;
@@ -36,11 +36,11 @@ pub(crate) mod apply_patch;
 pub(crate) mod unified_exec;
 pub(crate) mod zsh_fork;
 
-const SNAPSHOT_ORIGINAL_BASH_ENV_ENV_KEY: &str = "CODEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_BASH_ENV";
-const SNAPSHOT_ORIGINAL_POSIX_ENV_ENV_KEY: &str = "CODEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_POSIX_ENV";
-const SNAPSHOT_ORIGINAL_ZDOTDIR_ENV_KEY: &str = "CODEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_ZDOTDIR";
-const SNAPSHOT_BROKERED_VALUE_ENV_PREFIX: &str = "CODEX_NETWORK_PROXY_SNAPSHOT_BROKERED_VALUE_";
-const SNAPSHOT_BROKERED_UNSET_ENV_PREFIX: &str = "CODEX_NETWORK_PROXY_SNAPSHOT_BROKERED_UNSET_";
+const SNAPSHOT_ORIGINAL_BASH_ENV_ENV_KEY: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_BASH_ENV";
+const SNAPSHOT_ORIGINAL_POSIX_ENV_ENV_KEY: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_POSIX_ENV";
+const SNAPSHOT_ORIGINAL_ZDOTDIR_ENV_KEY: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_ZDOTDIR";
+const SNAPSHOT_BROKERED_VALUE_ENV_PREFIX: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_BROKERED_VALUE_";
+const SNAPSHOT_BROKERED_UNSET_ENV_PREFIX: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_BROKERED_UNSET_";
 
 pub(crate) fn exec_env_for_sandbox_permissions(
     env: &HashMap<String, String>,
@@ -288,7 +288,7 @@ pub(crate) fn prepare_brokered_shell_snapshot_env(
 /// `explicit_env_overrides` contains policy-driven shell env overrides that
 /// should win after the snapshot is sourced, while `env` is the full live exec
 /// environment. We need access to both so snapshot restore logic can preserve
-/// runtime-only vars like `CODEX_THREAD_ID` without pretending they came from
+/// runtime-only vars like `GENEX_THREAD_ID` without pretending they came from
 /// the explicit override policy.
 ///
 /// `runtime_path_prepends` contains Genex-owned PATH entries already applied to
@@ -350,10 +350,10 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         .collect::<String>();
     let mut override_env = explicit_env_overrides.clone();
     for key in [
-        CODEX_SESSION_ID_ENV_VAR,
-        CODEX_THREAD_ID_ENV_VAR,
-        CODEX_VERSION_ENV_VAR,
-        CODEX_PERMISSION_PROFILE_ENV_VAR,
+        GENEX_SESSION_ID_ENV_VAR,
+        GENEX_THREAD_ID_ENV_VAR,
+        GENEX_VERSION_ENV_VAR,
+        GENEX_PERMISSION_PROFILE_ENV_VAR,
         GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
         PLUGIN_METRICS_OUTPUT_ENV_VAR,
     ] {
@@ -365,7 +365,7 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
     let (override_captures, override_exports) = build_override_exports(
         &override_env,
         &[
-            CODEX_PERMISSION_PROFILE_ENV_VAR,
+            GENEX_PERMISSION_PROFILE_ENV_VAR,
             GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ],

@@ -85,7 +85,7 @@ foo = "bar"
     let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex-app-server")?)
         .env("GENEX_HOME", genex_home.path())
         .env(
-            "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
             genex_home.path().join("managed_config.toml"),
         )
         .args(["--strict-config", "--listen", "off"])
@@ -125,7 +125,7 @@ fn managed_auth_requirements_fail_closed_for_standalone_app_server() -> Result<(
         let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex-app-server")?)
             .env("GENEX_HOME", genex_home.path())
             .env(
-                "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
+                "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
                 genex_home.path().join("managed_config.toml"),
             )
             .args(["--listen", "off"])

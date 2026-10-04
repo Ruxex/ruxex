@@ -429,7 +429,7 @@ impl App {
             }
             AppEvent::ForkCurrentSession { name } => {
                 self.session_telemetry.counter(
-                    "codex.thread.fork",
+                    "genex.thread.fork",
                     /*inc*/ 1,
                     &[("source", "slash_command")],
                 );
@@ -1534,14 +1534,14 @@ impl App {
                 profile_selection,
             } => {
                 self.session_telemetry.counter(
-                    "codex.windows_sandbox.fallback_prompt_shown",
+                    "genex.windows_sandbox.fallback_prompt_shown",
                     /*inc*/ 1,
                     &[],
                 );
                 self.chat_widget.clear_windows_sandbox_setup_status();
                 if let Some(started_at) = self.windows_sandbox.setup_started_at.take() {
                     self.session_telemetry.record_duration(
-                        "codex.windows_sandbox.elevated_setup_duration_ms",
+                        "genex.windows_sandbox.elevated_setup_duration_ms",
                         started_at.elapsed(),
                         &[("result", "failure")],
                     );
@@ -1591,7 +1591,7 @@ impl App {
                         && mode == WindowsSandboxEnableMode::Elevated
                     {
                         self.session_telemetry.record_duration(
-                            "codex.windows_sandbox.elevated_setup_duration_ms",
+                            "genex.windows_sandbox.elevated_setup_duration_ms",
                             started_at.elapsed(),
                             &[("result", "success")],
                         );

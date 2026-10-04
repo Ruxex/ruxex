@@ -1238,7 +1238,7 @@ impl RemoteMarketplaceFixture {
             .env_remove("PROVIDER_API_KEY")
             .env_remove("CODEX_API_KEY")
             .env_remove("CODEX_ACCESS_TOKEN")
-            .env("CODEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS", "1")
+            .env("GENEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS", "1")
             .args(args)
             .output()
             .await?)

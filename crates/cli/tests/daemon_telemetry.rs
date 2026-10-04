@@ -54,7 +54,7 @@ async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow:
         }
         let body: Value = serde_json::from_slice(&requests[0].body)?;
         let metric = &body["resourceMetrics"][0]["scopeMetrics"][0]["metrics"][0];
-        assert_eq!(metric["name"], "codex.daemon.update");
+        assert_eq!(metric["name"], "genex.daemon.update");
         assert!(
             metric["sum"]["dataPoints"][0]["attributes"]
                 .as_array()

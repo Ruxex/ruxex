@@ -928,7 +928,7 @@ async fn external_agent_config_import_reports_failed_sync_import_in_completion()
         .with_env_overrides(&[
             ("HOME", Some(home_dir.as_str())),
             (
-                "CODEX_ANALYTICS_EVENTS_CAPTURE_FILE",
+                "GENEX_ANALYTICS_EVENTS_CAPTURE_FILE",
                 Some(analytics_capture_file.as_str()),
             ),
         ])
@@ -1013,7 +1013,7 @@ async fn external_agent_config_import_reports_failed_sync_import_in_completion()
                 captured_events.extend(events.iter().cloned());
             }
             if captured_events.iter().any(|event| {
-                event["event_type"] == "codex_onboarding_external_agent_import_complete"
+                event["event_type"] == "genex_onboarding_external_agent_import_complete"
                     && event["event_params"]["type"] == "COMMANDS"
             }) {
                 return Ok::<Vec<serde_json::Value>, anyhow::Error>(captured_events);
@@ -1025,7 +1025,7 @@ async fn external_agent_config_import_reports_failed_sync_import_in_completion()
     let event = events
         .iter()
         .find(|event| {
-            event["event_type"] == "codex_onboarding_external_agent_import_failure"
+            event["event_type"] == "genex_onboarding_external_agent_import_failure"
                 && event["event_params"]["type"] == "CONFIG"
         })
         .expect("config failure analytics event");
@@ -1039,7 +1039,7 @@ async fn external_agent_config_import_reports_failed_sync_import_in_completion()
     assert!(event_params.get("raw_errors").is_none());
     assert!(event_params.get("message").is_none());
     assert!(!events.iter().any(|event| {
-        event["event_type"] == "codex_onboarding_external_agent_import_failure"
+        event["event_type"] == "genex_onboarding_external_agent_import_failure"
             && event["event_params"]["type"] == "COMMANDS"
     }));
 
@@ -1116,7 +1116,7 @@ async fn external_agent_config_import_completed_tracks_analytics_event() -> Resu
     let event = wait_for_analytics_event(
         &analytics_server,
         DEFAULT_TIMEOUT,
-        "codex_onboarding_external_agent_import_complete",
+        "genex_onboarding_external_agent_import_complete",
     )
     .await?;
     let event_params = &event["event_params"];
@@ -1131,7 +1131,7 @@ async fn external_agent_config_import_completed_tracks_analytics_event() -> Resu
     let event = wait_for_analytics_event(
         &analytics_server,
         DEFAULT_TIMEOUT,
-        "codex_onboarding_external_agent_import_failure",
+        "genex_onboarding_external_agent_import_failure",
     )
     .await?;
     let event_params = &event["event_params"];
@@ -1234,7 +1234,7 @@ async fn external_agent_config_import_reports_session_config_error_subtype() -> 
     let event = wait_for_analytics_event(
         &analytics_server,
         DEFAULT_TIMEOUT,
-        "codex_onboarding_external_agent_import_failure",
+        "genex_onboarding_external_agent_import_failure",
     )
     .await?;
     let event_params = &event["event_params"];
@@ -1400,7 +1400,7 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
     let event = wait_for_analytics_event(
         &analytics_server,
         DEFAULT_TIMEOUT,
-        "codex_plugin_install_failed",
+        "genex_plugin_install_failed",
     )
     .await?;
     let event_params = &event["event_params"];
@@ -1413,7 +1413,7 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
     let event = wait_for_analytics_event(
         &analytics_server,
         DEFAULT_TIMEOUT,
-        "codex_onboarding_external_agent_import_failure",
+        "genex_onboarding_external_agent_import_failure",
     )
     .await?;
     let event_params = &event["event_params"];

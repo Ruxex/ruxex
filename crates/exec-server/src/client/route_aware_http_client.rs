@@ -12,7 +12,7 @@ use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::RouteAwareClientPool;
 use genex_http_client::RouteAwareRequestError;
-use genex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use genex_protocol::shell_environment::GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
 use futures::FutureExt;
 use futures::StreamExt;
 use futures::future::BoxFuture;
@@ -38,7 +38,7 @@ use crate::rpc::internal_error;
 use crate::rpc::invalid_params;
 
 const HTTP_HEADER_ENV_DENYLIST: &[&str] = &[
-    CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
+    GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
     "PROVIDER_API_KEY",
     "CODEX_API_KEY",
     "CODEX_ACCESS_TOKEN",
@@ -172,7 +172,7 @@ impl RouteAwareHttpRequestRunner {
         }
 
         let request_span = tracing::info_span!(
-            "codex.exec_server.http_request",
+            "genex.exec_server.http_request",
             otel.kind = "client",
             http.request.method = method.as_str(),
             server.address = url.host_str().unwrap_or_default(),

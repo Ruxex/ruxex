@@ -53,7 +53,7 @@ fn mcp_contribution_context_identifies_the_running_thread() {
         &config,
         &thread_init,
         &thread_store,
-        "codex_work_cca",
+        "genex_work_cca",
         &[],
         /*executor_capability_discovery*/ None,
     )

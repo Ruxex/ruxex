@@ -218,7 +218,7 @@ pub enum ExecutedToolCallArguments {
     Raw(serde_json::Value),
     #[serde(skip_deserializing)]
     Truncated {
-        #[serde(rename = "_codex_executed_tool_call_truncated")]
+        #[serde(rename = "_genex_executed_tool_call_truncated")]
         truncation: ExecutedToolCallTruncation,
     },
 }
@@ -360,9 +360,9 @@ impl ExecutedToolCall {
     pub fn new(name: String, arguments: serde_json::Value) -> Self {
         let arguments = if arguments
             .as_object()
-            .is_some_and(|object| object.contains_key("_codex_executed_tool_call_truncated"))
+            .is_some_and(|object| object.contains_key("_genex_executed_tool_call_truncated"))
         {
-            serde_json::json!({ "_codex_executed_tool_call_raw": arguments })
+            serde_json::json!({ "_genex_executed_tool_call_raw": arguments })
         } else {
             arguments
         };

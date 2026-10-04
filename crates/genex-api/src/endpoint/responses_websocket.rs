@@ -723,7 +723,7 @@ async fn run_websocket_response_stream(
                     text.as_str(),
                     timing_log_context,
                 );
-                if event.kind() == "codex.response.metadata"
+                if event.kind() == "genex.response.metadata"
                     && let Some(etag) =
                         event
                             .headers
@@ -746,7 +746,7 @@ async fn run_websocket_response_stream(
                 let model_verifications = event.model_verifications();
                 let safety_buffering =
                     safety_buffering_for_event(&event, &mut safety_buffering_treatment);
-                if event.kind() == "codex.rate_limits" {
+                if event.kind() == "genex.rate_limits" {
                     if let Some(snapshot) = parse_rate_limit_event(&text) {
                         let _ = tx_event.send(Ok(ResponseEvent::RateLimits(snapshot))).await;
                     }
@@ -1137,7 +1137,7 @@ mod tests {
     #[test]
     fn websocket_safety_buffering_uses_event_before_header_fallback() {
         let metadata: ResponsesStreamEvent = serde_json::from_value(json!({
-            "type": "codex.response.metadata",
+            "type": "genex.response.metadata",
             "headers": {
                 "x-codex-safety-buffering-enabled": "true",
                 "x-codex-safety-buffering-faster-model": "gpt-fast-header"
@@ -1173,7 +1173,7 @@ mod tests {
     #[test]
     fn websocket_safety_buffering_event_controls_visibility_when_header_disables_it() {
         let metadata: ResponsesStreamEvent = serde_json::from_value(json!({
-            "type": "codex.response.metadata",
+            "type": "genex.response.metadata",
             "headers": {
                 "x-codex-safety-buffering-enabled": "false",
                 "x-codex-safety-buffering-faster-model": "gpt-fast-header"

@@ -1,6 +1,6 @@
 //! Linux sandbox helper entry point.
 //!
-//! On Linux, `codex-linux-sandbox` applies:
+//! On Linux, `genex-linux-sandbox` applies:
 //! - in-process restrictions (`no_new_privs` + seccomp), and
 //! - bubblewrap for filesystem isolation.
 #[cfg(target_os = "linux")]
@@ -37,5 +37,5 @@ pub fn run_main() -> ! {
 
 #[cfg(not(target_os = "linux"))]
 pub fn run_main() -> ! {
-    panic!("codex-linux-sandbox is only supported on Linux");
+    panic!("genex-linux-sandbox is only supported on Linux");
 }

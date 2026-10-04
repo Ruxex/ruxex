@@ -216,7 +216,7 @@ impl ShellSnapshot {
             };
             let timer = config
                 .session_telemetry
-                .start_timer("codex.shell_snapshot.duration_ms", &[("version", "v1")]);
+                .start_timer("genex.shell_snapshot.duration_ms", &[("version", "v1")]);
             let snapshot = ShellSnapshot::try_create(
                 &config.genex_home,
                 config.session_id,
@@ -235,7 +235,7 @@ impl ShellSnapshot {
             }
             config
                 .session_telemetry
-                .counter("codex.shell_snapshot", /*inc*/ 1, &counter_tags);
+                .counter("genex.shell_snapshot", /*inc*/ 1, &counter_tags);
             snapshot.ok().map(Arc::new)
         }
         .instrument(snapshot_span)
@@ -673,7 +673,7 @@ async fn capture_snapshot(
         .apply_to_env_for_snapshot(&mut env);
     let mut snapshot_allowed_env = env.clone();
     // The live broker regenerates this marker; captured dummies can belong to another scope.
-    snapshot_allowed_env.remove("CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS");
+    snapshot_allowed_env.remove("GENEX_NETWORK_PROXY_BROKERED_CREDENTIALS");
     for key in &provider_context_keys {
         if env_value(&original_env, key) != env_value(&env, key) {
             remove_env_value(&mut snapshot_allowed_env, key);

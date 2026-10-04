@@ -6,7 +6,7 @@ use genex_app_server_protocol::ProcessExitedNotification;
 use genex_app_server_protocol::ProcessKillParams;
 use genex_app_server_protocol::ProcessSpawnParams;
 use genex_app_server_protocol::RequestId;
-use genex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR;
+use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
@@ -38,8 +38,8 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
             "-NonInteractive".to_string(),
             "-Command".to_string(),
             concat!(
-                "[IO.File]::WriteAllText($env:CODEX_PROCESS_EXEC_PROBE_FILE, 'process'); ",
-                "while (!(Test-Path -LiteralPath $env:CODEX_PROCESS_EXEC_RELEASE_FILE)) { ",
+                "[IO.File]::WriteAllText($env:GENEX_PROCESS_EXEC_PROBE_FILE, 'process'); ",
+                "while (!(Test-Path -LiteralPath $env:GENEX_PROCESS_EXEC_RELEASE_FILE)) { ",
                 "Start-Sleep -Milliseconds 20 ",
                 "}; ",
                 "[Console]::Out.Write('process-out'); ",
@@ -52,8 +52,8 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
             "sh".to_string(),
             "-c".to_string(),
             concat!(
-                "printf process > \"$CODEX_PROCESS_EXEC_PROBE_FILE\"; ",
-                "while [ ! -e \"$CODEX_PROCESS_EXEC_RELEASE_FILE\" ]; do sleep 0.05; done; ",
+                "printf process > \"$GENEX_PROCESS_EXEC_PROBE_FILE\"; ",
+                "while [ ! -e \"$GENEX_PROCESS_EXEC_RELEASE_FILE\" ]; do sleep 0.05; done; ",
                 "printf process-out; ",
                 "printf process-err >&2",
             )
@@ -62,11 +62,11 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
     };
     let env = HashMap::from([
         (
-            "CODEX_PROCESS_EXEC_PROBE_FILE".to_string(),
+            "GENEX_PROCESS_EXEC_PROBE_FILE".to_string(),
             Some(probe_file.display().to_string()),
         ),
         (
-            "CODEX_PROCESS_EXEC_RELEASE_FILE".to_string(),
+            "GENEX_PROCESS_EXEC_RELEASE_FILE".to_string(),
             Some(release_file.display().to_string()),
         ),
     ]);
@@ -111,7 +111,7 @@ async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Res
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(CODEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;

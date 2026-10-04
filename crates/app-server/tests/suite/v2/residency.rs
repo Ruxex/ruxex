@@ -19,7 +19,7 @@ use test_case::test_case;
 use tokio::time::timeout;
 
 const READ_TIMEOUT: Duration = Duration::from_secs(60);
-const PROVIDER_RESIDENCY_ENV_VAR: &str = "CODEX_TEST_RESIDENCY_HEADER";
+const PROVIDER_RESIDENCY_ENV_VAR: &str = "GENEX_TEST_RESIDENCY_HEADER";
 
 #[derive(Clone, Copy)]
 enum ModelTransport {

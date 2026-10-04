@@ -14,7 +14,7 @@ pub(super) fn record_availability_once() {
         && !AVAILABILITY_RECORDED.swap(true, Ordering::Relaxed)
     {
         let _ = metrics.counter(
-            "codex.windows_mxc.available",
+            "genex.windows_mxc.available",
             /*inc*/ 1,
             &[("available", if available { "true" } else { "false" })],
         );

@@ -641,7 +641,7 @@ async fn shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools(
     let profile_home = tempfile::tempdir()?;
     fs::write(
         profile_home.path().join(".bashrc"),
-        "printf capture > \"$HOME/$CODEX_THREAD_ID\"\n",
+        "printf capture > \"$HOME/$GENEX_THREAD_ID\"\n",
     )
     .await?;
     let builder =

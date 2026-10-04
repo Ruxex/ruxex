@@ -131,7 +131,8 @@ struct ResponseCompletedUsage {
     output_tokens_details: Option<ResponseCompletedOutputTokensDetails>,
     total_tokens: i64,
     #[serde(default)]
-    codex_rollout_budget_units: Option<serde_json::Number>,
+    #[serde(rename = "codex_rollout_budget_units")]
+    genex_rollout_budget_units: Option<serde_json::Number>,
 }
 
 impl From<ResponseCompletedUsage> for TokenUsage {
@@ -147,7 +148,7 @@ impl From<ResponseCompletedUsage> for TokenUsage {
                 .map(|d| d.reasoning_tokens)
                 .unwrap_or(0),
             total_tokens: val.total_tokens,
-            codex_rollout_budget_units: val.codex_rollout_budget_units,
+            genex_rollout_budget_units: val.genex_rollout_budget_units,
         }
     }
 }
@@ -514,7 +515,7 @@ pub fn process_responses_event(
                 }));
             }
         }
-        "codex.response.metadata"
+        "genex.response.metadata"
         | "response.content_part.added"
         | "response.content_part.done"
         | "response.custom_tool_call_input.done"
@@ -908,7 +909,7 @@ mod tests {
                 output_tokens: 10,
                 reasoning_output_tokens: 5,
                 total_tokens: 110,
-                codex_rollout_budget_units: serde_json::Number::from_f64(2.5),
+                genex_rollout_budget_units: serde_json::Number::from_f64(2.5),
             }
         );
     }
@@ -1840,7 +1841,7 @@ mod tests {
     #[test]
     fn safety_buffering_ignores_metadata_field_for_other_event_kinds() {
         let event: ResponsesStreamEvent = serde_json::from_value(json!({
-            "type": "codex.response.metadata",
+            "type": "genex.response.metadata",
             "metadata": {
                 "type": "safety_buffering",
                 "use_cases": ["cyber"],

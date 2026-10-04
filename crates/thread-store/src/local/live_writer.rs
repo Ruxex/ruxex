@@ -19,7 +19,7 @@ use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
 use crate::types::canonical_history_mode_from_rollout_items;
 
-const ROLLOUT_SIZE_BYTES_METRIC: &str = "codex.rollout.size_bytes";
+const ROLLOUT_SIZE_BYTES_METRIC: &str = "genex.rollout.size_bytes";
 
 pub(super) async fn create_thread(
     store: &LocalThreadStore,

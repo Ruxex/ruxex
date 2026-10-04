@@ -36,7 +36,7 @@ pub(super) async fn fork_source(
         config_warnings: Vec::new(),
         session_source: SessionSource::Exec,
         enable_api_key_env: true,
-        client_name: "codex_exec".to_string(),
+        client_name: "genex_exec".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
         opt_out_notification_methods: Vec::new(),

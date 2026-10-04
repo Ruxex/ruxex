@@ -18,12 +18,12 @@ use genex_protocol::shell_environment::is_non_inheritable_env_var;
 ///
 /// We may try to have just one environment variable for all sandboxing
 /// attributes, so this may change in the future.
-pub const CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR: &str = "CODEX_SANDBOX_NETWORK_DISABLED";
+pub const GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR: &str = "GENEX_SANDBOX_NETWORK_DISABLED";
 
 /// Should be set when the process is spawned under a sandbox. Currently, the
 /// value is "seatbelt" for macOS, but it may change in the future to
 /// accommodate sandboxing configuration and other sandboxing mechanisms.
-pub const CODEX_SANDBOX_ENV_VAR: &str = "CODEX_SANDBOX";
+pub const GENEX_SANDBOX_ENV_VAR: &str = "GENEX_SANDBOX";
 
 #[derive(Debug, Clone, Copy)]
 pub enum StdioPolicy {
@@ -37,7 +37,7 @@ pub enum StdioPolicy {
 ///
 /// For now, we take `NetworkSandboxPolicy` as a parameter to spawn_child()
 /// because we need to determine whether to set the
-/// `CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` environment variable.
+/// `GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` environment variable.
 pub(crate) struct SpawnChildRequest<'a> {
     pub program: PathBuf,
     pub args: Vec<String>,
@@ -84,7 +84,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
     cmd.envs(env);
 
     if !network_sandbox_policy.is_enabled() {
-        cmd.env(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
+        cmd.env(GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
     }
 
     // If this Genex process dies (including being killed via SIGKILL), we want

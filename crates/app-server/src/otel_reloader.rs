@@ -98,7 +98,7 @@ where
                         drop(tokio::task::spawn_blocking(move || previous_provider.shutdown()));
                     }
                     info!(
-                        event.name = "codex.app_server.otel_reloaded",
+                        event.name = "genex.app_server.otel_reloaded",
                         "reloaded telemetry exporters after account change"
                     );
                 }

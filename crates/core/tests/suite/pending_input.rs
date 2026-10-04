@@ -133,7 +133,7 @@ async fn standalone_tool_output_starts_instruction_turn() -> anyhow::Result<()> 
     let expected_output = json!({
         "type": "function_call_output",
         "name": "send_message_to_thread",
-        "namespace": "codex_app",
+        "namespace": "genex_app",
         "output": "delegated work",
     });
     let output = serde_json::from_value(expected_output.clone())?;

@@ -64,7 +64,7 @@ pub(crate) use user_shell::UserShellCommandTask;
 pub(crate) use user_shell::execute_user_shell_command;
 
 pub(crate) const GRACEFULL_INTERRUPTION_TIMEOUT_MS: u64 = 100;
-const TASK_COMPACT_METRIC: &str = "codex.task.compact";
+const TASK_COMPACT_METRIC: &str = "genex.task.compact";
 static ACTIVE_TURNS: Gauge = Gauge::new("core.turns.active");
 
 pub(crate) type SessionTaskResult = GenexResult<Option<String>>;
@@ -323,14 +323,14 @@ impl Session {
             thread.id = %self.thread_id,
             turn.id = %turn_context.sub_id,
             model = %turn_context.model_info().slug,
-            codex.turn.reasoning_effort = %reasoning_effort,
-            codex.turn.token_usage.input_tokens = field::Empty,
-            codex.turn.token_usage.cached_input_tokens = field::Empty,
-            codex.turn.token_usage.cache_write_input_tokens = field::Empty,
-            codex.turn.token_usage.non_cached_input_tokens = field::Empty,
-            codex.turn.token_usage.output_tokens = field::Empty,
-            codex.turn.token_usage.reasoning_output_tokens = field::Empty,
-            codex.turn.token_usage.total_tokens = field::Empty,
+            genex.turn.reasoning_effort = %reasoning_effort,
+            genex.turn.token_usage.input_tokens = field::Empty,
+            genex.turn.token_usage.cached_input_tokens = field::Empty,
+            genex.turn.token_usage.cache_write_input_tokens = field::Empty,
+            genex.turn.token_usage.non_cached_input_tokens = field::Empty,
+            genex.turn.token_usage.output_tokens = field::Empty,
+            genex.turn.token_usage.reasoning_output_tokens = field::Empty,
+            genex.turn.token_usage.total_tokens = field::Empty,
         );
         let handle = tokio::spawn(
             async move {
@@ -668,35 +668,35 @@ impl Session {
                 total_tokens: (total_token_usage.total_tokens
                     - token_usage_at_turn_start.total_tokens)
                     .max(0),
-                codex_rollout_budget_units: None,
+                genex_rollout_budget_units: None,
             };
             let current_span = Span::current();
             current_span.record(
-                "codex.turn.token_usage.input_tokens",
+                "genex.turn.token_usage.input_tokens",
                 turn_token_usage.input_tokens,
             );
             current_span.record(
-                "codex.turn.token_usage.cached_input_tokens",
+                "genex.turn.token_usage.cached_input_tokens",
                 turn_token_usage.cached_input(),
             );
             current_span.record(
-                "codex.turn.token_usage.cache_write_input_tokens",
+                "genex.turn.token_usage.cache_write_input_tokens",
                 turn_token_usage.cache_write_input_tokens,
             );
             current_span.record(
-                "codex.turn.token_usage.non_cached_input_tokens",
+                "genex.turn.token_usage.non_cached_input_tokens",
                 turn_token_usage.non_cached_input(),
             );
             current_span.record(
-                "codex.turn.token_usage.output_tokens",
+                "genex.turn.token_usage.output_tokens",
                 turn_token_usage.output_tokens,
             );
             current_span.record(
-                "codex.turn.token_usage.reasoning_output_tokens",
+                "genex.turn.token_usage.reasoning_output_tokens",
                 turn_token_usage.reasoning_output_tokens,
             );
             current_span.record(
-                "codex.turn.token_usage.total_tokens",
+                "genex.turn.token_usage.total_tokens",
                 turn_token_usage.total_tokens,
             );
             token_usage_by_model.emit(turn_telemetry);

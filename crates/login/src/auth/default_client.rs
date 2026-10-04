@@ -35,8 +35,8 @@ use std::sync::RwLock;
 /// The full user agent string is returned from the mcp initialize response.
 /// Parenthesis will be added by Genex. This should only specify what goes inside of the parenthesis.
 pub static USER_AGENT_SUFFIX: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
-pub const DEFAULT_ORIGINATOR: &str = "codex_cli_rs";
-pub const INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "CODEX_INTERNAL_ORIGINATOR_OVERRIDE";
+pub const DEFAULT_ORIGINATOR: &str = "genex_cli_rs";
+pub const INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "GENEX_INTERNAL_ORIGINATOR_OVERRIDE";
 pub use genex_model_provider_info::RESIDENCY_HEADER_NAME;
 pub use genex_model_provider_info::ResidencyRequirement;
 pub use genex_model_provider_info::read_managed_residency_requirement as read_default_client_residency_requirement;
@@ -136,7 +136,7 @@ pub fn add_originator_header(headers: &mut HeaderMap, originator_value: &str) {
 
 pub fn is_first_party_originator(originator_value: &str) -> bool {
     originator_value == DEFAULT_ORIGINATOR
-        || originator_value == "codex-tui"
+        || originator_value == "genex-tui"
         || originator_value == "codex_vscode"
         || originator_value.starts_with("Codex ")
 }
@@ -306,5 +306,5 @@ pub fn default_headers() -> HeaderMap {
 }
 
 fn is_sandboxed() -> bool {
-    std::env::var("CODEX_SANDBOX").as_deref() == Ok("seatbelt")
+    std::env::var("GENEX_SANDBOX").as_deref() == Ok("seatbelt")
 }

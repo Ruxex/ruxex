@@ -54,7 +54,7 @@ pub(crate) fn emit_tool_result(
     log_and_trace_event!(
         telemetry,
         common: {
-            event.name = "codex.tool_result",
+            event.name = "genex.tool_result",
             tool_result_seq = tool_result_seq,
             tool_name = %tool_name.name,
             tool_namespace = %tool_namespace,

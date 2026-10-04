@@ -343,7 +343,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
         .send_thread_start_request_with_auto_env(ThreadStartParams {
             model: Some("gpt-5.2".to_string()),
             thread_source: Some(ThreadSource::User),
-            service_name: Some("codex_work_desktop".to_string()),
+            service_name: Some("genex_work_desktop".to_string()),
             ..Default::default()
         })
         .await?;
@@ -384,7 +384,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
     );
     assert_eq!(thread.status, ThreadStatus::Idle);
     assert_eq!(thread.thread_source, Some(ThreadSource::User));
-    assert_eq!(thread.originator.as_deref(), Some("codex_work_desktop"));
+    assert_eq!(thread.originator.as_deref(), Some("genex_work_desktop"));
     let thread_path = thread.path.clone().expect("thread path should be present");
     assert!(thread_path.is_absolute(), "thread path should be absolute");
     assert!(
@@ -939,7 +939,7 @@ async fn thread_start_tracks_thread_initialized_analytics() -> Result<()> {
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
             thread_source: Some(ThreadSource::User),
-            service_name: Some("codex_work_desktop".to_string()),
+            service_name: Some("genex_work_desktop".to_string()),
             ..Default::default()
         })
         .await?;
@@ -951,7 +951,7 @@ async fn thread_start_tracks_thread_initialized_analytics() -> Result<()> {
         event,
         &thread.id,
         &thread.session_id,
-        "codex_work_desktop",
+        "genex_work_desktop",
         "mock-model",
         "new",
         "user",

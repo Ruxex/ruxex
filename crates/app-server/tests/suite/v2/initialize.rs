@@ -97,7 +97,7 @@ async fn initialize_probe_does_not_override_originator() -> Result<()> {
     };
     let InitializeResponse { user_agent, .. } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("codex_cli_rs/"));
+    assert!(user_agent.starts_with("genex_cli_rs/"));
     Ok(())
 }
 
@@ -130,7 +130,7 @@ async fn initialize_codex_backend_does_not_override_originator() -> Result<()> {
     };
     let InitializeResponse { user_agent, .. } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("codex_cli_rs/"));
+    assert!(user_agent.starts_with("genex_cli_rs/"));
     Ok(())
 }
 
@@ -147,8 +147,8 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
         .with_genex_home(genex_home.path())
         .without_auto_env()
         .with_env_overrides(&[(
-            "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
-            Some("codex_originator_via_env_var"),
+            "GENEX_INTERNAL_ORIGINATOR_OVERRIDE",
+            Some("genex_originator_via_env_var"),
         )])
         .build()
         .await?;
@@ -173,7 +173,7 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
         platform_os,
     } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("codex_originator_via_env_var/"));
+    assert!(user_agent.starts_with("genex_originator_via_env_var/"));
     assert_eq!(response_genex_home, expected_genex_home);
     assert_eq!(platform_family, std::env::consts::FAMILY);
     assert_eq!(platform_os, std::env::consts::OS);
@@ -191,7 +191,7 @@ async fn initialize_rejects_invalid_client_name() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("CODEX_INTERNAL_ORIGINATOR_OVERRIDE", None)])
+        .with_env_overrides(&[("GENEX_INTERNAL_ORIGINATOR_OVERRIDE", None)])
         .build()
         .await?;
 

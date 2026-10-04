@@ -385,7 +385,7 @@ fn worktree_rejects_remote_defaults_before_allocation() -> anyhow::Result<()> {
         let test = test_genex_exec();
         let mut command = test.cmd();
         if route == "environment" {
-            command.env("CODEX_EXEC_SERVER_URL", "ws://127.0.0.1:9");
+            command.env("GENEX_EXEC_SERVER_URL", "ws://127.0.0.1:9");
         } else {
             fs::write(
                 test.home_path().join("environments.toml"),

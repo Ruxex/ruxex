@@ -14,7 +14,7 @@ pub use auth::AuthKeyringBackendKind;
 pub use auth::AuthManager;
 pub use auth::AuthManagerConfig;
 pub use auth::AuthManagerInitializationError;
-pub use auth::CODEX_API_KEY_ENV_VAR;
+pub use auth::GENEX_API_KEY_ENV_VAR;
 pub use auth::GenexAuth;
 pub use auth::ExternalAuth;
 pub use auth::ExternalAuthFuture;

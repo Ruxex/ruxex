@@ -17,7 +17,7 @@ use genex_app_server_protocol::JSONRPCNotification;
 use genex_app_server_protocol::RequestId;
 use genex_app_server_protocol::SandboxPolicy;
 use genex_core::exec_env::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
-use genex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR;
+use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
 use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
@@ -454,7 +454,7 @@ async fn command_exec_permission_profile_starts_selected_network_proxy() -> Resu
             command: vec![
                 "sh".to_string(),
                 "-lc".to_string(),
-                "printf '%s' \"${CODEX_NETWORK_PROXY_ACTIVE-unset}\"".to_string(),
+                "printf '%s' \"${GENEX_NETWORK_PROXY_ACTIVE-unset}\"".to_string(),
             ],
             process_id: None,
             tty: false,
@@ -502,7 +502,7 @@ async fn command_exec_permission_profile_does_not_reuse_default_network_proxy() 
             command: vec![
                 "sh".to_string(),
                 "-lc".to_string(),
-                "printf '%s' \"${CODEX_NETWORK_PROXY_ACTIVE-unset}\"".to_string(),
+                "printf '%s' \"${GENEX_NETWORK_PROXY_ACTIVE-unset}\"".to_string(),
             ],
             process_id: None,
             tty: false,
@@ -603,7 +603,7 @@ async fn command_exec_returns_error_when_local_environment_is_disabled() -> Resu
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(CODEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

@@ -15,7 +15,7 @@ fn non_inheritable_environment_is_removed_after_policy_overrides() {
         ("SAFE".to_string(), "inherited".to_string()),
         ("node_repl_auth_token".into(), "inherited-token".into()),
         (
-            "codex_exec_server_noise_auth_token".to_string(),
+            "genex_exec_server_noise_auth_token".to_string(),
             "inherited-noise-token".to_string(),
         ),
     ];
@@ -26,7 +26,7 @@ fn non_inheritable_environment_is_removed_after_policy_overrides() {
             ("SAFE".to_string(), "override".to_string()),
             ("Node_Repl_Auth_Token".into(), "configured-token".into()),
             (
-                "Codex_Exec_Server_Noise_Auth_Token".to_string(),
+                "Genex_Exec_Server_Noise_Auth_Token".to_string(),
                 "configured-noise-token".to_string(),
             ),
         ]),
@@ -47,7 +47,7 @@ fn command_scrubber_removes_names_from_real_child_environment() {
             .env(CHILD_MODE_ENV_VAR, "1")
             .env("Node_Repl_Auth_Token", "inherited-token")
             .env(
-                "Codex_Exec_Server_Noise_Auth_Token",
+                "Genex_Exec_Server_Noise_Auth_Token",
                 "inherited-noise-token",
             )
             .output()
@@ -65,7 +65,7 @@ fn command_scrubber_removes_names_from_real_child_environment() {
     command
         .env("NODE_REPL_AUTH_TOKEN", "configured-token")
         .env(
-            CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
+            GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
             "configured-noise-token",
         )
         .env("SAFE", "value");

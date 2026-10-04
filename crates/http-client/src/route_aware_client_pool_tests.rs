@@ -167,7 +167,7 @@ async fn legacy_custom_ca_fallback_is_limited_to_reqwest_default() {
         std::fs::write(&invalid_ca_path, "not a PEM certificate")
             .expect("invalid CA fixture should be written");
 
-        for ca_env in ["CODEX_CA_CERTIFICATE", "SSL_CERT_FILE"] {
+        for ca_env in ["GENEX_CA_CERTIFICATE", "SSL_CERT_FILE"] {
             for policy_name in ["reqwest-default", "respect-system-proxy"] {
                 let output = std::process::Command::new(
                     std::env::current_exe().expect("test executable should be available"),
@@ -175,7 +175,7 @@ async fn legacy_custom_ca_fallback_is_limited_to_reqwest_default() {
                 .arg("--exact")
                 .arg("route_aware_client_pool::tests::legacy_custom_ca_fallback_is_limited_to_reqwest_default")
                 .arg("--nocapture")
-                .env_remove("CODEX_CA_CERTIFICATE")
+                .env_remove("GENEX_CA_CERTIFICATE")
                 .env_remove("SSL_CERT_FILE")
                 .env(ca_env, &invalid_ca_path)
                 .env(CHILD_POLICY_ENV, policy_name)

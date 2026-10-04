@@ -5,8 +5,8 @@
 
 use std::time::Duration;
 
-pub(crate) const LOAD_DURATION: &str = "codex.plugins.loaded_cache.load.duration_ms";
-pub(crate) const WAIT_DURATION: &str = "codex.plugins.loaded_cache.wait.duration_ms";
+pub(crate) const LOAD_DURATION: &str = "genex.plugins.loaded_cache.load.duration_ms";
+pub(crate) const WAIT_DURATION: &str = "genex.plugins.loaded_cache.wait.duration_ms";
 
 pub(crate) enum RequestOutcome {
     Hit,
@@ -25,7 +25,7 @@ impl RequestOutcome {
             Self::Load => "load",
         };
         let _ = metrics.counter(
-            "codex.plugins.loaded_cache.request",
+            "genex.plugins.loaded_cache.request",
             /*inc*/ 1,
             &[("outcome", outcome)],
         );
@@ -41,7 +41,7 @@ pub(crate) fn record_duration(name: &'static str, duration: Duration) {
 pub(crate) fn record_event(event: &'static str) {
     if let Some(metrics) = genex_otel::global() {
         let _ = metrics.counter(
-            "codex.plugins.loaded_cache.event",
+            "genex.plugins.loaded_cache.event",
             /*inc*/ 1,
             &[("event", event)],
         );

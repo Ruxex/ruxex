@@ -28,7 +28,7 @@ use genex_app_server_protocol::ThreadStartResponse;
 use genex_config::types::AuthCredentialsStoreMode;
 use genex_core::config::set_project_trust_level;
 use genex_core_plugins::store::PluginStore;
-use genex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR;
+use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
 use genex_exec_server::CreateDirectoryOptions;
 use genex_plugin::PluginId;
 use genex_protocol::config_types::TrustLevel;
@@ -616,7 +616,7 @@ async fn skills_list_skips_cwd_roots_when_environment_disabled() -> Result<()> {
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(CODEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 

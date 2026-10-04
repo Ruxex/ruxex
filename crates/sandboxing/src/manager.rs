@@ -2,7 +2,7 @@
 use crate::bwrap::WSL1_BWRAP_WARNING;
 #[cfg(target_os = "linux")]
 use crate::bwrap::is_wsl1;
-use crate::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use crate::landlock::GENEX_LINUX_SANDBOX_ARG0;
 use crate::landlock::create_linux_sandbox_command_args_for_permission_profile;
 use crate::policy_transforms::effective_permission_profile;
 use crate::policy_transforms::should_require_platform_sandbox;
@@ -242,7 +242,7 @@ impl std::fmt::Display for SandboxTransformError {
                 "sandbox policy cwd URI `{cwd}` is not valid on this host: {source}"
             ),
             Self::MissingLinuxSandboxExecutable => {
-                write!(f, "missing codex-linux-sandbox executable path")
+                write!(f, "missing genex-linux-sandbox executable path")
             }
             Self::WindowsMxcPreparation(err) => {
                 write!(f, "failed to prepare MXC sandbox: {err}")
@@ -547,7 +547,7 @@ impl SandboxManager {
                 let pending = pending_sandboxed_request?;
                 if let Some(metrics) = genex_otel::global() {
                     let _ = metrics.counter(
-                        "codex.windows_sandbox.private_desktop",
+                        "genex.windows_sandbox.private_desktop",
                         /*inc*/ 1,
                         &[(
                             "enabled",
@@ -822,10 +822,10 @@ fn os_string_to_command_component(value: OsString) -> String {
 }
 
 fn linux_sandbox_arg0_override(exe: &Path) -> String {
-    if exe.file_name().and_then(|name| name.to_str()) == Some(CODEX_LINUX_SANDBOX_ARG0) {
+    if exe.file_name().and_then(|name| name.to_str()) == Some(GENEX_LINUX_SANDBOX_ARG0) {
         os_string_to_command_component(exe.as_os_str().to_owned())
     } else {
-        CODEX_LINUX_SANDBOX_ARG0.to_string()
+        GENEX_LINUX_SANDBOX_ARG0.to_string()
     }
 }
 

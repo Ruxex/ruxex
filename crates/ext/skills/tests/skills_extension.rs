@@ -853,7 +853,7 @@ async fn shadow_selection_uses_host_catalog_when_instructions_are_disabled() -> 
     let catalog_entry_counts = snapshot
         .scope_metrics()
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-        .find(|metric| metric.name() == "codex.skills.shadow_selection.catalog_entries")
+        .find(|metric| metric.name() == "genex.skills.shadow_selection.catalog_entries")
         .map(|metric| match metric.data() {
             AggregatedMetrics::F64(MetricData::Histogram(histogram)) => histogram
                 .data_points()
@@ -957,7 +957,7 @@ async fn shadow_lru_selector_recovers_a_skill_invoked_on_an_earlier_turn() -> Te
     let metric = snapshot
         .scope_metrics()
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-        .find(|metric| metric.name() == "codex.skills.shadow_selection.invocation")
+        .find(|metric| metric.name() == "genex.skills.shadow_selection.invocation")
         .ok_or("shadow invocation metric should be recorded")?;
     let mut selector_hits = match metric.data() {
         AggregatedMetrics::U64(MetricData::Sum(sum)) => sum

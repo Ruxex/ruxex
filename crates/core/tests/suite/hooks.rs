@@ -3360,7 +3360,7 @@ async fn permission_request_hook_sees_raw_exec_command_input() -> Result<()> {
 
 #[tokio::test]
 async fn permission_request_hook_allows_network_approval_without_prompt() -> Result<()> {
-    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://codex-network-test.invalid', timeout=2).read().decode(errors='replace'))""#;
+    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://genex-network-test.invalid', timeout=2).read().decode(errors='replace'))""#;
     run_network_permission_hook_test(
         "allow",
         PERMISSION_REQUEST_ALLOW_REASON,
@@ -3374,7 +3374,7 @@ async fn permission_request_hook_allows_network_approval_without_prompt() -> Res
 #[tokio::test]
 async fn permission_request_hook_denies_network_approval_with_custom_message() -> Result<()> {
     let denial = "network access denied by the integration-test hook";
-    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); opener.open('http://codex-network-test.invalid', timeout=2).read()""#;
+    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); opener.open('http://genex-network-test.invalid', timeout=2).read()""#;
     run_network_permission_hook_test(
         "deny",
         denial,
@@ -3492,7 +3492,7 @@ allow_local_binding = true
     assert_single_permission_request_hook_input(
         test.genex_home_path(),
         command,
-        Some("network-access http://codex-network-test.invalid:80"),
+        Some("network-access http://genex-network-test.invalid:80"),
     )?;
     let requests = responses.requests();
     assert_eq!(

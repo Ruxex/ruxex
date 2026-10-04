@@ -77,7 +77,7 @@ impl SkillTurnMetrics {
         for plugin_id in usage.plugins {
             let plugin_id = sanitize_metric_tag_value(&plugin_id);
             metrics.histogram(
-                "codex.skill.turn.duration_seconds",
+                "genex.skill.turn.duration_seconds",
                 duration_seconds,
                 &[
                     ("plugin_id", plugin_id.as_str()),

@@ -10,14 +10,14 @@ use genex_protocol::models::ActivePermissionProfile;
 use genex_protocol::shell_environment;
 use std::collections::HashMap;
 
-pub use genex_protocol::shell_environment::CODEX_SESSION_ID_ENV_VAR;
-pub use genex_protocol::shell_environment::CODEX_THREAD_ID_ENV_VAR;
+pub use genex_protocol::shell_environment::GENEX_SESSION_ID_ENV_VAR;
+pub use genex_protocol::shell_environment::GENEX_THREAD_ID_ENV_VAR;
 
-pub(crate) const CODEX_VERSION_ENV_VAR: &str = "CODEX_VERSION";
+pub(crate) const GENEX_VERSION_ENV_VAR: &str = "GENEX_VERSION";
 
 /// Informational name of the active permission profile. Child processes can
 /// overwrite this value, so it must not be treated as proof of enforcement.
-pub const CODEX_PERMISSION_PROFILE_ENV_VAR: &str = "CODEX_PERMISSION_PROFILE";
+pub const GENEX_PERMISSION_PROFILE_ENV_VAR: &str = "GENEX_PERMISSION_PROFILE";
 
 /// Construct an environment map based on the rules in the specified policy. The
 /// resulting map can be passed directly to `Command::envs()` after calling
@@ -27,7 +27,7 @@ pub const CODEX_PERMISSION_PROFILE_ENV_VAR: &str = "CODEX_PERMISSION_PROFILE";
 /// The derivation follows the algorithm documented in the struct-level comment
 /// for [`ShellEnvironmentPolicy`].
 ///
-/// `CODEX_THREAD_ID` is injected when a thread id is provided, even when
+/// `GENEX_THREAD_ID` is injected when a thread id is provided, even when
 /// `include_only` is set.
 pub fn create_env(
     policy: &ShellEnvironmentPolicy,
@@ -39,12 +39,12 @@ pub fn create_env(
 
 /// Exposes the shared root-session identity and harness version to shell commands.
 pub(crate) fn inject_session_env(env: &mut HashMap<String, String>, session_id: SessionId) {
-    env.insert(CODEX_SESSION_ID_ENV_VAR.to_string(), session_id.to_string());
+    env.insert(GENEX_SESSION_ID_ENV_VAR.to_string(), session_id.to_string());
     if cfg!(windows) {
-        env.retain(|key, _| !key.eq_ignore_ascii_case(CODEX_VERSION_ENV_VAR));
+        env.retain(|key, _| !key.eq_ignore_ascii_case(GENEX_VERSION_ENV_VAR));
     }
     env.insert(
-        CODEX_VERSION_ENV_VAR.to_string(),
+        GENEX_VERSION_ENV_VAR.to_string(),
         env!("CARGO_PKG_VERSION").to_string(),
     );
 }
@@ -58,13 +58,13 @@ pub(crate) fn inject_permission_profile_env(
     active_permission_profile: Option<&ActivePermissionProfile>,
 ) {
     if cfg!(windows) {
-        env.retain(|key, _| !key.eq_ignore_ascii_case(CODEX_PERMISSION_PROFILE_ENV_VAR));
+        env.retain(|key, _| !key.eq_ignore_ascii_case(GENEX_PERMISSION_PROFILE_ENV_VAR));
     } else {
-        env.remove(CODEX_PERMISSION_PROFILE_ENV_VAR);
+        env.remove(GENEX_PERMISSION_PROFILE_ENV_VAR);
     }
     if let Some(active_permission_profile) = active_permission_profile {
         env.insert(
-            CODEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
+            GENEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
             active_permission_profile.id.clone(),
         );
     }

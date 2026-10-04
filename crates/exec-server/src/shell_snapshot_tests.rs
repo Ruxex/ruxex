@@ -77,7 +77,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "codex-exec-server",
+            "genex-exec-server",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -171,7 +171,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
     {
         match metric.name() {
-            "codex.shell_snapshot" => {
+            "genex.shell_snapshot" => {
                 let AggregatedMetrics::U64(MetricData::Sum(sum)) = metric.data() else {
                     panic!("expected shell snapshot counter");
                 };
@@ -183,7 +183,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
                     counters.insert(tags, point.value());
                 }
             }
-            "codex.shell_snapshot.duration_ms" => {
+            "genex.shell_snapshot.duration_ms" => {
                 let AggregatedMetrics::F64(MetricData::Histogram(histogram)) = metric.data() else {
                     panic!("expected shell snapshot duration histogram");
                 };

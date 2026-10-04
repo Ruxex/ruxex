@@ -262,7 +262,7 @@ fn oversized_read_pages_preserve_turns_and_pagination() {
 #[test]
 fn delegated_prompts_match_desktop_xml_contract() {
     let output = FunctionCallOutputBody::Text(delegated_prompt("thread-1", "Check status"));
-    for namespace in ["genex_tui", "codex_app"] {
+    for namespace in ["genex_tui", "genex_app"] {
         assert_eq!(
             parse_delegated_tool_output("send_message_to_thread", Some(namespace), &output),
             Some(("thread-1".to_string(), "Check status".to_string()))

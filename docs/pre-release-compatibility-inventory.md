@@ -46,6 +46,14 @@ where `codex` is only a substring of another word, external repository URLs,
 and active external/security namespaces whose replacement would strand state.
 Provider-specific capability findings remain separate follow-up candidates.
 
+### Genex Rust 境界移行 (2026-10-04)
+
+| 対象 | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| Rust 内部 env/定数、protocol・persisted marker、telemetry 内部名、originator、CLI/TUI/test fixture | 既存の workspace producer/consumer を同一 migration wave で更新。Responses usage は `genex-api` の adapter で wire payload から内部型へ変換し、Rust 側の canonical field は `genex_rollout_budget_units` とした。 | `migrate-in-place` | `scripts/audit_genex_rust_names.py`; `just check --tests`; `git diff --check` |
+| `codex_rollout_budget_units` | OpenAI Responses の raw completion usage が `crates/genex-api/src/sse/responses.rs` と end-to-end fixture で生成/消費する唯一の wire boundary。内部型の serde adapter に明示的な rename を置いた。 | `retain` at external adapter only | Raw fixture audit; `just check --tests` |
+| `CODEX_API_KEY` / `CODEX_ACCESS_TOKEN`、`x-codex-*` Responses headers、OpenAI model IDs、third-party MCP/Agent Plugin/package names、OS sandbox/security names、外部 telemetry/MCP values、upstream/historical/legal names | Login/Responses endpoint、外部 client/protocol、package/runtime、OS/security、既存 telemetry の consumer が exact value を要求する。Rust 内の binding/constant 名だけ変更できるものは変更し、wire/value は保持した。 | `retain` exact external value; `migrate-in-place` repository-owned bindings | Exact residual audit; `just check --tests`; `just check` |
+
 ### Dependency-ordered leaf path/package audit (2026-10-03)
 
 | Exact path/name | Producer/consumer audit | Canonical replacement | Decision | Verification |

@@ -4,7 +4,7 @@ use genex_api::SearchCommands;
 use genex_api::SearchQuery;
 use genex_api::SearchRequest;
 use genex_api::SearchSettings;
-use genex_core::X_CODEX_TURN_METADATA_HEADER;
+use genex_core::X_GENEX_TURN_METADATA_HEADER;
 use genex_core::web_search_action_detail;
 use genex_extension_api::ExtensionTurnItem;
 use genex_extension_api::FunctionCallError;
@@ -40,7 +40,7 @@ use crate::schema::commands_schema;
 pub(crate) const WEB_NAMESPACE: &str = "web";
 pub(crate) const RUN_TOOL_NAME: &str = "run";
 const WEB_RUN_DESCRIPTION: &str = include_str!("../web_run_description.md");
-const RESULTS_PAYLOAD_BYTES_METRIC: &str = "codex.web_search.results.payload_bytes";
+const RESULTS_PAYLOAD_BYTES_METRIC: &str = "genex.web_search.results.payload_bytes";
 
 pub(crate) struct WebSearchTool {
     pub(crate) session_id: String,
@@ -193,7 +193,7 @@ fn search_request_headers(originator: Option<&str>, turn_metadata: Option<&str>)
     if let Some(turn_metadata) = turn_metadata
         && let Ok(header_value) = HeaderValue::from_str(turn_metadata)
     {
-        headers.insert(X_CODEX_TURN_METADATA_HEADER, header_value);
+        headers.insert(X_GENEX_TURN_METADATA_HEADER, header_value);
     }
 
     if let Some(originator) = originator {
@@ -274,20 +274,20 @@ mod tests {
 
     use super::command_action;
     use super::search_request_headers;
-    use genex_core::X_CODEX_TURN_METADATA_HEADER;
+    use genex_core::X_GENEX_TURN_METADATA_HEADER;
 
     #[test]
     fn search_request_headers_forward_thread_originator_and_turn_metadata() {
-        let headers = search_request_headers(Some("codex_work_cca"), Some("turn-metadata"));
+        let headers = search_request_headers(Some("genex_work_cca"), Some("turn-metadata"));
         assert_eq!(
             headers
                 .get("originator")
                 .and_then(|value| value.to_str().ok()),
-            Some("codex_work_cca")
+            Some("genex_work_cca")
         );
         assert_eq!(
             headers
-                .get(X_CODEX_TURN_METADATA_HEADER)
+                .get(X_GENEX_TURN_METADATA_HEADER)
                 .and_then(|value| value.to_str().ok()),
             Some("turn-metadata")
         );

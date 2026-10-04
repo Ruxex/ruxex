@@ -54,7 +54,7 @@ pub(super) fn emit_network_policy_decision(
     tracing::event!(
         target: "genex_otel.log_only",
         tracing::Level::INFO,
-        event.name = "codex.network_proxy.policy_decision",
+        event.name = "genex.network_proxy.policy_decision",
         event.timestamp = decision.timestamp,
         conversation.id = metadata.conversation_id.as_deref(),
         app.version = metadata.app_version.as_deref(),

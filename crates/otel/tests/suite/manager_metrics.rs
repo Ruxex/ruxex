@@ -34,13 +34,13 @@ fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
     .with_metrics(metrics);
 
     manager.counter(
-        "codex.session_started",
+        "genex.session_started",
         /*inc*/ 1,
         &[("source", "tui")],
     );
     for tokens in [32_000, 256_000] {
         manager.histogram_with_boundaries(
-            "codex.request_tokens",
+            "genex.request_tokens",
             tokens,
             &[16_000.0, 128_000.0, 512_000.0],
             &[("source", "tui")],
@@ -50,7 +50,7 @@ fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
 
     let resource_metrics = latest_metrics(&exporter);
     assert_eq!(
-        histogram_data(&resource_metrics, "codex.request_tokens"),
+        histogram_data(&resource_metrics, "genex.request_tokens"),
         (
             vec![16_000.0, 128_000.0, 512_000.0],
             vec![0, 1, 1, 0],
@@ -59,7 +59,7 @@ fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
         )
     );
     let metric =
-        find_metric(&resource_metrics, "codex.session_started").expect("counter metric missing");
+        find_metric(&resource_metrics, "genex.session_started").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {
@@ -111,7 +111,7 @@ fn manager_allows_disabling_metadata_tags() -> Result<()> {
     .with_metrics_without_metadata_tags(metrics);
 
     manager.counter(
-        "codex.session_started",
+        "genex.session_started",
         /*inc*/ 1,
         &[("source", "tui")],
     );
@@ -119,7 +119,7 @@ fn manager_allows_disabling_metadata_tags() -> Result<()> {
 
     let resource_metrics = latest_metrics(&exporter);
     let metric =
-        find_metric(&resource_metrics, "codex.session_started").expect("counter metric missing");
+        find_metric(&resource_metrics, "genex.session_started").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {
@@ -156,12 +156,12 @@ fn manager_attaches_optional_service_name_tag() -> Result<()> {
     .with_metrics_service_name("my_app_server_client")
     .with_metrics(metrics);
 
-    manager.counter("codex.session_started", /*inc*/ 1, &[]);
+    manager.counter("genex.session_started", /*inc*/ 1, &[]);
     manager.shutdown_metrics()?;
 
     let resource_metrics = latest_metrics(&exporter);
     let metric =
-        find_metric(&resource_metrics, "codex.session_started").expect("counter metric missing");
+        find_metric(&resource_metrics, "genex.session_started").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {

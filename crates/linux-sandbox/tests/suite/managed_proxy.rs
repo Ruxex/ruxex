@@ -310,7 +310,7 @@ async fn namespace_reaper_collects_orphaned_descendants() {
 
 #[tokio::test]
 async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
-    if option_env!("CODEX_BWRAP_SHA256")
+    if option_env!("GENEX_BWRAP_SHA256")
         .is_some_and(|digest| digest.chars().any(|character| character != '0'))
     {
         eprintln!("skipping system bwrap fallback test: bundled binaries require a release digest");
@@ -328,7 +328,7 @@ async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
     };
 
     let tempdir = tempfile::tempdir().expect("create isolated sandbox installation");
-    let sandbox_executable = tempdir.path().join("codex-linux-sandbox");
+    let sandbox_executable = tempdir.path().join("genex-linux-sandbox");
     let original_executable = env!("CARGO_BIN_EXE_codex-linux-sandbox");
     if std::fs::hard_link(original_executable, &sandbox_executable).is_err() {
         std::fs::copy(original_executable, &sandbox_executable).expect("copy sandbox executable");

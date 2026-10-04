@@ -56,7 +56,7 @@ async fn stdio_sigterm_times_out_with_blocked_stderr() -> Result<()> {
         .arg(DISABLE_PLUGIN_STARTUP_TASKS_ARG)
         .env("GENEX_HOME", genex_home.path())
         .env(
-            "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
             genex_home.path().join("managed_config.toml"),
         )
         .env("RUST_LOG", "genex_app_server_transport=error")

@@ -20,7 +20,7 @@ use super::UnifiedExecContext;
 use super::process_manager::apply_unified_exec_env;
 use super::process_manager::exec_env_policy_from_shell_policy;
 use crate::config::NetworkProxySpec;
-use crate::exec_env::CODEX_THREAD_ID_ENV_VAR;
+use crate::exec_env::GENEX_THREAD_ID_ENV_VAR;
 use crate::exec_env::inject_apply_patch_env;
 use crate::exec_env::inject_permission_profile_env;
 use crate::exec_env::inject_session_env;
@@ -111,7 +111,7 @@ impl Session {
                     });
                 let mut env = apply_unified_exec_env(HashMap::new());
                 env.insert(
-                    CODEX_THREAD_ID_ENV_VAR.to_string(),
+                    GENEX_THREAD_ID_ENV_VAR.to_string(),
                     session.thread_id().to_string(),
                 );
                 inject_session_env(&mut env, session.session_id());

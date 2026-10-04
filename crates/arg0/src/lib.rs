@@ -7,10 +7,10 @@ use std::path::PathBuf;
 use genex_apply_patch::GENEX_CORE_APPLY_PATCH_ARG1;
 use genex_async_utils::THREAD_STACK_SIZE_BYTES;
 #[cfg(unix)]
-use genex_exec_server::CODEX_ARG0_EXEC_HELPER_ARG1;
-use genex_exec_server::CODEX_FS_HELPER_ARG1;
+use genex_exec_server::GENEX_ARG0_EXEC_HELPER_ARG1;
+use genex_exec_server::GENEX_FS_HELPER_ARG1;
 use genex_install_context::InstallContext;
-use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
 use genex_utils_home_dir::find_genex_home;
 #[cfg(target_os = "windows")]
 use genex_windows_sandbox::GENEX_WINDOWS_SANDBOX_ARG1;
@@ -92,7 +92,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
         }
     }
 
-    if exe_name == CODEX_LINUX_SANDBOX_ARG0 {
+    if exe_name == GENEX_LINUX_SANDBOX_ARG0 {
         // Safety: [`run_main`] never returns.
         genex_linux_sandbox::run_main();
     } else if exe_name == APPLY_PATCH_ARG0 || exe_name == MISSPELLED_APPLY_PATCH_ARG0 {
@@ -104,10 +104,10 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
         genex_sandboxing::run_windows_mxc_main();
     }
     #[cfg(unix)]
-    if argv1 == CODEX_ARG0_EXEC_HELPER_ARG1 {
+    if argv1 == GENEX_ARG0_EXEC_HELPER_ARG1 {
         genex_exec_server::run_arg0_exec_helper_main();
     }
-    if argv1 == CODEX_FS_HELPER_ARG1 {
+    if argv1 == GENEX_FS_HELPER_ARG1 {
         genex_exec_server::run_fs_helper_main();
     }
     #[cfg(target_os = "windows")]
@@ -202,14 +202,14 @@ fn prepare_path_env_var_with_aliases(
 /// Linux (but not Windows).
 ///
 /// When the current executable is invoked through the hard-link or alias named
-/// `codex-linux-sandbox` we *directly* execute
+/// `genex-linux-sandbox` we *directly* execute
 /// [`genex_linux_sandbox::run_main`] (which never returns). Otherwise we:
 ///
 /// 1.  Load `.env` values from `~/.genex/.env` before creating any threads.
 /// 2.  Spawn a main runtime thread with a controlled stack size.
 /// 3.  Construct a Tokio multi-thread runtime.
 /// 4.  Capture the current executable path and derive the
-///     `codex-linux-sandbox` helper path (falling back to the current
+///     `genex-linux-sandbox` helper path (falling back to the current
 ///     executable if needed) so children can re-invoke the sandbox when running
 ///     on Linux.
 /// 5.  Execute the provided async `main_fn` inside that runtime, forwarding any
@@ -282,7 +282,7 @@ fn linux_sandbox_exe_path(
     path_entry_guard: Option<&Arg0PathEntryGuard>,
     current_exe: Option<PathBuf>,
 ) -> Option<PathBuf> {
-    // Prefer the `codex-linux-sandbox` alias when available so callers can
+    // Prefer the `genex-linux-sandbox` alias when available so callers can
     // re-exec through a path whose basename still triggers arg0 dispatch on
     // bubblewrap builds that do not support `--argv0`.
     path_entry_guard
@@ -391,7 +391,7 @@ fn prepare_path_entry_for_genex_aliases(
         APPLY_PATCH_ARG0,
         MISSPELLED_APPLY_PATCH_ARG0,
         #[cfg(target_os = "linux")]
-        CODEX_LINUX_SANDBOX_ARG0,
+        GENEX_LINUX_SANDBOX_ARG0,
         #[cfg(unix)]
         EXECVE_WRAPPER_ARG0,
     ] {
@@ -425,7 +425,7 @@ fn prepare_path_entry_for_genex_aliases(
         genex_linux_sandbox_exe: {
             #[cfg(target_os = "linux")]
             {
-                Some(path.join(CODEX_LINUX_SANDBOX_ARG0))
+                Some(path.join(GENEX_LINUX_SANDBOX_ARG0))
             }
             #[cfg(not(target_os = "linux"))]
             {
@@ -654,7 +654,7 @@ mod tests {
     fn linux_sandbox_exe_path_prefers_genex_linux_sandbox_alias() -> std::io::Result<()> {
         let temp_dir = TempDir::new()?;
         let lock_file = create_lock(temp_dir.path())?;
-        let alias_path = temp_dir.path().join("codex-linux-sandbox");
+        let alias_path = temp_dir.path().join("genex-linux-sandbox");
         let path_entry = Arg0PathEntryGuard::new(
             temp_dir,
             lock_file,

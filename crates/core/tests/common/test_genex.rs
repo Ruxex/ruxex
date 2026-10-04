@@ -576,7 +576,7 @@ impl TestGenexBuilder {
         #[cfg(target_os = "linux")]
         let genex_linux_sandbox_exe = Some(
             crate::find_genex_linux_sandbox_exe()
-                .context("should find binary for codex-linux-sandbox")?,
+                .context("should find binary for genex-linux-sandbox")?,
         );
         #[cfg(not(target_os = "linux"))]
         let genex_linux_sandbox_exe = None;

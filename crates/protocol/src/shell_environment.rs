@@ -3,13 +3,13 @@ use crate::config_types::ShellEnvironmentPolicy;
 use crate::config_types::ShellEnvironmentPolicyInherit;
 use std::collections::HashMap;
 
-pub const CODEX_SESSION_ID_ENV_VAR: &str = "CODEX_SESSION_ID";
-pub const CODEX_THREAD_ID_ENV_VAR: &str = "CODEX_THREAD_ID";
-pub const CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR: &str = "CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN";
+pub const GENEX_SESSION_ID_ENV_VAR: &str = "GENEX_SESSION_ID";
+pub const GENEX_THREAD_ID_ENV_VAR: &str = "GENEX_THREAD_ID";
+pub const GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR: &str = "GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN";
 
 /// Environment variables that model-reachable child processes must not inherit.
 pub const NON_INHERITABLE_ENV_VARS: &[&str] = &[
-    CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
+    GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
     "NODE_REPL_AUTH_TOKEN",
 ];
 
@@ -142,7 +142,7 @@ where
 
     // Step 6 - Populate the thread ID environment variable when provided.
     if let Some(thread_id) = thread_id {
-        env_map.insert(CODEX_THREAD_ID_ENV_VAR.to_string(), thread_id.to_string());
+        env_map.insert(GENEX_THREAD_ID_ENV_VAR.to_string(), thread_id.to_string());
     }
 
     // Restricted launch context cannot be restored through user-provided shell

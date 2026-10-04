@@ -3204,7 +3204,7 @@ mod tests {
                     call_id: "dyn-1".into(),
                     turn_id: "turn-1".into(),
                     started_at_ms: 0,
-                    namespace: Some("codex_app".into()),
+                    namespace: Some("genex_app".into()),
                     tool: "lookup_ticket".into(),
                     arguments: serde_json::json!({"id":"ABC-123"}),
                 },
@@ -3213,7 +3213,7 @@ mod tests {
                 call_id: "dyn-1".into(),
                 turn_id: "turn-1".into(),
                 completed_at_ms: 0,
-                namespace: Some("codex_app".into()),
+                namespace: Some("genex_app".into()),
                 tool: "lookup_ticket".into(),
                 arguments: serde_json::json!({"id":"ABC-123"}),
                 content_items: vec![
@@ -3244,7 +3244,7 @@ mod tests {
             turns[0].items[1],
             ThreadItem::DynamicToolCall {
                 id: "dyn-1".into(),
-                namespace: Some("codex_app".into()),
+                namespace: Some("genex_app".into()),
                 tool: "lookup_ticket".into(),
                 arguments: serde_json::json!({"id":"ABC-123"}),
                 status: DynamicToolCallStatus::Completed,

@@ -1411,7 +1411,7 @@ async fn embedded_server_rejects_unowned_dynamic_tool_calls() -> Result<()> {
                     thread_id: "thread-1".to_string(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-1".to_string(),
-                    namespace: Some("codex_app".to_string()),
+                    namespace: Some("genex_app".to_string()),
                     tool: "list_threads".to_string(),
                     arguments: serde_json::json!({}),
                 },
@@ -1457,7 +1457,7 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         .thread_id
         .to_string();
 
-    for namespace in [Some("codex_app"), None] {
+    for namespace in [Some("genex_app"), None] {
         app.handle_app_server_event(
             &app_server,
             genex_app_server_client::AppServerEvent::ServerRequest(Box::new(

@@ -12,10 +12,10 @@ use serde::Serialize;
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::client::X_CODEX_INSTALLATION_ID_HEADER;
-use crate::client::X_CODEX_PARENT_THREAD_ID_HEADER;
-use crate::client::X_CODEX_TURN_METADATA_HEADER;
-use crate::client::X_CODEX_WINDOW_ID_HEADER;
+use crate::client::X_GENEX_INSTALLATION_ID_HEADER;
+use crate::client::X_GENEX_PARENT_THREAD_ID_HEADER;
+use crate::client::X_GENEX_TURN_METADATA_HEADER;
+use crate::client::X_GENEX_WINDOW_ID_HEADER;
 
 pub(crate) const INSTALLATION_ID_KEY: &str = "installation_id";
 pub(crate) const SESSION_ID_KEY: &str = "session_id";
@@ -50,7 +50,7 @@ pub(crate) const WORKSPACES_KEY: &str = "workspaces";
 // when submitting a turn, but they must not override fields owned by core.
 const RESERVED_METADATA_KEYS: &[&str] = &[
     INSTALLATION_ID_KEY,
-    X_CODEX_INSTALLATION_ID_HEADER,
+    X_GENEX_INSTALLATION_ID_HEADER,
     SESSION_ID_KEY,
     THREAD_ID_KEY,
     AGENT_NAME_KEY,
@@ -58,9 +58,9 @@ const RESERVED_METADATA_KEYS: &[&str] = &[
     WINDOW_ID_KEY,
     WINDOW_NUMBER_KEY,
     CONTEXT_WINDOW_ID_KEY,
-    X_CODEX_WINDOW_ID_HEADER,
-    X_CODEX_TURN_METADATA_HEADER,
-    X_CODEX_PARENT_THREAD_ID_HEADER,
+    X_GENEX_WINDOW_ID_HEADER,
+    X_GENEX_TURN_METADATA_HEADER,
+    X_GENEX_PARENT_THREAD_ID_HEADER,
     REQUEST_KIND_KEY,
     COMPACTION_KEY,
     LEGACY_CODE_MODE_TOOL_NAMES_KEY,
@@ -344,19 +344,19 @@ impl GenexResponsesMetadata {
     pub(crate) fn client_metadata(&self) -> HashMap<String, String> {
         let mut client_metadata = HashMap::from([
             (
-                X_CODEX_INSTALLATION_ID_HEADER.to_string(),
+                X_GENEX_INSTALLATION_ID_HEADER.to_string(),
                 self.installation_id.clone(),
             ),
             (SESSION_ID_KEY.to_string(), self.session_id.clone()),
             (THREAD_ID_KEY.to_string(), self.thread_id.clone()),
-            (X_CODEX_WINDOW_ID_HEADER.to_string(), self.window_id.clone()),
+            (X_GENEX_WINDOW_ID_HEADER.to_string(), self.window_id.clone()),
         ]);
         if let Some(turn_id) = &self.turn_id {
             client_metadata.insert(TURN_ID_KEY.to_string(), turn_id.clone());
         }
         if let Some(parent_thread_id) = self.parent_thread_id {
             client_metadata.insert(
-                X_CODEX_PARENT_THREAD_ID_HEADER.to_string(),
+                X_GENEX_PARENT_THREAD_ID_HEADER.to_string(),
                 parent_thread_id.to_string(),
             );
         }
@@ -369,14 +369,14 @@ impl GenexResponsesMetadata {
         if self.has_turn_metadata()
             && let Some(turn_metadata_json) = self.turn_metadata_json()
         {
-            client_metadata.insert(X_CODEX_TURN_METADATA_HEADER.to_string(), turn_metadata_json);
+            client_metadata.insert(X_GENEX_TURN_METADATA_HEADER.to_string(), turn_metadata_json);
         }
         client_metadata
     }
 
     pub(crate) fn compatibility_headers(&self) -> ApiHeaderMap {
         let mut headers = ApiHeaderMap::new();
-        insert_header(&mut headers, X_CODEX_WINDOW_ID_HEADER, &self.window_id);
+        insert_header(&mut headers, X_GENEX_WINDOW_ID_HEADER, &self.window_id);
         // Direct x-codex-turn-metadata is compatibility output. Keep the unbounded tool inventory
         // in client_metadata only so HTTP and WebSocket compatibility headers remain bounded.
         if self.has_turn_metadata()
@@ -387,14 +387,14 @@ impl GenexResponsesMetadata {
         {
             insert_header(
                 &mut headers,
-                X_CODEX_TURN_METADATA_HEADER,
+                X_GENEX_TURN_METADATA_HEADER,
                 &turn_metadata_json,
             );
         }
         if let Some(parent_thread_id) = self.parent_thread_id {
             insert_header(
                 &mut headers,
-                X_CODEX_PARENT_THREAD_ID_HEADER,
+                X_GENEX_PARENT_THREAD_ID_HEADER,
                 &parent_thread_id.to_string(),
             );
         }

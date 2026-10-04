@@ -270,7 +270,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.startup_phase",
+                event.name = "genex.startup_phase",
                 startup.phase = phase,
                 startup.status = status,
                 duration_ms = %duration.as_millis(),
@@ -286,7 +286,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.turn_ttft",
+                event.name = "genex.turn_ttft",
                 duration_ms = %duration.as_millis(),
             },
             log: {},
@@ -343,7 +343,7 @@ impl SessionTelemetry {
         }
         log_event!(
             self,
-            event.name = "codex.turn_cost",
+            event.name = "genex.turn_cost",
             turn.id = turn_id,
             usage.estimated_usd = estimated_usd,
             turn.interrupted = interrupted,
@@ -367,7 +367,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.plugin_install_elicitation_sent",
+                event.name = "genex.plugin_install_elicitation_sent",
                 plugin_install.tool_type = tool_type,
                 plugin_install.tool_id = tool_id,
                 plugin_install.tool_name = tool_name,
@@ -400,7 +400,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.plugin_install_suggestion",
+                event.name = "genex.plugin_install_suggestion",
                 plugin_install.tool_type = tool_type,
                 plugin_install.tool_id = tool_id,
                 plugin_install.tool_name = tool_name,
@@ -566,10 +566,10 @@ impl SessionTelemetry {
                 handle_responses_span
                     .record("gen_ai.usage.output_tokens", token_usage.output_tokens);
                 handle_responses_span.record(
-                    "codex.usage.reasoning_output_tokens",
+                    "genex.usage.reasoning_output_tokens",
                     token_usage.reasoning_output_tokens,
                 );
-                handle_responses_span.record("codex.usage.total_tokens", token_usage.total_tokens);
+                handle_responses_span.record("genex.usage.total_tokens", token_usage.total_tokens);
             }
             _ => {}
         }
@@ -590,7 +590,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.conversation_starts",
+                event.name = "genex.conversation_starts",
                 provider_name = %provider_name,
                 auth.env_codex_api_key_present = self.metadata.auth_env.codex_api_key_env_present,
                 auth.env_codex_api_key_enabled = self.metadata.auth_env.codex_api_key_env_enabled,
@@ -677,7 +677,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.api_request",
+                event.name = "genex.api_request",
                 duration_ms = %duration.as_millis(),
                 http.response.status_code = status,
                 error.message = error,
@@ -724,7 +724,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.websocket_connect",
+                event.name = "genex.websocket_connect",
                 duration_ms = %duration.as_millis(),
                 http.response.status_code = status,
                 success = success_str,
@@ -768,7 +768,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.websocket_request",
+                event.name = "genex.websocket_request",
                 duration_ms = %duration.as_millis(),
                 success = success_str,
                 error.message = error,
@@ -797,7 +797,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.auth_recovery",
+                event.name = "genex.auth_recovery",
                 auth.mode = mode,
                 auth.step = step,
                 auth.outcome = outcome,
@@ -935,7 +935,7 @@ impl SessionTelemetry {
         );
         log_event!(
             self,
-            event.name = "codex.sse_event",
+            event.name = "genex.sse_event",
             event.kind = %kind,
             duration_ms = %duration.as_millis(),
         );
@@ -959,21 +959,21 @@ impl SessionTelemetry {
         match kind {
             Some(kind) => log_event!(
                 self,
-                event.name = "codex.sse_event",
+                event.name = "genex.sse_event",
                 event.kind = %kind,
                 duration_ms = %duration.as_millis(),
                 error.message = %error,
             ),
             None => log_event!(
                 self,
-                event.name = "codex.sse_event",
+                event.name = "genex.sse_event",
                 duration_ms = %duration.as_millis(),
                 error.message = %error,
             ),
         }
         trace_event!(
             self,
-            event.name = "codex.sse_event",
+            event.name = "genex.sse_event",
             event.kind = %kind_str,
             duration_ms = %duration.as_millis(),
             error.message = %error,
@@ -987,7 +987,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.sse_event",
+                event.name = "genex.sse_event",
                 event.kind = %"response.completed",
                 error.message = %error,
             },
@@ -1000,7 +1000,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "codex.sse_event",
+                event.name = "genex.sse_event",
                 event.kind = %"response.completed",
                 input_token_count = %usage.input_tokens,
                 output_token_count = %usage.output_tokens,
@@ -1046,13 +1046,13 @@ impl SessionTelemetry {
 
         log_event!(
             self,
-            event.name = "codex.user_prompt",
+            event.name = "genex.user_prompt",
             prompt_length = %prompt.chars().count(),
             prompt = %prompt_to_log,
         );
         trace_event!(
             self,
-            event.name = "codex.user_prompt",
+            event.name = "genex.user_prompt",
             prompt_length = %prompt.chars().count(),
             text_input_count = text_input_count as i64,
             image_input_count = image_input_count as i64,
@@ -1071,7 +1071,7 @@ impl SessionTelemetry {
         match source {
             Some(source) => log_event!(
                 self,
-                event.name = "codex.tool_decision",
+                event.name = "genex.tool_decision",
                 tool_name = %tool_name.name,
                 tool_namespace = %tool_namespace,
                 call_id = %call_id,
@@ -1080,7 +1080,7 @@ impl SessionTelemetry {
             ),
             None => log_event!(
                 self,
-                event.name = "codex.tool_decision",
+                event.name = "genex.tool_decision",
                 tool_name = %tool_name.name,
                 tool_namespace = %tool_namespace,
                 call_id = %call_id,
@@ -1102,7 +1102,7 @@ impl SessionTelemetry {
             escalated_duration.map(|duration| duration.as_millis().min(i64::MAX as u128) as i64);
         log_event!(
             self,
-            event.name = "codex.sandbox_outcome",
+            event.name = "genex.sandbox_outcome",
             tool_name = %tool_name,
             call_id = %call_id,
             outcome = %outcome,
@@ -1111,7 +1111,7 @@ impl SessionTelemetry {
         );
         trace_event!(
             self,
-            event.name = "codex.sandbox_outcome",
+            event.name = "genex.sandbox_outcome",
             tool_name = %tool_name,
             call_id = %call_id,
             outcome = %outcome,

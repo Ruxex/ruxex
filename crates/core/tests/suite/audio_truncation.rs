@@ -61,7 +61,7 @@ async fn dynamic_tool_audio_exceeding_the_output_budget_is_omitted() -> Result<(
         vec![
             sse(vec![
                 responses::ev_response_created("resp-1"),
-                responses::ev_function_call_with_namespace(call_id, "codex_app", tool_name, "{}"),
+                responses::ev_function_call_with_namespace(call_id, "genex_app", tool_name, "{}"),
                 responses::ev_completed("resp-1"),
             ]),
             sse(vec![
@@ -79,7 +79,7 @@ async fn dynamic_tool_audio_exceeding_the_output_budget_is_omitted() -> Result<(
     });
     let base_test = builder.build_with_auto_env(&server).await?;
     let dynamic_tool = DynamicToolSpec::Namespace(DynamicToolNamespaceSpec {
-        name: "codex_app".to_string(),
+        name: "genex_app".to_string(),
         description: "Audio tools.".to_string(),
         tools: vec![DynamicToolNamespaceTool::Function(
             DynamicToolFunctionSpec {

@@ -88,7 +88,7 @@ pub fn app_server_json_shutdown_event(
         .stdin(Stdio::null())
         .env("GENEX_HOME", genex_home)
         .env(
-            "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
             genex_home.join("managed_config.toml"),
         )
         .env("LOG_FORMAT", "json")

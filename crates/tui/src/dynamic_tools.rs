@@ -1191,7 +1191,7 @@ pub(crate) fn parse_delegated_tool_output(
     namespace: Option<&str>,
     output: &FunctionCallOutputBody,
 ) -> Option<(String, String)> {
-    if !matches!(namespace, Some(NAMESPACE | "codex_app"))
+    if !matches!(namespace, Some(NAMESPACE | "genex_app"))
         || !matches!(name, "create_thread" | "send_message_to_thread")
     {
         return None;

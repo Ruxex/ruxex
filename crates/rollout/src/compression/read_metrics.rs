@@ -48,9 +48,9 @@ impl Drop for ReadMetrics {
             ("stage", stage),
             ("error_kind", error_kind),
         ];
-        let _ = metrics.counter("codex.rollout_compression.read", /*inc*/ 1, &tags);
+        let _ = metrics.counter("genex.rollout_compression.read", /*inc*/ 1, &tags);
         let _ = metrics.record_duration(
-            "codex.rollout_compression.read.io_duration_ms",
+            "genex.rollout_compression.read.io_duration_ms",
             self.duration,
             &tags,
         );

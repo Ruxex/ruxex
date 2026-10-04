@@ -343,7 +343,7 @@ fn build_request_metadata(
         .current_meta_value_for_mcp_request(ExecutionMetadata::from_settings(settings))
         .map(|turn_metadata| {
             Map::from_iter([(
-                crate::X_CODEX_TURN_METADATA_HEADER.to_string(),
+                crate::X_GENEX_TURN_METADATA_HEADER.to_string(),
                 turn_metadata,
             )])
         })

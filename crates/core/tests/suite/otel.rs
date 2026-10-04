@@ -96,7 +96,7 @@ fn touch_command(path: &str) -> String {
 
 #[test]
 fn extract_log_field_handles_empty_bare_values() {
-    let line = "event.name=\"codex.tool_result\" mcp_server= mcp_server_origin=";
+    let line = "event.name=\"genex.tool_result\" mcp_server= mcp_server_origin=";
     assert_eq!(extract_log_field(line, "mcp_server"), Some(String::new()));
     assert_eq!(
         extract_log_field(line, "mcp_server_origin"),
@@ -106,7 +106,7 @@ fn extract_log_field_handles_empty_bare_values() {
 
 #[test]
 fn extract_log_field_does_not_confuse_similar_keys() {
-    let line = "event.name=\"codex.tool_result\" mcp_server_origin=stdio";
+    let line = "event.name=\"genex.tool_result\" mcp_server_origin=stdio";
     assert_eq!(extract_log_field(line, "mcp_server"), None);
     assert_eq!(
         extract_log_field(line, "mcp_server_origin"),
@@ -148,16 +148,16 @@ async fn responses_api_emits_api_request_event() {
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
-            .find(|line| line.contains("codex.api_request"))
+            .find(|line| line.contains("genex.api_request"))
             .map(|_| Ok(()))
-            .unwrap_or_else(|| Err("expected codex.api_request event".to_string()))
+            .unwrap_or_else(|| Err("expected genex.api_request event".to_string()))
     });
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event")
+                line.contains("genex.sse_event")
                     && line.contains("event.kind=response.completed")
                     && line.contains("service_tier=\"flex\"")
                     && line.contains("model_reasoning_effort=\"high\"")
@@ -171,9 +171,9 @@ async fn responses_api_emits_api_request_event() {
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
-            .find(|line| line.contains("codex.conversation_starts"))
+            .find(|line| line.contains("genex.conversation_starts"))
             .map(|_| Ok(()))
-            .unwrap_or_else(|| Err("expected codex.conversation_starts event".to_string()))
+            .unwrap_or_else(|| Err("expected genex.conversation_starts event".to_string()))
     });
 }
 
@@ -204,7 +204,7 @@ async fn process_sse_emits_tracing_for_output_item() {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event")
+                line.contains("genex.sse_event")
                     && line.contains("event.kind=response.output_item.done")
             })
             .map(|_| Ok(()))
@@ -244,12 +244,12 @@ async fn process_sse_emits_failed_event_on_parse_error() {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event")
+                line.contains("genex.sse_event")
                     && line.contains("error.message")
                     && line.contains("expected ident at line 1 column 2")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing codex.sse_event".to_string()))
+            .unwrap_or(Err("missing genex.sse_event".to_string()))
     });
 }
 
@@ -285,12 +285,12 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event")
+                line.contains("genex.sse_event")
                     && line.contains("error.message")
                     && line.contains("stream closed before response.completed")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing codex.sse_event".to_string()))
+            .unwrap_or(Err("missing genex.sse_event".to_string()))
     });
 }
 
@@ -346,13 +346,13 @@ async fn process_sse_failed_event_records_response_error_message() {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event")
+                line.contains("genex.sse_event")
                     && line.contains("event.kind=response.failed")
                     && line.contains("error.message")
                     && line.contains("boom")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing codex.sse_event".to_string()))
+            .unwrap_or(Err("missing genex.sse_event".to_string()))
     });
 }
 
@@ -405,10 +405,10 @@ async fn process_sse_failed_event_logs_parse_error() {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event") && line.contains("event.kind=response.failed")
+                line.contains("genex.sse_event") && line.contains("event.kind=response.failed")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing codex.sse_event".to_string()))
+            .unwrap_or(Err("missing genex.sse_event".to_string()))
     });
 }
 
@@ -451,10 +451,10 @@ async fn process_sse_failed_event_logs_missing_error() {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event") && line.contains("event.kind=response.failed")
+                line.contains("genex.sse_event") && line.contains("event.kind=response.failed")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing codex.sse_event".to_string()))
+            .unwrap_or(Err("missing genex.sse_event".to_string()))
     });
 }
 
@@ -506,13 +506,13 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event")
+                line.contains("genex.sse_event")
                     && line.contains("event.kind=response.completed")
                     && line.contains("error.message")
                     && line.contains("failed to parse ResponseCompleted")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing codex.sse_event".to_string()))
+            .unwrap_or(Err("missing genex.sse_event".to_string()))
     });
 }
 
@@ -561,7 +561,7 @@ async fn process_sse_emits_completed_telemetry() {
         lines
             .iter()
             .find(|line| {
-                line.contains("codex.sse_event")
+                line.contains("genex.sse_event")
                     && line.contains("event.kind=response.completed")
                     && line.contains("input_token_count=3")
                     && line.contains("output_token_count=5")
@@ -643,27 +643,27 @@ async fn turn_and_completed_response_spans_record_token_usage() {
         logs.lines().any(|line| {
             line.contains("handle_responses{")
                 && line.contains("otel.name=\"completed\"")
-                && line.contains("codex.request.reasoning_effort=high")
+                && line.contains("genex.request.reasoning_effort=high")
                 && line.contains("gen_ai.usage.input_tokens=3")
                 && line.contains("gen_ai.usage.cache_read.input_tokens=1")
                 && line.contains("gen_ai.usage.cache_write.input_tokens=2")
                 && line.contains("gen_ai.usage.output_tokens=5")
-                && line.contains("codex.usage.reasoning_output_tokens=2")
-                && line.contains("codex.usage.total_tokens=9")
+                && line.contains("genex.usage.reasoning_output_tokens=2")
+                && line.contains("genex.usage.total_tokens=9")
         }),
         "missing completed response span token usage\nlogs:\n{logs}"
     );
     assert!(
         logs.lines().any(|line| {
             line.contains("turn{otel.name=\"session_task.turn\"")
-                && line.contains("codex.turn.reasoning_effort=high")
-                && line.contains("codex.turn.token_usage.input_tokens=3")
-                && line.contains("codex.turn.token_usage.cached_input_tokens=1")
-                && line.contains("codex.turn.token_usage.cache_write_input_tokens=2")
-                && line.contains("codex.turn.token_usage.non_cached_input_tokens=2")
-                && line.contains("codex.turn.token_usage.output_tokens=5")
-                && line.contains("codex.turn.token_usage.reasoning_output_tokens=2")
-                && line.contains("codex.turn.token_usage.total_tokens=9")
+                && line.contains("genex.turn.reasoning_effort=high")
+                && line.contains("genex.turn.token_usage.input_tokens=3")
+                && line.contains("genex.turn.token_usage.cached_input_tokens=1")
+                && line.contains("genex.turn.token_usage.cache_write_input_tokens=2")
+                && line.contains("genex.turn.token_usage.non_cached_input_tokens=2")
+                && line.contains("genex.turn.token_usage.output_tokens=5")
+                && line.contains("genex.turn.token_usage.reasoning_output_tokens=2")
+                && line.contains("genex.turn.token_usage.total_tokens=9")
         }),
         "missing regular turn span token usage\nlogs:\n{logs}"
     );
@@ -832,7 +832,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
             logs.lines().any(|line| {
                 line.contains("handle_responses{")
                     && line.contains(&otel_name)
-                    && line.contains("codex.request.reasoning_effort=high")
+                    && line.contains("genex.request.reasoning_effort=high")
                     && from_field
                         .as_ref()
                         .is_none_or(|from_field| line.contains(from_field))
@@ -896,9 +896,9 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("codex.tool_result") && line.contains("call_id=custom-tool-call")
+                line.contains("genex.tool_result") && line.contains("call_id=custom-tool-call")
             })
-            .ok_or_else(|| "missing codex.tool_result event".to_string())?;
+            .ok_or_else(|| "missing genex.tool_result event".to_string())?;
 
         if !line.contains("tool_name=unsupported_tool") {
             return Err("missing tool_name field".to_string());
@@ -966,9 +966,9 @@ async fn handle_response_item_records_tool_result_for_function_call() {
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("codex.tool_result") && line.contains("call_id=function-call")
+                line.contains("genex.tool_result") && line.contains("call_id=function-call")
             })
-            .ok_or_else(|| "missing codex.tool_result event".to_string())?;
+            .ok_or_else(|| "missing genex.tool_result event".to_string())?;
 
         if !line.contains("tool_name=nonexistent") {
             return Err("missing tool_name field".to_string());
@@ -1036,8 +1036,8 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
     logs_assert(|lines: &[&str]| {
         let line = lines
             .iter()
-            .find(|line| line.contains("codex.tool_result") && line.contains("call_id=shell-call"))
-            .ok_or_else(|| "missing codex.tool_result event".to_string())?;
+            .find(|line| line.contains("genex.tool_result") && line.contains("call_id=shell-call"))
+            .ok_or_else(|| "missing genex.tool_result event".to_string())?;
 
         if !line.contains("tool_name=exec_command") {
             return Err("missing tool_name field".to_string());
@@ -1073,9 +1073,9 @@ fn tool_decision_assertion<'a>(
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("codex.tool_decision") && line.contains(&format!("call_id={call_id}"))
+                line.contains("genex.tool_decision") && line.contains(&format!("call_id={call_id}"))
             })
-            .ok_or_else(|| format!("missing codex.tool_decision event for {call_id}"))?;
+            .ok_or_else(|| format!("missing genex.tool_decision event for {call_id}"))?;
 
         let lower = line.to_lowercase();
         if !lower.contains("tool_name=exec_command") {
@@ -1106,10 +1106,10 @@ fn sandbox_outcome_assertion<'a>(
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("codex.sandbox_outcome")
+                line.contains("genex.sandbox_outcome")
                     && line.contains(&format!("call_id={call_id}"))
             })
-            .ok_or_else(|| format!("missing codex.sandbox_outcome event for {call_id}"))?;
+            .ok_or_else(|| format!("missing genex.sandbox_outcome event for {call_id}"))?;
 
         let lower = line.to_lowercase();
         if !lower.contains("tool_name=exec_command") {
@@ -1173,7 +1173,7 @@ fn network_policy_decisions_omit_source_and_destination() {
             let line = lines
                 .iter()
                 .find(|line| {
-                    line.contains("codex.tool_decision")
+                    line.contains("genex.tool_decision")
                         && line.contains(&format!("call_id={call_id}"))
                 })
                 .ok_or_else(|| format!("missing network tool decision for {call_id}"))?;
@@ -1284,7 +1284,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
 #[traced_test]
 async fn handle_exec_command_user_approved_records_tool_decision() {
     let server = start_mock_server().await;
-    let command = touch_command("codex-otel-approval-test");
+    let command = touch_command("genex-otel-approval-test");
     mount_sse_once(
         &server,
         sse(vec![
@@ -1348,7 +1348,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
 #[traced_test]
 async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
     let server = start_mock_server().await;
-    let command = touch_command("codex-otel-approval-test");
+    let command = touch_command("genex-otel-approval-test");
 
     mount_sse_once(
         &server,
@@ -1412,7 +1412,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
 #[traced_test]
 async fn handle_exec_command_user_denies_records_tool_decision() {
     let server = start_mock_server().await;
-    let command = touch_command("codex-otel-approval-test");
+    let command = touch_command("genex-otel-approval-test");
 
     mount_sse_once(
         &server,

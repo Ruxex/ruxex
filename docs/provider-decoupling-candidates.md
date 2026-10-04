@@ -34,6 +34,25 @@ serialized という理由だけで `retain` や `defer` にはしない。
 telemetry、hosted assumption を見つけた場合は、命名変更へ混ぜず本メモの独立
 follow-up と compatibility inventory の decision に記録する。
 
+### Genex Rust 境界移行の再計画と実装 (2026-10-04)
+
+Rust source の残存 `codex` を、repository-owned な内部名と外部契約に分けて
+再監査した。内部の env/定数、protocol・persisted marker、telemetry の内部名、
+originator、CLI/TUI/test fixture は producer/consumer を同一 wave で
+`migrate-in-place` とする。Responses API の `codex_rollout_budget_units` は
+`genex-api` の serde adapter だけに残し、内部の usage 型は
+`genex_rollout_budget_units` に変換する。
+
+明示的に `retain` するのは、Responses の wire field/header/auth/model、
+third-party MCP/Agent Plugin/package 識別子、OpenAI/upstream URL、OS sandbox・
+security namespace、既存の外部 telemetry/MCP contract、履歴・法的記録、および
+旧形式を検証する test fixture である。
+この分類に基づく実装では、Rust の repository-owned residual audit は
+`scripts/audit_genex_rust_names.py` で実行し、内部 Rust 名の未分類残存を失敗扱いに
+する。実装前の RED audit は 175 行、移行後の Rust source の `codex` 残存は
+1,747 occurrences（1,539 lines）で、残りは上記の retain boundary として個別に
+台帳化する。
+
 ### 0.6 依存順 leaf wave の decisions (2026-10-03)
 
 - `genex-execpolicy` の standalone binary、README、description、local migration

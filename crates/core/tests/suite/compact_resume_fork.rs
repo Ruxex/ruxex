@@ -15,7 +15,7 @@ use genex_core::ThreadManager;
 use genex_core::TurnInputRequest;
 use genex_core::compact::SUMMARIZATION_PROMPT;
 use genex_core::config::Config;
-use genex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use genex_core::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_history::GenexHarnessMetadata;
 use genex_history::RolloutItem;
@@ -48,7 +48,7 @@ const AFTER_SECOND_RESUME: &str = "AFTER_SECOND_RESUME";
 const CHECKPOINT_METADATA_KEY: &str = "replacement_history_metadata";
 
 fn network_disabled() -> bool {
-    std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok()
+    std::env::var(GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok()
 }
 
 fn body_contains_text(body: &str, text: &str) -> bool {

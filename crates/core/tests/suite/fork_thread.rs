@@ -98,7 +98,7 @@ async fn fork_thread_twice_drops_to_first_message() {
     // Fork once with n=1 → drops the last user input and everything after.
     let NewThread {
         thread_id: fork1_thread_id,
-        thread: codex_fork1,
+        thread: genex_fork1,
         ..
     } = thread_manager
         .fork_thread(
@@ -109,10 +109,10 @@ async fn fork_thread_twice_drops_to_first_message() {
         .await
         .expect("fork 1");
 
-    let fork1_path = codex_fork1.rollout_path().expect("rollout path");
+    let fork1_path = genex_fork1.rollout_path().expect("rollout path");
     expected_after_first.push(thread_settings_applied_item(
         fork1_thread_id,
-        codex_fork1.thread_settings_snapshot().await,
+        genex_fork1.thread_settings_snapshot().await,
     ));
 
     // GetHistory on fork1 flushed; the file is ready.
@@ -125,7 +125,7 @@ async fn fork_thread_twice_drops_to_first_message() {
     // Fork again with n=0 → drops the (new) last user message, leaving only the first.
     let NewThread {
         thread_id: fork2_thread_id,
-        thread: codex_fork2,
+        thread: genex_fork2,
         ..
     } = thread_manager
         .fork_thread(
@@ -136,7 +136,7 @@ async fn fork_thread_twice_drops_to_first_message() {
         .await
         .expect("fork 2");
 
-    let fork2_path = codex_fork2.rollout_path().expect("rollout path");
+    let fork2_path = genex_fork2.rollout_path().expect("rollout path");
     // GetHistory on fork2 flushed; the file is ready.
     let fork1_items = read_rollout_items(&fork1_path);
     let fork1_user_inputs = find_user_input_positions(&fork1_items);
@@ -147,7 +147,7 @@ async fn fork_thread_twice_drops_to_first_message() {
     let mut expected_after_second: Vec<RolloutItem> = fork1_items[..cut_last_on_fork1].to_vec();
     expected_after_second.push(thread_settings_applied_item(
         fork2_thread_id,
-        codex_fork2.thread_settings_snapshot().await,
+        genex_fork2.thread_settings_snapshot().await,
     ));
     let fork2_items = read_rollout_items(&fork2_path);
     pretty_assertions::assert_eq!(

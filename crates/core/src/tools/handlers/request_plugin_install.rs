@@ -132,10 +132,10 @@ impl RequestPluginInstallHandler {
         }
         if (requested_tool_type == Some(DiscoverableToolType::Plugin)
             || self.presentation == ToolSuggestPresentation::RecommendationContext)
-            && turn.app_server_client_name.as_deref() == Some("codex-tui")
+            && turn.app_server_client_name.as_deref() == Some("genex-tui")
         {
             return Err(FunctionCallError::RespondToModel(
-                "plugin install requests are not available in codex-tui yet".to_string(),
+                "plugin install requests are not available in genex-tui yet".to_string(),
             ));
         }
 
@@ -181,7 +181,7 @@ impl RequestPluginInstallHandler {
         let elicitation = session
             .request_mcp_server_elicitation(
                 turn.as_ref(),
-                "codex_plugins".to_string(),
+                "genex_plugins".to_string(),
                 request_id,
                 request,
             )

@@ -285,7 +285,7 @@ impl ChatWidget {
             }
             SlashCommand::Rename => {
                 self.session_telemetry
-                    .counter("codex.thread.rename", /*inc*/ 1, &[]);
+                    .counter("genex.thread.rename", /*inc*/ 1, &[]);
                 self.show_rename_prompt();
             }
             SlashCommand::Model => {
@@ -369,7 +369,7 @@ impl ChatWidget {
                     }
 
                     self.session_telemetry.counter(
-                        "codex.windows_sandbox.setup_elevated_sandbox_command",
+                        "genex.windows_sandbox.setup_elevated_sandbox_command",
                         /*inc*/ 1,
                         &[],
                     );
@@ -724,7 +724,7 @@ impl ChatWidget {
                     return;
                 }
                 self.session_telemetry
-                    .counter("codex.thread.rename", /*inc*/ 1, &[]);
+                    .counter("genex.thread.rename", /*inc*/ 1, &[]);
                 let Some(name) = normalize_thread_name(&args) else {
                     self.add_error_message("Thread name cannot be empty.".to_string());
                     return;

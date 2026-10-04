@@ -1,4 +1,4 @@
-use genex_login::CODEX_API_KEY_ENV_VAR;
+use genex_login::GENEX_API_KEY_ENV_VAR;
 use std::path::Path;
 use tempfile::TempDir;
 use wiremock::MockServer;
@@ -17,7 +17,7 @@ impl TestGenexExecBuilder {
         cmd.current_dir(self.cwd.path())
             .env("GENEX_HOME", self.home.path())
             .env("GENEX_SQLITE_HOME", self.home.path())
-            .env(CODEX_API_KEY_ENV_VAR, "dummy");
+            .env(GENEX_API_KEY_ENV_VAR, "dummy");
         cmd
     }
     pub fn cmd_with_server(&self, server: &MockServer) -> assert_cmd::Command {

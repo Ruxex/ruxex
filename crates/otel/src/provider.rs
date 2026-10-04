@@ -681,7 +681,7 @@ mod tests {
                 env!("CARGO_PKG_VERSION"),
                 exporter.clone(),
             ))?);
-        cached.counter("codex.after_transition", /*inc*/ 1, &[])?;
+        cached.counter("genex.after_transition", /*inc*/ 1, &[])?;
         initial.shutdown()?;
         replacement.shutdown()?;
 
@@ -694,7 +694,7 @@ mod tests {
             .collect();
         names.sort_unstable();
         names.dedup();
-        assert_eq!(names, vec!["codex.after_transition"]);
+        assert_eq!(names, vec!["genex.after_transition"]);
 
         Ok(())
     }

@@ -176,7 +176,7 @@ impl Session {
                 // Count completed discovery attempts, including refreshes, before host policy
                 // or MCP startup determines whether the server's tools become available.
                 self.services.session_telemetry.counter(
-                    "codex.mcp.executor_discovery",
+                    "genex.mcp.executor_discovery",
                     /*inc*/ 1,
                     &[("outcome", outcome)],
                 );
@@ -198,7 +198,7 @@ impl Session {
                         "unavailable"
                     };
                     self.services.session_telemetry.counter(
-                        "codex.mcp.executor_discovery.server",
+                        "genex.mcp.executor_discovery.server",
                         /*inc*/ 1,
                         &[("server_name", name.as_str()), ("outcome", outcome)],
                     );

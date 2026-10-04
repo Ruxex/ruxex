@@ -70,7 +70,7 @@ fn inserts_bwrap_argv0_before_command_separator() {
     apply_inner_command_argv0_for_launcher(
         &mut argv,
         /*supports_argv0*/ true,
-        "/tmp/genex-arg0-session/codex-linux-sandbox".to_string(),
+        "/tmp/genex-arg0-session/genex-linux-sandbox".to_string(),
     );
     let daemon_directory = genex_uds::shared_daemon_socket_directory()
         .unwrap()
@@ -101,7 +101,7 @@ fn inserts_bwrap_argv0_before_command_separator() {
             "--cap-drop".to_string(),
             "ALL".to_string(),
             "--argv0".to_string(),
-            "codex-linux-sandbox".to_string(),
+            "genex-linux-sandbox".to_string(),
             "--".to_string(),
             "/bin/true".to_string(),
         ]
@@ -127,13 +127,13 @@ fn rewrites_inner_command_path_when_bwrap_lacks_argv0() {
     apply_inner_command_argv0_for_launcher(
         &mut argv,
         /*supports_argv0*/ false,
-        "/tmp/genex-arg0-session/codex-linux-sandbox".to_string(),
+        "/tmp/genex-arg0-session/genex-linux-sandbox".to_string(),
     );
 
     assert!(!argv.iter().any(|arg| arg == "--argv0"));
     assert!(
         argv.windows(2)
-            .any(|window| { window == ["--", "/tmp/genex-arg0-session/codex-linux-sandbox"] })
+            .any(|window| { window == ["--", "/tmp/genex-arg0-session/genex-linux-sandbox"] })
     );
 }
 
@@ -625,7 +625,7 @@ fn managed_proxy_inner_command_includes_route_spec() {
 #[test]
 fn managed_network_policy_alone_enables_proxy_mode() {
     let parsed = LandlockCommand::try_parse_from([
-        "codex-linux-sandbox",
+        "genex-linux-sandbox",
         "--sandbox-policy-cwd",
         "/tmp",
         "--managed-network",
@@ -643,7 +643,7 @@ fn managed_network_policy_alone_enables_proxy_mode() {
 #[test]
 fn malformed_managed_network_policy_is_rejected() {
     let error = LandlockCommand::try_parse_from([
-        "codex-linux-sandbox",
+        "genex-linux-sandbox",
         "--sandbox-policy-cwd",
         "/tmp",
         "--managed-network",

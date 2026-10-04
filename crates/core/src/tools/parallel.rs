@@ -360,7 +360,7 @@ impl Drop for ToolCallTimingGuard {
         macro_rules! log_tool_call {
             ($dispatch_duration_ms:expr, $handler_duration_ms:expr, $total_duration_ms:expr) => {
                 info!(
-                    event.name = "codex.tool_call",
+                    event.name = "genex.tool_call",
                     trace_id = %genex_otel::current_span_trace_id().unwrap_or_default(),
                     conversation.id = %self.conversation_id,
                     turn_id = %self.turn_id,

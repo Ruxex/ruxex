@@ -23,7 +23,7 @@ use genex_protocol::config_types::WindowsSandboxLevel;
 #[cfg(any(unix, windows))]
 use genex_protocol::models::PermissionProfile;
 #[cfg(target_os = "linux")]
-use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
@@ -38,7 +38,7 @@ use tokio::time::timeout;
 use super::PreparedExecRequest;
 use super::prepare_exec_request_with_telemetry;
 #[cfg(unix)]
-use crate::CODEX_ARG0_EXEC_HELPER_ARG1;
+use crate::GENEX_ARG0_EXEC_HELPER_ARG1;
 use crate::ExecParams;
 use crate::ExecServerRuntimePaths;
 #[cfg(any(unix, windows))]
@@ -226,13 +226,13 @@ async fn sandbox_request_routes_custom_arg0_to_inner_helper() {
     let helper_mode = prepared
         .command
         .iter()
-        .position(|arg| arg == CODEX_ARG0_EXEC_HELPER_ARG1)
+        .position(|arg| arg == GENEX_ARG0_EXEC_HELPER_ARG1)
         .expect("sandboxed command should invoke arg0 helper");
 
     assert_eq!(
         prepared.command[helper_mode..],
         [
-            CODEX_ARG0_EXEC_HELPER_ARG1,
+            GENEX_ARG0_EXEC_HELPER_ARG1,
             "custom-arg0",
             "/bin/sh",
             "-c",
@@ -240,7 +240,7 @@ async fn sandbox_request_routes_custom_arg0_to_inner_helper() {
         ]
     );
     #[cfg(target_os = "linux")]
-    assert_eq!(prepared.arg0, Some(CODEX_LINUX_SANDBOX_ARG0.to_string()));
+    assert_eq!(prepared.arg0, Some(GENEX_LINUX_SANDBOX_ARG0.to_string()));
     #[cfg(target_os = "macos")]
     assert_eq!(prepared.arg0, None);
 }

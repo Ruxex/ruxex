@@ -21,7 +21,7 @@ fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::
         &genex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
-        |name| (name == genex_login::CODEX_ACCESS_TOKEN_ENV_VAR).then(|| "  ".into()),
+        |name| (name == genex_login::GENEX_ACCESS_TOKEN_ENV_VAR).then(|| "  ".into()),
     ));
 
     std::fs::create_dir_all(genex_home.join("tmp").join("arg0"))?;
@@ -54,11 +54,11 @@ fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::
         &genex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
-        |name| { (name == genex_login::CODEX_ACCESS_TOKEN_ENV_VAR).then(|| "access-token".into()) },
+        |name| { (name == genex_login::GENEX_ACCESS_TOKEN_ENV_VAR).then(|| "access-token".into()) },
     ));
     for disabled_credential in [
         genex_login::PROVIDER_API_KEY_ENV_VAR,
-        genex_login::CODEX_API_KEY_ENV_VAR,
+        genex_login::GENEX_API_KEY_ENV_VAR,
     ] {
         assert!(should_delay_startup_composer_for_first_login(
             &genex_home,
@@ -94,7 +94,7 @@ fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::
         || panic!("process credentials should not probe managed configuration"),
         |name| match name {
             "GENEX_HOME" => Some("/custom/home".into()),
-            genex_login::CODEX_ACCESS_TOKEN_ENV_VAR => Some("access-token".into()),
+            genex_login::GENEX_ACCESS_TOKEN_ENV_VAR => Some("access-token".into()),
             _ => None,
         },
     ));

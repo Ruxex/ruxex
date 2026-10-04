@@ -27,14 +27,14 @@ fn snapshot_collects_metrics_without_shutdown() -> Result<()> {
     let metrics = MetricsClient::new(config)?;
 
     metrics.counter(
-        "codex.tool.call",
+        "genex.tool.call",
         /*inc*/ 1,
         &[("tool", "shell"), ("success", "true")],
     )?;
 
     let snapshot = metrics.snapshot()?;
 
-    let metric = find_metric(&snapshot, "codex.tool.call").expect("counter metric missing");
+    let metric = find_metric(&snapshot, "genex.tool.call").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {
@@ -69,14 +69,14 @@ fn observable_gauge_is_collected_on_every_delta_snapshot() -> Result<()> {
         .with_runtime_reader();
     let metrics = MetricsClient::new(config)?;
     metrics.register_observable_gauge_with_description(
-        "codex.active",
+        "genex.active",
         "Number of active operations.",
         || 1,
         &[("component", "test")],
     )?;
 
     for snapshot in [metrics.snapshot()?, metrics.snapshot()?] {
-        let gauge = find_metric(&snapshot, "codex.active").expect("gauge metric missing");
+        let gauge = find_metric(&snapshot, "genex.active").expect("gauge metric missing");
         let point = match gauge.data() {
             AggregatedMetrics::I64(MetricData::Gauge(gauge)) => {
                 gauge.data_points().next().expect("gauge point")
@@ -116,13 +116,13 @@ fn manager_snapshot_metrics_collects_without_shutdown() -> Result<()> {
     .with_metrics(metrics);
 
     manager.counter(
-        "codex.tool.call",
+        "genex.tool.call",
         /*inc*/ 1,
         &[("tool", "shell"), ("success", "true")],
     );
 
     let snapshot = manager.snapshot_metrics()?;
-    let metric = find_metric(&snapshot, "codex.tool.call").expect("counter metric missing");
+    let metric = find_metric(&snapshot, "genex.tool.call").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {
@@ -187,7 +187,7 @@ fn manager_turn_cost_records_microusd_metric() -> Result<()> {
     );
 
     let snapshot = manager.snapshot_metrics()?;
-    let metric = find_metric(&snapshot, "codex.turn.cost_microusd")
+    let metric = find_metric(&snapshot, "genex.turn.cost_microusd")
         .expect("turn-cost microdollar metric missing");
     let point = match metric.data() {
         AggregatedMetrics::U64(MetricData::Sum(sum)) => {

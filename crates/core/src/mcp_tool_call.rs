@@ -87,9 +87,9 @@ const MCP_RESULT_TELEMETRY_META_KEY: &str = "codex/telemetry";
 const MCP_RESULT_TELEMETRY_SPAN_KEY: &str = "span";
 const MCP_RESULT_TELEMETRY_TARGET_ID_KEY: &str = "target_id";
 const MCP_RESULT_TELEMETRY_DID_TRIGGER_SERVER_USER_FLOW_KEY: &str = "did_trigger_server_user_flow";
-const MCP_RESULT_TELEMETRY_TARGET_ID_SPAN_ATTR: &str = "codex.mcp.target.id";
+const MCP_RESULT_TELEMETRY_TARGET_ID_SPAN_ATTR: &str = "genex.mcp.target.id";
 const MCP_RESULT_TELEMETRY_SERVER_USER_FLOW_SPAN_ATTR: &str =
-    "codex.mcp.server_user_flow.triggered";
+    "genex.mcp.server_user_flow.triggered";
 const MCP_RESULT_TELEMETRY_TARGET_ID_MAX_CHARS: usize = 256;
 const MCP_TOOL_CALL_EVENT_RESULT_MAX_BYTES: usize = DEFAULT_OUTPUT_BYTES_CAP;
 
@@ -487,10 +487,10 @@ fn mcp_tool_call_span(
         turn.id = turn_context.sub_id.as_str(),
         server.address = Empty,
         server.port = Empty,
-        codex.mcp.target.id = Empty,
-        codex.mcp.server_user_flow.triggered = Empty,
+        genex.mcp.target.id = Empty,
+        genex.mcp.server_user_flow.triggered = Empty,
         error.type = Empty,
-        codex.mcp.error.code = Empty,
+        genex.mcp.error.code = Empty,
     );
     record_server_fields(&span, fields.server_origin);
     span
@@ -871,7 +871,7 @@ impl Session {
     }
 }
 
-const MCP_TOOL_CODEX_OUTPUT_TEMPLATE_META_KEY: &str = "codex/outputTemplate";
+const MCP_TOOL_OUTPUT_TEMPLATE_META_KEY: &str = "codex/outputTemplate";
 const MCP_TOOL_UI_RESOURCE_URI_META_KEY: &str = "ui/resourceUri";
 const MCP_TOOL_PLUGIN_ID_META_KEY: &str = "plugin_id";
 const MCP_TOOL_ITEM_ID_META_KEY: &str = "itemId";
@@ -949,7 +949,7 @@ fn build_mcp_tool_call_request_meta(
         ))
     {
         request_meta.insert(
-            crate::X_CODEX_TURN_METADATA_HEADER.to_string(),
+            crate::X_GENEX_TURN_METADATA_HEADER.to_string(),
             turn_metadata,
         );
     }
@@ -1332,7 +1332,7 @@ fn get_mcp_app_resource_uri(
                     .and_then(serde_json::Value::as_str)
             })
             .or_else(|| {
-                meta.get(MCP_TOOL_CODEX_OUTPUT_TEMPLATE_META_KEY)
+                meta.get(MCP_TOOL_OUTPUT_TEMPLATE_META_KEY)
                     .and_then(serde_json::Value::as_str)
             })
             .map(str::to_string)

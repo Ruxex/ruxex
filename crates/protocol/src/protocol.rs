@@ -1787,7 +1787,7 @@ pub struct TokenUsage {
     #[serde(default, skip_serializing)]
     #[schemars(skip)]
     #[ts(skip)]
-    pub codex_rollout_budget_units: Option<serde_json::Number>,
+    pub genex_rollout_budget_units: Option<serde_json::Number>,
 }
 
 /// Best-effort Responses API usage observed for one completed response.
@@ -5849,7 +5849,7 @@ mod tests {
             output_tokens: 0,
             reasoning_output_tokens: 0,
             total_tokens: 10,
-            codex_rollout_budget_units: None,
+            genex_rollout_budget_units: None,
         });
 
         let info = TokenUsageInfo::new_or_append(&initial, &last, Some(128_000))
@@ -5872,7 +5872,7 @@ mod tests {
             output_tokens: 0,
             reasoning_output_tokens: 0,
             total_tokens: 10,
-            codex_rollout_budget_units: None,
+            genex_rollout_budget_units: None,
         });
 
         let info =

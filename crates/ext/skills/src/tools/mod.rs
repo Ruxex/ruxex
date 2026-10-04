@@ -136,7 +136,7 @@ impl SkillMetrics {
                 .unwrap_or("unknown");
             let invoke_type = if implicit { "implicit" } else { "explicit" };
             metrics.counter(
-                "codex.skill.injected",
+                "genex.skill.injected",
                 /*inc*/ 1,
                 &[
                     ("status", "ok"),

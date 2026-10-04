@@ -273,7 +273,7 @@ pub async fn shutdown(sess: &Arc<Session>, sub_id: String) -> bool {
         .filter(|item| is_user_turn_boundary(item))
         .count();
     sess.services.session_telemetry.counter(
-        "codex.conversation.turn.count",
+        "genex.conversation.turn.count",
         i64::try_from(turn_count).unwrap_or(0),
         &[],
     );
@@ -517,7 +517,7 @@ pub(super) fn submission_dispatch_span(sub: &Submission) -> tracing::Span {
         "submission_dispatch",
         otel.name = span_name.as_str(),
         submission.id = sub.id.as_str(),
-        codex.op = op_name
+        genex.op = op_name
     );
     if let Some(trace) = sub.trace.as_ref()
         && !set_parent_from_w3c_trace_context(&dispatch_span, trace)

@@ -161,8 +161,8 @@ impl ExecServerTelemetry {
         if let Err(failure_reason) = result {
             tags.push(("failure_reason", failure_reason));
         }
-        let _ = metrics.record_duration("codex.shell_snapshot.duration_ms", duration, &tags);
-        let _ = metrics.counter("codex.shell_snapshot", /*inc*/ 1, &tags);
+        let _ = metrics.record_duration("genex.shell_snapshot.duration_ms", duration, &tags);
+        let _ = metrics.counter("genex.shell_snapshot", /*inc*/ 1, &tags);
     }
 
     pub(crate) fn process_started(&self, process_id: &str) -> ProcessMetricGuard {
@@ -176,7 +176,7 @@ impl ExecServerTelemetry {
         // the spans without retaining the request span.
         let span = tracing::info_span!(
             parent: None,
-            "codex.exec_server.process",
+            "genex.exec_server.process",
             otel.kind = "internal",
             process.id = process_id,
             result = tracing::field::Empty,

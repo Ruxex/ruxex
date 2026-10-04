@@ -52,7 +52,7 @@ pub fn parse_all_rate_limits(headers: &HeaderMap) -> Vec<RateLimitSnapshot> {
 /// Parses rate-limit headers for the provided limit id.
 ///
 /// `limit_id` should match the server-provided metered limit id (e.g. `codex`,
-/// `codex_other`). When omitted, this defaults to the legacy `codex` header family.
+/// `genex_other`). When omitted, this defaults to the legacy `codex` header family.
 pub fn parse_rate_limit_for_limit(
     headers: &HeaderMap,
     limit_id: Option<&str>,
@@ -133,7 +133,7 @@ struct RateLimitEvent {
 
 pub fn parse_rate_limit_event(payload: &str) -> Option<RateLimitSnapshot> {
     let event: RateLimitEvent = serde_json::from_str(payload).ok()?;
-    if event.kind != "codex.rate_limits" {
+    if event.kind != "genex.rate_limits" {
         return None;
     }
     let (primary, secondary) = if let Some(details) = event.rate_limits.as_ref() {
@@ -303,8 +303,8 @@ mod tests {
         );
 
         let snapshot =
-            parse_rate_limit_for_limit(&headers, Some("codex_secondary")).expect("snapshot");
-        assert_eq!(snapshot.limit_id.as_deref(), Some("codex_secondary"));
+            parse_rate_limit_for_limit(&headers, Some("genex_secondary")).expect("snapshot");
+        assert_eq!(snapshot.limit_id.as_deref(), Some("genex_secondary"));
         assert_eq!(snapshot.limit_name, None);
         let primary = snapshot.primary.expect("primary");
         assert_eq!(primary.used_percent, 80.0);
@@ -326,8 +326,8 @@ mod tests {
         );
 
         let snapshot =
-            parse_rate_limit_for_limit(&headers, Some("codex_bengalfox")).expect("snapshot");
-        assert_eq!(snapshot.limit_id.as_deref(), Some("codex_bengalfox"));
+            parse_rate_limit_for_limit(&headers, Some("genex_bengalfox")).expect("snapshot");
+        assert_eq!(snapshot.limit_id.as_deref(), Some("genex_bengalfox"));
         assert_eq!(snapshot.limit_name.as_deref(), Some("gpt-5.2-codex-sonic"));
     }
 
@@ -346,7 +346,7 @@ mod tests {
         let updates = parse_all_rate_limits(&headers);
         assert_eq!(updates.len(), 2);
         assert_eq!(updates[0].limit_id.as_deref(), Some("codex"));
-        assert_eq!(updates[1].limit_id.as_deref(), Some("codex_secondary"));
+        assert_eq!(updates[1].limit_id.as_deref(), Some("genex_secondary"));
         assert_eq!(updates[0].limit_name, None);
         assert_eq!(updates[1].limit_name, None);
     }

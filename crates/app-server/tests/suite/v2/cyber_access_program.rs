@@ -411,7 +411,7 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", None),
             ("CODEX_ACCESS_TOKEN", Some("at-test-token")),
-            ("CODEX_AUTHAPI_BASE_URL", Some(authapi_base_url.as_str())),
+            ("GENEX_AUTHAPI_BASE_URL", Some(authapi_base_url.as_str())),
         ])
         .build_initialized()
         .await?;

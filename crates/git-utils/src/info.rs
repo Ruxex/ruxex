@@ -892,13 +892,13 @@ mod tests {
     #[test]
     fn canonicalize_git_remote_url_normalizes_github_variants() {
         for remote in [
-            "git@github.com:provider/Codex.git",
+            "git@github.com:provider/Genex.git",
             "ssh://git@github.com/codex/codex.git",
-            "ssh://git@github.com:22/provider/Codex.git",
+            "ssh://git@github.com:22/provider/Genex.git",
             "https://github.com/codex/codex.git",
             "https://github.com:443/codex/codex.git",
             "https://token@github.com/codex/codex/",
-            "github.com/codex/Codex.git",
+            "github.com/codex/Genex.git",
         ] {
             assert_eq!(
                 canonicalize_git_remote_url(remote),

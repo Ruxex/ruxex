@@ -57,7 +57,7 @@ pub(crate) async fn emit_explicit_skill_invocations(
             "error"
         };
         turn_context.session_telemetry.counter(
-            "codex.skill.injected",
+            "genex.skill.injected",
             /*inc*/ 1,
             &[
                 ("status", status),
@@ -162,7 +162,7 @@ pub(crate) async fn maybe_emit_implicit_skill_invocation(
     }
 
     turn_context.session_telemetry.counter(
-        "codex.skill.injected",
+        "genex.skill.injected",
         /*inc*/ 1,
         &[
             ("status", "ok"),

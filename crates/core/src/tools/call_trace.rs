@@ -43,10 +43,10 @@ pub(crate) fn received(
         } => (None, Source::CodeMode, cell_id, runtime_tool_call_id),
     };
     tracing::event!(
-        name: "codex.tool_call_received",
+        name: "genex.tool_call_received",
         target: "genex_otel.trace_safe",
         tracing::Level::INFO,
-        event.name = "codex.tool_call_received",
+        event.name = "genex.tool_call_received",
         conversation.id = %thread_id,
         turn_id,
         call_id,
@@ -66,10 +66,10 @@ pub(crate) fn result_ready(
     source: Source,
 ) {
     tracing::event!(
-        name: "codex.tool_result_ready",
+        name: "genex.tool_result_ready",
         target: "genex_otel.trace_safe",
         tracing::Level::INFO,
-        event.name = "codex.tool_result_ready",
+        event.name = "genex.tool_result_ready",
         conversation.id = %thread_id,
         turn_id,
         call_id,

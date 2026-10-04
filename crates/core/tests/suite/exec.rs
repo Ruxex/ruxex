@@ -4,7 +4,7 @@ use genex_core::exec::ExecCapturePolicy;
 use genex_core::exec::ExecParams;
 use genex_core::exec::process_exec_tool_call;
 use genex_core::sandboxing::SandboxPermissions;
-use genex_core::spawn::CODEX_SANDBOX_ENV_VAR;
+use genex_core::spawn::GENEX_SANDBOX_ENV_VAR;
 use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::error::Result;
 use genex_protocol::exec_output::ExecToolCallOutput;
@@ -16,8 +16,8 @@ use std::collections::HashMap;
 use tempfile::TempDir;
 
 fn skip_test() -> bool {
-    if std::env::var(CODEX_SANDBOX_ENV_VAR) == Ok("seatbelt".to_string()) {
-        eprintln!("{CODEX_SANDBOX_ENV_VAR} is set to 'seatbelt', skipping test.");
+    if std::env::var(GENEX_SANDBOX_ENV_VAR) == Ok("seatbelt".to_string()) {
+        eprintln!("{GENEX_SANDBOX_ENV_VAR} is set to 'seatbelt', skipping test.");
         return true;
     }
 

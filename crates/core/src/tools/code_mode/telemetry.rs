@@ -18,7 +18,7 @@ pub(super) fn record_code_mode_host_duration(
     tracing::info!(
         target: "genex_code_mode::timing",
         {
-            event.name = "codex.code_mode.host_timing",
+            event.name = "genex.code_mode.host_timing",
             conversation_id = thread_id,
             turn_id,
             call_id,
@@ -59,11 +59,11 @@ impl Drop for NestedToolDispatchTrace {
             DispatchInterruption::Abandoned => "abandoned",
         };
         tracing::event!(
-            name: "codex.code_mode.nested_tool_dispatch_interrupted",
+            name: "genex.code_mode.nested_tool_dispatch_interrupted",
             target: "genex_otel.trace_safe",
             parent: &self.span,
             tracing::Level::INFO,
-            event.name = "codex.code_mode.nested_tool_dispatch_interrupted",
+            event.name = "genex.code_mode.nested_tool_dispatch_interrupted",
             conversation.id = %self.thread_id,
             call_id = self.call_id.as_str(),
             outcome,

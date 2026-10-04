@@ -5,7 +5,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
 const NAMESPACE_SQUATTING_PROBE_METRIC: &str =
-    "codex.windows_system_config.namespace_squatting_probe";
+    "genex.windows_system_config.namespace_squatting_probe";
 static NAMESPACE_SQUATTING_PROBE_RECORDED: AtomicBool = AtomicBool::new(false);
 
 /// Records the coarse system-config namespace probe once after metrics exist.

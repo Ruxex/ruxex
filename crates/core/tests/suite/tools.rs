@@ -499,7 +499,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
     let expected_escaped_calls = json!([{
         "name": format!("{namespace}__{tool_name}"),
         "arguments": {
-            "_codex_executed_tool_call_truncated": {
+            "_genex_executed_tool_call_truncated": {
                 "original_bytes": serde_json::to_vec(&escaped_input)?.len(),
                 "max_bytes": 8 * 1024,
             },

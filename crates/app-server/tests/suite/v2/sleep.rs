@@ -107,7 +107,7 @@ async fn clock_tools_emit_control_tool_analytics() -> Result<()> {
         )
         .await?;
     let turn_event = wait_for_matching_analytics_event(&server, DEFAULT_READ_TIMEOUT, |event| {
-        event["event_type"] == "codex_turn_event" && event["event_params"]["turn_id"] == turn.id
+        event["event_type"] == "genex_turn_event" && event["event_params"]["turn_id"] == turn.id
     })
     .await?;
     timeout(DEFAULT_READ_TIMEOUT, app_server.shutdown_gracefully()).await??;
@@ -115,7 +115,7 @@ async fn clock_tools_emit_control_tool_analytics() -> Result<()> {
     let events = captured_analytics_events(&server).await;
     let mut control_events = events
         .iter()
-        .filter(|event| event["event_type"] == "codex_control_tool_call_event")
+        .filter(|event| event["event_type"] == "genex_control_tool_call_event")
         .collect::<Vec<_>>();
     control_events.sort_by_key(|event| event["event_params"]["item_id"].as_str());
     assert_eq!(

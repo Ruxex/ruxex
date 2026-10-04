@@ -420,7 +420,7 @@ async fn turn_start_sends_nested_subagent_lineage_after_cold_thread_resume_v2() 
     assert!(metadata.get("forked_from_thread_id").is_none());
 
     let turn_event =
-        wait_for_analytics_event(&server, DEFAULT_READ_TIMEOUT, "codex_turn_event").await?;
+        wait_for_analytics_event(&server, DEFAULT_READ_TIMEOUT, "genex_turn_event").await?;
     let params = &turn_event["event_params"];
     assert_eq!(
         (
@@ -442,7 +442,7 @@ async fn turn_start_sends_nested_subagent_lineage_after_cold_thread_resume_v2() 
             .count()
     };
     assert_eq!(
-        (count("codex_turn_event"), count("codex_web_search_event")),
+        (count("genex_turn_event"), count("genex_web_search_event")),
         (1, 1)
     );
 
@@ -571,11 +571,11 @@ async fn turn_steer_updates_client_metadata_on_follow_up_responses_request_v2() 
     assert_eq!(second_metadata["turn_trigger"].as_str(), Some("user"));
     assert_eq!(second_metadata["source"].as_str(), Some("steer-source"));
 
-    let event = wait_for_analytics_event(&server, DEFAULT_READ_TIMEOUT, "codex_turn_event").await?;
+    let event = wait_for_analytics_event(&server, DEFAULT_READ_TIMEOUT, "genex_turn_event").await?;
     assert_eq!(
         (
             event["event_params"]["turn_trigger"].as_str(),
-            event["event_params"]["codex_turn_source"].as_str(),
+            event["event_params"]["genex_turn_source"].as_str(),
         ),
         (Some("user"), Some("steer-source"))
     );

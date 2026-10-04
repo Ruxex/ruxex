@@ -186,8 +186,8 @@ fn otlp_http_exporter_sends_metrics_to_collector() -> Result<()> {
         },
     ))?;
 
-    metrics.counter("codex.turns", /*inc*/ 1, &[("source", "test")])?;
-    metrics.counter("codex.api_request", /*inc*/ 1, &[("status", "200")])?;
+    metrics.counter("genex.turns", /*inc*/ 1, &[("source", "test")])?;
+    metrics.counter("genex.api_request", /*inc*/ 1, &[("status", "200")])?;
     metrics.counter_with_description(
         EXEC_SERVER_CLIENT_REQUEST_COUNT_METRIC,
         "Client-side exec-server RPC attempts.",
@@ -195,39 +195,39 @@ fn otlp_http_exporter_sends_metrics_to_collector() -> Result<()> {
         &[("method", "fs/readFile")],
     )?;
     metrics.record_duration(
-        "codex.api_request.duration_ms",
+        "genex.api_request.duration_ms",
         Duration::from_millis(100),
         &[("status", "200")],
     )?;
-    metrics.counter("codex.conversation.turn.count", /*inc*/ 1, &[])?;
+    metrics.counter("genex.conversation.turn.count", /*inc*/ 1, &[])?;
     metrics.record_duration(
-        "codex.responses_api_engine_iapi_ttft.duration_ms",
+        "genex.responses_api_engine_iapi_ttft.duration_ms",
         Duration::from_millis(100),
         &[],
     )?;
     metrics.record_duration(
-        "codex.responses_api_engine_service_tbt.duration_ms",
+        "genex.responses_api_engine_service_tbt.duration_ms",
         Duration::from_millis(100),
         &[],
     )?;
     metrics.record_duration(
-        "codex.responses_api_engine_service_ttft.duration_ms",
+        "genex.responses_api_engine_service_ttft.duration_ms",
         Duration::from_millis(100),
         &[],
     )?;
-    metrics.counter("codex.tool.call", /*inc*/ 1, &[("tool", "test")])?;
+    metrics.counter("genex.tool.call", /*inc*/ 1, &[("tool", "test")])?;
     metrics.record_duration(
-        "codex.tool.call.duration_ms",
+        "genex.tool.call.duration_ms",
         Duration::from_millis(42),
         &[("tool", "test")],
     )?;
     metrics.histogram(
-        "codex.turn.token_usage",
+        "genex.turn.token_usage",
         /*value*/ 100,
         &[("token_type", "total")],
     )?;
     metrics.gauge_with_description(
-        "codex.active",
+        "genex.active",
         "Number of active Genex operations.",
         /*value*/ 1,
         &[("component", "test")],
@@ -252,17 +252,17 @@ fn otlp_http_exporter_sends_metrics_to_collector() -> Result<()> {
 
     let body = String::from_utf8_lossy(&request.body);
     assert!(
-        body.contains("codex.turns"),
+        body.contains("genex.turns"),
         "expected metric name not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("codex.active"),
+        body.contains("genex.active"),
         "expected gauge not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.api_request\""),
+        body.contains("\"genex.api_request\""),
         "expected API-request counter not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
@@ -271,42 +271,42 @@ fn otlp_http_exporter_sends_metrics_to_collector() -> Result<()> {
         "custom OTLP must retain the exec-server client counter"
     );
     assert!(
-        body.contains("\"codex.api_request.duration_ms\""),
+        body.contains("\"genex.api_request.duration_ms\""),
         "expected API-request duration not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.conversation.turn.count\""),
+        body.contains("\"genex.conversation.turn.count\""),
         "expected conversation turn count not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.responses_api_engine_iapi_ttft.duration_ms\""),
+        body.contains("\"genex.responses_api_engine_iapi_ttft.duration_ms\""),
         "expected engine IAPI TTFT duration not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.responses_api_engine_service_tbt.duration_ms\""),
+        body.contains("\"genex.responses_api_engine_service_tbt.duration_ms\""),
         "expected engine service TBT duration not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.responses_api_engine_service_ttft.duration_ms\""),
+        body.contains("\"genex.responses_api_engine_service_ttft.duration_ms\""),
         "expected engine service TTFT duration not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.tool.call\""),
+        body.contains("\"genex.tool.call\""),
         "expected tool-call counter not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.turn.token_usage\""),
+        body.contains("\"genex.turn.token_usage\""),
         "expected turn-token histogram not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("\"codex.tool.call.duration_ms\""),
+        body.contains("\"genex.tool.call.duration_ms\""),
         "expected tool-call duration not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
@@ -380,7 +380,7 @@ fn otlp_http_exporter_sends_logs_to_collector()
         tracing::event!(
             target: "genex_otel.log_only",
             tracing::Level::INFO,
-            event.name = "codex.test.log_exported",
+            event.name = "genex.test.log_exported",
             "test OTEL log export"
         );
     });
@@ -404,7 +404,7 @@ fn otlp_http_exporter_sends_logs_to_collector()
 
     let body = String::from_utf8_lossy(&request.body);
     assert!(
-        body.contains("codex.test.log_exported"),
+        body.contains("genex.test.log_exported"),
         "expected exported log event not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );
@@ -531,7 +531,7 @@ fn otlp_http_exporter_sends_traces_to_collector()
         tracing::event!(
             target: "genex_otel.trace_safe",
             tracing::Level::INFO,
-            event.name = "codex.test.trace_event",
+            event.name = "genex.test.trace_event",
             "test OTEL trace event"
         );
         tracing::info!("trace loopback event");
@@ -577,7 +577,7 @@ fn otlp_http_exporter_sends_traces_to_collector()
         &body.chars().take(2000).collect::<String>()
     );
     assert!(
-        body.contains("codex.test.trace_event"),
+        body.contains("genex.test.trace_event"),
         "expected trace event not found; body prefix: {}",
         &body.chars().take(2000).collect::<String>()
     );

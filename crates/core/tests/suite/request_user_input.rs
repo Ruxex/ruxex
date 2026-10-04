@@ -217,7 +217,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
 
 fn ev_rate_limits() -> Value {
     json!({
-        "type": "codex.rate_limits",
+        "type": "genex.rate_limits",
         "plan_type": "plus",
         "rate_limits": {
             "allowed": true,

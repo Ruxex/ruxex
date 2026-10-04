@@ -164,7 +164,7 @@ async fn request_queue_waits_for_dispatcher_admission_before_recording_telemetry
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "codex-exec-server",
+            "genex-exec-server",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -373,7 +373,7 @@ fn request_telemetry_fixture(router: RpcRouter<ExecServerHandler>) -> RequestTel
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "codex-exec-server",
+            "genex-exec-server",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )

@@ -89,7 +89,7 @@ impl InitializeRequestProcessor {
         let user_verification_enabled = experimental_api_enabled
             && matches!(
                 (session.origin, name.as_str()),
-                (ConnectionOrigin::InProcess, "codex-tui")
+                (ConnectionOrigin::InProcess, "genex-tui")
                     | (ConnectionOrigin::Stdio, "Codex Desktop")
             )
             && tokio::task::spawn_blocking(self.user_verification.device_supported)
@@ -144,7 +144,7 @@ impl InitializeRequestProcessor {
                     }
                     SetOriginatorError::AlreadyInitialized => {
                         // No-op. This is expected to happen if the originator is already set via env var.
-                        // TODO(owen): Once we remove support for CODEX_INTERNAL_ORIGINATOR_OVERRIDE,
+                        // TODO(owen): Once we remove support for GENEX_INTERNAL_ORIGINATOR_OVERRIDE,
                         // this will be an unexpected state and we can return a JSON-RPC error indicating
                         // internal server error.
                     }

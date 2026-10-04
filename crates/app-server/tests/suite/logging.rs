@@ -416,7 +416,7 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
     .await??;
 
     let mut tool_call = app_server
-        .wait_for_json_log_event("codex.tool_call")
+        .wait_for_json_log_event("genex.tool_call")
         .await?;
     let tool_call_object = tool_call
         .as_object_mut()
@@ -460,7 +460,7 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
             "level": "INFO",
             "fields": {
                 "message": "tool call completed",
-                "event.name": "codex.tool_call",
+                "event.name": "genex.tool_call",
                 "conversation.id": thread.id,
                 "turn_id": turn.id,
                 "tool_name": "exec_command",

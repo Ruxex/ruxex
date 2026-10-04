@@ -453,7 +453,7 @@ pub(super) async fn run_main_inner(
             ("terminal_name", terminal_name),
             ("multiplexer", multiplexer),
         ]);
-        let _ = metrics.counter("codex.tui.start", /*inc*/ 1, &launch_tags);
+        let _ = metrics.counter("genex.tui.start", /*inc*/ 1, &launch_tags);
     };
     let launch_telemetry = daemon_telemetry::Launch(Some(launch_telemetry));
     let state_db = startup_draft
@@ -617,7 +617,7 @@ pub(super) async fn run_main_inner(
             ),
             ("outcome", "handoff_requested"),
         ]);
-        let _ = metrics.counter("codex.daemon.update", /*inc*/ 1, &tags);
+        let _ = metrics.counter("genex.daemon.update", /*inc*/ 1, &tags);
     }
 
     if let Some(otel) = otel

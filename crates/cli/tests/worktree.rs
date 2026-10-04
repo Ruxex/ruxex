@@ -217,7 +217,7 @@ trust_level = "trusted"
     env.insert("TERM_PROGRAM".into(), "unrecognized-terminal".into());
     env.insert("OTEL_METRIC_EXPORT_INTERVAL".into(), "100".into());
     for key in [
-        "CODEX_EXEC_SERVER_URL",
+        "GENEX_EXEC_SERVER_URL",
         "CODEX_ACCESS_TOKEN",
         "PROVIDER_API_KEY",
         "CODEX_API_KEY",
@@ -502,19 +502,19 @@ trust_level = "trusted"
                 .collect::<Vec<_>>();
             let update = exported
                 .iter()
-                .find(|metric| metric["name"] == "codex.daemon.update")
+                .find(|metric| metric["name"] == "genex.daemon.update")
                 .context("handoff metric")?;
             let update_point = &update["sum"]["dataPoints"][0];
             assert_eq!(update_point["asInt"], 1);
             let point = exported
                 .iter()
-                .filter(|metric| metric["name"] == "codex.tui.start")
+                .filter(|metric| metric["name"] == "genex.tui.start")
                 .flat_map(|metric| metric["sum"]["dataPoints"].as_array().into_iter().flatten())
                 .next()
-                .context("codex.tui.start data point")?;
+                .context("genex.tui.start data point")?;
             let tags = point["attributes"]
                 .as_array()
-                .context("codex.tui.start attributes")?
+                .context("genex.tui.start attributes")?
                 .iter()
                 .map(|attribute| {
                     Ok((

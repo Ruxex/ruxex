@@ -470,7 +470,7 @@ fn wsl1_allows_non_bubblewrap_linux_paths() {
 #[cfg(target_os = "linux")]
 #[test]
 fn transform_linux_seccomp_preserves_helper_path_in_arg0_when_available() {
-    let genex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/codex-linux-sandbox");
+    let genex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/genex-linux-sandbox");
     let exec_request = transform_linux_seccomp_request(&genex_linux_sandbox_exe);
 
     assert_eq!(
@@ -485,7 +485,7 @@ fn transform_linux_seccomp_uses_helper_alias_when_launcher_is_not_helper_path() 
     let genex_linux_sandbox_exe = std::path::PathBuf::from("/tmp/genex");
     let exec_request = transform_linux_seccomp_request(&genex_linux_sandbox_exe);
 
-    assert_eq!(exec_request.arg0, Some("codex-linux-sandbox".to_string()));
+    assert_eq!(exec_request.arg0, Some("genex-linux-sandbox".to_string()));
 }
 
 #[cfg(unix)]
@@ -597,7 +597,7 @@ async fn linux_unix_socket_grant_uses_effective_managed_policy() -> anyhow::Resu
             environment_id: None,
             network: live_proxy.then_some(&network),
             sandbox_policy_cwd: &cwd_uri,
-            sandbox_exe: Some(std::path::Path::new("/tmp/codex-linux-sandbox")),
+            sandbox_exe: Some(std::path::Path::new("/tmp/genex-linux-sandbox")),
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,

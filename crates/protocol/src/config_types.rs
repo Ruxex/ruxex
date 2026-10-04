@@ -15,7 +15,7 @@ use wildmatch::WildMatchPattern;
 
 use crate::model_types::ReasoningEffort;
 
-/// Limit for the text included in `codex.tool_result` log records.
+/// Limit for the text included in `genex.tool_result` log records.
 /// This does not affect model-visible output. Raising it can expose more tool data to logs.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, JsonSchema)]
 #[serde(default)]

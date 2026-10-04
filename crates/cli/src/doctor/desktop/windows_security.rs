@@ -146,16 +146,18 @@ fn event_target(value: &str) -> Option<&'static str> {
     let value = value.to_ascii_lowercase();
     let parts = value.split(['\\', '/']).map(str::trim).collect::<Vec<_>>();
     let name = *parts.last()?;
-    let package = parts.iter().any(|part| part.starts_with("provider.codex_"));
+    let package = parts.iter().any(|part| {
+        part.starts_with("provider.codex_") || part.starts_with("provider.genex_")
+    });
     let trusted = package || parts.windows(2).any(|pair| pair == ["provider", "codex"]);
     match name {
         "genex-windows-sandbox-setup.exe" | "codex-windows-sandbox-setup.exe" => Some("sandbox_setup"),
         "genex-command-runner.exe" | "codex-command-runner.exe" => Some("command_runner"),
         "genex.exe" => Some("genex"),
         "codex.exe" => Some("codex"),
-        "codex-desktop.exe" => Some("codex_desktop"),
+        "codex-desktop.exe" => Some("genex_desktop"),
         "rg.exe" if trusted => Some("ripgrep"),
-        _ if package => Some("codex_desktop_package"),
+        _ if package => Some("genex_desktop_package"),
         _ => None,
     }
 }

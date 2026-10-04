@@ -43,7 +43,7 @@ pub(crate) fn record_model_fallback(
         "failed"
     };
     session_telemetry.counter(
-        "codex.compaction.model_fallback",
+        "genex.compaction.model_fallback",
         /*inc*/ 1,
         &[
             ("reason", reason_tag),

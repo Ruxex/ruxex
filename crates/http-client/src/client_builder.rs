@@ -223,7 +223,7 @@ impl HttpClientBuilder {
                 tracing::event!(
                     target: "genex_otel.log_only",
                     tracing::Level::WARN,
-                    event.name = "codex.http_client.custom_ca_fallback",
+                    event.name = "genex.http_client.custom_ca_fallback",
                     "HTTP client fell back to system root certificates"
                 );
                 tracing::warn!(error = %error, "failed to build HTTP client with custom CA");

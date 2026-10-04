@@ -342,7 +342,7 @@ fn emit_windows_sandbox_setup_success_metrics(
     };
     let mode_tag = windows_sandbox_setup_mode_tag(mode);
     let _ = metrics.record_duration(
-        "codex.windows_sandbox.setup_duration_ms",
+        "genex.windows_sandbox.setup_duration_ms",
         duration,
         &[
             ("result", "success"),
@@ -351,7 +351,7 @@ fn emit_windows_sandbox_setup_success_metrics(
         ],
     );
     let _ = metrics.counter(
-        "codex.windows_sandbox.setup_success",
+        "genex.windows_sandbox.setup_success",
         /*inc*/ 1,
         &[("originator", originator_tag), ("mode", mode_tag)],
     );
@@ -370,7 +370,7 @@ pub fn emit_windows_sandbox_setup_failure_metrics(
     let originator_tag = originator_tag.as_str();
     let mode_tag = windows_sandbox_setup_mode_tag(mode);
     let _ = metrics.record_duration(
-        "codex.windows_sandbox.setup_duration_ms",
+        "genex.windows_sandbox.setup_duration_ms",
         duration,
         &[
             ("result", "failure"),
@@ -379,7 +379,7 @@ pub fn emit_windows_sandbox_setup_failure_metrics(
         ],
     );
     let _ = metrics.counter(
-        "codex.windows_sandbox.setup_failure",
+        "genex.windows_sandbox.setup_failure",
         /*inc*/ 1,
         &[("originator", originator_tag), ("mode", mode_tag)],
     );
@@ -409,15 +409,15 @@ pub fn emit_windows_sandbox_setup_failure_metrics(
                         genex_windows_sandbox::SetupErrorCode::OrchestratorHelperLaunchCanceled
                     )
                 }) {
-                    "codex.windows_sandbox.elevated_setup_canceled"
+                    "genex.windows_sandbox.elevated_setup_canceled"
                 } else {
-                    "codex.windows_sandbox.elevated_setup_failure"
+                    "genex.windows_sandbox.elevated_setup_failure"
                 };
             let _ = metrics.counter(metric_name, /*inc*/ 1, &failure_tags);
         }
     } else {
         let _ = metrics.counter(
-            "codex.windows_sandbox.legacy_setup_preflight_failed",
+            "genex.windows_sandbox.legacy_setup_preflight_failed",
             /*inc*/ 1,
             &[("originator", originator_tag)],
         );

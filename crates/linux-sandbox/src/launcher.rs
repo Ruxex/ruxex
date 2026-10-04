@@ -367,7 +367,7 @@ mod tests {
             "9".to_string(),
             "/tmp/second:with-colon".to_string(),
             "--".to_string(),
-            "codex-linux-sandbox".to_string(),
+            "genex-linux-sandbox".to_string(),
             "--apply-seccomp-then-exec".to_string(),
             "--".to_string(),
             "true".to_string(),
@@ -386,7 +386,7 @@ mod tests {
                 "/proc/self/fd/9".to_string(),
                 "/tmp/second:with-colon".to_string(),
                 "--".to_string(),
-                "codex-linux-sandbox".to_string(),
+                "genex-linux-sandbox".to_string(),
                 "--verify-fd-mount".to_string(),
                 "7:/tmp/first".to_string(),
                 "--verify-fd-mount".to_string(),
@@ -411,7 +411,7 @@ mod tests {
                 fd.to_string(),
                 destination.to_string(),
                 "--".to_string(),
-                "codex-linux-sandbox".to_string(),
+                "genex-linux-sandbox".to_string(),
             ];
 
             assert!(translate_legacy_bwrap_fd_mounts(&mut argv).is_err());
@@ -445,7 +445,7 @@ mod tests {
             "7".to_string(),
             "/tmp/second".to_string(),
             "--".to_string(),
-            "codex-linux-sandbox".to_string(),
+            "genex-linux-sandbox".to_string(),
         ];
 
         assert!(translate_legacy_bwrap_fd_mounts(&mut argv).is_err());

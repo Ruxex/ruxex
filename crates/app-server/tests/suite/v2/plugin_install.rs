@@ -83,7 +83,7 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
 const REMOTE_PLUGIN_ID: &str = "plugins~Plugin_00000000000000000000000000000000";
 const INSTALL_ATTEMPT_ID: &str = "94c79f7b-cceb-4415-9a3e-b51b2f718d43";
 const TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS: &str =
-    "CODEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS";
+    "GENEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS";
 
 #[tokio::test]
 async fn plugin_install_rejects_relative_marketplace_paths() -> Result<()> {
@@ -586,11 +586,11 @@ async fn plugin_install_tracks_analytics_when_remote_detail_fetch_fails() -> Res
     assert_eq!(err.error.code, -32600);
     assert!(err.error.message.contains("failed with status 404"));
 
-    let payload = wait_for_plugin_analytics_payload(&server, "codex_plugin_install_failed").await?;
+    let payload = wait_for_plugin_analytics_payload(&server, "genex_plugin_install_failed").await?;
     let event_params = &payload["events"][0]["event_params"];
     assert_eq!(
         payload["events"][0]["event_type"],
-        "codex_plugin_install_failed"
+        "genex_plugin_install_failed"
     );
     assert_eq!(event_params["plugin_id"], json!(null));
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
@@ -657,11 +657,11 @@ async fn plugin_install_tracks_analytics_when_remote_install_is_rate_limited() -
         /*expected_count*/ 1,
     )
     .await?;
-    let payload = wait_for_plugin_analytics_payload(&server, "codex_plugin_install_failed").await?;
+    let payload = wait_for_plugin_analytics_payload(&server, "genex_plugin_install_failed").await?;
     let event_params = &payload["events"][0]["event_params"];
     assert_eq!(
         payload["events"][0]["event_type"],
-        "codex_plugin_install_failed"
+        "genex_plugin_install_failed"
     );
     assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
@@ -732,11 +732,11 @@ async fn plugin_install_rejects_remote_plugin_disabled_by_admin_before_download(
             .join("plugins/cache/test-remote/linear")
             .exists()
     );
-    let payload = wait_for_plugin_analytics_payload(&server, "codex_plugin_install_failed").await?;
+    let payload = wait_for_plugin_analytics_payload(&server, "genex_plugin_install_failed").await?;
     let event_params = &payload["events"][0]["event_params"];
     assert_eq!(
         payload["events"][0]["event_type"],
-        "codex_plugin_install_failed"
+        "genex_plugin_install_failed"
     );
     assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
@@ -781,11 +781,11 @@ async fn plugin_install_rejects_remote_plugin_not_available() -> Result<()> {
         /*expected_count*/ 0,
     )
     .await?;
-    let payload = wait_for_plugin_analytics_payload(&server, "codex_plugin_install_failed").await?;
+    let payload = wait_for_plugin_analytics_payload(&server, "genex_plugin_install_failed").await?;
     let event_params = &payload["events"][0]["event_params"];
     assert_eq!(
         payload["events"][0]["event_type"],
-        "codex_plugin_install_failed"
+        "genex_plugin_install_failed"
     );
     assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
@@ -871,11 +871,11 @@ async fn plugin_install_tracks_analytics_when_marketplace_file_cannot_be_read() 
     );
 
     let payload =
-        wait_for_plugin_analytics_payload(&analytics_server, "codex_plugin_install_failed").await?;
+        wait_for_plugin_analytics_payload(&analytics_server, "genex_plugin_install_failed").await?;
     let event_params = &payload["events"][0]["event_params"];
     assert_eq!(
         payload["events"][0]["event_type"],
-        "codex_plugin_install_failed"
+        "genex_plugin_install_failed"
     );
     assert_eq!(event_params["plugin_id"], json!(null));
     assert_eq!(event_params["remote_plugin_id"], json!(null));
@@ -1026,12 +1026,12 @@ async fn plugin_install_tracks_analytics_event() -> Result<()> {
     assert_eq!(response.apps_needing_auth, Vec::<AppSummary>::new());
 
     let payload =
-        wait_for_plugin_analytics_payload(&analytics_server, "codex_plugin_installed").await?;
+        wait_for_plugin_analytics_payload(&analytics_server, "genex_plugin_installed").await?;
     assert_eq!(
         payload,
         json!({
             "events": [{
-                "event_type": "codex_plugin_installed",
+                "event_type": "genex_plugin_installed",
                 "event_params": {
                     "plugin_id": "sample-plugin@debug",
                     "remote_plugin_id": null,
@@ -1095,11 +1095,11 @@ async fn plugin_install_failure_tracks_analytics_event() -> Result<()> {
     assert_eq!(err.error.code, -32600);
 
     let payload =
-        wait_for_plugin_analytics_payload(&analytics_server, "codex_plugin_install_failed").await?;
+        wait_for_plugin_analytics_payload(&analytics_server, "genex_plugin_install_failed").await?;
     let event_params = &payload["events"][0]["event_params"];
     assert_eq!(
         payload["events"][0]["event_type"],
-        "codex_plugin_install_failed"
+        "genex_plugin_install_failed"
     );
     assert_eq!(event_params["plugin_id"], "sample-plugin@debug");
     assert_eq!(event_params["remote_plugin_id"], json!(null));
@@ -1152,12 +1152,12 @@ async fn plugin_install_tracks_remote_plugin_analytics_event() -> Result<()> {
         json!({"install_attempt_id": INSTALL_ATTEMPT_ID})
     );
 
-    let payload = wait_for_plugin_analytics_payload(&server, "codex_plugin_installed").await?;
+    let payload = wait_for_plugin_analytics_payload(&server, "genex_plugin_installed").await?;
     assert_eq!(
         payload,
         json!({
             "events": [{
-                "event_type": "codex_plugin_installed",
+                "event_type": "genex_plugin_installed",
                 "event_params": {
                     "plugin_id": "linear@test-remote",
                     "remote_plugin_id": REMOTE_PLUGIN_ID,
@@ -1230,11 +1230,11 @@ async fn plugin_install_preserves_status_when_remote_bundle_error_body_is_too_la
         /*expected_count*/ 0,
     )
     .await?;
-    let payload = wait_for_plugin_analytics_payload(&server, "codex_plugin_install_failed").await?;
+    let payload = wait_for_plugin_analytics_payload(&server, "genex_plugin_install_failed").await?;
     let event_params = &payload["events"][0]["event_params"];
     assert_eq!(
         payload["events"][0]["event_type"],
-        "codex_plugin_install_failed"
+        "genex_plugin_install_failed"
     );
     assert_eq!(event_params["plugin_id"], "linear@test-remote");
     assert_eq!(event_params["remote_plugin_id"], REMOTE_PLUGIN_ID);
@@ -2794,12 +2794,12 @@ async fn plugin_analytics_wait_ignores_unrelated_requests_and_batched_events() -
     mount_backend_analytics_events(&server).await;
     let client = HttpClientBuilder::new().build_direct()?;
     let expected = json!({
-        "event_type": "codex_plugin_install_failed",
+        "event_type": "genex_plugin_install_failed",
         "event_params": {"plugin_id": "sample-plugin@debug"}
     });
     for events in [
-        json!([{"event_type": "codex_turn_event"}]),
-        json!([{"event_type": "codex_thread_initialized"}, expected.clone()]),
+        json!([{"event_type": "genex_turn_event"}]),
+        json!([{"event_type": "genex_thread_initialized"}, expected.clone()]),
     ] {
         client
             .post(format!(
@@ -2812,7 +2812,7 @@ async fn plugin_analytics_wait_ignores_unrelated_requests_and_batched_events() -
             .error_for_status()?;
     }
     assert_eq!(
-        wait_for_plugin_analytics_payload(&server, "codex_plugin_install_failed").await?,
+        wait_for_plugin_analytics_payload(&server, "genex_plugin_install_failed").await?,
         json!({"events": [expected]})
     );
     Ok(())

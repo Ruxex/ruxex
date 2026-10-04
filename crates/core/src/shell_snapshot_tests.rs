@@ -756,7 +756,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         assert!(!snapshot.contains(secret), "snapshot exposed {secret}");
     }
     assert!(!snapshot.contains("attacker.example"));
-    assert!(!snapshot.contains("CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS"));
+    assert!(!snapshot.contains("GENEX_NETWORK_PROXY_BROKERED_CREDENTIALS"));
     assert!(snapshot.contains("api.snapshot.example"));
     assert!(!snapshot.contains("attacker.vendor.example"));
     assert!(snapshot.contains("EXCLUDED_PARENT_HOME=\"missing\""));
@@ -781,7 +781,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     fs::write(
         &validation_path,
         "test \"${HOME-missing}\" = missing && \
-         test \"${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}\" = 1\n",
+         test \"${GENEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}\" = 1\n",
     )
     .await?;
     validate_snapshot(

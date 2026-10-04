@@ -196,7 +196,7 @@ async fn steered_input_checkpoint_controls_next_request(
             TurnInputRequest::new(TurnInput::ResponseItem(serde_json::from_value(json!({
                 "type": "function_call_output",
                 "name": "send_message_to_thread",
-                "namespace": "codex_app",
+                "namespace": "genex_app",
                 "output": "steered input",
             }))?))
         }

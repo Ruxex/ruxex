@@ -89,8 +89,8 @@ use test_case::test_case;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 
-const NETWORK_TEST_HOST: &str = "codex-network-test.invalid";
-const NETWORK_TEST_TARGET: &str = "http://codex-network-test.invalid:80";
+const NETWORK_TEST_HOST: &str = "genex-network-test.invalid";
+const NETWORK_TEST_TARGET: &str = "http://genex-network-test.invalid:80";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg_attr(
@@ -442,8 +442,8 @@ async fn cancelled_guardian_network_review_fails_closed_without_rewriting_turn_s
     Ok(())
 }
 
-#[test_case("GET", "http://codex-network-test.invalid/"; "plain_http")]
-#[test_case("CONNECT", "codex-network-test.invalid:443"; "connect")]
+#[test_case("GET", "http://genex-network-test.invalid/"; "plain_http")]
+#[test_case("CONNECT", "genex-network-test.invalid:443"; "connect")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg_attr(
     not(target_os = "linux"),
@@ -468,7 +468,7 @@ async fn disconnected_network_request_explains_failure_to_model(
 import os, socket, time, urllib.parse
 proxy = urllib.parse.urlparse(os.environ['HTTP_PROXY'])
 sock = socket.create_connection((proxy.hostname, proxy.port), timeout=10)
-sock.sendall(b'{method} {target} HTTP/1.1\r\nHost: codex-network-test.invalid\r\n\r\n')
+sock.sendall(b'{method} {target} HTTP/1.1\r\nHost: genex-network-test.invalid\r\n\r\n')
 while not os.path.exists('disconnect-now'):
     time.sleep(0.01)
 sock.close()
@@ -1002,7 +1002,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
     assert!(
         approval
             .call_id
-            .starts_with("network#local#http#codex-network-test.invalid#80#")
+            .starts_with("network#local#http#genex-network-test.invalid#80#")
     );
     assert_eq!(approval.approval_id.as_deref(), None);
     let first_approval_call_id = approval.call_id.clone();
@@ -1010,7 +1010,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
     assert_eq!(approval.cwd, test.config.cwd.clone().into());
     assert_eq!(
         approval.reason.as_deref(),
-        Some("codex-network-test.invalid is not in the allowed_domains")
+        Some("genex-network-test.invalid is not in the allowed_domains")
     );
     test.genex
         .submit(Op::ExecApproval {
@@ -1423,11 +1423,11 @@ async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt(
 
     let policy = fs::read_to_string(test.home.path().join("rules/default.rules"))?;
     assert!(policy.contains(
-        r#"network_rule(host="codex-network-test.invalid", protocol="http", decision="allow""#
+        r#"network_rule(host="genex-network-test.invalid", protocol="http", decision="allow""#
     ));
     assert!(first_responses.requests().iter().any(|request| {
         request.body_contains_text(
-            "Allowed network rule saved in execpolicy (allowlist): codex-network-test.invalid",
+            "Allowed network rule saved in execpolicy (allowlist): genex-network-test.invalid",
         )
     }));
     mount_exec_network_turn(
@@ -1495,7 +1495,7 @@ async fn denying_network_policy_amendment_persists_and_blocks_request() -> Resul
 
     let policy = fs::read_to_string(test.home.path().join("rules/default.rules"))?;
     assert!(policy.contains(
-        r#"network_rule(host="codex-network-test.invalid", protocol="http", decision="deny""#
+        r#"network_rule(host="genex-network-test.invalid", protocol="http", decision="deny""#
     ));
     let output = responses
         .requests()

@@ -189,7 +189,7 @@ impl CommandHookRuntime {
 }
 
 #[tracing::instrument(
-    name = "codex.hooks.command",
+    name = "genex.hooks.command",
     level = "trace",
     skip_all,
     fields(

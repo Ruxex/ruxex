@@ -66,7 +66,7 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     }
 
     let targets = if cfg!(target_os = "windows") {
-        "signed Codex app; codex.exe; codex-windows-sandbox-setup.exe; codex-command-runner.exe; genex-code-mode-host.exe"
+        "signed Codex app; genex.exe; codex-windows-sandbox-setup.exe; codex-command-runner.exe; genex-code-mode-host.exe"
     } else if cfg!(target_os = "macos") {
         "signing team 2DC432GLL2 plus the installed Codex app identity, signed codex agent, and required helpers"
     } else {
@@ -91,7 +91,7 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     for product in products {
         let remedy = match product {
             "CrowdStrike Falcon" => {
-                "CrowdStrike Falcon: Add a certificate or IOA exclusion for Codex. If sensor overhead continues, exclude the Codex agent from sensor visibility. Keep monitoring descendant processes."
+                "CrowdStrike Falcon: Add a certificate or IOA exclusion for Genex. If sensor overhead continues, exclude the Codex agent from sensor visibility. Keep monitoring descendant processes."
             }
             "BeyondTrust Privilege Management" => {
                 "BeyondTrust: Remove Codex from application blocking rules. Add allow rules for Codex helper executables. Do not grant administrator privileges."
@@ -112,7 +112,7 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
         check = check.issue(
             DoctorIssue::new(
                 CheckStatus::Warning,
-                format!("{product} can interfere with Codex. Verify Codex exclusions."),
+                format!("{product} can interfere with Genex. Verify Codex exclusions."),
             )
             .measured("not verified")
             .expected("Codex application and helper exclusions")

@@ -989,13 +989,13 @@ impl App {
                     .and_then(std::ffi::OsStr::to_str)
                     .is_some_and(|name| {
                         if cfg!(windows) {
-                            name.eq_ignore_ascii_case("codex-tui")
+                            name.eq_ignore_ascii_case("genex-tui")
                         } else {
-                            name == "codex-tui"
+                            name == "genex-tui"
                         }
                     }) {
                     current_executable.with_file_name(if cfg!(windows) {
-                        "codex.exe"
+                        "genex.exe"
                     } else {
                         "genex"
                     })

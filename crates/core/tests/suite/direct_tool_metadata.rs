@@ -317,7 +317,7 @@ async fn direct_function_and_tool_search_mark_complete_attempts(
         metadata_bytes += serde_json::to_vec(&metadata)?.len();
         assert!(
             metadata["executed_tool_calls"][0]["arguments"]
-                .get("_codex_executed_tool_call_truncated")
+                .get("_genex_executed_tool_call_truncated")
                 .is_some()
         );
         assert!(metadata.get("tool_calls_complete").is_none());
@@ -333,7 +333,7 @@ async fn direct_function_and_tool_search_mark_complete_attempts(
             .expect("recorded calls");
         assert_eq!(calls.len(), 1);
         if calls[0]["arguments"]
-            .get("_codex_executed_tool_call_truncated")
+            .get("_genex_executed_tool_call_truncated")
             .is_some()
         {
             truncated += 1;

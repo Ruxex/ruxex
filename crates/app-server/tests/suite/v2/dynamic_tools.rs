@@ -341,7 +341,7 @@ async fn thread_start_rejects_invalid_dynamic_tool_inputs() -> Result<()> {
 #[tokio::test]
 async fn dynamic_tool_call_round_trip_sends_text_content_items_to_model() -> Result<()> {
     let call_id = "dyn-call-1";
-    let tool_namespace = "codex_app";
+    let tool_namespace = "genex_app";
     let tool_name = "demo_tool";
     let tool_args = json!({ "city": "Paris" });
     let tool_call_arguments = serde_json::to_string(&tool_args)?;

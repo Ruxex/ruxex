@@ -46,7 +46,7 @@ use genex_protocol::protocol::TurnEnvironmentSelection;
 use genex_protocol::protocol::TurnEnvironmentSelections;
 use genex_protocol::user_input::UserInput;
 #[cfg(target_os = "linux")]
-use genex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0;
+use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
@@ -400,12 +400,12 @@ async fn apply_patch_cli_uses_genex_self_exe_with_linux_sandbox_helper_alias() -
         .config
         .genex_linux_sandbox_exe
         .as_ref()
-        .expect("linux test config should include codex-linux-sandbox helper");
+        .expect("linux test config should include genex-linux-sandbox helper");
     assert_eq!(
         genex_linux_sandbox_exe
             .file_name()
             .and_then(|name| name.to_str()),
-        Some(CODEX_LINUX_SANDBOX_ARG0),
+        Some(GENEX_LINUX_SANDBOX_ARG0),
     );
 
     let patch = "*** Begin Patch\n*** Add File: helper-alias.txt\n+hello\n*** End Patch";
@@ -1905,13 +1905,13 @@ async fn apply_patch_turn_diff_paths_stay_repo_relative_when_session_cwd_is_nest
     Ok(())
 }
 
-#[test_case("codex_work_web", true, "work.txt"; "web work uses cwd when enabled")]
-#[test_case("codex_work_mobile", true, "work.txt"; "mobile work uses cwd when enabled")]
-#[test_case("codex_work_web", false, "subdir/work.txt"; "disabled feature keeps repository root")]
-#[test_case("codex_work_desktop", true, "work.txt"; "desktop uses cwd when enabled")]
-#[test_case("codex_work_cca", true, "work.txt"; "legacy cca uses cwd when enabled")]
-#[test_case("codex_cli_rs", true, "work.txt"; "coding originator uses cwd when enabled")]
-#[test_case("codex_cli_rs", false, "subdir/work.txt"; "coding originator keeps repository root when disabled")]
+#[test_case("genex_work_web", true, "work.txt"; "web work uses cwd when enabled")]
+#[test_case("genex_work_mobile", true, "work.txt"; "mobile work uses cwd when enabled")]
+#[test_case("genex_work_web", false, "subdir/work.txt"; "disabled feature keeps repository root")]
+#[test_case("genex_work_desktop", true, "work.txt"; "desktop uses cwd when enabled")]
+#[test_case("genex_work_cca", true, "work.txt"; "legacy cca uses cwd when enabled")]
+#[test_case("genex_cli_rs", true, "work.txt"; "coding originator uses cwd when enabled")]
+#[test_case("genex_cli_rs", false, "subdir/work.txt"; "coding originator keeps repository root when disabled")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn apply_patch_turn_diff_skips_git_root_when_feature_is_enabled(
     originator: &str,

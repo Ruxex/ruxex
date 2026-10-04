@@ -15,9 +15,9 @@ use uuid::Uuid;
 use super::oneshot::Completion;
 
 use crate::genex_thread::BackgroundTerminalInfo;
-use crate::exec_env::CODEX_PERMISSION_PROFILE_ENV_VAR;
-use crate::exec_env::CODEX_THREAD_ID_ENV_VAR;
-use crate::exec_env::CODEX_VERSION_ENV_VAR;
+use crate::exec_env::GENEX_PERMISSION_PROFILE_ENV_VAR;
+use crate::exec_env::GENEX_THREAD_ID_ENV_VAR;
+use crate::exec_env::GENEX_VERSION_ENV_VAR;
 use crate::exec_env::create_env;
 use crate::exec_env::inject_apply_patch_env;
 use crate::exec_env::inject_permission_profile_env;
@@ -98,7 +98,7 @@ const UNIFIED_EXEC_ENV: [(&str, &str); 10] = [
     ("PAGER", "cat"),
     ("GIT_PAGER", "cat"),
     ("GH_PAGER", "cat"),
-    ("CODEX_CI", "1"),
+    ("GENEX_CI", "1"),
 ];
 const NETWORK_ACCESS_DENIED_MESSAGE: &str =
     "Network access was denied by the Genex sandbox network proxy.";
@@ -140,16 +140,16 @@ pub(super) fn exec_env_policy_from_shell_policy(
         .map(std::string::ToString::to_string)
         .collect::<Vec<_>>();
     exclude.extend([
-        CODEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
-        CODEX_VERSION_ENV_VAR.to_string(),
+        GENEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
+        GENEX_VERSION_ENV_VAR.to_string(),
         genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
         PLUGIN_METRICS_OUTPUT_ENV_VAR.to_string(),
     ]);
     let mut r#set = policy.r#set.clone();
     r#set.retain(|key, _| {
         ![
-            CODEX_PERMISSION_PROFILE_ENV_VAR,
-            CODEX_VERSION_ENV_VAR,
+            GENEX_PERMISSION_PROFILE_ENV_VAR,
+            GENEX_VERSION_ENV_VAR,
                 genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ]
@@ -180,8 +180,8 @@ fn env_overlay_for_exec_server(
             !is_non_inheritable_env_var(key)
                 && (matches!(
                     key.as_str(),
-                    CODEX_PERMISSION_PROFILE_ENV_VAR
-                        | CODEX_VERSION_ENV_VAR
+                    GENEX_PERMISSION_PROFILE_ENV_VAR
+                        | GENEX_VERSION_ENV_VAR
                         | genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR
                 ) || local_policy_env.get(*key) != Some(*value))
         })
@@ -927,7 +927,7 @@ impl UnifiedExecProcessManager {
                 "text"
             };
             context.step_context.session_telemetry.counter(
-                "codex.unified_exec.stdin_review.size_check",
+                "genex.unified_exec.stdin_review.size_check",
                 /*inc*/ 1,
                 &[("result", size_check_result), ("input_kind", input_kind)],
             );
@@ -1323,10 +1323,10 @@ impl UnifiedExecProcessManager {
             );
             // Sandbox retries can reuse the public ID for a new executor process.
             tracing::event!(
-                name: "codex.unified_exec.process_start_requested",
+                name: "genex.unified_exec.process_start_requested",
                 target: "genex_otel.trace_safe",
                 tracing::Level::INFO,
-                event.name = "codex.unified_exec.process_start_requested",
+                event.name = "genex.unified_exec.process_start_requested",
                 unified_exec_process_id = process_id,
                 process.id = params.process_id.as_str(),
             );
@@ -1433,7 +1433,7 @@ impl UnifiedExecProcessManager {
         let local_policy_env = create_env(shell_environment_policy, /*thread_id*/ None);
         let mut env = local_policy_env.clone();
         env.insert(
-            CODEX_THREAD_ID_ENV_VAR.to_string(),
+            GENEX_THREAD_ID_ENV_VAR.to_string(),
             context.session.thread_id.to_string(),
         );
         inject_session_env(&mut env, context.session.session_id());

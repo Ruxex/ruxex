@@ -148,7 +148,7 @@ impl PidBackend {
             for name in [
                 "GENEX_HOME",
                 "GENEX_SQLITE_HOME",
-                "CODEX_CA_CERTIFICATE",
+                "GENEX_CA_CERTIFICATE",
                 "SSL_CERT_FILE",
                 "REQUESTS_CA_BUNDLE",
                 "CURL_CA_BUNDLE",

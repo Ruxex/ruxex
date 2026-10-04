@@ -32,7 +32,7 @@ use genex_protocol::protocol::ExecCommandSource;
 use genex_protocol::protocol::ExecCommandStatus;
 use genex_protocol::protocol::Op;
 use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::shell_environment::CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use genex_protocol::shell_environment::GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
 use genex_protocol::user_input::UserInput;
 use genex_utils_output_truncation::approx_tokens_from_byte_count;
 use genex_utils_path_uri::PathUri;
@@ -406,21 +406,21 @@ async fn exec_command_does_not_expose_configured_noise_auth_token() -> Result<()
 
     let builder = test_genex().with_model("gpt-5.4").with_config(|config| {
         config.permissions.shell_environment_policy.r#set.insert(
-            CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_string(),
+            GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_string(),
             "configured-noise-token".to_string(),
         );
         config.permissions.shell_environment_policy.r#set.insert(
-            CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_ascii_lowercase(),
+            GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_ascii_lowercase(),
             "case-variant-noise-token".to_string(),
         );
     });
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
     let command = match core_test_support::test_target_os() {
         core_test_support::TestTargetOs::Linux | core_test_support::TestTargetOs::MacOs => {
-            "if [ -n \"${CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN:-}\" ] || [ -n \"${codex_exec_server_noise_auth_token:-}\" ]; then echo leaked; else echo unset; fi"
+            "if [ -n \"${GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN:-}\" ] || [ -n \"${genex_exec_server_noise_auth_token:-}\" ]; then echo leaked; else echo unset; fi"
         }
         core_test_support::TestTargetOs::Windows => {
-            "if ($env:CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN) { Write-Output leaked } else { Write-Output unset }"
+            "if ($env:GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN) { Write-Output leaked } else { Write-Output unset }"
         }
     };
     let call_id = "exec-command-noise-auth-token";
@@ -467,7 +467,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
                 ("KEEP".to_string(), "preserved".to_string()),
                 ("DROP".to_string(), "filtered".to_string()),
                 (
-                    "CODEX_VERSION".to_string(),
+                    "GENEX_VERSION".to_string(),
                     "configured-version".to_string(),
                 ),
             ]),
@@ -522,10 +522,10 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
     let call_id = "exec-command-environment-shell-policy";
     let command = match core_test_support::test_target_os() {
         core_test_support::TestTargetOs::Linux | core_test_support::TestTargetOs::MacOs => {
-            r#"printf '%s:%s:%s:%s' "$KEEP" "${DROP:-missing}" "${OWNER_ONLY:-missing}" "$CODEX_VERSION""#
+            r#"printf '%s:%s:%s:%s' "$KEEP" "${DROP:-missing}" "${OWNER_ONLY:-missing}" "$GENEX_VERSION""#
         }
         core_test_support::TestTargetOs::Windows => {
-            r#"if (Test-Path Env:DROP) { $drop = $env:DROP } else { $drop = 'missing' }; if (Test-Path Env:OWNER_ONLY) { $owner = $env:OWNER_ONLY } else { $owner = 'missing' }; Write-Output "${env:KEEP}:${drop}:${owner}:${env:CODEX_VERSION}""#
+            r#"if (Test-Path Env:DROP) { $drop = $env:DROP } else { $drop = 'missing' }; if (Test-Path Env:OWNER_ONLY) { $owner = $env:OWNER_ONLY } else { $owner = 'missing' }; Write-Output "${env:KEEP}:${drop}:${owner}:${env:GENEX_VERSION}""#
         }
     };
     let arguments = json!({

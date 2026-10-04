@@ -14,8 +14,8 @@ use genex_core::config::ConfigOverrides;
 use genex_core::config::NetworkProxyAuditMetadata;
 use genex_core::exec_env::create_env;
 #[cfg(target_os = "macos")]
-use genex_core::spawn::CODEX_SANDBOX_ENV_VAR;
-use genex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use genex_core::spawn::GENEX_SANDBOX_ENV_VAR;
+use genex_core::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
 use genex_core::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
 use genex_protocol::config_types::SandboxMode;
 use genex_protocol::models::PermissionProfile;
@@ -414,7 +414,7 @@ async fn run_command_under_sandbox(
                 network_sandbox_policy,
                 env,
                 |env_map| {
-                    env_map.insert(CODEX_SANDBOX_ENV_VAR.to_string(), "seatbelt".to_string());
+                    env_map.insert(GENEX_SANDBOX_ENV_VAR.to_string(), "seatbelt".to_string());
                     if let Some(network) = network.as_ref() {
                         network.apply_to_env(env_map);
                     }
@@ -426,7 +426,7 @@ async fn run_command_under_sandbox(
             #[expect(clippy::expect_used)]
             let genex_linux_sandbox_exe = config
                 .genex_linux_sandbox_exe
-                .expect("codex-linux-sandbox executable not found");
+                .expect("genex-linux-sandbox executable not found");
             let network_sandbox_policy = runtime_permission_profile.network_sandbox_policy();
             let (env, managed_network) = if let Some(network) = network.as_ref() {
                 let prepared =
@@ -446,7 +446,7 @@ async fn run_command_under_sandbox(
             spawn_debug_sandbox_child(
                 genex_linux_sandbox_exe,
                 args,
-                Some("codex-linux-sandbox"),
+                Some("genex-linux-sandbox"),
                 cwd.to_path_buf(),
                 network_sandbox_policy,
                 env,
@@ -616,7 +616,7 @@ async fn spawn_debug_sandbox_child(
     cmd.envs(env);
 
     if !network_sandbox_policy.is_enabled() {
-        cmd.env(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
+        cmd.env(GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
     }
 
     cmd.stdin(Stdio::inherit())

@@ -108,7 +108,7 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
     let named_tool_output = json!({
         "type": "function_call_output",
         "name": "send_message_to_thread",
-        "namespace": "codex_app",
+        "namespace": "genex_app",
         "output": "Another agent delegated this task.",
     });
     let named_tool_item: ResponseItem = serde_json::from_value(named_tool_output.clone())?;
@@ -288,7 +288,7 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
             input: Vec::new(),
             tool_output: Some(Box::new(TurnToolOutput {
                 name: "send_message_to_thread".to_string(),
-                namespace: Some("codex_app".to_string()),
+                namespace: Some("genex_app".to_string()),
                 output: FunctionCallOutputBody::Text("Start a delegated turn.".to_string()),
             })),
             ..Default::default()
@@ -322,7 +322,7 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
             output: FunctionCallOutputBody::Text(output),
             ..
         } if name == "send_message_to_thread"
-            && namespace.as_deref() == Some("codex_app")
+            && namespace.as_deref() == Some("genex_app")
             && output == "Start a delegated turn."
     ));
     assert!(

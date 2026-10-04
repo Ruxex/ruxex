@@ -32,7 +32,7 @@ pub struct RequestPluginInstallResult {
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct RequestPluginInstallMeta<'a> {
-    #[serde(rename = "codex_approval_kind")]
+    #[serde(rename = "genex_approval_kind")]
     pub approval_kind: &'static str,
     pub persist: &'static str,
     pub tool_type: DiscoverableToolType,

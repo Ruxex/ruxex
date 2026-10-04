@@ -144,7 +144,7 @@ async fn exec_server_http_request_buffers_response_body() -> anyhow::Result<()> 
 async fn exec_server_http_request_rejects_protected_environment_headers() -> anyhow::Result<()> {
     let mut server = exec_server_with_env(
         [(
-            "CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
+            "GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
             "executor-internal-token",
         )],
         &[],
@@ -154,8 +154,8 @@ async fn exec_server_http_request_rejects_protected_environment_headers() -> any
 
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     for (index, env_var) in [
-        "CODEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
-        "codex_exec_server_noise_auth_token",
+        "GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
+        "genex_exec_server_noise_auth_token",
         "PROVIDER_API_KEY",
         "CODEX_ACCESS_TOKEN",
         "CODEX_CONNECTORS_TOKEN",

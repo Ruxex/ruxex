@@ -186,7 +186,7 @@ async fn responses_stream_parses_items_and_completed_end_to_end() -> Result<()> 
             assert_eq!(
                 token_usage
                     .as_ref()
-                    .and_then(|usage| usage.codex_rollout_budget_units.as_ref())
+                    .and_then(|usage| usage.genex_rollout_budget_units.as_ref())
                     .and_then(serde_json::Number::as_f64),
                 Some(2.5)
             );

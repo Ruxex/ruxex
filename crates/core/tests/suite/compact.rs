@@ -549,7 +549,7 @@ async fn summarize_context_three_requests_and_instructions(
     // inspect them without relying on specific prompt markers.
     let request_log = mount_sse_sequence(&server, vec![sse1, sse2, sse3]).await;
 
-    // Build config pointing to the mock server and spawn Codex.
+    // Build config pointing to the mock server and spawn Genex.
     let model_provider = non_provider_model_provider(&server);
     let mut builder = test_genex().with_config(move |config| {
         config.model = Some("gpt-5.2".to_string());

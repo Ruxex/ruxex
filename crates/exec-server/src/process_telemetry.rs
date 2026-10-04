@@ -26,12 +26,12 @@ pub(crate) enum ProcessTelemetryEvent {
 impl ProcessTelemetry {
     pub(crate) fn log(&self, event: ProcessTelemetryEvent, sandbox: SandboxType) {
         let (event_name, exit_code, termination_requested, reason) = match event {
-            ProcessTelemetryEvent::Start => ("codex.exec_server.process_start", None, None, None),
+            ProcessTelemetryEvent::Start => ("genex.exec_server.process_start", None, None, None),
             ProcessTelemetryEvent::SpawnFailed => {
-                ("codex.exec_server.process_spawn_failed", None, None, None)
+                ("genex.exec_server.process_spawn_failed", None, None, None)
             }
             ProcessTelemetryEvent::SandboxDenied => (
-                "codex.exec_server.sandbox_denied",
+                "genex.exec_server.sandbox_denied",
                 None,
                 None,
                 Some("inferred_denial"),
@@ -40,7 +40,7 @@ impl ProcessTelemetry {
                 exit_code,
                 termination_requested,
             } => (
-                "codex.exec_server.process_exit",
+                "genex.exec_server.process_exit",
                 Some(exit_code),
                 Some(termination_requested),
                 None,

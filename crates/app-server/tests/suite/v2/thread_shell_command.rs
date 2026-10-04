@@ -37,7 +37,7 @@ use genex_app_server_protocol::TurnStartedNotification;
 use genex_app_server_protocol::TurnStatus;
 use genex_app_server_protocol::UserInput as V2UserInput;
 use genex_core::shell::default_user_shell;
-use genex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR;
+use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -180,7 +180,7 @@ async fn thread_shell_command_returns_error_when_local_environment_is_disabled()
         .with_genex_home(genex_home.as_path())
         // This test intentionally exercises thread/shellCommand without a local host environment.
         .without_auto_env()
-        .with_env_overrides(&[(CODEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp

@@ -34,7 +34,7 @@ use tokio::process::Command;
 
 use crate::ExecServerRuntimePaths;
 use crate::FileSystemSandboxContext;
-use crate::fs_helper::CODEX_FS_HELPER_ARG1;
+use crate::fs_helper::GENEX_FS_HELPER_ARG1;
 use crate::fs_helper::FsHelperPayload;
 use crate::fs_helper::FsHelperRequest;
 use crate::fs_helper::FsHelperResponse;
@@ -161,7 +161,7 @@ impl FileSystemSandboxRunner {
             .ok_or_else(|| invalid_request("filesystem sandbox cwd has no root".to_string()))?;
         let command = SandboxCommand {
             program: helper.as_path().as_os_str().to_owned(),
-            args: vec![CODEX_FS_HELPER_ARG1.to_string()],
+            args: vec![GENEX_FS_HELPER_ARG1.to_string()],
             cwd: PathUri::from_abs_path(&helper_cwd),
             env: self.helper_env.clone(),
             managed_network: None,
@@ -965,7 +965,7 @@ mod tests {
     fn helper_permissions_include_only_linux_sandbox_alias_executable() {
         let root = tempfile::tempdir().expect("temp dir");
         let genex_self_exe = root.path().join("bin").join("genex");
-        let genex_linux_sandbox_exe = root.path().join("aliases").join("codex-linux-sandbox");
+        let genex_linux_sandbox_exe = root.path().join("aliases").join("genex-linux-sandbox");
         let runtime_paths =
             ExecServerRuntimePaths::new(genex_self_exe, Some(genex_linux_sandbox_exe))
                 .expect("runtime paths");

@@ -284,7 +284,7 @@ impl AgentRegistry {
                 active_agents.nickname_reset_count += 1;
                 if let Some(metrics) = genex_otel::global() {
                     let _ = metrics.counter(
-                        "codex.multi_agent.nickname_pool_reset",
+                        "genex.multi_agent.nickname_pool_reset",
                         /*inc*/ 1,
                         &[],
                     );

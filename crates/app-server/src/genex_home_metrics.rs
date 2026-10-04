@@ -15,7 +15,7 @@ use std::path::Path;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
-const SIZE_BYTES_METRIC: &str = "codex.app_server.genex_home.size_bytes";
+const SIZE_BYTES_METRIC: &str = "genex.app_server.genex_home.size_bytes";
 // Bucket sizes range from 1 MiB through 1 TiB; larger directories use the overflow bucket.
 const SIZE_BYTES_BOUNDARIES: &[f64] = &[
     1_048_576.0,

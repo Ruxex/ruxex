@@ -281,10 +281,10 @@ impl GenexAuth {
     }
 }
 
-pub const CODEX_API_KEY_ENV_VAR: &str = "CODEX_API_KEY";
+pub const GENEX_API_KEY_ENV_VAR: &str = "CODEX_API_KEY";
 
 pub fn read_api_key_from_env() -> Option<String> {
-    read_non_empty_env_var(CODEX_API_KEY_ENV_VAR)
+    read_non_empty_env_var(GENEX_API_KEY_ENV_VAR)
 }
 
 fn read_non_empty_env_var(key: &str) -> Option<String> {
