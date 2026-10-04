@@ -11,9 +11,9 @@ use std::process::Output;
 #[test]
 fn only_matching_enforced_apple_security_events_are_failures() {
     for (event, expected) in [
-        ("denied com.codex.codex", Evidence::Blocked),
+        ("denied com.genex.genex", Evidence::Blocked),
         (
-            "denied /Applications/Codex.app/Contents/MacOS/Codex",
+            "denied /Applications/Genex.app/Contents/MacOS/Genex",
             Evidence::Blocked,
         ),
         ("malware detected Other.app", Evidence::Clear),

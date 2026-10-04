@@ -449,3 +449,12 @@ nudges now consume the server-provided `normal_model_slug`, warnings are based o
 reasoning effort, and the default bucket is `default`. These are `remove`/`migrate-in-place`.
 External provider model IDs, Product::Codex restrictions, GitHub/upstream fixtures, security and
 OS identities, and required endpoint wire names remain separate retained contracts.
+
+### OS security, history, and telemetry genericization (2026-10-04)
+
+The pre-release audit confirmed that the desktop security product identifiers, owned history
+metadata namespace, world-state hash namespace, OTEL meter scope, and authentication-environment
+telemetry fields are repository-owned. They were migrated together with their in-repository
+producers, consumers, tests, and snapshots. Trusted-process and enforcement predicates are
+unchanged. GitHub/upstream repository values, Product::Codex, OpenAI/provider wire names, and
+third-party originator identifiers remain external contracts.

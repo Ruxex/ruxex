@@ -46,13 +46,13 @@ fn defender_distinguishes_detection_and_remediation() {
 }
 
 #[test]
-fn only_trusted_codex_executables_are_reported() {
+fn only_trusted_genex_executables_are_reported() {
     for (path, expected) in [
         ("genex.exe", true),
-        (r"provider.Codex_2p2nqsd0c76g0\OtherApp.exe", false),
-        ("evil-codex.exe", false),
+        (r"provider.Genex_2p2nqsd0c76g0\OtherApp.exe", false),
+        ("evil-genex.exe", false),
         (r"C:\Other\OtherApp.exe", false),
-        (r"provider.CodexEvil_1\OtherApp.exe", false),
+        (r"provider.GenexEvil_1\OtherApp.exe", false),
     ] {
         let events = parse_events(&fixture(/*id*/ 1121, path, &[]), CHANNELS[0]);
         assert_eq!(!events.is_empty(), expected, "misclassified {path}");

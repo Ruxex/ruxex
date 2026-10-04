@@ -147,15 +147,14 @@ fn event_target(value: &str) -> Option<&'static str> {
     let parts = value.split(['\\', '/']).map(str::trim).collect::<Vec<_>>();
     let name = *parts.last()?;
     let package = parts.iter().any(|part| {
-        part.starts_with("provider.codex_") || part.starts_with("provider.genex_")
+        part.starts_with("provider.genex_")
     });
-    let trusted = package || parts.windows(2).any(|pair| pair == ["provider", "codex"]);
+    let trusted = package || parts.windows(2).any(|pair| pair == ["provider", "genex"]);
     match name {
-        "genex-windows-sandbox-setup.exe" | "codex-windows-sandbox-setup.exe" => Some("sandbox_setup"),
-        "genex-command-runner.exe" | "codex-command-runner.exe" => Some("command_runner"),
+        "genex-windows-sandbox-setup.exe" => Some("sandbox_setup"),
+        "genex-command-runner.exe" => Some("command_runner"),
         "genex.exe" => Some("genex"),
-        "codex.exe" => Some("codex"),
-        "codex-desktop.exe" => Some("genex_desktop"),
+        "genex-desktop.exe" => Some("genex_desktop"),
         "rg.exe" if trusted => Some("ripgrep"),
         _ if package => Some("genex_desktop_package"),
         _ => None,
@@ -201,15 +200,15 @@ fn classify(channels: &[Option<Vec<Evidence>>]) -> DoctorCheck {
     }
     let summary = match (status, visible) {
         (CheckStatus::Ok, _) if channels.contains(&None) => "security event coverage is incomplete",
-        (CheckStatus::Ok, _) => "no locally visible recent Codex security enforcement was found",
+        (CheckStatus::Ok, _) => "no locally visible recent Genex security enforcement was found",
         (CheckStatus::Warning, false) => "security event channels could not be inspected",
-        (CheckStatus::Warning, true) => "recent Codex security audit or detection requires review",
-        (CheckStatus::Fail, _) => "endpoint security blocked or quarantined a Codex executable",
+        (CheckStatus::Warning, true) => "recent Genex security audit or detection requires review",
+        (CheckStatus::Fail, _) => "endpoint security blocked or quarantined a Genex executable",
     };
     let mut check = desktop_check("desktop.security.enforcement", status, summary).details(details);
     if status != CheckStatus::Ok {
         check = check.remediation(
-            "ask your organization's security administrator to review endpoint security events and the approved Codex application policy",
+            "ask your organization's security administrator to review endpoint security events and the approved Genex application policy",
         );
     }
     check

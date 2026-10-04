@@ -228,7 +228,7 @@ fn windows_store_update(
         serde_json::from_slice(manifest).map_err(|_| "invalid Windows Store update manifest")?;
     if manifest.schema_version == 0
         || manifest.store_product_id != "9PLM9XGG6VKS"
-        || manifest.package_identity != "provider.Codex"
+        || manifest.package_identity != "provider.Genex"
     {
         return Err("Windows Store update manifest does not target the production application");
     }
@@ -272,7 +272,7 @@ async fn latest_macos_staged_build(root: &Path, installed_build: u64) -> Option<
         if !std::fs::symlink_metadata(&extracted).is_ok_and(|metadata| metadata.is_dir()) {
             continue;
         }
-        let bundle = extracted.join("Codex.app");
+        let bundle = extracted.join("Genex.app");
         if !std::fs::symlink_metadata(&bundle).is_ok_and(|metadata| metadata.is_dir()) {
             continue;
         }
@@ -380,7 +380,7 @@ where
             .request(Method::GET, url)
             .header(
                 http::header::USER_AGENT,
-                concat!("codex-doctor/", env!("CARGO_PKG_VERSION")),
+                concat!("genex-doctor/", env!("CARGO_PKG_VERSION")),
             )
             .send()
             .await
@@ -506,19 +506,19 @@ mod tests {
                 .expect("unrelated Sparkle cache directory should be created");
         }
         for (name, identity, build) in [
-            ("newest", "com.codex.codex", "6268"),
-            ("newer", "com.codex.codex", "6168"),
-            ("older", "com.codex.codex", "6138"),
+            ("newest", "com.genex.genex", "6268"),
+            ("newer", "com.genex.genex", "6168"),
+            ("older", "com.genex.genex", "6138"),
             ("different", "com.example.other", "9999"),
-            ("invalid", "com.codex.codex", "invalid"),
+            ("invalid", "com.genex.genex", "invalid"),
         ] {
-            let bundle = root.path().join(name).join("extracted/Codex.app");
+            let bundle = root.path().join(name).join("extracted/Genex.app");
             write_macos_bundle(&bundle, identity, build);
         }
         let outside = tempfile::tempdir().expect("external fixture should be created");
-        let linked = outside.path().join("Codex.app");
-        write_macos_bundle(&linked, "com.codex.codex", "9999");
-        std::os::unix::fs::symlink(&linked, root.path().join("Codex.app"))
+        let linked = outside.path().join("Genex.app");
+        write_macos_bundle(&linked, "com.genex.genex", "9999");
+        std::os::unix::fs::symlink(&linked, root.path().join("Genex.app"))
             .expect("symlinked staged app fixture should be created");
 
         assert_eq!(
@@ -537,7 +537,7 @@ mod tests {
             "schemaVersion": 1,
             "buildVersion": "26.803.5235.1",
             "storeProductId": "9PLM9XGG6VKS",
-            "packageIdentity": "provider.Codex",
+            "packageIdentity": "provider.Genex",
         });
         assert_eq!(
             windows_store_update(&serde_json::to_vec(&manifest).unwrap(), "26.803.5235.0"),

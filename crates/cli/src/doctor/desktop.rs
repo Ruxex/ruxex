@@ -141,7 +141,7 @@ fn desktop_log_root(identity: &str) -> Option<PathBuf> {
             let local = env::var_os("LOCALAPPDATA").map(PathBuf::from).or_else(|| {
                 env::var_os("USERPROFILE").map(|home| PathBuf::from(home).join("AppData/Local"))
             })?;
-            local.join("Codex/Logs")
+            local.join("Genex/Logs")
         }
         _ => return None,
     };
@@ -210,7 +210,7 @@ impl DesktopLog {
         let name = entry.file_name();
         let name = name
             .to_str()?
-            .strip_prefix("codex-desktop-")?
+            .strip_prefix("genex-desktop-")?
             .strip_suffix(".log")?;
         let (session_and_pid, _) = name.split_once("-t")?;
         let (session_id, process_id) = session_and_pid.rsplit_once('-')?;

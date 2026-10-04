@@ -424,7 +424,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
                     "experimental_api_enabled": true,
                 },
                 "runtime": {
-                    "codex_rs_version": env!("CARGO_PKG_VERSION"),
+                    "genex_rs_version": env!("CARGO_PKG_VERSION"),
                     "runtime_os": std::env::consts::OS,
                     "runtime_os_version": event["event_params"]["runtime"]["runtime_os_version"],
                     "runtime_arch": std::env::consts::ARCH,

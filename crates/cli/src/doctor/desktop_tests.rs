@@ -89,7 +89,7 @@ fn stopped_desktop_does_not_report_a_failure() {
 fn write_log(directory: &Path, contents: &str) {
     fs::write(
         directory.join(format!(
-            "codex-desktop-{CURRENT_SESSION}-{CURRENT_PROCESS}-t0-i0-120000-0.log"
+            "genex-desktop-{CURRENT_SESSION}-{CURRENT_PROCESS}-t0-i0-120000-0.log"
         )),
         contents,
     )

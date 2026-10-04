@@ -14,8 +14,8 @@ pub struct AuthEnvTelemetry {
 impl AuthEnvTelemetry {
     pub fn to_otel_metadata(&self) -> AuthEnvTelemetryMetadata {
         AuthEnvTelemetryMetadata {
-            codex_api_key_env_present: self.api_key_env_present,
-            codex_api_key_env_enabled: self.api_key_env_enabled,
+            genex_api_key_env_present: self.api_key_env_present,
+            genex_api_key_env_enabled: self.api_key_env_enabled,
             provider_env_key_name: self.provider_env_key_name.clone(),
             provider_env_key_present: self.provider_env_key_present,
         }

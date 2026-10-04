@@ -149,7 +149,7 @@ pub(super) fn desktop_check(
 
 #[cfg(target_os = "windows")]
 fn installed_windows_app() -> Result<Option<InstalledApp>, DiscoveryError> {
-    const PACKAGE_FAMILY: &str = "provider.Codex_2p2nqsd0c76g0";
+    const PACKAGE_FAMILY: &str = "provider.Genex_2p2nqsd0c76g0";
 
     let family = PACKAGE_FAMILY
         .encode_utf16()
@@ -200,7 +200,7 @@ fn installed_windows_app() -> Result<Option<InstalledApp>, DiscoveryError> {
         .ok_or(DiscoveryError)?;
     let package = String::from_utf16(&buffer[..end]).map_err(|_| DiscoveryError)?;
     let version = package
-        .strip_prefix("provider.Codex_")
+        .strip_prefix("provider.Genex_")
         .and_then(|name| name.split('_').next())
         .filter(|version| {
             version
@@ -210,7 +210,7 @@ fn installed_windows_app() -> Result<Option<InstalledApp>, DiscoveryError> {
         .ok_or(DiscoveryError)?;
 
     Ok(Some(InstalledApp {
-        identity: "provider.Codex",
+        identity: "provider.Genex",
         version: version.to_string(),
         package_family: PACKAGE_FAMILY,
     }))
@@ -221,7 +221,7 @@ async fn installed_macos_app() -> Result<Option<InstalledApp>, DiscoveryError> {
     let applications = std::iter::once(PathBuf::from("/Applications"))
         .chain(std::env::var_os("HOME").map(|home| PathBuf::from(home).join("Applications")))
         .flat_map(|directory| {
-            ["Codex.app"]
+            ["Genex.app"]
                 .into_iter()
                 .map(move |application| directory.join(application))
         });
@@ -260,7 +260,7 @@ pub(in crate::doctor) async fn inspect_macos_bundle(
         return Err(DiscoveryError);
     }
     let metadata: Value = serde_json::from_slice(&output.stdout).map_err(|_| DiscoveryError)?;
-    if metadata.get("CFBundleIdentifier").and_then(Value::as_str) != Some("com.codex.codex") {
+    if metadata.get("CFBundleIdentifier").and_then(Value::as_str) != Some("com.genex.genex") {
         return Ok(None);
     }
     let version = metadata
@@ -275,7 +275,7 @@ pub(in crate::doctor) async fn inspect_macos_bundle(
         .ok_or(DiscoveryError)?;
 
     Ok(Some(InstalledApp {
-        identity: "com.codex.codex",
+        identity: "com.genex.genex",
         version: version.to_string(),
         bundle: bundle.to_path_buf(),
         build,

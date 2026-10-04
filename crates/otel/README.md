@@ -113,13 +113,13 @@ let metrics = MetricsClient::new(MetricsConfig::in_memory(
     env!("CARGO_PKG_VERSION"),
     exporter.clone(),
 ))?;
-metrics.counter("codex.turns", 1, &[("model", "gpt-5.1")])?;
+metrics.counter("genex.turns", 1, &[("model", "example-model")])?;
 metrics.shutdown()?; // flushes in-memory exporter
 ```
 
 ## WebSocket continuation
 
-`codex.websocket.continuation` counts `response.create` send attempts, including
+`genex.websocket.continuation` counts `response.create` send attempts, including
 failed sends. It carries existing session tags plus `mode` (`incremental`/`full`),
 `phase` (`warmup`/`generation`), and `reason`:
 

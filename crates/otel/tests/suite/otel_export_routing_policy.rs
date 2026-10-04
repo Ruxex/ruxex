@@ -87,8 +87,8 @@ fn find_span_event_by_name_attr<'a>(
 
 fn auth_env_metadata() -> AuthEnvTelemetryMetadata {
     AuthEnvTelemetryMetadata {
-        codex_api_key_env_present: false,
-        codex_api_key_env_enabled: true,
+        genex_api_key_env_present: false,
+        genex_api_key_env_enabled: true,
         provider_env_key_name: Some("configured".to_string()),
         provider_env_key_present: Some(true),
     }
@@ -683,7 +683,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
     );
     assert_eq!(
         request_log_attrs
-            .get("auth.env_codex_api_key_enabled")
+            .get("auth.env_genex_api_key_enabled")
             .map(String::as_str),
         Some("true")
     );

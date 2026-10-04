@@ -861,8 +861,8 @@ pub(super) fn redact_detail(detail: &str) -> String {
 
     let secret_keys = [
         "api_key",
-        "codex_api_key",
-        "codex_access_token",
+        "genex_api_key",
+        "genex_access_token",
         "authorization",
         "bearer_token",
         "token",
@@ -1377,7 +1377,7 @@ Background Server
             .iter_mut()
             .find(|detail| detail.starts_with("exclusion targets: "))
             .expect("endpoint security check should include exclusion targets");
-        *targets = "exclusion targets: verified Codex app and required helpers".into();
+            *targets = "exclusion targets: verified Genex app and required helpers".into();
         report.checks.push(security);
         report.checks.extend([
             DoctorCheck::new(
@@ -1388,7 +1388,7 @@ Background Server
             )
             .detail("version: 1.2.3")
             .detail("running: true")
-            .detail("log directory: $HOME/Library/Logs/com.codex.codex"),
+            .detail("log directory: $HOME/Library/Logs/com.genex.genex"),
             DoctorCheck::new(
                 "desktop.app_server.handshake",
                 "desktop",
