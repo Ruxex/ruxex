@@ -75,9 +75,9 @@ enabled = true
     let plugin_root = genex_home
         .path()
         .join("plugins/cache/provider-api-curated/api-docs/local");
-    std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     std::fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"api-docs","version":"local"}"#,
     )?;
     std::fs::write(

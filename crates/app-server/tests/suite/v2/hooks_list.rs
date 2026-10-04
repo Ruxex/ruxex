@@ -98,10 +98,10 @@ additionalContextLimit = 4096
 
 fn write_plugin_hook_config(genex_home: &std::path::Path, hooks_json: &str) -> Result<()> {
     let plugin_root = genex_home.join("plugins/cache/test/demo/local");
-    std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     std::fs::create_dir_all(plugin_root.join("hooks"))?;
     std::fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"demo"}"#,
     )?;
     std::fs::write(plugin_root.join("hooks/hooks.json"), hooks_json)?;
@@ -123,10 +123,10 @@ fn write_versioned_plugin_hook(
     version: &str,
     hook_log_path: &std::path::Path,
 ) -> Result<()> {
-    std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     std::fs::create_dir_all(plugin_root.join("hooks"))?;
     std::fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         format!(r#"{{"name":"demo","version":"{version}"}}"#),
     )?;
     std::fs::write(
@@ -463,7 +463,7 @@ async fn plugin_upgrade_refreshes_hook_runtime_for_loaded_session() -> Result<()
         timeout(DEFAULT_TIMEOUT, mcp.read_response(staged_write_id)).await??;
 
     std::fs::write(
-        plugin_source.join(".codex-plugin/plugin.json"),
+        plugin_source.join(".genex-plugin/plugin.json"),
         r#"{"name":"demo","version":"2"}"#,
     )?;
     let install_id = mcp
@@ -525,7 +525,7 @@ async fn plugin_upgrade_refreshes_hook_runtime_for_loaded_session() -> Result<()
     assert!(!hook.enabled);
 
     std::fs::write(
-        plugin_source.join(".codex-plugin/plugin.json"),
+        plugin_source.join(".genex-plugin/plugin.json"),
         r#"{"name":"demo","version":"3"}"#,
     )?;
     let install_id = mcp
@@ -926,14 +926,14 @@ async fn hooks_list_hides_builtin_cleanup_and_preserves_other_plugin_hooks(
 ) -> Result<()> {
     let genex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
-    let plugin_id = format!("{plugin_name}@codex-bundled");
+    let plugin_id = format!("{plugin_name}@genex-bundled");
     let plugin_root = genex_home
         .path()
-        .join(format!("plugins/cache/codex-bundled/{plugin_name}/local"));
-    std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+        .join(format!("plugins/cache/genex-bundled/{plugin_name}/local"));
+    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     std::fs::create_dir_all(plugin_root.join("hooks"))?;
     std::fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         serde_json::to_vec(&serde_json::json!({ "name": plugin_name }))?,
     )?;
     let ordinary_command = "echo ordinary plugin hook";

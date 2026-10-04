@@ -313,7 +313,7 @@ def main() -> None:
     plugin_root = Path(args.path).expanduser().resolve() / plugin_name
     plugin_root.mkdir(parents=True, exist_ok=True)
 
-    plugin_json_path = plugin_root / ".codex-plugin" / "plugin.json"
+    plugin_json_path = plugin_root / ".genex-plugin" / "plugin.json"
     write_json(
         plugin_json_path,
         build_plugin_json(

@@ -82,3 +82,22 @@
 - [x] Run the Rust audit and confirm every remaining match is explicitly allowlisted with a reason.
 - [x] Run `just generate`, inspect the complete diff, then run `just check --tests`, `just check`, and `git diff --check`.
 - [x] Perform a final source/diff review for accidental changes to OpenAI endpoint compatibility and security behavior.
+
+### Task 6: Expand the repository-owned boundary migration
+
+The follow-up audit confirmed that the plugin overlay, bundled runtime namespaces,
+Responses-side generic headers/usage field, and selected authentication names are
+repository-owned in this unreleased fork. This task supersedes the earlier provisional
+retention of those exact values; external plugin ecosystem paths, provider residency and
+inference trace headers, endpoint URLs, model identifiers, and security namespaces remain
+outside this task.
+
+- [x] Migrate `.codex-plugin` to `.genex-plugin` across plugin loaders, protocol discovery,
+  app-server/CLI consumers, and fixtures.
+- [x] Migrate `codex-bundled*`, `codex-primary-runtime`, and `codex-runtimes` namespaces
+  and cache/runtime paths to their `genex-*` equivalents.
+- [x] Migrate Responses-owned `codex_rollout_budget_units`, `x-codex-*` request/response
+  names, and Responses-specific internal metadata/header names to `genex` values.
+- [x] Migrate the repository-owned auth environment/keyring names to `GENEX_*` while
+  preserving token semantics, redaction, and security behavior.
+- [x] Run generation and workspace checks, inspect the residual scan, and review the diff.

@@ -230,7 +230,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     .await;
 
     test.cmd_with_server(&server)
-        .env_remove("CODEX_API_KEY")
+        .env_remove("GENEX_API_KEY")
         .env_remove("GENEX_ANALYTICS_EVENTS_CAPTURE_FILE")
         .arg("--skip-git-repo-check")
         .arg("-s")

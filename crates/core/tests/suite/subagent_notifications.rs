@@ -1068,7 +1068,7 @@ async fn spawned_child_receives_forked_parent_context(
     assert!(child_request.body_contains_text(TURN_0_FORK_PROMPT));
     let child_body = child_request.body_json();
     let child_metadata: serde_json::Value = serde_json::from_str(
-        child_body["client_metadata"]["x-codex-turn-metadata"]
+        child_body["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("child turn metadata"),
     )?;
@@ -1152,7 +1152,7 @@ async fn spawned_child_receives_forked_parent_context(
     assert_root_turn(&followup_parent_body, Some(followup_parent_turn_id))?;
     assert_root_turn(&reused_child_body, Some(followup_parent_turn_id))?;
     let reused_metadata: Value = serde_json::from_str(
-        reused_child_body["client_metadata"]["x-codex-turn-metadata"]
+        reused_child_body["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("reused child turn metadata"),
     )?;
@@ -1367,7 +1367,7 @@ async fn grandchild_full_fork_preserves_context_baseline(
         let request = timeout(Duration::from_secs(/*secs*/ 10), async {
             loop {
                 let request = mock.requests().into_iter().find(|request| {
-                    request.body_json()["client_metadata"]["x-codex-turn-metadata"]
+                    request.body_json()["client_metadata"]["x-genex-turn-metadata"]
                         .as_str()
                         .and_then(|text| serde_json::from_str::<Value>(text).ok())
                         .is_some_and(|metadata| metadata["agent_name"] == agent_name)
@@ -1399,7 +1399,7 @@ async fn grandchild_full_fork_preserves_context_baseline(
             );
         }
         let metadata: Value = serde_json::from_str(
-            request.body_json()["client_metadata"]["x-codex-turn-metadata"]
+            request.body_json()["client_metadata"]["x-genex-turn-metadata"]
                 .as_str()
                 .expect("descendant turn metadata"),
         )?;
@@ -2490,7 +2490,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
                 && decoded_body(req)
                     .and_then(|body| serde_json::from_slice::<Value>(&body).ok())
                     .and_then(|body| {
-                        body["client_metadata"]["x-codex-turn-metadata"]
+                        body["client_metadata"]["x-genex-turn-metadata"]
                             .as_str()
                             .and_then(|metadata| serde_json::from_str::<Value>(metadata).ok())
                     })
@@ -2587,7 +2587,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
         let child_request = child_request.requests().into_iter().find_map(|request| {
             let body = request.body_json();
             let turn_metadata: Value =
-                serde_json::from_str(body["client_metadata"]["x-codex-turn-metadata"].as_str()?)
+                serde_json::from_str(body["client_metadata"]["x-genex-turn-metadata"].as_str()?)
                     .ok()?;
             turn_metadata
                 .get("parent_turn_id")
@@ -2989,7 +2989,7 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
                 && request.body_contains_text(WORKER_FOLLOWUP_TASK))
             .then(|| {
                 let metadata: Value = serde_json::from_str(
-                    body["client_metadata"]["x-codex-turn-metadata"]
+                    body["client_metadata"]["x-genex-turn-metadata"]
                         .as_str()
                         .expect("worker turn metadata"),
                 )

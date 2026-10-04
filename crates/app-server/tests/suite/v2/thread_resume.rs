@@ -3502,7 +3502,7 @@ async fn thread_goal_lifecycle_emits_analytics_and_clear_deletes_goal() -> Resul
     assert_eq!(response_requests.len(), 2);
     let metadata_header = response_requests[1]
         .headers
-        .get("x-codex-turn-metadata")
+        .get("x-genex-turn-metadata")
         .expect("goal continuation should include turn metadata")
         .to_str()?;
     let metadata: serde_json::Value = serde_json::from_str(metadata_header)?;

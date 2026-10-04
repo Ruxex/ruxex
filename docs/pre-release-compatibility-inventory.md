@@ -54,6 +54,19 @@ Provider-specific capability findings remain separate follow-up candidates.
 | `codex_rollout_budget_units` | OpenAI Responses の raw completion usage が `crates/genex-api/src/sse/responses.rs` と end-to-end fixture で生成/消費する唯一の wire boundary。内部型の serde adapter に明示的な rename を置いた。 | `retain` at external adapter only | Raw fixture audit; `just check --tests` |
 | `CODEX_API_KEY` / `CODEX_ACCESS_TOKEN`、`x-codex-*` Responses headers、OpenAI model IDs、third-party MCP/Agent Plugin/package names、OS sandbox/security names、外部 telemetry/MCP values、upstream/historical/legal names | Login/Responses endpoint、外部 client/protocol、package/runtime、OS/security、既存 telemetry の consumer が exact value を要求する。Rust 内の binding/constant 名だけ変更できるものは変更し、wire/value は保持した。 | `retain` exact external value; `migrate-in-place` repository-owned bindings | Exact residual audit; `just check --tests`; `just check` |
 
+### Genex repository boundary expansion (2026-10-04)
+
+The following decisions supersede the provisional `retain` rows above for the exact
+repository-owned names. This fork has no external users, and the audited producers and
+consumers are updated together.
+
+| Exact name group | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| `.codex-plugin` | Plugin utility, exec-server protocol, core plugin loader/store, hooks, CLI, app-server, and extension tests use this as the repository-owned overlay/private metadata directory. External `.claude-plugin`, `.cursor-plugin`, root `plugin.json`, and schema URLs are separate contracts. | `migrate-in-place` to `.genex-plugin` | Cross-crate plugin audit; `just generate`; `just check --tests`; `just check` |
+| `codex-bundled*`, `codex-primary-runtime`, `codex-runtimes` | Bundled hook IDs, bundled/alpha marketplace registration, artifact runtime lookup, cache paths, and Windows runtime provisioning are produced and consumed inside this repository. | `migrate-in-place` to `genex-*` | Marketplace/runtime producer-consumer audit; `just check --tests`; `just check` |
+| `codex_rollout_budget_units`, `x-codex-*`, and Responses-specific internal Genex client metadata/header names | Responses SSE/WebSocket producers, request builders, app-server metadata forwarding, raw fixtures, and tests are repository-owned in this fork; the generic endpoint adapter does not require the Codex spelling. | `migrate-in-place` to `genex-*` | Raw wire fixture and header audit; `just generate`; `just check --tests`; `just check` |
+| `CODEX_API_KEY`, `CODEX_ACCESS_TOKEN`, `CODEX_GITHUB_TOKEN`, `CODEX_GITHUB_PERSONAL_ACCESS_TOKEN`, `CODEX_CONNECTORS_TOKEN`, `CODEX_AUTH`, `Codex Auth`, `CODEX_INTERNAL_ORIGINATOR_OVERRIDE` | Login, keyring service/secret, proxy, exec-server environment allowlists, MCP startup guidance, conformance scripts, and tests are in-repository producers/consumers. Secret handling and redaction behavior remain unchanged. | `migrate-in-place` to `GENEX_*` and `Genex Auth` | Auth producer-consumer audit; exact residual scan; `just check --tests`; `just check` |
+
 ### Dependency-ordered leaf path/package audit (2026-10-03)
 
 | Exact path/name | Producer/consumer audit | Canonical replacement | Decision | Verification |

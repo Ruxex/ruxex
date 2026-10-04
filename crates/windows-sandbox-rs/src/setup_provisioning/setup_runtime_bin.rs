@@ -92,6 +92,6 @@ pub(super) fn ensure_managed_runtime_paths_readable(
 fn runtime_paths(user_profile: Option<PathBuf>) -> Vec<PathBuf> {
     user_profile
         .into_iter()
-        .map(|profile| profile.join(".cache").join("codex-runtimes"))
+        .map(|profile| profile.join(".cache").join("genex-runtimes"))
         .collect()
 }

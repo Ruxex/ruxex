@@ -455,7 +455,7 @@ def _isolated_environment(genex_home: Path) -> dict[str, str]:
     env = dict(os.environ)
     env["GENEX_HOME"] = str(genex_home)
     # Direct app-server MCP calls do not need a model or credentials.
-    for name in ("CODEX_API_KEY", "CODEX_ACCESS_TOKEN", "PROVIDER_API_KEY"):
+    for name in ("GENEX_API_KEY", "GENEX_ACCESS_TOKEN", "PROVIDER_API_KEY"):
         env.pop(name, None)
     return env
 

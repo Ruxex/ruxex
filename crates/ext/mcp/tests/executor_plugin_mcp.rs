@@ -27,10 +27,10 @@ struct PackageSummary {
 async fn selected_plugin_package_is_contributed_without_servers() -> TestResult {
     let genex_home = tempfile::tempdir()?;
     let plugin_root = tempfile::tempdir()?;
-    std::fs::create_dir_all(plugin_root.path().join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.path().join(".genex-plugin"))?;
     std::fs::create_dir_all(plugin_root.path().join("skills/deploy"))?;
     std::fs::write(
-        plugin_root.path().join(".codex-plugin/plugin.json"),
+        plugin_root.path().join(".genex-plugin/plugin.json"),
         r#"{"name":"skill-only","interface":{"displayName":"Skill Only"}}"#,
     )?;
     std::fs::write(

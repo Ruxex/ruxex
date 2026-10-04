@@ -109,7 +109,7 @@ fn write_scenario_capabilities(home: &TempDir) -> Result<ScenarioSkills> {
     ] {
         let manifest = plugin_cache
             .join(name)
-            .join("local/.codex-plugin/plugin.json");
+            .join("local/.genex-plugin/plugin.json");
         fs::create_dir_all(manifest.parent().expect("manifest parent"))?;
         fs::write(
             manifest,
@@ -709,9 +709,9 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread() -> Resu
         .await?;
 
     let plugin_root = home.path().join("plugins/cache/test/notes/local");
-    fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+    fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         json!({ "name": "notes", "description": "Look up and summarize team notes" }).to_string(),
     )?;
     fs::write(

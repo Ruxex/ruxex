@@ -41,8 +41,8 @@ async fn emits_safety_buffering_from_response_metadata_with_the_header_fallback_
             metadata,
             ev_completed("resp-1"),
         ]))
-        .insert_header("x-codex-safety-buffering-enabled", "true")
-        .insert_header("x-codex-safety-buffering-faster-model", FASTER_MODEL),
+        .insert_header("x-genex-safety-buffering-enabled", "true")
+        .insert_header("x-genex-safety-buffering-faster-model", FASTER_MODEL),
     )
     .await;
 

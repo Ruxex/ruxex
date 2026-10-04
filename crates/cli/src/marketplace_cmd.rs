@@ -121,7 +121,7 @@ struct UpgradeMarketplaceArgs {
     after_help = "Example:\n  genex plugin marketplace publish ./plugins/demo --registry https://registry.example --token-env-var PLUGIN_REGISTRY_TOKEN"
 )]
 struct PublishMarketplaceArgs {
-    /// Plugin directory containing .codex-plugin/plugin.json.
+    /// Plugin directory containing .genex-plugin/plugin.json.
     #[arg(value_name = "PLUGIN_PATH")]
     plugin_path: PathBuf,
 

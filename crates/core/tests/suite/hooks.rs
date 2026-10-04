@@ -4490,8 +4490,8 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     }
     let plugin_root = home
         .path()
-        .join(format!("plugins/cache/codex-bundled/{plugin_name}/local"));
-    fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+        .join(format!("plugins/cache/genex-bundled/{plugin_name}/local"));
+    fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     let hooks = serde_json::json!({ "hooks": { "Stop": [{ "hooks": [{
         "type": "mcp_tool",
         "server": mcp_server_name,
@@ -4514,14 +4514,14 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         }
     };
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         serde_json::to_vec(&serde_json::json!({
             "name": plugin_name,
             "hooks": manifest_hooks,
         }))?,
     )?;
     let hook_key = genex_hooks::hook_key(
-        &format!("{plugin_name}@codex-bundled:{source_relative_path}"),
+        &format!("{plugin_name}@genex-bundled:{source_relative_path}"),
         HookEventName::Stop,
         /*group_index*/ 0,
         /*handler_index*/ 0,
@@ -4529,7 +4529,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     fs::write(
         home.path().join("config.toml"),
         format!(
-            "[features]\nhooks = {hooks_enabled}\n\n[plugins.\"{plugin_name}@codex-bundled\"]\nenabled = {plugin_enabled}\n\n[hooks.state.\"{hook_key}\"]\nenabled = false\n"
+            "[features]\nhooks = {hooks_enabled}\n\n[plugins.\"{plugin_name}@genex-bundled\"]\nenabled = {plugin_enabled}\n\n[hooks.state.\"{hook_key}\"]\nenabled = false\n"
         ),
     )?;
     let repl_url = format!("{}/repl", server.uri());
@@ -4683,11 +4683,11 @@ async fn plugin_pre_tool_use_blocks_exec_command_before_execution() -> Result<()
     let home = Arc::new(TempDir::new()?);
     let plugin_root = home.path().join("plugins/cache/test/sample/local");
     let hooks_dir = plugin_root.join("hooks");
-    fs::create_dir_all(plugin_root.join(".codex-plugin"))
+    fs::create_dir_all(plugin_root.join(".genex-plugin"))
         .context("create plugin manifest directory")?;
     fs::create_dir_all(&hooks_dir).context("create plugin hooks directory")?;
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .context("write plugin manifest")?;

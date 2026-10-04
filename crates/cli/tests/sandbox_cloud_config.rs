@@ -108,7 +108,7 @@ async fn sandbox_fetches_and_enforces_cloud_managed_permission_profile() -> Resu
         .env("GENEX_HOME", genex_home.path())
         .env("NO_PROXY", "127.0.0.1,localhost")
         .env("no_proxy", "127.0.0.1,localhost")
-        .env_remove("CODEX_ACCESS_TOKEN")
+        .env_remove("GENEX_ACCESS_TOKEN")
         .env_remove("PROVIDER_API_KEY")
         .args(["-c", "cli_auth_credentials_store=\"file\""])
         .args(["-c", managed_auth_base_url_override.as_str()])

@@ -218,9 +218,9 @@ trust_level = "trusted"
     env.insert("OTEL_METRIC_EXPORT_INTERVAL".into(), "100".into());
     for key in [
         "GENEX_EXEC_SERVER_URL",
-        "CODEX_ACCESS_TOKEN",
+        "GENEX_ACCESS_TOKEN",
         "PROVIDER_API_KEY",
-        "CODEX_API_KEY",
+        "GENEX_API_KEY",
         "TMUX",
         "TMUX_PANE",
         "ZELLIJ",

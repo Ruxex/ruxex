@@ -157,8 +157,8 @@ async fn exec_server_http_request_rejects_protected_environment_headers() -> any
         "GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
         "genex_exec_server_noise_auth_token",
         "PROVIDER_API_KEY",
-        "CODEX_ACCESS_TOKEN",
-        "CODEX_CONNECTORS_TOKEN",
+        "GENEX_ACCESS_TOKEN",
+        "GENEX_CONNECTORS_TOKEN",
         "AWS_SECRET_ACCESS_KEY",
         "AZURE_FEDERATED_TOKEN_FILE",
     ]

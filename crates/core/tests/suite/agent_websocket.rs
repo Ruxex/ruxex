@@ -79,7 +79,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
         [(&non_lite_turn, true, false), (&lite_turn, false, true)]
     {
         let metadata: Value = serde_json::from_str(
-            request["client_metadata"]["x-codex-turn-metadata"]
+            request["client_metadata"]["x-genex-turn-metadata"]
                 .as_str()
                 .expect("websocket request should include turn metadata"),
         )?;
@@ -209,7 +209,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     assert_eq!(warmup["type"].as_str(), Some("response.create"));
     assert_eq!(warmup["generate"].as_bool(), Some(false));
     let warmup_metadata: Value = serde_json::from_str(
-        warmup["client_metadata"]["x-codex-turn-metadata"]
+        warmup["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("warmup turn metadata"),
     )?;
@@ -217,7 +217,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     assert_eq!(warmup_metadata["metrics_enabled"].as_bool(), Some(false));
     assert_eq!(
         warmup_metadata["window_id"].as_str(),
-        warmup["client_metadata"]["x-codex-window-id"].as_str()
+        warmup["client_metadata"]["x-genex-window-id"].as_str()
     );
     assert!(
         turn["tools"]
@@ -228,7 +228,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     assert_eq!(turn["type"].as_str(), Some("response.create"));
     assert_eq!(turn.get("generate"), None);
     let turn_metadata: Value = serde_json::from_str(
-        turn["client_metadata"]["x-codex-turn-metadata"]
+        turn["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("turn metadata"),
     )?;

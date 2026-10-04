@@ -217,7 +217,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
     init_marketplace_repo(source.path(), "trusted", "old")?;
 
     init_marketplace_repo(plugin_source.path(), "plugin", "plugin")?;
-    let plugin_root = plugin_source.path().join(".codex-plugin");
+    let plugin_root = plugin_source.path().join(".genex-plugin");
     std::fs::create_dir_all(&plugin_root)?;
     std::fs::write(
         plugin_root.join("plugin.json"),
@@ -298,7 +298,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
         .await?;
     let plugin_root = genex_home
         .path()
-        .join("plugins/cache/trusted/toolkit/1.0.0/.codex-plugin/plugin.json");
+        .join("plugins/cache/trusted/toolkit/1.0.0/.genex-plugin/plugin.json");
     timeout(DEFAULT_TIMEOUT, async {
         while !plugin_root.exists() {
             tokio::time::sleep(Duration::from_millis(10)).await;
@@ -337,7 +337,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
         .await?;
 
     std::fs::write(
-        plugin_source.path().join(".codex-plugin/plugin.json"),
+        plugin_source.path().join(".genex-plugin/plugin.json"),
         r#"{"name":"toolkit","version":"1.1.0","interface":{"displayName":"Toolkit"}}"#,
     )?;
     run_git(plugin_source.path(), &["add", "."])?;
@@ -355,7 +355,7 @@ async fn automatic_upgrade_isolates_git_while_explicit_install_preserves_configu
     assert!(
         genex_home
             .path()
-            .join("plugins/cache/trusted/toolkit/1.1.0/.codex-plugin/plugin.json")
+            .join("plugins/cache/trusted/toolkit/1.1.0/.genex-plugin/plugin.json")
             .is_file(),
         "explicit plugin/list refresh must preserve command-scoped Git configuration"
     );

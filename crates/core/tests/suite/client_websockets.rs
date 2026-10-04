@@ -76,11 +76,11 @@ const MODEL: &str = "gpt-5.4";
 const USER_AGENT_HEADER: &str = "user-agent";
 const X_CLIENT_REQUEST_ID_HEADER: &str = "x-client-request-id";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
-    "ws_request_header_x_provider_internal_codex_responses_lite";
+    "ws_request_header_x_provider_internal_genex_responses_lite";
 const TEST_INSTALLATION_ID: &str = "11111111-1111-4111-8111-111111111111";
 const TEST_WINDOW_ID: &str = "test-thread:0";
 const X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
-    "x-codex-ws-stream-request-start-ms";
+    "x-genex-ws-stream-request-start-ms";
 
 fn assert_request_trace_matches(body: &serde_json::Value, expected_trace: &W3cTraceContext) {
     let client_metadata = body["client_metadata"]
@@ -302,7 +302,7 @@ async fn responses_websocket_streams_request() {
         Some(genex_login::default_client::get_user_agent())
     );
     assert_eq!(
-        body["client_metadata"]["x-codex-installation-id"].as_str(),
+        body["client_metadata"]["x-genex-installation-id"].as_str(),
         Some(TEST_INSTALLATION_ID)
     );
     let stream_request_start_ms = body["client_metadata"]
@@ -604,7 +604,7 @@ async fn responses_websocket_preconnect_reuses_connection() {
         Some(genex_login::default_client::get_user_agent())
     );
     assert_eq!(
-        server.single_handshake().header("x-codex-window-id"),
+        server.single_handshake().header("x-genex-window-id"),
         Some(TEST_WINDOW_ID.to_string())
     );
     let connection = server.single_connection();
@@ -673,7 +673,7 @@ async fn responses_websocket_request_prewarm_reuses_connection() {
     );
     assert_eq!(warmup["tools"], serde_json::json!([]));
     let warmup_turn_metadata: serde_json::Value = serde_json::from_str(
-        warmup["client_metadata"]["x-codex-turn-metadata"]
+        warmup["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("warmup turn metadata"),
     )
@@ -734,7 +734,7 @@ async fn responses_websocket_request_prewarm_uses_caller_supplied_metadata() {
         .expect("missing warmup request")
         .body_json();
     let warmup_turn_metadata: serde_json::Value = serde_json::from_str(
-        warmup["client_metadata"]["x-codex-turn-metadata"]
+        warmup["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("warmup turn metadata"),
     )
@@ -900,7 +900,7 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
                             ev_response_created(&id),
                             json!({
                                 "type": "response.metadata",
-                                "headers": {"x-codex-turn-state": turn_state},
+                                "headers": {"x-genex-turn-state": turn_state},
                             }),
                             ev_completed(&id),
                         ]
@@ -962,7 +962,7 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
                         (
                             body["previous_response_id"].clone(),
                             body["input"].as_array().unwrap().len(),
-                            body["client_metadata"]["x-codex-turn-state"].clone(),
+                            body["client_metadata"]["x-genex-turn-state"].clone(),
                         )
                     })
                     .collect::<Vec<_>>())
@@ -1310,7 +1310,7 @@ async fn responses_websocket_preconnect_runs_when_only_v2_feature_enabled() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(server.single_connection().len(), 0);
     assert_eq!(
-        server.single_handshake().header("x-codex-turn-metadata"),
+        server.single_handshake().header("x-genex-turn-metadata"),
         None
     );
     assert_eq!(
@@ -1776,15 +1776,15 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
             "resets_in_seconds": 1234
         },
         "headers": {
-            "x-codex-primary-used-percent": "100.0",
-            "x-codex-secondary-used-percent": "87.5",
-            "x-codex-primary-over-secondary-limit-percent": "95.0",
-            "x-codex-primary-window-minutes": "15",
-            "x-codex-secondary-window-minutes": "60",
-            "x-codex-credits-has-credits": "true",
-            "x-codex-credits-unlimited": "false",
-            "x-codex-credits-balance": "",
-            "x-codex-rate-limit-reached-type": "workspace_member_usage_limit_reached"
+            "x-genex-primary-used-percent": "100.0",
+            "x-genex-secondary-used-percent": "87.5",
+            "x-genex-primary-over-secondary-limit-percent": "95.0",
+            "x-genex-primary-window-minutes": "15",
+            "x-genex-secondary-window-minutes": "60",
+            "x-genex-credits-has-credits": "true",
+            "x-genex-credits-unlimited": "false",
+            "x-genex-credits-balance": "",
+            "x-genex-rate-limit-reached-type": "workspace_member_usage_limit_reached"
         }
     });
 
@@ -2138,13 +2138,13 @@ async fn responses_websocket_forwards_turn_metadata_on_initial_and_incremental_c
     assert_eq!(second["type"].as_str(), Some("response.create"));
     assert_eq!(second["previous_response_id"].as_str(), Some("resp-1"));
     let first_metadata: serde_json::Value = serde_json::from_str(
-        first["client_metadata"]["x-codex-turn-metadata"]
+        first["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("first turn metadata"),
     )
     .expect("first metadata should be valid json");
     let second_metadata: serde_json::Value = serde_json::from_str(
-        second["client_metadata"]["x-codex-turn-metadata"]
+        second["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("second turn metadata"),
     )
@@ -2200,7 +2200,7 @@ async fn responses_websocket_sends_canonical_turn_metadata() {
 
     assert_eq!(body["type"].as_str(), Some("response.create"));
     let turn_metadata: serde_json::Value = serde_json::from_str(
-        body["client_metadata"]["x-codex-turn-metadata"]
+        body["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("turn metadata"),
     )

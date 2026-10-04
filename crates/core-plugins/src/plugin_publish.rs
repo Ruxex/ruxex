@@ -418,7 +418,7 @@ mod tests {
 
     fn plugin_dir() -> TempDir {
         let dir = tempfile::tempdir().expect("create plugin directory");
-        let manifest = dir.path().join(".codex-plugin/plugin.json");
+        let manifest = dir.path().join(".genex-plugin/plugin.json");
         fs::create_dir_all(manifest.parent().expect("manifest parent"))
             .expect("create manifest directory");
         fs::write(manifest, r#"{"name":"demo","description":"demo plugin"}"#)

@@ -1161,7 +1161,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
         token_budget_window_ids(&initial_token_budget[0], "/root");
     let initial_turn_metadata: Value = serde_json::from_str(
         &requests[0]
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("initial context window metadata"),
     )?;
     assert_eq!(
@@ -1177,7 +1177,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
     ) = token_budget_window_ids(&post_compaction_token_budget[0], "/root");
     let post_compaction_turn_metadata: Value = serde_json::from_str(
         &requests[1]
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("post-compaction context window metadata"),
     )?;
     assert_eq!(

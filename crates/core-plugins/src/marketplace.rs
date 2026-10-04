@@ -1049,7 +1049,7 @@ fn resolve_marketplace_interface(
 }
 
 fn fallback_plugin_manifest_path(plugin_root: &Path) -> PathBuf {
-    plugin_root.join(".codex-plugin/plugin.json")
+    plugin_root.join(".genex-plugin/plugin.json")
 }
 
 fn marketplace_plugin_manifest_fallback(

@@ -143,11 +143,11 @@ impl AuthStorageBackend for FileAuthStorage {
 }
 
 static GENEX_AUTH_SECRET_NAME: Lazy<SecretName> =
-    Lazy::new(|| match SecretName::new("CODEX_AUTH") {
+    Lazy::new(|| match SecretName::new("GENEX_AUTH") {
         Ok(name) => name,
-        Err(err) => unreachable!("CODEX_AUTH should be a valid secret name: {err}"),
+        Err(err) => unreachable!("GENEX_AUTH should be a valid secret name: {err}"),
     });
-const KEYRING_SERVICE: &str = "Codex Auth";
+const KEYRING_SERVICE: &str = "Genex Auth";
 
 // turns genex_home path into a stable, short key string
 fn compute_store_key(genex_home: &Path) -> std::io::Result<String> {

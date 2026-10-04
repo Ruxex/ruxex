@@ -225,12 +225,12 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     );
     let turn_metadata_header = search_request
         .headers
-        .get("x-codex-turn-metadata")
-        .context("standalone search should include x-codex-turn-metadata")?
+        .get("x-genex-turn-metadata")
+        .context("standalone search should include x-genex-turn-metadata")?
         .to_str()
-        .context("x-codex-turn-metadata should be valid ASCII")?;
+        .context("x-genex-turn-metadata should be valid ASCII")?;
     let turn_metadata: Value = serde_json::from_str(turn_metadata_header)
-        .context("x-codex-turn-metadata should be valid JSON")?;
+        .context("x-genex-turn-metadata should be valid JSON")?;
     let mcp_request_meta = turn_metadata["mcp_request_meta"]
         .as_str()
         .context("mcp_request_meta should be a JSON string")?;

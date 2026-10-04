@@ -80,9 +80,9 @@ async fn genex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
         .await;
         let mut command = test.cmd_with_server(&server);
         command
-            .env_remove("CODEX_API_KEY")
+            .env_remove("GENEX_API_KEY")
             .env_remove("PROVIDER_API_KEY")
-            .env_remove("CODEX_ACCESS_TOKEN")
+            .env_remove("GENEX_ACCESS_TOKEN")
             .env("GENEX_HOME", home_env)
             .args(["--skip-git-repo-check", "--sandbox", "workspace-write", "--add-dir"])
             .arg(&visualizations)

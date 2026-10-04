@@ -29,8 +29,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "codex-bundled-alpha";
-const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "codex-primary-runtime";
+const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "genex-bundled-alpha";
+const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "genex-primary-runtime";
 
 use crate::marketplace_cmd::MarketplaceCli;
 
@@ -834,8 +834,8 @@ fn is_implicit_system_marketplace_root(
         && path_ends_with(
             root,
             &[
-                "codex-runtimes",
-                "codex-primary-runtime",
+                "genex-runtimes",
+                "genex-primary-runtime",
                 "plugins",
                 marketplace_name,
             ],

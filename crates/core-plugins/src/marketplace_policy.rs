@@ -512,7 +512,7 @@ fn is_expected_managed_path(path: &Path, expected: &Path) -> bool {
 pub(crate) fn primary_runtime_marketplace_root() -> Option<PathBuf> {
     Some(
         primary_runtime_cache_dir()?
-            .join("codex-runtimes/codex-primary-runtime/plugins")
+            .join("genex-runtimes/genex-primary-runtime/plugins")
             .join(PRIMARY_RUNTIME_MARKETPLACE_NAME),
     )
 }

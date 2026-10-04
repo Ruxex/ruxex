@@ -52,7 +52,7 @@ use wiremock::ResponseTemplate;
 mod trimming;
 
 const DUMMY_FUNCTION_NAME: &str = "test_tool";
-const TURN_STATE_HEADER: &str = "x-codex-turn-state";
+const TURN_STATE_HEADER: &str = "x-genex-turn-state";
 const REMOTE_COMPACT_TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 const CONTEXT_WINDOW_TRUNCATED_OUTPUT_MESSAGE: &str =
     "Output exceeded the available model context and was truncated";
@@ -1021,7 +1021,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     );
     assert!(
         compact_request
-            .header("x-codex-beta-features")
+            .header("x-genex-beta-features")
             .as_deref()
             .is_some_and(|value| value
                 .split(',')
@@ -1031,7 +1031,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     assert_eq!(compact_request.path(), "/v1/responses");
     let compact_metadata: Value = serde_json::from_str(
         &compact_request
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("v2 compact request should include turn metadata"),
     )
     .expect("v2 compact turn metadata should be valid json");
@@ -1043,10 +1043,10 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     );
     assert_eq!(
         compact_metadata["window_id"].as_str(),
-        compact_request.header("x-codex-window-id").as_deref()
+        compact_request.header("x-genex-window-id").as_deref()
     );
     assert_eq!(
-        compact_request.body_json()["client_metadata"]["x-codex-window-id"].as_str(),
+        compact_request.body_json()["client_metadata"]["x-genex-window-id"].as_str(),
         compact_metadata["window_id"].as_str()
     );
     assert_eq!(
@@ -1226,7 +1226,7 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
         assert_eq!("/v1/responses", compact_request.path());
         let compact_metadata: Value = serde_json::from_str(
             &compact_request
-                .header("x-codex-turn-metadata")
+                .header("x-genex-turn-metadata")
                 .expect("v2 compact request should include turn metadata"),
         )?;
         assert_eq!(compact_metadata["window_number"].as_u64(), Some(0));
@@ -1350,7 +1350,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     if automatic {
         let followup_metadata: Value = serde_json::from_str(
             &requests[1]
-                .header("x-codex-turn-metadata")
+                .header("x-genex-turn-metadata")
                 .context("follow-up request metadata")?,
         )?;
         assert_eq!(followup_metadata["request_kind"], "turn");

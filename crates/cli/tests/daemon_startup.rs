@@ -65,8 +65,8 @@ async fn daemon_startup(command: &str) -> Result<()> {
     let mut env = std::env::vars().collect::<std::collections::HashMap<_, _>>();
     for key in [
         "GENEX_EXEC_SERVER_URL",
-        "CODEX_ACCESS_TOKEN",
-        "CODEX_API_KEY",
+        "GENEX_ACCESS_TOKEN",
+        "GENEX_API_KEY",
         "GENEX_CLOUD_TASKS_MODE",
         "PROVIDER_API_KEY",
     ] {

@@ -1595,7 +1595,7 @@ async fn thread_fork_creates_reference_backed_paginated_thread() -> Result<()> {
         .expect("forked turn response request");
     let request_body = response_request.body_json::<Value>()?;
     let turn_metadata: Value = serde_json::from_str(
-        request_body["client_metadata"]["x-codex-turn-metadata"]
+        request_body["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("forked turn metadata"),
     )?;
@@ -2161,7 +2161,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
         .expect("cold-resumed model request")
         .body_json::<Value>()?;
     let turn_metadata: Value = serde_json::from_str(
-        request_body["client_metadata"]["x-codex-turn-metadata"]
+        request_body["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("cold-resumed turn metadata"),
     )?;

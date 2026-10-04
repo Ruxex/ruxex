@@ -1,7 +1,7 @@
 use crate::PluginCommandAttribution;
 use crate::command_script_arguments;
 
-const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "codex-primary-runtime";
+const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "genex-primary-runtime";
 const MAX_EXPECTED_OUTPUT_COUNT: u32 = 100;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

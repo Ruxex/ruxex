@@ -74,7 +74,7 @@ plugins = true
 
 fn write_marketplace_source_with_manifest(source: &Path, marketplace_manifest: &str) -> Result<()> {
     std::fs::create_dir_all(source.join(".agents").join("plugins"))?;
-    std::fs::create_dir_all(source.join("plugins").join("sample").join(".codex-plugin"))?;
+    std::fs::create_dir_all(source.join("plugins").join("sample").join(".genex-plugin"))?;
     std::fs::write(
         source
             .join(".agents")
@@ -86,7 +86,7 @@ fn write_marketplace_source_with_manifest(source: &Path, marketplace_manifest: &
         source
             .join("plugins")
             .join("sample")
-            .join(".codex-plugin")
+            .join(".genex-plugin")
             .join("plugin.json"),
         r#"{"name":"sample","version":"1.2.3","description":"Sample plugin"}"#,
     )?;
@@ -210,12 +210,12 @@ fn setup_local_marketplace_with_implicit_system_roots() -> Result<(TempDir, Temp
         .path()
         .join(".tmp")
         .join("bundled-marketplaces")
-        .join("codex-bundled");
+        .join("genex-bundled");
     std::fs::create_dir_all(&bundled_root)?;
     let bundled_source = bundled_root.display().to_string();
     record_user_marketplace(
         genex_home.path(),
-        "codex-bundled",
+        "genex-bundled",
         &configured_local_marketplace(&bundled_source),
     )?;
 
@@ -223,15 +223,15 @@ fn setup_local_marketplace_with_implicit_system_roots() -> Result<(TempDir, Temp
     let runtime_root = cache_home
         .path()
         .join(".cache")
-        .join("codex-runtimes")
-        .join("codex-primary-runtime")
+        .join("genex-runtimes")
+        .join("genex-primary-runtime")
         .join("plugins")
-        .join("codex-primary-runtime");
+        .join("genex-primary-runtime");
     std::fs::create_dir_all(&runtime_root)?;
     let runtime_source = runtime_root.display().to_string();
     record_user_marketplace(
         genex_home.path(),
-        "codex-primary-runtime",
+        "genex-primary-runtime",
         &configured_local_marketplace(&runtime_source),
     )?;
 
@@ -1058,7 +1058,7 @@ async fn plugin_add_reinstalls_from_configured_marketplace_snapshot() -> Result<
     assert!(
         genex_home
             .path()
-            .join("plugins/cache/debug/sample/1.2.3/.codex-plugin/plugin.json")
+            .join("plugins/cache/debug/sample/1.2.3/.genex-plugin/plugin.json")
             .is_file()
     );
 
@@ -1111,7 +1111,7 @@ async fn plugin_add_rejects_cached_plugins_without_authorizing_marketplace_snaps
     assert!(
         genex_home
             .path()
-            .join("plugins/cache/debug/sample/1.2.3/.codex-plugin/plugin.json")
+            .join("plugins/cache/debug/sample/1.2.3/.genex-plugin/plugin.json")
             .is_file()
     );
 
@@ -1134,7 +1134,7 @@ fn sample_remote_plugin_bundle() -> Result<Vec<u8>> {
     let mut archive = tar::Builder::new(GzEncoder::new(Vec::new(), Compression::default()));
     for (path, contents) in [
         (
-            ".codex-plugin/plugin.json",
+            ".genex-plugin/plugin.json",
             r#"{"name":"sample","version":"1.2.3"}"#,
         ),
         (
@@ -1236,8 +1236,8 @@ impl RemoteMarketplaceFixture {
             .env("GENEX_HOME", self.home.path())
             .env("HOME", self.home.path())
             .env_remove("PROVIDER_API_KEY")
-            .env_remove("CODEX_API_KEY")
-            .env_remove("CODEX_ACCESS_TOKEN")
+            .env_remove("GENEX_API_KEY")
+            .env_remove("GENEX_ACCESS_TOKEN")
             .env("GENEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS", "1")
             .args(args)
             .output()
@@ -1378,7 +1378,7 @@ async fn remote_plugin_add_list_and_remove() -> Result<()> {
         .join(MARKETPLACE)
         .join("sample")
         .join("1.2.3");
-    let manifest = installed_root.join(".codex-plugin/plugin.json");
+    let manifest = installed_root.join(".genex-plugin/plugin.json");
     let installed_for_add = Arc::clone(&installed);
     Mock::given(method("POST"))
         .and(path(format!("/backend-api/ps/plugins/{REMOTE_ID}/install")))

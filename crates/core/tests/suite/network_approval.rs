@@ -929,7 +929,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         .context("parent completion request")?;
     assert_eq!(final_parent.body_json()["model"], "guardian-parent-b");
     let metadata: Value = serde_json::from_str(
-        final_parent.body_json()["client_metadata"]["x-codex-turn-metadata"]
+        final_parent.body_json()["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .context("Responses turn metadata")?,
     )?;

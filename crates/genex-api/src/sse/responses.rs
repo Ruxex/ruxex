@@ -27,7 +27,7 @@ use tracing::debug;
 use tracing::trace;
 
 const X_REASONING_INCLUDED_HEADER: &str = "x-reasoning-included";
-const TURN_STATE_HEADER: &str = "x-codex-turn-state";
+const TURN_STATE_HEADER: &str = "x-genex-turn-state";
 const PROVIDER_MODEL_HEADER: &str = "provider-model";
 const REQUEST_ID_HEADER: &str = "x-request-id";
 const TRUSTED_ACCESS_FOR_CYBER_VERIFICATION: &str = "trusted_access_for_cyber";
@@ -131,7 +131,6 @@ struct ResponseCompletedUsage {
     output_tokens_details: Option<ResponseCompletedOutputTokensDetails>,
     total_tokens: i64,
     #[serde(default)]
-    #[serde(rename = "codex_rollout_budget_units")]
     genex_rollout_budget_units: Option<serde_json::Number>,
 }
 
@@ -896,7 +895,7 @@ mod tests {
             "output_tokens": 10,
             "output_tokens_details": { "reasoning_tokens": 5 },
             "total_tokens": 110,
-            "codex_rollout_budget_units": 2.5
+            "genex_rollout_budget_units": 2.5
         }))
         .expect("valid response usage");
 

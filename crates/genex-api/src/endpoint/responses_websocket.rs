@@ -149,7 +149,7 @@ impl Drop for WsStream {
     }
 }
 
-const TURN_STATE_HEADER: &str = "x-codex-turn-state";
+const TURN_STATE_HEADER: &str = "x-genex-turn-state";
 const X_MODELS_ETAG_HEADER: &str = "x-models-etag";
 const X_REASONING_INCLUDED_HEADER: &str = "x-reasoning-included";
 // Temporarily disabled while the Responses WebSocket model header remains a
@@ -165,7 +165,7 @@ const RESPONSES_WEBSOCKET_TIMING_EVENT_TARGET: &str = "genex_api::responses_webs
 const SESSION_ID_CLIENT_METADATA_KEY: &str = "session_id";
 const THREAD_ID_CLIENT_METADATA_KEY: &str = "thread_id";
 const TURN_ID_CLIENT_METADATA_KEY: &str = "turn_id";
-const WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str = "x-codex-ws-stream-request-start-ms";
+const WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str = "x-genex-ws-stream-request-start-ms";
 
 struct ResponsesWebsocketTimingLogContext {
     model: String,
@@ -977,8 +977,8 @@ mod tests {
                 "resets_at": 1738888888
             },
             "headers": {
-                "x-codex-primary-used-percent": "100.0",
-                "x-codex-primary-window-minutes": 15
+                "x-genex-primary-used-percent": "100.0",
+                "x-genex-primary-window-minutes": 15
             }
         })
         .to_string();
@@ -1002,13 +1002,13 @@ mod tests {
         let headers = headers.expect("expected headers");
         assert_eq!(
             headers
-                .get("x-codex-primary-used-percent")
+                .get("x-genex-primary-used-percent")
                 .and_then(|value| value.to_str().ok()),
             Some("100.0")
         );
         assert_eq!(
             headers
-                .get("x-codex-primary-window-minutes")
+                .get("x-genex-primary-window-minutes")
                 .and_then(|value| value.to_str().ok()),
             Some("15")
         );
@@ -1089,8 +1089,8 @@ mod tests {
                 "message": "The usage limit has been reached"
             },
             "headers": {
-                "x-codex-primary-used-percent": "100.0",
-                "x-codex-primary-window-minutes": 15
+                "x-genex-primary-used-percent": "100.0",
+                "x-genex-primary-window-minutes": 15
             }
         })
         .to_string();
@@ -1139,8 +1139,8 @@ mod tests {
         let metadata: ResponsesStreamEvent = serde_json::from_value(json!({
             "type": "genex.response.metadata",
             "headers": {
-                "x-codex-safety-buffering-enabled": "true",
-                "x-codex-safety-buffering-faster-model": "gpt-fast-header"
+                "x-genex-safety-buffering-enabled": "true",
+                "x-genex-safety-buffering-faster-model": "gpt-fast-header"
             }
         }))
         .expect("deserialize treatment metadata");
@@ -1175,8 +1175,8 @@ mod tests {
         let metadata: ResponsesStreamEvent = serde_json::from_value(json!({
             "type": "genex.response.metadata",
             "headers": {
-                "x-codex-safety-buffering-enabled": "false",
-                "x-codex-safety-buffering-faster-model": "gpt-fast-header"
+                "x-genex-safety-buffering-enabled": "false",
+                "x-genex-safety-buffering-faster-model": "gpt-fast-header"
             }
         }))
         .expect("deserialize treatment metadata");

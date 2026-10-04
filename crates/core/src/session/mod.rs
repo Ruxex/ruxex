@@ -1086,7 +1086,7 @@ impl Session {
         !matches!(permission_profile, PermissionProfile::Disabled)
     }
 
-    /// Builds the `x-codex-beta-features` header value for this session.
+    /// Builds the `x-genex-beta-features` header value for this session.
     ///
     /// `ModelClient` is session-scoped and intentionally does not depend on the full `Config`, so
     /// we precompute the comma-separated list of enabled experimental feature keys at session

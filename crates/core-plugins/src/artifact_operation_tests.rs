@@ -40,7 +40,7 @@ fn rejects_untrusted_mismatched_or_invalid_markers() {
         ),
         (
             Some(PluginCommandAttribution {
-                plugin_id: PluginId::parse("documents@codex-primary-runtime").expect("plugin id"),
+                plugin_id: PluginId::parse("documents@genex-primary-runtime").expect("plugin id"),
                 normalized_relative_path: presentation.script_path.to_string(),
             }),
             marker_command(presentation.script_path, "create", "1", "pptx"),
@@ -111,7 +111,7 @@ fn rejects_untrusted_mismatched_or_invalid_markers() {
 
 fn attribution(plugin_name: &str, script_path: &str) -> PluginCommandAttribution {
     PluginCommandAttribution {
-        plugin_id: PluginId::parse(&format!("{plugin_name}@codex-primary-runtime"))
+        plugin_id: PluginId::parse(&format!("{plugin_name}@genex-primary-runtime"))
             .expect("plugin id"),
         normalized_relative_path: script_path.to_string(),
     }

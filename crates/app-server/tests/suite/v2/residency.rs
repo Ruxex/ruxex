@@ -108,7 +108,7 @@ async fn managed_residency_overrides_provider_headers(transport: ModelTransport)
         .with_genex_home(genex_home.path())
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", Some("sk-test")),
-            ("CODEX_ACCESS_TOKEN", None),
+            ("GENEX_ACCESS_TOKEN", None),
             (PROVIDER_RESIDENCY_ENV_VAR, Some("eu-environment")),
         ])
         .build_initialized_with_timeout(READ_TIMEOUT)

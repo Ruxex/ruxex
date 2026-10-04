@@ -32,9 +32,9 @@ mod tool_suggest_metadata;
 pub(crate) use git_policy::PluginGitMode;
 pub(crate) use git_policy::configure_trusted_git_repository;
 
-pub const BUNDLED_MARKETPLACE_NAME: &str = "codex-bundled";
-pub(crate) const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "codex-bundled-alpha";
-pub(crate) const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "codex-primary-runtime";
+pub const BUNDLED_MARKETPLACE_NAME: &str = "genex-bundled";
+pub(crate) const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "genex-bundled-alpha";
+pub(crate) const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "genex-primary-runtime";
 
 #[cfg(test)]
 pub(crate) const TEST_CURATED_MARKETPLACE_NAME: &str = "test-curated";

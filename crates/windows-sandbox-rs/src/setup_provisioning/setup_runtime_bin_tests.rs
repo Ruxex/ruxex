@@ -8,6 +8,6 @@ fn primary_runtime_path_does_not_depend_on_local_app_data() {
 
     assert_eq!(
         runtime_paths(Some(user_profile)),
-        vec![PathBuf::from(r"C:\Users\user\.cache\codex-runtimes")]
+        vec![PathBuf::from(r"C:\Users\user\.cache\genex-runtimes")]
     );
 }

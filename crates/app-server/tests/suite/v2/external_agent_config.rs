@@ -508,7 +508,7 @@ async fn external_agent_config_secondary_source_imports_session_and_plugin_end_t
             .parent()
             .expect("configured marketplace manifest parent"),
     )?;
-    std::fs::create_dir_all(configured_plugin_root.join(".codex-plugin"))?;
+    std::fs::create_dir_all(configured_plugin_root.join(".genex-plugin"))?;
     std::fs::write(
         marketplace_root.join(".cursor-plugin/marketplace.json"),
         r#"{
@@ -531,7 +531,7 @@ async fn external_agent_config_secondary_source_imports_session_and_plugin_end_t
 }"#,
     )?;
     std::fs::write(
-        configured_plugin_root.join(".codex-plugin/plugin.json"),
+        configured_plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample","version":"0.1.0"}"#,
     )?;
     std::fs::write(
@@ -1269,7 +1269,7 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
     let marketplace_root = genex_home.path().join("marketplace");
     let plugin_root = marketplace_root.join("plugins").join("sample");
     std::fs::create_dir_all(marketplace_root.join(".agents/plugins"))?;
-    std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     std::fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -1286,7 +1286,7 @@ async fn external_agent_config_import_reinstalls_plugins_from_known_marketplaces
 }"#,
     )?;
     std::fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample","version":"0.1.0"}"#,
     )?;
     let source_home = external_agent_home(genex_home.path());

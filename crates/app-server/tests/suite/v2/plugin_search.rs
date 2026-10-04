@@ -429,7 +429,7 @@ async fn plugin_search_returns_local_matches_for_api_key_auth() -> Result<()> {
         let curated_root = genex_home.path().join(".tmp/plugins");
         let bundled_alpha_root = genex_home
             .path()
-            .join(".tmp/bundled-marketplaces/codex-bundled-alpha");
+            .join(".tmp/bundled-marketplaces/genex-bundled-alpha");
         let server = MockServer::start().await;
         write_local_marketplace(
             &curated_root,
@@ -463,7 +463,7 @@ async fn plugin_search_returns_local_matches_for_api_key_auth() -> Result<()> {
         )?;
         write_local_marketplace(
             &bundled_alpha_root,
-            "codex-bundled-alpha",
+            "genex-bundled-alpha",
             "marketplace.json",
             &[LocalPluginFixture {
                 name: "alpha-calendar",
@@ -746,7 +746,7 @@ fn write_local_marketplace(
     )?;
 
     for plugin in plugins {
-        let plugin_manifest = root.join("plugins").join(plugin.name).join(".codex-plugin");
+        let plugin_manifest = root.join("plugins").join(plugin.name).join(".genex-plugin");
         std::fs::create_dir_all(&plugin_manifest)?;
         std::fs::write(
             plugin_manifest.join("plugin.json"),
@@ -806,7 +806,7 @@ fn write_installed_plugin(
         .join(marketplace_name)
         .join(plugin_name)
         .join("1.2.3")
-        .join(".codex-plugin");
+        .join(".genex-plugin");
     std::fs::create_dir_all(&plugin_manifest)?;
     std::fs::write(
         plugin_manifest.join("plugin.json"),

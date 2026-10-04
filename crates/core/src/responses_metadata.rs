@@ -259,7 +259,7 @@ pub(crate) enum TurnToolSource {
 /// Caller-owned snapshot of Genex metadata sent to ResponsesAPI.
 ///
 /// The full Genex turn metadata blob is transported canonically as
-/// `client_metadata["x-codex-turn-metadata"]`. Flat `client_metadata` keys and direct HTTP/ws
+/// `client_metadata["x-genex-turn-metadata"]`. Flat `client_metadata` keys and direct HTTP/ws
 /// headers are generated compatibility projections of this snapshot, not separate sources of
 /// truth.
 #[derive(Clone, Debug)]
@@ -377,7 +377,7 @@ impl GenexResponsesMetadata {
     pub(crate) fn compatibility_headers(&self) -> ApiHeaderMap {
         let mut headers = ApiHeaderMap::new();
         insert_header(&mut headers, X_GENEX_WINDOW_ID_HEADER, &self.window_id);
-        // Direct x-codex-turn-metadata is compatibility output. Keep the unbounded tool inventory
+        // Direct x-genex-turn-metadata is compatibility output. Keep the unbounded tool inventory
         // in client_metadata only so HTTP and WebSocket compatibility headers remain bounded.
         if self.has_turn_metadata()
             && let Ok(turn_metadata_json) = to_ascii_json_string(&GenexTurnMetadataPayload {

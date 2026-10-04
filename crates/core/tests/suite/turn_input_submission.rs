@@ -507,7 +507,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
     let request = response_mock.single_request();
     let turn_metadata: Value = serde_json::from_str(
         request
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .as_deref()
             .expect("recovered turn should include turn metadata"),
     )
@@ -581,7 +581,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     assert!(request.has_content_kinds(&["daemon_recovery.internal_context"]));
     let metadata: Value = serde_json::from_str(
         &request
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("turn metadata"),
     )
     .unwrap();

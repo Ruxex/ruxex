@@ -222,7 +222,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
     );
     let turn_metadata: serde_json::Value = serde_json::from_str(
         &request
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("review request turn metadata"),
     )
     .expect("review request turn metadata json");
@@ -934,7 +934,7 @@ async fn review_uses_custom_review_model_from_config() {
     assert_eq!(body["reasoning"]["effort"].as_str(), Some("max"));
     let turn_metadata: serde_json::Value = serde_json::from_str(
         &request
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("review request turn metadata"),
     )
     .expect("review request turn metadata json");

@@ -207,15 +207,15 @@ def test_isolated_environment_drops_model_credentials(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    monkeypatch.setenv("CODEX_API_KEY", "secret")
-    monkeypatch.setenv("CODEX_ACCESS_TOKEN", "secret")
+    monkeypatch.setenv("GENEX_API_KEY", "secret")
+    monkeypatch.setenv("GENEX_ACCESS_TOKEN", "secret")
     monkeypatch.setenv("PROVIDER_API_KEY", "secret")
 
     env = _isolated_environment(tmp_path)
 
     assert env["GENEX_HOME"] == str(tmp_path)
-    assert "CODEX_API_KEY" not in env
-    assert "CODEX_ACCESS_TOKEN" not in env
+    assert "GENEX_API_KEY" not in env
+    assert "GENEX_ACCESS_TOKEN" not in env
     assert "PROVIDER_API_KEY" not in env
     assert env.get("PATH") == os.environ.get("PATH")
 

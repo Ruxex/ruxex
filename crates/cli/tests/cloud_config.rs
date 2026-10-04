@@ -131,8 +131,8 @@ impl CloudManagedConfigFixture {
             .env("GENEX_HOME", self.genex_home.path())
             .env("NO_PROXY", "127.0.0.1,localhost")
             .env("no_proxy", "127.0.0.1,localhost")
-            .env_remove("CODEX_ACCESS_TOKEN")
-            .env_remove("CODEX_API_KEY")
+            .env_remove("GENEX_ACCESS_TOKEN")
+            .env_remove("GENEX_API_KEY")
             .env_remove("PROVIDER_API_KEY")
             .args(args);
         Ok(command)

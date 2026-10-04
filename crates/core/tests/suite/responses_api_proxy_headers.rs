@@ -115,11 +115,11 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     .await?;
 
     let parent_window_id = parent
-        .header("x-codex-window-id")
-        .ok_or_else(|| anyhow!("parent request missing x-codex-window-id"))?;
+        .header("x-genex-window-id")
+        .ok_or_else(|| anyhow!("parent request missing x-genex-window-id"))?;
     let child_window_id = child
-        .header("x-codex-window-id")
-        .ok_or_else(|| anyhow!("child request missing x-codex-window-id"))?;
+        .header("x-genex-window-id")
+        .ok_or_else(|| anyhow!("child request missing x-genex-window-id"))?;
     let (parent_thread_id, parent_generation) = split_window_id(&parent_window_id)?;
     let (child_thread_id, child_generation) = split_window_id(&child_window_id)?;
 
@@ -132,19 +132,19 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
         "collab_spawn"
     );
     assert_eq!(
-        child.header("x-codex-parent-thread-id").as_deref(),
+        child.header("x-genex-parent-thread-id").as_deref(),
         Some(parent_thread_id)
     );
     let parent_turn_metadata: serde_json::Value = serde_json::from_str(
         &parent
-            .header("x-codex-turn-metadata")
-            .ok_or_else(|| anyhow!("parent request missing x-codex-turn-metadata"))?,
+            .header("x-genex-turn-metadata")
+            .ok_or_else(|| anyhow!("parent request missing x-genex-turn-metadata"))?,
     )?;
     assert_eq!(parent_turn_metadata["genex_security_surface"], json!("sdk"));
     let child_turn_metadata: serde_json::Value = serde_json::from_str(
         &child
-            .header("x-codex-turn-metadata")
-            .ok_or_else(|| anyhow!("child request missing x-codex-turn-metadata"))?,
+            .header("x-genex-turn-metadata")
+            .ok_or_else(|| anyhow!("child request missing x-genex-turn-metadata"))?,
     )?;
     assert!(child_turn_metadata.get("forked_from_thread_id").is_none());
     assert_eq!(

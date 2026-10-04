@@ -88,7 +88,7 @@ pub fn assert_root_turn(body: &Value, expected: Option<&str>) -> Result<()> {
 
 fn assert_turn_id(body: &Value, key: &str, expected: Option<&str>) -> Result<()> {
     let metadata = &body["client_metadata"];
-    let payload = metadata["x-codex-turn-metadata"]
+    let payload = metadata["x-genex-turn-metadata"]
         .as_str()
         .expect("canonical turn metadata");
     let canonical: Value = serde_json::from_str(payload)?;

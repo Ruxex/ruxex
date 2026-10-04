@@ -412,8 +412,8 @@ async fn idle_queue_dispatch_preserves_client_id() -> Result<()> {
     assert!(body["input"].to_string().contains("durable queued message"));
     let metadata_header = request
         .headers
-        .get("x-codex-turn-metadata")
-        .context("queued model request is missing its x-codex-turn-metadata header")?
+        .get("x-genex-turn-metadata")
+        .context("queued model request is missing its x-genex-turn-metadata header")?
         .to_str()
         .context("queued turn metadata header is not valid ASCII")?;
     let metadata: Value = serde_json::from_str(metadata_header)?;
@@ -846,8 +846,8 @@ async fn queue_start_without_id_starts_the_head_when_idle() -> Result<()> {
     for request in &response_requests[1..] {
         let metadata_header = request
             .headers
-            .get("x-codex-turn-metadata")
-            .context("queued model request is missing its x-codex-turn-metadata header")?
+            .get("x-genex-turn-metadata")
+            .context("queued model request is missing its x-genex-turn-metadata header")?
             .to_str()
             .context("queued turn metadata header is not valid ASCII")?;
         let metadata: Value = serde_json::from_str(metadata_header)?;

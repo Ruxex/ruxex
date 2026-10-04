@@ -316,7 +316,7 @@ async fn import_local_plugins_returns_completed_status() {
     let plugin_root = marketplace_root.join("plugins").join("cloudflare");
     fs::create_dir_all(marketplace_root.join(EXTERNAL_AGENT_PLUGIN_MANIFEST_DIR))
         .expect("create marketplace manifest dir");
-    fs::create_dir_all(plugin_root.join(".codex-plugin")).expect("create plugin manifest dir");
+    fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("create plugin manifest dir");
     fs::create_dir_all(&genex_home).expect("create genex home");
 
     fs::write(
@@ -351,7 +351,7 @@ async fn import_local_plugins_returns_completed_status() {
     )
     .expect("write marketplace manifest");
     fs::write(
-        plugin_root.join(".codex-plugin").join("plugin.json"),
+        plugin_root.join(".genex-plugin").join("plugin.json"),
         r#"{"name":"cloudflare","version":"0.1.0"}"#,
     )
     .expect("write plugin manifest");

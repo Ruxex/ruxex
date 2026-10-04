@@ -82,7 +82,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     )?;
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
-        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("CODEX_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("GENEX_API_KEY", None)])
         .build_initialized()
         .await?;
     let mut bundled = genex_models_manager::test_support::test_models_response()?.models;
@@ -353,7 +353,7 @@ api_key_model_discovery = true
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("CODEX_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("GENEX_API_KEY", None)])
         .build_initialized()
         .await?;
     let request_id = mcp

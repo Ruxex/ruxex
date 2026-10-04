@@ -23,7 +23,7 @@ async fn host_skills_service_reuses_plugin_manager_skill_snapshot() {
         .path()
         .join("plugins/cache/test-remote/sample/local");
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample","description":"sample plugin"}"#,
     );
     let skill_path = plugin_root.join("skills/SKILL.md");

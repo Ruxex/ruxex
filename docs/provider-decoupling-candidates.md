@@ -53,6 +53,30 @@ security namespace、既存の外部 telemetry/MCP contract、履歴・法的記
 1,747 occurrences（1,539 lines）で、残りは上記の retain boundary として個別に
 台帳化する。
 
+### Genex repository boundary expansion (2026-10-04)
+
+前節の「外部契約として保持」とした項目を、Responses API の汎用化方針と
+repository-owned な plugin/auth 境界の再監査に基づいて更新する。この節が前節の
+該当する暫定判断を上書きする。
+
+- `.codex-plugin` は Agent Plugin の外部標準ディレクトリではなく、Genex の
+  manifest overlay、private metadata、command/skill migration metadata を読む
+  repository-owned な内部境界である。`.genex-plugin` へ移行する。
+- `codex-bundled`、`codex-bundled-alpha`、`codex-primary-runtime`、
+  `codex-runtimes` は、bundled hooks、artifact runtime、marketplace cache を
+  同一 repository 内で登録・解決する namespace/path である。それぞれ
+  `genex-*` へ移行する。`.claude-plugin`、`.cursor-plugin`、root `plugin.json`
+  と Agent Plugin schema URL は外部標準なので変更しない。
+- Responses の `codex_rollout_budget_units`、`x-codex-*` と Responses 用の
+  internal header/metadata key は endpoint 固有の必須名ではなく、Genex 側で
+  汎用化する wire producer/consumer として `genex` へ移行する。
+- `CODEX_API_KEY`、`CODEX_ACCESS_TOKEN`、GitHub/Connectors token、`CODEX_AUTH`、
+  `Codex Auth` keyring service、`CODEX_INTERNAL_ORIGINATOR_OVERRIDE` は、本 fork の login、proxy、keyring、
+  test/config consumers を同時更新できる repository-owned auth namespace として
+  `GENEX_*` へ移行する。token の意味や secret redaction/security behavior は変更しない。
+
+この追加 wave の decision は全て `migrate-in-place` とし、旧値を読む互換層は追加しない。
+
 ### 0.6 依存順 leaf wave の decisions (2026-10-03)
 
 - `genex-execpolicy` の standalone binary、README、description、local migration

@@ -315,7 +315,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
             .expect("resumed model request")
             .body_json::<Value>()?;
         let metadata: Value = serde_json::from_str(
-            body["client_metadata"]["x-codex-turn-metadata"]
+            body["client_metadata"]["x-genex-turn-metadata"]
                 .as_str()
                 .expect("turn metadata"),
         )?;

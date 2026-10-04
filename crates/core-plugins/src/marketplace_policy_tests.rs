@@ -568,11 +568,11 @@ restrict_to_allowed_sources = true
         Some((
             &format!(
                 r#"
-[marketplaces.codex-bundled]
+[marketplaces.genex-bundled]
 source_type = "local"
 source = {bundled_root:?}
 
-[marketplaces.codex-bundled-alpha]
+[marketplaces.genex-bundled-alpha]
 source_type = "local"
 source = "/tmp/not-managed"
 
@@ -580,10 +580,10 @@ source = "/tmp/not-managed"
 source_type = "local"
 source = {bundled_root:?}
 
-[plugins."sample@codex-bundled"]
+[plugins."sample@genex-bundled"]
 enabled = true
 
-[plugins."sample@codex-bundled-alpha"]
+[plugins."sample@genex-bundled-alpha"]
 enabled = true
 
 [plugins."sample@evil"]
@@ -641,7 +641,7 @@ path = {source_root:?}
         Some((
             &format!(
                 r#"
-[marketplaces.codex-bundled]
+[marketplaces.genex-bundled]
 source_type = "local"
 source = {source_root:?}
 
@@ -649,7 +649,7 @@ source = {source_root:?}
 source_type = "local"
 source = {source_root:?}
 
-[plugins."sample@codex-bundled"]
+[plugins."sample@genex-bundled"]
 enabled = true
 
 [plugins."sample@test-curated"]
@@ -724,7 +724,7 @@ source = "https://github.com/example/blocked.git"
     let stack = config_layer_stack_with_user_config(
         "[marketplaces]\nrestrict_to_allowed_sources = false\n",
         Some((
-            "[marketplaces.codex-bundled]\nsource_type = \"git\"\nsource = \"https://github.com/example/blocked.git\"\n",
+            "[marketplaces.genex-bundled]\nsource_type = \"git\"\nsource = \"https://github.com/example/blocked.git\"\n",
             config_file,
         )),
     );

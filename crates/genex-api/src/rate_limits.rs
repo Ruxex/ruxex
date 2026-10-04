@@ -201,9 +201,9 @@ fn parse_rate_limit_window(
 }
 
 fn parse_credits_snapshot(headers: &HeaderMap) -> Option<CreditsSnapshot> {
-    let has_credits = parse_header_bool(headers, "x-codex-credits-has-credits")?;
-    let unlimited = parse_header_bool(headers, "x-codex-credits-unlimited")?;
-    let balance = parse_header_str(headers, "x-codex-credits-balance")
+    let has_credits = parse_header_bool(headers, "x-genex-credits-has-credits")?;
+    let unlimited = parse_header_bool(headers, "x-genex-credits-unlimited")?;
+    let balance = parse_header_str(headers, "x-genex-credits-balance")
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(std::string::ToString::to_string);
@@ -265,15 +265,15 @@ mod tests {
     fn parse_rate_limit_for_limit_defaults_to_default_headers() {
         let mut headers = HeaderMap::new();
         headers.insert(
-            "x-codex-primary-used-percent",
+            "x-genex-primary-used-percent",
             HeaderValue::from_static("12.5"),
         );
         headers.insert(
-            "x-codex-primary-window-minutes",
+            "x-genex-primary-window-minutes",
             HeaderValue::from_static("60"),
         );
         headers.insert(
-            "x-codex-primary-reset-at",
+            "x-genex-primary-reset-at",
             HeaderValue::from_static("1704069000"),
         );
 
@@ -290,15 +290,15 @@ mod tests {
     fn parse_rate_limit_for_limit_reads_secondary_headers() {
         let mut headers = HeaderMap::new();
         headers.insert(
-            "x-codex-secondary-primary-used-percent",
+            "x-genex-secondary-primary-used-percent",
             HeaderValue::from_static("80"),
         );
         headers.insert(
-            "x-codex-secondary-primary-window-minutes",
+            "x-genex-secondary-primary-window-minutes",
             HeaderValue::from_static("1440"),
         );
         headers.insert(
-            "x-codex-secondary-primary-reset-at",
+            "x-genex-secondary-primary-reset-at",
             HeaderValue::from_static("1704074400"),
         );
 
@@ -317,11 +317,11 @@ mod tests {
     fn parse_rate_limit_for_limit_prefers_limit_name_header() {
         let mut headers = HeaderMap::new();
         headers.insert(
-            "x-codex-bengalfox-primary-used-percent",
+            "x-genex-bengalfox-primary-used-percent",
             HeaderValue::from_static("80"),
         );
         headers.insert(
-            "x-codex-bengalfox-limit-name",
+            "x-genex-bengalfox-limit-name",
             HeaderValue::from_static("gpt-5.2-codex-sonic"),
         );
 
@@ -335,11 +335,11 @@ mod tests {
     fn parse_all_rate_limits_reads_all_limit_families() {
         let mut headers = HeaderMap::new();
         headers.insert(
-            "x-codex-primary-used-percent",
+            "x-genex-primary-used-percent",
             HeaderValue::from_static("12.5"),
         );
         headers.insert(
-            "x-codex-secondary-primary-used-percent",
+            "x-genex-secondary-primary-used-percent",
             HeaderValue::from_static("80"),
         );
 

@@ -160,7 +160,7 @@ pub(crate) fn load_plugin_manifest_with_format(plugin_root: &Path) -> Option<Loa
     let contents = fs::read_to_string(&manifest_path).ok()?;
     let is_agent_plugin = manifest_path == plugin_root.join(AGENT_PLUGIN_MANIFEST_RELATIVE_PATH);
     let overlay = if is_agent_plugin {
-        let overlay_path = plugin_root.join(".codex-plugin/plugin.json");
+        let overlay_path = plugin_root.join(".genex-plugin/plugin.json");
         fs::read_to_string(&overlay_path)
             .ok()
             .map(|contents| (overlay_path, contents))
@@ -667,12 +667,12 @@ mod tests {
     const ALTERNATE_PLUGIN_MANIFEST_RELATIVE_PATH: &str = ".claude-plugin/plugin.json";
 
     fn write_manifest(plugin_root: &Path, version: Option<&str>, interface: &str) {
-        fs::create_dir_all(plugin_root.join(".codex-plugin")).expect("create manifest dir");
+        fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("create manifest dir");
         let version = version
             .map(|version| format!("  \"version\": \"{version}\",\n"))
             .unwrap_or_default();
         fs::write(
-            plugin_root.join(".codex-plugin/plugin.json"),
+            plugin_root.join(".genex-plugin/plugin.json"),
             format!(
                 r#"{{
   "name": "demo-plugin",
@@ -820,9 +820,9 @@ mod tests {
     fn plugin_manifest_reads_keywords() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("demo-plugin");
-        fs::create_dir_all(plugin_root.join(".codex-plugin")).expect("create manifest dir");
+        fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("create manifest dir");
         fs::write(
-            plugin_root.join(".codex-plugin/plugin.json"),
+            plugin_root.join(".genex-plugin/plugin.json"),
             r#"{
   "name": "demo-plugin",
   "keywords": ["api-key", "developer tools"]
@@ -886,7 +886,7 @@ mod tests {
 
     fn parse_uri_composer_icon(plugin_root: &PathUri, composer_icon: &str) -> Option<PathUri> {
         let manifest_path = plugin_root
-            .join(".codex-plugin/plugin.json")
+            .join(".genex-plugin/plugin.json")
             .expect("manifest URI");
         let composer_icon_json =
             serde_json::to_string(composer_icon).expect("serialize composer icon");
@@ -936,10 +936,10 @@ mod tests {
             .expect("resolve executor plugin")
             .expect("plugin descriptor");
         let manifest_path = plugin_root_uri
-            .join(".codex-plugin/plugin.json")
+            .join(".genex-plugin/plugin.json")
             .expect("manifest URI");
         let manifest_contents =
-            fs::read_to_string(plugin_root.join(".codex-plugin/plugin.json")).expect("manifest");
+            fs::read_to_string(plugin_root.join(".genex-plugin/plugin.json")).expect("manifest");
         let expected_manifest =
             super::parse_plugin_manifest_uri(&plugin_root_uri, &manifest_path, &manifest_contents)
                 .expect("URI manifest");
@@ -960,7 +960,7 @@ mod tests {
         let plugin_root =
             PathUri::parse("file:///C:/plugins/demo-plugin").expect("plugin root URI");
         let manifest_path = plugin_root
-            .join(".codex-plugin/plugin.json")
+            .join(".genex-plugin/plugin.json")
             .expect("manifest URI");
         let manifest = super::parse_plugin_manifest_uri(
             &plugin_root,

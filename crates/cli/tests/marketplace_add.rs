@@ -16,7 +16,7 @@ fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
 
 fn write_marketplace_source(source: &Path, marker: &str) -> Result<()> {
     std::fs::create_dir_all(source.join(".agents/plugins"))?;
-    std::fs::create_dir_all(source.join("plugins/sample/.codex-plugin"))?;
+    std::fs::create_dir_all(source.join("plugins/sample/.genex-plugin"))?;
     std::fs::write(
         source.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -33,7 +33,7 @@ fn write_marketplace_source(source: &Path, marker: &str) -> Result<()> {
 }"#,
     )?;
     std::fs::write(
-        source.join("plugins/sample/.codex-plugin/plugin.json"),
+        source.join("plugins/sample/.genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )?;
     std::fs::write(source.join("plugins/sample/marker.txt"), marker)?;

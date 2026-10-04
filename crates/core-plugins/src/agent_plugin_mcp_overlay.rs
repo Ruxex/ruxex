@@ -18,7 +18,7 @@ pub(super) async fn apply_agent_plugin_env_overlay(
         return;
     }
 
-    let overlay_path = plugin_root.join(".codex-plugin/plugin.json");
+    let overlay_path = plugin_root.join(".genex-plugin/plugin.json");
     let Ok(contents) = tokio::fs::read_to_string(&overlay_path).await else {
         return;
     };

@@ -39,7 +39,7 @@ pub struct PluginSkillRoot {
 }
 
 /// Directory containing private plugin metadata.
-const PLUGIN_METADATA_DIR: &str = ".codex-plugin";
+const PLUGIN_METADATA_DIR: &str = ".genex-plugin";
 /// Directory containing commands converted into skills during plugin installation.
 const MIGRATED_COMMAND_SKILLS_DIR: &str = "migrated-command-skills";
 

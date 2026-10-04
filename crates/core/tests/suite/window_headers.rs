@@ -99,7 +99,7 @@ async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork(
         .iter()
         .map(|request| {
             let metadata = request
-                .header("x-codex-turn-metadata")
+                .header("x-genex-turn-metadata")
                 .expect("turn metadata header");
             serde_json::from_str::<serde_json::Value>(&metadata).expect("valid turn metadata")
         })
@@ -107,7 +107,7 @@ async fn window_id_advances_after_compact_persists_on_resume_and_resets_on_fork(
     for (request, metadata) in requests.iter().zip(&metadata) {
         assert_eq!(
             metadata["window_id"].as_str(),
-            request.header("x-codex-window-id").as_deref()
+            request.header("x-genex-window-id").as_deref()
         );
         assert!(
             metadata["context_window_id"]
@@ -168,8 +168,8 @@ async fn shutdown_thread(genex: &Arc<GenexThread>) -> Result<()> {
 
 fn window_id_parts(request: &ResponsesRequest) -> (String, u64) {
     let window_id = request
-        .header("x-codex-window-id")
-        .expect("missing x-codex-window-id header");
+        .header("x-genex-window-id")
+        .expect("missing x-genex-window-id header");
     let (thread_id, generation) = window_id
         .rsplit_once(':')
         .expect("window id header should contain a generation");

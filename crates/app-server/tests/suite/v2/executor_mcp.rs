@@ -696,9 +696,9 @@ url = "{executor_url}"
     )?;
 
     let plugin = TempDir::new()?;
-    std::fs::create_dir_all(plugin.path().join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin.path().join(".genex-plugin"))?;
     std::fs::write(
-        plugin.path().join(".codex-plugin/plugin.json"),
+        plugin.path().join(".genex-plugin/plugin.json"),
         r#"{"name":"executor-demo"}"#,
     )?;
     std::fs::write(

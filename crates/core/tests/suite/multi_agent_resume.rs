@@ -272,7 +272,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
             .into_iter()
             .find_map(|request| {
                 let body = request.body_json();
-                if body["client_metadata"]["x-codex-parent-thread-id"] != json!(root_thread_id) {
+                if body["client_metadata"]["x-genex-parent-thread-id"] != json!(root_thread_id) {
                     return None;
                 }
                 body["client_metadata"]["thread_id"]
@@ -606,7 +606,7 @@ base_url = "{redirected_base_url}"
     ] {
         if let Some(parent_thread) = parent_thread {
             assert_eq!(
-                body["client_metadata"]["x-codex-parent-thread-id"],
+                body["client_metadata"]["x-genex-parent-thread-id"],
                 json!(parent_thread)
             );
         }

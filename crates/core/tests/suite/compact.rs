@@ -2945,7 +2945,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
     // before its compaction attempt is sent.
     let [first_metadata, compact_metadata] = [&requests[0], &requests[1]].map(|request| {
         serde_json::from_str::<Value>(
-            request.body_json()["client_metadata"]["x-codex-turn-metadata"]
+            request.body_json()["client_metadata"]["x-genex-turn-metadata"]
                 .as_str()
                 .expect("request should include turn metadata"),
         )
@@ -4053,7 +4053,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
     );
     let compact_metadata: Value = serde_json::from_str(
         &requests[1]
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("local compact request should include turn metadata"),
     )
     .expect("local compact turn metadata should be valid json");
@@ -4063,7 +4063,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
     );
     assert_eq!(
         compact_metadata["window_id"].as_str(),
-        requests[1].header("x-codex-window-id").as_deref()
+        requests[1].header("x-genex-window-id").as_deref()
     );
     assert_eq!(
         compact_metadata["compaction"],
@@ -4082,7 +4082,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
     );
     let next_turn_metadata: Value = serde_json::from_str(
         &requests[2]
-            .header("x-codex-turn-metadata")
+            .header("x-genex-turn-metadata")
             .expect("next regular request should include turn metadata"),
     )
     .expect("next regular turn metadata should be valid json");
@@ -4093,7 +4093,7 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
     );
     assert_eq!(
         next_turn_metadata["window_id"].as_str(),
-        requests[2].header("x-codex-window-id").as_deref()
+        requests[2].header("x-genex-window-id").as_deref()
     );
     assert_ne!(
         compact_metadata["window_id"], next_turn_metadata["window_id"],

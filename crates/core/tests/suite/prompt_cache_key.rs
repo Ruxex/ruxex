@@ -198,7 +198,7 @@ async fn ephemeral_fork_shares_cache_routing_but_keeps_session_identity() -> Res
     let requests = requests.requests();
     let body = requests[1].body_json();
     let metadata: Value = serde_json::from_str(
-        body["client_metadata"]["x-codex-turn-metadata"]
+        body["client_metadata"]["x-genex-turn-metadata"]
             .as_str()
             .expect("turn metadata"),
     )?;

@@ -24,6 +24,10 @@ FORBIDDEN = (
     r"\bCODEX_EXEC_SERVER_(?:URL|NOISE_AUTH_TOKEN)\b",
     r"\bCODEX_APP_SERVER_[A-Z0-9_]+\b",
     r"\bcodex_(?:rollout_budget_units|approval_kind|requires_user_input|request_type|sensitive_action)\b",
+    r"x-codex-(?!(?:residency|inference-call-id)\b)",
+    r"\.codex-plugin\b",
+    r"\bcodex-(?:bundled(?:-alpha)?|primary-runtime|runtimes)\b",
+    r"(?-i:\bCODEX_(?:API_KEY|ACCESS_TOKEN|GITHUB_TOKEN|GITHUB_PERSONAL_ACCESS_TOKEN|CONNECTORS_TOKEN|AUTH|INTERNAL_ORIGINATOR_OVERRIDE)\b)",
     r"\bcodex_app\b",
     r"\bcodex_exec\b",
     r"\bcodex_app_server_daemon\b",
@@ -40,15 +44,7 @@ def main() -> int:
     failures: list[tuple[Path, int, str]] = []
     for path in sorted(RUST_ROOT.rglob("*.rs")):
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            # The Responses adapter must keep this provider wire key while
-            # exposing `genex_rollout_budget_units` to the rest of the
-            # workspace. The adapter and its raw-response fixture are the
-            # only approved locations for this spelling.
-            adapter_wire_key = (
-                "codex_rollout_budget_units" in line
-                and "crates/genex-api/" in str(path.relative_to(ROOT))
-            )
-            if PATTERN.search(line) and not adapter_wire_key:
+            if PATTERN.search(line):
                 failures.append((path.relative_to(ROOT), line_number, line.strip()))
 
     if failures:

@@ -313,13 +313,13 @@ fn write_plugin_with_version(
     manifest_version: Option<&str>,
 ) {
     let plugin_root = root.join(dir_name);
-    fs::create_dir_all(plugin_root.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
     fs::create_dir_all(plugin_root.join("skills")).unwrap();
     let version = manifest_version
         .map(|manifest_version| format!(r#","version":"{manifest_version}""#))
         .unwrap_or_default();
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         format!(r#"{{"name":"{manifest_name}"{version}}}"#),
     )
     .unwrap();
@@ -420,7 +420,7 @@ async fn load_plugins_loads_manifest_mcp_server_objects() {
         .join("test/counter-sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{
   "name": "counter-sample",
   "version": "1.1.1",
@@ -487,7 +487,7 @@ async fn load_plugins_applies_plugin_mcp_server_policy() {
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{
   "name": "sample"
 }"#,
@@ -559,7 +559,7 @@ async fn load_plugins_resolves_disabled_skill_names_against_loaded_plugin_skills
     let skill_path = plugin_root.join("skills/sample-search/SKILL.md");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -600,7 +600,7 @@ async fn load_plugins_ignores_unknown_disabled_skill_names() {
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -645,7 +645,7 @@ async fn plugin_capability_summary_uses_manifest_mcp_server_objects() {
         .join("test/counter-sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{
   "name": "counter-sample",
   "version": "1.1.1",
@@ -687,7 +687,7 @@ async fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{
   "name": "sample",
   "description": "Plugin that\n includes   the sample\tserver"
@@ -725,7 +725,7 @@ async fn capability_summary_truncates_overlong_plugin_descriptions() {
     let too_long = "x".repeat(MAX_CAPABILITY_SUMMARY_DESCRIPTION_LEN + 1);
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         &format!(
             r#"{{
   "name": "sample",
@@ -761,7 +761,7 @@ async fn install_plugin_materializes_default_command_skills() {
     let source_root = genex_home.path().join("source/sample");
 
     write_file(
-        &source_root.join(".codex-plugin/plugin.json"),
+        &source_root.join(".genex-plugin/plugin.json"),
         r#"{
   "name": "sample",
   "skills": "./custom-skills/"
@@ -785,7 +785,7 @@ async fn install_plugin_materializes_default_command_skills() {
         &format!("---\ndescription: Oversized\n---\n{}", "x".repeat(4_000)),
     );
     write_file(
-        &source_root.join(".codex-plugin/migrated-command-skills/undeclared-command/SKILL.md"),
+        &source_root.join(".genex-plugin/migrated-command-skills/undeclared-command/SKILL.md"),
         "---\nname: undeclared-command\ndescription: undeclared command\n---\n",
     );
     let result = PluginStore::new(genex_home.path().to_path_buf())
@@ -796,7 +796,7 @@ async fn install_plugin_materializes_default_command_skills() {
         .unwrap();
     let migrated_skill = result
         .installed_path
-        .join(".codex-plugin/migrated-command-skills/source-command-pr-review/SKILL.md");
+        .join(".genex-plugin/migrated-command-skills/source-command-pr-review/SKILL.md");
     let expected_migrated_skill = "---\nname: \"source-command-pr-review\"\ndescription: \"Review a pull request\"\n---\n\n# source-command-pr-review\n\nUse this skill when the user asks to run the migrated source command `pr-review`.\n\n## Command Template\n\nInspect the proposed changes.\n";
     assert_eq!(
         fs::read_to_string(&migrated_skill).unwrap(),
@@ -805,13 +805,13 @@ async fn install_plugin_materializes_default_command_skills() {
     assert!(
         !result
             .installed_path
-            .join(".codex-plugin/migrated-command-skills/undeclared-command")
+            .join(".genex-plugin/migrated-command-skills/undeclared-command")
             .exists()
     );
     assert!(
         !result
             .installed_path
-            .join(".codex-plugin/migrated-command-skills/source-command-oversized")
+            .join(".genex-plugin/migrated-command-skills/source-command-oversized")
             .exists()
     );
 
@@ -848,7 +848,7 @@ async fn install_plugin_materializes_default_command_skills() {
             .unwrap(),
             AbsolutePathBuf::from_absolute_path_checked(
                 fs::canonicalize(result.installed_path.join(
-                    ".codex-plugin/migrated-command-skills/source-command-summarize/SKILL.md"
+                    ".genex-plugin/migrated-command-skills/source-command-summarize/SKILL.md"
                 ))
                 .unwrap()
             )
@@ -862,7 +862,7 @@ fn install_plugin_ignores_invalid_commands_manifest_field() {
     let genex_home = TempDir::new().unwrap();
     let source_root = genex_home.path().join("source/sample");
     write_file(
-        &source_root.join(".codex-plugin/plugin.json"),
+        &source_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample","commands":{}}"#,
     );
     write_file(
@@ -880,7 +880,7 @@ fn install_plugin_ignores_invalid_commands_manifest_field() {
     assert!(
         !result
             .installed_path
-            .join(".codex-plugin/migrated-command-skills")
+            .join(".genex-plugin/migrated-command-skills")
             .exists()
     );
 }
@@ -890,7 +890,7 @@ fn install_plugin_ignores_command_migration_errors() {
     let genex_home = TempDir::new().unwrap();
     let source_root = genex_home.path().join("source/sample");
     write_file(
-        &source_root.join(".codex-plugin/plugin.json"),
+        &source_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample","commands":"./commands/review.md"}"#,
     );
     fs::create_dir_all(source_root.join("commands")).unwrap();
@@ -984,7 +984,7 @@ async fn load_plugins_ignores_invalid_manifest_skills_shape() {
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{
   "name": "sample",
   "skills": { "path": "./custom-skills/" }
@@ -1022,7 +1022,7 @@ async fn load_plugins_preserves_disabled_plugins_without_effective_contributions
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -1079,7 +1079,7 @@ async fn load_plugins_returns_empty_when_feature_disabled() {
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -1206,7 +1206,7 @@ async fn load_plugins_rejects_invalid_plugin_keys() {
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
 
@@ -1534,7 +1534,7 @@ async fn install_plugin_writes_marketplace_manifest_fallback_when_missing_plugin
             auth_policy: MarketplacePluginAuthPolicy::OnInstall,
         }
     );
-    assert!(!plugin_root.join(".codex-plugin/plugin.json").exists());
+    assert!(!plugin_root.join(".genex-plugin/plugin.json").exists());
     assert!(
         !tmp.path()
             .join("plugins/.marketplace-plugin-source-staging")
@@ -1560,7 +1560,7 @@ async fn install_plugin_writes_marketplace_manifest_fallback_when_missing_plugin
     assert_eq!(interface.developer_name.as_deref(), Some("Byron Grogan"));
     assert_eq!(interface.category.as_deref(), Some("code-review"));
     let fallback_json: serde_json::Value = serde_json::from_str(
-        &fs::read_to_string(installed_path.join(".codex-plugin/plugin.json")).unwrap(),
+        &fs::read_to_string(installed_path.join(".genex-plugin/plugin.json")).unwrap(),
     )
     .unwrap();
     assert_eq!(
@@ -1571,7 +1571,7 @@ async fn install_plugin_writes_marketplace_manifest_fallback_when_missing_plugin
     assert_eq!(
         fs::read_to_string(
             installed_path
-                .join(".codex-plugin/migrated-command-skills/source-command-review/SKILL.md")
+                .join(".genex-plugin/migrated-command-skills/source-command-review/SKILL.md")
         )
         .unwrap(),
         "---\nname: \"source-command-review\"\ndescription: \"Review code\"\n---\n\n# source-command-review\n\nUse this skill when the user asks to run the migrated source command `review`.\n\n## Command Template\n\nReview the current change.\n"
@@ -1634,7 +1634,7 @@ async fn install_plugin_supports_git_subdir_marketplace_sources() {
             auth_policy: MarketplacePluginAuthPolicy::OnInstall,
         }
     );
-    assert!(installed_path.join(".codex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
 }
 
 #[tokio::test]
@@ -1688,7 +1688,7 @@ async fn install_plugin_supports_relative_git_subdir_marketplace_sources() {
             auth_policy: MarketplacePluginAuthPolicy::OnInstall,
         }
     );
-    assert!(installed_path.join(".codex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
 }
 
 #[tokio::test]
@@ -2041,7 +2041,7 @@ async fn read_plugin_for_config_does_not_fallback_from_invalid_plugin_manifest()
   ]
 }"#,
     );
-    write_file(&plugin_root.join(".codex-plugin/plugin.json"), "{");
+    write_file(&plugin_root.join(".genex-plugin/plugin.json"), "{");
     write_file(
         &tmp.path().join(CONFIG_TOML_FILE),
         r#"[features]
@@ -2090,7 +2090,7 @@ async fn read_plugin_for_config_uses_user_layer_skill_settings_only() {
 }"#,
     );
     write_file(
-        &plugin_root.join(".codex-plugin/plugin.json"),
+        &plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"enabled-plugin"}"#,
     );
     write_file(
@@ -2162,7 +2162,7 @@ async fn list_marketplaces_installed_git_source_reads_metadata_from_cache_withou
     );
     let cached_plugin_root = tmp.path().join("plugins/cache/debug/toolkit/local");
     write_file(
-        &cached_plugin_root.join(".codex-plugin/plugin.json"),
+        &cached_plugin_root.join(".genex-plugin/plugin.json"),
         r##"{
   "name": "toolkit",
   "interface": {
@@ -2268,7 +2268,7 @@ plugins = true
 "#,
     );
     fs::create_dir_all(curated_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
     fs::write(
         curated_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -2286,7 +2286,7 @@ plugins = true
     )
     .unwrap();
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"linear"}"#,
     )
     .unwrap();
@@ -2388,7 +2388,7 @@ source = "/tmp/debug"
 "#,
     );
     fs::create_dir_all(marketplace_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -2406,7 +2406,7 @@ source = "/tmp/debug"
     )
     .unwrap();
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .unwrap();
@@ -2466,7 +2466,7 @@ async fn configured_marketplace_upgrade_invalidates_cached_tool_suggest_metadata
     );
     write_curated_plugin(&remote_repo, "sample");
     write_file(
-        &remote_repo.join("plugins/sample/.codex-plugin/plugin.json"),
+        &remote_repo.join("plugins/sample/.genex-plugin/plugin.json"),
         r#"{"name":"sample","description":"Before upgrade"}"#,
     );
     init_git_repo(&remote_repo);
@@ -2520,7 +2520,7 @@ source = "{remote_repo_url}"
     );
 
     write_file(
-        &remote_repo.join("plugins/sample/.codex-plugin/plugin.json"),
+        &remote_repo.join("plugins/sample/.genex-plugin/plugin.json"),
         r#"{"name":"sample","description":"After upgrade"}"#,
     );
     run_git(&remote_repo, &["add", "."]);
@@ -2562,7 +2562,7 @@ source = "/tmp/debug"
 "#,
     );
     fs::create_dir_all(marketplace_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -2580,7 +2580,7 @@ source = "/tmp/debug"
     )
     .unwrap();
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .unwrap();
@@ -2620,7 +2620,7 @@ plugins = true
 "#,
     );
     fs::create_dir_all(marketplace_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -2638,7 +2638,7 @@ plugins = true
     )
     .unwrap();
     fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .unwrap();

@@ -90,9 +90,9 @@ fn write_cached_remote_plugin_with_skill(
     genex_home: &std::path::Path,
 ) -> Result<std::path::PathBuf> {
     let plugin_root = genex_home.join("plugins/cache/test-remote/linear/local");
-    std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     std::fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"linear"}"#,
     )?;
 
@@ -113,9 +113,9 @@ fn write_cached_local_curated_plugin_with_skill(
     let plugin_root = genex_home.join(format!(
         "plugins/cache/{marketplace_name}/google-calendar/local"
     ));
-    std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
     std::fs::write(
-        plugin_root.join(".codex-plugin/plugin.json"),
+        plugin_root.join(".genex-plugin/plugin.json"),
         r#"{"name":"google-calendar"}"#,
     )?;
 
@@ -814,10 +814,10 @@ async fn skills_list_refreshes_externally_updated_plugin_versions() -> Result<()
     let genex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let source = TempDir::new()?;
-    std::fs::create_dir_all(source.path().join(".codex-plugin"))?;
+    std::fs::create_dir_all(source.path().join(".genex-plugin"))?;
     std::fs::create_dir_all(source.path().join("skills"))?;
     std::fs::write(
-        source.path().join(".codex-plugin/plugin.json"),
+        source.path().join(".genex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )?;
     std::fs::write(
@@ -944,7 +944,7 @@ enabled = true
                 .path()
                 .join("plugins/cache/provider-api-curated/google-calendar/local");
             std::fs::write(
-                plugin_root.join(".codex-plugin/plugin.json"),
+                plugin_root.join(".genex-plugin/plugin.json"),
                 r#"{"name":"google-calendar","skills":"./replacement-skills"}"#,
             )?;
             let skill_dir = plugin_root.join("replacement-skills/refreshed-skill");

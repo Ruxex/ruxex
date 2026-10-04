@@ -10,7 +10,7 @@
 //!
 //! A [`ModelClientSession`] is created per turn and is used to stream one or more Responses API
 //! requests during that turn. It caches a Responses WebSocket connection (opened lazily) and stores
-//! per-turn state such as the `x-codex-turn-state` token used for sticky routing.
+//! per-turn state such as the `x-genex-turn-state` token used for sticky routing.
 //! Cached connections, incremental response state, and turn routing are discarded when auth
 //! ownership changes.
 //!
@@ -137,20 +137,20 @@ use genex_response_debug_context::extract_response_debug_context_from_api_error;
 use genex_response_debug_context::telemetry_api_error_message;
 use genex_response_debug_context::telemetry_transport_error_message;
 
-pub const X_GENEX_INSTALLATION_ID_HEADER: &str = "x-codex-installation-id";
-pub const X_GENEX_ROUTING_HINT_HEADER: &str = "x-codex-routing-hint";
-pub const X_GENEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
-pub const X_GENEX_TURN_METADATA_HEADER: &str = "x-codex-turn-metadata";
-pub const X_GENEX_PARENT_THREAD_ID_HEADER: &str = "x-codex-parent-thread-id";
-pub const X_GENEX_WINDOW_ID_HEADER: &str = "x-codex-window-id";
+pub const X_GENEX_INSTALLATION_ID_HEADER: &str = "x-genex-installation-id";
+pub const X_GENEX_ROUTING_HINT_HEADER: &str = "x-genex-routing-hint";
+pub const X_GENEX_TURN_STATE_HEADER: &str = "x-genex-turn-state";
+pub const X_GENEX_TURN_METADATA_HEADER: &str = "x-genex-turn-metadata";
+pub const X_GENEX_PARENT_THREAD_ID_HEADER: &str = "x-genex-parent-thread-id";
+pub const X_GENEX_WINDOW_ID_HEADER: &str = "x-genex-window-id";
 pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
     "x-responsesapi-include-timing-metrics";
 const X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
-    "x-codex-ws-stream-request-start-ms";
+    "x-genex-ws-stream-request-start-ms";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
-    "ws_request_header_x_provider_internal_codex_responses_lite";
+    "ws_request_header_x_provider_internal_genex_responses_lite";
 const X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER: &str =
-    "x-provider-internal-codex-responses-lite";
+    "x-provider-internal-genex-responses-lite";
 #[cfg(test)]
 pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
     Duration::from_millis(DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS);
@@ -242,7 +242,7 @@ pub struct ModelClient {
 ///
 /// - The last full request, so subsequent calls can reuse incremental websocket request payloads
 ///   only when the current request is an incremental extension of the previous one.
-/// - The `x-codex-turn-state` sticky-routing token, which must be replayed for all requests within
+/// - The `x-genex-turn-state` sticky-routing token, which must be replayed for all requests within
 ///   the same turn.
 ///
 /// Create a fresh `ModelClientSession` for each Genex turn. Reusing it across turns would replay
@@ -254,8 +254,8 @@ pub struct ModelClientSession {
     /// Turn state for sticky routing.
     ///
     /// This is an `OnceLock` that stores the turn state value received from the server
-    /// on turn start via the `x-codex-turn-state` response header. Once set, this value
-    /// should be sent back to the server in the `x-codex-turn-state` request header for
+    /// on turn start via the `x-genex-turn-state` response header. Once set, this value
+    /// should be sent back to the server in the `x-genex-turn-state` request header for
     /// all subsequent requests within the same turn to maintain sticky routing.
     ///
     /// This is a contract between the client and server: we receive it at turn start,
@@ -1936,8 +1936,8 @@ fn stamp_ws_stream_request_start_ms(request: &mut ResponsesWsRequest<'_>) {
 ///
 /// These headers implement Genex-specific conventions:
 ///
-/// - `x-codex-beta-features`: comma-separated beta feature keys enabled for the session.
-/// - `x-codex-turn-state`: sticky routing token captured earlier in the turn.
+/// - `x-genex-beta-features`: comma-separated beta feature keys enabled for the session.
+/// - `x-genex-turn-state`: sticky routing token captured earlier in the turn.
 fn build_responses_headers(
     beta_features_header: Option<&str>,
     turn_state: Option<&Arc<OnceLock<String>>>,
@@ -1947,7 +1947,7 @@ fn build_responses_headers(
         && !value.is_empty()
         && let Ok(header_value) = HeaderValue::from_str(value)
     {
-        headers.insert("x-codex-beta-features", header_value);
+        headers.insert("x-genex-beta-features", header_value);
     }
     if let Some(turn_state) = turn_state
         && let Some(state) = turn_state.get()
