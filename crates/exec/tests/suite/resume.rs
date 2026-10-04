@@ -625,7 +625,7 @@ async fn exec_resume_accepts_global_flags_after_subcommand() -> anyhow::Result<(
         .arg(base_config)
         .arg("--json")
         .arg("--model")
-        .arg("gpt-5.2-codex")
+        .arg("example-model")
         .arg("--config")
         .arg("reasoning_level=xhigh")
         .arg("--dangerously-bypass-approvals-and-sandbox")

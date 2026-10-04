@@ -1638,7 +1638,6 @@ fn model_preset_from_api_model(model: ApiModel) -> ModelPreset {
         let upgrade_info = model.upgrade_info.clone();
         ModelUpgrade {
             id: upgrade_id,
-            migration_config_key: model.model.clone(),
             model_link: upgrade_info
                 .as_ref()
                 .and_then(|info| info.model_link.clone()),

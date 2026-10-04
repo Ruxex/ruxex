@@ -63,8 +63,7 @@ fn thread_usage_credit_formatting_rounds_to_one_decimal_place() {
 
 #[test]
 fn thread_usage_model_names_match_desktop_display_names() {
-    assert_eq!(format_model_display_name("gpt-5.4"), "GPT-5.4");
-    assert_eq!(format_model_display_name("gpt-5-mini"), "GPT-5 Mini");
-    assert_eq!(format_model_display_name("gpt-5.6-sol"), "GPT-5.6 Sol");
+    assert_eq!(format_model_display_name("example-model"), "example-model");
+    assert_eq!(format_model_display_name("provider/model"), "provider/model");
     assert_eq!(format_model_display_name("examplemodel"), "examplemodel");
 }

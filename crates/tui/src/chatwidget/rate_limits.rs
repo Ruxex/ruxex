@@ -1,10 +1,9 @@
 //! Rate-limit warning, prompt, and notice surfaces, plus quota-aware account refresh cadence.
 
 use super::*;
-use crate::model_catalog::LUNA_RESERVE_MODEL;
 use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
+use genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
 
-pub(super) const NUDGE_MODEL_SLUG: &str = crate::model_catalog::LUNA_MODEL;
 pub(super) const RATE_LIMIT_SWITCH_PROMPT_THRESHOLD: f64 = 90.0;
 pub(super) const RATE_LIMIT_SWITCH_PROMPT_VIEW_ID: &str = "rate-limit-switch-prompt";
 
@@ -21,7 +20,6 @@ pub(super) struct RateLimitWarningState {
 impl RateLimitWarningState {
     pub(super) fn take_warnings(
         &mut self,
-        plan_type: Option<PlanType>,
         secondary_used_percent: Option<f64>,
         secondary_window_minutes: Option<i64>,
         primary_used_percent: Option<f64>,
@@ -43,9 +41,8 @@ impl RateLimitWarningState {
             {
                 let threshold = RATE_LIMIT_WARNING_THRESHOLDS[self.secondary_index];
                 if threshold != 50.0
-                    || (matches!(plan_type, Some(PlanType::Plus | PlanType::Team))
-                        && secondary_window_minutes
-                            .is_some_and(|minutes| is_approximate_window(minutes, 5 * 60)))
+                    || secondary_window_minutes
+                        .is_some_and(|minutes| is_approximate_window(minutes, 5 * 60))
                 {
                     highest_secondary = Some(threshold);
                 }
@@ -68,9 +65,8 @@ impl RateLimitWarningState {
             {
                 let threshold = RATE_LIMIT_WARNING_THRESHOLDS[self.primary_index];
                 if threshold != 50.0
-                    || (matches!(plan_type, Some(PlanType::Plus | PlanType::Team))
-                        && primary_window_minutes
-                            .is_some_and(|minutes| is_approximate_window(minutes, 5 * 60)))
+                    || primary_window_minutes
+                        .is_some_and(|minutes| is_approximate_window(minutes, 5 * 60))
                 {
                     highest_primary = Some(threshold);
                 }
@@ -188,7 +184,8 @@ impl ChatWidget {
             .rate_limit_snapshots_by_limit_id
             .iter()
             .filter(|(limit_id, snapshot)| {
-                limit_id.as_str() == "codex" || snapshot.limit_name == self.current_model()
+                limit_id.as_str() == DEFAULT_RATE_LIMIT_ID
+                    || snapshot.limit_name == self.current_model()
             })
             .flat_map(|(_, snapshot)| snapshot.primary.iter().chain(snapshot.secondary.iter()))
             .map(|window| window.used_percent)
@@ -236,7 +233,7 @@ impl ChatWidget {
             let limit_id = snapshot
                 .limit_id
                 .clone()
-                .unwrap_or_else(|| "codex".to_string());
+                .unwrap_or_else(|| DEFAULT_RATE_LIMIT_ID.to_string());
             if matches!(source, RateLimitSnapshotSource::RollingUpdate)
                 && snapshot.credits.is_none()
             {
@@ -252,14 +249,14 @@ impl ChatWidget {
             }
             self.plan_type = snapshot.plan_type.or(self.plan_type);
 
-            let is_genex_limit = limit_id.eq_ignore_ascii_case("codex");
-            if is_genex_limit
+            let is_default_limit = limit_id.eq_ignore_ascii_case(DEFAULT_RATE_LIMIT_ID);
+            if is_default_limit
                 && (matches!(source, RateLimitSnapshotSource::AccountUsage)
                     || snapshot.spend_control_reached.is_some())
             {
                 self.genex_spend_control_reached = snapshot.spend_control_reached;
             }
-            if (is_genex_limit && matches!(source, RateLimitSnapshotSource::AccountUsage))
+            if (is_default_limit && matches!(source, RateLimitSnapshotSource::AccountUsage))
                 || snapshot.rate_limit_reached_type.is_some()
             {
                 self.genex_rate_limit_reached_type = snapshot.rate_limit_reached_type;
@@ -279,7 +276,7 @@ impl ChatWidget {
                     .credits
                     .as_ref()
                     .is_some_and(has_usable_workspace_credits);
-            if is_genex_limit && has_workspace_credits {
+            if is_default_limit && has_workspace_credits {
                 match self.rate_limit_switch_prompt {
                     RateLimitSwitchPromptState::Pending => {
                         self.rate_limit_switch_prompt = RateLimitSwitchPromptState::Idle;
@@ -291,10 +288,9 @@ impl ChatWidget {
                     RateLimitSwitchPromptState::Idle => {}
                 }
             }
-            let should_warn_about_rate_limit_usage = is_genex_limit && !has_workspace_credits;
+            let should_warn_about_rate_limit_usage = is_default_limit && !has_workspace_credits;
             let warnings = if should_warn_about_rate_limit_usage {
                 self.rate_limit_warnings.take_warnings(
-                    self.plan_type,
                     snapshot
                         .secondary
                         .as_ref()
@@ -316,7 +312,7 @@ impl ChatWidget {
                 vec![]
             };
 
-            let high_usage = is_genex_limit
+            let high_usage = is_default_limit
                 && (snapshot
                     .secondary
                     .as_ref()
@@ -331,7 +327,6 @@ impl ChatWidget {
             if high_usage
                 && !has_workspace_credits
                 && !self.rate_limit_switch_prompt_hidden()
-                && self.current_model() != NUDGE_MODEL_SLUG
                 && !matches!(
                     self.rate_limit_switch_prompt,
                     RateLimitSwitchPromptState::Shown
@@ -380,10 +375,17 @@ impl ChatWidget {
     }
 
     fn lower_cost_preset(&self) -> Option<ModelPreset> {
+        let normal_model = self
+            .rate_limit_snapshots_by_limit_id
+            .values()
+            .find_map(|snapshot| snapshot.normal_model_slug.as_deref())?;
+        if normal_model == self.current_model() {
+            return None;
+        }
         let models = self.model_catalog.try_list_models().ok()?;
         models
             .iter()
-            .find(|preset| preset.show_in_picker && preset.model == NUDGE_MODEL_SLUG)
+            .find(|preset| preset.show_in_picker && preset.model == normal_model)
             .cloned()
     }
 
@@ -395,9 +397,7 @@ impl ChatWidget {
     }
 
     pub(super) fn maybe_show_pending_rate_limit_prompt(&mut self) {
-        if self.rate_limit_switch_prompt_hidden()
-            || matches!(self.current_model(), NUDGE_MODEL_SLUG | LUNA_RESERVE_MODEL)
-        {
+        if self.rate_limit_switch_prompt_hidden() {
             self.rate_limit_switch_prompt = RateLimitSwitchPromptState::Idle;
             return;
         }

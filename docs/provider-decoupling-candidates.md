@@ -430,3 +430,22 @@ provider account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と
    詳細は compatibility inventory の `Persisted session/history compatibility`
    セクションに記録した。
 6. 未完了の各項目について producer/consumer を台帳に記録し、`remove`、`retain`、`migrate-in-place` を決めた後、`just check`、必要に応じて `just check --tests`、生成物があれば `just generate` を実行する。
+
+### Generic model boundary cleanup (2026-10-04)
+
+Producer/consumer audit for the model picker, reasoning controls, rate-limit parser and TUI,
+status-surface previews, model migration notices, and Rust test fixtures found that the following
+items were repository-owned assumptions rather than required external endpoint names:
+
+- `codex-auto-*` picker partitioning/order and reasoning-label suppression;
+- model warning checks for `gpt-5.1-codex*`/`gpt-5.2` and the Plus-plan wording;
+- the hardcoded `gpt-reserve`/`gpt-5.6-luna` TUI branches;
+- the default rate-limit bucket identifier `codex` and its TUI/core consumers;
+- the `gpt-5.2-codex` status preview and Codex/GPT model test fixtures;
+- stale GPT/Codex migration notice keys and config fields.
+
+The model catalog remains the producer of available model IDs and reasoning capabilities. Rate-limit
+nudges now consume the server-provided `normal_model_slug`, warnings are based on advertised
+reasoning effort, and the default bucket is `default`. These are `remove`/`migrate-in-place`.
+External provider model IDs, Product::Codex restrictions, GitHub/upstream fixtures, security and
+OS identities, and required endpoint wire names remain separate retained contracts.

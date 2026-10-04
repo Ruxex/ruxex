@@ -134,7 +134,6 @@ fn model_presets_with_test_upgrades() -> Vec<ModelPreset> {
     preset.model = "gpt-5.2".to_string();
     preset.upgrade = Some(ModelUpgrade {
         id: "gpt-5.5".to_string(),
-        migration_config_key: "hide_test_migration_prompt".to_string(),
         model_link: None,
         upgrade_copy: None,
         migration_markdown: None,

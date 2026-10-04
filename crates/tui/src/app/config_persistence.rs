@@ -641,10 +641,10 @@ impl App {
     }
 
     pub(super) fn reasoning_label_for(
-        model: &str,
+        _model: &str,
         reasoning_effort: Option<&ReasoningEffortConfig>,
     ) -> Option<String> {
-        (!model.starts_with("codex-auto-")).then(|| Self::reasoning_label(reasoning_effort))
+        Some(Self::reasoning_label(reasoning_effort))
     }
 
     pub(crate) fn token_usage(&self) -> crate::token_usage::TokenUsage {

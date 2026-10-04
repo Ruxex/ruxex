@@ -1893,6 +1893,9 @@ pub struct RateLimitSnapshot {
     pub rate_limit_reached_type: Option<RateLimitReachedType>,
 }
 
+/// Stable identifier used when a server does not distinguish multiple metered limit buckets.
+pub const DEFAULT_RATE_LIMIT_ID: &str = "default";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
@@ -5717,7 +5720,7 @@ mod tests {
                 parent_thread_id: None,
                 thread_source: None,
                 thread_name: None,
-                model: "codex-mini-latest".to_string(),
+                model: "example-model".to_string(),
                 model_provider_id: "provider".to_string(),
                 service_tier: None,
                 approval_policy: AskForApproval::Never,
@@ -5737,7 +5740,7 @@ mod tests {
                 "type": "session_configured",
                 "session_id": "67e55044-10b1-426f-9247-bb680e5fe0c7",
                 "thread_id": "67e55044-10b1-426f-9247-bb680e5fe0c8",
-                "model": "codex-mini-latest",
+                "model": "example-model",
                 "model_provider_id": "provider",
                 "approval_policy": "never",
                 "permission_profile": permission_profile,
@@ -5755,7 +5758,7 @@ mod tests {
         let cwd = test_path_buf("/home/user/project");
         let value = json!({
             "session_id": "67e55044-10b1-426f-9247-bb680e5fe0c8",
-            "model": "codex-mini-latest",
+            "model": "example-model",
             "model_provider_id": "provider",
             "approval_policy": "never",
             "sandbox_policy": {

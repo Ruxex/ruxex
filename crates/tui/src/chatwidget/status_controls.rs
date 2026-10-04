@@ -365,7 +365,10 @@ impl ChatWidget {
         );
         preview_data.thread_id = self.thread_id;
 
-        if self.rate_limit_snapshots_by_limit_id.contains_key("codex") {
+        if self
+            .rate_limit_snapshots_by_limit_id
+            .contains_key(genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID)
+        {
             for item in [
                 StatusSurfacePreviewItem::FiveHourLimit,
                 StatusSurfacePreviewItem::WeeklyLimit,

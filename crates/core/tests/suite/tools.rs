@@ -574,7 +574,7 @@ async fn exec_command_escalated_permissions_rejected_then_ok() -> Result<()> {
 
     let server = start_mock_server().await;
     let mut builder = test_genex()
-        .with_model("test-gpt-5-codex")
+        .with_model("test-model")
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         });

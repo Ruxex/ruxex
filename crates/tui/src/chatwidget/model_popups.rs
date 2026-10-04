@@ -4,15 +4,13 @@
 //! into another, especially while Plan mode is active.
 
 use super::*;
-use crate::model_catalog::LUNA_RESERVE_MODEL;
 
 const ULTRA_REASONING_CONCURRENCY_WARNING_THRESHOLD: usize = 8;
 pub(super) const MODEL_SELECTION_VIEW_ID: &str = "model-selection";
 pub(super) const ALL_MODELS_SELECTION_VIEW_ID: &str = "all-models-selection";
 
 impl ChatWidget {
-    /// Open a popup to choose a quick auto model. Selecting "All models"
-    /// opens the full picker with every available preset.
+    /// Open a popup with every picker-visible model from the active catalog.
     pub(crate) fn open_model_popup(&mut self) {
         if !self.is_session_configured() {
             self.add_info_message(
@@ -75,119 +73,7 @@ impl ChatWidget {
             .filter(|preset| preset.show_in_picker)
             .collect();
 
-        let current_model = self.current_model();
-        let current_label = presets
-            .iter()
-            .find(|preset| preset.model.as_str() == current_model)
-            .map(|preset| preset.model.to_string())
-            .unwrap_or_else(|| self.model_display_name().to_string());
-
-        let (mut auto_presets, other_presets): (Vec<ModelPreset>, Vec<ModelPreset>) = presets
-            .into_iter()
-            .partition(|preset| Self::is_auto_model(&preset.model));
-
-        if auto_presets.is_empty() {
-            self.open_all_models_popup_with_view_id(other_presets, MODEL_SELECTION_VIEW_ID);
-            return;
-        }
-
-        auto_presets.sort_by_key(|preset| Self::auto_model_order(&preset.model));
-        let mut items: Vec<SelectionItem> = auto_presets
-            .into_iter()
-            .map(|preset| {
-                let description =
-                    (!preset.description.is_empty()).then_some(preset.description.clone());
-                let model = preset.model.clone();
-                let requires_advanced_selection =
-                    Self::is_advanced_reasoning_effort(&preset.default_reasoning_effort)
-                        || preset
-                            .supported_reasoning_efforts
-                            .iter()
-                            .any(|option| Self::is_advanced_reasoning_effort(&option.effort));
-                let actions: Vec<SelectionAction> = if requires_advanced_selection {
-                    let preset_for_action = preset.clone();
-                    vec![Box::new(move |tx| {
-                        tx.send(AppEvent::OpenReasoningPopup {
-                            model: preset_for_action.clone(),
-                        });
-                    })]
-                } else {
-                    let should_prompt_plan_mode_scope = self
-                        .should_prompt_plan_mode_reasoning_scope(
-                            model.as_str(),
-                            Some(preset.default_reasoning_effort.clone()),
-                        );
-                    self.model_selection_actions(
-                        model.clone(),
-                        Some(preset.default_reasoning_effort.clone()),
-                        should_prompt_plan_mode_scope,
-                    )
-                };
-                SelectionItem {
-                    name: model.clone(),
-                    description,
-                    is_current: model.as_str() == current_model,
-                    is_default: preset.is_default,
-                    secondary_action: if requires_advanced_selection {
-                        None
-                    } else {
-                        self.session_model_selection_action(
-                            model.clone(),
-                            Some(preset.default_reasoning_effort),
-                        )
-                    },
-                    actions,
-                    dismiss_on_select: !requires_advanced_selection,
-                    dismiss_parent_on_child_accept: requires_advanced_selection,
-                    ..Default::default()
-                }
-            })
-            .collect();
-
-        if !other_presets.is_empty() {
-            let actions: Vec<SelectionAction> = vec![Box::new(|tx| {
-                tx.send(AppEvent::OpenAllModelsPopup);
-            })];
-
-            let is_current = !items.iter().any(|item| item.is_current);
-            let description = Some(format!(
-                "Choose a specific model and reasoning level (current: {current_label})"
-            ));
-
-            items.push(SelectionItem {
-                name: "All models".to_string(),
-                description,
-                is_current,
-                actions,
-                dismiss_on_select: true,
-                ..Default::default()
-            });
-        }
-
-        let header = self.model_menu_header(
-            "Select Model",
-            "Pick a quick auto mode or browse all models.",
-        );
-        self.show_model_selection_view(SelectionViewParams {
-            view_id: Some(MODEL_SELECTION_VIEW_ID),
-            footer_hint: Some(standard_popup_hint_line()),
-            items,
-            header,
-            ..Default::default()
-        });
-    }
-
-    pub(super) fn is_auto_model(model: &str) -> bool {
-        model.starts_with("codex-auto-")
-    }
-
-    fn auto_model_order(model: &str) -> usize {
-        match model {
-            "codex-auto-fast" => 0,
-            "codex-auto-balanced" => 1,
-            "codex-auto-thorough" => 2,
-            _ => 3,
-        }
+        self.open_all_models_popup_with_view_id(presets, MODEL_SELECTION_VIEW_ID);
     }
 
     pub(crate) fn open_all_models_popup(&mut self) {
@@ -196,7 +82,7 @@ impl ChatWidget {
             .try_list_models()
             .unwrap_or_default()
             .into_iter()
-            .filter(|preset| preset.show_in_picker && !Self::is_auto_model(&preset.model))
+            .filter(|preset| preset.show_in_picker)
             .collect();
         self.open_all_models_popup_with_view_id(presets, ALL_MODELS_SELECTION_VIEW_ID);
     }
@@ -310,7 +196,6 @@ impl ChatWidget {
         selected_effort: Option<ReasoningEffortConfig>,
     ) -> bool {
         if !self.collaboration_modes_enabled()
-            || selected_model == LUNA_RESERVE_MODEL
             || self.active_mode_kind() != ModeKind::Plan
             || selected_model != self.current_model()
         {
@@ -462,11 +347,8 @@ impl ChatWidget {
         };
         let warning_text = warn_effort.as_ref().map(|effort| {
             let effort_label = Self::reasoning_effort_label(effort);
-            format!("⚠ {effort_label} reasoning effort can quickly consume Plus plan rate limits.")
+            format!("⚠ {effort_label} reasoning effort can quickly consume account limits.")
         });
-        let warn_for_model = preset.model.starts_with("gpt-5.1-codex")
-            || preset.model.starts_with("gpt-5.1-codex-max")
-            || preset.model.starts_with("gpt-5.2");
 
         let mut all_choices: Vec<ReasoningEffortConfig> = supported
             .iter()
@@ -501,11 +383,7 @@ impl ChatWidget {
             .then(|| default_effort.clone());
 
         let model_slug = preset.model.to_string();
-        let model_label = if model_slug == LUNA_RESERVE_MODEL {
-            preset.display_name.clone()
-        } else {
-            model_slug.clone()
-        };
+        let model_label = model_slug.clone();
         let is_current_model = self.current_model() == preset.model.as_str();
         let highlight_choice = if is_current_model {
             if in_plan_mode {
@@ -537,7 +415,7 @@ impl ChatWidget {
                 .map(|option| option.description.to_string())
                 .filter(|text| !text.is_empty());
 
-            let show_warning = warn_for_model && warn_effort.as_ref() == Some(&effort);
+            let show_warning = warn_effort.as_ref() == Some(&effort);
             let selected_description = if show_warning {
                 warning_text.as_ref().map(|warning_message| {
                     description.as_ref().map_or_else(

@@ -602,7 +602,7 @@ mod tests {
                 thread_id: None,
                 thread_settings: ThreadSettingsSnapshot {
                     disabled_plugin_ids: Vec::new(),
-                    model: "gpt-5.2-codex".to_string(),
+                    model: "example-model".to_string(),
                     model_provider_id: "updated-provider".to_string(),
                     service_tier: None,
                     approval_policy: AskForApproval::Never,
@@ -615,7 +615,7 @@ mod tests {
                     collaboration_mode: CollaborationMode {
                         mode: ModeKind::Default,
                         settings: Settings {
-                            model: "gpt-5.2-codex".to_string(),
+                            model: "example-model".to_string(),
                             reasoning_effort: Some(ReasoningEffort::Ultra),
                             developer_instructions: None,
                         },
@@ -627,7 +627,7 @@ mod tests {
         assert!(rollout_item_affects_thread_metadata(&item));
         apply_rollout_item(&mut metadata, &item, "test-provider");
 
-        assert_eq!(metadata.model.as_deref(), Some("gpt-5.2-codex"));
+        assert_eq!(metadata.model.as_deref(), Some("example-model"));
         assert_eq!(metadata.model_provider, "updated-provider");
         assert_eq!(metadata.reasoning_effort, Some(ReasoningEffort::Ultra));
         assert_eq!(metadata.cwd, cwd);

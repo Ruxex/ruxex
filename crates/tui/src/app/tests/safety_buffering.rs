@@ -26,8 +26,8 @@ use pretty_assertions::assert_eq;
 use serde_json::Value;
 use tokio::sync::oneshot;
 
-const CURRENT_MODEL: &str = "gpt-5.6-terra";
-const FASTER_MODEL: &str = "gpt-5.6-luna";
+const CURRENT_MODEL: &str = "current-model";
+const FASTER_MODEL: &str = "fallback-model";
 const MODEL_PROVIDER_ID: &str = "safety-retry-test";
 const PREVIOUS_PROMPT: &str = "Establish context";
 const RETRY_PROMPT: &str = "Handle the safety-buffered request";

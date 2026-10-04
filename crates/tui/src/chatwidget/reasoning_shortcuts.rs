@@ -130,11 +130,7 @@ impl ChatWidget {
             } else {
                 "is"
             };
-            let model_path = if current_model.starts_with("codex-auto-") {
-                current_model
-            } else {
-                format!("All models → {current_model}")
-            };
+            let model_path = format!("Models → {current_model}");
             self.add_info_message(
                 format!(
                     "{advanced_label} {verb} available under /model → {model_path} → More reasoning…"

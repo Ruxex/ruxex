@@ -86,7 +86,7 @@ type ConfigMutator = dyn FnOnce(&mut Config) + Send;
 type PreBuildHook = dyn FnOnce(&Path) + Send + 'static;
 type WorkspaceSetup = dyn FnOnce(AbsolutePathBuf, Arc<dyn ExecutorFileSystem>) -> BoxFuture<'static, Result<()>>
     + Send;
-const TEST_MODEL_WITH_EXPERIMENTAL_TOOLS: &str = "test-gpt-5.1-codex";
+const TEST_MODEL_WITH_EXPERIMENTAL_TOOLS: &str = "test-model-with-experimental-tools";
 const REMOTE_EXEC_SERVER_URL_ENV_VAR: &str = "GENEX_TEST_REMOTE_EXEC_SERVER_URL";
 static REMOTE_TEST_INSTANCE_COUNTER: AtomicU64 = AtomicU64::new(0);
 const SUBMIT_TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);

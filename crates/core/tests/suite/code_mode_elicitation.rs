@@ -54,7 +54,7 @@ impl CodeModeElicitationHarness {
         let server = responses::start_mock_server().await;
         let mut builder =
             test_genex()
-                .with_model("test-gpt-5.1-codex")
+                .with_model("test-model")
                 .with_config(move |config| {
                     let _ = config.features.enable(Feature::CodeMode);
                     configure(config);

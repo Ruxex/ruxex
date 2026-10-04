@@ -50,10 +50,10 @@ use wiremock::MockServer;
 
 const ETAG: &str = "\"models-etag-ttl\"";
 const CACHE_FILE: &str = "models_cache.json";
-const REMOTE_MODEL: &str = "codex-test-ttl";
-const VERSIONED_MODEL: &str = "codex-test-versioned";
-const MISSING_VERSION_MODEL: &str = "codex-test-missing-version";
-const DIFFERENT_VERSION_MODEL: &str = "codex-test-different-version";
+const REMOTE_MODEL: &str = "test-model-ttl";
+const VERSIONED_MODEL: &str = "test-model-versioned";
+const MISSING_VERSION_MODEL: &str = "test-model-missing-version";
+const DIFFERENT_VERSION_MODEL: &str = "test-model-different-version";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
@@ -65,7 +65,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
         models: bundled
             .models
             .into_iter()
-            .filter(|model| ["gpt-5.4", "codex-auto-review"].contains(&model.slug.as_str()))
+            .filter(|model| ["gpt-5.4", "review-model"].contains(&model.slug.as_str()))
             .collect(),
     };
     assert_eq!(catalog.models.len(), 2);
@@ -139,7 +139,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
     for request in &guardian_requests {
         assert_eq!(
             request.body_json()["model"].as_str(),
-            Some("codex-auto-review")
+            Some("review-model")
         );
     }
     let guardian_thread = guardian_requests[0].body_json()["client_metadata"]["thread_id"]

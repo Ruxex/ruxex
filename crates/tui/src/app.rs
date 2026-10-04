@@ -124,8 +124,6 @@ use genex_config::types::ModelAvailabilityNuxConfig;
 use genex_exec_server::EnvironmentManager;
 use genex_features::Feature;
 use genex_features::FeaturesToml;
-use genex_models_manager::model_presets::HIDE_GPT_5_1_GENEX_MAX_MIGRATION_PROMPT_CONFIG;
-use genex_models_manager::model_presets::HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG;
 use genex_otel::SessionTelemetry;
 use genex_protocol::ThreadId;
 use genex_protocol::model_types::ModelAvailabilityNux;

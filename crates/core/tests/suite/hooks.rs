@@ -4155,7 +4155,7 @@ text(output.output);
 
     let updated_input = serde_json::json!({ "command": rewritten_command });
     let mut builder = test_genex()
-        .with_model("test-gpt-5.1-codex")
+        .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^Bash$", &updated_input)
                 .expect("failed to write updating pre tool use hook fixture");
@@ -4235,7 +4235,7 @@ try {{
 
     let reason = "blocked nested command";
     let mut builder = test_genex()
-        .with_model("test-gpt-5.1-codex")
+        .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny", reason)
                 .expect("failed to write blocking pre tool use hook fixture");
@@ -4314,7 +4314,7 @@ try {{
     .await;
 
     let mut builder = test_genex()
-        .with_model("test-gpt-5.1-codex")
+        .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_post_tool_use_hook(home, Some("^Bash$"), hook_mode, reason)
                 .expect("failed to write blocking post tool use hook fixture");
@@ -5298,7 +5298,7 @@ async fn pre_tool_use_blocks_local_function_tool_before_execution() -> Result<()
 
     let reason = "blocked local function pre hook";
     let mut builder = test_genex()
-        .with_model("test-gpt-5.1-codex")
+        .with_model("test-model")
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^test_sync_tool$"), "json_deny", reason)
                 .expect("failed to write pre tool use hook test fixture");
@@ -5368,7 +5368,7 @@ async fn pre_tool_use_rewrites_local_function_tool_before_execution() -> Result<
 
     let updated_input = serde_json::json!({});
     let mut builder = test_genex()
-        .with_model("test-gpt-5.1-codex")
+        .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^test_sync_tool$", &updated_input)
                 .expect("failed to write updating pre tool use hook test fixture");

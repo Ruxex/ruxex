@@ -63,7 +63,7 @@ use unicode_width::UnicodeWidthStr;
 fn stale_monthly_limit_marks_fresh_rolling_snapshot_stale() {
     let now = Local::now();
     let snapshot = RateLimitSnapshotDisplay {
-        limit_name: "codex".to_string(),
+        limit_name: "default".to_string(),
         normal_model_slug: None,
         captured_at: now,
         primary: Some(RateLimitWindowDisplay {
@@ -287,7 +287,7 @@ fn permissions_text_for_width(config: &Config, width: u16) -> Option<String> {
 async fn status_permissions_non_default_workspace_write_uses_workspace_label() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
-    config.model = Some("gpt-5.1-codex-max".to_string());
+    config.model = Some("example-model".to_string());
     config.model_provider_id = "provider".to_string();
     config
         .permissions
@@ -828,7 +828,7 @@ async fn status_snapshot_respects_unlimited_without_has_credits_flag() {
 async fn status_card_token_usage_excludes_cached_tokens() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
-    config.model = Some("gpt-5.1-codex-max".to_string());
+    config.model = Some("example-model".to_string());
     set_workspace_cwd(&mut config, test_path_buf("/workspace/tests").abs());
 
     let account_display = test_status_account_display();

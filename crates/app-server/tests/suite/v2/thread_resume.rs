@@ -1184,7 +1184,7 @@ async fn thread_resume_preserves_goal_first_and_fork_approvals_reviewer() -> Res
 
         let start_id = mcp
             .send_thread_start_request_with_auto_env(ThreadStartParams {
-                model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
                 approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
                 history_mode: Some(ThreadHistoryMode::Paginated),
                 ..Default::default()
@@ -1364,7 +1364,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
         let update_id = mcp
             .send_thread_settings_update_request(ThreadSettingsUpdateParams {
                 thread_id: thread.id.clone(),
-                model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
                 effort: Some(ReasoningEffort::Ultra),
                 approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
                 cwd: Some(persisted_cwd.clone()),
@@ -1427,7 +1427,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
         ..
     } = timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(resume_id)).await??;
 
-    assert_eq!(model, "gpt-5.2-codex");
+    assert_eq!(model, "example-model");
     assert_eq!(reasoning_effort, Some(ReasoningEffort::Ultra));
     assert_eq!(approvals_reviewer, ApprovalsReviewer::AutoReview);
     assert_eq!(thread.cwd.as_path(), live_cwd);
@@ -1440,7 +1440,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
             collaboration_mode: Some(CollaborationMode {
                 mode: ModeKind::Plan,
                 settings: Settings {
-                    model: "gpt-5.2-codex".to_string(),
+                    model: "example-model".to_string(),
                     reasoning_effort: None,
                     developer_instructions: Some("Persisted plan instructions".to_string()),
                 },
@@ -1522,7 +1522,7 @@ async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() ->
     let saved_mode = CollaborationMode {
         mode: ModeKind::Plan,
         settings: Settings {
-            model: "gpt-5.2-codex".into(),
+            model: "example-model".into(),
             reasoning_effort: Some(ReasoningEffort::Low),
             developer_instructions: Some("Legacy plan instructions".into()),
         },
@@ -1945,7 +1945,7 @@ async fn thread_goal_get_rejects_unmaterialized_thread() -> Result<()> {
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
             ephemeral: Some(true),
             ..Default::default()
         })
@@ -2247,7 +2247,7 @@ async fn goal_first_live_thread_appears_in_state_db_thread_list() -> Result<()> 
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -2746,7 +2746,7 @@ async fn thread_resume_keeps_tool_paused_goal_paused() -> Result<()> {
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -2830,7 +2830,7 @@ async fn thread_goal_set_enforces_configured_maximum_token_budget() -> Result<()
         .await?;
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
             config: Some(
                 [("goals.max_goal_token_budget".to_string(), json!(100))]
                     .into_iter()
@@ -2923,7 +2923,7 @@ async fn thread_goal_set_preserves_budget_limited_same_objective() -> Result<()>
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -3009,7 +3009,7 @@ async fn thread_goal_set_persists_resumable_stopped_statuses() -> Result<()> {
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -3413,7 +3413,7 @@ async fn thread_goal_lifecycle_emits_analytics_and_clear_deletes_goal() -> Resul
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2-codex".to_string()),
+                model: Some("example-model".to_string()),
             ..Default::default()
         })
         .await?;

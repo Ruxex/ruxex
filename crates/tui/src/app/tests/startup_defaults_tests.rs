@@ -81,7 +81,6 @@ async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
         .expect("client model in catalog");
     client_preset.upgrade = Some(genex_protocol::model_types::ModelUpgrade {
         id: "server-model".into(),
-        migration_config_key: "test-fork-migration".into(),
         model_link: None,
         upgrade_copy: None,
         migration_markdown: None,

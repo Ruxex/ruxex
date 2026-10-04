@@ -141,19 +141,19 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
 
     let server = MockServer::start().await;
     let generic = test_remote_model_with_policy(
-        "gpt-5.3",
+        "model-5.3",
         ModelVisibility::List,
         /*priority*/ 1_000,
         TruncationPolicyConfig::bytes(/*limit*/ 10_000),
     );
     let specific = test_remote_model_with_policy(
-        "gpt-5.3-codex",
+        "model-5.3-special",
         ModelVisibility::List,
         /*priority*/ 1_000,
         TruncationPolicyConfig::bytes(/*limit*/ 10_000),
     );
     let specific = ModelInfo {
-        display_name: "GPT 5.3 Codex".to_string(),
+        display_name: "Model 5.3 Special".to_string(),
         model_messages: Some(ModelMessages {
             instructions_template: Some("use specific prefix".to_string()),
             ..Default::default()
@@ -161,7 +161,7 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
         ..specific
     };
     let generic = ModelInfo {
-        display_name: "GPT 5.3".to_string(),
+        display_name: "Model 5.3".to_string(),
         model_messages: Some(ModelMessages {
             instructions_template: Some("use generic prefix".to_string()),
             ..Default::default()
@@ -198,10 +198,10 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
         .await;
 
     let model_info = manager
-        .get_model_info("gpt-5.3-codex-test", &config.to_models_manager_config())
+        .get_model_info("model-5.3-special-test", &config.to_models_manager_config())
         .await;
 
-    assert_eq!(model_info.slug, "gpt-5.3-codex-test");
+    assert_eq!(model_info.slug, "model-5.3-special-test");
     assert_eq!(
         render_model_instructions(&model_info),
         render_model_instructions(&specific)
@@ -406,8 +406,8 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let requested_model = "gpt-5.3-codex-test";
-    let prefix_model = "gpt-5.3-codex";
+    let requested_model = "model-5.3-special-test";
+    let prefix_model = "model-5.3-special";
     let base_instructions = "Keep the catalog base instructions.";
     let developer_instructions = "Keep the configured developer instructions.";
     let mut remote_model = test_remote_model_with_policy(
@@ -516,7 +516,7 @@ async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() 
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let requested_model = "custom/gpt-5.5-codex";
+    let requested_model = "custom/example-model";
     let response_mock = mount_sse_once(
         &server,
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
@@ -1308,7 +1308,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
 
     let server = MockServer::start().await;
     let remote_model = test_remote_model(
-        "codex-auto-balanced",
+        "review-model",
         ModelVisibility::Hide,
         /*priority*/ 0,
     );
@@ -1351,7 +1351,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
         .await;
     let hidden = available
         .iter()
-        .find(|model| model.model == "codex-auto-balanced")
+        .find(|model| model.model == "review-model")
         .expect("hidden remote model should be listed");
     assert!(!hidden.show_in_picker, "hidden models should remain hidden");
     assert_eq!(

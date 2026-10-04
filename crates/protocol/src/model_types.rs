@@ -190,7 +190,6 @@ pub struct ReasoningEffortPreset {
 #[derive(Debug, Clone, Deserialize, Serialize, TS, JsonSchema, PartialEq)]
 pub struct ModelUpgrade {
     pub id: String,
-    pub migration_config_key: String,
     pub model_link: Option<String>,
     pub upgrade_copy: Option<String>,
     pub migration_markdown: Option<String>,
@@ -785,7 +784,6 @@ impl From<ModelInfo> for ModelPreset {
             is_default: false, // default is the highest priority available model
             upgrade: info.upgrade.as_ref().map(|upgrade| ModelUpgrade {
                 id: upgrade.model.clone(),
-                migration_config_key: info.slug.clone(),
                 // todo(aibrahim): add the model link here.
                 model_link: None,
                 upgrade_copy: None,

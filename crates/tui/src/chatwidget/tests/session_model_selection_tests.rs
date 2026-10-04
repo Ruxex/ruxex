@@ -25,7 +25,7 @@ async fn session_model_selection_accepts_final_choices_without_saving() {
             description: "Selected effort".into(),
         }];
         if picker == "auto" {
-            preset.model = "codex-auto-test".into();
+            preset.model = "example-model".into();
         }
         let expected_model = preset.model.clone();
         if picker == "default_only" {

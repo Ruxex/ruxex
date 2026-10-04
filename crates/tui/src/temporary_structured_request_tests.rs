@@ -61,7 +61,7 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
              \":root\" = \"read\"\n\
              {denied_key} = \"deny\"\n\n\
              [mcp_servers.forbidden]\n\
-             command = \"codex-auto-title-missing-mcp\"\n\
+             command = \"example-title-missing-mcp\"\n\
              required = true\n"
         ),
     )?;

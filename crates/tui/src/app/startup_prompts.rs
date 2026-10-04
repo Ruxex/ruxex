@@ -118,21 +118,9 @@ pub(super) fn model_upgrade_for_migration(
         return preset.upgrade.clone();
     }
 
-    // Saved selections can outlive their catalog entries. Keep only their migration metadata.
-    let (target_model, current_name, target_name) = match model {
-        "gpt-5.4-mini" => ("gpt-5.6-luna", "GPT-5.4 Mini", "GPT-5.6 Luna"),
-        _ => return None,
-    };
-    Some(ModelUpgrade {
-        id: target_model.to_string(),
-        migration_config_key: model.to_string(),
-        model_link: None,
-        upgrade_copy: None,
-        migration_markdown: Some(format!(
-            "{current_name} is no longer available\n\nGenex now uses {target_name} in place of {current_name}. Switch to {target_name} to continue.\n"
-        )),
-        retirement_at: None,
-    })
+    // Saved selections can outlive their catalog entries, but migration targets must come from
+    // the active provider catalog rather than a built-in model mapping.
+    None
 }
 
 pub(super) fn should_show_model_migration_prompt(
@@ -172,22 +160,6 @@ pub(super) fn should_show_model_migration_prompt(
     }
 
     false
-}
-
-pub(super) fn migration_prompt_hidden(
-    config: &crate::local_settings::LocalSettings,
-    migration_config_key: &str,
-) -> bool {
-    match migration_config_key {
-        HIDE_GPT_5_1_GENEX_MAX_MIGRATION_PROMPT_CONFIG => config
-            .notices
-            .hide_gpt_5_1_genex_max_migration_prompt
-            .unwrap_or(false),
-        HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG => {
-            config.notices.hide_gpt5_1_migration_prompt.unwrap_or(false)
-        }
-        _ => false,
-    }
 }
 
 pub(super) fn target_preset_for_upgrade<'a>(
@@ -302,17 +274,12 @@ pub(super) async fn handle_model_migration_prompt_if_needed(
 
     if let Some(ModelUpgrade {
         id: target_model,
-        migration_config_key,
         model_link,
         upgrade_copy,
         migration_markdown,
         ..
     }) = upgrade.as_ref()
     {
-        if migration_prompt_hidden(local_settings, migration_config_key.as_str()) {
-            return Ok(None);
-        }
-
         let target_model = target_model.to_string();
         if !should_show_model_migration_prompt(
             model,

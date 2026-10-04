@@ -67,7 +67,7 @@ async fn exec_command_tool_executes_command_and_streams_output() -> anyhow::Resu
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("test-gpt-5-codex");
+    let mut builder = test_genex().with_model("test-model");
     let TestGenex {
         genex,
         cwd,

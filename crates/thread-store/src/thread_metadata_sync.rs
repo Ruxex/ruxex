@@ -636,7 +636,7 @@ mod tests {
                 thread_id: None,
                 thread_settings: ThreadSettingsSnapshot {
                     disabled_plugin_ids: Vec::new(),
-                    model: "gpt-5.2-codex".to_string(),
+                    model: "example-model".to_string(),
                     model_provider_id: "updated-provider".to_string(),
                     service_tier: None,
                     approval_policy: AskForApproval::Never,
@@ -649,7 +649,7 @@ mod tests {
                     collaboration_mode: CollaborationMode {
                         mode: ModeKind::Default,
                         settings: Settings {
-                            model: "gpt-5.2-codex".to_string(),
+                            model: "example-model".to_string(),
                             reasoning_effort: Some(ReasoningEffort::Ultra),
                             developer_instructions: None,
                         },
@@ -662,7 +662,7 @@ mod tests {
             .observe_appended_items(&[item.clone()])
             .expect("thread settings metadata update");
 
-        assert_eq!(update.patch.model.as_deref(), Some("gpt-5.2-codex"));
+        assert_eq!(update.patch.model.as_deref(), Some("example-model"));
         assert_eq!(
             update.patch.model_provider.as_deref(),
             Some("updated-provider")

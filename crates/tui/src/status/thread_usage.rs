@@ -263,36 +263,7 @@ fn grouped_usage(
 }
 
 fn format_model_display_name(model: &str) -> String {
-    let model = crate::model_catalog::model_display_name(model);
-    let Some((prefix, remainder)) = model.split_once('-') else {
-        return model.to_string();
-    };
-    if !prefix.eq_ignore_ascii_case("gpt") || remainder.is_empty() {
-        return model.to_string();
-    }
-
-    let mut segments = remainder.split('-');
-    let first = segments.next().unwrap_or_default();
-    let mut display_name = format!("GPT-{first}");
-    let numeric_model = first
-        .chars()
-        .next()
-        .is_some_and(|character| character.is_ascii_digit());
-    for segment in segments {
-        display_name.push(if numeric_model { ' ' } else { '-' });
-        if segment.eq_ignore_ascii_case("oai") {
-            display_name.push_str("OAI");
-            continue;
-        }
-
-        let mut characters = segment.chars();
-        if let Some(first_character) = characters.next() {
-            display_name.extend(first_character.to_uppercase());
-            display_name.push_str(characters.as_str());
-        }
-    }
-
-    display_name
+    model.to_string()
 }
 
 pub(crate) fn format_credit_micros(micros: i64) -> String {

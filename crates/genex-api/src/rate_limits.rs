@@ -1,5 +1,6 @@
 use genex_protocol::account::PlanType;
 use genex_protocol::protocol::CreditsSnapshot;
+use genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
 use genex_protocol::protocol::RateLimitSnapshot;
 use genex_protocol::protocol::RateLimitWindow;
 use http::HeaderMap;
@@ -18,7 +19,7 @@ impl Display for RateLimitError {
     }
 }
 
-/// Parses the default Codex rate-limit header family into a `RateLimitSnapshot`.
+/// Parses the default rate-limit header family into a `RateLimitSnapshot`.
 pub fn parse_default_rate_limit(headers: &HeaderMap) -> Option<RateLimitSnapshot> {
     parse_rate_limit_for_limit(headers, /*limit_id*/ None)
 }
@@ -35,7 +36,7 @@ pub fn parse_all_rate_limits(headers: &HeaderMap) -> Vec<RateLimitSnapshot> {
     for name in headers.keys() {
         let header_name = name.as_str().to_ascii_lowercase();
         if let Some(limit_id) = header_name_to_limit_id(&header_name)
-            && limit_id != "codex"
+            && limit_id != DEFAULT_RATE_LIMIT_ID
         {
             limit_ids.insert(limit_id);
         }
@@ -51,8 +52,8 @@ pub fn parse_all_rate_limits(headers: &HeaderMap) -> Vec<RateLimitSnapshot> {
 
 /// Parses rate-limit headers for the provided limit id.
 ///
-/// `limit_id` should match the server-provided metered limit id (e.g. `codex`,
-/// `genex_other`). When omitted, this defaults to the legacy `codex` header family.
+/// `limit_id` should match the server-provided metered limit id (e.g. `default`,
+/// `genex_other`). When omitted, this defaults to the `default` header family.
 pub fn parse_rate_limit_for_limit(
     headers: &HeaderMap,
     limit_id: Option<&str>,
@@ -60,7 +61,7 @@ pub fn parse_rate_limit_for_limit(
     let normalized_limit = limit_id
         .map(str::trim)
         .filter(|name| !name.is_empty())
-        .unwrap_or("codex")
+        .unwrap_or(DEFAULT_RATE_LIMIT_ID)
         .to_ascii_lowercase()
         .replace('_', "-");
     let prefix = format!("x-{normalized_limit}");
@@ -154,7 +155,7 @@ pub fn parse_rate_limit_event(payload: &str) -> Option<RateLimitSnapshot> {
         .or(event.limit_name)
         .map(normalize_limit_id);
     Some(RateLimitSnapshot {
-        limit_id: Some(limit_id.unwrap_or_else(|| "codex".to_string())),
+        limit_id: Some(limit_id.unwrap_or_else(|| DEFAULT_RATE_LIMIT_ID.to_string())),
         limit_name: None,
         normal_model_slug: None,
         primary,
@@ -278,7 +279,7 @@ mod tests {
         );
 
         let snapshot = parse_rate_limit_for_limit(&headers, /*limit_id*/ None).expect("snapshot");
-        assert_eq!(snapshot.limit_id.as_deref(), Some("codex"));
+        assert_eq!(snapshot.limit_id.as_deref(), Some(DEFAULT_RATE_LIMIT_ID));
         assert_eq!(snapshot.limit_name, None);
         let primary = snapshot.primary.expect("primary");
         assert_eq!(primary.used_percent, 12.5);
@@ -322,13 +323,13 @@ mod tests {
         );
         headers.insert(
             "x-genex-bengalfox-limit-name",
-            HeaderValue::from_static("gpt-5.2-codex-sonic"),
+            HeaderValue::from_static("example-model"),
         );
 
         let snapshot =
             parse_rate_limit_for_limit(&headers, Some("genex_bengalfox")).expect("snapshot");
         assert_eq!(snapshot.limit_id.as_deref(), Some("genex_bengalfox"));
-        assert_eq!(snapshot.limit_name.as_deref(), Some("gpt-5.2-codex-sonic"));
+        assert_eq!(snapshot.limit_name.as_deref(), Some("example-model"));
     }
 
     #[test]
@@ -345,7 +346,7 @@ mod tests {
 
         let updates = parse_all_rate_limits(&headers);
         assert_eq!(updates.len(), 2);
-        assert_eq!(updates[0].limit_id.as_deref(), Some("codex"));
+        assert_eq!(updates[0].limit_id.as_deref(), Some(DEFAULT_RATE_LIMIT_ID));
         assert_eq!(updates[1].limit_id.as_deref(), Some("genex_secondary"));
         assert_eq!(updates[0].limit_name, None);
         assert_eq!(updates[1].limit_name, None);
@@ -357,7 +358,7 @@ mod tests {
 
         let updates = parse_all_rate_limits(&headers);
         assert_eq!(updates.len(), 1);
-        assert_eq!(updates[0].limit_id.as_deref(), Some("codex"));
+        assert_eq!(updates[0].limit_id.as_deref(), Some(DEFAULT_RATE_LIMIT_ID));
         assert_eq!(updates[0].limit_name, None);
         assert_eq!(updates[0].primary, None);
         assert_eq!(updates[0].secondary, None);

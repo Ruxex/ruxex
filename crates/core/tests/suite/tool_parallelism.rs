@@ -77,7 +77,7 @@ async fn run_turn_and_measure(test: &TestGenex, prompt: &str) -> anyhow::Result<
 }
 
 async fn build_genex_with_test_tool(server: &wiremock::MockServer) -> anyhow::Result<TestGenex> {
-    let mut builder = test_genex().with_model("test-gpt-5.1-codex");
+    let mut builder = test_genex().with_model("test-model");
     builder.build(server).await
 }
 
