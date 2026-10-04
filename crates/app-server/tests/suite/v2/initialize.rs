@@ -102,7 +102,7 @@ async fn initialize_probe_does_not_override_originator() -> Result<()> {
 }
 
 #[tokio::test]
-async fn initialize_codex_backend_does_not_override_originator() -> Result<()> {
+async fn initialize_genex_backend_does_not_override_originator() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
     let genex_home = TempDir::new()?;
@@ -118,8 +118,8 @@ async fn initialize_codex_backend_does_not_override_originator() -> Result<()> {
     let message = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_client_info(ClientInfo {
-            name: "codex-backend".to_string(),
-            title: Some("Codex Backend".to_string()),
+            name: "genex-backend".to_string(),
+            title: Some("Genex Backend".to_string()),
             version: "0.1.0".to_string(),
         }),
     )

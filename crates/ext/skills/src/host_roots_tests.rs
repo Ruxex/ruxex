@@ -244,7 +244,7 @@ fn expected_skill(path: AbsolutePathBuf, name: &str, scope: SkillScope) -> Skill
 #[test]
 fn layer_roots_preserve_scope_precedence_and_disabled_projects() {
     let temp_dir = TempDir::new().expect("temp dir");
-    let system_folder = absolute(temp_dir.path().join("etc/codex"));
+    let system_folder = absolute(temp_dir.path().join("etc/genex"));
     let home_folder = absolute(temp_dir.path().join("home"));
     let user_folder = home_folder.join("genex");
     let project_folder = absolute(temp_dir.path().join("repo/.genex"));
@@ -599,7 +599,7 @@ async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_name
     let temp_dir = TempDir::new().expect("temp dir");
     let home_folder = absolute(temp_dir.path().join("home"));
     let genex_home = home_folder.join("genex");
-    let system_folder = absolute(temp_dir.path().join("etc/codex"));
+    let system_folder = absolute(temp_dir.path().join("etc/genex"));
     let repository = absolute(temp_dir.path().join("repo"));
     let cwd = repository.join("nested/inner");
     fs::create_dir_all(&cwd).expect("create cwd");

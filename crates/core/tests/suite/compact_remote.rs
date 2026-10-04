@@ -35,7 +35,7 @@ use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_genex::TestGenexBuilder;
 use core_test_support::test_genex::TestGenexHarness;
-use core_test_support::test_genex::test_genex as base_test_codex;
+use core_test_support::test_genex::test_genex as base_test_genex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_event_with_timeout;
@@ -58,7 +58,7 @@ const CONTEXT_WINDOW_TRUNCATED_OUTPUT_MESSAGE: &str =
     "Output exceeded the available model context and was truncated";
 
 fn test_genex() -> TestGenexBuilder {
-    base_test_codex().with_config(|config| {
+    base_test_genex().with_config(|config| {
         config.update_plan_enabled = true;
     })
 }

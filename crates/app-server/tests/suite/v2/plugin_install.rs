@@ -2624,7 +2624,7 @@ async fn start_apps_server(
         )
         .route("/ps/apps/batch", post(batch_apps))
         .with_state(state)
-        .nest_service("/api/codex/ps/mcp", mcp_service);
+        .nest_service("/api/genex/ps/mcp", mcp_service);
 
     let handle = tokio::spawn(async move {
         let _ = axum::serve(listener, router).await;
@@ -2749,7 +2749,7 @@ fn write_analytics_config(genex_home: &std::path::Path, base_url: &str) -> std::
 
 async fn mount_backend_analytics_events(server: &MockServer) {
     Mock::given(method("POST"))
-        .and(path("/backend-api/codex/analytics-events/events"))
+        .and(path("/backend-api/genex/analytics-events/events"))
         .respond_with(ResponseTemplate::new(200).set_body_string(r#"{"status":"ok"}"#))
         .mount(server)
         .await;
@@ -2770,7 +2770,7 @@ async fn wait_for_plugin_analytics_payload(
                     && request
                         .url
                         .path()
-                        .ends_with("/codex/analytics-events/events")
+                        .ends_with("/genex/analytics-events/events")
             }) {
                 let mut payload: serde_json::Value = serde_json::from_slice(&request.body)
                     .map_err(|err| anyhow::anyhow!("invalid analytics payload: {err}"))?;
@@ -2803,7 +2803,7 @@ async fn plugin_analytics_wait_ignores_unrelated_requests_and_batched_events() -
     ] {
         client
             .post(format!(
-                "{}/backend-api/codex/analytics-events/events",
+                "{}/backend-api/genex/analytics-events/events",
                 server.uri()
             ))
             .json(&json!({"events": events}))

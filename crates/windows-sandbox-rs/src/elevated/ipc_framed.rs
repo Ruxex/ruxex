@@ -207,7 +207,7 @@ mod tests {
                     tty: false,
                     stdin_open: false,
                     use_private_desktop: true,
-                    private_desktop_name: Some("CodexSandboxDesktop-1234".to_string()),
+                    private_desktop_name: Some("GenexSandboxDesktop-1234".to_string()),
                 }),
             },
         };
@@ -226,7 +226,7 @@ mod tests {
         assert_eq!(PermissionProfile::read_only(), payload.permission_profile);
         assert_eq!(workspace_roots, payload.workspace_roots);
         assert_eq!(
-            Some("CodexSandboxDesktop-1234"),
+            Some("GenexSandboxDesktop-1234"),
             payload.private_desktop_name.as_deref()
         );
         assert_eq!(

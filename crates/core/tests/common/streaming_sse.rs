@@ -117,13 +117,13 @@ pub async fn start_streaming_sse_server(
                             return;
                         }
 
-                        let responses_route = matches!(path, "/v1/responses" | "/backend-api/codex/responses");
+                        let responses_route = matches!(path, "/v1/responses" | "/backend-api/genex/responses");
                         if method == "GET" && responses_route {
                             let _ = write_http_response(&mut stream, /*status*/ 426, "websockets unsupported", "text/plain").await;
                             return;
                         }
 
-                        if method == "POST" && (responses_route || path == "/backend-api/codex/guardian") {
+                        if method == "POST" && (responses_route || path == "/backend-api/genex/guardian") {
                             let body = match read_request_body(&mut stream, &request, body_prefix)
                                 .await
                             {

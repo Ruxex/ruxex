@@ -211,7 +211,7 @@ mod tests {
     async fn response_body_limit_survives_auth_retry_without_limiting_other_models_requests() {
         let transport = CapturingTransport::default();
         let auth = Arc::new(RetryAuth::default());
-        let mut provider = provider("https://example.com/api/codex");
+        let mut provider = provider("https://example.com/api/genex");
         provider.retry.max_attempts = 2;
         let request_url = ModelsClient::<CapturingTransport>::request_url(&provider, "0.99.0");
         let client = ModelsClient::new(transport.clone(), provider, auth.clone());
@@ -263,7 +263,7 @@ mod tests {
             etag: None,
         };
 
-        let provider = provider("https://example.com/api/codex");
+        let provider = provider("https://example.com/api/genex");
         let request_url = ModelsClient::<CapturingTransport>::request_url(&provider, "0.99.0");
         let client = ModelsClient::new(transport.clone(), provider, Arc::new(DummyAuth));
 
@@ -284,7 +284,7 @@ mod tests {
             .clone();
         assert_eq!(
             url,
-            "https://example.com/api/codex/models?client_version=0.99.0"
+            "https://example.com/api/genex/models?client_version=0.99.0"
         );
     }
 
@@ -322,7 +322,7 @@ mod tests {
             etag: None,
         };
 
-        let provider = provider("https://example.com/api/codex");
+        let provider = provider("https://example.com/api/genex");
         let request_url = ModelsClient::<CapturingTransport>::request_url(&provider, "0.99.0");
         let client = ModelsClient::new(transport, provider, Arc::new(DummyAuth));
 
@@ -347,7 +347,7 @@ mod tests {
             etag: Some("\"abc\"".to_string()),
         };
 
-        let provider = provider("https://example.com/api/codex");
+        let provider = provider("https://example.com/api/genex");
         let request_url = ModelsClient::<CapturingTransport>::request_url(&provider, "0.1.0");
         let client = ModelsClient::new(transport, provider, Arc::new(DummyAuth));
 

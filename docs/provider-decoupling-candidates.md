@@ -399,6 +399,15 @@ Apps、`codex_apps`、Apps entitlement、host-owned Apps MCP の現行経路と�
 
 provider account/entitlement、host-owned Apps MCP、Apps 固有 UI/protocol と、通常の MCP、OAuth/elicitation、provider-neutral metadata/security behavior を分けて監査する。
 
+### 3.5 Genex 内部 API・OS セキュリティ・UI の残存名（2026-10-05）
+
+producer/consumer をリポジトリ内で再監査した結果、次の範囲は外部利用者向け互換層ではなく、本リポジトリ内の producer と consumer を同時に変更できる対象とした。
+
+- `api/genex`、`backend-api/genex`、`genex/analytics-events`、`genex/alpha` への内部 route/fixture を `migrate-in-place`。OpenAI endpoint の `/v1/responses`、wire field、認証 header/env、モデル ID は対象外。
+- Windows/macOS/Linux の Genex-owned sandbox/package/config/security identifiers（`GenexSandbox`、`com.genex`、`/etc/genex`、`genex-linux-sandbox`、Genex WFP/provisioning/helper names）を `migrate-in-place`。trust/enforcement の判定ロジックは変更しない。
+- 内部テストの temporary path、model slug、workspace/network fixture、app-server/TUI の Genex-owned client/backend labels、`dotGenexFolder`、Genex UI 文言を `migrate-in-place`。
+- MCP/VS Code client identities and metadata keys、Agent Plugin の `.codex-plugin`/`com.codex` manifest namespace、GitHub repository/attachment identity、Product::Codex、外部 package/installer/upstream URL、OpenAI/Bedrock wire values は `retain`。これらは外部プロトコル、既存サービス、第三者パッケージ、履歴データ、または provider endpoint の契約であり、内部名の残存数には含めるが未対応バグとは扱わない。
+
 ## 4. 現時点で削除候補としない共有基盤
 
 - `genex-api`、`genex-model-provider-info`、`genex-model-provider` の全体

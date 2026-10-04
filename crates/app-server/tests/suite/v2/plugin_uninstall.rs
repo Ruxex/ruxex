@@ -99,7 +99,7 @@ async fn plugin_uninstall_tracks_analytics_event() -> Result<()> {
                 continue;
             };
             if let Some(request) = requests.iter().find(|request| {
-                request.method == "POST" && request.url.path() == "/codex/analytics-events/events"
+                request.method == "POST" && request.url.path() == "/genex/analytics-events/events"
             }) {
                 break request.body.clone();
             }
@@ -195,7 +195,7 @@ async fn plugin_uninstall_writes_remote_plugin_to_cloud_when_remote_plugin_enabl
         .mount(&server)
         .await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/codex/analytics-events/events"))
+        .and(path("/backend-api/genex/analytics-events/events"))
         .respond_with(ResponseTemplate::new(200).set_body_string(r#"{"status":"ok"}"#))
         .mount(&server)
         .await;
@@ -671,7 +671,7 @@ async fn wait_for_plugin_analytics_payload(server: &MockServer) -> Result<serde_
                     && request
                         .url
                         .path()
-                        .ends_with("/codex/analytics-events/events")
+                        .ends_with("/genex/analytics-events/events")
             }) {
                 return serde_json::from_slice(&request.body)
                     .map_err(|err| anyhow::anyhow!("invalid analytics payload: {err}"));

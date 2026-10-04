@@ -49,7 +49,7 @@ const THREAD_HINT: &str = "Recent notes (up to 5, most-recent first):\n- /root/w
 async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestResult {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/codex/alpha/notes/v2/read_file"))
+        .and(path("/backend-api/genex/alpha/notes/v2/read_file"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "encrypted_output": "enc_payload"
@@ -57,7 +57,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         .mount(&server)
         .await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/codex/alpha/notes/v2/thread_hint"))
+        .and(path("/backend-api/genex/alpha/notes/v2/thread_hint"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"text": THREAD_HINT})))
         .mount(&server)
@@ -68,7 +68,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         .genex_home(genex_home.path().to_path_buf())
         .build()
         .await?;
-    config.model_provider.base_url = Some(format!("{}/backend-api/codex", server.uri()));
+    config.model_provider.base_url = Some(format!("{}/backend-api/genex", server.uri()));
     config.token_budget = Some(TokenBudgetConfig {
         use_history_notes_extension: true,
         ..TokenBudgetConfig::default()
@@ -247,7 +247,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         }
         Mock::given(method("POST"))
             .and(path(format!(
-                "/backend-api/codex/alpha/{namespace}/v2/{name}"
+                "/backend-api/genex/alpha/{namespace}/v2/{name}"
             )))
             .and(header("x-provider-actor-authorization", "actor-biscuit"))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
@@ -298,7 +298,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         {"data": "cG5n", "mime_type": "image/png", "detail": "original"}
     ]);
     Mock::given(method("POST"))
-        .and(path("/backend-api/codex/alpha/history/v2/read_item"))
+        .and(path("/backend-api/genex/alpha/history/v2/read_item"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(response))
         .mount(&server)
@@ -330,7 +330,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
     ] {
         server.reset().await;
         Mock::given(method("POST"))
-            .and(path("/backend-api/codex/alpha/notes/v2/thread_hint"))
+            .and(path("/backend-api/genex/alpha/notes/v2/thread_hint"))
             .respond_with(ResponseTemplate::new(200).set_body_json(result))
             .mount(&server)
             .await;
@@ -359,7 +359,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
 }
 
 #[tokio::test]
-async fn history_notes_require_an_responses_provider_and_codex_backend_auth() -> TestResult {
+async fn history_notes_require_an_responses_provider_and_genex_backend_auth() -> TestResult {
     let genex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())

@@ -162,7 +162,7 @@ impl ToolContributor for HistoryNotesExtension {
     }
 }
 
-/// Installs the standalone history and notes tools backed by the Codex backend.
+/// Installs the standalone history and notes tools backed by the Genex backend.
 pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, auth_manager: Arc<AuthManager>) {
     let extension = Arc::new(HistoryNotesExtension { auth_manager });
     registry.thread_lifecycle_contributor(extension.clone());

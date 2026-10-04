@@ -56,7 +56,7 @@ async fn workspace_roots_test(server: &MockServer) -> Result<TestGenex> {
 }
 
 fn outside_workspace_path(test: &TestGenex, file_name: &str) -> Result<PathUri> {
-    let file_name = format!("codex-workspace-roots-{}-{file_name}", std::process::id());
+    let file_name = format!("genex-workspace-roots-{}-{file_name}", std::process::id());
     PathUri::from_abs_path(&test.config.cwd)
         .parent()
         .context("test workspace should have a parent")?

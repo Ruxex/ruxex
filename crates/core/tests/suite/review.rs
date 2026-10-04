@@ -59,7 +59,7 @@ use wiremock::MockServer;
 /// legacy review events, and TurnComplete when the model returns a structured review payload.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn review_op_emits_lifecycle_and_review_output() {
-    // Skip under Codex sandbox network restrictions.
+    // Skip under Genex sandbox network restrictions.
     skip_if_no_network!();
 
     // Start mock Responses API server. Return a single assistant message whose

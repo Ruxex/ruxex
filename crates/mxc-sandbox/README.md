@@ -6,7 +6,7 @@ process security environment (PSEC). It never invokes MXC's AppContainer
 dispatcher, edits host ACLs, creates sandbox users, runs setup, or requests
 elevation. The existing Genex Windows sandboxes remain separate backends.
 
-Windows executors record `codex.windows_mxc.available` once per process with an
+Windows executors record `genex.windows_mxc.available` once per process with an
 `available=true|false` tag. This measures runtime availability independently of
 selection. Unsupported Windows executors reject MXC requests before execution.
 

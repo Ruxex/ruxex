@@ -1807,7 +1807,7 @@ mod tests {
 
     fn mdm_requirement_source() -> RequirementSource {
         RequirementSource::MdmManagedPreferences {
-            domain: "com.codex.codex".to_string(),
+            domain: "com.genex.genex".to_string(),
             key: "requirements_toml_base64".to_string(),
         }
     }
@@ -1869,7 +1869,7 @@ mod tests {
     #[test]
     fn composite_requirement_source_flattens_and_deduplicates_sources() {
         let mdm_source = RequirementSource::MdmManagedPreferences {
-            domain: "com.codex.codex".to_string(),
+            domain: "com.genex.genex".to_string(),
             key: "requirements_toml_base64".to_string(),
         };
         let mdm_source_again = mdm_source.clone();
@@ -2520,7 +2520,7 @@ mod tests {
         )?;
 
         let source_location = RequirementSource::MdmManagedPreferences {
-            domain: "com.codex".to_string(),
+            domain: "com.genex".to_string(),
             key: "allowed_approval_policies".to_string(),
         };
 
@@ -2577,7 +2577,7 @@ mod tests {
             "#,
         )?;
         let source_location = RequirementSource::MdmManagedPreferences {
-            domain: "com.codex".to_string(),
+            domain: "com.genex".to_string(),
             key: "allowed_approval_policies".to_string(),
         };
         populated_target.merge_unset_fields(source_location, source);
@@ -2732,7 +2732,7 @@ mod tests {
 
         let source_location = RequirementSource::composite([
             RequirementSource::MdmManagedPreferences {
-                domain: "com.codex.codex".to_string(),
+                domain: "com.genex.genex".to_string(),
                 key: "requirements_toml_base64".to_string(),
             },
             mdm_requirement_source(),

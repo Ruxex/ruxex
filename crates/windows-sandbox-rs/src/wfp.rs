@@ -64,10 +64,10 @@ use filter_specs::ConditionSpec;
 use filter_specs::FILTER_SPECS;
 use filter_specs::FilterSpec;
 
-const SESSION_NAME: &str = "Codex Windows Sandbox WFP";
-const PROVIDER_NAME: &str = "Codex Windows Sandbox WFP";
+const SESSION_NAME: &str = "Genex Windows Sandbox WFP";
+const PROVIDER_NAME: &str = "Genex Windows Sandbox WFP";
 const PROVIDER_DESCRIPTION: &str = "Persistent WFP provider for Genex Windows sandbox filters";
-const SUBLAYER_NAME: &str = "Codex Windows Sandbox WFP";
+const SUBLAYER_NAME: &str = "Genex Windows Sandbox WFP";
 const SUBLAYER_DESCRIPTION: &str = "Persistent WFP sublayer for Genex Windows sandbox filters";
 
 // WFP identifies persistent providers, sublayers, and filters by stable GUIDs.

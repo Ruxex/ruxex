@@ -218,7 +218,7 @@
 //! machine and treats the key stream as normal typing. When toggling from enabled → disabled, the
 //! composer flushes/clears any in-flight burst state so it cannot leak into subsequent input.
 //!
-//! For the detailed burst state machine, see `codex-rs/tui/src/bottom_pane/paste_burst.rs`.
+//! For the detailed burst state machine, see `genex-rs/tui/src/bottom_pane/paste_burst.rs`.
 //!
 //! # PasteBurst Integration Points
 //!

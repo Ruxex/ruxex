@@ -154,7 +154,7 @@ for family in (socket.AF_NETLINK, getattr(socket, 'AF_VSOCK', 40)):
         let prepared = network
             .prepare_for_optional_environment(env, /*environment_id*/ None)
             .expect("prepare managed network policy");
-        let mut command = Command::new(env!("CARGO_BIN_EXE_codex-linux-sandbox"));
+        let mut command = Command::new(env!("CARGO_BIN_EXE_genex-linux-sandbox"));
         command
             .arg("--sandbox-policy-cwd")
             .arg(&cwd)

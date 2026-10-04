@@ -77,8 +77,8 @@ struct SnapshotRun {
     genex_home: PathBuf,
 }
 
-const POLICY_PATH_FOR_TEST: &str = "/codex/policy/path";
-const SNAPSHOT_PATH_FOR_TEST: &str = "/codex/snapshot/path";
+const POLICY_PATH_FOR_TEST: &str = "/genex/policy/path";
+const SNAPSHOT_PATH_FOR_TEST: &str = "/genex/snapshot/path";
 const SNAPSHOT_MARKER_VAR: &str = "GENEX_SNAPSHOT_POLICY_MARKER";
 const SNAPSHOT_MARKER_VALUE: &str = "from_snapshot";
 const POLICY_SUCCESS_OUTPUT: &str = "policy-after-snapshot";

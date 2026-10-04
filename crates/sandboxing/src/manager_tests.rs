@@ -700,7 +700,7 @@ fn transform_for_direct_spawn_windows_materializes_inner_helper() {
                 transform: SandboxTransformRequest {
                     command: SandboxCommand {
                         program: configured_helper.as_os_str().to_owned(),
-                        args: vec!["--codex-run-as-fs-helper".to_string()],
+                        args: vec!["--genex-run-as-fs-helper".to_string()],
                         cwd: cwd_uri.clone(),
                         env: HashMap::from([(
                             "Path".to_string(),
@@ -767,7 +767,7 @@ fn transform_for_direct_spawn_windows_materializes_inner_helper() {
     );
     assert_eq!(
         exec_request.command[separator_index + 2],
-        "--codex-run-as-fs-helper"
+        "--genex-run-as-fs-helper"
     );
     assert_eq!(
         exec_request

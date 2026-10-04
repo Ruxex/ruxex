@@ -915,7 +915,7 @@ mod tests {
         let source = RequirementSource::Composite {
             sources: vec![
                 RequirementSource::SystemRequirementsToml {
-                    file: test_path_buf("/etc/codex/requirements.toml").abs(),
+                    file: test_path_buf("/etc/genex/requirements.toml").abs(),
                 },
                 RequirementSource::EnterpriseManaged {
                     id: "layer-1".to_string(),
@@ -1688,7 +1688,7 @@ mod tests {
         );
         assert_eq!(
             super::hook_metadata_for_config_layer_source(&ConfigLayerSource::Mdm {
-                domain: "com.codex.codex".to_string(),
+                domain: "com.genex.genex".to_string(),
                 key: "config".to_string(),
             }),
             (HookSource::Mdm, true),

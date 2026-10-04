@@ -14,7 +14,7 @@ use crate::message_processor::ConnectionSessionState;
 use crate::message_processor::InitializedConnectionSessionState;
 use crate::transport::ConnectionOrigin;
 
-const NON_ORIGINATING_CLIENT_NAMES: &[&str] = &["genex_app_server_daemon", "codex-backend"];
+const NON_ORIGINATING_CLIENT_NAMES: &[&str] = &["genex_app_server_daemon", "genex-backend"];
 
 #[derive(Clone)]
 pub(crate) struct InitializeRequestProcessor {
@@ -90,7 +90,7 @@ impl InitializeRequestProcessor {
             && matches!(
                 (session.origin, name.as_str()),
                 (ConnectionOrigin::InProcess, "genex-tui")
-                    | (ConnectionOrigin::Stdio, "Codex Desktop")
+                    | (ConnectionOrigin::Stdio, "Genex Desktop")
             )
             && tokio::task::spawn_blocking(self.user_verification.device_supported)
                 .await

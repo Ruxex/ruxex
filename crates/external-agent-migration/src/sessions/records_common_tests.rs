@@ -25,13 +25,13 @@ fn converts_tool_use_blocks_to_bounded_external_agent_tags() {
 fn converts_tool_result_blocks_to_bounded_external_agent_tags() {
     let block = serde_json::json!({
         "type": "tool_result",
-        "content": "codex-rs/external-agent-migration/src/sessions/records_common.rs"
+        "content": "genex-rs/external-agent-migration/src/sessions/records_common.rs"
     });
 
     assert_eq!(
         tool_result_note(&block),
         "[external_agent_tool_result]\n\
-         codex-rs/external-agent-migration/src/sessions/records_common.rs\n\
+         genex-rs/external-agent-migration/src/sessions/records_common.rs\n\
          [/external_agent_tool_result]"
     );
 }

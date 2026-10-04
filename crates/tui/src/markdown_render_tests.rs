@@ -794,11 +794,11 @@ fn web_link_labels_keep_link_style_in_wrapped_prose_and_tables() {
 #[test]
 fn file_link_hides_destination() {
     let text = render_markdown_text_for_cwd(
-        "[/Users/example/code/codex/codex-rs/tui/src/My%20File.rs](/Users/example/code/codex/codex-rs/tui/src/My%20File.rs)",
-        Path::new("/Users/example/code/codex"),
+        "[/Users/example/code/genex/genex-rs/tui/src/My%20File.rs](/Users/example/code/genex/genex-rs/tui/src/My%20File.rs)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/My File.rs",
+        "genex-rs/tui/src/My File.rs",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -810,8 +810,8 @@ fn file_link_hides_destination() {
 #[test]
 fn file_link_decodes_percent_encoded_bare_path_destination() {
     let text = render_markdown_text_for_cwd(
-        "[open Example Folder/Résumé/report.md](/Users/example/code/codex/Example%20Folder/R%C3%A9sum%C3%A9/report.md)",
-        Path::new("/Users/example/code/codex"),
+        "[open Example Folder/Résumé/report.md](/Users/example/code/genex/Example%20Folder/R%C3%A9sum%C3%A9/report.md)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([
         "open Example Folder/Résumé/report.md".into(),
@@ -831,11 +831,11 @@ fn file_link_decodes_percent_encoded_bare_path_destination() {
 #[test]
 fn file_link_appends_line_number_when_label_lacks_it() {
     let text = render_markdown_text_for_cwd(
-        "[markdown_render.rs](/Users/example/code/codex/codex-rs/tui/src/markdown_render.rs:74)",
-        Path::new("/Users/example/code/codex"),
+        "[markdown_render.rs](/Users/example/code/genex/genex-rs/tui/src/markdown_render.rs:74)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/markdown_render.rs:74",
+        "genex-rs/tui/src/markdown_render.rs:74",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -844,11 +844,11 @@ fn file_link_appends_line_number_when_label_lacks_it() {
 #[test]
 fn file_link_keeps_absolute_paths_outside_cwd() {
     let text = render_markdown_text_for_cwd(
-        "[README.md:74](/Users/example/code/codex/README.md:74)",
-        Path::new("/Users/example/code/codex/codex-rs/tui"),
+        "[README.md:74](/Users/example/code/genex/README.md:74)",
+        Path::new("/Users/example/code/genex/genex-rs/tui"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "/Users/example/code/codex/README.md:74",
+        "/Users/example/code/genex/README.md:74",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -858,11 +858,11 @@ fn file_link_keeps_absolute_paths_outside_cwd() {
 #[test]
 fn file_link_appends_hash_anchor_when_label_lacks_it() {
     let text = render_markdown_text_for_cwd(
-        "[markdown_render.rs](file:///Users/example/code/codex/codex-rs/tui/src/markdown_render.rs#L74C3)",
-        Path::new("/Users/example/code/codex"),
+        "[markdown_render.rs](file:///Users/example/code/genex/genex-rs/tui/src/markdown_render.rs#L74C3)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/markdown_render.rs:74:3",
+        "genex-rs/tui/src/markdown_render.rs:74:3",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -871,11 +871,11 @@ fn file_link_appends_hash_anchor_when_label_lacks_it() {
 #[test]
 fn file_link_uses_target_path_for_hash_anchor() {
     let text = render_markdown_text_for_cwd(
-        "[markdown_render.rs#L74C3](file:///Users/example/code/codex/codex-rs/tui/src/markdown_render.rs#L74C3)",
-        Path::new("/Users/example/code/codex"),
+        "[markdown_render.rs#L74C3](file:///Users/example/code/genex/genex-rs/tui/src/markdown_render.rs#L74C3)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/markdown_render.rs:74:3",
+        "genex-rs/tui/src/markdown_render.rs:74:3",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -884,11 +884,11 @@ fn file_link_uses_target_path_for_hash_anchor() {
 #[test]
 fn file_link_appends_range_when_label_lacks_it() {
     let text = render_markdown_text_for_cwd(
-        "[markdown_render.rs](/Users/example/code/codex/codex-rs/tui/src/markdown_render.rs:74:3-76:9)",
-        Path::new("/Users/example/code/codex"),
+        "[markdown_render.rs](/Users/example/code/genex/genex-rs/tui/src/markdown_render.rs:74:3-76:9)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/markdown_render.rs:74:3-76:9",
+        "genex-rs/tui/src/markdown_render.rs:74:3-76:9",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -897,11 +897,11 @@ fn file_link_appends_range_when_label_lacks_it() {
 #[test]
 fn file_link_uses_target_path_for_range() {
     let text = render_markdown_text_for_cwd(
-        "[markdown_render.rs:74:3-76:9](/Users/example/code/codex/codex-rs/tui/src/markdown_render.rs:74:3-76:9)",
-        Path::new("/Users/example/code/codex"),
+        "[markdown_render.rs:74:3-76:9](/Users/example/code/genex/genex-rs/tui/src/markdown_render.rs:74:3-76:9)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/markdown_render.rs:74:3-76:9",
+        "genex-rs/tui/src/markdown_render.rs:74:3-76:9",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -910,11 +910,11 @@ fn file_link_uses_target_path_for_range() {
 #[test]
 fn file_link_appends_hash_range_when_label_lacks_it() {
     let text = render_markdown_text_for_cwd(
-        "[markdown_render.rs](file:///Users/example/code/codex/codex-rs/tui/src/markdown_render.rs#L74C3-L76C9)",
-        Path::new("/Users/example/code/codex"),
+        "[markdown_render.rs](file:///Users/example/code/genex/genex-rs/tui/src/markdown_render.rs#L74C3-L76C9)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/markdown_render.rs:74:3-76:9",
+        "genex-rs/tui/src/markdown_render.rs:74:3-76:9",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -923,8 +923,8 @@ fn file_link_appends_hash_range_when_label_lacks_it() {
 #[test]
 fn multiline_file_link_label_after_styled_prefix_does_not_panic() {
     let text = render_markdown_text_for_cwd(
-        "**bold** plain [foo\nbar](file:///Users/example/code/codex/codex-rs/tui/src/markdown_render.rs#L74C3)",
-        Path::new("/Users/example/code/codex"),
+        "**bold** plain [foo\nbar](file:///Users/example/code/genex/genex-rs/tui/src/markdown_render.rs#L74C3)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([
         "bold".bold(),
@@ -934,7 +934,7 @@ fn multiline_file_link_label_after_styled_prefix_does_not_panic() {
         "bar".into(),
         " (".into(),
         Span::styled(
-            "codex-rs/tui/src/markdown_render.rs:74:3",
+            "genex-rs/tui/src/markdown_render.rs:74:3",
             MarkdownStyles::default().code,
         ),
         ")".into(),
@@ -945,11 +945,11 @@ fn multiline_file_link_label_after_styled_prefix_does_not_panic() {
 #[test]
 fn file_link_uses_target_path_for_hash_range() {
     let text = render_markdown_text_for_cwd(
-        "[markdown_render.rs#L74C3-L76C9](file:///Users/example/code/codex/codex-rs/tui/src/markdown_render.rs#L74C3-L76C9)",
-        Path::new("/Users/example/code/codex"),
+        "[markdown_render.rs#L74C3-L76C9](file:///Users/example/code/genex/genex-rs/tui/src/markdown_render.rs#L74C3-L76C9)",
+        Path::new("/Users/example/code/genex"),
     );
     let expected = Text::from(Line::from_iter([Span::styled(
-        "codex-rs/tui/src/markdown_render.rs:74:3-76:9",
+        "genex-rs/tui/src/markdown_render.rs:74:3-76:9",
         MarkdownStyles::default().code,
     )]));
     assert_eq!(text, expected);
@@ -971,9 +971,9 @@ fn url_link_shows_destination() {
 #[test]
 fn unordered_list_local_file_link_stays_inline_with_following_text() {
     let text = render_markdown_text_with_width_and_cwd(
-        "- [binary](/Users/example/code/codex/codex-rs/README.md:93): core is the agent/business logic, tui is the terminal UI, exec is the headless automation surface, and cli is the top-level multitool binary.",
+        "- [binary](/Users/example/code/genex/genex-rs/README.md:93): core is the agent/business logic, tui is the terminal UI, exec is the headless automation surface, and cli is the top-level multitool binary.",
         Some(72),
-        Some(Path::new("/Users/example/code/codex")),
+        Some(Path::new("/Users/example/code/genex")),
     );
     let rendered = text
         .lines
@@ -988,7 +988,7 @@ fn unordered_list_local_file_link_stays_inline_with_following_text() {
     assert_eq!(
         rendered,
         vec![
-            "- binary (codex-rs/README.md:93): core is the agent/business logic, tui",
+            "- binary (genex-rs/README.md:93): core is the agent/business logic, tui",
             "  is the terminal UI, exec is the headless automation surface, and cli",
             "  is the top-level multitool binary.",
         ]
@@ -998,9 +998,9 @@ fn unordered_list_local_file_link_stays_inline_with_following_text() {
 #[test]
 fn unordered_list_local_file_link_soft_break_before_colon_stays_inline() {
     let text = render_markdown_text_with_width_and_cwd(
-        "- [binary](/Users/example/code/codex/codex-rs/README.md:93)\n  : core is the agent/business logic.",
+        "- [binary](/Users/example/code/genex/genex-rs/README.md:93)\n  : core is the agent/business logic.",
         Some(72),
-        Some(Path::new("/Users/example/code/codex")),
+        Some(Path::new("/Users/example/code/genex")),
     );
     let rendered = text
         .lines
@@ -1014,16 +1014,16 @@ fn unordered_list_local_file_link_soft_break_before_colon_stays_inline() {
         .collect::<Vec<_>>();
     assert_eq!(
         rendered,
-        vec!["- binary (codex-rs/README.md:93): core is the agent/business logic.",]
+        vec!["- binary (genex-rs/README.md:93): core is the agent/business logic.",]
     );
 }
 
 #[test]
 fn consecutive_unordered_list_local_file_links_do_not_detach_paths() {
     let text = render_markdown_text_with_width_and_cwd(
-        "- [binary](/Users/example/code/codex/codex-rs/README.md:93)\n  : cli is the top-level multitool binary.\n- [expectations](/Users/example/code/codex/codex-rs/core/README.md:1)\n  : codex-core owns the real runtime behavior.",
+        "- [binary](/Users/example/code/genex/genex-rs/README.md:93)\n  : cli is the top-level multitool binary.\n- [expectations](/Users/example/code/genex/genex-rs/core/README.md:1)\n  : genex-core owns the real runtime behavior.",
         Some(72),
-        Some(Path::new("/Users/example/code/codex")),
+        Some(Path::new("/Users/example/code/genex")),
     );
     let rendered = text
         .lines
@@ -1038,8 +1038,8 @@ fn consecutive_unordered_list_local_file_links_do_not_detach_paths() {
     assert_eq!(
         rendered,
         vec![
-            "- binary (codex-rs/README.md:93): cli is the top-level multitool binary.",
-            "- expectations (codex-rs/core/README.md:1): codex-core owns the real",
+            "- binary (genex-rs/README.md:93): cli is the top-level multitool binary.",
+            "- expectations (genex-rs/core/README.md:1): genex-core owns the real",
             "  runtime behavior.",
         ]
     );

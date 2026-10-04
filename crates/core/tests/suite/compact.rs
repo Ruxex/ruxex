@@ -696,7 +696,7 @@ async fn summarize_context_three_requests_and_instructions(
         "third request should not include the summarize trigger"
     );
 
-    // Shut down Codex to flush rollout entries before inspecting the file.
+    // Shut down Genex to flush rollout entries before inspecting the file.
     genex.submit(Op::Shutdown).await?;
     wait_for_event(&genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
@@ -1315,7 +1315,7 @@ async fn multiple_auto_compact_per_task_runs_after_token_limit_hit() {
         })
         .build(&server)
         .await
-        .expect("build codex");
+        .expect("build genex");
 
     // user message
     let user_message = "create an app";
@@ -2327,7 +2327,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
         });
-    let test = builder.build(&server).await.expect("build test codex");
+    let test = builder.build(&server).await.expect("build test genex");
 
     test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
@@ -2429,7 +2429,7 @@ async fn pre_sampling_compact_runs_when_comp_hash_changes() {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
         });
-    let test = builder.build(&server).await.expect("build test codex");
+    let test = builder.build(&server).await.expect("build test genex");
 
     test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
@@ -2586,7 +2586,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
                 ev_completed_with_tokens("r1", /*total_tokens*/ 100),
             ])),
             invalid_request_response(format!(
-                "The '{retired_model}' model is not supported when using Codex with a managed account."
+                "The '{retired_model}' model is not supported when using Genex with a managed account."
             )),
             sse_response(sse(vec![
                 json!({
@@ -2617,7 +2617,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
     let initial = initial_builder
         .build(&server)
         .await
-        .expect("build initial test codex");
+        .expect("build initial test genex");
     let home = initial.home.clone();
     let rollout_path = initial
         .session_configured
@@ -2660,7 +2660,7 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
     let resumed = resumed_builder
         .resume(&server, home, rollout_path)
         .await
-        .expect("resume codex");
+        .expect("resume genex");
 
     resumed
         .genex
@@ -2756,7 +2756,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
     let initial = initial_builder
         .build(&server)
         .await
-        .expect("build initial test codex");
+        .expect("build initial test genex");
     let home = initial.home.clone();
     let rollout_path = initial
         .session_configured
@@ -2800,7 +2800,7 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
     let resumed = resumed_builder
         .resume(&server, home, rollout_path)
         .await
-        .expect("resume codex");
+        .expect("resume genex");
 
     resumed
         .genex
@@ -2898,7 +2898,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
             config.tool_registry.turn_metadata_includes_tool_info = true;
             set_test_compact_prompt(config);
         });
-    let test = builder.build(&server).await.expect("build test codex");
+    let test = builder.build(&server).await.expect("build test genex");
 
     test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
@@ -3006,7 +3006,7 @@ async fn pre_sampling_compact_keeps_unknown_previous_model_for_api_key_auth_and_
             config.model_catalog = Some(model_catalog);
             set_test_compact_prompt(config);
         });
-    let test = builder.build(&server).await.expect("build test codex");
+    let test = builder.build(&server).await.expect("build test genex");
 
     test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
@@ -3096,7 +3096,7 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
             config.model_provider = model_provider;
             set_test_compact_prompt(config);
         });
-    let test = builder.build(&server).await.expect("build test codex");
+    let test = builder.build(&server).await.expect("build test genex");
 
     test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
@@ -3205,7 +3205,7 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
             config.model_auto_compact_token_limit_scope =
                 AutoCompactTokenLimitScope::BodyAfterPrefix;
         });
-    let test = builder.build(&server).await.expect("build test codex");
+    let test = builder.build(&server).await.expect("build test genex");
 
     test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
@@ -3298,7 +3298,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
     let initial = initial_builder
         .build(&server)
         .await
-        .expect("build initial test codex");
+        .expect("build initial test genex");
     let home = initial.home.clone();
     let rollout_path = initial
         .session_configured
@@ -3341,7 +3341,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
     let resumed = resumed_builder
         .resume(&server, home, rollout_path)
         .await
-        .expect("resume codex");
+        .expect("resume genex");
 
     resumed
         .genex
@@ -3419,7 +3419,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
     let initial = initial_builder
         .build(&server)
         .await
-        .expect("build initial test codex");
+        .expect("build initial test genex");
     let home = initial.home.clone();
     let rollout_path = initial
         .session_configured
@@ -3472,7 +3472,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
     let resumed = resumed_builder
         .resume(&server, home, rollout_path)
         .await
-        .expect("resume codex");
+        .expect("resume genex");
 
     resumed
         .genex
@@ -3546,7 +3546,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
     let initial = initial_builder
         .build(&server)
         .await
-        .expect("build initial test codex");
+        .expect("build initial test genex");
     let home = initial.home.clone();
     let rollout_path = initial
         .session_configured
@@ -3597,7 +3597,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
     let resumed = resumed_builder
         .resume(&server, home, rollout_path)
         .await
-        .expect("resume codex");
+        .expect("resume genex");
 
     resumed
         .genex
@@ -3898,7 +3898,7 @@ async fn manual_compact_non_context_failure_retries_then_emits_task_error() {
         })
         .build(&server)
         .await
-        .expect("build codex")
+        .expect("build genex")
         .genex;
 
     genex
@@ -4471,7 +4471,7 @@ async fn auto_compact_body_after_prefix_ignores_starting_window_prefix() {
         })
         .build(&server)
         .await
-        .expect("build codex");
+        .expect("build genex");
 
     for user in ["PREFIX_FREE_ONE", "PREFIX_FREE_TWO"] {
         test.submit_turn(user).await.expect("submit turn");
@@ -4559,7 +4559,7 @@ async fn auto_compact_body_after_prefix_counts_growth_after_compaction() {
         })
         .build(&server)
         .await
-        .expect("build codex");
+        .expect("build genex");
 
     test.submit_turn("WINDOW_PREFIX")
         .await
@@ -4643,7 +4643,7 @@ async fn auto_compact_body_after_prefix_still_caps_at_context_window() {
         })
         .build(&server)
         .await
-        .expect("build codex");
+        .expect("build genex");
 
     for user in ["CONTEXT_CAP_ONE", "CONTEXT_CAP_TWO", "CONTEXT_CAP_THREE"] {
         test.submit_turn(user).await.expect("submit turn");
@@ -4718,7 +4718,7 @@ async fn auto_compact_accounts_for_encrypted_reasoning(first_response_includes_r
         })
         .build(&server)
         .await
-        .expect("build codex")
+        .expect("build genex")
         .genex;
 
     for (idx, user) in [first_user, second_user, third_user]
@@ -4801,7 +4801,7 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
         })
         .build(&server)
         .await
-        .expect("build codex")
+        .expect("build genex")
         .genex;
 
     for user in ["USER_ONE", "USER_TWO"] {
@@ -4923,7 +4923,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
         })
         .build(&server)
         .await
-        .expect("build codex");
+        .expect("build genex");
 
     test.genex
         .start_or_steer_turn(disabled_permission_user_turn(
@@ -5020,7 +5020,7 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
         })
         .build(&server)
         .await
-        .expect("build codex")
+        .expect("build genex")
         .genex;
 
     genex
@@ -5094,7 +5094,7 @@ async fn snapshot_request_shape_manual_compact_without_previous_user_messages() 
         })
         .build(&server)
         .await
-        .expect("build codex")
+        .expect("build genex")
         .genex;
 
     genex.submit(Op::Compact).await.expect("run /compact");

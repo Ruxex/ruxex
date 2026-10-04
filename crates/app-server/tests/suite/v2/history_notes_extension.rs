@@ -102,7 +102,7 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
         .mount(&server)
         .await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/codex/alpha/notes/v2/thread_hint"))
+        .and(path("/backend-api/genex/alpha/notes/v2/thread_hint"))
         .respond_with(
             ResponseTemplate::new(hint_status).set_body_json(serde_json::json!({
                 "text": hint_text
@@ -128,7 +128,7 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
         ))
         .with_model_provider("provider-custom")
         .with_provider_name("provider")
-        .with_provider_base_url(&format!("{}/backend-api/codex", server.uri()))
+        .with_provider_base_url(&format!("{}/backend-api/genex", server.uri()))
         .with_provider_config("supports_websockets = false\nrequires_auth = true")
         .with_extra_config(&format!(
             "[features.token_budget]\nenabled = true\nuse_history_notes_extension = {use_history_notes_extension}\n\n[mcp_servers.notes]\nurl = \"{}/mcp\"\nstartup_timeout_sec = 10\n",
@@ -189,7 +189,7 @@ async fn app_server_uses_configured_notes_backend_for_context_window_hints(
     let requests = server.received_requests().await.expect("recorded requests");
     let native_requests = requests
         .iter()
-        .filter(|request| request.url.path() == "/backend-api/codex/alpha/notes/v2/thread_hint")
+        .filter(|request| request.url.path() == "/backend-api/genex/alpha/notes/v2/thread_hint")
         .count();
     assert_eq!(native_requests, usize::from(use_history_notes_extension));
     let bridge_calls = requests
@@ -300,7 +300,7 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
     for (namespace, tool, arguments) in &calls[..9] {
         Mock::given(method("POST"))
             .and(path(format!(
-                "/backend-api/codex/alpha/{namespace}/v2/{tool}"
+                "/backend-api/genex/alpha/{namespace}/v2/{tool}"
             )))
             .and(body_partial_json(arguments.clone()))
             .respond_with(
@@ -345,7 +345,7 @@ async fn history_notes_and_async_message_emit_control_tool_analytics() -> Result
     MockResponsesConfig::new(&server.uri())
         .with_model_provider("provider-custom")
         .with_provider_name("provider")
-        .with_provider_base_url(&format!("{}/backend-api/codex", server.uri()))
+        .with_provider_base_url(&format!("{}/backend-api/genex", server.uri()))
         .with_provider_config("supports_websockets = false\nrequires_auth = true")
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_root_config(&format!(

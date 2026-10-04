@@ -253,7 +253,7 @@ fn append_mdm_config_layer(
     if let Some(config) = loaded.managed_config_from_mdm {
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::Mdm {
-                domain: "com.codex.codex".to_string(),
+                domain: "com.genex.genex".to_string(),
                 key: "config_toml_base64".to_string(),
             },
             base_dir: genex_home.clone(),

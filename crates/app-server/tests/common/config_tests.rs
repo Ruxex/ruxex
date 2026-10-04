@@ -8,7 +8,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         .with_model("custom-model")
         .with_model_provider("provider-custom")
         .with_provider_name("provider")
-        .with_provider_base_url("http://127.0.0.1:1234/api/codex")
+        .with_provider_base_url("http://127.0.0.1:1234/api/genex")
         .with_approval_policy("on-request")
         .with_sandbox_mode("workspace-write")
         .enable_feature(Feature::NetworkProxy)
@@ -30,7 +30,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         "shell_snapshot = false",
         "network_proxy = true",
         "[model_providers.provider-custom]\nname = \"provider\"",
-        "base_url = \"http://127.0.0.1:1234/api/codex\"",
+        "base_url = \"http://127.0.0.1:1234/api/genex\"",
         "requires_auth = true",
         "[extra]\nenabled = true",
     ] {

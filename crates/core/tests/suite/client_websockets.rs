@@ -166,7 +166,7 @@ async fn responses_websocket_preserves_credit_usage_metadata() {
     let expected_metadata = completed["response"]["usage"].clone();
     let server =
         start_websocket_server(vec![vec![vec![ev_response_created("resp-1"), completed]]]).await;
-    let harness = websocket_harness_for_codex_backend(&server).await;
+    let harness = websocket_harness_for_genex_backend(&server).await;
     let mut client_session = harness.client.new_session();
     let prompt = prompt_with_input(vec![message_item("hello")]);
     let responses_metadata = turn_metadata(&harness, /*turn_id*/ None);
@@ -215,7 +215,7 @@ async fn responses_websocket_omits_raw_tool_metadata_for_provider_named_custom_e
         ev_completed("resp-1"),
     ]]])
     .await;
-    let harness = websocket_harness_for_codex_backend(&server).await;
+    let harness = websocket_harness_for_genex_backend(&server).await;
     let mut call = ExecutedToolCall::new("test_tool".to_string(), json!({ "query": "keep" }));
     call.set_tool_result_sources(ToolResultSources::new(vec![ToolResultSource {
         r#type: "test_resource".to_string(),
@@ -266,7 +266,7 @@ async fn responses_websocket_streams_request() {
     ]]])
     .await;
 
-    let harness = websocket_harness_for_codex_backend(&server).await;
+    let harness = websocket_harness_for_genex_backend(&server).await;
     let mut client_session = harness.client.new_session();
     let prompt = prompt_with_input(vec![message_item("hello")]);
 
@@ -910,7 +910,7 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
             .collect(),
         )
         .await;
-        let harness = websocket_harness_for_codex_backend(&server).await;
+        let harness = websocket_harness_for_genex_backend(&server).await;
         let mut client_session = harness.client.new_session();
         let mut input = Vec::new();
 
@@ -1197,7 +1197,7 @@ async fn responses_websocket_prewarm_includes_model_and_tier_routing_hint() {
     ]]])
     .await;
 
-    let harness = websocket_harness_for_codex_backend(&server).await;
+    let harness = websocket_harness_for_genex_backend(&server).await;
     let mut model_info = harness.model_info.clone();
     let service_tier = ServiceTier::Flex.request_value();
     model_info.service_tiers.push(ModelServiceTier {
@@ -1803,7 +1803,7 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
     let test = builder
         .build_with_websocket_server(&server)
         .await
-        .expect("build websocket codex");
+        .expect("build websocket genex");
 
     let submission = test
         .genex
@@ -1892,7 +1892,7 @@ async fn responses_websocket_invalid_request_error_with_status_is_forwarded() {
     let test = builder
         .build_with_websocket_server(&server)
         .await
-        .expect("build websocket codex");
+        .expect("build websocket genex");
 
     let submission = test
         .genex
@@ -1945,7 +1945,7 @@ async fn responses_websocket_connection_limit_error_reconnects_and_completes() {
     let test = builder
         .build_with_websocket_server(&server)
         .await
-        .expect("build websocket codex");
+        .expect("build websocket genex");
 
     test.submit_turn("hello")
         .await
@@ -2667,7 +2667,7 @@ async fn websocket_harness(server: &WebSocketTestServer) -> WebsocketTestHarness
     websocket_harness_with_runtime_metrics(server, /*runtime_metrics_enabled*/ false).await
 }
 
-async fn websocket_harness_for_codex_backend(server: &WebSocketTestServer) -> WebsocketTestHarness {
+async fn websocket_harness_for_genex_backend(server: &WebSocketTestServer) -> WebsocketTestHarness {
     let provider = ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri())));
     websocket_harness_with_provider_options_and_auth(
         provider,
@@ -2768,7 +2768,7 @@ async fn websocket_harness_with_provider_options_and_auth(
     });
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(
-        MetricsConfig::in_memory("test", "codex-core", env!("CARGO_PKG_VERSION"), exporter)
+        MetricsConfig::in_memory("test", "genex-core", env!("CARGO_PKG_VERSION"), exporter)
             .with_runtime_reader(),
     )
     .expect("in-memory metrics client");
@@ -2828,7 +2828,7 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
 
     let exporter = InMemoryMetricExporter::default();
     let config =
-        MetricsConfig::in_memory("test", "codex-core", "test", exporter).with_runtime_reader();
+        MetricsConfig::in_memory("test", "genex-core", "test", exporter).with_runtime_reader();
     let metrics = MetricsClient::new(config)?;
     let warmup = vec![ev_response_created("warmup"), ev_completed("warmup")];
     let turn = vec![ev_response_created("turn"), ev_completed("turn")];

@@ -63,7 +63,7 @@ use windows_sys::Win32::System::StationsAndDesktops::DESKTOP_WRITE_OWNER;
 use windows_sys::Win32::System::StationsAndDesktops::DESKTOP_WRITEOBJECTS;
 use windows_sys::Win32::System::StationsAndDesktops::OpenDesktopW;
 
-const PRIVATE_DESKTOP_PREFIX: &str = "CodexSandboxDesktop-";
+const PRIVATE_DESKTOP_PREFIX: &str = "GenexSandboxDesktop-";
 
 const DESKTOP_ALL_ACCESS: u32 = DESKTOP_READOBJECTS
     | DESKTOP_CREATEWINDOW
@@ -364,7 +364,7 @@ struct PrivateDesktop {
 impl PrivateDesktop {
     fn create(logs_base_dir: Option<&Path>) -> Result<Self> {
         let mut rng = SmallRng::from_entropy();
-        let name = format!("CodexSandboxDesktop-{:x}", rng.r#gen::<u128>());
+        let name = format!("GenexSandboxDesktop-{:x}", rng.r#gen::<u128>());
         let name_wide = to_wide(&name);
         let handle = unsafe {
             CreateDesktopW(

@@ -282,7 +282,7 @@ pub(crate) async fn read_remote_project_trust(
                 .map(|(trust_target, _)| trust_target)
                 .or_else(|| {
                     disabled_project
-                        .and_then(|layer| layer["name"]["dotCodexFolder"].as_str())
+                        .and_then(|layer| layer["name"]["dotGenexFolder"].as_str())
                         .and_then(|path| {
                             path.strip_suffix("/.genex")
                                 .or_else(|| path.strip_suffix("\\.genex"))

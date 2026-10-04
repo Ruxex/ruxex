@@ -55,7 +55,7 @@ fn windows_wrapper_args_round_trip() {
     let args = create_windows_sandbox_command_args_for_permission_profile(
         vec![
             "genex.exe".to_string(),
-            "--codex-run-as-fs-helper".to_string(),
+            "--genex-run-as-fs-helper".to_string(),
         ],
         &command_cwd,
         workspace_roots.as_slice(),
@@ -96,7 +96,7 @@ fn windows_wrapper_args_round_trip() {
 
     assert_eq!(
         parsed.command,
-        vec!["genex.exe", "--codex-run-as-fs-helper"]
+        vec!["genex.exe", "--genex-run-as-fs-helper"]
     );
     assert_eq!(parsed.command_cwd, command_cwd);
     assert_eq!(parsed.workspace_roots, workspace_roots);
@@ -123,7 +123,7 @@ fn windows_wrapper_args_round_trip() {
     let mut private_args = args[1..].to_vec();
     private_args.insert(/*index*/ 0, PRIVATE_DESKTOP_FLAG.to_string());
     assert!(parse_windows_sandbox_wrapper_args(private_args.clone()).is_err());
-    let name = "CodexSandboxDesktop-0123456789abcdef";
+    let name = "GenexSandboxDesktop-0123456789abcdef";
     private_args.splice(
         1..1,
         [PRIVATE_DESKTOP_NAME_FLAG.to_string(), name.to_string()],

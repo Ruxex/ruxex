@@ -730,7 +730,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         .ok_or_else(|| anyhow::anyhow!("wiremock did not record requests"))?;
     let mut archive_events = Vec::new();
     for request in requests {
-        if request.url.path() != "/codex/analytics-events/events" {
+        if request.url.path() != "/genex/analytics-events/events" {
             continue;
         }
         let payload: Value = serde_json::from_slice(&request.body)?;

@@ -53,7 +53,7 @@ fn create_env_from_core_vars() -> HashMap<String, String> {
 }
 
 fn genex_linux_sandbox_exe() -> PathBuf {
-    let sandbox_program = PathBuf::from(env!("CARGO_BIN_EXE_codex-linux-sandbox"));
+    let sandbox_program = PathBuf::from(env!("CARGO_BIN_EXE_genex-linux-sandbox"));
     match sandbox_program.canonicalize() {
         Ok(path) => path,
         Err(_) => sandbox_program,
@@ -1050,7 +1050,7 @@ async fn sandbox_rejects_symlinked_synthetic_mount_registry() {
     std::fs::create_dir_all(&registry_target).expect("create registry target");
     let effective_uid = unsafe { libc::geteuid() };
     let registry = temp.path().join(format!(
-        "codex-bwrap-synthetic-mount-targets-{effective_uid}"
+        "genex-bwrap-synthetic-mount-targets-{effective_uid}"
     ));
     std::os::unix::fs::symlink(&registry_target, &registry).expect("symlink registry");
 
@@ -1139,11 +1139,11 @@ async fn sandbox_keeps_parent_repo_discovery_while_blocking_child_metadata() {
         r#"set -e
 test "$(git rev-parse --show-toplevel)" = '{repo}'
 touch "$TMPDIR/writable-sibling"
-registry="${{TMPDIR:-/tmp}}/codex-bwrap-synthetic-mount-targets-$(id -u)"
+registry="${{TMPDIR:-/tmp}}/genex-bwrap-synthetic-mount-targets-$(id -u)"
 if touch "$registry/forged-marker" 2>/dev/null; then
   exit 22
 fi
-redirected_registry='{redirected_tmp}'/codex-bwrap-synthetic-mount-targets-$(id -u)
+redirected_registry='{redirected_tmp}'/genex-bwrap-synthetic-mount-targets-$(id -u)
 for marker_dir in "$registry"/*; do
   [ -d "$marker_dir" ] || continue
   mkdir -p "$redirected_registry/${{marker_dir##*/}}"
@@ -1151,7 +1151,7 @@ for marker_dir in "$registry"/*; do
 done
 ln -sfn '{redirected_tmp}' "$TMPDIR"
 git status --short > status.before
-if grep -E '(^|[[:space:]])\.(git|codex|agents)(/|$)' status.before; then
+if grep -E '(^|[[:space:]])\.(git|genex|agents)(/|$)' status.before; then
   cat status.before
   exit 21
 fi
@@ -1372,7 +1372,7 @@ async fn sandbox_starts_with_denied_tmp_without_exposing_registry() {
 cat AGENTS.md
 test ! -r "$DENIED_SECRET"
 if printf modified > "$DENIED_SECRET" 2>/dev/null; then exit 1; fi
-registry="$TMPDIR/codex-bwrap-synthetic-mount-targets-$(id -u)"
+registry="$TMPDIR/genex-bwrap-synthetic-mount-targets-$(id -u)"
 test ! -e "$registry"
 "#,
                 ],

@@ -158,7 +158,7 @@ impl PreparedWindowsSandboxCleanup {
                 .sids()
                 .any(|sid| self._retained_logons.contains_sid(sid))
         {
-            match principals::remove_sandbox_principal("CodexSandboxUsers") {
+            match principals::remove_sandbox_principal("GenexSandboxUsers") {
                 Ok(()) => report("remove sandbox group: completed"),
                 Err(error) => {
                     report(&format!("remove sandbox group: failed, {error:#}"));

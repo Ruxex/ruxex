@@ -16,7 +16,7 @@ use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn request_body_is_zstd_compressed_for_codex_backend_when_enabled() -> anyhow::Result<()> {
+async fn request_body_is_zstd_compressed_for_genex_backend_when_enabled() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -26,7 +26,7 @@ async fn request_body_is_zstd_compressed_for_codex_backend_when_enabled() -> any
     )
     .await;
 
-    let base_url = format!("{}/backend-api/codex/v1", server.uri());
+    let base_url = format!("{}/backend-api/genex/v1", server.uri());
     let mut builder = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
@@ -72,7 +72,7 @@ async fn request_body_is_not_compressed_for_api_key_auth_even_when_enabled() -> 
     )
     .await;
 
-    let base_url = format!("{}/backend-api/codex/v1", server.uri());
+    let base_url = format!("{}/backend-api/genex/v1", server.uri());
     let mut builder = test_genex().with_config(move |config| {
         config
             .features

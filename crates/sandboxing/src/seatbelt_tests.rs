@@ -1165,7 +1165,7 @@ fn restricted_reads_cannot_read_preferences_outside_allowed_roots() {
         .tempdir()
         .expect("temp workspace");
     let domain = PreferenceDomain(format!(
-        "com.codex.codex.{}",
+        "com.genex.genex.{}",
         workspace
             .path()
             .file_name()

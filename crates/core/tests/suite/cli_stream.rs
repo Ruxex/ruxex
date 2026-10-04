@@ -73,7 +73,7 @@ fn personal_access_token_exec_command(server: &MockServer, home: &TempDir) -> Co
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.provider.base_url=\"{}/api/codex\"",
+            "model_providers.provider.base_url=\"{}/api/genex\"",
             server.uri()
         ))
         .arg("-c")
@@ -163,7 +163,7 @@ async fn responses_mode_stream_cli_supports_personal_access_tokens() {
         String::from_utf8_lossy(&output.stderr)
     );
     let request = resp_mock.single_request();
-    assert_eq!(request.path(), "/api/codex/responses");
+    assert_eq!(request.path(), "/api/genex/responses");
     assert_eq!(
         request.header("authorization").as_deref(),
         Some("Bearer at-cli-test")
@@ -179,7 +179,7 @@ async fn responses_mode_stream_cli_does_not_attempt_oauth_refresh_for_personal_a
     let server = MockServer::start().await;
     mount_personal_access_token_startup(&server).await;
     Mock::given(method("POST"))
-        .and(path("/api/codex/responses"))
+        .and(path("/api/genex/responses"))
         .and(header("authorization", PERSONAL_ACCESS_TOKEN_AUTHORIZATION))
         .respond_with(ResponseTemplate::new(401).set_body_string("unauthorized"))
         .expect(1..)
@@ -308,7 +308,7 @@ async fn exec_cli_applies_model_instructions_file() {
     let custom_path_str = custom_path.to_string_lossy().replace('\\', "/");
 
     // Build a provider override that points at the mock server and instructs
-    // Codex to use the Responses API with the dummy env var.
+    // Genex to use the Responses API with the dummy env var.
     let provider_override = format!(
         "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
         server.uri()
@@ -478,7 +478,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         responses::mount_sse_sequence(&server, vec![cli_sse_response(), cli_sse_response()]).await;
     let repo_root = repo_root();
 
-    // 4. Run the codex CLI and invoke `exec`, which is what records a session.
+    // 4. Run the genex CLI and invoke `exec`, which is what records a session.
     let bin = genex_utils_cargo_bin::cargo_bin("genex").unwrap();
     let mut cmd = Command::new(bin);
     cmd.arg("exec")

@@ -22,7 +22,7 @@ Seatbelt also keeps the legacy default preferences read access
 
 ### Linux
 
-Expects the binary containing `genex-core` to run the equivalent of `codex sandbox` when `arg0` is `codex-linux-sandbox`. See the `genex-arg0` crate for details.
+Expects the binary containing `genex-core` to run the equivalent of `genex sandbox` when `arg0` is `genex-linux-sandbox`. See the `genex-arg0` crate for details.
 
 Legacy `SandboxPolicy` / `sandbox_mode` configs are still supported on Linux.
 They can continue to use the legacy Landlock path when the split filesystem

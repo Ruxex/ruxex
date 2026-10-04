@@ -2263,7 +2263,7 @@ async fn apply_patch_turn_diff_tracks_local_and_remote_environment_paths() -> Re
     let test = builder.build_with_remote_and_local_env(&server).await?;
     let file_name = "shared-turn-diff.txt";
     let shared_cwd = PathBuf::from(format!(
-        "/tmp/codex-remote-turn-diff-{}",
+        "/tmp/genex-remote-turn-diff-{}",
         SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
     ))
     .abs();

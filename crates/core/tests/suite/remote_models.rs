@@ -62,7 +62,7 @@ use wiremock::ResponseTemplate;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 
-const REMOTE_MODEL_SLUG: &str = "codex-test";
+const REMOTE_MODEL_SLUG: &str = "genex-test";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn disabled_update_plan_preserves_custom_catalog_instructions() -> Result<()> {
@@ -741,7 +741,7 @@ async fn remote_models_truncation_policy_without_override_preserves_remote() -> 
         .start()
         .await;
 
-    let slug = "codex-test-truncation-policy";
+    let slug = "genex-test-truncation-policy";
     let remote_model = test_remote_model_with_policy(
         slug,
         ModelVisibility::List,
@@ -787,7 +787,7 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
         .start()
         .await;
 
-    let slug = "codex-test-truncation-override";
+    let slug = "genex-test-truncation-override";
     let remote_model = test_remote_model_with_policy(
         slug,
         ModelVisibility::List,

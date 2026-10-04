@@ -316,13 +316,13 @@ fn response_completed_chunks(response_id: &str) -> Vec<StreamingSseChunk> {
     ]
 }
 
-async fn build_codex(server: &StreamingSseServer) -> Arc<GenexThread> {
+async fn build_genex(server: &StreamingSseServer) -> Arc<GenexThread> {
     test_genex()
         .with_config(|config| config.update_plan_enabled = true)
         .with_model("gpt-5.4")
         .build_with_streaming_server(server)
         .await
-        .expect("build streaming Codex test session")
+        .expect("build streaming Genex test session")
         .genex
 }
 
@@ -522,7 +522,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await
-        .expect("build Codex test session")
+        .expect("build Genex test session")
         .genex;
 
     genex
@@ -600,7 +600,7 @@ async fn steer_interrupts_wait_agent_and_is_sent_in_follow_up_request() {
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build Codex test session")
+        .expect("build Genex test session")
         .genex;
 
     submit_user_input(&genex, INITIAL_PROMPT).await;
@@ -684,7 +684,7 @@ async fn any_new_input_interrupts_sleep() {
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build Codex test session")
+        .expect("build Genex test session")
         .genex;
 
     submit_user_input(&genex, INITIAL_PROMPT).await;
@@ -887,7 +887,7 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_reasoning_item() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let genex = build_codex(&server).await;
+    let genex = build_genex(&server).await;
 
     submit_user_input(&genex, "first prompt").await;
 
@@ -942,7 +942,7 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_commentary_message_ite
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let genex = build_codex(&server).await;
+    let genex = build_genex(&server).await;
 
     submit_user_input(&genex, "first prompt").await;
 
@@ -993,7 +993,7 @@ async fn queued_inter_agent_mail_does_not_restart_after_final_answer() {
         response_completed_chunks("unexpected-resp-2"),
     ])
     .await;
-    let genex = build_codex(&server).await;
+    let genex = build_genex(&server).await;
 
     submit_queue_only_agent_mail(&genex, "queued child update").await;
     submit_user_input(&genex, "first prompt").await;
@@ -1068,7 +1068,7 @@ async fn injected_response_item_reopens_turn_after_final_answer() {
     ];
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
-    let genex = build_codex(&server).await;
+    let genex = build_genex(&server).await;
 
     submit_user_input(&genex, INITIAL_PROMPT).await;
     wait_for_reasoning_item_started(&genex).await;
@@ -1139,7 +1139,7 @@ async fn user_input_does_not_preempt_after_reasoning_item() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let genex = build_codex(&server).await;
+    let genex = build_genex(&server).await;
 
     submit_user_input(&genex, "first prompt").await;
 
@@ -1432,7 +1432,7 @@ async fn steered_user_input_waits_for_model_continuation_after_mid_turn_compact(
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build streaming Codex test session")
+        .expect("build streaming Genex test session")
         .genex;
 
     submit_user_input(&genex, "first prompt").await;
@@ -1517,7 +1517,7 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build streaming Codex test session")
+        .expect("build streaming Genex test session")
         .genex;
 
     submit_user_input(&genex, "first prompt").await;
@@ -1634,7 +1634,7 @@ async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build streaming Codex test session");
+        .expect("build streaming Genex test session");
     let genex = test.genex.clone();
 
     submit_danger_full_access_user_turn(&test, "first prompt").await;

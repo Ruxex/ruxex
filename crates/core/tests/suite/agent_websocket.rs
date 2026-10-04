@@ -113,7 +113,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn websocket_test_codex_shell_chain() -> Result<()> {
+async fn websocket_test_genex_shell_chain() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let call_id = "exec-command-call";
@@ -297,7 +297,7 @@ async fn websocket_first_turn_handles_handshake_delay_with_startup_prewarm() -> 
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn websocket_v2_test_codex_shell_chain() -> Result<()> {
+async fn websocket_v2_test_genex_shell_chain() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let call_id = "exec-command-call";

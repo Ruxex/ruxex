@@ -58,7 +58,7 @@ fn cwd() -> AbsolutePathBuf {
 
 fn mdm_requirement_source() -> RequirementSource {
     RequirementSource::MdmManagedPreferences {
-        domain: "com.codex.codex".to_string(),
+        domain: "com.genex.genex".to_string(),
         key: "requirements_toml_base64".to_string(),
     }
 }
@@ -1387,7 +1387,7 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
         vec![
             ConfigLayerEntry::new(
                 ConfigLayerSource::Mdm {
-                    domain: "com.codex.codex".to_string(),
+                    domain: "com.genex.genex".to_string(),
                     key: "config".to_string(),
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
@@ -1406,7 +1406,7 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
             ),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Mdm {
-                    domain: "com.codex.codex".to_string(),
+                    domain: "com.genex.genex".to_string(),
                     key: "config".to_string(),
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),

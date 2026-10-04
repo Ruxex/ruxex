@@ -19,10 +19,10 @@ use super::ENCRYPTED_TOOL_ARGUMENTS_HEADER;
 use super::HistoryNotesBackend;
 
 #[tokio::test]
-async fn routes_through_codex_backend_and_injects_trusted_session_agent_context() {
+async fn routes_through_genex_backend_and_injects_trusted_session_agent_context() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/codex/alpha/notes/v2/read_file"))
+        .and(path("/backend-api/genex/alpha/notes/v2/read_file"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "encrypted_output": "enc_payload"
@@ -38,7 +38,7 @@ async fn routes_through_codex_backend_and_injects_trusted_session_agent_context(
         AuthManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
     let provider = create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
-            "{}/backend-api/codex",
+            "{}/backend-api/genex",
             server.uri()
         ))),
         Some(auth_manager),
@@ -106,7 +106,7 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
     ];
     for (route, _) in &cases {
         Mock::given(method("POST"))
-            .and(path(format!("/backend-api/codex/alpha/{route}")))
+            .and(path(format!("/backend-api/genex/alpha/{route}")))
             .and(header(ENCRYPTED_TOOL_ARGUMENTS_HEADER, "true"))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
             .expect(1)
@@ -118,7 +118,7 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
         AuthManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(HeaderMap::new())));
     let backend = HistoryNotesBackend::new(create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
-            "{}/backend-api/codex",
+            "{}/backend-api/genex",
             server.uri()
         ))),
         Some(auth_manager),

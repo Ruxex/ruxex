@@ -802,7 +802,7 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                 ),
                 layer(
                     ConfigLayerSource::Mdm {
-                        domain: "com.codex.codex".to_string(),
+                        domain: "com.genex.genex".to_string(),
                         key: "config".to_string(),
                     },
                     "[a]\nunrequested=true",
@@ -845,7 +845,7 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                 layer(ConfigLayerSource::SessionFlags, "a=2"),
                 layer(
                     ConfigLayerSource::Mdm {
-                        domain: "com.codex.codex".to_string(),
+                        domain: "com.genex.genex".to_string(),
                         key: "config".to_string(),
                     },
                     "[a]",

@@ -2,7 +2,7 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 use dirs::home_dir;
 use std::path::PathBuf;
 
-/// Returns the path to the Codex configuration directory, which can be
+/// Returns the path to the Genex configuration directory, which can be
 /// specified by the `GENEX_HOME` environment variable. If not set, defaults to
 /// `~/.genex`.
 ///

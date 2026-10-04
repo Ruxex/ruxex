@@ -297,12 +297,12 @@ fn build_runtime() -> anyhow::Result<tokio::runtime::Runtime> {
     Ok(builder.build()?)
 }
 
-const PROTECTED_ENV_VAR_PREFIX: &str = "CODEX_";
+const PROTECTED_ENV_VAR_PREFIX: &str = "GENEX_";
 
 /// Load env vars from ~/.genex/.env.
 ///
 /// Security: Do not allow `.env` files to create or modify protected runtime
-/// variables with names starting with `CODEX_`.
+/// variables with names starting with `GENEX_`.
 fn load_dotenv() {
     if let Ok(genex_home) = find_genex_home()
         && let Ok(iter) = dotenvy::from_path_iter(genex_home.join(".env"))

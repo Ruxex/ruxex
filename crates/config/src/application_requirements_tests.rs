@@ -43,7 +43,7 @@ fn cloud_source() -> RequirementSource {
 
 fn managed_source() -> RequirementSource {
     RequirementSource::MdmManagedPreferences {
-        domain: "com.codex.codex".to_string(),
+        domain: "com.genex.genex".to_string(),
         key: "requirements".to_string(),
     }
 }

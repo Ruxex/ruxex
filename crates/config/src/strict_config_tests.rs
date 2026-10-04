@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 #[test]
 fn ignored_toml_field_errors_accept_non_file_source_names() {
-    let source_name = "com.codex.codex:config_toml_base64";
+    let source_name = "com.genex.genex:config_toml_base64";
     let contents = r#"
 model = "gpt-5"
 unknown_key = true"#;

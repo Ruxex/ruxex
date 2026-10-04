@@ -63,7 +63,7 @@ pub use windows::WindowsSystemConfigNamespaceProbe;
 pub use windows::probe_windows_system_config_namespace;
 
 #[cfg(unix)]
-const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/codex/config.toml";
+const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/genex/config.toml";
 
 #[cfg(windows)]
 const DEFAULT_PROGRAM_DATA_DIR_WINDOWS: &str = r"C:\ProgramData";
@@ -92,16 +92,16 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// composed with config-style TOML merging plus field-specific handling for
 /// hooks, rules, deny-read permissions, and remote sandbox config:
 ///
-/// - system    `/etc/codex/requirements.toml` (Unix) or
-///   `%ProgramData%\provider\Codex\requirements.toml` (Windows)
+/// - system    `/etc/genex/requirements.toml` (Unix) or
+///   `%ProgramData%\provider\Genex\requirements.toml` (Windows)
 /// - admin:    managed preferences (*)
 ///
 /// Configuration is built up from multiple layers in the following order:
 ///
 /// - package:  optional default configuration supplied with the Genex package
 /// - admin:    managed preferences (*)
-/// - system    `/etc/codex/config.toml` (Unix) or
-///   `%ProgramData%\provider\Codex\config.toml` (Windows)
+/// - system    `/etc/genex/config.toml` (Unix) or
+///   `%ProgramData%\provider\Genex\config.toml` (Windows)
 /// - user      `${GENEX_HOME}/config.toml`
 /// - profile   `${GENEX_HOME}/<name>.config.toml`, when selected
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
@@ -391,7 +391,7 @@ pub async fn load_config_layers_state(
         )?;
         layers.push(ConfigLayerEntry::new_with_raw_toml(
             ConfigLayerSource::Mdm {
-                domain: "com.codex.codex".to_string(),
+                domain: "com.genex.genex".to_string(),
                 key: "config_toml_base64".to_string(),
             },
             managed_config,
@@ -650,7 +650,7 @@ pub async fn load_requirements_toml(
 
 #[cfg(unix)]
 fn system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    AbsolutePathBuf::from_absolute_path(Path::new("/etc/codex/requirements.toml"))
+    AbsolutePathBuf::from_absolute_path(Path::new("/etc/genex/requirements.toml"))
 }
 
 #[cfg(windows)]
@@ -727,7 +727,7 @@ fn windows_genex_system_dir() -> PathBuf {
         );
         PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS)
     });
-    program_data.join("provider").join("Codex")
+    program_data.join("provider").join("Genex")
 }
 
 #[cfg(windows)]
@@ -1693,7 +1693,7 @@ foo = "xyzzy"
         let expected = windows_program_data_dir_from_known_folder()
             .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
             .join("provider")
-            .join("Codex")
+            .join("Genex")
             .join("requirements.toml");
         assert_eq!(
             windows_system_requirements_toml_file()
@@ -1707,7 +1707,7 @@ foo = "xyzzy"
                 .as_path()
                 .ends_with(
                     Path::new("provider")
-                        .join("Codex")
+                        .join("Genex")
                         .join("requirements.toml")
                 )
         );
@@ -1719,7 +1719,7 @@ foo = "xyzzy"
         let expected = windows_program_data_dir_from_known_folder()
             .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
             .join("provider")
-            .join("Codex")
+            .join("Genex")
             .join("config.toml");
         assert_eq!(
             windows_system_config_toml_file()
@@ -1731,7 +1731,7 @@ foo = "xyzzy"
             windows_system_config_toml_file()
                 .expect("config.toml path")
                 .as_path()
-                .ends_with(Path::new("provider").join("Codex").join("config.toml"))
+                .ends_with(Path::new("provider").join("Genex").join("config.toml"))
         );
     }
 }

@@ -2556,7 +2556,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
     let test = managed_network_unified_exec_test(&server).await?;
     let local_cwd = TempDir::new()?;
     let remote_cwd = PathBuf::from(format!(
-        "/tmp/codex-network-approval-{}",
+        "/tmp/genex-network-approval-{}",
         SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
     ))
     .abs();

@@ -298,7 +298,7 @@ fn apply_zsh_fork_path_prepend_moves_existing_shell_parent_to_front() {
 }
 
 #[test]
-fn explicit_escalation_keeps_user_proxy_env_without_codex_marker() {
+fn explicit_escalation_keeps_user_proxy_env_without_genex_marker() {
     let env = HashMap::from([
         (
             "HTTP_PROXY".to_string(),
@@ -541,7 +541,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_explicit_override_precedence() {
 }
 
 #[test]
-fn maybe_wrap_shell_lc_with_snapshot_restores_codex_metadata_from_env() {
+fn maybe_wrap_shell_lc_with_snapshot_restores_genex_metadata_from_env() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
@@ -1401,7 +1401,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
 
 #[cfg(target_os = "macos")]
 #[test]
-fn maybe_wrap_shell_lc_with_snapshot_refreshes_codex_proxy_git_ssh_command() {
+fn maybe_wrap_shell_lc_with_snapshot_refreshes_genex_proxy_git_ssh_command() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(
@@ -1487,7 +1487,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_custom_git_ssh_command() {
 
 #[cfg(target_os = "macos")]
 #[test]
-fn maybe_wrap_shell_lc_with_snapshot_clears_stale_codex_git_ssh_command_without_live_command() {
+fn maybe_wrap_shell_lc_with_snapshot_clears_stale_genex_git_ssh_command_without_live_command() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(

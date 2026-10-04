@@ -253,7 +253,7 @@ async fn token_budget_guidance_precedes_standalone_context_window(
     )
     .await;
     let guidance_message = "Preserve important state before compaction.";
-    let backend_url = format!("{}/backend-api/codex", server.uri());
+    let backend_url = format!("{}/backend-api/genex", server.uri());
     let test = test_genex()
         .with_model_info_override("gpt-5.2", |model| {
             model.supports_experimental_context = true;
@@ -302,13 +302,13 @@ async fn token_budget_guidance_precedes_standalone_context_window(
     Ok(())
 }
 
-#[test_case("provider", "/backend-api/codex", None, true, true; "codex_backend")]
-#[test_case("provider", "/backend-api/codex", None, false, false; "unsupported_model")]
-#[test_case("Custom", "/backend-api/codex", None, true, false; "custom_provider")]
-#[test_case("provider", "/v1", None, true, false; "non_codex_endpoint")]
-#[test_case("provider", "/backend-api/codex", Some("test-provider-token"), true, false; "provider_credentials")]
+#[test_case("provider", "/backend-api/genex", None, true, true; "genex_backend")]
+#[test_case("provider", "/backend-api/genex", None, false, false; "unsupported_model")]
+#[test_case("Custom", "/backend-api/genex", None, true, false; "custom_provider")]
+#[test_case("provider", "/v1", None, true, false; "non_genex_endpoint")]
+#[test_case("provider", "/backend-api/genex", Some("test-provider-token"), true, false; "provider_credentials")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn experimental_context_requires_capable_model_and_codex_backend(
+async fn experimental_context_requires_capable_model_and_genex_backend(
     provider_name: &'static str,
     base_path: &'static str,
     bearer_token: Option<&'static str>,
@@ -371,7 +371,7 @@ async fn token_budget_history_notes_requires_capable_starting_model(
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let backend_url = format!("{}/backend-api/codex", server.uri());
+    let backend_url = format!("{}/backend-api/genex", server.uri());
     let result = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_pre_build_hook(move |home| {
@@ -528,7 +528,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
         vec![sse_completed("resp-1"), sse_completed("resp-2")],
     )
     .await;
-    let backend_url = format!("{}/backend-api/codex", server.uri());
+    let backend_url = format!("{}/backend-api/genex", server.uri());
     let test = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_model_info_override("gpt-5.2", |model_info| {

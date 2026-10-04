@@ -58,8 +58,8 @@ deleted normally. Ordinary client-controlled threads keep their existing behavio
 ## User verification (experimental)
 
 Genex app-server advertises `provider/elicitation.userVerification` to the
-host-owned plugin service for bundled, in-process TUI sessions (`codex-tui`) and
-local stdio desktop sessions (`Codex Desktop`) on devices with supported biometric
+host-owned plugin service for bundled, in-process TUI sessions (`genex-tui`) and
+local stdio desktop sessions (`Genex Desktop`) on devices with supported biometric
 hardware and the `experimentalApi` opt-in. This is an app-server decision,
 independent of whether a key exists; TUI/Desktop/mobile do not advertise this MCP
 capability. Mobile integration requires a separate rollout. Other clients and

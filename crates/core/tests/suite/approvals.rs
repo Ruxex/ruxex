@@ -296,7 +296,7 @@ impl ActionKind {
                 let _ = fs::remove_file(&path);
                 let patch = build_add_file_patch(&patch_path, content);
                 let command = shell_apply_patch_command(&patch);
-                // The configured Codex helper binary can take longer to launch
+                // The configured Genex helper binary can take longer to launch
                 // on slower CI runners, so allow more than the normal timeout.
                 let timeout_ms = 30_000;
                 let event = shell_event(call_id, &command, timeout_ms, sandbox_permissions)?;
@@ -3703,7 +3703,7 @@ async fn matched_prefix_rule_runs_unsandboxed_under_zsh_fork() -> Result<()> {
 ///
 /// Tool owners use this pattern when a trusted wrapper must run outside the
 /// current sandbox, but then needs to launch child commands back inside the
-/// same sandbox with `codex sandbox -P`. The nested invocation must also pass
+/// same sandbox with `genex sandbox -P`. The nested invocation must also pass
 /// `--include-managed-config` so it continues to honor enterprise requirements.
 /// The test proves both halves of that contract: the wrapper writes outside the
 /// `:workspace` sandbox, while its inherited profile name remains `:workspace`.
@@ -3806,7 +3806,7 @@ touch {outside_path:?}
 /// named profile needed to reconstruct the original sandbox remotely without
 /// dropping managed enterprise requirements. The script treats the inherited
 /// environment value as untrusted and accepts only explicitly allowlisted
-/// profile names before passing one to `codex sandbox -P`.
+/// profile names before passing one to `genex sandbox -P`.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg(unix)]
 async fn zsh_fork_inner_allowed_script_inherits_active_permission_profile() -> Result<()> {
@@ -3840,7 +3840,7 @@ ALLOWED_PROFILES = (":workspace",)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Print an ssh command that recreates the current Codex sandbox remotely."
+        description="Print an ssh command that recreates the current Genex sandbox remotely."
     )
     parser.add_argument("--host", required=True)
     try:
@@ -3867,7 +3867,7 @@ def main():
     shell_command = shlex.join(args.command)
     sandbox_command = shlex.join(
         [
-            "codex",
+            "genex",
             "sandbox",
             "-P",
             profile_name,
@@ -3987,12 +3987,12 @@ exec {remote_bash_exec} "$@"
     assert_eq!(
         sandbox_argv.len(),
         9,
-        "expected codex sandbox ... bash -lc CMD"
+        "expected genex sandbox ... bash -lc CMD"
     );
     assert_eq!(
         sandbox_argv[..8],
         [
-            "codex",
+            "genex",
             "sandbox",
             "-P",
             BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
@@ -4001,7 +4001,7 @@ exec {remote_bash_exec} "$@"
             "bash",
             "-lc",
         ],
-        "remote_bash.py should use the allowlisted inherited profile and managed configuration to reconstruct the Codex sandbox"
+        "remote_bash.py should use the allowlisted inherited profile and managed configuration to reconstruct the Genex sandbox"
     );
     let command_argv = shlex::split(&sandbox_argv[8]).context("parse remote bash command")?;
     assert_eq!(
@@ -4034,7 +4034,7 @@ async fn invalid_requested_prefix_rule_falls_back_for_compound_command() -> Resu
 
     let call_id = "invalid-prefix-rule";
     let command =
-        "touch /tmp/codex-fallback-rule-test.txt && echo hello > /tmp/codex-fallback-rule-test.txt";
+        "touch /tmp/genex-fallback-rule-test.txt && echo hello > /tmp/genex-fallback-rule-test.txt";
     let event = shell_event_with_prefix_rule(
         call_id,
         command,
@@ -4087,7 +4087,7 @@ async fn approving_fallback_rule_for_compound_command_works() -> Result<()> {
 
     let call_id = "invalid-prefix-rule";
     let command =
-        "touch /tmp/codex-fallback-rule-test.txt && echo hello > /tmp/codex-fallback-rule-test.txt";
+        "touch /tmp/genex-fallback-rule-test.txt && echo hello > /tmp/genex-fallback-rule-test.txt";
     let event = shell_event_with_prefix_rule(
         call_id,
         command,
@@ -4134,7 +4134,7 @@ async fn approving_fallback_rule_for_compound_command_works() -> Result<()> {
 
     let call_id = "invalid-prefix-rule-again";
     let command =
-        "touch /tmp/codex-fallback-rule-test.txt && echo hello > /tmp/codex-fallback-rule-test.txt";
+        "touch /tmp/genex-fallback-rule-test.txt && echo hello > /tmp/genex-fallback-rule-test.txt";
     let event = shell_event_with_prefix_rule(
         call_id,
         command,

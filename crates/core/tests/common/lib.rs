@@ -65,7 +65,7 @@ fn configure_insta_workspace_root_for_snapshot_tests() {
 
     let workspace_root = genex_utils_cargo_bin::repo_root()
         .ok()
-        .map(|root| root.join("codex-rs"));
+        .map(|root| root.join("genex-rs"));
 
     if let Some(workspace_root) = workspace_root
         && let Ok(workspace_root) = workspace_root.canonicalize()
@@ -145,7 +145,7 @@ impl TempDirExt for TempDir {
 }
 
 pub fn test_tmp_path() -> AbsolutePathBuf {
-    test_absolute_path_with_windows("/tmp", Some(r"C:\Users\codex\AppData\Local\Temp"))
+    test_absolute_path_with_windows("/tmp", Some(r"C:\Users\genex\AppData\Local\Temp"))
 }
 
 pub fn test_tmp_path_buf() -> PathBuf {

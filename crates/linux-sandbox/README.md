@@ -2,9 +2,9 @@
 
 This crate is responsible for producing:
 
-- a `codex-linux-sandbox` standalone executable for Linux that is bundled with the Node.js version of the Genex CLI
+- a `genex-linux-sandbox` standalone executable for Linux that is bundled with the Node.js version of the Genex CLI
 - a lib crate that exposes the business logic of the executable as `run_main()` so that
-  - the `genex-exec` CLI can check if its arg0 is `codex-linux-sandbox` and, if so, execute as if it were `codex-linux-sandbox`
+  - the `genex-exec` CLI can check if its arg0 is `genex-linux-sandbox` and, if so, execute as if it were `genex-linux-sandbox`
   - this should also be true of the `genex` multitool CLI
 
 On Linux, Genex prefers the first `bwrap` found on `PATH`
