@@ -3413,7 +3413,7 @@ command = "python3 /enterprise/hooks/pre.py"
             path_prefixes = ["/console/v1"]
 
             [experimental_network.header_injections.headers]
-            "x-statsig-change-source" = "codex"
+            "x-statsig-change-source" = "genex"
         "#;
 
         let source = mdm_requirement_source();
@@ -3479,13 +3479,13 @@ command = "python3 /enterprise/hooks/pre.py"
                 path_prefixes: vec!["/console/v1".to_string()],
                 headers: BTreeMap::from([(
                     "x-statsig-change-source".to_string(),
-                    "codex".to_string(),
+                    "genex".to_string(),
                 )]),
             }])
         );
         let debug = format!("{:?}", sourced_network.value.header_injections);
         assert!(debug.contains("x-statsig-change-source"));
-        assert!(!debug.contains("codex"));
+        assert!(!debug.contains("genex"));
 
         Ok(())
     }

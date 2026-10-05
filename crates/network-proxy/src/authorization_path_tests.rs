@@ -24,14 +24,14 @@ fn accepts_unambiguous_paths() {
 #[test]
 fn rejects_paths_with_ambiguous_segments_or_encodings() {
     let paths = [
-        "/provider/provider/../codex",
+        "/provider/provider/../repo",
         "/provider/provider/./issues",
-        "/provider/provider\\..\\codex",
-        "/provider/provider/%2e%2e/codex",
-        "/provider/provider/%2E%2E/codex",
-        "/provider/provider/%2f..%2fcodex",
-        "/provider/provider/%5c..%5ccodex",
-        "/provider/provider/%252e%252e/codex",
+        "/provider/provider\\..\\repo",
+        "/provider/provider/%2e%2e/repo",
+        "/provider/provider/%2E%2E/repo",
+        "/provider/provider/%2f..%2frepo",
+        "/provider/provider/%5c..%5crepo",
+        "/provider/provider/%252e%252e/repo",
         "/provider/provider/%",
         "/provider/provider/%2",
         "/provider/provider/%zz",

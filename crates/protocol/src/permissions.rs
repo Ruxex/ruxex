@@ -585,7 +585,7 @@ impl TryFrom<FileSystemSandboxPolicy> for RawFileSystemSandboxPolicy {
     }
 }
 
-const PROJECT_ROOTS_GLOB_PATTERN_PREFIX: &str = "codex-project-roots://";
+const PROJECT_ROOTS_GLOB_PATTERN_PREFIX: &str = "genex-project-roots://";
 
 pub fn project_roots_glob_pattern(subpath: &Path) -> String {
     format!("{PROJECT_ROOTS_GLOB_PATTERN_PREFIX}{}", subpath.display())

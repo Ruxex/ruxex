@@ -311,7 +311,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         "--ws-shared-secret-file".to_string(),
         shared_secret_file.display().to_string(),
         "--ws-issuer".to_string(),
-        "codex-enroller".to_string(),
+        "genex-enroller".to_string(),
         "--ws-audience".to_string(),
         "genex-app-server".to_string(),
         "--ws-max-clock-skew-seconds".to_string(),
@@ -324,7 +324,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         shared_secret.as_bytes(),
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() - 30,
-            "iss": "codex-enroller",
+            "iss": "genex-enroller",
             "aud": "genex-app-server",
         }),
     )?;
@@ -338,7 +338,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
             "nbf": OffsetDateTime::now_utc().unix_timestamp() + 30,
-            "iss": "codex-enroller",
+            "iss": "genex-enroller",
             "aud": "genex-app-server",
         }),
     )?;
@@ -358,7 +358,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         shared_secret.as_bytes(),
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
-            "iss": "codex-enroller",
+            "iss": "genex-enroller",
             "aud": "wrong-audience",
         }),
     )?;
@@ -368,7 +368,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         b"fedcba9876543210fedcba9876543210",
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
-            "iss": "codex-enroller",
+            "iss": "genex-enroller",
             "aud": "genex-app-server",
         }),
     )?;
@@ -378,7 +378,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         shared_secret.as_bytes(),
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
-            "iss": "codex-enroller",
+            "iss": "genex-enroller",
             "aud": "genex-app-server",
         }),
     )?;

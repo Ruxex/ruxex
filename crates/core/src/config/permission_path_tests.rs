@@ -324,7 +324,7 @@ fn interior_dot_workspace_glob_fails_closed_for_every_path_convention() {
                 },
                 Write,
             ),
-            deny_glob_entry("codex-project-roots://private/./*.env"),
+            deny_glob_entry("genex-project-roots://private/./*.env"),
         ]),
         NetworkSandboxPolicy::Restricted,
     );

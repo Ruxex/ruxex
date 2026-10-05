@@ -66,7 +66,7 @@ const RESTART_RETRY_INTERVAL: Duration = Duration::from_millis(50);
 const INSTALLER_URL_ENV: &str = "GENEX_INSTALLER_URL";
 
 #[cfg(test)]
-const INSTALL_URL: &str = "https://example.invalid/codex/install";
+const INSTALL_URL: &str = "https://example.invalid/genex/install";
 
 pub(crate) async fn run(
     http_client_factory: HttpClientFactory,

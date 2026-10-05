@@ -348,9 +348,9 @@ mod tests {
             ),
             (
                 "provider",
-                Some("https://example.com/codex"),
-                Some("https://example.com/codex/models"),
-                "https://example.com/codex",
+                Some("https://example.com/genex"),
+                Some("https://example.com/genex/models"),
+                "https://example.com/genex",
             ),
             (
                 "Azure",

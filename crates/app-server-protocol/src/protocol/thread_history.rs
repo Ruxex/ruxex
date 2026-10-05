@@ -2994,15 +2994,15 @@ mod tests {
             }),
             EventMsg::WebSearchEnd(WebSearchEndEvent {
                 call_id: "search-1".into(),
-                query: "codex".into(),
+                query: "genex".into(),
                 action: CoreWebSearchAction::Search {
-                    query: Some("codex".into()),
+                    query: Some("genex".into()),
                     queries: None,
                 },
                 results: Some(vec![serde_json::json!({
                     "type": "text_result",
                     "ref_id": "turn0search0",
-                    "url": "https://example.com/codex",
+                    "url": "https://example.com/genex",
                 })]),
             }),
             EventMsg::ExecCommandEnd(ExecCommandEndEvent {
@@ -3055,15 +3055,15 @@ mod tests {
             turns[0].items[1],
             ThreadItem::WebSearch(WebSearchItem {
                 id: "search-1".into(),
-                query: "codex".into(),
+                query: "genex".into(),
                 action: Some(WebSearchAction::Search {
-                    query: Some("codex".into()),
+                    query: Some("genex".into()),
                     queries: None,
                 }),
                 results: Some(vec![serde_json::json!({
                     "type": "text_result",
                     "ref_id": "turn0search0",
-                    "url": "https://example.com/codex",
+                    "url": "https://example.com/genex",
                 })]),
             })
         );
@@ -4755,9 +4755,9 @@ mod tests {
         let changes = builder.handle_rollout_item_with_changes(&RolloutItem::EventMsg(
             EventMsg::WebSearchEnd(WebSearchEndEvent {
                 call_id: "search-1".into(),
-                query: "codex".into(),
+                query: "genex".into(),
                 action: CoreWebSearchAction::Search {
-                    query: Some("codex".into()),
+                    query: Some("genex".into()),
                     queries: None,
                 },
                 results: None,
@@ -4770,9 +4770,9 @@ mod tests {
                     turn_id: "rollout-0".into(),
                     item: ThreadItem::WebSearch(WebSearchItem {
                         id: "search-1".into(),
-                        query: "codex".into(),
+                        query: "genex".into(),
                         action: Some(WebSearchAction::Search {
-                            query: Some("codex".into()),
+                            query: Some("genex".into()),
                             queries: None,
                         }),
                         results: None,
@@ -4899,9 +4899,9 @@ mod tests {
             })),
             RolloutItem::EventMsg(EventMsg::WebSearchEnd(WebSearchEndEvent {
                 call_id: "search-1".into(),
-                query: "codex".into(),
+                query: "genex".into(),
                 action: CoreWebSearchAction::Search {
-                    query: Some("codex".into()),
+                    query: Some("genex".into()),
                     queries: None,
                 },
                 results: None,
@@ -4914,9 +4914,9 @@ mod tests {
                     turn_id: "rollout-0".into(),
                     item: ThreadItem::WebSearch(WebSearchItem {
                         id: "search-1".into(),
-                        query: "codex".into(),
+                        query: "genex".into(),
                         action: Some(WebSearchAction::Search {
-                            query: Some("codex".into()),
+                            query: Some("genex".into()),
                             queries: None,
                         }),
                         results: None,
