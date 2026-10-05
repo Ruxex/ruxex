@@ -637,8 +637,8 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
             params: ThreadAttachmentAddParams {
                 thread_id: source_thread_id.clone(),
                 attachment_type: "pull_request".to_string(),
-                identity_key: "codex/codex#123".to_string(),
-                payload: json!({"url": "https://github.com/codex/codex/pull/123"}),
+                identity_key: "owner/repo#123".to_string(),
+                payload: json!({"url": "https://github.com/owner/repo/pull/123"}),
             },
         })
         .await?;

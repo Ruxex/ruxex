@@ -11,8 +11,8 @@ use serde_json::json;
 use tokio::sync::watch;
 use tokio_util::task::AbortOnDropHandle;
 
-pub(crate) const CAPABILITY: &str = "codex/auth-change";
-const NOTIFICATION: &str = "notifications/codex/authChanged";
+pub(crate) const CAPABILITY: &str = "genex/auth-change";
+const NOTIFICATION: &str = "notifications/genex/authChanged";
 const SEND_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub(crate) async fn start(

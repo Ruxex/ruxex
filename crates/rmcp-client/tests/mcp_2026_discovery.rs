@@ -37,7 +37,7 @@ const MAX_MCP_MESSAGE_BYTES: usize = 8 * 1024 * 1024;
 fn initialize_params() -> InitializeRequestParams {
     InitializeRequestParams::new(
         ClientCapabilities::default(),
-        Implementation::new("codex-discovery-test", "0.0.0"),
+        Implementation::new("genex-discovery-test", "0.0.0"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }
@@ -207,7 +207,7 @@ async fn modern_mode_uses_sdk_discovery_and_self_contained_request_metadata() ->
                     );
                     assert_eq!(
                         body.pointer("/params/_meta/io.modelcontextprotocol~1clientInfo/name"),
-                        Some(&json!("codex-discovery-test"))
+                        Some(&json!("genex-discovery-test"))
                     );
                     modern_discover_response(&body)
                 }
@@ -218,7 +218,7 @@ async fn modern_mode_uses_sdk_discovery_and_self_contained_request_metadata() ->
                     );
                     assert_eq!(
                         body.pointer("/params/_meta/io.modelcontextprotocol~1clientInfo/name"),
-                        Some(&json!("codex-discovery-test"))
+                        Some(&json!("genex-discovery-test"))
                     );
                     ResponseTemplate::new(200).set_body_json(json!({
                         "jsonrpc": "2.0",

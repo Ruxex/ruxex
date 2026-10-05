@@ -178,7 +178,7 @@ async fn mitm_policy_allows_matching_hooked_write_in_full_mode() {
     );
     let req = Request::builder()
         .method(Method::POST)
-        .uri("/repos/codex/codex/issues")
+        .uri("/repos/owner/repo/issues")
         .header(HOST, "api.github.com")
         .body(Body::empty())
         .unwrap();
@@ -215,8 +215,8 @@ async fn mitm_policy_blocks_encoded_path_traversal_for_repository_allowlist() {
     );
     let paths = [
         "/provider/provider/issues",
-        "/codex/codex",
-        "/provider/provider/%2e%2e/codex",
+        "/owner/repo",
+        "/provider/provider/%2e%2e/repo",
         "/provider/provider/%2e%2e/%2e%2e/microsoft/vscode",
     ];
     let mut actual = Vec::with_capacity(paths.len());
@@ -283,7 +283,7 @@ async fn mitm_policy_blocks_matching_hooked_write_in_limited_mode() {
     );
     let req = Request::builder()
         .method(Method::POST)
-        .uri("/repos/codex/codex/issues")
+        .uri("/repos/owner/repo/issues")
         .header(HOST, "api.github.com")
         .body(Body::empty())
         .unwrap();
@@ -331,7 +331,7 @@ async fn mitm_policy_blocks_hook_miss_for_hooked_host_and_records_telemetry_in_f
     );
     let req = Request::builder()
         .method(Method::GET)
-        .uri("/repos/codex/codex/issues?token=secret")
+        .uri("/repos/owner/repo/issues?token=secret")
         .header(HOST, "api.github.com")
         .header("authorization", "Bearer user-supplied")
         .body(Body::empty())

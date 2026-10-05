@@ -87,7 +87,7 @@ async fn exercise_stdio_server(
         .initialize(
             InitializeRequestParams::new(
                 capabilities,
-                Implementation::new("codex-mcp-client", "0.0.0-test"),
+                Implementation::new("genex-mcp-client", "0.0.0-test"),
             )
             .with_protocol_version(ProtocolVersion::V_2025_06_18),
             Some(Duration::from_secs(5)),

@@ -40,7 +40,7 @@ enum OversizedHttpResponse {
 fn initialize_params() -> InitializeRequestParams {
     InitializeRequestParams::new(
         ClientCapabilities::default(),
-        Implementation::new("codex-message-limit-test", "0.0.0-test"),
+        Implementation::new("genex-message-limit-test", "0.0.0-test"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }

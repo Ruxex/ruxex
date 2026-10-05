@@ -2330,8 +2330,8 @@ impl CallToolResult {
 fn convert_mcp_content_to_items(
     contents: &[serde_json::Value],
 ) -> Vec<FunctionCallOutputContentItem> {
-    const GENEX_ENCRYPTED_CONTENT_META_KEY: &str = "codex/encryptedContent";
-    const GENEX_IMAGE_DETAIL_META_KEY: &str = "codex/imageDetail";
+    const GENEX_ENCRYPTED_CONTENT_META_KEY: &str = "genex/encryptedContent";
+    const GENEX_IMAGE_DETAIL_META_KEY: &str = "genex/imageDetail";
 
     #[derive(serde::Deserialize)]
     #[serde(tag = "type")]
@@ -3606,7 +3606,7 @@ mod tests {
                 "data": "BASE64",
                 "mimeType": "image/png",
                 "_meta": {
-                    "codex/imageDetail": "original",
+                    "genex/imageDetail": "original",
                 },
             })],
             structured_content: None,
@@ -3640,7 +3640,7 @@ mod tests {
                 "data": "BASE64",
                 "mimeType": "image/png",
                 "_meta": {
-                    "codex/imageDetail": "high",
+                    "genex/imageDetail": "high",
                 },
             })],
             structured_content: None,

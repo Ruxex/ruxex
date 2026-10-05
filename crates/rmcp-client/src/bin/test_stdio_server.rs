@@ -45,9 +45,9 @@ struct TestToolServer {
     supports_provider_form_elicitation: Arc<AtomicBool>,
 }
 
-const MEMO_URI: &str = "memo://codex/example-note";
+const MEMO_URI: &str = "memo://genex/example-note";
 const MEMO_CONTENT: &str = "This is a sample MCP resource served by the rmcp test server.";
-const SANDBOX_STATE_META_CAPABILITY: &str = "codex/sandbox-state-meta";
+const SANDBOX_STATE_META_CAPABILITY: &str = "genex/sandbox-state-meta";
 const SMALL_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
 const APP_ONLY_CWD_MARKER_FILE_ENV: &str = "MCP_TEST_APP_ONLY_CWD_MARKER_FILE";
 const DYNAMIC_SERVER_METADATA_ENV: &str = "MCP_TEST_DYNAMIC_SERVER_METADATA";
@@ -395,9 +395,9 @@ impl TestToolServer {
     }
 
     fn memo_template() -> ResourceTemplate {
-        ResourceTemplate::new("memo://codex/{slug}", "codex-memo")
-            .with_title("Codex Memo")
-            .with_description("Template for memo://codex/{slug} resources used in tests.")
+        ResourceTemplate::new("memo://genex/{slug}", "genex-memo")
+            .with_title("Genex Memo")
+            .with_description("Template for memo://genex/{slug} resources used in tests.")
             .with_mime_type("text/plain")
     }
 
@@ -518,7 +518,7 @@ impl ServerHandler for TestToolServer {
         let server_info = match dynamic_server_process_label() {
             Some(process_label) => server_info
                 .with_server_info(
-                    Implementation::new("codex-rmcp-test-server", env!("CARGO_PKG_VERSION"))
+                    Implementation::new("genex-rmcp-test-server", env!("CARGO_PKG_VERSION"))
                         .with_title(process_label.clone()),
                 )
                 .with_instructions(format!("Use the tools from {process_label}.")),
@@ -630,7 +630,7 @@ impl ServerHandler for TestToolServer {
                     ]))
                 } else if args.code == "await nodeRepl.emitImage(await tab.screenshot())" {
                     let mut meta = MetaObject::new();
-                    meta.insert("codex/imageDetail".to_string(), json!("low"));
+                    meta.insert("genex/imageDetail".to_string(), json!("low"));
                     Ok(CallToolResult::success(vec![
                         rmcp::model::ContentBlock::text("guardian-visible-before-image"),
                         rmcp::model::ContentBlock::Image(
@@ -715,7 +715,7 @@ impl ServerHandler for TestToolServer {
             }
             "encrypted_output" => {
                 let mut meta = MetaObject::new();
-                meta.insert("codex/encryptedContent".to_string(), json!(true));
+                meta.insert("genex/encryptedContent".to_string(), json!(true));
                 let mut result = CallToolResult::success(vec![
                     rmcp::model::ContentBlock::text("Lookup completed"),
                     rmcp::model::ContentBlock::Text(
@@ -808,7 +808,7 @@ impl TestToolServer {
             ImageScenario::ImageOnlyOriginalDetail => {
                 let mut meta = MetaObject::new();
                 meta.insert(
-                    "codex/imageDetail".to_string(),
+                    "genex/imageDetail".to_string(),
                     serde_json::json!("original"),
                 );
                 content.push(rmcp::model::ContentBlock::Image(

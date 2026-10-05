@@ -14,7 +14,7 @@ const OTHER_ORIGINATOR_TAG_VALUE: &str = "other";
 const KNOWN_ORIGINATOR_TAG_VALUES: &[&str] = &[
     "genex_desktop",
     "genex-app-server",
-    "codex_mcp_server",
+    "genex_mcp_server",
     "genex_cli_rs",
     "genex-tui",
     "codex_vscode",

@@ -83,7 +83,7 @@ use telemetry::emit_mcp_call_metrics;
 use telemetry::mcp_call_metric_outcome;
 use telemetry::record_mcp_call_outcome_span_telemetry;
 
-const MCP_RESULT_TELEMETRY_META_KEY: &str = "codex/telemetry";
+const MCP_RESULT_TELEMETRY_META_KEY: &str = "genex/telemetry";
 const MCP_RESULT_TELEMETRY_SPAN_KEY: &str = "span";
 const MCP_RESULT_TELEMETRY_TARGET_ID_KEY: &str = "target_id";
 const MCP_RESULT_TELEMETRY_DID_TRIGGER_SERVER_USER_FLOW_KEY: &str = "did_trigger_server_user_flow";
@@ -871,7 +871,7 @@ impl Session {
     }
 }
 
-const MCP_TOOL_OUTPUT_TEMPLATE_META_KEY: &str = "codex/outputTemplate";
+const MCP_TOOL_OUTPUT_TEMPLATE_META_KEY: &str = "genex/outputTemplate";
 const MCP_TOOL_UI_RESOURCE_URI_META_KEY: &str = "ui/resourceUri";
 const MCP_TOOL_PLUGIN_ID_META_KEY: &str = "plugin_id";
 const MCP_TOOL_ITEM_ID_META_KEY: &str = "itemId";
@@ -1297,7 +1297,7 @@ fn mcp_tool_metadata(tool_info: &ToolInfo, plugin_id: Option<&str>) -> McpToolAp
             .tool
             .meta
             .as_ref()
-            .and_then(|meta| meta.get("codex/ui"))
+            .and_then(|meta| meta.get("genex/ui"))
             .and_then(|ui| ui.get("preferredModelDisplayMode"))
             .and_then(serde_json::Value::as_str)
         {

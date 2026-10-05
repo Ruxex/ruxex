@@ -326,7 +326,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
             commit_hash: Some(genex_git_utils::GitSha::new("rollout-sha")),
             branch: Some("rollout-branch".to_string()),
             repository_url: Some(
-                SanitizedGitUrl::try_from("git@example.com:codex/codex.git")
+                SanitizedGitUrl::try_from("git@example.com:owner/repo.git")
                     .expect("valid git remote URL"),
             ),
         }),
@@ -362,7 +362,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
     assert_eq!(persisted.git_branch.as_deref(), Some("sqlite-branch"));
     assert_eq!(
         persisted.git_origin_url.as_deref(),
-        Some("git@example.com:codex/codex.git")
+        Some("git@example.com:owner/repo.git")
     );
 }
 

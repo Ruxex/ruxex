@@ -872,4 +872,27 @@ names were migrated together without compatibility aliases.
 | Repository-owned API and analytics routes | app-server/API route producers, request fixtures, history-notes integration tests, and analytics path consumers were updated from the old Codex routes to the Genex routes together. `/v1/responses`, provider endpoint wire fields, auth headers/env, and model IDs were not changed. | `migrate-in-place` internal routes; `retain` OpenAI/provider wire contracts | Exact old-route search returns no matches in `crates`; `just generate`; `just check --tests`; `just check` |
 | OS security and sandbox identifiers | Windows sandbox desktop/account/WFP/provisioning/helper names, managed config domains, Linux sandbox package/binary, `/etc/genex`, and platform test fixtures were audited across producers and consumers. Trust, ACL, firewall, process, and sandbox enforcement behavior is unchanged. | `migrate-in-place` repository-owned names | Old security-name search returns no matches in `crates`; `just check --tests`; `just check`; `git diff --check` |
 | Internal tests, paths, and UI | Test-only model slugs, temporary paths, workspace/network fixtures, app-server/backend labels, `dotGenexFolder`, and Genex-owned UI text were migrated with their assertions and consumers. | `migrate-in-place` | Internal residual audit; `just check --tests`; `just check`; `git diff --check` |
-| MCP/VS Code, GitHub attachments/history fixtures, and external contracts | MCP/VS Code identities and metadata keys, Agent Plugin manifest namespace, GitHub attachment identity/URLs, Product::Codex, external package/installer/upstream URLs, and OpenAI/Bedrock endpoint values were confirmed as external or persisted contracts. | `retain` | Retain-only residual audit; no producer/consumer migration attempted |
+| VS Code, GitHub production contracts, and external contracts | VS Code identities, Agent Plugin manifest namespace, GitHub attachment type/URL semantics, Product::Codex, external package/installer/upstream URLs, and OpenAI/Bedrock endpoint values were confirmed as external or persisted contracts. Repository-owned GitHub/PR values used only as tests and history fixtures were migrated to neutral values. MCP repository-owned identifiers are superseded by the migration section below. | `retain` for external/runtime contracts; `migrate-in-place` for test/history fixtures | Retain-only residual audit for external values; fixture producer/consumer audit and migration; MCP producer/consumer migration is recorded below |
+
+### MCP contract namespace migration (2026-10-05)
+
+The user-approved Genex migration treats the repository-owned MCP integration namespace as
+migratable. Producers and consumers were audited together across the MCP client, core tool-result
+handling, protocol image/content handling, code-mode descriptions/runtime tests, OAuth registration,
+telemetry tags, and MCP transport/resource fixtures.
+
+| Area | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| MCP client identity and transport metadata | `genex-mcp` initialization, `genex-rmcp-client` User-Agent helpers, OAuth dynamic-registration display name, elicitation request IDs, test servers, and transport tests were updated together. | `migrate-in-place` to `genex-mcp-client`, `genex-mcp-*`, and `Genex` | Exact old MCP client identity/User-Agent search; `just check --tests`; `just check` |
+| MCP capability and notification keys | Sandbox-state metadata, tool-catalog cache, and auth-change capability/notification producers and consumers are repository-owned extension contracts for the Genex backend. | `migrate-in-place` to `genex/*` and `notifications/genex/*` | Cross-crate capability/key search; `just check --tests`; `just check` |
+| MCP result/UI metadata | Tool-result telemetry, output-template, UI display-mode, encrypted-content, and image-detail metadata keys were changed in core/protocol/runtime descriptions and all MCP fixtures. | `migrate-in-place` to `genex/*` | Producer/consumer and fixture audit; `just generate`; `just check --tests`; `just check` |
+| MCP resource/event fixtures | `memo://codex`, `codex-memo`, MCP test server/client identities, discovery/message-limit/MRTr/event fixtures, and test OAuth client display text were renamed. | `migrate-in-place` | Exact MCP fixture search; `just check --tests`; `just check` |
+| Non-MCP external values | The pre-registered external OAuth client ID, `codex.code_mode.v1` gRPC package, and VS Code client identity are not MCP repository-owned namespace keys. | `retain` | Explicit retain-only audit; public-source check for VS Code extension |
+
+### VS Code extension source audit (2026-10-05)
+
+The official `openai/codex` repository's public issue states that the VS Code extension source is not
+publicly discoverable and requests that it be open-sourced. No public extension repository or
+producer was found to update in lockstep. Therefore `codex_vscode`, `Codex VS Code Extension`, and
+the related User-Agent/originator values remain retained external client identities. The generic
+`VSCode`, `vscode-remote://`, and `.vscode` values remain VS Code platform contracts.

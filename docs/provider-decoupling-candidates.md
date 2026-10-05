@@ -406,7 +406,24 @@ producer/consumer をリポジトリ内で再監査した結果、次の範囲�
 - `api/genex`、`backend-api/genex`、`genex/analytics-events`、`genex/alpha` への内部 route/fixture を `migrate-in-place`。OpenAI endpoint の `/v1/responses`、wire field、認証 header/env、モデル ID は対象外。
 - Windows/macOS/Linux の Genex-owned sandbox/package/config/security identifiers（`GenexSandbox`、`com.genex`、`/etc/genex`、`genex-linux-sandbox`、Genex WFP/provisioning/helper names）を `migrate-in-place`。trust/enforcement の判定ロジックは変更しない。
 - 内部テストの temporary path、model slug、workspace/network fixture、app-server/TUI の Genex-owned client/backend labels、`dotGenexFolder`、Genex UI 文言を `migrate-in-place`。
-- MCP/VS Code client identities and metadata keys、Agent Plugin の `.codex-plugin`/`com.codex` manifest namespace、GitHub repository/attachment identity、Product::Codex、外部 package/installer/upstream URL、OpenAI/Bedrock wire values は `retain`。これらは外部プロトコル、既存サービス、第三者パッケージ、履歴データ、または provider endpoint の契約であり、内部名の残存数には含めるが未対応バグとは扱わない。
+- VS Code client identities、Agent Plugin の `.codex-plugin`/`com.codex` manifest namespace、GitHubの本番attachment契約、Product::Codex、外部 package/installer/upstream URL、OpenAI/Bedrock wire values は `retain`。これらは外部プロトコル、既存サービス、第三者パッケージ、履歴データ、または provider endpoint の契約であり、内部名の残存数には含めるが未対応バグとは扱わない。一方、GitHub/PR URLやGit originを単なるテストfixtureとして使っていた箇所は、検証する形式を保ったまま `owner/repo` へ `migrate-in-place` した。MCP repository-owned identifiers は下記の移行記録で扱う。
+
+### MCP 名前空間のGenex化（2026-10-05）
+
+MCPについては、ユーザー判断により本リポジトリが所有するクライアント識別子、User-Agent、
+capability、notification、tool-result metadata、UI表示メタデータ、OAuth表示名、resource URI、
+テストfixtureを `migrate-in-place` とした。`genex-mcp` と `genex-rmcp-client` のproducer、core/protocol
+consumer、code-mode説明、テストサーバー、OTELタグを同時に更新する。
+
+保持するのは、MCPとは別契約の `codex.code_mode.v1`、外部OAuthの事前登録client ID、VS Code拡張の
+`codex_vscode`/`Codex VS Code Extension`、およびVS Codeの `vscode-remote://`/`.vscode` だけである。
+
+### VS Code拡張ソースの公開状況（2026-10-05）
+
+公式 `openai/codex` の公開Issueでは、VS Code拡張のソースは公開されておらず、公開要望が提出されている
+状態だった。したがって拡張側producerを同期更新できる公開リポジトリは確認できず、`codex_vscode`の
+契約変更は保留する。将来ソースが公開された場合は、app-serverのClientInfo/User-Agent、OTEL originator、
+拡張側実装をまとめて `genex_vscode` へ移行する。
 
 ## 4. 現時点で削除候補としない共有基盤
 

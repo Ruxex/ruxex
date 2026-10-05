@@ -77,10 +77,10 @@ use tracing::warn;
 
 /// MCP server capability indicating that Genex should include [`SandboxState`]
 /// in tool-call request `_meta` under this key.
-pub const MCP_SANDBOX_STATE_META_CAPABILITY: &str = "codex/sandbox-state-meta";
+pub const MCP_SANDBOX_STATE_META_CAPABILITY: &str = "genex/sandbox-state-meta";
 /// Experimental MCP server capability for development and testing only; production servers should
 /// not use it. Its `cacheable: false` property disables sharing tool definitions across connections.
-const MCP_TOOL_CATALOG_CACHE_CAPABILITY: &str = "codex/tool-catalog-cache";
+const MCP_TOOL_CATALOG_CACHE_CAPABILITY: &str = "genex/tool-catalog-cache";
 const MCP_TOOL_CATALOG_CACHEABLE_PROPERTY: &str = "cacheable";
 pub(crate) const MCP_TOOLS_LIST_DURATION_METRIC: &str = "genex.mcp.tools.list.duration_ms";
 pub(crate) const MCP_TOOLS_FETCH_UNCACHED_DURATION_METRIC: &str =
@@ -722,7 +722,7 @@ pub(crate) fn mcp_initialize_request_params(
     }
     InitializeRequestParams::new(
         capabilities,
-        Implementation::new("codex-mcp-client", env!("CARGO_PKG_VERSION")).with_title("Codex"),
+        Implementation::new("genex-mcp-client", env!("CARGO_PKG_VERSION")).with_title("Genex"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }

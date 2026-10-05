@@ -56,7 +56,7 @@ fn init_params() -> InitializeRequestParams {
         Some(ElicitationCapability::new().with_form(FormElicitationCapability::new()));
     InitializeRequestParams::new(
         capabilities,
-        Implementation::new("codex-test", "0.0.0-test").with_title("Codex rmcp recovery test"),
+        Implementation::new("genex-test", "0.0.0-test").with_title("Genex rmcp recovery test"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }

@@ -1303,7 +1303,7 @@ image({
   type: "image",
   data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
   mimeType: "image/png",
-  _meta: { "codex/imageDetail": "original" },
+  _meta: { "genex/imageDetail": "original" },
 });
 "#
                 .to_string(),
@@ -1413,7 +1413,7 @@ image(
     type: "image",
     data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
     mimeType: "image/png",
-    _meta: { "codex/imageDetail": "original" },
+    _meta: { "genex/imageDetail": "original" },
   },
   "high",
 );
@@ -1587,7 +1587,7 @@ image({
       type: "image",
       data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
       mimeType: "image/png",
-      _meta: { "codex/imageDetail": "original" },
+      _meta: { "genex/imageDetail": "original" },
     },
   ],
   isError: false,

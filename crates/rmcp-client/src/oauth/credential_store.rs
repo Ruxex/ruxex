@@ -5,7 +5,7 @@
 //! this refresh adapter does not support.
 //!
 //! Ordinary token reads use the cached credentials. Refresh-guard acquisition rereads
-//! the pinned store before RMCP exchanges the token and saves the result. Codex
+//! the pinned store before RMCP exchanges the token and saves the result. Genex
 //! Genex preparation rechecks freshness under that guard before asking RMCP to refresh.
 //! Saves and clears require an active guard; no store operation reacquires the lock.
 //! The runtime snapshot advances only for credentials compatible with this connection,

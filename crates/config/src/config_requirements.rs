@@ -3659,7 +3659,7 @@ command = "python3 /enterprise/hooks/pre.py"
             description = "ignored legacy field"
 
             [mcp_servers.docs.identity]
-            command = "codex-mcp"
+            command = "genex-mcp"
 
             [mcp_servers.remote.identity]
             url = "https://example.com/mcp"
@@ -3675,7 +3675,7 @@ command = "python3 /enterprise/hooks/pre.py"
                         "docs".to_string(),
                         McpServerRequirement::Identity {
                             identity: McpServerIdentity::Command {
-                                command: "codex-mcp".to_string(),
+                                command: "genex-mcp".to_string(),
                             },
                         },
                     ),

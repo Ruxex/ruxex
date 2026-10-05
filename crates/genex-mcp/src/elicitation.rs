@@ -171,7 +171,7 @@ impl ElicitationRequestRouter {
             "elicitation request channel closed unexpectedly",
         );
         let public_request_id = format!(
-            "codex-mcp-elicitation-{}",
+            "genex-mcp-elicitation-{}",
             NEXT_ELICITATION_REQUEST_ID.fetch_add(1, Ordering::Relaxed)
         );
         let request_key = (

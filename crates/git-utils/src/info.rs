@@ -892,17 +892,17 @@ mod tests {
     #[test]
     fn canonicalize_git_remote_url_normalizes_github_variants() {
         for remote in [
-            "git@github.com:provider/Genex.git",
-            "ssh://git@github.com/codex/codex.git",
-            "ssh://git@github.com:22/provider/Genex.git",
-            "https://github.com/codex/codex.git",
-            "https://github.com:443/codex/codex.git",
-            "https://token@github.com/codex/codex/",
-            "github.com/codex/Genex.git",
+            "git@github.com:owner/Repo.git",
+            "ssh://git@github.com/owner/repo.git",
+            "ssh://git@github.com:22/owner/Repo.git",
+            "https://github.com/owner/repo.git",
+            "https://github.com:443/owner/repo.git",
+            "https://token@github.com/owner/repo/",
+            "github.com/owner/Repo.git",
         ] {
             assert_eq!(
                 canonicalize_git_remote_url(remote),
-                Some("github.com/codex/codex".to_string())
+                Some("github.com/owner/repo".to_string())
             );
         }
     }
@@ -921,7 +921,7 @@ mod tests {
 
     #[test]
     fn canonicalize_git_remote_url_rejects_non_repository_values() {
-        for remote in ["", "file:///tmp/repo", "github.com/codex", "/tmp/repo"] {
+        for remote in ["", "file:///tmp/repo", "github.com/owner", "/tmp/repo"] {
             assert_eq!(canonicalize_git_remote_url(remote), None);
         }
     }

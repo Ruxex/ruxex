@@ -86,7 +86,7 @@ fn assert_destination(buf: &Buffer, destination: &str) -> Vec<LinkedCell> {
 
 #[test]
 fn composer_wrapped_url_fragments_keep_the_complete_destination() {
-    let url = "https://github.com/codex/codex/pull/20252";
+    let url = "https://github.com/owner/repo/pull/20252";
     let (sender, _receiver) = unbounded_channel::<AppEvent>();
     let mut composer = ChatComposer::new(
         /*has_input_focus*/ true,

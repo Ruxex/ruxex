@@ -706,7 +706,7 @@ mod tests {
         let mut config = base_config();
         let mut hook = github_hook();
         hook.matcher.body = Some(MitmHookBodyConfig(serde_json::json!({
-            "repository": "codex/codex"
+            "repository": "owner/repo"
         })));
         config.mitm_hooks = vec![hook];
 
@@ -798,7 +798,7 @@ mod tests {
         .unwrap();
         let req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/codex/codex/issues")
+            .uri("/repos/owner/repo/issues")
             .header("x-trace", "1")
             .body(Body::empty())
             .unwrap();
@@ -836,7 +836,7 @@ mod tests {
         .unwrap();
         let req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/codex/codex/issues?state=open&per_page=10")
+            .uri("/repos/owner/repo/issues?state=open&per_page=10")
             .header("x-github-api-version", "2022-11-28")
             .body(Body::empty())
             .unwrap();
@@ -853,7 +853,7 @@ mod tests {
     fn evaluate_matches_wildcard_path_query_and_header_constraints() {
         let mut config = base_config();
         let mut hook = github_hook();
-        hook.matcher.path_prefixes = vec!["pattern:/repos/*/codex/issues*".to_string()];
+        hook.matcher.path_prefixes = vec!["pattern:/repos/*/repo/issues*".to_string()];
         hook.matcher.query =
             BTreeMap::from([("state".to_string(), vec!["pattern:op*".to_string()])]);
         hook.matcher.headers = BTreeMap::from([(
@@ -870,7 +870,7 @@ mod tests {
         .unwrap();
         let req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/codex/codex/issues?state=open")
+            .uri("/repos/owner/repo/issues?state=open")
             .header("x-github-api-version", "2022-11-28-preview")
             .body(Body::empty())
             .unwrap();
@@ -898,7 +898,7 @@ mod tests {
     fn evaluate_path_wildcard_does_not_cross_segment_boundaries() {
         let mut config = base_config();
         let mut hook = github_hook();
-        hook.matcher.path_prefixes = vec!["pattern:/repos/*/codex/issues*".to_string()];
+        hook.matcher.path_prefixes = vec!["pattern:/repos/*/repo/issues*".to_string()];
         config.mitm_hooks = vec![hook];
 
         let hooks = compile_mitm_hooks_with_resolvers(
@@ -909,7 +909,7 @@ mod tests {
         .unwrap();
         let nested_req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/provider/private/codex/issues")
+            .uri("/repos/provider/private/repo/issues")
             .body(Body::empty())
             .unwrap();
 
@@ -934,14 +934,14 @@ mod tests {
         )
         .unwrap();
         let paths = [
-            "/provider/provider/../codex",
-            "/provider/provider/%2e%2e/codex",
-            "/provider/provider/%2E%2E/codex",
-            "/provider/provider/.%2e/codex",
-            "/provider/provider/%2e./codex",
-            "/provider/provider/%252e%252e/codex",
-            "/provider/provider/%2f..%2fcodex",
-            "/provider/provider/%5c..%5ccodex",
+            "/provider/provider/../repo",
+            "/provider/provider/%2e%2e/repo",
+            "/provider/provider/%2E%2E/repo",
+            "/provider/provider/.%2e/repo",
+            "/provider/provider/%2e./repo",
+            "/provider/provider/%252e%252e/repo",
+            "/provider/provider/%2f..%2frepo",
+            "/provider/provider/%5c..%5crepo",
             "/provider/provider/%2e%2e/%2e%2e/microsoft/vscode",
         ];
         let actual = paths
@@ -979,13 +979,13 @@ mod tests {
         .unwrap();
         let exact_req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/[draft]/codex/issues?state=op*")
+            .uri("/repos/[draft]/repo/issues?state=op*")
             .header("x-github-api-version", "2022-11-28[preview]")
             .body(Body::empty())
             .unwrap();
         let non_literal_req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/draft/codex/issues?state=open")
+            .uri("/repos/draft/repo/issues?state=open")
             .header("x-github-api-version", "2022-11-28-preview")
             .body(Body::empty())
             .unwrap();
@@ -1022,13 +1022,13 @@ mod tests {
         .unwrap();
         let exact_req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/codex/codex/issues?state=pattern%3A%2A")
+            .uri("/repos/owner/repo/issues?state=pattern%3A%2A")
             .header("x-github-api-version", "pattern:*")
             .body(Body::empty())
             .unwrap();
         let non_literal_req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/codex/codex/issues?state=pattern%3Aopen")
+            .uri("/repos/owner/repo/issues?state=pattern%3Aopen")
             .header("x-github-api-version", "pattern:preview")
             .body(Body::empty())
             .unwrap();
@@ -1060,7 +1060,7 @@ mod tests {
         .unwrap();
         let req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/codex/codex/issues?state=closed")
+            .uri("/repos/owner/repo/issues?state=closed")
             .body(Body::empty())
             .unwrap();
 
@@ -1074,7 +1074,7 @@ mod tests {
     fn evaluate_returns_no_hooks_for_unconfigured_host() {
         let req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/codex/codex/issues")
+            .uri("/repos/owner/repo/issues")
             .body(Body::empty())
             .unwrap();
 

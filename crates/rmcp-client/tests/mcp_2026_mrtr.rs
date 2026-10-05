@@ -129,7 +129,7 @@ async fn create_client(
         .initialize(
             InitializeRequestParams::new(
                 capabilities,
-                Implementation::new("codex-mrtr-test", "0.0.0"),
+                Implementation::new("genex-mrtr-test", "0.0.0"),
             )
             .with_protocol_version(ProtocolVersion::V_2025_06_18),
             Some(Duration::from_secs(5)),

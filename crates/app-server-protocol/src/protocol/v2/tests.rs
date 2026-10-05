@@ -3530,7 +3530,7 @@ fn plugin_source_serializes_local_git_npm_and_remote_variants() {
 
     assert_eq!(
         serde_json::to_value(PluginSource::Git {
-            url: "https://github.com/codex/example.git".to_string(),
+            url: "https://github.com/owner/example.git".to_string(),
             path: Some("plugins/example".to_string()),
             ref_name: Some("main".to_string()),
             sha: Some("abc123".to_string()),
@@ -3538,7 +3538,7 @@ fn plugin_source_serializes_local_git_npm_and_remote_variants() {
         .unwrap(),
         json!({
             "type": "git",
-            "url": "https://github.com/codex/example.git",
+            "url": "https://github.com/owner/example.git",
             "path": "plugins/example",
             "refName": "main",
             "sha": "abc123",
