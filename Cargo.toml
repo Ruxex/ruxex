@@ -63,7 +63,6 @@ members = [
     "crates/genex-mcp",
     "crates/mermaid",
     "crates/model-provider-info",
-    "crates/mxc-sandbox",
     "crates/models-manager",
     "crates/network-proxy",
     "crates/process-hardening",
@@ -193,7 +192,6 @@ genex-mcp = { path = "crates/genex-mcp" }
 genex-mcp-extension = { path = "crates/ext/mcp" }
 genex-model-provider-info = { path = "crates/model-provider-info" }
 genex-models-manager = { path = "crates/models-manager" }
-genex-mxc-sandbox = { path = "crates/mxc-sandbox" }
 genex-network-proxy = { path = "crates/network-proxy" }
 genex-otel = { path = "crates/otel" }
 genex-otel-trace-websocket = { path = "crates/otel-trace-websocket" }
@@ -248,16 +246,12 @@ genex-utils-stream-parser = { path = "crates/utils/stream-parser" }
 genex-utils-string = { path = "crates/utils/string" }
 genex-utils-template = { path = "crates/utils/template" }
 genex-user-verification = { path = "crates/user-verification" }
-genex-windows-sandbox = { path = "crates/windows-sandbox-rs" }
 core_test_support = { path = "crates/core/tests/common" }
 
 # External
-learning_mode_windows = { git = "https://github.com/microsoft/mxc", rev = "6cd3d58f05d3447e67109cfb75e042803b843ca4" }
-wxc_common = { git = "https://github.com/microsoft/mxc", rev = "6cd3d58f05d3447e67109cfb75e042803b843ca4" }
 age = "0.11.1"
 ansi-to-tui = "8.0.1"
 anyhow = "1"
-appcontainer_common = { git = "https://github.com/microsoft/mxc", rev = "6cd3d58f05d3447e67109cfb75e042803b843ca4" }
 arboard = { version = "3", features = ["wayland-data-control"] }
 arc-swap = "1.9.0"
 assert_cmd = "2"
@@ -449,10 +443,8 @@ tonic = { version = "0.14.3", default-features = false, features = ["channel", "
 tonic-prost = "0.14.3"
 tree-sitter = "0.25.10"
 tree-sitter-bash = "0.25"
-tree-sitter-powershell = "=0.26.4"
 ts-rs = "11"
 tungstenite = { version = "0.27.0", features = ["proxy"] }
-uds_windows = "1.1.0"
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2"
 url = "2"
@@ -465,7 +457,6 @@ webbrowser = "1.2.2"
 which = "8"
 whoami = "1.6.1"
 wildmatch = "2.6.1"
-winapi-util = "0.1.11"
 zip = "2.4.2"
 zstd = "0.13"
 

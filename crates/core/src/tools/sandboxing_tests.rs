@@ -205,107 +205,6 @@ fn deny_read_blocks_explicit_escalation_and_policy_bypass() {
 }
 
 #[test]
-fn windows_sandbox_env_preserves_denied_reads_or_rejects_unsupported_backend() {
-    let temp_dir = tempfile::TempDir::new().expect("create sandbox workspace");
-    let cwd = AbsolutePathBuf::from_absolute_path(
-        dunce::canonicalize(temp_dir.path()).expect("canonicalize sandbox workspace"),
-    )
-    .expect("absolute sandbox workspace");
-    let denied_path = cwd.join("blocked");
-    std::fs::create_dir_all(denied_path.as_path()).expect("create denied directory");
-    let denied_path = AbsolutePathBuf::from_absolute_path(
-        dunce::canonicalize(denied_path.as_path()).expect("canonicalize denied directory"),
-    )
-    .expect("absolute denied directory");
-    let file_system_policy = FileSystemSandboxPolicy::restricted(vec![
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::Root,
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::project_roots(/*subpath*/ None),
-            },
-            access: FileSystemAccessMode::Write,
-            missing_path_behavior: None,
-        },
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Path {
-                path: denied_path.clone().into(),
-            },
-            access: FileSystemAccessMode::Deny,
-            missing_path_behavior: None,
-        },
-    ]);
-    let permissions = genex_protocol::models::PermissionProfile::from_runtime_permissions(
-        &file_system_policy,
-        NetworkSandboxPolicy::Restricted,
-    );
-    let cwd_uri = PathUri::from_abs_path(&cwd);
-    let manager = SandboxManager::new();
-    let mut attempt = SandboxAttempt {
-        sandbox: SandboxType::WindowsRestrictedToken,
-        sandbox_requested: true,
-        permissions: &permissions,
-        exec_server_permissions: &permissions,
-        enforce_managed_network: false,
-        manager: &manager,
-        sandbox_cwd: &cwd_uri,
-        workspace_roots: std::slice::from_ref(&cwd_uri),
-        sandbox_exe: None,
-        use_legacy_landlock: false,
-        windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel::Elevated,
-        windows_sandbox_private_desktop: false,
-        network_denial_cancellation_token: None,
-        network_proxy: None,
-    };
-    let command = || SandboxCommand {
-        program: "cmd.exe".into(),
-        args: vec!["/C".to_string(), "echo sandboxed".to_string()],
-        cwd: cwd_uri.clone(),
-        env: HashMap::new(),
-        managed_network: None,
-        additional_permissions: None,
-    };
-    let options = || crate::sandboxing::ExecOptions {
-        expiration: crate::exec::ExecExpiration::DefaultTimeout,
-        capture_policy: crate::exec::ExecCapturePolicy::ShellTool,
-    };
-
-    let request = attempt
-        .env_for(
-            command(),
-            options(),
-            /*network*/ None,
-            /*environment_id*/ None,
-        )
-        .expect("prepare elevated Windows sandbox request");
-    let overrides = request
-        .windows_sandbox_filesystem_overrides
-        .expect("elevated Windows sandbox should preserve deny-read overrides");
-    assert_eq!(overrides.additional_deny_read_paths, vec![denied_path]);
-    assert_eq!(request.windows_sandbox_workspace_roots, vec![cwd]);
-
-    attempt.windows_sandbox_level =
-        genex_protocol::config_types::WindowsSandboxLevel::RestrictedToken;
-    let error = attempt
-        .env_for(
-            command(),
-            options(),
-            /*network*/ None,
-            /*environment_id*/ None,
-        )
-        .expect_err("restricted-token Windows sandbox cannot enforce deny-read restrictions");
-    assert_eq!(
-        error.to_string(),
-        "unsupported operation: windows unelevated restricted-token sandbox cannot enforce deny-read restrictions directly; refusing to run unsandboxed"
-    );
-}
-
-#[test]
 fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
     let cwd: AbsolutePathBuf = std::env::current_dir()
         .expect("current dir")
@@ -328,8 +227,6 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
         workspace_roots: std::slice::from_ref(&cwd_uri),
         sandbox_exe: None,
         use_legacy_landlock: false,
-        windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel::Disabled,
-        windows_sandbox_private_desktop: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };
@@ -373,13 +270,6 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
             workspace_roots: vec![cwd_uri.clone()],
             user_home_dir: None,
             temporary_directories: None,
-            windows_sandbox_selection: if cfg!(windows) {
-                genex_file_system::WindowsSandboxSelection::RestrictedToken
-            } else {
-                genex_file_system::WindowsSandboxSelection::Disabled
-            },
-            windows_sandbox_private_desktop: false,
-            windows_sandbox_proxy_settings_mode: None,
             use_legacy_landlock: false,
         })
     );

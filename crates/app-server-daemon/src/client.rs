@@ -4,6 +4,8 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
+use futures::SinkExt;
+use futures::StreamExt;
 use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::InitializeCapabilities;
 use genex_app_server_protocol::InitializeParams;
@@ -13,8 +15,6 @@ use genex_app_server_protocol::JSONRPCNotification;
 use genex_app_server_protocol::JSONRPCRequest;
 use genex_app_server_protocol::RequestId;
 use genex_uds::UnixStream;
-use futures::SinkExt;
-use futures::StreamExt;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
 use tokio::time::timeout;
@@ -72,28 +72,6 @@ async fn connect_at(socket_path: &Path, url: &str) -> Result<WebSocketStream<Uni
         .await
         .with_context(|| format!("failed to upgrade {}", socket_path.display()))?;
     Ok(websocket)
-}
-
-#[cfg(windows)]
-pub(crate) async fn request_shutdown(socket_path: &Path, pid: u32) -> Result<()> {
-    timeout(CONTROL_SOCKET_RESPONSE_TIMEOUT, async {
-        let mut websocket = connect_at(socket_path, "ws://localhost/daemon/shutdown").await?;
-        websocket
-            .send(Message::Text(pid.to_string().into()))
-            .await?;
-        let reply = websocket
-            .next()
-            .await
-            .context("shutdown socket closed without acknowledgment")??;
-        anyhow::ensure!(
-            matches!(reply, Message::Text(ack) if ack == pid.to_string()),
-            "shutdown acknowledgment did not match the managed process {pid}"
-        );
-        websocket.close(None).await?;
-        Ok(())
-    })
-    .await
-    .context("timed out waiting for managed app-server shutdown acknowledgment")?
 }
 
 pub(crate) async fn initialize<S>(

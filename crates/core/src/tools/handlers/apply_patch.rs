@@ -249,7 +249,7 @@ fn write_permissions_for_paths(
         .map(|path| {
             path.parent()
                 .or_else(|| match sandbox_route {
-                    PatchSandboxRoute::Platform(_) => {
+                    PatchSandboxRoute::Platform => {
                         // Host path rules can recover parents of opaque local paths.
                         // `to_abs_path` verifies that the target round-trips losslessly.
                         path.to_abs_path().ok()?.parent().map(PathUri::from)
@@ -272,7 +272,7 @@ fn write_permissions_for_paths(
     })?;
 
     match sandbox_route {
-        PatchSandboxRoute::Platform(_) => normalize_additional_permissions(permissions).ok(),
+        PatchSandboxRoute::Platform => normalize_additional_permissions(permissions).ok(),
         PatchSandboxRoute::ExecutorManaged => {
             normalize_additional_permissions_with_context(permissions, context).ok()
         }
@@ -556,7 +556,7 @@ async fn execute_verified_patch(
     let sandbox_route = if turn_environment.environment.is_remote() {
         PatchSandboxRoute::ExecutorManaged
     } else {
-        PatchSandboxRoute::Platform(turn_environment.config().windows_sandbox_level)
+        PatchSandboxRoute::Platform
     };
     let (file_paths, effective_additional_permissions, file_system_sandbox_policy) =
         effective_patch_permissions(

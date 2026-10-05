@@ -13,8 +13,6 @@ use genex_app_server_protocol::CliAuthCredentialsStoreMode;
 use genex_app_server_protocol::ClientResponsePayload;
 use genex_app_server_protocol::ComputerUseMacosRequirements;
 use genex_app_server_protocol::ComputerUseRequirements;
-use genex_app_server_protocol::ComputerUseWindowsExeRequirement;
-use genex_app_server_protocol::ComputerUseWindowsRequirements;
 use genex_app_server_protocol::ConfigBatchWriteParams;
 use genex_app_server_protocol::ConfigReadParams;
 use genex_app_server_protocol::ConfigReadResponse;
@@ -35,7 +33,6 @@ use genex_app_server_protocol::NetworkRequirements;
 use genex_app_server_protocol::NetworkUnixSocketPermission;
 use genex_app_server_protocol::NewThreadModelDefaults;
 use genex_app_server_protocol::SandboxMode;
-use genex_app_server_protocol::WindowsSandboxImplementation;
 use genex_config::ConfigRequirementsToml;
 use genex_config::HookEventsToml;
 use genex_config::HookHandlerConfig as CoreHookHandlerConfig;
@@ -278,11 +275,6 @@ fn map_requirements_to_api(
         }
         None => ConfigRequirementsToml::default(),
     };
-    let windows_sandbox_private_desktop = requirements
-        .windows
-        .as_ref()
-        .and_then(|windows| windows.sandbox_private_desktop);
-
     Some(ConfigRequirements {
         model_provider: requirements.model_provider,
         model_providers: requirements.model_providers.map(|providers| {
@@ -338,23 +330,6 @@ fn map_requirements_to_api(
                 .filter_map(map_sandbox_mode_requirement_to_api)
                 .collect()
         }),
-        allowed_windows_sandbox_implementations: requirements.windows.and_then(|windows| {
-            windows
-                .allowed_sandbox_implementations
-                .map(|implementations| {
-                    implementations
-                        .into_iter()
-                        .map(|implementation| match implementation {
-                            genex_config::types::WindowsSandboxModeToml::Elevated => {
-                                WindowsSandboxImplementation::Elevated
-                            }
-                            genex_config::types::WindowsSandboxModeToml::Unelevated => {
-                                WindowsSandboxImplementation::Unelevated
-                            }
-                        })
-                        .collect()
-                })
-        }),
         allowed_permission_profiles: requirements.allowed_permission_profiles,
         default_permissions: requirements.default_permissions,
         allowed_web_search_modes: requirements.allowed_web_search_modes.map(|modes| {
@@ -402,7 +377,6 @@ fn map_requirements_to_api(
         model_catalog_json: requirements.model_catalog_json.map(Into::into),
         check_for_update_on_startup: requirements.check_for_update_on_startup,
         allow_login_shell: requirements.allow_login_shell,
-        windows_sandbox_private_desktop,
     })
 }
 
@@ -423,28 +397,6 @@ fn map_computer_use_requirements_to_api(
                         .into_iter()
                         .map(|(bundle_id, requirement)| {
                             (bundle_id, map_allow_deny_requirement_to_api(requirement))
-                        })
-                        .collect()
-                }),
-            }),
-        windows: computer_use
-            .windows
-            .map(|windows| ComputerUseWindowsRequirements {
-                aumids: windows.aumids.map(|aumids| {
-                    aumids
-                        .into_iter()
-                        .map(|(aumid, requirement)| {
-                            (aumid, map_allow_deny_requirement_to_api(requirement))
-                        })
-                        .collect()
-                }),
-                exes: windows.exes.map(|exes| {
-                    exes.into_iter()
-                        .map(|exe| ComputerUseWindowsExeRequirement {
-                            publisher_name: exe.publisher_name,
-                            product_name: exe.product_name,
-                            binary_name: exe.binary_name,
-                            access: map_allow_deny_requirement_to_api(exe.access),
                         })
                         .collect()
                 }),
@@ -513,11 +465,7 @@ fn map_browser_use_access_approval_lifetime_to_api(
 }
 
 fn map_hooks_requirements_to_api(hooks: ManagedHooksRequirementsToml) -> ManagedHooksRequirements {
-    let ManagedHooksRequirementsToml {
-        managed_dir,
-        windows_managed_dir,
-        hooks,
-    } = hooks;
+    let ManagedHooksRequirementsToml { managed_dir, hooks } = hooks;
     let HookEventsToml {
         pre_tool_use,
         permission_request,
@@ -535,7 +483,6 @@ fn map_hooks_requirements_to_api(hooks: ManagedHooksRequirementsToml) -> Managed
 
     ManagedHooksRequirements {
         managed_dir,
-        windows_managed_dir,
         pre_tool_use: map_hook_matcher_groups_to_api(pre_tool_use),
         permission_request: map_hook_matcher_groups_to_api(permission_request),
         post_tool_use: map_hook_matcher_groups_to_api(post_tool_use),
@@ -575,14 +522,12 @@ fn map_hook_handler_to_api(handler: CoreHookHandlerConfig) -> ConfiguredHookHand
     match handler {
         CoreHookHandlerConfig::Command {
             command,
-            command_windows,
             timeout_sec,
             r#async,
             status_message,
             additional_context_limit,
         } => ConfiguredHookHandler::Command {
             command,
-            command_windows,
             timeout_sec,
             r#async,
             status_message,

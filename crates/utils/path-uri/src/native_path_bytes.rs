@@ -6,8 +6,7 @@ impl PathUri {
     /// Resolves a native path stored as bytes, using this URI's path convention.
     ///
     /// UTF-8 paths follow [`Self::join`]. Non-UTF-8 POSIX names are preserved
-    /// losslessly, including when the filesystem is on another host. Invalid
-    /// UTF-8 Windows paths, null bytes, and opaque base URIs are rejected.
+    /// losslessly. Null bytes and opaque base URIs are rejected.
     pub fn join_native_bytes(&self, path: &[u8]) -> Result<Self, PathUriParseError> {
         if let Ok(path) = std::str::from_utf8(path) {
             return self.join(path);

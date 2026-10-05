@@ -16,11 +16,11 @@
       "description": "Absolute path to the server's $GENEX_HOME directory."
     },
     "platformFamily": {
-      "description": "Platform family for the running app-server target, for example `\"unix\"` or `\"windows\"`.",
+      "description": "Platform family for the running app-server target, for example `\"unix\"`.",
       "type": "string"
     },
     "platformOs": {
-      "description": "Operating system for the running app-server target, for example `\"macos\"`, `\"linux\"`, or `\"windows\"`.",
+      "description": "Operating system for the running app-server target, for example `\"macos\"` or `\"linux\"`.",
       "type": "string"
     },
     "userAgent": {

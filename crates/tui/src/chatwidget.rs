@@ -78,7 +78,10 @@ use crate::text_formatting::proper_join;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
 use crate::version::GENEX_CLI_VERSION;
-use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+use crossterm::event::KeyEventKind;
+use crossterm::event::KeyModifiers;
 use genex_app_server_protocol::CollabAgentTool;
 use genex_app_server_protocol::CollabAgentToolCallStatus;
 use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
@@ -86,6 +89,7 @@ use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
 use genex_app_server_protocol::CreditsSnapshot;
 use genex_app_server_protocol::ErrorNotification;
 use genex_app_server_protocol::FileChangeRequestApprovalParams;
+use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
 use genex_app_server_protocol::ItemCompletedNotification;
 use genex_app_server_protocol::ItemStartedNotification;
 use genex_app_server_protocol::McpServerElicitationRequest;
@@ -112,7 +116,6 @@ use genex_app_server_protocol::TurnCompletedNotification;
 use genex_app_server_protocol::TurnPlanStepStatus;
 use genex_app_server_protocol::TurnStatus;
 use genex_app_server_protocol::UserInput;
-use genex_app_server_protocol::WindowsSandboxSetupMode;
 use genex_config::Constrained;
 use genex_config::ConstraintResult;
 use genex_config::types::Notifications;
@@ -132,8 +135,6 @@ use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::CollaborationModeMask;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::Settings;
-#[cfg(target_os = "windows")]
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::items::AgentMessageContent;
 use genex_protocol::items::AgentMessageItem;
 use genex_protocol::models::MessagePhase;
@@ -148,10 +149,6 @@ use genex_terminal_detection::TerminalName;
 use genex_terminal_detection::terminal_info;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyEventKind;
-use crossterm::event::KeyModifiers;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
@@ -206,7 +203,6 @@ fn queued_message_edit_binding_for_terminal(terminal_info: TerminalInfo) -> KeyB
         | TerminalName::Konsole
         | TerminalName::GnomeTerminal
         | TerminalName::Vte
-        | TerminalName::WindowsTerminal
         | TerminalName::Dumb
         | TerminalName::Unknown => key_hint::alt(KeyCode::Up),
     }
@@ -389,7 +385,6 @@ mod settings_popups;
 mod side;
 use self::safety_buffering::SafetyBufferingState;
 mod status_state;
-mod windows_sandbox_prompts;
 use self::status_state::StatusIndicatorState;
 use self::status_state::StatusState;
 use self::status_state::TerminalTitleStatusKind;
@@ -550,11 +545,6 @@ pub(crate) struct ChatWidget {
     pub(crate) snapshot_local_images: bool,
     pending_image_submission: Option<image_submission::PendingImageSubmission>,
     pub(crate) local_worktree_operations: bool,
-    pub(crate) windows_sandbox_local_server: bool,
-    pub(crate) windows_sandbox_config: crate::windows_sandbox::WindowsSandboxConfig,
-    pub(crate) windows_sandbox_host: crate::app::WindowsSandboxHost,
-    #[cfg(any(target_os = "windows", test))]
-    pub(crate) windows_sandbox_elevated_setup_complete: bool,
     token_info: Option<TokenUsageInfo>,
     token_usage_pending: bool,
     // Status and polling use account usage reads; response streams may identify meters differently.

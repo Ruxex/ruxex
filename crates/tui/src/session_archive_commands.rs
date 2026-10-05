@@ -17,6 +17,9 @@ use crate::legacy_core::config::resolve_profile_v2_config_path;
 use crate::named_session_lookup::SessionCollection;
 use crate::named_session_lookup::display_label;
 use crate::named_session_lookup::lookup;
+use color_eyre::eyre::Result;
+use color_eyre::eyre::WrapErr;
+use color_eyre::eyre::eyre;
 use genex_app_server_protocol::Thread as AppServerThread;
 use genex_arg0::Arg0DispatchPaths;
 use genex_config::LoaderOverrides;
@@ -25,9 +28,6 @@ use genex_exec_server::ExecServerRuntimePaths;
 use genex_protocol::ThreadId;
 use genex_utils_cli::CliConfigOverrides;
 use genex_utils_home_dir::find_genex_home;
-use color_eyre::eyre::Result;
-use color_eyre::eyre::WrapErr;
-use color_eyre::eyre::eyre;
 
 use super::RemoteAppServerEndpoint;
 

@@ -1,5 +1,6 @@
 //! Run isolated structured requests through existing app-server methods.
 
+use color_eyre::eyre::eyre;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_client::TypedRequestError;
 use genex_app_server_protocol::AskForApproval;
@@ -23,7 +24,6 @@ use genex_app_server_protocol::TurnStartResponse;
 use genex_app_server_protocol::TurnStatus;
 use genex_app_server_protocol::UserInput;
 use genex_protocol::model_types::ReasoningEffort;
-use color_eyre::eyre::eyre;
 use serde_json::Value;
 use std::time::Duration;
 use tokio::sync::mpsc::UnboundedReceiver;

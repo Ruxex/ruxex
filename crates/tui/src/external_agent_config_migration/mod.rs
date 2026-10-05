@@ -2,12 +2,12 @@ use crate::diff_render::display_path_for;
 use crate::tui::FrameRequester;
 use crate::tui::Tui;
 use crate::tui::TuiEvent;
-use genex_app_server_protocol::ExternalAgentConfigMigrationItem;
-use genex_app_server_protocol::PluginsMigration;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use genex_app_server_protocol::ExternalAgentConfigMigrationItem;
+use genex_app_server_protocol::PluginsMigration;
 use ratatui::prelude::Stylize as _;
 use ratatui::text::Line;
 use tokio_stream::StreamExt;
@@ -717,13 +717,13 @@ mod tests {
     use crate::custom_terminal::Terminal;
     use crate::test_backend::VT100Backend;
     use crate::tui::FrameRequester;
+    use crossterm::event::KeyCode;
+    use crossterm::event::KeyEvent;
+    use crossterm::event::KeyModifiers;
     use genex_app_server_protocol::ExternalAgentConfigMigrationItem;
     use genex_app_server_protocol::ExternalAgentConfigMigrationItemType;
     use genex_app_server_protocol::PluginsMigration;
     use genex_app_server_protocol::SessionMigration;
-    use crossterm::event::KeyCode;
-    use crossterm::event::KeyEvent;
-    use crossterm::event::KeyModifiers;
     use pretty_assertions::assert_eq;
     use ratatui::layout::Rect;
     use std::path::PathBuf;
@@ -756,12 +756,6 @@ mod tests {
         }
     }
 
-    #[cfg(windows)]
-    fn sample_project_root() -> PathBuf {
-        PathBuf::from(r"C:\workspace\project")
-    }
-
-    #[cfg(not(windows))]
     fn sample_project_root() -> PathBuf {
         PathBuf::from("/workspace/project")
     }

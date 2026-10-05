@@ -1,8 +1,6 @@
 //! Managed app-server lifecycle, serialized across CLI invocations and the updater.
 
 mod backend;
-#[cfg(windows)]
-use backend::windows::try_lock_file;
 mod client;
 mod install_lock;
 mod managed_install;
@@ -26,7 +24,6 @@ use backend::BackendPaths;
 use genex_app_server_transport::app_server_control_socket_path;
 use genex_utils_home_dir::find_genex_home;
 use managed_install::managed_genex_bin;
-#[cfg(any(unix, windows))]
 use managed_install::managed_genex_version;
 use serde::Serialize;
 use settings::DaemonSettings;
@@ -128,7 +125,7 @@ pub struct UpdateOutput {
     pub message: String,
 }
 
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RestartIfRunningOutcome {
     Busy,
@@ -138,7 +135,7 @@ pub(crate) enum RestartIfRunningOutcome {
     Restarted,
 }
 
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RestartMode {
     IfVersionChanged,
@@ -146,7 +143,7 @@ pub(crate) enum RestartMode {
     Always,
 }
 
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum RestartDecision {
     NotReady,
@@ -156,18 +153,12 @@ enum RestartDecision {
 
 pub async fn run(command: LifecycleCommand) -> Result<LifecycleOutput> {
     ensure_supported_platform()?;
-    #[cfg(windows)]
-    if matches!(command, LifecycleCommand::Start | LifecycleCommand::Restart) {
-        backend::windows::ensure_not_elevated()?;
-    }
     // Keep daemon package preparation off callers' async stack frames.
     Box::pin(Daemon::from_environment()?.run(command)).await
 }
 
 pub async fn bootstrap(options: BootstrapOptions) -> Result<BootstrapOutput> {
     ensure_supported_platform()?;
-    #[cfg(windows)]
-    backend::windows::ensure_not_elevated()?;
     Box::pin(Daemon::from_environment()?.bootstrap(options)).await
 }
 
@@ -176,8 +167,6 @@ pub async fn run_pid_update_loop(
     restore_release: Option<String>,
 ) -> Result<()> {
     ensure_supported_platform()?;
-    #[cfg(windows)]
-    backend::windows::ensure_not_elevated()?;
     update_loop::run(http_client_factory, restore_release).await
 }
 
@@ -185,21 +174,12 @@ pub async fn update(
     http_client_factory: genex_http_client::HttpClientFactory,
 ) -> Result<UpdateOutput> {
     ensure_supported_platform()?;
-    #[cfg(windows)]
-    backend::windows::ensure_not_elevated()?;
     update_loop::request_manual_update(&Daemon::from_environment()?, http_client_factory).await
 }
 
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 fn ensure_supported_platform() -> Result<()> {
     Ok(())
-}
-
-#[cfg(not(any(unix, windows)))]
-fn ensure_supported_platform() -> Result<()> {
-    Err(anyhow!(
-        "genex app-server daemon lifecycle is only supported on Unix and Windows platforms"
-    ))
 }
 
 #[derive(Clone)]
@@ -377,7 +357,7 @@ impl Daemon {
             .await)
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     pub(crate) async fn try_restart_if_running(
         &self,
         mode: RestartMode,
@@ -423,8 +403,6 @@ impl Daemon {
                 RestartDecision::NotReady => return Ok(RestartIfRunningOutcome::NotReady),
                 RestartDecision::AlreadyCurrent => RestartIfRunningOutcome::AlreadyCurrent,
                 RestartDecision::Restart => {
-                    #[cfg(windows)]
-                    backend::windows::ensure_detached_launch(managed_genex_bin)?;
                     if let Err(err) = thread_recovery::discard_pending(self) {
                         eprintln!(
                             "warning: failed to clear stale daemon recovery before update: {err}"
@@ -710,8 +688,6 @@ impl Daemon {
 
     fn ensure_managed_genex_bin(&self) -> Result<()> {
         if self.managed_genex_bin.is_file() {
-            #[cfg(windows)]
-            backend::windows::ensure_detached_launch(&self.managed_genex_bin)?;
             return Ok(());
         }
 
@@ -721,14 +697,9 @@ impl Daemon {
         ))
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     async fn managed_genex_version_best_effort(&self) -> Option<String> {
         managed_genex_version(&self.managed_genex_bin).await.ok()
-    }
-
-    #[cfg(not(any(unix, windows)))]
-    async fn managed_genex_version_best_effort(&self) -> Option<String> {
-        None
     }
 
     fn backend_paths(&self, _settings: &DaemonSettings) -> BackendPaths {
@@ -820,7 +791,7 @@ impl Daemon {
     }
 }
 
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 fn restart_decision(
     mode: RestartMode,
     info: Option<&client::ProbeInfo>,
@@ -856,12 +827,7 @@ fn try_lock_file(file: &tokio::fs::File) -> Result<bool> {
     Err(err).context("failed to lock daemon operation")
 }
 
-#[cfg(not(any(unix, windows)))]
-fn try_lock_file(_file: &tokio::fs::File) -> Result<bool> {
-    Ok(true)
-}
-
-#[cfg(all(test, any(unix, windows)))]
+#[cfg(all(test, unix))]
 mod tests {
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;

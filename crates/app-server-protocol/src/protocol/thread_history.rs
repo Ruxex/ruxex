@@ -1684,13 +1684,13 @@ mod tests {
     use genex_protocol::protocol::AgentReasoningEvent;
     use genex_protocol::protocol::AgentReasoningRawContentEvent;
     use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-    use genex_protocol::protocol::GenexErrorInfo;
     use genex_protocol::protocol::DynamicToolCallResponseEvent;
     use genex_protocol::protocol::EnteredReviewModeEvent;
     use genex_protocol::protocol::ExecCommandBeginEvent;
     use genex_protocol::protocol::ExecCommandEndEvent;
     use genex_protocol::protocol::ExecCommandSource;
     use genex_protocol::protocol::ExitedReviewModeEvent;
+    use genex_protocol::protocol::GenexErrorInfo;
     use genex_protocol::protocol::ItemStartedEvent;
     use genex_protocol::protocol::McpInvocation;
     use genex_protocol::protocol::McpToolCallEndEvent;

@@ -77,7 +77,7 @@ def extract_source(source: Source, archives: Path, destination: Path) -> None:
                 raise ValueError(f"Expanded source exceeds limits: {source.name}")
         if not members:
             raise ValueError(f"Empty source archive: {source.name}")
-        # Bound Python's fallback copies when Windows cannot create archive links.
+        # Bound Python's fallback copies when archive links are unavailable.
         links = sum(member.issym() or member.islnk() for member in members)
         if size + links * max(member.size for member in members) > MAX_SOURCE_BYTES:
             raise ValueError(f"Expanded source exceeds limits: {source.name}")

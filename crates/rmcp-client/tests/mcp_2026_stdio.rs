@@ -5,6 +5,7 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
+use futures::FutureExt;
 use genex_exec_server::Environment;
 use genex_rmcp_client::Elicitation;
 use genex_rmcp_client::ElicitationAction;
@@ -14,7 +15,6 @@ use genex_rmcp_client::LocalStdioServerLauncher;
 use genex_rmcp_client::McpProtocolMode;
 use genex_rmcp_client::RmcpClient;
 use genex_rmcp_client::StdioServerLauncher;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::ElicitRequestParams;

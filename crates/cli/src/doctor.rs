@@ -81,8 +81,6 @@ mod system;
 mod thread_inventory;
 mod title;
 mod updates;
-#[cfg(target_os = "windows")]
-mod windows_dev_drive;
 
 #[cfg(test)]
 #[path = "doctor/desktop_tests.rs"]
@@ -364,10 +362,6 @@ async fn build_report(
     checks.push(run_sync_check("disk", progress.clone(), || {
         disk::check(config_result.as_ref().ok(), &cwd)
     }));
-    #[cfg(target_os = "windows")]
-    checks.push(run_sync_check("dev drive", progress.clone(), || {
-        windows_dev_drive::check(&cwd)
-    }));
     match &config_result {
         Ok(config) => {
             let auth_manager_result =
@@ -539,7 +533,7 @@ async fn build_report(
 
     progress.begin("desktop");
     if let Some(desktop) = desktop::collect().await {
-        #[cfg(any(target_os = "macos", target_os = "windows"))]
+        #[cfg(target_os = "macos")]
         if let Some(application) = desktop.application.as_ref() {
             updates::append_desktop_update(&mut checks, config_result.as_ref().ok(), application)
                 .await;
@@ -958,7 +952,6 @@ fn describe_install_context(context: &InstallContext) -> String {
         } => {
             let platform = match platform {
                 StandalonePlatform::Unix => "unix",
-                StandalonePlatform::Windows => "windows",
             };
             match &context.package_layout {
                 Some(package_layout) => {
@@ -1539,7 +1532,6 @@ struct TerminalCheckInputs {
     stream_supports_color: bool,
     terminal_size: Result<(u16, u16), String>,
     tmux_details: Vec<String>,
-    windows_console_details: Vec<String>,
 }
 
 impl TerminalCheckInputs {
@@ -1553,7 +1545,6 @@ impl TerminalCheckInputs {
         } else {
             Vec::new()
         };
-        let windows_console_details = windows_console_details();
         Self {
             info,
             env,
@@ -1565,7 +1556,6 @@ impl TerminalCheckInputs {
             stream_supports_color: supports_color::on(Stream::Stdout).is_some(),
             terminal_size,
             tmux_details,
-            windows_console_details,
         }
     }
 
@@ -1580,51 +1570,6 @@ impl TerminalCheckInputs {
 
 fn terminal_check(no_color_flag: bool) -> DoctorCheck {
     terminal_check_from_inputs(TerminalCheckInputs::detect(no_color_flag))
-}
-
-#[cfg(windows)]
-fn windows_console_details() -> Vec<String> {
-    use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
-    use windows_sys::Win32::System::Console::ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    use windows_sys::Win32::System::Console::GetConsoleCP;
-    use windows_sys::Win32::System::Console::GetConsoleMode;
-    use windows_sys::Win32::System::Console::GetConsoleOutputCP;
-    use windows_sys::Win32::System::Console::GetStdHandle;
-    use windows_sys::Win32::System::Console::STD_ERROR_HANDLE;
-    use windows_sys::Win32::System::Console::STD_OUTPUT_HANDLE;
-
-    let mut details = Vec::new();
-    details.push(format!("console input code page: {}", unsafe {
-        GetConsoleCP()
-    }));
-    details.push(format!("console output code page: {}", unsafe {
-        GetConsoleOutputCP()
-    }));
-    details.push(console_mode_detail("stdout console mode", unsafe {
-        GetStdHandle(STD_OUTPUT_HANDLE)
-    }));
-    details.push(console_mode_detail("stderr console mode", unsafe {
-        GetStdHandle(STD_ERROR_HANDLE)
-    }));
-
-    fn console_mode_detail(label: &str, handle: isize) -> String {
-        if handle == 0 || handle == INVALID_HANDLE_VALUE {
-            return format!("{label}: unavailable");
-        }
-        let mut mode = 0_u32;
-        if unsafe { GetConsoleMode(handle, &mut mode) } == 0 {
-            return format!("{label}: unavailable");
-        }
-        let vt_enabled = mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING != 0;
-        format!("{label}: 0x{mode:08x} (VT processing: {vt_enabled})")
-    }
-
-    details
-}
-
-#[cfg(not(windows))]
-fn windows_console_details() -> Vec<String> {
-    Vec::new()
 }
 
 fn terminal_check_from_inputs(inputs: TerminalCheckInputs) -> DoctorCheck {
@@ -1660,7 +1605,6 @@ fn terminal_check_from_inputs(inputs: TerminalCheckInputs) -> DoctorCheck {
     }
     push_presence_env_values(&mut details, &inputs, REMOTE_TERMINAL_ENV_VARS);
     details.extend(inputs.tmux_details.iter().cloned());
-    details.extend(inputs.windows_console_details.iter().cloned());
 
     let locale_warning = locale.as_deref().is_some_and(is_non_utf8_locale);
     let mut issues = Vec::new();
@@ -1737,7 +1681,6 @@ fn terminal_name(info: &TerminalInfo) -> &'static str {
         TerminalName::Konsole => "Konsole",
         TerminalName::GnomeTerminal => "GNOME Terminal",
         TerminalName::Vte => "VTE",
-        TerminalName::WindowsTerminal => "Windows Terminal",
         TerminalName::Dumb => "dumb",
         TerminalName::Unknown => "unknown",
     }
@@ -2738,16 +2681,6 @@ fn stdio_command_resolves(
         let candidate = dir.join(command);
         if executable_path_exists(&candidate).is_ok() {
             return Ok(());
-        }
-        #[cfg(windows)]
-        {
-            let pathext = env::var("PATHEXT").unwrap_or_else(|_| ".COM;.EXE;.BAT;.CMD".to_string());
-            for extension in pathext.split(';').filter(|extension| !extension.is_empty()) {
-                let candidate = dir.join(format!("{command}{extension}"));
-                if executable_path_exists(&candidate).is_ok() {
-                    return Ok(());
-                }
-            }
         }
     }
     Err("not found on PATH".to_string())

@@ -9,10 +9,7 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
 
     let auth_config = config.auth_config();
-    match auth_config
-        .load_auth(/*enable_api_key_env*/ false)
-        .await
-    {
+    match auth_config.load_auth(/*enable_api_key_env*/ false).await {
         Ok(Some(auth)) => match auth.auth_mode() {
             AuthMode::ApiKey => match auth.get_token() {
                 Ok(api_key) => {

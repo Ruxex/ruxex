@@ -22,12 +22,12 @@ use crate::key_hint;
 use crate::key_hint::KeyBinding;
 use crate::key_hint::KeyBindingListExt;
 use crate::key_hint::ShortcutHint;
-use genex_config::types::KeybindingsSpec;
-use genex_config::types::MAX_FUNCTION_KEY;
-use genex_config::types::TuiKeymap;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
+use genex_config::types::KeybindingsSpec;
+use genex_config::types::MAX_FUNCTION_KEY;
+use genex_config::types::TuiKeymap;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -2728,18 +2728,6 @@ mod tests {
             keymap.chat.prompt_stack_back = Some(one(binding));
             assert!(RuntimeKeymap::from_config(&keymap).is_err());
         }
-        #[cfg(windows)]
-        {
-            let mut keymap = TuiKeymap::default();
-            keymap.chat.next_permission_mode = Some(one("ctrl-alt-q"));
-            assert!(RuntimeKeymap::from_config(&keymap).is_err());
-            keymap.chat.next_permission_mode = None;
-            keymap.chat.skip_question = Some(one("ctrl-alt-q"));
-            assert!(RuntimeKeymap::from_config(&keymap).is_err());
-            keymap.chat.skip_question = None;
-            keymap.chat.prompt_stack_back = Some(one("ctrl-alt-q"));
-            assert!(RuntimeKeymap::from_config(&keymap).is_err());
-        }
         let mut keymap = TuiKeymap::default();
         keymap.chat.previous_permission_mode = Some(one("f7"));
         keymap.chat.next_permission_mode = Some(one("ctrl-x enter"));
@@ -3516,19 +3504,6 @@ mod tests {
                 .contains("backspace")
         );
 
-        #[cfg(windows)]
-        {
-            keymap.agents.stop = Some(one("ctrl-alt-@"));
-            assert!(RuntimeKeymap::from_config(&keymap).is_err());
-            keymap.agents.stop = Some(one("f10"));
-            keymap.global.open_agents = Some(one("ctrl-alt-@"));
-            assert!(
-                RuntimeKeymap::from_config(&keymap)
-                    .unwrap_err()
-                    .contains("AltGr")
-            );
-            keymap.global.open_agents = Some(one("f12"));
-        }
         keymap.agents.stop = Some(one("backspace f10"));
         assert!(
             RuntimeKeymap::from_config(&keymap)

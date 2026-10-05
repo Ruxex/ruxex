@@ -1,7 +1,7 @@
-use super::manager::GenexAuth;
 use super::manager::ExternalAuth;
 use super::manager::ExternalAuthFuture;
 use super::manager::ExternalAuthRefreshContext;
+use super::manager::GenexAuth;
 use genex_protocol::config_types::ModelProviderAuthInfo;
 use std::fmt;
 use std::io;

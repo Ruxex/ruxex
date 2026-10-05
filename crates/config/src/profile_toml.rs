@@ -6,7 +6,6 @@ use serde::Serialize;
 use crate::config_toml::ToolsToml;
 use crate::types::MetricsConfigToml;
 use crate::types::SessionPickerViewMode;
-use crate::types::WindowsToml;
 use genex_features::FeaturesToml;
 use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::SandboxMode;
@@ -48,8 +47,6 @@ pub struct ConfigProfile {
     /// TUI settings scoped to this profile.
     #[serde(default)]
     pub tui: Option<ProfileTui>,
-    #[serde(default)]
-    pub windows: Option<WindowsToml>,
     /// Optional feature toggles scoped to this profile.
     #[serde(default)]
     // Injects known feature keys into the schema and forbids unknown keys.

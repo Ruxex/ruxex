@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use bytes::Bytes;
+use futures::StreamExt;
 use genex_api::AuthProvider;
 use genex_api::Compression;
 use genex_api::Provider;
@@ -15,7 +16,6 @@ use genex_client::Response;
 use genex_client::StreamResponse;
 use genex_client::TransportError;
 use genex_protocol::models::ResponseItem;
-use futures::StreamExt;
 use http::HeaderMap;
 use http::StatusCode;
 use pretty_assertions::assert_eq;

@@ -7,11 +7,11 @@ use std::path::Path;
 
 use super::TransportEvent;
 use crate::transport::websocket::run_websocket_connection;
+use futures::SinkExt;
+use futures::StreamExt;
 use genex_uds::UnixListener;
 use genex_uds::UnixStream;
 use genex_utils_absolute_path::AbsolutePathBuf;
-use futures::SinkExt;
-use futures::StreamExt;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
@@ -39,7 +39,6 @@ pub async fn start_control_socket_acceptor(
     shutdown_token: CancellationToken,
     daemon_shutdown_access: DaemonShutdownAccess,
 ) -> IoResult<JoinHandle<()>> {
-    #[cfg(unix)]
     let (socket_path, rendezvous_path, _startup_lock) = {
         use std::os::unix::fs::MetadataExt;
 
@@ -78,22 +77,11 @@ pub async fn start_control_socket_acceptor(
             lock,
         )
     };
-    #[cfg(windows)]
-    let (socket_path, directory_guard) = {
-        if let Some(parent) = socket_path.as_path().parent() {
-            genex_uds::prepare_private_socket_directory(parent).await?;
-        }
-        let (path, guard) = genex_uds::validate_private_socket_path(socket_path.as_path())?;
-        (AbsolutePathBuf::from_absolute_path_checked(path)?, guard)
-    };
     prepare_control_socket_path(socket_path.as_path()).await?;
     let listener = UnixListener::bind(socket_path.as_path()).await?;
     let socket_guard = ControlSocketFileGuard {
         socket_path,
-        #[cfg(unix)]
         rendezvous_path,
-        #[cfg(windows)]
-        _directory_guard: directory_guard,
     };
     set_control_socket_permissions(socket_guard.socket_path.as_path()).await?;
     #[cfg(unix)]
@@ -203,13 +191,6 @@ async fn run_daemon_shutdown(
 
 // Unix callers hold the physical socket's startup lock through bind and publication.
 async fn prepare_control_socket_path(socket_path: &Path) -> IoResult<()> {
-    #[cfg(windows)]
-    let (socket_path, _directory_guard) = genex_uds::validate_private_socket_path(socket_path)?;
-    #[cfg(windows)]
-    let socket_path = AbsolutePathBuf::from_absolute_path_checked(socket_path)?;
-    #[cfg(windows)]
-    let socket_path = socket_path.as_path();
-
     match UnixStream::connect(socket_path).await {
         Ok(_stream) => {
             return Err(std::io::Error::new(
@@ -307,23 +288,13 @@ async fn set_control_socket_permissions(socket_path: &Path) -> IoResult<()> {
     .await
 }
 
-#[cfg(not(unix))]
-async fn set_control_socket_permissions(_socket_path: &Path) -> IoResult<()> {
-    Ok(())
-}
-
 struct ControlSocketFileGuard {
     socket_path: AbsolutePathBuf,
-    #[cfg(unix)]
     rendezvous_path: AbsolutePathBuf,
-    // Keep the directory pinned until after the socket file is removed in Drop.
-    #[cfg(windows)]
-    _directory_guard: std::os::windows::io::OwnedHandle,
 }
 
 impl Drop for ControlSocketFileGuard {
     fn drop(&mut self) {
-        #[cfg(unix)]
         if std::fs::read_link(self.rendezvous_path.as_path())
             .ok()
             .as_deref()

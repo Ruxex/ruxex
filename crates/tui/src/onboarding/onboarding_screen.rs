@@ -10,6 +10,10 @@
 //! editing a non-empty API-key field, while control/alt chords remain available
 //! as explicit exit shortcuts.
 
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+use crossterm::event::KeyEventKind;
+use crossterm::event::KeyModifiers;
 use genex_app_server_client::AppServerEvent;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_protocol::ClientRequest;
@@ -17,12 +21,6 @@ use genex_app_server_protocol::ConfigBatchWriteParams;
 use genex_app_server_protocol::RequestId;
 use genex_exec_server::LOCAL_FS;
 use genex_git_utils::resolve_root_git_project_for_trust;
-#[cfg(target_os = "windows")]
-use genex_protocol::config_types::WindowsSandboxLevel;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyEventKind;
-use crossterm::event::KeyModifiers;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::Widget;
@@ -134,22 +132,6 @@ impl OnboardingScreen {
             tui.frame_requester(),
             local_settings.tui.animations,
         )));
-        #[cfg(target_os = "windows")]
-        let show_windows_create_sandbox_hint = if show_trust_screen
-            && remote_project_trust.is_none()
-            && let Some(handle) = &app_server_request_handle
-        {
-            crate::windows_sandbox::WindowsSandboxConfig::read(
-                handle.clone(),
-                config.cwd.display().to_string(),
-            )
-            .await
-            .is_ok_and(|state| state.level() == WindowsSandboxLevel::Disabled)
-        } else {
-            false
-        };
-        #[cfg(not(target_os = "windows"))]
-        let show_windows_create_sandbox_hint = false;
         if show_login_screen {
             let highlighted_mode = SignInOption::ApiKey;
             if let Some(app_server_request_handle) = app_server_request_handle {
@@ -186,7 +168,6 @@ impl OnboardingScreen {
                 cancel: super::trust_directory::TrustCancelAction::Quit,
                 cwd,
                 trust_target,
-                show_windows_create_sandbox_hint,
                 should_quit: false,
                 selection: None,
                 highlighted,
@@ -729,7 +710,6 @@ mod tests {
                 cancel: super::super::trust_directory::TrustCancelAction::Quit,
                 cwd: PathBuf::from("/workspace/project"),
                 trust_target: PathBuf::from("/workspace/project"),
-                show_windows_create_sandbox_hint: false,
                 should_quit: false,
                 selection: None,
                 highlighted: TrustDirectorySelection::Trust,
@@ -796,7 +776,6 @@ mod tests {
                     cancel: super::super::trust_directory::TrustCancelAction::AgentsOverview,
                     cwd: PathBuf::from("/workspace/project"),
                     trust_target: PathBuf::from("/workspace/project"),
-                    show_windows_create_sandbox_hint: false,
                     should_quit: false,
                     selection: None,
                     highlighted: TrustDirectorySelection::Trust,
@@ -827,7 +806,6 @@ mod tests {
                 cancel: super::super::trust_directory::TrustCancelAction::Quit,
                 cwd: PathBuf::from("/workspace/project"),
                 trust_target: PathBuf::from("/workspace/project"),
-                show_windows_create_sandbox_hint: false,
                 should_quit: false,
                 selection: Some(TrustDirectorySelection::Trust),
                 highlighted: TrustDirectorySelection::Trust,

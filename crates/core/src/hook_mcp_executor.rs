@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use anyhow::bail;
+use futures::FutureExt;
+use futures::future::BoxFuture;
 use genex_hooks::HookMcpCall;
 use genex_hooks::HookMcpExecutor;
 use genex_mcp::McpRuntime;
 use genex_protocol::ThreadId;
-use futures::FutureExt;
-use futures::future::BoxFuture;
 use serde_json::Value;
 
 pub(crate) struct CoreHookMcpExecutor {

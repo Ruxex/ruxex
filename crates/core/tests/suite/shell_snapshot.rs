@@ -7,7 +7,6 @@ use genex_core::config::NetworkProxySpec;
 #[cfg(unix)]
 use genex_core::shell::get_shell_by_model_provided_path;
 #[cfg(unix)]
-use genex_core::windows_sandbox::WindowsSandboxLevelExt;
 use genex_features::Feature;
 #[cfg(unix)]
 use genex_network_proxy::NetworkProxyConfig;
@@ -19,7 +18,6 @@ use genex_protocol::config_types::Settings;
 #[cfg(unix)]
 use genex_protocol::config_types::TrustLevel;
 #[cfg(unix)]
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 #[cfg(unix)]
 use genex_protocol::models::PermissionProfileSnapshot;
@@ -699,8 +697,6 @@ async fn shell_snapshot_v2_guardian_uses_its_resolved_permissions_and_tools(
         workspace_roots: environments.environments[0].workspace_roots.clone(),
         permission_profile: PermissionProfileSnapshot::legacy(PermissionProfile::Disabled),
         shell_environment_policy: test.config.permissions.shell_environment_policy.clone(),
-        windows_sandbox_level: WindowsSandboxLevel::from_config(&test.config),
-        windows_sandbox_private_desktop: test.config.permissions.windows_sandbox_private_desktop,
         use_legacy_landlock: test.config.features.use_legacy_landlock(),
         exec_policy: None,
         mcp_policy: None,

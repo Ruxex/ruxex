@@ -2220,10 +2220,7 @@ async fn apply_patch_turn_diff_emits_portable_paths_for_remote_cwd() -> Result<(
 
     let cwd = &test.executor_environment().selection().cwd;
     let file_uri = cwd.join(file)?;
-    let expected_relative_path = match test_target_os() {
-        TestTargetOs::Linux | TestTargetOs::MacOs => "nested/foreign.txt",
-        TestTargetOs::Windows => r"nested\foreign.txt",
-    };
+    let expected_relative_path = "nested/foreign.txt";
     assert_eq!(
         file_uri.relative_path_from(cwd).as_deref(),
         Some(expected_relative_path)

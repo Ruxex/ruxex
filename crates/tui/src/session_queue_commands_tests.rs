@@ -1,7 +1,7 @@
+use color_eyre::Report;
 use genex_app_server_client::TypedRequestError;
 use genex_app_server_protocol::JSONRPCErrorError;
 use genex_app_server_protocol::experimental_required_message;
-use color_eyre::Report;
 use pretty_assertions::assert_eq;
 
 use super::JSONRPC_INVALID_REQUEST;

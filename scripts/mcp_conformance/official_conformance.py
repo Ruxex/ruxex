@@ -247,23 +247,13 @@ def _make_adapter_launcher(
     # checkout paths (including paths with spaces) remain supported.
     launcher_dir = Path(tempfile.mkdtemp(prefix="mcp-conformance-adapter-"))
     automatic_auth = "1" if require_automatic_auth else "0"
-    if sys.platform == "win32":
-        launcher = launcher_dir / "client.cmd"
-        adapter_command = subprocess.list2cmdline([sys.executable, str(adapter_script)])
-        launcher.write_text(
-            "@echo off\n"
-            f'set "GENEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH={automatic_auth}"\n'
-            f"{adapter_command} %*\n",
-            encoding="utf-8",
-        )
-    else:
-        launcher = launcher_dir / "client"
-        launcher.write_text(
-            "#!/bin/sh\n"
-            f"export GENEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH={automatic_auth}\n"
-            f'exec {shlex.quote(sys.executable)} {shlex.quote(str(adapter_script))} "$@"\n',
-            encoding="utf-8",
-        )
+    launcher = launcher_dir / "client"
+    launcher.write_text(
+        "#!/bin/sh\n"
+        f"export GENEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH={automatic_auth}\n"
+        f'exec {shlex.quote(sys.executable)} {shlex.quote(str(adapter_script))} "$@"\n',
+        encoding="utf-8",
+    )
     launcher.chmod(0o755)
     return launcher
 
@@ -273,30 +263,6 @@ def _terminate_process_group(
     *,
     force: bool = False,
 ) -> None:
-    if sys.platform == "win32":
-        command = ["taskkill", "/T", "/PID", str(process.pid)]
-        if force:
-            command.insert(1, "/F")
-        try:
-            result = subprocess.run(
-                command,
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            if result.returncode == 0:
-                return
-        except OSError:
-            pass
-        try:
-            if force:
-                process.kill()
-            else:
-                process.terminate()
-        except (OSError, ProcessLookupError):
-            pass
-        return
-
     try:
         os.killpg(process.pid, signal.SIGKILL if force else signal.SIGTERM)
     except (OSError, ProcessLookupError):
@@ -415,12 +381,7 @@ def _run_scenario(
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            start_new_session=sys.platform != "win32",
-            creationflags=(
-                getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-                if sys.platform == "win32"
-                else 0
-            ),
+            start_new_session=True,
         )
         try:
             process_timeout = timeout_seconds + process_grace_seconds

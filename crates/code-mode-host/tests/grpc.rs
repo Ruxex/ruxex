@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
+use futures::FutureExt;
 use genex_code_mode::CellId;
 use genex_code_mode::CodeModeNestedToolCall;
 use genex_code_mode::CodeModeSession;
@@ -28,7 +29,6 @@ use genex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
 #[cfg(unix)]
 use genex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHostServer;
 use genex_protocol::ToolName;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 #[cfg(unix)]

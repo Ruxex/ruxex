@@ -16,8 +16,6 @@ use genex_network_proxy::NetworkProxyHandle;
 use genex_network_proxy::NetworkProxyState;
 use genex_network_proxy::build_config_state;
 use genex_network_proxy::host_and_port_from_network_addr;
-#[cfg(any(target_os = "windows", test))]
-use genex_network_proxy::managed_proxy_ports;
 use genex_network_proxy::normalize_host;
 use genex_network_proxy::validate_policy_against_constraints;
 use genex_protocol::models::PermissionProfile;
@@ -101,16 +99,6 @@ impl NetworkProxySpec {
 
     pub fn socks_enabled(&self) -> bool {
         self.config.enable_socks5
-    }
-
-    #[cfg(any(target_os = "windows", test))]
-    pub(crate) fn configured_proxy_ports(&self) -> std::io::Result<Vec<u16>> {
-        managed_proxy_ports(&self.config).map_err(std::io::Error::other)
-    }
-
-    #[cfg(any(target_os = "windows", test))]
-    pub(crate) fn allow_local_binding(&self) -> bool {
-        self.config.allow_local_binding
     }
 
     pub fn from_config_and_constraints(

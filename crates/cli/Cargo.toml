@@ -52,6 +52,7 @@ genex-login = { workspace = true }
 genex-mcp = { workspace = true }
 genex-model-provider = { workspace = true }
 genex-models-manager = { workspace = true }
+genex-network-proxy = { workspace = true }
 genex-plugin = { workspace = true }
 genex-protocol = { workspace = true }
 genex-tcp-tunnel = { workspace = true }
@@ -98,15 +99,6 @@ which = { workspace = true }
 
 [target.'cfg(all(target_os = "linux", target_env = "musl", any(target_arch = "x86_64", target_arch = "aarch64")))'.dependencies]
 tikv-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-genex_windows_sandbox = { package = "genex-windows-sandbox", path = "../windows-sandbox-rs" }
-windows-sys = { version = "0.52", features = [
-    "Win32_Foundation",
-    "Win32_Storage_Packaging_Appx",
-    "Win32_System_Console",
-    "Win32_System_Threading",
-] }
 
 [dev-dependencies]
 app_test_support = { workspace = true }

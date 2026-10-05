@@ -4,10 +4,10 @@ use std::sync::PoisonError;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
+use futures::FutureExt;
 use genex_code_mode_protocol::CellId;
 use genex_code_mode_protocol::grpc;
 use genex_protocol::protocol::W3cTraceContext;
-use futures::FutureExt;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
 use tracing::warn;

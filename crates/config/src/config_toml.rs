@@ -26,7 +26,6 @@ use crate::types::SkillsConfig;
 use crate::types::ToolSuggestConfig;
 use crate::types::Tui;
 use crate::types::UriBasedFileOpener;
-use crate::types::WindowsToml;
 use genex_features::FeaturesToml;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
@@ -37,7 +36,6 @@ use genex_protocol::config_types::TrustLevel;
 use genex_protocol::config_types::Verbosity;
 use genex_protocol::config_types::WebSearchMode;
 use genex_protocol::config_types::WebSearchToolConfig;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::NetworkSandboxPolicy;
@@ -177,7 +175,7 @@ pub struct ConfigToml {
     /// symlinks. Read only from the host's user config at startup; defaults to false.
     /// This grants no write access by itself, but trusts symlink targets even if
     /// they change between commands or lie outside GENEX_HOME.
-    /// This setting has no effect on Linux or Windows.
+    /// This setting has no effect on Linux.
     pub allow_symlinked_genex_home: Option<bool>,
 
     /// Sandbox configuration to apply if `sandbox` is `WorkspaceWrite`.
@@ -416,10 +414,6 @@ pub struct ConfigToml {
     /// OTEL configuration.
     pub otel: Option<OtelConfigToml>,
 
-    /// Windows-specific configuration.
-    #[serde(default)]
-    pub windows: Option<WindowsToml>,
-
     /// Collection of in-product notices (different from notifications)
     /// See [`crate::types::Notice`] for more details
     pub notice: Option<Notice>,
@@ -566,7 +560,6 @@ impl ConfigToml {
     pub async fn derive_permission_profile(
         &self,
         sandbox_mode_override: Option<SandboxMode>,
-        windows_sandbox_level: WindowsSandboxLevel,
         active_project: Option<&ProjectConfig>,
         permission_profile_constraint: Option<&crate::Constrained<PermissionProfile>>,
     ) -> PermissionProfile {
@@ -574,30 +567,13 @@ impl ConfigToml {
         let resolved_sandbox_mode = configured_sandbox_mode
             .or_else(|| {
                 // If no sandbox_mode is set but this directory has a trust decision,
-                // default to workspace-write except on unsandboxed Windows where we
-                // default to read-only.
+                // default to workspace-write.
                 active_project
                     .filter(|project| project.is_trusted() || project.is_untrusted())
-                    .map(|_| {
-                        if cfg!(target_os = "windows")
-                            && windows_sandbox_level == WindowsSandboxLevel::Disabled
-                        {
-                            SandboxMode::ReadOnly
-                        } else {
-                            SandboxMode::WorkspaceWrite
-                        }
-                    })
+                    .map(|_| SandboxMode::WorkspaceWrite)
             })
             .unwrap_or_default();
-        let effective_sandbox_mode = if cfg!(target_os = "windows")
-            // If the experimental Windows sandbox is enabled, do not force a downgrade.
-            && windows_sandbox_level == WindowsSandboxLevel::Disabled
-            && matches!(resolved_sandbox_mode, SandboxMode::WorkspaceWrite)
-        {
-            SandboxMode::ReadOnly
-        } else {
-            resolved_sandbox_mode
-        };
+        let effective_sandbox_mode = resolved_sandbox_mode;
 
         let permission_profile = match effective_sandbox_mode {
             SandboxMode::ReadOnly => PermissionProfile::read_only(),
@@ -669,8 +645,7 @@ impl ConfigToml {
 }
 
 /// Canonicalize the path and convert it to a string to be used as a key in the
-/// projects trust map. On Windows, strips UNC, when possible, to try to ensure
-/// that different paths that point to the same location have the same key.
+/// projects trust map.
 fn normalized_project_lookup_keys(path: &Path) -> Vec<String> {
     let normalized_path = normalize_project_lookup_key(path.to_string_lossy().to_string());
     let normalized_canonical_path = normalize_project_lookup_key(
@@ -687,11 +662,7 @@ fn normalized_project_lookup_keys(path: &Path) -> Vec<String> {
 }
 
 fn normalize_project_lookup_key(key: String) -> String {
-    if cfg!(windows) {
-        key.to_ascii_lowercase()
-    } else {
-        key
-    }
+    key
 }
 
 fn project_config_for_lookup_key(
@@ -800,5 +771,4 @@ mod tests {
         assert!(message.contains("TOML list of strings"));
         assert!(message.contains("comma-separated strings are not supported"));
     }
-
 }

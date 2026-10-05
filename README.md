@@ -18,7 +18,7 @@ Approximate line count by file type:
 | TypeScript | 7,502 |
 | Python | 25,438 |
 | SQL | 806 |
-| Shell/PowerShell | 2,746 |
+| Shell | 2,746 |
 | C/C headers | 6,265 |
 | Protocol Buffers | 383 |
 | Markdown | 14,274 |
@@ -41,7 +41,7 @@ Approximate line count by file type at this commit:
 | TypeScript | 6,608 |
 | Python | 25,438 |
 | SQL | 794 |
-| Shell/PowerShell | 2,500 |
+| Shell | 2,500 |
 | C/C headers | 6,265 |
 | Protocol Buffers | 338 |
 | Markdown | 15,556 |
@@ -65,7 +65,7 @@ Approximate line count by file type at this commit:
 | TypeScript | 6,455 |
 | Python | 25,346 |
 | SQL | 753 |
-| Shell/PowerShell | 2,503 |
+| Shell | 2,503 |
 | C/C headers | 6,265 |
 | Protocol Buffers | 269 |
 | Markdown | 18,690 |
@@ -92,7 +92,7 @@ cargo build --locked --release -p genex-cli --bin genex
 ./target/release/genex
 ```
 
-On Windows, the executable is `target/release/genex.exe`.
+Supported hosts are Linux and macOS. Windows users should run Genex inside WSL2.
 Release artifacts are built locally and attached to releases manually. Features
 that launch helper executables or use native resources still need those resources
 beside the CLI; building the CLI alone does not assemble a complete runtime package.

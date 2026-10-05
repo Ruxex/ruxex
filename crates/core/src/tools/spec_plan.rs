@@ -61,6 +61,7 @@ use crate::tools::registry::ToolExposure;
 use crate::tools::registry::ToolRegistry;
 use crate::tools::router::ToolRouter;
 use crate::tools::tool_namespaces_info::collect_tool_namespaces_info;
+use futures::future::BoxFuture;
 use genex_extension_api::ExtensionData;
 use genex_features::Feature;
 use genex_features::SleepToolMode;
@@ -91,7 +92,6 @@ use genex_tools::collect_code_mode_exec_prompt_tool_definitions;
 use genex_tools::collect_request_plugin_install_entries;
 use genex_tools::default_namespace_description;
 use genex_tools::request_user_input_available_modes;
-use futures::future::BoxFuture;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -939,25 +939,6 @@ fn any_environment_allows_login_shell(environments: &TurnEnvironmentSnapshot) ->
         .any(|environment| environment.config().allow_login_shell)
 }
 
-fn should_include_windows_shell_guidance(environments: &TurnEnvironmentSnapshot) -> bool {
-    let mut environments = environments.turn_environments();
-    let Some(environment) = environments.next() else {
-        return false;
-    };
-    let executor_platform_os = if environments.next().is_none() {
-        environment.executor_platform_os.as_deref()
-    } else {
-        None
-    };
-
-    // One tool schema can target any ready environment. Multi-environment turns and legacy
-    // executors without platform OS information preserve the host-derived guidance.
-    match executor_platform_os {
-        Some(platform_os) => platform_os == "windows",
-        None => cfg!(windows),
-    }
-}
-
 #[instrument(level = "trace", skip_all)]
 fn add_shell_tools(context: &CoreToolPlanContext<'_>, registry: &mut ToolRegistry) {
     let turn_context = context.turn_context;
@@ -982,7 +963,6 @@ fn add_shell_tools(context: &CoreToolPlanContext<'_>, registry: &mut ToolRegistr
             turn_context,
             context.environments,
         ),
-        include_windows_shell_guidance: should_include_windows_shell_guidance(context.environments),
     };
     if features.enabled(Feature::UnifiedExec) {
         registry.add(ExecCommandHandler::new(options));

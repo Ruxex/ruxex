@@ -1,7 +1,6 @@
 use genex_config::test_support::CloudConfigBundleFixture;
 use genex_core::EnvironmentConfig;
 use genex_core::TurnInputRequest;
-use genex_core::windows_sandbox::WindowsSandboxLevelExt;
 use genex_features::Feature;
 use genex_protocol::approvals::ExecApprovalKind;
 use genex_protocol::protocol::ReviewDecision;
@@ -21,7 +20,6 @@ use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::Settings;
 use genex_protocol::config_types::ShellEnvironmentPolicy;
 use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::models::PermissionProfileSnapshot;
 use genex_protocol::models::ResponseItem;
@@ -415,14 +413,7 @@ async fn exec_command_does_not_expose_configured_noise_auth_token() -> Result<()
         );
     });
     let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
-    let command = match core_test_support::test_target_os() {
-        core_test_support::TestTargetOs::Linux | core_test_support::TestTargetOs::MacOs => {
-            "if [ -n \"${GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN:-}\" ] || [ -n \"${genex_exec_server_noise_auth_token:-}\" ]; then echo leaked; else echo unset; fi"
-        }
-        core_test_support::TestTargetOs::Windows => {
-            "if ($env:GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN) { Write-Output leaked } else { Write-Output unset }"
-        }
-    };
+    let command = "if [ -n \"${GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN:-}\" ] || [ -n \"${genex_exec_server_noise_auth_token:-}\" ]; then echo leaked; else echo unset; fi";
     let call_id = "exec-command-noise-auth-token";
     let arguments = json!({ "cmd": command, "yield_time_ms": 5_000 });
     mount_sse_sequence(
@@ -504,12 +495,6 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
                         .clone(),
                     ..Default::default()
                 },
-                windows_sandbox_level: WindowsSandboxLevel::from_config(&harness.test().config),
-                windows_sandbox_private_desktop: harness
-                    .test()
-                    .config
-                    .permissions
-                    .windows_sandbox_private_desktop,
                 use_legacy_landlock: harness.test().config.features.use_legacy_landlock(),
                 exec_policy: None,
                 mcp_policy: None,
@@ -520,14 +505,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
         .await?;
 
     let call_id = "exec-command-environment-shell-policy";
-    let command = match core_test_support::test_target_os() {
-        core_test_support::TestTargetOs::Linux | core_test_support::TestTargetOs::MacOs => {
-            r#"printf '%s:%s:%s:%s' "$KEEP" "${DROP:-missing}" "${OWNER_ONLY:-missing}" "$GENEX_VERSION""#
-        }
-        core_test_support::TestTargetOs::Windows => {
-            r#"if (Test-Path Env:DROP) { $drop = $env:DROP } else { $drop = 'missing' }; if (Test-Path Env:OWNER_ONLY) { $owner = $env:OWNER_ONLY } else { $owner = 'missing' }; Write-Output "${env:KEEP}:${drop}:${owner}:${env:GENEX_VERSION}""#
-        }
-    };
+    let command = r#"printf '%s:%s:%s:%s' "$KEEP" "${DROP:-missing}" "${OWNER_ONLY:-missing}" "$GENEX_VERSION""#;
     let arguments = json!({
         "cmd": command,
         "login": false,
@@ -1305,43 +1283,6 @@ async fn unified_exec_short_lived_network_denial_emits_failed_end_event() -> Res
     Ok(())
 }
 
-#[cfg(windows)]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn unified_exec_rejects_unelevated_windows_sandbox_with_managed_network() -> Result<()> {
-    let server = start_mock_server().await;
-    let (test, permission_profile) = unified_exec_network_denial_test(&server).await?;
-    let call_id = "uexec-unelevated-managed-network";
-    let args = json!({
-        "cmd": "echo should not run",
-        "yield_time_ms": 1_000,
-    });
-    let responses = mount_unified_exec_network_denial_responses(&server, call_id, &args).await?;
-
-    submit_unified_exec_turn(
-        &test,
-        "run an unelevated managed-network command",
-        permission_profile,
-    )
-    .await?;
-    wait_for_event(&test.genex, |event| {
-        matches!(event, EventMsg::TurnComplete(_))
-    })
-    .await;
-
-    let output_item = responses
-        .last_request()
-        .expect("model should receive the rejected tool call output")
-        .function_call_output(call_id);
-    let output = extract_output_text(&output_item)
-        .expect("rejected tool call should include model-visible text");
-    assert!(
-        output.contains("managed networking requires the elevated Windows sandbox backend"),
-        "unexpected output: {output}"
-    );
-
-    Ok(())
-}
-
 async fn unified_exec_network_denial_test(
     server: &wiremock::MockServer,
 ) -> Result<(TestGenex, PermissionProfile)> {
@@ -1379,8 +1320,6 @@ allow_local_binding = true
                 .permissions
                 .set_permission_profile(permission_profile_for_config)
                 .expect("set permission profile");
-            #[cfg(windows)]
-            config.set_windows_sandbox_enabled(/*value*/ true);
         });
     let test = builder.build_with_auto_env(server).await?;
     assert!(
@@ -2670,9 +2609,6 @@ async fn assert_write_stdin_ctrl_c_interrupts_non_tty_session(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn write_stdin_ctrl_c_terminates_non_tty_session_on_windows() -> Result<()> {
-    if core_test_support::test_target_os() != core_test_support::TestTargetOs::Windows {
-        return Ok(());
-    }
     skip_if_wine_exec!(
         Ok(()),
         "Wine exits Windows non-TTY shell processes immediately"

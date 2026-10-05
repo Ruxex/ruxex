@@ -1,4 +1,4 @@
-//! Coordinates package selection with the shell and PowerShell installers.
+//! Coordinates package selection with the shell installers.
 
 use anyhow::Context;
 use anyhow::Result;
@@ -95,11 +95,6 @@ pub(crate) async fn acquire_install_lock(root: &Path) -> Result<InstallLock> {
     };
     let mut options = OpenOptions::new();
     options.create(true).truncate(false).write(true);
-    #[cfg(windows)]
-    {
-        use std::os::windows::fs::OpenOptionsExt;
-        options.share_mode(0);
-    }
     loop {
         let acquired = options.open(&lock);
         #[cfg(unix)]
@@ -125,11 +120,7 @@ pub(crate) async fn acquire_install_lock(root: &Path) -> Result<InstallLock> {
                     _directory_owner: None,
                 });
             }
-            Err(error)
-                if error.kind() == std::io::ErrorKind::WouldBlock
-                    || cfg!(windows)
-                        && (error.raw_os_error() == Some(32)
-                            || error.kind() == std::io::ErrorKind::PermissionDenied) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {}
             Err(error) => return Err(error).context("failed to acquire daemon installer lock"),
         }
         if tokio::time::Instant::now() >= deadline {

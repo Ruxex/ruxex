@@ -3,9 +3,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
+use futures::FutureExt;
 use genex_exec_server::HttpClient;
 use genex_protocol::protocol::McpAuthStatus;
-use futures::FutureExt;
 use http::HeaderMap;
 use http::header::AUTHORIZATION;
 use rmcp::transport::AuthorizationManager;
@@ -309,6 +309,7 @@ mod tests {
     use axum::http::StatusCode;
     use axum::http::header::WWW_AUTHENTICATE;
     use axum::routing::get;
+    use futures::future::BoxFuture;
     use genex_exec_server::ExecServerError;
     use genex_exec_server::HttpRedirectPolicy;
     use genex_exec_server::HttpRequestParams;
@@ -317,7 +318,6 @@ mod tests {
     use genex_exec_server::RouteAwareHttpClient;
     use genex_http_client::HttpClientFactory;
     use genex_http_client::OutboundProxyPolicy;
-    use futures::future::BoxFuture;
     use pretty_assertions::assert_eq;
     use serial_test::serial;
     use std::collections::HashMap;

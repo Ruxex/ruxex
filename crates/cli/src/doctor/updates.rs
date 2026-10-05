@@ -19,13 +19,13 @@ use serde::Deserialize;
 
 use super::CheckStatus;
 use super::DoctorCheck;
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use super::DoctorIssue;
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use super::desktop::platform::InstalledApp;
 use super::doctor_install_context;
 use super::doctor_managed_by_npm;
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use super::network;
 
 const MAX_VERSION_RESPONSE_BYTES: usize = 1024 * 1024;
@@ -37,9 +37,6 @@ const HOMEBREW_CASK_API_URL: &str = "https://formulae.brew.sh/api/cask/codex.jso
 const DESKTOP_UPDATE_URL: &str = "https://persistent.oaistatic.com/codex-app-prod/appcast-x64.xml";
 #[cfg(all(target_os = "macos", not(target_arch = "x86_64")))]
 const DESKTOP_UPDATE_URL: &str = "https://persistent.oaistatic.com/codex-app-prod/appcast.xml";
-#[cfg(target_os = "windows")]
-const DESKTOP_UPDATE_URL: &str =
-    "https://persistent.oaistatic.com/codex-app-prod/windows-store-update.json";
 
 /// Builds the update-health row for the current installation.
 ///
@@ -89,7 +86,7 @@ pub(super) async fn updates_check(config: &Config) -> DoctorCheck {
     DoctorCheck::new("updates.status", "updates", status, summary).details(details)
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 pub(super) async fn append_desktop_update(
     checks: &mut [DoctorCheck],
     config: Option<&Config>,
@@ -140,16 +137,7 @@ pub(super) async fn append_desktop_update(
     {
         Ok(response) => {
             let status = response.status().as_u16();
-            #[cfg(target_os = "windows")]
-            if status == 404 && response.url().scheme() == "https" {
-                checks[reachability_index].details.push(format!(
-                    "desktop assets CDN: {desktop_update_display_url} reachable (HTTP 404; no update available)"
-                ));
-                return;
-            }
-            if cfg!(target_os = "windows") && response.url().scheme() != "https" {
-                Err("update manifest redirected to a non-HTTPS URL".to_string())
-            } else if status == 407 {
+            if status == 407 {
                 Err("proxy authentication required (HTTP 407)".to_string())
             } else if !(200..=299).contains(&status) {
                 Err(format!("HTTP {status}"))
@@ -157,31 +145,6 @@ pub(super) async fn append_desktop_update(
                 checks[reachability_index].details.push(format!(
                     "desktop assets CDN: {desktop_update_display_url} reachable (HTTP {status})"
                 ));
-                #[cfg(target_os = "windows")]
-                if let Some(update) = checks.iter_mut().find(|check| check.id == "updates.status") {
-                    match response.bytes().await {
-                        Ok(body) => match windows_store_update(&body, &application.version) {
-                            Ok(Some(build)) => update.details.extend([
-                                "desktop update status: available".to_string(),
-                                format!("desktop latest build: {build}"),
-                                format!("desktop application: {}", application.identity),
-                            ]),
-                            Ok(None) => {}
-                            Err(error) => {
-                                update.status = update.status.max(CheckStatus::Warning);
-                                update
-                                    .details
-                                    .push(format!("desktop update manifest: {error}"));
-                            }
-                        },
-                        Err(_) => {
-                            update.status = update.status.max(CheckStatus::Warning);
-                            update
-                                .details
-                                .push("desktop update manifest: response could not be read".into());
-                        }
-                    }
-                }
                 Ok(())
             }
         }
@@ -208,44 +171,6 @@ pub(super) async fn append_desktop_update(
             .field("desktop assets CDN"),
         );
     }
-}
-
-#[cfg(any(target_os = "windows", test))]
-fn windows_store_update(
-    manifest: &[u8],
-    installed_version: &str,
-) -> Result<Option<String>, &'static str> {
-    #[derive(Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct StoreManifest {
-        schema_version: u64,
-        build_version: String,
-        store_product_id: String,
-        package_identity: String,
-    }
-
-    let manifest: StoreManifest =
-        serde_json::from_slice(manifest).map_err(|_| "invalid Windows Store update manifest")?;
-    if manifest.schema_version == 0
-        || manifest.store_product_id != "9PLM9XGG6VKS"
-        || manifest.package_identity != "provider.Genex"
-    {
-        return Err("Windows Store update manifest does not target the production application");
-    }
-    let version = |value: &str| -> Option<[u64; 4]> {
-        value
-            .split('.')
-            .map(str::parse::<u64>)
-            .collect::<Result<Vec<_>, _>>()
-            .ok()?
-            .try_into()
-            .ok()
-    };
-    let latest = version(&manifest.build_version)
-        .ok_or("Windows Store update manifest contains an invalid build version")?;
-    let installed =
-        version(installed_version).ok_or("installed Windows application has an invalid version")?;
-    Ok((latest > installed).then_some(manifest.build_version))
 }
 
 #[cfg(target_os = "macos")]
@@ -528,28 +453,6 @@ mod tests {
         assert_eq!(
             latest_macos_staged_build(root.path(), /*installed_build*/ 6268).await,
             None
-        );
-    }
-
-    #[test]
-    fn windows_store_updates_compare_all_four_production_build_components() {
-        let mut manifest = serde_json::json!({
-            "schemaVersion": 1,
-            "buildVersion": "26.803.5235.1",
-            "storeProductId": "9PLM9XGG6VKS",
-            "packageIdentity": "provider.Genex",
-        });
-        assert_eq!(
-            windows_store_update(&serde_json::to_vec(&manifest).unwrap(), "26.803.5235.0"),
-            Ok(Some("26.803.5235.1".to_string()))
-        );
-        assert_eq!(
-            windows_store_update(&serde_json::to_vec(&manifest).unwrap(), "26.803.5235.1"),
-            Ok(None)
-        );
-        manifest["storeProductId"] = "other".into();
-        assert!(
-            windows_store_update(&serde_json::to_vec(&manifest).unwrap(), "26.803.5235.0").is_err()
         );
     }
 

@@ -16,7 +16,6 @@ use genex_core::exec_env::create_env;
 #[cfg(target_os = "macos")]
 use genex_core::spawn::GENEX_SANDBOX_ENV_VAR;
 use genex_core::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use genex_core::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
 use genex_protocol::config_types::SandboxMode;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::models::SandboxEnforcement;
@@ -35,7 +34,6 @@ use toml::Value as TomlValue;
 
 use crate::LandlockCommand;
 use crate::SeatbeltCommand;
-use crate::WindowsCommand;
 use crate::exit_status::handle_exit_status;
 
 #[cfg(target_os = "macos")]
@@ -125,47 +123,10 @@ pub async fn run_command_under_landlock(
     .await
 }
 
-pub async fn run_command_under_windows_sandbox(
-    command: WindowsCommand,
-    genex_linux_sandbox_exe: Option<PathBuf>,
-    loader_overrides: LoaderOverrides,
-) -> anyhow::Result<()> {
-    let WindowsCommand {
-        sandbox_state,
-        permissions_profile,
-        config_profile: _,
-        cwd,
-        include_managed_config,
-        config_overrides,
-        command,
-    } = command;
-    let managed_requirements_mode = ManagedRequirementsMode::for_profile_invocation(
-        &permissions_profile,
-        include_managed_config,
-    );
-    run_command_under_sandbox(
-        DebugSandboxConfigOptions {
-            sandbox_state,
-            permissions_profile,
-            cwd,
-            managed_requirements_mode,
-            loader_overrides,
-        },
-        command,
-        config_overrides,
-        genex_linux_sandbox_exe,
-        SandboxType::Windows,
-        /*log_denials*/ false,
-        &[],
-    )
-    .await
-}
-
 enum SandboxType {
     #[cfg(target_os = "macos")]
     Seatbelt,
     Landlock,
-    Windows,
 }
 
 #[derive(Debug)]
@@ -247,9 +208,6 @@ async fn run_command_under_sandbox(
     // In practice, this should be `std::env::current_dir()` because this CLI
     // does not support `--cwd`, but let's use the config value for consistency.
     let cwd = config.cwd.clone();
-    // Non-Windows sandbox launchers still use `sandbox_policy_cwd` for any
-    // remaining cwd-dependent policy resolution. `:workspace_roots` entries in
-    // the effective profile have already been materialized from config roots.
     let sandbox_policy_cwd = cwd.clone();
     let env = create_env(
         &config.permissions.shell_environment_policy,
@@ -311,35 +269,6 @@ async fn run_command_under_sandbox(
         }
     }
 
-    // Legacy Windows sandbox sessions emulate inherited stdio and exit the process.
-    if let SandboxType::Windows = sandbox_type {
-        #[cfg(target_os = "windows")]
-        {
-            if config.permissions.windows_sandbox_type != genex_sandboxing::SandboxType::WindowsMxc
-            {
-                let workspace_roots = config
-                    .effective_workspace_roots()
-                    .iter()
-                    .map(genex_utils_path_uri::PathUri::to_abs_path)
-                    .collect::<std::io::Result<Vec<_>>>()
-                    .context("invalid Windows sandbox workspace roots")?;
-                run_command_under_windows_session(
-                    &config,
-                    &permission_profile,
-                    command,
-                    cwd,
-                    workspace_roots,
-                    env,
-                )
-                .await;
-            }
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            anyhow::bail!("Windows sandbox is only available on Windows");
-        }
-    }
-
     #[cfg(target_os = "macos")]
     let mut denial_logger = log_denials.then(DenialLogger::new).flatten();
     #[cfg(not(target_os = "macos"))]
@@ -352,7 +281,7 @@ async fn run_command_under_sandbox(
         Some(spec) => Some(
             spec.start_proxy(
                 &permission_profile,
-                managed_proxy_routing_for_windows_sandbox(config.permissions.windows_sandbox_type),
+                genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
                 /*policy_decider*/ None,
                 /*blocked_request_observer*/ None,
                 managed_network_requirements_enabled,
@@ -368,7 +297,7 @@ async fn run_command_under_sandbox(
         .map(genex_core::config::StartedNetworkProxy::proxy);
     // Proxy containment depends on whether a proxy is active, not whether its
     // policy came from managed requirements.
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     let enforce_managed_network = network.is_some();
     let managed_mitm_ca_trust_bundle_path = match network.as_ref() {
         Some(network) => network.managed_mitm_ca_trust_bundle_path(),
@@ -454,57 +383,6 @@ async fn run_command_under_sandbox(
             )
             .await?
         }
-        #[cfg(not(target_os = "windows"))]
-        SandboxType::Windows => {
-            unreachable!("Windows sandbox should have been handled above");
-        }
-        #[cfg(target_os = "windows")]
-        SandboxType::Windows => {
-            use genex_sandboxing::SandboxCommand;
-            use genex_sandboxing::SandboxManager;
-            use genex_sandboxing::SandboxTransformRequest;
-            use genex_utils_path_uri::PathUri;
-
-            let (program, args) = command
-                .split_first()
-                .context("sandbox command must not be empty")?;
-            let sandbox_policy_cwd = PathUri::from_abs_path(&sandbox_policy_cwd);
-            let genex_self_exe = std::env::current_exe()?;
-            let request = SandboxManager::new().transform(SandboxTransformRequest {
-                command: SandboxCommand {
-                    program: program.into(),
-                    args: args.to_vec(),
-                    cwd: PathUri::from_abs_path(&cwd),
-                    env,
-                    managed_network: None,
-                    additional_permissions: None,
-                },
-                permissions: &runtime_permission_profile,
-                sandbox: genex_sandboxing::SandboxType::WindowsMxc,
-                enforce_managed_network,
-                environment_id: None,
-                network: network.as_ref(),
-                sandbox_policy_cwd: &sandbox_policy_cwd,
-                sandbox_exe: Some(genex_self_exe.as_path()),
-                use_legacy_landlock: false,
-                windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel::Disabled,
-                windows_sandbox_private_desktop: false,
-            })?;
-            let (program, args) = request
-                .command
-                .split_first()
-                .context("missing MXC wrapper")?;
-            spawn_debug_sandbox_child(
-                PathBuf::from(program),
-                args.to_vec(),
-                /*arg0*/ None,
-                cwd.to_path_buf(),
-                runtime_permission_profile.network_sandbox_policy(),
-                request.env,
-                |_| {},
-            )
-            .await?
-        }
     };
 
     #[cfg(target_os = "macos")]
@@ -528,71 +406,6 @@ async fn run_command_under_sandbox(
     }
 
     handle_exit_status(status);
-}
-
-#[cfg(target_os = "windows")]
-async fn run_command_under_windows_session(
-    config: &Config,
-    permission_profile: &PermissionProfile,
-    command: Vec<String>,
-    cwd: AbsolutePathBuf,
-    workspace_roots: Vec<AbsolutePathBuf>,
-    env: std::collections::HashMap<String, String>,
-) -> ! {
-    use genex_core::windows_sandbox::WindowsSandboxLevelExt;
-    use genex_protocol::config_types::WindowsSandboxLevel;
-    use genex_windows_sandbox::WindowsSandboxProxySettingsMode;
-    use genex_windows_sandbox::WindowsSandboxSessionRequest;
-    use genex_windows_sandbox::resolve_windows_deny_read_paths;
-    use genex_windows_sandbox::spawn_windows_sandbox_session_for_level;
-
-    // Setup reconciles persistent deny ACLs against this list. An empty list
-    // would discard the profile's denies, including on subsequent launches.
-    let (mut file_system, _) = permission_profile.to_runtime_permissions();
-    file_system.remove_skip_missing_path_entries();
-    let file_system = file_system.materialize_project_roots_with_workspace_roots(&workspace_roots);
-    let deny_read_paths = match resolve_windows_deny_read_paths(&file_system, &cwd) {
-        Ok(paths) => paths,
-        Err(err) => {
-            eprintln!("windows sandbox failed: {err}");
-            std::process::exit(1);
-        }
-    };
-
-    let empty_paths: &[AbsolutePathBuf] = &[];
-    let spawned = spawn_windows_sandbox_session_for_level(WindowsSandboxSessionRequest {
-        permission_profile,
-        workspace_roots: workspace_roots.as_slice(),
-        genex_home: config.genex_home.as_path(),
-        command,
-        cwd: cwd.as_path(),
-        env_map: env,
-        windows_sandbox_level: WindowsSandboxLevel::from_config(config),
-        proxy_settings_mode: WindowsSandboxProxySettingsMode::Preserve,
-        proxy_enforced: false,
-        network_proxy_restricting_sid: None,
-        timeout_ms: None,
-        read_roots_override: None,
-        read_roots_include_platform_defaults: false,
-        write_roots_override: None,
-        deny_read_paths_override: &deny_read_paths,
-        deny_write_paths_override: empty_paths,
-        tty: false,
-        stdin_open: true,
-        use_private_desktop: config.permissions.windows_sandbox_private_desktop,
-    })
-    .await;
-
-    let spawned = match spawned {
-        Ok(spawned) => spawned,
-        Err(err) => {
-            eprintln!("windows sandbox failed: {err}");
-            std::process::exit(1);
-        }
-    };
-
-    let exit_code = genex_windows_sandbox::forward_sandbox_session_stdio(spawned).await;
-    std::process::exit(exit_code);
 }
 
 async fn spawn_debug_sandbox_child(

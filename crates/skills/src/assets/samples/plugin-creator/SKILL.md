@@ -48,7 +48,6 @@ python3 scripts/create_basic_plugin.py my-plugin \
 When the user specifies a marketplace path, make sure that marketplace is actually installed before
 telling the user to reinstall from it. The default personal marketplace file at
 `~/.agents/plugins/marketplace.json` is discovered implicitly, but other marketplace paths are not.
-On Windows, use the equivalent path under the user profile.
 
 4. Generate/adjust optional companion folders as needed:
 

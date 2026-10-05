@@ -3,12 +3,12 @@ mod managed;
 use crate::agent::AgentControl;
 use crate::agents_md_manager::SessionInstructions;
 use crate::attestation::AttestationProvider;
-use crate::genex_thread::GenexThread;
 use crate::config::Config;
 use crate::config::ThreadStoreConfig;
 use crate::current_time::TimeProvider;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::environment_selection::default_thread_environment_selections;
+use crate::genex_thread::GenexThread;
 use crate::mcp::McpManager;
 use crate::rollout::truncation;
 use crate::session::ForkPersistence;
@@ -20,6 +20,8 @@ use crate::session::resolve_multi_agent_version;
 use crate::session::session::Session;
 use crate::tasks::InterruptedTurnHistoryMarker;
 use crate::tasks::interrupted_turn_history_marker;
+use futures::StreamExt;
+use futures::stream::FuturesUnordered;
 use genex_agent_graph_store::AgentGraphStore;
 use genex_agent_graph_store::LocalAgentGraphStore;
 use genex_app_server_protocol::ThreadHistoryBuilder;
@@ -86,8 +88,6 @@ use genex_thread_store::ThreadStoreError;
 use genex_thread_store::UpdateThreadMetadataParams;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_git_discovery::GitRootDiscovery;
-use futures::StreamExt;
-use futures::stream::FuturesUnordered;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -2078,8 +2078,6 @@ impl ThreadManagerState {
             starting.retain(|runtime| runtime.strong_count() != 0);
             starting.push(Arc::downgrade(&source_changed_during_startup));
         }
-        let windows_sandbox_proxy_settings_mode =
-            genex_sandboxing::WindowsSandboxProxySettingsMode::Reconcile;
         let attachment_source =
             forked_from_thread_id.filter(|_| matches!(&initial_history, InitialHistory::Forked(_)));
         let (session, io) = Session::spawn(SessionSpawnArgs {
@@ -2124,7 +2122,6 @@ impl ThreadManagerState {
             external_time_provider: self.external_time_provider.clone(),
             inherited_multi_agent_version: multi_agent_version,
             git_enrichment_policy: GitEnrichmentPolicy::Fresh,
-            windows_sandbox_proxy_settings_mode,
         })
         .await?;
         if let Some(source_thread_id) = attachment_source

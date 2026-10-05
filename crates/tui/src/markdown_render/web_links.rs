@@ -33,7 +33,6 @@ impl WebLinkDisplay {
             | TerminalName::Kitty
             | TerminalName::VsCode
             | TerminalName::Alacritty
-            | TerminalName::WindowsTerminal
             | TerminalName::Konsole
             | TerminalName::GnomeTerminal
             | TerminalName::Vte => Self::LabelOnly,

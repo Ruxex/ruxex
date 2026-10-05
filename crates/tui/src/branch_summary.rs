@@ -669,7 +669,10 @@ mod tests {
             repo_search_order_from_output(
                 r#"{"nameWithOwner":"contributor/repo","parent":{"nameWithOwner":"owner/repo"}}"#
             ),
-            Some(vec!["owner/repo".to_string(), "contributor/repo".to_string()])
+            Some(vec![
+                "owner/repo".to_string(),
+                "contributor/repo".to_string()
+            ])
         );
     }
 

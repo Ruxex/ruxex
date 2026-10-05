@@ -45,8 +45,6 @@ def runtime_files(
             r"lib/(?:gstreamer-1\.0/)?[A-Za-z0-9_+.-]+\.so(?:\.[0-9]+)*",
             "lib/gstreamer-1.0/libgst{}.so",
         )
-    elif target.endswith("-pc-windows-msvc"):
-        pattern, plugin = r"bin/[A-Za-z0-9_+.-]+\.[dD][lL][lL]", "bin/gst{}.dll"
     else:
         raise ValueError("unsupported native runtime target")
     libraries = manifest.get("libraries", [])

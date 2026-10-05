@@ -292,9 +292,6 @@
         },
         "macos": {
           "$ref": "#/definitions/ComputerUseMacosConfigToml"
-        },
-        "windows": {
-          "$ref": "#/definitions/ComputerUseWindowsConfigToml"
         }
       },
       "type": "object"
@@ -309,47 +306,6 @@
           "type": "object"
         }
       },
-      "type": "object"
-    },
-    "ComputerUseWindowsConfigToml": {
-      "additionalProperties": false,
-      "properties": {
-        "aumids": {
-          "additionalProperties": {
-            "$ref": "#/definitions/AllowDenyRequirementToml"
-          },
-          "type": "object"
-        },
-        "exes": {
-          "items": {
-            "$ref": "#/definitions/ComputerUseWindowsExeConfigToml"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "ComputerUseWindowsExeConfigToml": {
-      "additionalProperties": false,
-      "properties": {
-        "access": {
-          "$ref": "#/definitions/AllowDenyRequirementToml"
-        },
-        "binary_name": {
-          "type": "string"
-        },
-        "product_name": {
-          "type": "string"
-        },
-        "publisher_name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "access",
-        "product_name",
-        "publisher_name"
-      ],
       "type": "object"
     },
     "ConfigProfile": {
@@ -442,12 +398,6 @@
             "deferred_tool_world_state": {
               "type": "boolean"
             },
-            "elevated_windows_sandbox": {
-              "type": "boolean"
-            },
-            "enable_experimental_windows_sandbox": {
-              "type": "boolean"
-            },
             "enable_request_compression": {
               "type": "boolean"
             },
@@ -458,9 +408,6 @@
               "type": "boolean"
             },
             "executor_capability_discovery": {
-              "type": "boolean"
-            },
-            "experimental_windows_sandbox": {
               "type": "boolean"
             },
             "goals": {
@@ -521,9 +468,6 @@
               "type": "boolean"
             },
             "plugins": {
-              "type": "boolean"
-            },
-            "powershell_shell_version": {
               "type": "boolean"
             },
             "prevent_idle_sleep": {
@@ -756,14 +700,6 @@
         },
         "web_search": {
           "$ref": "#/definitions/WebSearchMode"
-        },
-        "windows": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/WindowsToml"
-            }
-          ],
-          "default": null
         }
       },
       "type": "object"
@@ -1191,10 +1127,6 @@
               "type": "boolean"
             },
             "command": {
-              "type": "string"
-            },
-            "commandWindows": {
-              "default": null,
               "type": "string"
             },
             "statusMessage": {
@@ -2142,7 +2074,7 @@
           "type": "boolean"
         },
         "hide_world_writable_warning": {
-          "description": "Tracks whether the user has acknowledged the Windows world-writable directories warning.",
+          "description": "Tracks whether the user has acknowledged the world-writable directories warning.",
           "type": "boolean"
         },
         "model_migrations": {
@@ -5217,26 +5149,6 @@
       },
       "type": "object"
     },
-    "WindowsSandboxModeToml": {
-      "enum": [
-        "elevated",
-        "unelevated"
-      ],
-      "type": "string"
-    },
-    "WindowsToml": {
-      "additionalProperties": false,
-      "properties": {
-        "sandbox": {
-          "$ref": "#/definitions/WindowsSandboxModeToml"
-        },
-        "sandbox_private_desktop": {
-          "description": "Defaults to `true`. Set to `false` to launch the final sandboxed child process on `Winsta0\\\\Default` instead of a private desktop.",
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "WireApi": {
       "description": "Wire protocol that the provider speaks.",
       "oneOf": [
@@ -5275,7 +5187,7 @@
       "type": "boolean"
     },
     "allow_symlinked_genex_home": {
-      "description": "Allow macOS sandbox writable roots at or beneath GENEX_HOME to traverse symlinks. Read only from the host's user config at startup; defaults to false. This grants no write access by itself, but trusts symlink targets even if they change between commands or lie outside GENEX_HOME. This setting has no effect on Linux or Windows.",
+      "description": "Allow macOS sandbox writable roots at or beneath GENEX_HOME to traverse symlinks. Read only from the host's user config at startup; defaults to false. This grants no write access by itself, but trusts symlink targets even if they change between commands or lie outside GENEX_HOME. This setting has no effect on Linux.",
       "type": "boolean"
     },
     "approval_policy": {
@@ -5421,12 +5333,6 @@
         "deferred_tool_world_state": {
           "type": "boolean"
         },
-        "elevated_windows_sandbox": {
-          "type": "boolean"
-        },
-        "enable_experimental_windows_sandbox": {
-          "type": "boolean"
-        },
         "enable_request_compression": {
           "type": "boolean"
         },
@@ -5437,9 +5343,6 @@
           "type": "boolean"
         },
         "executor_capability_discovery": {
-          "type": "boolean"
-        },
-        "experimental_windows_sandbox": {
           "type": "boolean"
         },
         "goals": {
@@ -5500,9 +5403,6 @@
           "type": "boolean"
         },
         "plugins": {
-          "type": "boolean"
-        },
-        "powershell_shell_version": {
           "type": "boolean"
         },
         "prevent_idle_sleep": {
@@ -6076,15 +5976,6 @@
         }
       ],
       "description": "Controls the web search tool mode: disabled, cached, indexed, or live."
-    },
-    "windows": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/WindowsToml"
-        }
-      ],
-      "default": null,
-      "description": "Windows-specific configuration."
     }
   },
   "title": "ConfigToml",

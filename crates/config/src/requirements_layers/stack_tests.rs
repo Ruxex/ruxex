@@ -1092,7 +1092,7 @@ managed_dir = "/managed/high"
 }
 
 #[test]
-fn active_windows_managed_dir_conflicts_fail_closed() {
+fn active_managed_dir_conflicts_fail_closed_again() {
     let err = compose_with_hook_directory_field(
         vec![
             layer(
@@ -1100,7 +1100,6 @@ fn active_windows_managed_dir_conflicts_fail_closed() {
                 "Low",
                 r#"
 [hooks]
-windows_managed_dir = 'C:\managed\low'
 "#,
             ),
             layer(
@@ -1108,15 +1107,14 @@ windows_managed_dir = 'C:\managed\low'
                 "High",
                 r#"
 [hooks]
-windows_managed_dir = 'C:\managed\high'
 "#,
             ),
         ],
-        HookDirectoryField::WindowsManagedDir,
+        HookDirectoryField::ManagedDir,
     )
     .expect_err("conflicting windows managed dirs should fail closed");
 
-    assert!(err.to_string().contains("hooks.windows_managed_dir"));
+    assert!(err.to_string().contains("hooks.managed_dir"));
     assert!(err.to_string().contains("High (req_high)"));
     assert!(err.to_string().contains("Low (req_low)"));
 }
@@ -1131,7 +1129,6 @@ fn inactive_hook_dir_conflicts_do_not_fail_composition() {
                 r#"
 [hooks]
 managed_dir = "/managed/hooks"
-windows_managed_dir = 'C:\managed\low'
 
 [[hooks.PreToolUse]]
 matcher = "Bash"
@@ -1147,7 +1144,6 @@ command = "low"
                 r#"
 [hooks]
 managed_dir = "/managed/hooks"
-windows_managed_dir = 'C:\managed\high'
 
 [[hooks.PreToolUse]]
 matcher = "Edit"
@@ -1169,7 +1165,6 @@ command = "high"
             r#"
 [hooks]
 managed_dir = "/managed/hooks"
-windows_managed_dir = 'C:\managed\high'
 
 [[hooks.PreToolUse]]
 matcher = "Edit"
@@ -1196,7 +1191,6 @@ command = "low"
                 r#"
 [hooks]
 managed_dir = "/managed/low"
-windows_managed_dir = 'C:\managed\hooks'
 
 [[hooks.PreToolUse]]
 matcher = "Bash"
@@ -1212,7 +1206,6 @@ command = "low"
                 r#"
 [hooks]
 managed_dir = "/managed/high"
-windows_managed_dir = 'C:\managed\hooks'
 
 [[hooks.PreToolUse]]
 matcher = "Edit"
@@ -1223,7 +1216,7 @@ command = "high"
 "#,
             ),
         ],
-        HookDirectoryField::WindowsManagedDir,
+        HookDirectoryField::ManagedDir,
     )
     .expect("inactive managed dir conflict should not fail")
     .expect("requirements present");
@@ -1234,7 +1227,6 @@ command = "high"
             r#"
 [hooks]
 managed_dir = "/managed/high"
-windows_managed_dir = 'C:\managed\hooks'
 
 [[hooks.PreToolUse]]
 matcher = "Edit"

@@ -46,8 +46,6 @@ pub enum TerminalName {
     GnomeTerminal,
     /// VTE backend terminal.
     Vte,
-    /// Windows Terminal emulator.
-    WindowsTerminal,
     /// Dumb terminal (TERM=dumb).
     Dumb,
     /// Unknown or missing terminal identification.
@@ -174,7 +172,6 @@ impl TerminalInfo {
                 TerminalName::Konsole => format_terminal_version("Konsole", &self.version),
                 TerminalName::GnomeTerminal => "gnome-terminal".to_string(),
                 TerminalName::Vte => format_terminal_version("VTE", &self.version),
-                TerminalName::WindowsTerminal => "WindowsTerminal".to_string(),
                 TerminalName::Dumb => "dumb".to_string(),
                 TerminalName::Unknown => "unknown".to_string(),
             }
@@ -322,14 +319,6 @@ fn detect_terminal_info_from_env(env: &dyn Environment) -> TerminalInfo {
         return TerminalInfo::from_name(TerminalName::Vte, version, multiplexer);
     }
 
-    if env.has("WT_SESSION") {
-        return TerminalInfo::from_name(
-            TerminalName::WindowsTerminal,
-            /*version*/ None,
-            multiplexer,
-        );
-    }
-
     if let Some(term) = env.var_non_empty("TERM") {
         return TerminalInfo::from_term(term, multiplexer);
     }
@@ -401,7 +390,6 @@ fn terminal_name_from_term_program(value: &str) -> Option<TerminalName> {
         "konsole" => Some(TerminalName::Konsole),
         "gnometerminal" => Some(TerminalName::GnomeTerminal),
         "vte" => Some(TerminalName::Vte),
-        "windowsterminal" => Some(TerminalName::WindowsTerminal),
         "dumb" => Some(TerminalName::Dumb),
         _ => None,
     }

@@ -173,8 +173,6 @@ allow_local_binding = true
         .with_config(|config| {
             config.project_doc_max_bytes = 0;
             config.approvals_reviewer = ApprovalsReviewer::AutoReview;
-            #[cfg(windows)]
-            config.set_windows_sandbox_enabled(/*value*/ true);
         })
         // This test supplies its own fake executor and must not select a CI executor.
         .build(&server)

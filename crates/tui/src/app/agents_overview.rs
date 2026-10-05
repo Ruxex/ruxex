@@ -72,22 +72,13 @@ impl App {
             self.chat_widget.show_selection_view(SelectionViewParams {
                 title: Some("Shared agents unavailable".to_string()),
                 subtitle: Some(
-                    if cfg!(any(unix, windows)) {
-                        "This session isn’t connected to a shared background server."
-                    } else {
-                        "Connect to a remote background server to use the agents dashboard."
-                    }
-                    .to_string(),
+                    "This session isn’t connected to a shared background server.".to_string(),
                 ),
-                footer_note: cfg!(any(unix, windows)).then(|| {
-                    Line::from(
-                        "Starting a background server will not interrupt or move this session."
-                            .dim(),
-                    )
-                }),
+                footer_note: Some(Line::from(
+                    "Starting a background server will not interrupt or move this session.".dim(),
+                )),
                 footer_hint: Some(standard_popup_hint_line_for_keymap(&self.keymap.list)),
                 items: [
-                    #[cfg(any(unix, windows))]
                     Some(SelectionItem {
                         name: "Start background server".to_string(),
                         description: Some(
@@ -318,9 +309,6 @@ impl App {
         started: Option<(Config, crate::app_server_session::AppServerStartedThread)>,
         mut startup_draft: Option<&mut StartupDraftPump>,
     ) -> color_eyre::Result<AppRunControl> {
-        if self.windows_sandbox_blocks_thread_switch() {
-            return Ok(AppRunControl::Continue);
-        }
         let is_new_session = started.is_some();
         if self.current_displayed_thread_id() == Some(root_thread_id)
             && (!self.thread_unavailable(root_thread_id)
@@ -977,7 +965,7 @@ impl App {
         }
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     pub(super) fn start_agents_daemon(&self) {
         let app_event_tx = self.app_event_tx.clone();
         tokio::spawn(async move {
@@ -987,18 +975,9 @@ impl App {
                 let executable = if current_executable
                     .file_stem()
                     .and_then(std::ffi::OsStr::to_str)
-                    .is_some_and(|name| {
-                        if cfg!(windows) {
-                            name.eq_ignore_ascii_case("genex-tui")
-                        } else {
-                            name == "genex-tui"
-                        }
-                    }) {
-                    current_executable.with_file_name(if cfg!(windows) {
-                        "genex.exe"
-                    } else {
-                        "genex"
-                    })
+                    .is_some_and(|name| name == "genex-tui")
+                {
+                    current_executable.with_file_name("genex")
                 } else {
                     current_executable
                 };

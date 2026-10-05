@@ -733,6 +733,8 @@ impl AppServerClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::SinkExt;
+    use futures::StreamExt;
     use genex_app_server_protocol::AccountUpdatedNotification;
     use genex_app_server_protocol::ConfigRequirementsReadResponse;
     use genex_app_server_protocol::GetAccountResponse;
@@ -751,8 +753,6 @@ mod tests {
     use genex_core::init_state_db;
     use genex_uds::UnixListener;
     use genex_utils_absolute_path::AbsolutePathBuf;
-    use futures::SinkExt;
-    use futures::StreamExt;
     use pretty_assertions::assert_eq;
     use std::ops::Deref;
     use std::path::Path;
@@ -1158,7 +1158,6 @@ mod tests {
     #[tokio::test]
     async fn remote_platform_metadata_preserves_reported_and_missing_values() {
         for (family, os) in [
-            (Some("windows"), Some("windows")),
             (Some("unix"), Some("linux")),
             (Some("future-family"), Some("future-os")),
             (Some("unix"), None),

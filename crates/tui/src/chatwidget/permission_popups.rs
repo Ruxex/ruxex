@@ -1,8 +1,6 @@
 //! Permission and approval popup flows for `ChatWidget`.
 //!
 //! This module owns the generic permission pickers and confirmation surfaces;
-//! Windows-specific sandbox prompting lives beside it in
-//! `windows_sandbox_prompts`.
 
 use super::*;
 use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
@@ -31,36 +29,18 @@ impl ChatWidget {
     }
 
     pub(super) fn open_legacy_permissions_popup(&mut self) {
-        let include_read_only = cfg!(target_os = "windows");
+        let include_read_only = true;
         let current_approval =
             AskForApproval::from(self.config.permissions.approval_policy.value());
         let current_permission_profile = self.config.permissions.permission_profile().clone();
         let mut items: Vec<SelectionItem> = Vec::new();
         let presets: Vec<ApprovalPreset> = builtin_approval_presets();
 
-        #[cfg(target_os = "windows")]
-        let windows_sandbox_level = self.windows_sandbox_config.level();
-        #[cfg(target_os = "windows")]
-        let windows_degraded_sandbox_enabled =
-            matches!(windows_sandbox_level, WindowsSandboxLevel::RestrictedToken)
-                && self.windows_sandbox_local_server
-                && self.windows_sandbox_host == crate::app::WindowsSandboxHost::Local;
-        #[cfg(not(target_os = "windows"))]
-        let windows_degraded_sandbox_enabled = false;
-
-        let show_elevate_sandbox_hint = windows_degraded_sandbox_enabled
-            && self
-                .windows_sandbox_config
-                .allows(WindowsSandboxSetupMode::Elevated)
-            && presets.iter().any(|preset| preset.id == "auto");
-
         for preset in presets.into_iter() {
             if !include_read_only && preset.id == "read-only" {
                 continue;
             }
-            let base_name = if preset.id == "auto" && windows_degraded_sandbox_enabled {
-                format!("{ASK_FOR_APPROVAL_LABEL} (non-admin sandbox)")
-            } else if preset.id == "auto" {
+            let base_name = if preset.id == "auto" {
                 ASK_FOR_APPROVAL_LABEL.to_string()
             } else {
                 preset.label.to_string()
@@ -99,18 +79,9 @@ impl ChatWidget {
             });
         }
 
-        let footer_note = show_elevate_sandbox_hint.then(|| {
-            vec![
-                "The non-admin sandbox protects your files and prevents network access under most circumstances. However, it carries greater risk if prompt injected. To upgrade to the default sandbox, run ".dim(),
-                "/setup-default-sandbox".cyan(),
-                ".".dim(),
-            ]
-            .into()
-        });
-
         self.bottom_pane.show_selection_view(SelectionViewParams {
             title: Some("Update Model Permissions".to_string()),
-            footer_note,
+            footer_note: None,
             footer_hint: Some(standard_popup_hint_line()),
             items,
             header: Box::new(()),
@@ -185,21 +156,6 @@ impl ChatWidget {
             )
         };
         let requires_confirmation = preset.id == "full-access";
-        #[cfg(target_os = "windows")]
-        if preset.id == "auto"
-            && matches!(
-                self.windows_sandbox_host,
-                crate::app::WindowsSandboxHost::Mixed | crate::app::WindowsSandboxHost::Unknown
-            )
-        {
-            let preset = preset.clone();
-            return vec![Box::new(move |tx| {
-                tx.send(AppEvent::OpenWindowsSandboxEnablePrompt {
-                    preset: preset.clone(),
-                    profile_selection: profile_selection.clone(),
-                });
-            })];
-        }
         if requires_confirmation {
             let preset = preset.clone();
             return vec![Box::new(move |tx| {

@@ -6,10 +6,11 @@ use std::process::Command;
 use std::process::Stdio;
 use std::time::Duration;
 
-use genex_exec_server::GENEX_ARG0_EXEC_HELPER_ARG1;
-use genex_exec_server::GENEX_FS_HELPER_ARG1;
+use ctor::ctor;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_exec_server::ExecServerTelemetry;
+use genex_exec_server::GENEX_ARG0_EXEC_HELPER_ARG1;
+use genex_exec_server::GENEX_FS_HELPER_ARG1;
 use genex_exec_server::RequestDispatchMode;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
@@ -17,7 +18,6 @@ use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
 use genex_test_binary_support::TestBinaryDispatchGuard;
 use genex_test_binary_support::TestBinaryDispatchMode;
 use genex_test_binary_support::configure_test_binary_dispatch;
-use ctor::ctor;
 
 pub(crate) mod exec_server;
 
@@ -29,18 +29,7 @@ pub(crate) const SYSTEM_PROXY_REQUEST_URL_ENV: &str =
     "GENEX_EXEC_SERVER_TEST_SYSTEM_PROXY_REQUEST_URL";
 pub(crate) const SYSTEM_PROXY_URL_ENV: &str = "GENEX_EXEC_SERVER_TEST_SYSTEM_PROXY_URL";
 
-const GENEX_WINDOWS_SANDBOX_ARG1: &str = "--run-as-windows-sandbox";
 const DELAYED_OUTPUT_AFTER_EXIT_CHILD_ARG: &str = "--genex-test-delayed-output-after-exit-child";
-
-#[macro_export]
-macro_rules! skip_if_mxc_unavailable {
-    ($return_value:expr $(,)?) => {{
-        if !genex_sandboxing::windows_mxc_available() {
-            eprintln!("skipping test: native MXC is unavailable on this host");
-            return $return_value;
-        }
-    }};
-}
 
 #[ctor]
 pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
@@ -49,12 +38,6 @@ pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         if argv1 == Some(GENEX_FS_HELPER_ARG1) {
-            return TestBinaryDispatchMode::DispatchArg0Only;
-        }
-        if argv1 == Some(GENEX_WINDOWS_SANDBOX_ARG1) {
-            return TestBinaryDispatchMode::DispatchArg0Only;
-        }
-        if argv1 == Some(genex_sandboxing::GENEX_WINDOWS_MXC_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         if exe_name == GENEX_LINUX_SANDBOX_ARG0 {

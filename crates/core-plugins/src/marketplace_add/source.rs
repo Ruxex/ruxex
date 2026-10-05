@@ -127,23 +127,11 @@ fn normalize_git_url(url: &str) -> String {
 
 fn looks_like_local_path(source: &str) -> bool {
     Path::new(source).is_absolute()
-        || looks_like_windows_absolute_path(source)
         || source.starts_with("./")
-        || source.starts_with(".\\")
         || source.starts_with("../")
-        || source.starts_with("..\\")
         || source.starts_with("~/")
         || source == "."
         || source == ".."
-}
-
-fn looks_like_windows_absolute_path(source: &str) -> bool {
-    let bytes = source.as_bytes();
-    bytes.len() >= 3
-        && bytes[0].is_ascii_alphabetic()
-        && bytes[1] == b':'
-        && matches!(bytes[2], b'\\' | b'/')
-        || source.starts_with(r"\\")
 }
 
 fn resolve_local_source_path(source: &str) -> Result<PathBuf, MarketplaceAddError> {
@@ -171,7 +159,7 @@ fn expand_tilde_path(source: &str) -> PathBuf {
     let Some(rest) = source.strip_prefix("~/") else {
         return PathBuf::from(source);
     };
-    let Some(home) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) else {
+    let Some(home) = std::env::var_os("HOME") else {
         return PathBuf::from(source);
     };
     PathBuf::from(home).join(rest)

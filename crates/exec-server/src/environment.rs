@@ -1046,10 +1046,7 @@ mod tests {
     #[tokio::test]
     async fn local_environment_passes_runtime_paths_to_exec_backend() {
         let environment = Environment::local(test_runtime_paths(), legacy_http_client_factory());
-        #[cfg(unix)]
         let uri = "file://server/share/checkout";
-        #[cfg(windows)]
-        let uri = "file:///usr/local/checkout";
         let sandbox_cwd = PathUri::parse(uri).expect("non-native sandbox cwd URI");
         let source = sandbox_cwd
             .to_abs_path()

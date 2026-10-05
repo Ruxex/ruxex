@@ -63,7 +63,6 @@ pub(crate) struct ExecCommandHandlerOptions {
     pub(crate) exec_permission_approvals_enabled: bool,
     pub(crate) include_environment_id: bool,
     pub(crate) include_shell_parameter: bool,
-    pub(crate) include_windows_shell_guidance: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -87,7 +86,6 @@ impl Default for ExecCommandHandler {
                 exec_permission_approvals_enabled: false,
                 include_environment_id: false,
                 include_shell_parameter: true,
-                include_windows_shell_guidance: cfg!(windows),
             },
         }
     }
@@ -122,7 +120,6 @@ impl ToolExecutor<ToolInvocation> for ExecCommandHandler {
             },
             self.options.include_environment_id,
             self.options.include_shell_parameter,
-            self.options.include_windows_shell_guidance,
         );
         let mut spec = match self.lifetime {
             ExecCommandLifetime::Interactive => spec,
@@ -212,7 +209,6 @@ impl ExecCommandHandler {
             && SandboxManager::new().select_initial(
                 turn_environment.permission_profile(),
                 SandboxablePreference::Auto,
-                turn_environment.config().windows_sandbox_level,
                 turn.network.is_some(),
             ) != SandboxType::None;
         // `to_abs_path()` alone cannot identify foreign drive paths: `file:///C:/repo` is

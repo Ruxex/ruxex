@@ -70,7 +70,6 @@ done
 fi
 "#
         }
-        ShellType::PowerShell | ShellType::Cmd => return String::new(),
     };
     script
         .replace(

@@ -17,8 +17,8 @@ use genex_utils_sandbox_summary::summarize_permission_profile;
 use owo_colors::OwoColorize;
 use owo_colors::Style;
 
-use crate::event_processor::GenexStatus;
 use crate::event_processor::EventProcessor;
+use crate::event_processor::GenexStatus;
 use crate::event_processor::handle_last_message;
 
 pub(crate) struct EventProcessorWithHumanOutput {

@@ -1,7 +1,7 @@
 //! Handshake coverage for the custom trust path retained by Windows realtime connections.
 
-use super::GENEX_CA_CERT_ENV;
 use super::ConfiguredCaBundle;
+use super::GENEX_CA_CERT_ENV;
 use super::build_rustls_client_config;
 use pretty_assertions::assert_eq;
 use rcgen::BasicConstraints;

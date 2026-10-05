@@ -715,47 +715,6 @@ async fn check_manual_update_restart(package_directory: &str) {
     server.abort();
 }
 
-#[cfg(windows)]
-#[tokio::test]
-async fn powershell_installer_is_noninteractive_and_reports_script_failure() {
-    let valid = FakeInstallerHttp::new(InstallerResponse::Success(
-        br#"
-function Test-Installer {
-    if ($env:GENEX_NON_INTERACTIVE -ne '1') { throw 'interactive installer' }
-    if ($env:GENEX_INSTALL_DAEMON_ONLY -ne '1') { throw 'wrong package destination' }
-    if ($env:GENEX_INSTALL_IF_CURRENT -ne '1' -or $env:GENEX_INSTALL_IF_LATEST -ne '0') { throw 'wrong update guard' }
-}
-Test-Installer
-"#
-        .to_vec(),
-    ));
-    let script = super::fetch_installer_script(&valid)
-        .await
-        .expect("fetch installer");
-    super::run_installer_script(
-        &script,
-        super::InstallerMode::RestoreProduction("0.150.0-x86_64-pc-windows-msvc"),
-        std::path::Path::new("packages/app-server-daemon"),
-    )
-    .await
-    .expect("installer succeeds");
-    let failing = FakeInstallerHttp::new(InstallerResponse::Success(
-        b"throw 'installer failed'".to_vec(),
-    ));
-    let script = super::fetch_installer_script(&failing)
-        .await
-        .expect("fetch failing installer");
-    assert!(
-        super::run_installer_script(
-            &script,
-            super::InstallerMode::RestoreProduction("0.150.0-x86_64-pc-windows-msvc"),
-            std::path::Path::new("packages/app-server-daemon")
-        )
-        .await
-        .is_err()
-    );
-}
-
 #[cfg(unix)]
 #[tokio::test]
 async fn update_rejects_a_package_root_change_during_download() {

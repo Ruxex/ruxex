@@ -2,9 +2,6 @@ use crate::context::world_state::validate_managed_developer_instructions;
 use crate::path_utils::normalize_for_native_workdir;
 use crate::unified_exec::DEFAULT_MAX_BACKGROUND_TERMINAL_TIMEOUT_MS;
 use crate::unified_exec::MIN_EMPTY_YIELD_TIME_MS;
-use crate::windows_sandbox::WindowsSandboxLevelExt;
-use crate::windows_sandbox::resolve_windows_sandbox_mode;
-use crate::windows_sandbox::resolve_windows_sandbox_private_desktop;
 use genex_agent_roles::load_agent_roles;
 use genex_config::ConfigLayerSource;
 use genex_config::ConfigLayerStack;
@@ -49,7 +46,6 @@ use genex_config::types::TuiKeymap;
 use genex_config::types::TuiNotificationSettings;
 use genex_config::types::TuiPetAnchor;
 use genex_config::types::UriBasedFileOpener;
-use genex_config::types::WindowsSandboxModeToml;
 use genex_core_plugins::PluginLoadOutcome;
 use genex_core_plugins::PluginsConfigInput;
 use genex_exec_server::ExecutorFileSystem;
@@ -100,7 +96,6 @@ use genex_protocol::config_types::TrustLevel;
 use genex_protocol::config_types::Verbosity;
 use genex_protocol::config_types::WebSearchConfig;
 use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::model_types::ModelsResponse;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::models::ActivePermissionProfile;
@@ -119,7 +114,6 @@ use genex_protocol::protocol::AskForApproval;
 use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::protocol::SandboxPolicy;
 use genex_rmcp_client::McpOAuthRefreshMode;
-use genex_sandboxing::SandboxType;
 pub use genex_thread_store::ExtraConfig;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_absolute_path::AbsolutePathBufGuard;
@@ -168,7 +162,6 @@ mod resolved_permission_profile;
 #[cfg(test)]
 mod schema;
 mod token_budget_startup;
-mod windows_sandbox_config;
 pub use auth_keyring::bootstrap_auth_config;
 pub use auth_keyring::resolve_bootstrap_auth_keyring_backend_kind;
 pub use genex_agent_roles::AgentRoleConfig;
@@ -204,8 +197,6 @@ pub use permissions::network_proxy_config_from_profile_network;
 pub use permissions::resolve_permission_profile;
 pub(crate) use resolved_permission_profile::PermissionProfileState;
 pub use token_budget_startup::TokenBudgetStartupConfig;
-pub use windows_sandbox_config::PreparedWindowsSandboxConfig;
-pub use windows_sandbox_config::prepare_windows_sandbox_config;
 
 /// Signals that a public config selected the retired `untrusted` approval policy.
 #[derive(Debug, thiserror::Error)]
@@ -311,13 +302,6 @@ pub struct Permissions {
     pub allow_login_shell: bool,
     /// Policy used to build process environments for shell/unified exec.
     pub shell_environment_policy: ShellEnvironmentPolicy,
-    /// Effective Windows sandbox mode derived from `[windows].sandbox` or
-    /// legacy feature keys.
-    pub windows_sandbox_mode: Option<WindowsSandboxModeToml>,
-    /// Selected Windows sandbox implementation, separate from the legacy setup level.
-    pub windows_sandbox_type: SandboxType,
-    /// Whether the final Windows sandboxed child should run on a private desktop.
-    pub windows_sandbox_private_desktop: bool,
 }
 
 impl Permissions {
@@ -337,9 +321,6 @@ impl Permissions {
             network: None,
             allow_login_shell: true,
             shell_environment_policy: ShellEnvironmentPolicy::default(),
-            windows_sandbox_mode: None,
-            windows_sandbox_type: SandboxType::None,
-            windows_sandbox_private_desktop: true,
         })
     }
 
@@ -3020,8 +3001,6 @@ impl Config {
             allow_login_shell: _,
             approval_policy: mut constrained_approval_policy,
             permission_profile: mut constrained_permission_profile,
-            windows_sandbox_mode: mut constrained_windows_sandbox_mode,
-            windows_sandbox_private_desktop: _,
             web_search_mode: mut constrained_web_search_mode,
             allow_managed_hooks_only: _,
             allow_appshots: _,
@@ -3138,17 +3117,6 @@ impl Config {
         };
         let respect_system_proxy = features.enabled(Feature::RespectSystemProxy);
         let enable_network_proxy = features.enabled(Feature::NetworkProxy);
-        let PreparedWindowsSandboxConfig {
-            mode: windows_sandbox_mode,
-            sandbox_type: windows_sandbox_type,
-            level: windows_sandbox_level,
-        } = prepare_windows_sandbox_config(
-            resolve_windows_sandbox_mode(&cfg),
-            WindowsSandboxLevel::from_features(&features),
-            &mut constrained_windows_sandbox_mode,
-            &mut startup_warnings,
-        )?;
-        let windows_sandbox_private_desktop = resolve_windows_sandbox_private_desktop(&cfg);
         let resolved_cwd = AbsolutePathBuf::try_from(normalize_for_native_workdir({
             use std::env;
 
@@ -3293,10 +3261,7 @@ impl Config {
                     let default_permissions = effective_permission_selection
                         .selected_profile_id
                         .unwrap_or_else(|| {
-                            default_builtin_permission_profile_name(
-                                &active_project,
-                                windows_sandbox_level,
-                            )
+                            default_builtin_permission_profile_name(&active_project)
                         });
                     network_proxy_config_for_profile_selection(
                         effective_permission_selection.profiles.as_ref(),
@@ -3316,7 +3281,7 @@ impl Config {
             let default_permissions = effective_permission_selection
                 .selected_profile_id
                 .unwrap_or_else(|| {
-                    default_builtin_permission_profile_name(&active_project, windows_sandbox_level)
+                    default_builtin_permission_profile_name(&active_project)
                 });
             let builtin_workspace_write_settings = if using_implicit_builtin_profile {
                 cfg.sandbox_workspace_write.as_ref().map(|settings| WorkspaceWriteSettings {
@@ -3381,7 +3346,6 @@ impl Config {
             let mut permission_profile = cfg
                 .derive_permission_profile(
                     sandbox_mode,
-                    windows_sandbox_level,
                     Some(&active_project),
                     Some(&constrained_permission_profile),
                 )
@@ -3876,9 +3840,6 @@ impl Config {
                 network,
                 allow_login_shell,
                 shell_environment_policy,
-                windows_sandbox_mode,
-                windows_sandbox_type,
-                windows_sandbox_private_desktop,
             },
             explicit_permission_profile_mode,
             custom_permission_profiles,
@@ -4115,32 +4076,6 @@ impl Config {
         } else {
             Ok(Some(s))
         }
-    }
-
-    pub fn set_windows_sandbox_enabled(&mut self, value: bool) {
-        self.permissions.windows_sandbox_mode = if value {
-            Some(WindowsSandboxModeToml::Unelevated)
-        } else if matches!(
-            self.permissions.windows_sandbox_mode,
-            Some(WindowsSandboxModeToml::Unelevated)
-        ) {
-            None
-        } else {
-            self.permissions.windows_sandbox_mode
-        };
-    }
-
-    pub fn set_windows_elevated_sandbox_enabled(&mut self, value: bool) {
-        self.permissions.windows_sandbox_mode = if value {
-            Some(WindowsSandboxModeToml::Elevated)
-        } else if matches!(
-            self.permissions.windows_sandbox_mode,
-            Some(WindowsSandboxModeToml::Elevated)
-        ) {
-            None
-        } else {
-            self.permissions.windows_sandbox_mode
-        };
     }
 
     pub fn managed_network_requirements_enabled(&self) -> bool {

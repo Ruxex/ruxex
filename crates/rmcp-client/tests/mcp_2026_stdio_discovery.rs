@@ -4,6 +4,7 @@ use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
+use futures::FutureExt;
 use genex_exec_server::Environment;
 use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
 use genex_rmcp_client::ElicitationAction;
@@ -13,7 +14,6 @@ use genex_rmcp_client::LocalStdioServerLauncher;
 use genex_rmcp_client::McpProtocolMode;
 use genex_rmcp_client::RmcpClient;
 use genex_rmcp_client::StdioServerLauncher;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;

@@ -8,11 +8,11 @@ use super::AgentPath;
 use super::AgentThreadId;
 use super::CodeCellId;
 use super::CodeModeRuntimeToolId;
-use super::GenexTurnId;
 use super::CompactionId;
 use super::CompactionRequestId;
 use super::ConversationItemId;
 use super::EdgeId;
+use super::GenexTurnId;
 use super::McpCallId;
 use super::ModelVisibleCallId;
 use super::TerminalId;
@@ -106,7 +106,7 @@ pub struct CompactionRequest {
     pub raw_response_payload_id: Option<RawPayloadId>,
 }
 
-    /// Runtime operation requested by the model, a JS code cell, or Genex itself.
+/// Runtime operation requested by the model, a JS code cell, or Genex itself.
 ///
 /// A `ToolCall` is not a chat transcript row. Model-visible call/output items
 /// link to it through `model_visible_*_item_ids`; runtime-only tools can have

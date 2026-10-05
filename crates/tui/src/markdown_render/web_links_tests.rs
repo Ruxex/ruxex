@@ -41,7 +41,6 @@ fn supporting_terminals_render_only_the_styled_label_and_keep_its_target() {
         TerminalName::Kitty,
         TerminalName::VsCode,
         TerminalName::Alacritty,
-        TerminalName::WindowsTerminal,
         TerminalName::Konsole,
         TerminalName::GnomeTerminal,
         TerminalName::Vte,

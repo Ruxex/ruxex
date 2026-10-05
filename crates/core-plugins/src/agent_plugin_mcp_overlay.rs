@@ -91,9 +91,5 @@ pub(super) async fn apply_agent_plugin_env_overlay(
 }
 
 fn environment_names_match(left: &str, right: &str) -> bool {
-    if cfg!(windows) {
-        left.eq_ignore_ascii_case(right)
-    } else {
-        left == right
-    }
+    left == right
 }

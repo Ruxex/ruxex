@@ -83,7 +83,7 @@ impl FileSystemHandler {
                     .validate_file_system_paths_for_current_host()
                     .is_ok()
                     && sandbox.should_read_from_sandbox()
-                    && (!cfg!(target_os = "windows") || sandbox.windows_sandbox_is_requested())
+                    && sandbox.should_read_from_sandbox()
                     && params
                         .roots
                         .iter()

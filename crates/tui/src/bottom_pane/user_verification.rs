@@ -4,8 +4,8 @@
 //! always requires explicit approval. The controller owns the app-server request and its proof;
 //! this view only calls its decision callback and displays the pending state.
 
-use genex_app_server_protocol::RequestId;
 use crossterm::event::KeyEvent;
+use genex_app_server_protocol::RequestId;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize;

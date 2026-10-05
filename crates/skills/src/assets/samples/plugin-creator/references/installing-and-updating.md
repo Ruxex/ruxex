@@ -26,7 +26,7 @@ python3 scripts/read_marketplace_name.py
 ```
 
 Here, "personal marketplace" means the marketplace whose file is at
-`~/.agents/plugins/marketplace.json`. On Windows, use the equivalent path under the user profile.
+`~/.agents/plugins/marketplace.json`.
 The helper uses Python's home-directory resolution and prints the validated marketplace name to use
 when constructing the install command. If the helper fails, stop.
 

@@ -1,9 +1,6 @@
 use std::collections::HashMap;
-#[cfg(any(windows, test))]
-use std::time::Duration;
 
 use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::FileSystemAccessMode;
 use genex_protocol::permissions::FileSystemPath;
@@ -20,32 +17,20 @@ use genex_sandboxing::SandboxType;
 use genex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(not(target_os = "linux"))]
 use genex_utils_absolute_path::canonicalize_preserving_symlinks;
-#[cfg(any(windows, test))]
-use genex_utils_path_uri::LegacyAppPathString;
-#[cfg(any(windows, test))]
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-#[cfg(any(windows, test))]
-use tokio::io::AsyncBufReadExt;
-#[cfg(any(windows, test))]
-use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
 use crate::ExecServerRuntimePaths;
 use crate::FileSystemSandboxContext;
-use crate::fs_helper::GENEX_FS_HELPER_ARG1;
 use crate::fs_helper::FsHelperPayload;
 use crate::fs_helper::FsHelperRequest;
 use crate::fs_helper::FsHelperResponse;
+use crate::fs_helper::GENEX_FS_HELPER_ARG1;
 use crate::rpc::internal_error;
 use crate::rpc::invalid_request;
 
 const FS_HELPER_ENV_ALLOWLIST: &[&str] = &["PATH", "TMPDIR", "TMP", "TEMP"];
-#[cfg(any(windows, test))]
-const FS_HELPER_EXIT_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 2);
-#[cfg(any(windows, test))]
-const MAX_FS_HELPER_STDERR_BYTES: u64 = 4096;
 
 #[derive(Debug, PartialEq, Eq)]
 struct SandboxCwd {
@@ -117,22 +102,19 @@ impl FileSystemSandboxRunner {
         // unrelated permission roots synchronously on the executor's runtime thread.
         #[cfg(not(target_os = "linux"))]
         normalize_file_system_policy_root_aliases(&mut file_system_policy);
-        #[cfg(windows)]
-        bind_windows_cwd_relative_deny_read_globs(&mut file_system_policy, &cwd.uri)?;
         let network_policy = NetworkSandboxPolicy::Restricted;
         let permission_profile = PermissionProfile::from_runtime_permissions_with_enforcement(
             native_permissions.enforcement(),
             &file_system_policy,
             network_policy,
         );
-        self.sandbox_exec_request(&permission_profile, &cwd, workspace_roots, sandbox)
+        self.sandbox_exec_request(&permission_profile, &cwd, sandbox)
     }
 
     fn sandbox_exec_request(
         &self,
         permission_profile: &PermissionProfile,
         cwd: &SandboxCwd,
-        workspace_roots: &[AbsolutePathBuf],
         sandbox_context: &FileSystemSandboxContext,
     ) -> Result<SandboxExecRequest, JSONRPCErrorError> {
         let helper = &self.runtime_paths.genex_self_exe;
@@ -141,10 +123,9 @@ impl FileSystemSandboxRunner {
         let sandbox_manager = sandbox_manager.with_allowed_symlinked_genex_home(
             self.runtime_paths.allowed_symlinked_genex_home.clone(),
         );
-        let (sandbox, windows_sandbox_level) = crate::sandbox_selection::select_sandbox(
+        let sandbox = crate::sandbox_selection::select_sandbox(
             &sandbox_manager,
             permission_profile,
-            sandbox_context,
             /*has_managed_network_requirements*/ false,
         );
         if sandbox == SandboxType::None {
@@ -153,7 +134,7 @@ impl FileSystemSandboxRunner {
             ));
         }
         // Requests use absolute paths; the helper can start at the filesystem root even if
-        // the policy cwd was removed. Keep its drive or share for Windows `:root` rules.
+        // the policy cwd was removed.
         let helper_cwd = cwd
             .native
             .ancestors()
@@ -169,9 +150,6 @@ impl FileSystemSandboxRunner {
         };
         sandbox_manager
             .transform_for_direct_spawn(SandboxDirectSpawnTransformRequest {
-                workspace_roots,
-                windows_sandbox_proxy_settings_mode:
-                    genex_sandboxing::WindowsSandboxProxySettingsMode::Preserve,
                 transform: SandboxTransformRequest {
                     command,
                     permissions: permission_profile,
@@ -180,16 +158,8 @@ impl FileSystemSandboxRunner {
                     environment_id: None,
                     network: None,
                     sandbox_policy_cwd: &cwd.uri,
-                    sandbox_exe: if cfg!(windows) {
-                        Some(self.runtime_paths.genex_self_exe.as_path())
-                    } else {
-                        self.runtime_paths.genex_linux_sandbox_exe.as_deref()
-                    },
+                    sandbox_exe: self.runtime_paths.genex_linux_sandbox_exe.as_deref(),
                     use_legacy_landlock: sandbox_context.use_legacy_landlock,
-                    windows_sandbox_level: windows_sandbox_level
-                        .unwrap_or(WindowsSandboxLevel::Disabled),
-                    windows_sandbox_private_desktop: sandbox_context
-                        .windows_sandbox_private_desktop,
                 },
             })
             .map_err(|err| invalid_request(format!("failed to prepare fs sandbox: {err}")))
@@ -255,34 +225,6 @@ fn add_helper_runtime_permissions(
     }
 }
 
-#[cfg(any(windows, test))]
-fn bind_windows_cwd_relative_deny_read_globs(
-    file_system_policy: &mut FileSystemSandboxPolicy,
-    cwd: &PathUri,
-) -> Result<(), JSONRPCErrorError> {
-    // The Windows direct-spawn wrapper reevaluates the profile using the helper cwd.
-    // Bind cwd-relative denials before moving the helper to the filesystem root.
-    for entry in &mut file_system_policy.entries {
-        if let FileSystemPath::GlobPattern { pattern } = &mut entry.path
-            && entry.access == FileSystemAccessMode::Deny
-            && PathConvention::Windows
-                .home_relative_suffix(pattern)
-                .is_none()
-            && LegacyAppPathString::from_string(pattern.as_str())
-                .to_path_uri(PathConvention::Windows)
-                .is_err()
-        {
-            cwd.validate_glob_directory(PathConvention::Windows)
-                .map_err(|err| invalid_request(err.to_string()))?;
-            *pattern = cwd
-                .join(pattern.as_str())
-                .map_err(|err| invalid_request(err.to_string()))?
-                .inferred_native_path_string();
-        }
-    }
-    Ok(())
-}
-
 #[cfg(not(target_os = "linux"))]
 fn normalize_file_system_policy_root_aliases(file_system_policy: &mut FileSystemSandboxPolicy) {
     for entry in &mut file_system_policy.entries {
@@ -341,7 +283,6 @@ fn helper_env_key_is_allowed(key: &str) -> bool {
     FS_HELPER_ENV_ALLOWLIST.contains(&key)
         // CoreFoundation consults this before falling back to user lookup during helper startup.
         || (cfg!(target_os = "macos") && key == "__CF_USER_TEXT_ENCODING")
-        || (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))
 }
 
 #[tracing::instrument(name = "fs.sandbox_execute", skip_all)]
@@ -355,32 +296,10 @@ async fn run_command(
         .take()
         .ok_or_else(|| internal_error("failed to open fs sandbox helper stdin".to_string()))?;
 
-    #[cfg(windows)]
-    let mut request_json = request_json;
-    #[cfg(windows)]
-    request_json.push(b'\n');
     stdin.write_all(&request_json).await.map_err(io_error)?;
-
-    #[cfg(windows)]
-    let response = {
-        stdin.flush().await.map_err(io_error)?;
-        let stdout = child
-            .stdout
-            .take()
-            .ok_or_else(|| internal_error("failed to open fs sandbox helper stdout".to_string()))?;
-        let stderr = drain_helper_stderr(&mut child);
-        let response = read_helper_response(stdout).await;
-        drop(stdin);
-        reap_helper_after_response(child, stderr).await?;
-        response?
-    };
-
-    #[cfg(not(windows))]
-    let response = {
-        stdin.shutdown().await.map_err(io_error)?;
-        drop(stdin);
-        wait_for_helper_output(child).await?.stdout
-    };
+    stdin.shutdown().await.map_err(io_error)?;
+    drop(stdin);
+    let response = wait_for_helper_output(child).await?.stdout;
 
     let response = serde_json::from_slice(&response).map_err(json_error)?;
     match response {
@@ -389,75 +308,6 @@ async fn run_command(
     }
 }
 
-#[cfg(any(windows, test))]
-pub(crate) async fn read_helper_response(
-    stdout: impl tokio::io::AsyncRead + Unpin,
-) -> Result<Vec<u8>, JSONRPCErrorError> {
-    let mut response = Vec::new();
-    let bytes_read = tokio::io::BufReader::new(stdout)
-        .read_until(b'\n', &mut response)
-        .await
-        .map_err(io_error)?;
-    if bytes_read == 0 {
-        return Err(internal_error(
-            "fs sandbox helper closed stdout without responding".to_string(),
-        ));
-    }
-    Ok(response)
-}
-
-#[cfg(any(windows, test))]
-pub(crate) fn drain_helper_stderr(
-    child: &mut tokio::process::Child,
-) -> tokio::task::JoinHandle<Result<Vec<u8>, std::io::Error>> {
-    let stderr_pipe = child.stderr.take();
-    tokio::spawn(async move {
-        let mut stderr = Vec::new();
-        if let Some(mut stderr_pipe) = stderr_pipe {
-            (&mut stderr_pipe)
-                .take(MAX_FS_HELPER_STDERR_BYTES)
-                .read_to_end(&mut stderr)
-                .await?;
-            tokio::io::copy(&mut stderr_pipe, &mut tokio::io::sink()).await?;
-        }
-        Ok::<_, std::io::Error>(stderr)
-    })
-}
-
-#[cfg(any(windows, test))]
-pub(crate) async fn reap_helper_after_response(
-    mut child: tokio::process::Child,
-    stderr: tokio::task::JoinHandle<Result<Vec<u8>, std::io::Error>>,
-) -> Result<(), JSONRPCErrorError> {
-    let (status, stderr) = match tokio::time::timeout(FS_HELPER_EXIT_TIMEOUT, async {
-        tokio::try_join!(child.wait(), async {
-            stderr.await.map_err(std::io::Error::other)?
-        })
-    })
-    .await
-    {
-        Ok(result) => result.map_err(io_error)?,
-        Err(_) => {
-            tokio::time::timeout(FS_HELPER_EXIT_TIMEOUT, child.kill())
-                .await
-                .map_err(|_| {
-                    internal_error("fs sandbox helper did not stop after its response".to_string())
-                })?
-                .map_err(io_error)?;
-            return Ok(());
-        }
-    };
-    if status.success() {
-        return Ok(());
-    }
-
-    Err(internal_error(format!(
-        "fs sandbox helper failed with status {status}: {stderr}",
-        stderr = String::from_utf8_lossy(&stderr).trim()
-    )))
-}
-
-#[cfg(not(windows))]
 pub(crate) async fn wait_for_helper_output(
     child: tokio::process::Child,
 ) -> Result<std::process::Output, JSONRPCErrorError> {
@@ -526,10 +376,6 @@ fn json_error(err: serde_json::Error) -> JSONRPCErrorError {
 }
 
 #[cfg(test)]
-#[path = "fs_sandbox_windows_tests.rs"]
-mod windows_tests;
-
-#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
     use std::ffi::OsString;
@@ -550,7 +396,6 @@ mod tests {
     use super::FileSystemSandboxRunner;
     use super::SandboxCwd;
     use super::add_helper_runtime_permissions;
-    use super::bind_windows_cwd_relative_deny_read_globs;
     use super::helper_env;
     use super::helper_env_from_vars;
     use super::helper_env_key_is_allowed;
@@ -668,29 +513,11 @@ mod tests {
         );
     }
 
-    #[cfg(windows)]
-    #[test]
-    fn helper_env_preserves_windows_path_key_for_system_bwrap_discovery() {
-        let env = helper_env_from_vars(
-            [
-                ("Path", r"C:\Windows\System32"),
-                ("PATH_INJECTION", "bad"),
-                ("PROVIDER_API_KEY", "secret"),
-            ]
-            .map(|(key, value)| (OsString::from(key), OsString::from(value))),
-        );
-
-        assert_eq!(
-            env,
-            HashMap::from([("Path".to_string(), r"C:\Windows\System32".to_string())])
-        );
-    }
-
     #[test]
     fn sandbox_exec_request_carries_helper_env() {
         let Some((path_key, path)) = std::env::vars_os().find(|(key, _)| {
             let key = key.to_string_lossy();
-            key == "PATH" || (cfg!(windows) && key.eq_ignore_ascii_case("PATH"))
+            key == "PATH"
         }) else {
             return;
         };
@@ -703,11 +530,10 @@ mod tests {
         let runner = FileSystemSandboxRunner::new(runtime_paths);
         let native_cwd = AbsolutePathBuf::current_dir().expect("cwd");
         let cwd = PathUri::from_abs_path(&native_cwd);
-        let file_system_policy = restricted_policy(vec![
-            #[cfg(windows)]
-            special_entry(FileSystemSpecialPath::Root, FileSystemAccessMode::Read),
-            path_entry(native_cwd.clone(), FileSystemAccessMode::Write),
-        ]);
+        let file_system_policy = restricted_policy(vec![path_entry(
+            native_cwd.clone(),
+            FileSystemAccessMode::Write,
+        )]);
         let network_policy = NetworkSandboxPolicy::Restricted;
         let permission_profile =
             PermissionProfile::from_runtime_permissions(&file_system_policy, network_policy);
@@ -716,34 +542,8 @@ mod tests {
             uri: cwd,
             native: native_cwd,
         };
-        #[cfg(windows)]
-        let sandbox_context = {
-            let error = runner
-                .sandbox_exec_request(
-                    &permission_profile,
-                    &sandbox_cwd,
-                    std::slice::from_ref(&sandbox_cwd.native),
-                    &sandbox_context,
-                )
-                .expect_err("disabled Windows sandbox must not run the helper unsandboxed");
-            assert_eq!(
-                error.message,
-                "filesystem sandbox cannot be enforced on this executor"
-            );
-            crate::FileSystemSandboxContext {
-                windows_sandbox_selection:
-                    genex_file_system::WindowsSandboxSelection::RestrictedToken,
-                ..sandbox_context
-            }
-        };
-
         let request = runner
-            .sandbox_exec_request(
-                &permission_profile,
-                &sandbox_cwd,
-                std::slice::from_ref(&sandbox_cwd.native),
-                &sandbox_context,
-            )
+            .sandbox_exec_request(&permission_profile, &sandbox_cwd, &sandbox_context)
             .expect("sandbox exec request");
 
         assert_eq!(request.env.get(&path_key), Some(&path));
@@ -766,11 +566,6 @@ mod tests {
         )]);
         let sandbox_context =
             sandbox_context_with_cwd(&policy, PathUri::from_abs_path(&selected_cwd));
-        #[cfg(windows)]
-        let sandbox_context = crate::FileSystemSandboxContext {
-            windows_sandbox_selection: genex_file_system::WindowsSandboxSelection::RestrictedToken,
-            ..sandbox_context
-        };
         selected.close().expect("remove selected directory");
 
         let request = runner
@@ -783,110 +578,6 @@ mod tests {
                 PathUri::from_abs_path(&root),
                 PathUri::from_abs_path(&selected_cwd)
             )
-        );
-    }
-
-    /// Tilde patterns stay home-relative when Windows sandbox commands start at another cwd.
-    #[test]
-    fn windows_cwd_relative_denial_binding_keeps_tilde_patterns_home_relative() {
-        let cwd = PathUri::parse("file:///C:/policy/checkout").expect("Windows policy cwd");
-        let mut policy = restricted_policy(
-            [
-                "~",
-                "~/",
-                r"~\",
-                "~/private/*.env",
-                r"~\private\*.env",
-                "hidden/*.env",
-                "~someone/private",
-                "D:/absolute/*.env",
-            ]
-            .into_iter()
-            .map(|pattern| {
-                FileSystemSandboxEntry::new(
-                    FileSystemPath::GlobPattern {
-                        pattern: pattern.to_string(),
-                    },
-                    FileSystemAccessMode::Deny,
-                )
-            })
-            .collect(),
-        );
-
-        bind_windows_cwd_relative_deny_read_globs(&mut policy, &cwd).expect("bind Windows policy");
-
-        let patterns = policy
-            .entries
-            .into_iter()
-            .filter_map(|entry| match entry.path {
-                FileSystemPath::GlobPattern { pattern } => Some(pattern),
-                FileSystemPath::Path { .. } | FileSystemPath::Special { .. } => None,
-            })
-            .collect::<Vec<_>>();
-        assert_eq!(
-            patterns,
-            [
-                "~",
-                "~/",
-                r"~\",
-                "~/private/*.env",
-                r"~\private\*.env",
-                r"C:\policy\checkout\hidden\*.env",
-                r"C:\policy\checkout\~someone\private",
-                "D:/absolute/*.env",
-            ]
-        );
-    }
-
-    /// Windows wrapper policy checks must keep cwd-relative denials anchored to the selection.
-    #[cfg(windows)]
-    #[test]
-    fn sandbox_exec_request_binds_windows_relative_globs_to_policy_cwd() {
-        let genex_self_exe = std::env::current_exe().expect("current exe");
-        let runtime_paths =
-            ExecServerRuntimePaths::new(genex_self_exe, /*genex_linux_sandbox_exe*/ None)
-                .expect("runtime paths");
-        let runner = FileSystemSandboxRunner::new(runtime_paths);
-        let selected = tempfile::tempdir().expect("selected directory");
-        let selected_cwd = AbsolutePathBuf::from_absolute_path(selected.path()).expect("cwd");
-        let cwd_uri = PathUri::from_abs_path(&selected_cwd);
-        let pattern = "hidden/*.env";
-        let absolute_pattern = cwd_uri
-            .join(pattern)
-            .expect("absolute glob")
-            .inferred_native_path_string();
-        let policy = restricted_policy(vec![
-            special_entry(FileSystemSpecialPath::Root, FileSystemAccessMode::Read),
-            FileSystemSandboxEntry::new(
-                FileSystemPath::GlobPattern {
-                    pattern: pattern.to_string(),
-                },
-                FileSystemAccessMode::Deny,
-            ),
-        ]);
-        let sandbox_context = crate::FileSystemSandboxContext {
-            windows_sandbox_selection: genex_file_system::WindowsSandboxSelection::Elevated,
-            ..sandbox_context_with_cwd(&policy, cwd_uri)
-        };
-        selected.close().expect("remove selected directory");
-
-        let request = runner
-            .sandbox_command(&sandbox_context)
-            .expect("sandbox command");
-
-        assert_eq!(
-            request
-                .permission_profile
-                .file_system_sandbox_policy()
-                .entries
-                .into_iter()
-                .find(|entry| { matches!(entry.path, FileSystemPath::GlobPattern { .. }) }),
-            Some(FileSystemSandboxEntry::new(
-                FileSystemPath::GlobPattern {
-                    pattern: absolute_pattern
-                },
-                FileSystemAccessMode::Deny,
-            ))
         );
     }
 
@@ -1011,10 +702,7 @@ mod tests {
     }
 
     fn non_native_cwd() -> PathUri {
-        #[cfg(unix)]
         let uri = "file://server/share/checkout";
-        #[cfg(windows)]
-        let uri = "file:///usr/local/checkout";
 
         PathUri::parse(uri).expect("non-native cwd URI")
     }

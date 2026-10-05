@@ -51,11 +51,7 @@ mod mcp_cmd;
 mod mcp_login;
 mod plugin_cmd;
 mod queue_cmd;
-#[cfg(target_os = "windows")]
-mod sandbox_setup;
 mod state_db_recovery;
-#[cfg(not(windows))]
-mod wsl_paths;
 
 use crate::mcp_cmd::McpCli;
 use crate::plugin_cmd::PluginCli;
@@ -402,13 +398,11 @@ impl clap::FromArgMatches for SessionTuiCli {
 type HostSandboxArgs = genex_cli::SeatbeltCommand;
 #[cfg(target_os = "linux")]
 type HostSandboxArgs = genex_cli::LandlockCommand;
-#[cfg(target_os = "windows")]
-type HostSandboxArgs = genex_cli::WindowsCommand;
 
-#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 type HostSandboxArgs = UnsupportedSandboxArgs;
 
-#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 #[derive(Debug, Parser)]
 struct UnsupportedSandboxArgs {
     /// Layer $GENEX_HOME/<name>.config.toml on top of the base user config.
@@ -703,65 +697,14 @@ fn run_update_action(
     let cmd_str = action.command_str();
     println!("Updating Genex via `{cmd_str}`...");
     let status = {
-        #[cfg(windows)]
-        {
-            let (cmd, args) = action.command_args();
-            let cmd = if action == UpdateAction::StandaloneWindows {
-                // These args contain PowerShell metacharacters, so do not let
-                // PATHEXT select a batch shim for this action.
-                "powershell.exe"
-            } else {
-                cmd
-            };
-            let path_env =
-                std::env::var_os("PATH").ok_or_else(|| anyhow::anyhow!("PATH is not set"))?;
-            let command_path = resolve_windows_update_command_from_path(cmd, &path_env)?;
-            // Do not let a project-local command or package-manager config
-            // influence the updater after the user accepts the update prompt.
-            let update_cwd = tempfile::tempdir()?;
-            // Resolve through PATH without consulting the project cwd. When
-            // this returns a .cmd/.bat shim, std::process::Command routes the
-            // absolute path through the system command processor.
-            std::process::Command::new(command_path)
-                .args(args)
-                .current_dir(update_cwd.path())
-                .status()?
-        }
-        #[cfg(not(windows))]
-        {
-            let (cmd, args) = action.command_args();
-            let command_path = crate::wsl_paths::normalize_for_wsl(cmd);
-            let normalized_args: Vec<String> = args
-                .iter()
-                .map(crate::wsl_paths::normalize_for_wsl)
-                .collect();
-            std::process::Command::new(&command_path)
-                .args(&normalized_args)
-                .status()?
-        }
+        let (cmd, args) = action.command_args();
+        std::process::Command::new(cmd).args(args).status()?
     };
     if !status.success() {
         anyhow::bail!("`{cmd_str}` failed with status {status}");
     }
     println!("\n🎉 Update ran successfully! Please restart Genex.");
     Ok(())
-}
-
-#[cfg(windows)]
-fn resolve_windows_update_command_from_path(
-    command: &str,
-    path_env: &std::ffi::OsStr,
-) -> anyhow::Result<PathBuf> {
-    let path_env =
-        std::env::join_paths(std::env::split_paths(path_env).filter(|path| path.is_absolute()))?;
-    if path_env.is_empty() {
-        anyhow::bail!(
-            "Could not find an absolute update command `{command}` on PATH. Please update manually: https://developers.provider.com/codex/cli/"
-        );
-    }
-    which::which_in_global(command, Some(&path_env))?
-        .next()
-        .ok_or_else(|| anyhow::anyhow!("could not find update command `{command}` on PATH"))
 }
 
 fn run_execpolicycheck(cmd: ExecPolicyCheckCommand) -> anyhow::Result<()> {
@@ -992,7 +935,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                         /*remote*/ None,
                         root_remote_auth_token_env.clone(),
                     )?;
-                    #[cfg(not(any(unix, windows)))]
+                    #[cfg(not(unix))]
                     anyhow::bail!("`genex agents` requires `--remote` on this platform");
                 }
                 interactive.agents_overview = true;
@@ -1422,20 +1365,6 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 &mut sandbox_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            #[cfg(target_os = "windows")]
-            if let Some(setup_cli) = sandbox_setup::parse_setup_command(&sandbox_cli.command)? {
-                reject_remote_mode_for_subcommand(
-                    root_remote.as_deref(),
-                    root_remote_auth_token_env.as_deref(),
-                    "sandbox setup",
-                )?;
-                let cli_overrides = sandbox_cli
-                    .config_overrides
-                    .parse_overrides()
-                    .map_err(anyhow::Error::msg)?;
-                sandbox_setup::run(setup_cli, config_profile.cloned(), cli_overrides).await?;
-                return Ok(());
-            }
             reject_remote_mode_for_subcommand(
                 root_remote.as_deref(),
                 root_remote_auth_token_env.as_deref(),
@@ -1456,14 +1385,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 loader_overrides,
             )
             .await?;
-            #[cfg(target_os = "windows")]
-            genex_cli::run_command_under_windows_sandbox(
-                sandbox_cli,
-                arg0_paths.genex_linux_sandbox_exe.clone(),
-                loader_overrides,
-            )
-            .await?;
-            #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+            #[cfg(not(any(target_os = "macos", target_os = "linux")))]
             {
                 let _ = loader_overrides;
                 anyhow::bail!("`genex sandbox` is not supported on this operating system");
@@ -2163,7 +2085,7 @@ async fn run_interactive_tui(
         }
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     if interactive.agents_overview && remote.is_none() {
         if !std::io::stdin().is_terminal() {
             return Ok(AppExitInfo::fatal("stdin is not a terminal"));

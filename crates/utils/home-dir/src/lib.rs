@@ -1,5 +1,5 @@
-use genex_utils_absolute_path::AbsolutePathBuf;
 use dirs::home_dir;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use std::path::PathBuf;
 
 /// Returns the path to the Genex configuration directory, which can be
@@ -65,8 +65,8 @@ fn find_genex_home_from_env(genex_home_env: Option<&str>) -> std::io::Result<Abs
 #[cfg(test)]
 mod tests {
     use super::find_genex_home_from_env;
-    use genex_utils_absolute_path::AbsolutePathBuf;
     use dirs::home_dir;
+    use genex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::io::ErrorKind;

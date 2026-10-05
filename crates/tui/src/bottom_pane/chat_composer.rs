@@ -248,11 +248,11 @@ use crate::key_hint::ShortcutHint;
 use crate::key_hint::has_ctrl_or_alt;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 use crate::ui_consts::FOOTER_INDENT_COLS;
-use genex_message_history::HistoryBatchCursor;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use genex_message_history::HistoryBatchCursor;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -450,7 +450,6 @@ fn parent_owned_command_is_allowed(command: SlashCommand, args: &str) -> bool {
                 | SlashCommand::MultiAgents
                 | SlashCommand::Vim
                 | SlashCommand::Keymap
-                | SlashCommand::ElevateSandbox
                 | SlashCommand::Quit
                 | SlashCommand::Exit
                 | SlashCommand::Logout
@@ -577,7 +576,6 @@ pub(crate) struct ChatComposer {
     mentions_v2_enabled: bool,
     goal_command_enabled: bool,
     worktrees_enabled: bool,
-    windows_degraded_sandbox_active: bool,
     side_conversation_active: bool,
     history_search: Option<HistorySearchSession>,
     vim_history: VimHistory,
@@ -738,7 +736,6 @@ impl ChatComposer {
             mentions_v2_enabled: false,
             goal_command_enabled: false,
             worktrees_enabled: false,
-            windows_degraded_sandbox_active: false,
             side_conversation_active: false,
             history_search: None,
             vim_history: VimHistory::default(),
@@ -1018,10 +1015,6 @@ impl ChatComposer {
 
     fn image_paste_enabled(&self) -> bool {
         self.config.image_paste_enabled
-    }
-    #[cfg(target_os = "windows")]
-    pub fn set_windows_degraded_sandbox_active(&mut self, enabled: bool) {
-        self.windows_degraded_sandbox_active = enabled;
     }
     fn layout_areas(&self, area: Rect) -> [Rect; 4] {
         self.layout_areas_with_textarea_right_reserve(area, /*textarea_right_reserve*/ 0)

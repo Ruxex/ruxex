@@ -1,3 +1,4 @@
+use eventsource_stream::Event as StreamEvent;
 use genex_otel::MetricsClient;
 use genex_otel::MetricsConfig;
 use genex_otel::Result;
@@ -8,7 +9,6 @@ use genex_otel::TelemetryAuthMode;
 use genex_protocol::ThreadId;
 use genex_protocol::ToolName;
 use genex_protocol::protocol::SessionSource;
-use eventsource_stream::Event as StreamEvent;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use pretty_assertions::assert_eq;
 use std::time::Duration;

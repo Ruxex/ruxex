@@ -8,6 +8,8 @@ use crate::legacy_core::config::Config;
 use crate::resize_reflow_cap::resize_reflow_max_rows;
 use crate::thread_transcript::RawReasoningVisibility;
 use crate::thread_transcript::thread_items_to_transcript_cells;
+use color_eyre::eyre::Result;
+use color_eyre::eyre::WrapErr;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::SortDirection;
 use genex_app_server_protocol::Thread;
@@ -22,8 +24,6 @@ use genex_app_server_protocol::ThreadTurnsListResponse;
 use genex_app_server_protocol::Turn;
 use genex_app_server_protocol::TurnItemsView;
 use genex_protocol::ThreadId;
-use color_eyre::eyre::Result;
-use color_eyre::eyre::WrapErr;
 
 pub(crate) const INITIAL_HISTORY_TURN_LIMIT: u32 = 5;
 pub(crate) const HISTORY_ITEM_PAGE_LIMIT: u32 = 100;

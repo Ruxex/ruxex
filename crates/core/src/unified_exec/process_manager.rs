@@ -14,7 +14,6 @@ use uuid::Uuid;
 
 use super::oneshot::Completion;
 
-use crate::genex_thread::BackgroundTerminalInfo;
 use crate::exec_env::GENEX_PERMISSION_PROFILE_ENV_VAR;
 use crate::exec_env::GENEX_THREAD_ID_ENV_VAR;
 use crate::exec_env::GENEX_VERSION_ENV_VAR;
@@ -23,6 +22,7 @@ use crate::exec_env::inject_apply_patch_env;
 use crate::exec_env::inject_permission_profile_env;
 use crate::exec_env::inject_session_env;
 use crate::exec_policy::ExecApprovalRequest;
+use crate::genex_thread::BackgroundTerminalInfo;
 use crate::plugins::metrics::finish_and_track_measurements;
 use crate::sandboxing::ExecOptions;
 use crate::sandboxing::ExecRequest;
@@ -150,7 +150,7 @@ pub(super) fn exec_env_policy_from_shell_policy(
         ![
             GENEX_PERMISSION_PROFILE_ENV_VAR,
             GENEX_VERSION_ENV_VAR,
-                genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+            genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ]
         .iter()
@@ -220,14 +220,10 @@ fn exec_server_params_for_request(
     process_id: i32,
     request: &ExecRequest,
     tool_ctx: Option<&ToolCtx>,
-    windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
     tty: bool,
 ) -> genex_exec_server::ExecParams {
     let (env_policy, env) = exec_server_env_for_request(request);
-    let sandbox = request.exec_server_sandbox.clone().map(|mut sandbox| {
-        sandbox.windows_sandbox_proxy_settings_mode = Some(windows_sandbox_proxy_settings_mode);
-        sandbox
-    });
+    let sandbox = request.exec_server_sandbox.clone();
     // Sandbox retries and memory-backed local launches can reuse a unified-exec
     // ID while the executor still retains the previous process.
     let exec_server_process_id =
@@ -1249,7 +1245,6 @@ impl UnifiedExecProcessManager {
         environment_id: Option<&str>,
         exec_server_env_config: Option<ExecServerEnvConfig>,
         shell_snapshot: Option<genex_exec_server::ShellSnapshotRequest>,
-        windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
         tty: bool,
         spawn_lifecycle: SpawnLifecycleHandle,
         environment: &genex_exec_server::Environment,
@@ -1274,7 +1269,6 @@ impl UnifiedExecProcessManager {
             process_id,
             &request,
             Some(tool_ctx),
-            windows_sandbox_proxy_settings_mode,
             network_policy_decider,
             tty,
             spawn_lifecycle,
@@ -1298,7 +1292,6 @@ impl UnifiedExecProcessManager {
         process_id: i32,
         request: &ExecRequest,
         tool_ctx: Option<&ToolCtx>,
-        windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
         network_policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
         tty: bool,
         mut spawn_lifecycle: SpawnLifecycleHandle,
@@ -1314,13 +1307,7 @@ impl UnifiedExecProcessManager {
             }
 
             let backend = environment.get_exec_backend();
-            let params = exec_server_params_for_request(
-                process_id,
-                request,
-                tool_ctx,
-                windows_sandbox_proxy_settings_mode,
-                tty,
-            );
+            let params = exec_server_params_for_request(process_id, request, tool_ctx, tty);
             // Sandbox retries can reuse the public ID for a new executor process.
             tracing::event!(
                 name: "genex.unified_exec.process_start_requested",
@@ -1354,57 +1341,11 @@ impl UnifiedExecProcessManager {
         if request.command.is_empty() {
             return Err(UnifiedExecError::MissingCommandLine);
         }
-        let network_proxy_restricting_sid = {
-            #[cfg(target_os = "windows")]
-            {
-                if request.sandbox == genex_sandboxing::SandboxType::WindowsRestrictedToken {
-                    request
-                        .network
-                        .as_ref()
-                        .map(|network| {
-                            network
-                                .network_proxy_restricting_sid(
-                                    request.network_environment_id.as_deref(),
-                                )
-                                .ok_or_else(|| {
-                                    UnifiedExecError::create_process(
-                                        "managed Windows proxy route is missing its restricting SID"
-                                            .to_string(),
-                                    )
-                                })
-                        })
-                        .transpose()?
-                } else {
-                    None
-                }
-            }
-            #[cfg(not(target_os = "windows"))]
-            {
-                None::<String>
-            }
-        };
-        let windows_sandbox =
-            if request.sandbox == genex_sandboxing::SandboxType::WindowsRestrictedToken {
-                Some(genex_sandboxing::WindowsSandboxSpawnRequest {
-                    permission_profile: &request.permission_profile,
-                    workspace_roots: &request.windows_sandbox_workspace_roots,
-                    windows_sandbox_level: request.windows_sandbox_level,
-                    proxy_enforced: request.network.is_some(),
-                    network_proxy_restricting_sid: network_proxy_restricting_sid.as_deref(),
-                    proxy_settings_mode: windows_sandbox_proxy_settings_mode,
-                    filesystem_overrides: request.windows_sandbox_filesystem_overrides.as_ref(),
-                    use_private_desktop: request.windows_sandbox_private_desktop,
-                })
-            } else {
-                None
-            };
         let spawn_result = genex_sandboxing::spawn_process(genex_sandboxing::SpawnRequest {
             command: &request.command,
             cwd: native_cwd.as_path(),
             env: &request.env,
             arg0: &request.arg0,
-            sandbox: request.sandbox,
-            windows_sandbox,
             tty,
             stdin_open: tty,
             inherited_fds: &inherited_fds,
@@ -1457,11 +1398,10 @@ impl UnifiedExecProcessManager {
             .shell
             .as_ref()
             .unwrap_or(session_shell.as_ref());
-        // Legacy executors omit the platform. Unknown reported platforms use the
-        // more conservative Windows rules rather than silently weakening checks.
+        // Legacy executors omit the platform; unknown values retain the POSIX rules.
         let command_platform = match request.turn_environment.executor_platform_os.as_deref() {
             Some("linux" | "macos") => DangerousCommandPlatform::Posix,
-            Some("windows") | Some(_) => DangerousCommandPlatform::Windows,
+            Some(_) => DangerousCommandPlatform::Posix,
             None => DangerousCommandPlatform::host(),
         };
         let exec_approval_requirement = context
@@ -1474,7 +1414,6 @@ impl UnifiedExecProcessManager {
                     approval_policy: context.step_context.settings.approval_policy(),
                     permission_profile: request.turn_environment.permission_profile().clone(),
                     environment_policy: request.turn_environment.config().exec_policy.as_ref(),
-                    windows_sandbox_level: request.turn_environment.config().windows_sandbox_level,
                     sandbox_permissions: if request.additional_permissions_preapproved {
                         crate::sandboxing::SandboxPermissions::UseDefault
                     } else {

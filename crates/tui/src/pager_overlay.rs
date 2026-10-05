@@ -1054,8 +1054,8 @@ mod tests {
     use crate::history_cell;
     use crate::history_cell::HistoryCell;
     use crate::history_cell::new_patch_event;
-    use genex_protocol::parse_command::ParsedCommand;
     use crossterm::event::KeyModifiers;
+    use genex_protocol::parse_command::ParsedCommand;
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
     use ratatui::text::Text;

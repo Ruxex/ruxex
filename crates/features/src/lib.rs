@@ -149,8 +149,6 @@ pub enum Feature {
     UseLegacyLandlock,
     /// Experimental shell snapshotting.
     ShellSnapshot,
-    /// Expose the selected PowerShell execution host's bounded major/minor version.
-    PowerShellShellVersion,
     /// Keep policy-filtered shell snapshots entirely in executor memory.
     ShellSnapshotV2,
     /// Allow turns to start while selected executors are still starting.
@@ -300,10 +298,6 @@ pub enum Feature {
     /// Removed legacy Linux bubblewrap opt-in flag retained as a no-op so old
     /// wrappers and config can still parse it.
     UseLinuxSandboxBwrap,
-    /// Enable Windows sandbox (restricted token) on Windows.
-    WindowsSandbox,
-    /// Use the elevated Windows sandbox pipeline (setup + runner).
-    WindowsSandboxElevated,
     /// Legacy remote models flag kept for backward compatibility.
     RemoteModels,
     /// Persist rollout metadata to a local SQLite database.
@@ -800,7 +794,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::SecretAuthStorage,
         key: "secret_auth_storage",
         stage: Stage::Stable,
-        default_enabled: cfg!(windows),
+        default_enabled: false,
     },
     FeatureSpec {
         id: Feature::UnifiedExec,
@@ -831,12 +825,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "shell_snapshot",
         stage: Stage::Stable,
         default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::PowerShellShellVersion,
-        key: "powershell_shell_version",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
     },
     FeatureSpec {
         id: Feature::ShellSnapshotV2,
@@ -992,18 +980,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::UseLegacyLandlock,
         key: "use_legacy_landlock",
         stage: Stage::Deprecated,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::WindowsSandbox,
-        key: "experimental_windows_sandbox",
-        stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::WindowsSandboxElevated,
-        key: "elevated_windows_sandbox",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {
@@ -1343,11 +1319,7 @@ pub const FEATURES: &[FeatureSpec] = &[
     FeatureSpec {
         id: Feature::PreventIdleSleep,
         key: "prevent_idle_sleep",
-        stage: if cfg!(any(
-            target_os = "macos",
-            target_os = "linux",
-            target_os = "windows"
-        )) {
+        stage: if cfg!(any(target_os = "macos", target_os = "linux")) {
             Stage::Experimental {
                 name: "Prevent sleep while running",
                 menu_description: "Keep your computer awake while Genex is running a thread.",

@@ -3,9 +3,9 @@
 use super::focus_palette::PtyGenex;
 use super::focus_palette::write_test_config;
 use anyhow::Result;
-use genex_app_server_protocol::JSONRPCMessage;
 use futures::SinkExt;
 use futures::StreamExt;
+use genex_app_server_protocol::JSONRPCMessage;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::sync::Arc;

@@ -57,7 +57,7 @@ fn inject_apply_patch_env_follows_preserve_line_endings_feature() {
     assert_eq!(
         env,
         HashMap::from([(
-        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+            GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
             "1".to_string(),
         )])
     );

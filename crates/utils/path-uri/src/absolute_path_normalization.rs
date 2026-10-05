@@ -3,7 +3,7 @@ use crate::PathUri;
 use url::Url;
 
 pub(super) fn path_uri_from_segments<'a>(
-    convention: PathConvention,
+    _convention: PathConvention,
     host: Option<&str>,
     segments: impl Iterator<Item = &'a str>,
 ) -> Option<PathUri> {
@@ -11,7 +11,7 @@ pub(super) fn path_uri_from_segments<'a>(
     if let Some(host) = host {
         url.set_host(Some(host)).ok()?;
     }
-    let anchor_depth = usize::from(convention == PathConvention::Windows);
+    let anchor_depth = 0;
     let mut depth = 0;
     let mut normalized_segments = Vec::new();
     let mut has_trailing_separator = false;
@@ -33,9 +33,7 @@ pub(super) fn path_uri_from_segments<'a>(
             }
         }
     }
-    if has_trailing_separator
-        || (convention == PathConvention::Windows && host.is_none() && depth == anchor_depth)
-    {
+    if has_trailing_separator || (host.is_none() && depth == anchor_depth) {
         normalized_segments.push("");
     }
     {

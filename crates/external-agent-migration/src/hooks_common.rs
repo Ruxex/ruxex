@@ -39,9 +39,6 @@ pub(crate) fn rewrite_hook_command_for_source(
     let Some(target_config_dir) = target_config_dir else {
         return command.to_string();
     };
-    if looks_like_windows_hook_command(command) {
-        return command.to_string();
-    }
     let target_hooks_dir = target_config_dir.join(EXTERNAL_AGENT_MIGRATED_HOOKS_SUBDIR);
     let source_config_dir = source_external_agent_dir
         .file_name()
@@ -221,17 +218,6 @@ fn is_static_hook_path_suffix(suffix: &str) -> bool {
         && !suffix
             .chars()
             .any(|ch| matches!(ch, '\\' | '$' | '`' | '*' | '?' | '[' | '{' | '}'))
-}
-
-fn looks_like_windows_hook_command(command: &str) -> bool {
-    let source_hooks_backslash_path = format!(
-        r"{}\{EXTERNAL_AGENT_HOOKS_SUBDIR}\",
-        external_agent_config_dir()
-    );
-    let project_dir_env_var = external_agent_project_dir_env_var();
-    command.contains(&source_hooks_backslash_path)
-        || command.contains(&format!("%{project_dir_env_var}%"))
-        || command.contains(&format!("$env:{project_dir_env_var}"))
 }
 
 pub(super) fn shell_single_quote(value: &str) -> String {

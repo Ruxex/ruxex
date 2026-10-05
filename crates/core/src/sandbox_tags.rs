@@ -2,7 +2,6 @@
 //! Labels never inspect the filesystem and must not be used for authorization.
 
 use crate::responses_metadata::GenexResponsesMetadata;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 use genex_sandboxing::SandboxType;
 use genex_sandboxing::get_platform_sandbox;
@@ -21,15 +20,10 @@ impl SandboxTags {
     pub(crate) fn new(
         profile: &PermissionProfile,
         cwd: &Path,
-        windows_sandbox_level: WindowsSandboxLevel,
         enforce_managed_network: bool,
     ) -> Self {
         Self {
-            sandbox: permission_profile_sandbox_tag(
-                profile,
-                windows_sandbox_level,
-                enforce_managed_network,
-            ),
+            sandbox: permission_profile_sandbox_tag(profile, enforce_managed_network),
             policy: permission_profile_policy_tag(profile, cwd),
         }
     }
@@ -48,7 +42,6 @@ impl SandboxTags {
 
 fn permission_profile_sandbox_tag(
     profile: &PermissionProfile,
-    windows_sandbox_level: WindowsSandboxLevel,
     enforce_managed_network: bool,
 ) -> &'static str {
     match profile {
@@ -68,14 +61,7 @@ fn permission_profile_sandbox_tag(
             }
         }
     }
-    if cfg!(target_os = "windows") {
-        match windows_sandbox_level {
-            WindowsSandboxLevel::Elevated => return "windows_elevated",
-            WindowsSandboxLevel::Disabled | WindowsSandboxLevel::RestrictedToken => {}
-        }
-    }
-
-    get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled)
+    get_platform_sandbox()
         .map(SandboxType::as_metric_tag)
         .unwrap_or("none")
 }

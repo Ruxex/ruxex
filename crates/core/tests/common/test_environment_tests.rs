@@ -35,14 +35,6 @@ fn parses_each_explicit_environment() {
             container_name: "container-1".to_string(),
         })
     );
-    assert_eq!(
-        parse_test_environment(
-            Some(OsStr::new("wine-exec")),
-            /*legacy_remote_environment*/ None,
-            /*docker_container*/ None,
-        ),
-        Ok(TestEnvironment::WineExec)
-    );
 }
 
 #[test]
@@ -112,7 +104,7 @@ fn rejects_invalid_or_incomplete_configuration() {
             /*docker_container*/ None,
         ),
         Err(format!(
-            "{TEST_ENVIRONMENT_ENV_VAR} must be one of local, docker, or wine-exec; got \"other\""
+            "{TEST_ENVIRONMENT_ENV_VAR} must be one of local or docker; got \"other\""
         ))
     );
 }
@@ -123,15 +115,11 @@ fn derives_target_operating_system_and_placement() {
     let expected_local_target_os = TestTargetOs::Linux;
     #[cfg(target_os = "macos")]
     let expected_local_target_os = TestTargetOs::MacOs;
-    #[cfg(target_os = "windows")]
-    let expected_local_target_os = TestTargetOs::Windows;
-
     let environments = [
         TestEnvironment::Local,
         TestEnvironment::Docker {
             container_name: "container-1".to_string(),
         },
-        TestEnvironment::WineExec,
     ];
 
     assert_eq!(
@@ -139,7 +127,6 @@ fn derives_target_operating_system_and_placement() {
         [
             (expected_local_target_os, false),
             (TestTargetOs::Linux, true),
-            (TestTargetOs::Windows, true),
         ]
     );
 }

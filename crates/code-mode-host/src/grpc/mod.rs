@@ -11,13 +11,13 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Instant;
 
+use futures::Stream;
+use futures::StreamExt;
 use genex_code_mode_protocol::CellId;
 use genex_code_mode_protocol::WaitRequest;
 use genex_code_mode_protocol::grpc as proto;
 use genex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
 use genex_protocol::protocol::W3cTraceContext;
-use futures::Stream;
-use futures::StreamExt;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::Request;

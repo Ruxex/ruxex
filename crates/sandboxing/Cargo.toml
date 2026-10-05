@@ -14,14 +14,12 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-genex-mxc-sandbox = { workspace = true }
 genex-network-proxy = { workspace = true }
 genex-protocol = { workspace = true }
 genex-uds = { workspace = true }
 genex-utils-absolute-path = { workspace = true }
 genex-utils-path-uri = { workspace = true }
 genex-utils-pty = { workspace = true }
-genex-windows-sandbox = { workspace = true }
 dunce = { workspace = true }
 libc = { workspace = true }
 serde_json = { workspace = true }
@@ -30,10 +28,6 @@ tokio = { workspace = true, features = ["rt", "sync"] }
 tracing = { workspace = true, features = ["log"] }
 url = { workspace = true }
 which = { workspace = true }
-
-[target.'cfg(windows)'.dependencies]
-genex-otel = { workspace = true }
-genex-utils-home-dir = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }

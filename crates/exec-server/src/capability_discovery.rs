@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::io;
 
+use futures::StreamExt;
 use genex_exec_server_protocol::CapabilityRootDiscoverRequest;
 use genex_exec_server_protocol::CapabilityRootDiscovery;
 use genex_exec_server_protocol::CapabilityRootsDiscoverParams;
@@ -14,7 +15,6 @@ use genex_file_system::FileSystemSandboxContext;
 use genex_file_system::WalkEntryKind;
 use genex_file_system::WalkOptions;
 use genex_utils_path_uri::PathUri;
-use futures::StreamExt;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -80,14 +80,6 @@ async fn discover_root(
         && let Err(error) = sandbox.validate_file_system_paths_for_current_host()
     {
         discovery.error = Some(format!("failed to inspect capability root {path}: {error}"));
-        return discovery;
-    }
-
-    #[cfg(target_os = "windows")]
-    if sandbox.is_some_and(|context| {
-        context.should_read_from_sandbox() && !context.windows_sandbox_is_requested()
-    }) {
-        discovery.error = Some("filesystem sandbox is unavailable on this executor".to_string());
         return discovery;
     }
 

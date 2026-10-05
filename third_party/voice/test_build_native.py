@@ -26,7 +26,6 @@ class NativeBuildTests(unittest.TestCase):
         suffix = {
             "Darwin": "apple-darwin",
             "Linux": "unknown-linux-gnu",
-            "Windows": "pc-windows-msvc",
         }[platform.system()]
         self.args = SimpleNamespace(
             target=f"{architecture}-{suffix}",
@@ -42,11 +41,7 @@ class NativeBuildTests(unittest.TestCase):
             bootstrap_make=None,
             jobs=2,
         )
-        self.environment = {
-            **os.environ,
-            "INCLUDE": "fixture include",
-            "LIB": "fixture lib",
-        }
+        self.environment = dict(os.environ)
 
     def test_cli_entrypoint_imports_its_sibling_with_safe_path_enabled(self):
         result = subprocess.run(
@@ -66,7 +61,6 @@ class NativeBuildTests(unittest.TestCase):
 
     def test_rejects_cross_host_and_musl_builds(self):
         for target, system, machine, libc in [
-            ("x86_64-pc-windows-msvc", "Darwin", "x86_64", ""),
             ("aarch64-apple-darwin", "Darwin", "x86_64", ""),
             ("x86_64-unknown-linux-gnu", "Linux", "x86_64", "musl"),
             ("x86_64-unknown-linux-musl", "Linux", "x86_64", "musl"),
@@ -85,7 +79,6 @@ class NativeBuildTests(unittest.TestCase):
             NativeBuild(self.args, self.environment)
         self.assertFalse(self.args.output.exists())
 
-    @unittest.skipIf(os.name == "nt", "Exercises the Unix clang++ driver symlink")
     def test_bootstrap_links_cpp_runtime_through_compiler_symlink(self):
         tools = {name: shutil.which(name) for name in ("clang", "cmake", "make")}
         if not all(tools.values()):
@@ -145,7 +138,6 @@ class NativeBuildTests(unittest.TestCase):
             all((self.root / (name + ".used")).is_file() for name in ("ar", "ranlib"))
         )
 
-    @unittest.skipIf(os.name == "nt", "Exercises Autoconf's Unix tool expansion")
     def test_libffi_rejects_quoted_archive_tool_paths(self):
         for name in ("ar", "ranlib"):
             for index, path in enumerate(("declared tool", "declared'tool")):
@@ -167,7 +159,6 @@ class NativeBuildTests(unittest.TestCase):
                         build.build()
                     setattr(self.args, name, None)
 
-    @unittest.skipIf(os.name == "nt", "Exercises Autoconf's Unix flag expansion")
     def test_libffi_compiler_receives_literal_defines_without_shell_quotes(self):
         compiler = shutil.which("cc")
         if compiler is None:
@@ -233,7 +224,6 @@ class NativeBuildTests(unittest.TestCase):
                 )
                 self.assertEqual(result.stdout, expected)
 
-    @unittest.skipIf(os.name == "nt", "Unix install paths; Windows layout is unchanged")
     def test_cmake_installs_relative_library_paths(self):
         for argument, tool in (
             ("cc", "cc"),
@@ -323,11 +313,9 @@ class NativeBuildTests(unittest.TestCase):
     def test_meson_receives_private_link_inputs_with_spaces(self):
         if platform.system() == "Darwin":
             self.args.cc = Path(shutil.which("cc"))
-        self.args.c_flag = [] if os.name == "nt" else ["-DDECLARED_C=1"]
-        self.args.cxx_flag = [] if os.name == "nt" else ["-DDECLARED_CXX=1"]
-        self.args.link_flag = (
-            [] if os.name == "nt" else ["-Ldeclared input with spaces"]
-        )
+        self.args.c_flag = ["-DDECLARED_C=1"]
+        self.args.cxx_flag = ["-DDECLARED_CXX=1"]
+        self.args.link_flag = ["-Ldeclared input with spaces"]
         build = NativeBuild(self.args, self.environment)
         self.assertEqual(
             build.record["flags"],
@@ -354,8 +342,8 @@ class NativeBuildTests(unittest.TestCase):
                 text=True,
                 check=True,
             )
-        quote = subprocess.list2cmdline if build.windows else shlex.join
-        include = f"{'/I' if build.windows else '-I'}{build.prefix / 'include'}"
+        quote = shlex.join
+        include = f"-I{build.prefix / 'include'}"
         self.assertEqual(
             {name: build.environment[name] for name in ("CFLAGS", "CXXFLAGS")},
             {
@@ -363,206 +351,15 @@ class NativeBuildTests(unittest.TestCase):
                 "CXXFLAGS": quote([*self.args.cxx_flag, include]),
             },
         )
-        if build.windows:
-            self.assertEqual(
-                build.environment["LDFLAGS"],
-                quote([*self.args.link_flag, f"/LIBPATH:{build.prefix / 'lib'}"]),
-            )
-        else:
-            self.assertEqual(
-                shlex.split(build.environment["LDFLAGS"]),
-                [
-                    *self.args.link_flag,
-                    f"-L{build.prefix / 'lib'}",
-                    (
-                        "-Wl,-rpath,$ORIGIN:$ORIGIN/.."
-                        if build.args.target.endswith("unknown-linux-gnu")
-                        else f"-Wl,-rpath,{build.prefix / 'lib'}"
-                    ),
-                ],
-            )
-
-    def test_windows_paths_use_cygpath_and_propagate_failure(self):
-        build = NativeBuild(self.args, self.environment)
-        build.windows = True
-        path = Path("D:/build output/source")
-        with patch(
-            "build_native.subprocess.check_output",
-            return_value="/cygdrive/d/build output/source\n",
-        ) as convert:
-            self.assertEqual(build.posix_path(path), "/cygdrive/d/build output/source")
         self.assertEqual(
-            convert.call_args.args[0],
-            [build.toolchain["shell"].with_name("cygpath.exe"), "-u", str(path)],
+            shlex.split(build.environment["LDFLAGS"]),
+            [
+                *self.args.link_flag,
+                f"-L{build.prefix / 'lib'}",
+                (
+                    "-Wl,-rpath,$ORIGIN:$ORIGIN/.."
+                    if build.args.target.endswith("unknown-linux-gnu")
+                    else f"-Wl,-rpath,{build.prefix / 'lib'}"
+                ),
+            ],
         )
-        with patch(
-            "build_native.subprocess.check_output",
-            side_effect=subprocess.CalledProcessError(1, "cygpath"),
-        ):
-            with self.assertRaises(subprocess.CalledProcessError):
-                build.posix_path(path)
-
-    def test_windows_rejects_unix_overrides_before_creating_output(self):
-        self.args.target = "x86_64-pc-windows-msvc"
-        for name, value in (
-            ("c_flag", [r"/IC:\SDK\include"]),
-            ("ranlib", Path(sys.executable)),
-        ):
-            with patch("build_native.validate_target"):
-                setattr(self.args, name, value)
-                with self.assertRaisesRegex(ValueError, "Unix build host"):
-                    NativeBuild(self.args, self.environment)
-                delattr(self.args, name)
-            self.assertFalse(self.args.output.exists())
-
-    def test_windows_recipes_use_explicit_targets_and_posix_paths(self):
-        self.environment["USERPROFILE"] = str(self.root / "user profile")
-        for architecture, flag in (("x86_64", "-m64"), ("aarch64", "-marm64")):
-            with self.subTest(architecture=architecture):
-                self.args.target = f"{architecture}-pc-windows-msvc"
-                self.args.output = self.root / architecture
-                with (
-                    patch("build_native.platform.system", return_value="Windows"),
-                    patch("build_native.platform.machine", return_value=architecture),
-                ):
-                    build = NativeBuild(self.args, self.environment)
-                self.assertEqual(
-                    build.environment["USERPROFILE"], self.environment["USERPROFILE"]
-                )
-                calls = {}
-
-                def record(name, command, **kwargs):
-                    calls[name] = (command, kwargs)
-                    (build.output / f"{name}.log").write_text(
-                        "-ID:/private/include -LD:/private/lib -lffi\n"
-                    )
-
-                with (
-                    patch(
-                        "build_native.prepare_sources",
-                        side_effect=lambda *args: (build.output / "build").mkdir(),
-                    ),
-                    patch.object(build, "cmake") as cmake,
-                    patch.object(build, "meson"),
-                    patch.object(build, "run", side_effect=record),
-                    patch.object(
-                        build,
-                        "posix_path",
-                        side_effect=lambda path: "/cygdrive/d/" + path.name,
-                    ),
-                    patch(
-                        "build_native.subprocess.check_output",
-                        return_value="/usr/share/automake-1.18\n",
-                    ),
-                ):
-                    build.build()
-                opus_options = next(
-                    call.args[1]
-                    for call in cmake.call_args_list
-                    if call.args[0] == "opus"
-                )
-                self.assertEqual(
-                    "-DOPUS_PRESUME_NEON=ON" in opus_options, architecture == "aarch64"
-                )
-                command, kwargs = calls["libffi-configure"]
-                host = f"{architecture}-w64-mingw32"
-                linker_flags = "-no-undefined -Wc,-link,/IMPLIB:.libs/libffi.lib"
-                self.assertEqual(
-                    command,
-                    [
-                        build.toolchain["shell"],
-                        "/cygdrive/d/configure",
-                        "--prefix=/cygdrive/d/prefix",
-                        "--enable-shared",
-                        "--disable-static",
-                        "--disable-docs",
-                        f"--build={host}",
-                        f"--host={host}",
-                    ],
-                )
-                expected = {
-                    **build.environment,
-                    "CC": f"/cygdrive/d/msvcc.sh {flag}",
-                    "CXX": f"/cygdrive/d/msvcc.sh {flag}",
-                    "AR": "/usr/share/automake-1.18/ar-lib lib",
-                    "RANLIB": ":",
-                    "LD": "link",
-                    "NM": "dumpbin -symbols",
-                    "STRIP": ":",
-                    "LDFLAGS": "-no-undefined",
-                    "AM_MAKEFLAGS": shlex.quote(f"LTLDFLAGS={linker_flags}"),
-                    "CPP": "cl -nologo -EP",
-                    "CXXCPP": "cl -nologo -EP",
-                    "CPPFLAGS": "-DFFI_BUILDING_DLL",
-                    "CONFIG_SHELL": "/cygdrive/d/" + build.toolchain["shell"].name,
-                }
-                self.assertEqual(
-                    kwargs,
-                    {"cwd": build.output / "build/libffi", "environment": expected},
-                )
-                self.assertEqual(calls["libffi-install"][1]["environment"], expected)
-                if platform.system() == "Windows":
-                    cygwin = os.environ.get("VOICE_CYGWIN_ROOT")
-                    make = str(Path(cygwin) / "bin/make.exe") if cygwin else None
-                else:
-                    make = shutil.which("make")
-                if make is None:
-                    self.skipTest("GNU make is required for the recursive build check")
-                # Mirror libffi's MAKEOVERRIDES reset and recursive hook, without
-                # running a compiler or requiring the native source archives.
-                directory = build.output / "build/libffi"
-                (directory / "Makefile").write_text(
-                    "MAKEOVERRIDES =\nLTLDFLAGS = default\n"
-                    "all:\n\t@$(MAKE) --no-print-directory $(AM_MAKEFLAGS) nested\n"
-                    "nested:\n\t@$(MAKE) --no-print-directory $(AM_MAKEFLAGS) observe\n"
-                    "observe:\n\t@printf '%s\\n' \"$(LTLDFLAGS)\"\n"
-                )
-                result = subprocess.run(
-                    [make, "--no-print-directory"],
-                    cwd=directory,
-                    env={
-                        **os.environ,
-                        "AM_MAKEFLAGS": kwargs["environment"]["AM_MAKEFLAGS"],
-                        "PATH": os.pathsep.join(
-                            [str(Path(make).parent), os.environ.get("PATH", "")]
-                        ),
-                    },
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                self.assertEqual(
-                    result.stdout.strip(),
-                    linker_flags,
-                )
-
-    def test_explicit_windows_inputs_replace_ambient_sdk_and_search_paths(self):
-        self.args.target = "x86_64-pc-windows-msvc"
-        self.args.windows_build_inputs = self.root / "inputs.json"
-        selected = {
-            "PATH": str(self.root / "selected tools"),
-            "INCLUDE": str(self.root / "selected include"),
-            "LIB": str(self.root / "selected lib"),
-        }
-        with (
-            patch("build_native.validate_target"),
-            patch(
-                "build_native.build_environment",
-                return_value=(selected, {"target": self.args.target}),
-            ),
-        ):
-            build = NativeBuild(
-                self.args,
-                {"PATH": "/unrelated", "LIBPATH": "/unrelated"},
-            )
-        self.assertFalse(
-            any("/unrelated" in value for value in build.environment.values())
-        )
-        self.assertEqual(
-            {name: build.environment[name] for name in ("INCLUDE", "LIB")},
-            {name: selected[name] for name in ("INCLUDE", "LIB")},
-        )
-        self.assertEqual(
-            build.record["windows_build_inputs"], {"target": self.args.target}
-        )
-        self.assertFalse(build.output.exists())

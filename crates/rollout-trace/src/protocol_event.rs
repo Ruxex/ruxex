@@ -28,8 +28,8 @@ use serde::Serialize;
 use std::time::Duration;
 
 use crate::AgentThreadId;
-use crate::GenexTurnId;
 use crate::ExecutionStatus;
+use crate::GenexTurnId;
 use crate::RawTraceEventPayload;
 
 pub(crate) struct GenexTurnTraceEvent {

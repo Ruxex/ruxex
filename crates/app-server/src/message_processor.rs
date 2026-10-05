@@ -40,7 +40,6 @@ use crate::request_processors::ThreadQueueRequestProcessor;
 use crate::request_processors::ThreadRequestProcessor;
 use crate::request_processors::ThreadResumeTarget;
 use crate::request_processors::TurnRequestProcessor;
-use crate::request_processors::WindowsSandboxRequestProcessor;
 use crate::request_processors::read_server_diagnostics;
 use crate::request_serialization::QueuedInitializedRequest;
 use crate::request_serialization::RequestSerializationQueueKey;
@@ -150,7 +149,6 @@ pub(crate) struct MessageProcessor {
     thread_queue_processor: ThreadQueueRequestProcessor,
     thread_processor: ThreadRequestProcessor,
     turn_processor: TurnRequestProcessor,
-    windows_sandbox_processor: WindowsSandboxRequestProcessor,
     request_serialization_queues: RequestSerializationQueues,
 }
 
@@ -508,12 +506,6 @@ impl MessageProcessor {
             Arc::clone(&environment_manager_for_requests),
             FsWatchManager::new(outgoing.clone()),
         );
-        let windows_sandbox_processor = WindowsSandboxRequestProcessor::new(
-            outgoing.clone(),
-            Arc::clone(&config),
-            config_manager,
-        );
-
         Self {
             turn_admission,
             user_verification,
@@ -539,7 +531,6 @@ impl MessageProcessor {
             thread_queue_processor,
             thread_processor,
             turn_processor,
-            windows_sandbox_processor,
             request_serialization_queues,
         }
     }
@@ -1035,11 +1026,6 @@ impl MessageProcessor {
                 .read(params)
                 .await
                 .map(|response| Some(response.into())),
-            ClientRequest::WindowsSandboxReadiness { .. } => {
-                self.windows_sandbox_processor
-                    .windows_sandbox_readiness(&request_id)
-                    .await
-            }
             ClientRequest::ExternalAgentConfigDetect { params, .. } => self
                 .external_agent_config_processor
                 .detect(params)
@@ -1469,11 +1455,6 @@ impl MessageProcessor {
             ClientRequest::McpServerToolCall { params, .. } => {
                 self.mcp_processor
                     .mcp_server_tool_call(&request_id, params)
-                    .await
-            }
-            ClientRequest::WindowsSandboxSetupStart { params, .. } => {
-                self.windows_sandbox_processor
-                    .windows_sandbox_setup_start(&request_id, params)
                     .await
             }
             ClientRequest::LoginAccount { params, .. } => {

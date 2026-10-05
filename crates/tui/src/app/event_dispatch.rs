@@ -17,8 +17,6 @@ use crate::pager_overlay::TranscriptHistoryState;
 use crate::session_resume::cwds_differ;
 use genex_app_server_client::AppServerEvent;
 use genex_app_server_protocol::ThreadGoalStatus;
-#[cfg(target_os = "windows")]
-use genex_app_server_protocol::WindowsSandboxSetupMode;
 
 pub(super) const SHUTDOWN_FIRST_EXIT_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 2);
 
@@ -47,28 +45,6 @@ impl App {
                     | AppEvent::FatalExitRequest(_)
             )
         {
-            return Ok(AppRunControl::Continue);
-        }
-        if matches!(
-            &event,
-            AppEvent::OpenWindowsSandboxEnablePrompt { .. }
-                | AppEvent::OpenWindowsSandboxFallbackPrompt { .. }
-                | AppEvent::BeginWindowsSandboxElevatedSetup { .. }
-                | AppEvent::BeginWindowsSandboxLegacySetup { .. }
-                | AppEvent::EnableWindowsSandboxForAgentMode { .. }
-        ) && !self.windows_sandbox_setup_is_local()
-        {
-            if matches!(
-                &event,
-                AppEvent::OpenWindowsSandboxFallbackPrompt { .. }
-                    | AppEvent::EnableWindowsSandboxForAgentMode { .. }
-            ) {
-                self.chat_widget.clear_windows_sandbox_setup_status();
-            }
-            self.chat_widget.add_info_message(
-                "Windows sandbox setup requires local connections and executors.".to_string(),
-                /*hint*/ None,
-            );
             return Ok(AppRunControl::Continue);
         }
         if self.chat_widget.has_misalignment_policy_violation()
@@ -1516,138 +1492,6 @@ impl App {
                     self.launch_external_editor(tui).await;
                 }
             }
-            AppEvent::RefreshWindowsSandbox { thread_id } => {
-                #[cfg(any(target_os = "windows", test))]
-                self.refresh_windows_sandbox_for_thread(app_server, thread_id).await;
-                #[cfg(not(any(target_os = "windows", test)))]
-                let _ = thread_id;
-            }
-            AppEvent::OpenWindowsSandboxEnablePrompt {
-                preset,
-                profile_selection,
-            } => {
-                self.chat_widget
-                    .open_windows_sandbox_enable_prompt(preset, profile_selection);
-            }
-            AppEvent::OpenWindowsSandboxFallbackPrompt {
-                preset,
-                profile_selection,
-            } => {
-                self.session_telemetry.counter(
-                    "genex.windows_sandbox.fallback_prompt_shown",
-                    /*inc*/ 1,
-                    &[],
-                );
-                self.chat_widget.clear_windows_sandbox_setup_status();
-                if let Some(started_at) = self.windows_sandbox.setup_started_at.take() {
-                    self.session_telemetry.record_duration(
-                        "genex.windows_sandbox.elevated_setup_duration_ms",
-                        started_at.elapsed(),
-                        &[("result", "failure")],
-                    );
-                }
-                self.chat_widget
-                    .open_windows_sandbox_fallback_prompt(preset, profile_selection);
-            }
-            AppEvent::BeginWindowsSandboxElevatedSetup {
-                preset,
-                profile_selection,
-            } => {
-                #[cfg(target_os = "windows")]
-                self.begin_windows_sandbox_setup(
-                    app_server,
-                    preset,
-                    profile_selection,
-                    WindowsSandboxEnableMode::Elevated,
-                )
-                .await;
-                #[cfg(not(target_os = "windows"))]
-                let _ = (preset, profile_selection);
-            }
-            AppEvent::BeginWindowsSandboxLegacySetup {
-                preset,
-                profile_selection,
-            } => {
-                #[cfg(target_os = "windows")]
-                self.begin_windows_sandbox_setup(
-                    app_server,
-                    preset,
-                    profile_selection,
-                    WindowsSandboxEnableMode::Legacy,
-                )
-                .await;
-                #[cfg(not(target_os = "windows"))]
-                let _ = (preset, profile_selection);
-            }
-            AppEvent::EnableWindowsSandboxForAgentMode {
-                preset,
-                mode,
-                profile_selection,
-            } => {
-                #[cfg(target_os = "windows")]
-                {
-                    self.chat_widget.clear_windows_sandbox_setup_status();
-                    if let Some(started_at) = self.windows_sandbox.setup_started_at.take()
-                        && mode == WindowsSandboxEnableMode::Elevated
-                    {
-                        self.session_telemetry.record_duration(
-                            "genex.windows_sandbox.elevated_setup_duration_ms",
-                            started_at.elapsed(),
-                            &[("result", "success")],
-                        );
-                    }
-                    let selected_mode = match mode {
-                        WindowsSandboxEnableMode::Elevated => WindowsSandboxSetupMode::Elevated,
-                        WindowsSandboxEnableMode::Legacy => WindowsSandboxSetupMode::Unelevated,
-                    };
-                    let elevated_enabled = selected_mode == WindowsSandboxSetupMode::Elevated;
-                    if self
-                        .verify_windows_sandbox_mode_after_setup(app_server, selected_mode)
-                        .await
-                    {
-                            self.chat_widget.windows_sandbox_elevated_setup_complete =
-                                elevated_enabled;
-                            if let Some(selection) = profile_selection {
-                                self.select_permission_profile(app_server, selection).await;
-                            } else {
-                                self.app_event_tx.send(AppEvent::GenexOp(
-                                    AppCommand::override_turn_context(
-                                        /*cwd*/ None,
-                                        Some(AskForApproval::from(preset.approval)),
-                                        Some(preset.permission_profile.clone()),
-                                        Some(preset.active_permission_profile.clone()),
-                                        /*model*/ None,
-                                        /*effort*/ None,
-                                        /*summary*/ None,
-                                        /*service_tier*/ None,
-                                        /*collaboration_mode*/ None,
-                                    ),
-                                ));
-                                self.app_event_tx.send(AppEvent::UpdateAskForApprovalPolicy(
-                                    AskForApproval::from(preset.approval),
-                                ));
-                                self.app_event_tx
-                                    .send(AppEvent::UpdateActivePermissionProfile(
-                                        preset.active_permission_profile.clone(),
-                                    ));
-                            }
-                                self.chat_widget.add_plain_history_lines(vec![
-                                    Line::from(vec!["• ".dim(), "Sandbox ready".into()]),
-                                    Line::from(vec![
-                                        "  ".into(),
-                                        "Genex can now safely edit files and execute commands in your computer"
-                                            .dark_gray(),
-                                    ]),
-                                ]);
-                    } else {
-                        self.chat_widget.retain_input_after_failed_permission_selection();
-                    }
-                }
-                #[cfg(not(target_os = "windows"))]
-                {
-                    let _ = (preset, mode, profile_selection);
-                }
-            }
             AppEvent::PersistModelSelection { model, effort } => {
                 match self.persist_model_defaults(
                     app_server.request_handle(),
@@ -2022,11 +1866,11 @@ impl App {
                 self.stop_agents_overview_thread(app_server, thread_id)
                     .await;
             }
-            #[cfg(any(unix, windows))]
+            #[cfg(unix)]
             AppEvent::StartAgentsDaemon => {
                 self.start_agents_daemon();
             }
-            #[cfg(any(unix, windows))]
+            #[cfg(unix)]
             AppEvent::AgentsDaemonStarted { result } => match result {
                 Ok(()) => self.chat_widget.add_info_message(
                     "Background server started. Run `genex agents` in another terminal; this session remains unchanged."
@@ -2124,14 +1968,6 @@ impl App {
             }
             AppEvent::OpenPermissionsPopup | AppEvent::OpenApprovalsPopup => {
                 if self.reject_pending_permission_change() {
-                    return Ok(AppRunControl::Continue);
-                }
-                #[cfg(any(target_os = "windows", test))]
-                if self.chat_widget.windows_sandbox_local_server
-                    && self.windows_sandbox_host() != WindowsSandboxHost::Remote
-                    && self.chat_widget.windows_sandbox_config.requirements.is_none()
-                    && !self.refresh_windows_sandbox_config(app_server).await
-                {
                     return Ok(AppRunControl::Continue);
                 }
                 if app_server.uses_remote_workspace() {

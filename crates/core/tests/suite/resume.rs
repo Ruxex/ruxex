@@ -1,6 +1,5 @@
 use anyhow::Result;
 use genex_core::TurnInputRequest;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::ThreadSettingsOverrides;
 use genex_protocol::user_input::ByteRange;
@@ -19,38 +18,6 @@ use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn resume_restores_windows_sandbox_override() -> Result<()> {
-    skip_if_no_network!(Ok(()));
-
-    let server = start_mock_server().await;
-    let mut builder = test_genex();
-    let initial = builder.build(&server).await?;
-    core_test_support::submit_thread_settings(
-        &initial.genex,
-        ThreadSettingsOverrides {
-            windows_sandbox_level: Some(WindowsSandboxLevel::Elevated),
-            ..Default::default()
-        },
-    )
-    .await?;
-    initial.genex.ensure_rollout_materialized().await;
-    let settings = initial.genex.restorable_thread_settings().await;
-
-    let resumed = builder.restart(&server, &initial).await?;
-    resumed.genex.restore_thread_settings(settings).await?;
-
-    assert_eq!(
-        resumed
-            .genex
-            .restorable_thread_settings()
-            .await
-            .windows_sandbox_level,
-        Some(WindowsSandboxLevel::Elevated)
-    );
-    Ok(())
-}
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn resume_includes_initial_messages_from_rollout_events() -> Result<()> {

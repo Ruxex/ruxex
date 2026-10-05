@@ -5,10 +5,10 @@ use std::time::UNIX_EPOCH;
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use futures::FutureExt;
 use genex_exec_server::RouteAwareHttpClient;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;

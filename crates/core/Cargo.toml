@@ -77,7 +77,6 @@ genex-utils-plugins = { workspace = true }
 genex-utils-pty = { workspace = true }
 genex-utils-string = { workspace = true }
 genex-utils-stream-parser = { workspace = true }
-genex-windows-sandbox = { package = "genex-windows-sandbox", path = "../windows-sandbox-rs" }
 dirs = { workspace = true }
 dunce = { workspace = true }
 eventsource-stream = { workspace = true }

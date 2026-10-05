@@ -196,14 +196,6 @@ fn render_debug_config_lines(
         ));
     }
 
-    if let Some(sandbox_private_desktop) = requirements.windows_sandbox_private_desktop.as_ref() {
-        requirement_lines.push(requirement_line(
-            "windows.sandbox_private_desktop",
-            sandbox_private_desktop.value.to_string(),
-            Some(&sandbox_private_desktop.source),
-        ));
-    }
-
     if let Some(policies) = requirements_toml.allowed_approval_policies.as_ref() {
         let value = join_or_empty(policies.iter().map(ToString::to_string).collect::<Vec<_>>());
         requirement_lines.push(requirement_line(
@@ -387,12 +379,6 @@ fn format_managed_hooks_requirements(hooks: &ManagedHooksRequirementsToml) -> St
 
     if let Some(managed_dir) = hooks.managed_dir.as_ref() {
         parts.push(format!("managed_dir={}", managed_dir.display()));
-    }
-    if let Some(windows_managed_dir) = hooks.windows_managed_dir.as_ref() {
-        parts.push(format!(
-            "windows_managed_dir={}",
-            windows_managed_dir.display()
-        ));
     }
     parts.push(format!("handlers={}", hooks.handler_count()));
 

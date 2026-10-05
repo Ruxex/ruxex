@@ -353,7 +353,7 @@ fn process_platform_defaults_allow_scratch_without_granting_it_to_filesystem_hel
 
     for scratch_root in ["/private/tmp", "/private/var/tmp"] {
         let scratch = tempfile::Builder::new()
-        .prefix("genex-seatbelt-process-scratch-")
+            .prefix("genex-seatbelt-process-scratch-")
             .tempdir_in(scratch_root)
             .expect("scratch directory");
         let scratch_file = scratch.path().join("scratch.txt");

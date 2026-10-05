@@ -10,11 +10,11 @@ export type InitializeResponse = { userAgent: string,
 genexHome: AbsolutePathBuf,
 /**
  * Platform family for the running app-server target, for example
- * `"unix"` or `"windows"`.
+ * `"unix"`.
  */
 platformFamily: string,
 /**
  * Operating system for the running app-server target, for example
- * `"macos"`, `"linux"`, or `"windows"`.
+ * `"macos"` or `"linux"`.
  */
 platformOs: string, };

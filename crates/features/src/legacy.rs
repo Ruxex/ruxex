@@ -9,10 +9,6 @@ struct Alias {
 
 const ALIASES: &[Alias] = &[
     Alias {
-        legacy_key: "enable_experimental_windows_sandbox",
-        feature: Feature::WindowsSandbox,
-    },
-    Alias {
         legacy_key: "request_permissions",
         feature: Feature::ExecPermissionApprovals,
     },

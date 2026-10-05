@@ -1,7 +1,7 @@
 use super::*;
-use genex_rmcp_client::InProcessTransportFactory;
 use futures::FutureExt;
 use futures::future::BoxFuture;
+use genex_rmcp_client::InProcessTransportFactory;
 use pretty_assertions::assert_eq;
 use rmcp::ServiceExt;
 use rmcp::model::ClientCapabilities;

@@ -415,15 +415,7 @@ fn config_toml_source_path(layer: &ConfigLayerEntry) -> AbsolutePathBuf {
 }
 
 fn synthetic_layer_path(path: &str) -> AbsolutePathBuf {
-    #[cfg(windows)]
-    {
-        AbsolutePathBuf::resolve_path_against_base(path, r"C:\")
-    }
-
-    #[cfg(not(windows))]
-    {
-        AbsolutePathBuf::resolve_path_against_base(path, "/")
-    }
+    AbsolutePathBuf::resolve_path_against_base(path, "/")
 }
 
 fn escape_xml_text(value: &str) -> String {
@@ -496,17 +488,11 @@ fn append_matcher_groups(
             let normalized = match handler {
                 HookHandlerConfig::Command {
                     command,
-                    command_windows,
                     timeout_sec,
                     r#async,
                     status_message,
                     additional_context_limit,
                 } => {
-                    let command = if cfg!(windows) {
-                        command_windows.unwrap_or(command)
-                    } else {
-                        command
-                    };
                     if command.trim().is_empty() {
                         source.record_load_failure(
                             format!("skipping empty hook command in {}", source.path.display()),
@@ -550,7 +536,6 @@ fn append_matcher_groups(
                         .filter(|limit| *limit != DEFAULT_HOOK_OUTPUT_TOKEN_LIMIT);
                     let config = HookHandlerConfig::Command {
                         command: command.clone(),
-                        command_windows: None,
                         timeout_sec: Some(timeout_sec),
                         r#async,
                         status_message: status_message.clone(),
@@ -950,7 +935,6 @@ mod tests {
             matcher: matcher.map(str::to_string),
             hooks: vec![HookHandlerConfig::Command {
                 command: "echo hello".to_string(),
-                command_windows: None,
                 timeout_sec: None,
                 r#async: false,
                 status_message: None,
@@ -966,7 +950,6 @@ mod tests {
             matcher: None,
             hooks: vec![HookHandlerConfig::Command {
                 command: "echo hello".to_string(),
-                command_windows: None,
                 timeout_sec: None,
                 r#async: false,
                 status_message: None,
@@ -1312,7 +1295,6 @@ mod tests {
                 hooks: vec![
                     HookHandlerConfig::Command {
                         command: "echo default".to_string(),
-                        command_windows: None,
                         timeout_sec: None,
                         r#async: false,
                         status_message: None,
@@ -1320,7 +1302,6 @@ mod tests {
                     },
                     HookHandlerConfig::Command {
                         command: "echo clamped".to_string(),
-                        command_windows: None,
                         timeout_sec: Some(600),
                         r#async: true,
                         status_message: None,
@@ -1402,7 +1383,6 @@ mod tests {
                 matcher: Some("ignored".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "echo interrupt".to_string(),
-                    command_windows: None,
                     timeout_sec: Some(600),
                     r#async: true,
                     status_message: None,
@@ -1586,7 +1566,6 @@ mod tests {
                     matcher: None,
                     hooks: vec![HookHandlerConfig::Command {
                         command: "echo hello".to_string(),
-                        command_windows: None,
                         timeout_sec: None,
                         r#async: false,
                         status_message: None,
@@ -1599,7 +1578,7 @@ mod tests {
     }
 
     #[test]
-    fn pre_tool_use_resolves_windows_command_override_during_discovery() {
+    fn pre_tool_use_resolves_command_during_discovery() {
         let mut handlers = Vec::new();
         let mut warnings = Vec::new();
         let mut display_order = 0;
@@ -1617,7 +1596,6 @@ mod tests {
                 matcher: Some("^Bash$".to_string()),
                 hooks: vec![HookHandlerConfig::Command {
                     command: "echo unix".to_string(),
-                    command_windows: Some("echo windows".to_string()),
                     timeout_sec: None,
                     r#async: false,
                     status_message: None,
@@ -1631,12 +1609,7 @@ mod tests {
         assert_eq!(
             handlers[0].kind,
             ConfiguredHandlerKind::Command {
-                command: if cfg!(windows) {
-                    "echo windows"
-                } else {
-                    "echo unix"
-                }
-                .to_string(),
+                command: "echo unix".to_string(),
                 env: std::collections::HashMap::new(),
                 r#async: false,
             }

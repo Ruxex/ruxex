@@ -5,12 +5,13 @@ use crate::sandboxing::ExecOptions;
 use crate::shell::ShellType;
 use crate::tools::sandboxing::SandboxAttempt;
 use crate::tools::sandboxing::managed_network_for_sandbox_permissions;
-#[cfg(target_os = "macos")]
-use genex_network_proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
+use core_test_support::PathBufExt;
 use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
 use genex_network_proxy::ConfigReloader;
 use genex_network_proxy::ConfigReloaderFuture;
 use genex_network_proxy::ConfigState;
+#[cfg(target_os = "macos")]
+use genex_network_proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
 use genex_network_proxy::NetworkProxy;
 use genex_network_proxy::NetworkProxyConfig;
 use genex_network_proxy::NetworkProxyConstraints;
@@ -19,13 +20,11 @@ use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
 use genex_network_proxy::PROXY_ENV_KEYS;
 #[cfg(target_os = "macos")]
 use genex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 use genex_sandboxing::SandboxManager;
 use genex_sandboxing::SandboxType;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
-use core_test_support::PathBufExt;
 use pretty_assertions::assert_eq;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
@@ -126,8 +125,6 @@ async fn explicit_escalation_prepares_exec_without_managed_network() -> anyhow::
         workspace_roots: std::slice::from_ref(&sandbox_policy_cwd),
         sandbox_exe: None,
         use_legacy_landlock: false,
-        windows_sandbox_level: WindowsSandboxLevel::Disabled,
-        windows_sandbox_private_desktop: false,
         network_denial_cancellation_token: None,
         network_proxy: None,
     };
@@ -145,10 +142,6 @@ async fn explicit_escalation_prepares_exec_without_managed_network() -> anyhow::
         .expect("prepare exec request");
 
     assert_eq!(exec_request.cwd, PathUri::from_abs_path(&command_cwd));
-    assert_eq!(
-        exec_request.windows_sandbox_policy_cwd,
-        PathUri::from_abs_path(&native_sandbox_policy_cwd)
-    );
     assert_eq!(exec_request.network, None);
     for key in PROXY_ENV_KEYS {
         assert_eq!(exec_request.env.get(*key), None, "{key} should be unset");

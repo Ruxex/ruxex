@@ -278,16 +278,6 @@ fn granted_file_system_entry_within_request(
     {
         return false;
     }
-    if context.cwd.infer_path_convention() == Some(PathConvention::Windows)
-        && is_root_entry(granted_entry)
-        && !requested.entries.iter().any(|requested_entry| {
-            is_root_entry(requested_entry)
-                && access_covers(requested_entry.access, granted_entry.access)
-        })
-    {
-        return false;
-    }
-
     if let Some(path) = resolve_permission_path(&granted_entry.path, context) {
         if path.infer_path_convention() != context.cwd.infer_path_convention()
             || requested_read_deny_matcher
@@ -361,15 +351,11 @@ fn glob_static_prefix_path(
     pattern: &str,
     context: &FileSystemSandboxPolicyContext<'_>,
 ) -> Option<PathUri> {
-    let is_windows = context.cwd.infer_path_convention() == Some(PathConvention::Windows);
     let (prefix, wildcard_in_segment) = match pattern.find(['*', '?', '[', ']']) {
         Some(0) => return None,
         Some(index) => {
             let prefix = &pattern[..index];
-            (
-                prefix,
-                !(prefix.ends_with('/') || is_windows && prefix.ends_with('\\')),
-            )
+            (prefix, !prefix.ends_with('/'))
         }
         None => (pattern, false),
     };
@@ -408,18 +394,11 @@ fn materialize_cwd_dependent_entry(
 ) -> Option<FileSystemSandboxEntry> {
     match &entry.path {
         FileSystemPath::GlobPattern { pattern } => {
-            let is_windows = context.cwd.infer_path_convention() == Some(PathConvention::Windows);
             let home_relative = pattern
                 .strip_prefix("~/")
-                .or_else(|| (pattern == "~").then_some(""))
-                .or_else(|| is_windows.then(|| pattern.strip_prefix("~\\")).flatten());
+                .or_else(|| (pattern == "~").then_some(""));
             let (root, pattern) = match home_relative {
-                Some(suffix) => (
-                    context.user_home_dir?,
-                    suffix.trim_start_matches(|separator| {
-                        separator == '/' || is_windows && separator == '\\'
-                    }),
-                ),
+                Some(suffix) => (context.user_home_dir?, suffix.trim_start_matches('/')),
                 None => (context.cwd, pattern.as_str()),
             };
             let path = root.join(pattern).ok()?;

@@ -1,6 +1,9 @@
 mod common;
 
 use anyhow::Context;
+use common::TEST_BUILD_COMMIT;
+use common::exec_server::ExecServerHarness;
+use common::exec_server::exec_server_with_env;
 use genex_build_info::BuildInfo;
 use genex_build_info::build_id;
 use genex_exec_server::EnvironmentInfo;
@@ -10,9 +13,6 @@ use genex_exec_server_protocol::JSONRPCError;
 use genex_exec_server_protocol::JSONRPCErrorError;
 use genex_exec_server_protocol::JSONRPCMessage;
 use genex_exec_server_protocol::JSONRPCResponse;
-use common::TEST_BUILD_COMMIT;
-use common::exec_server::ExecServerHarness;
-use common::exec_server::exec_server_with_env;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::process::Command;

@@ -133,11 +133,7 @@ fn append_flag_if_missing(flags: &mut String, flag: &str) {
 }
 
 fn cargo_dylint_binary_name() -> &'static str {
-    if cfg!(windows) {
-        "cargo-dylint.exe"
-    } else {
-        "cargo-dylint"
-    }
+    "cargo-dylint"
 }
 
 fn infer_rustup_home() -> Result<Option<OsString>, String> {

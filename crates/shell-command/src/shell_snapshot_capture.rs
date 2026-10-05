@@ -38,7 +38,6 @@ pub struct SnapshotCaptureOptions {
 /// Returns a script that captures native state, aliases, and the requested export records.
 ///
 /// Startup behavior is independent of how the captured records will be rendered.
-/// PowerShell and Command Prompt snapshots are not supported by the snapshot callers.
 pub fn snapshot_capture_script(
     shell_type: ShellType,
     options: SnapshotCaptureOptions,
@@ -47,7 +46,6 @@ pub fn snapshot_capture_script(
         ShellType::Zsh => zsh_snapshot_script(options.startup),
         ShellType::Bash => bash_snapshot_script(options.startup),
         ShellType::Sh => sh_snapshot_script(options.startup),
-        ShellType::PowerShell | ShellType::Cmd => return None,
     };
     let declarations = if options.declarations {
         exports::script(shell_type)

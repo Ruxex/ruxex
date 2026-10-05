@@ -124,10 +124,8 @@ impl WebSearchTool {
                 u64::try_from(call.truncation_policy.token_budget()).unwrap_or(u64::MAX),
             ),
         };
-        let extra_headers = search_request_headers(
-            self.originator.as_deref(),
-            call.turn_metadata.as_deref(),
-        );
+        let extra_headers =
+            search_request_headers(self.originator.as_deref(), call.turn_metadata.as_deref());
         call.turn_item_emitter
             .emit_started(extension_turn_item(
                 WebSearchItem {

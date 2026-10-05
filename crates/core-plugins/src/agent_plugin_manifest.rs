@@ -186,12 +186,7 @@ pub(super) fn parse_agent_plugin_manifest_uri(
             extension_contents,
         )?;
     } else if let Some((overlay_path, overlay_contents)) = overlay {
-        apply_agent_plugin_extension(
-            &mut resolved,
-            plugin_root,
-            overlay_path,
-            overlay_contents,
-        )?;
+        apply_agent_plugin_extension(&mut resolved, plugin_root, overlay_path, overlay_contents)?;
     }
     Ok(resolved)
 }

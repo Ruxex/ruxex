@@ -104,7 +104,7 @@ pub enum EnvironmentStatusKind {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct EnvironmentShellInfo {
-    /// Stable shell name, for example `zsh`, `bash`, `powershell`, `sh`, or `cmd`.
+    /// Stable shell name, for example `zsh`, `bash`, or `sh`.
     pub name: String,
     /// Target-native shell executable path or command name.
     pub path: String,

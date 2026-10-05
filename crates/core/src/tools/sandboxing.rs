@@ -12,11 +12,10 @@ use crate::session::turn_context::TurnEnvironment;
 use crate::state::SessionServices;
 use crate::tools::hook_names::HookToolName;
 use crate::tools::network_approval::NetworkApprovalSpec;
+use futures::Future;
 use genex_file_system::FileSystemSandboxContext;
-use genex_file_system::WindowsSandboxSelection;
 use genex_network_proxy::NetworkProxy;
 use genex_protocol::approvals::ExecPolicyAmendment;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::error::GenexErr;
 use genex_protocol::permissions::FileSystemSandboxKind;
 use genex_protocol::permissions::FileSystemSandboxPolicy;
@@ -29,9 +28,7 @@ use genex_sandboxing::SandboxType;
 use genex_sandboxing::SandboxablePreference;
 use genex_sandboxing::policy_transforms::effective_permission_profile;
 use genex_tools::ToolName;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-use futures::Future;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -396,37 +393,9 @@ pub(crate) struct SandboxAttempt<'a> {
     pub(crate) sandbox_cwd: &'a PathUri,
     pub(crate) workspace_roots: &'a [PathUri],
     pub sandbox_exe: Option<&'a std::path::PathBuf>,
-    // TODO(anp): Reconcile these attempt settings with TurnEnvironment::sandbox_context
-    // so process execution and patch writes honor the selected environment's backend.
     pub use_legacy_landlock: bool,
-    pub windows_sandbox_level: genex_protocol::config_types::WindowsSandboxLevel,
-    pub windows_sandbox_private_desktop: bool,
     pub network_denial_cancellation_token: Option<CancellationToken>,
     pub(crate) network_proxy: Option<&'a NetworkProxy>,
-}
-
-pub(crate) fn executor_windows_sandbox_level(
-    windows_sandbox_level: WindowsSandboxLevel,
-    cwd: &PathUri,
-) -> WindowsSandboxLevel {
-    if windows_sandbox_level == WindowsSandboxLevel::Disabled
-        && cwd.infer_path_convention() == Some(PathConvention::Windows)
-    {
-        WindowsSandboxLevel::RestrictedToken
-    } else {
-        windows_sandbox_level
-    }
-}
-
-pub(crate) fn executor_windows_sandbox_selection(
-    windows_sandbox_level: WindowsSandboxLevel,
-    cwd: &PathUri,
-) -> WindowsSandboxSelection {
-    if cwd.infer_path_convention() == Some(PathConvention::Windows) {
-        executor_windows_sandbox_level(windows_sandbox_level, cwd).into()
-    } else {
-        WindowsSandboxSelection::Disabled
-    }
 }
 
 impl<'a> SandboxAttempt<'a> {
@@ -473,16 +442,9 @@ impl<'a> SandboxAttempt<'a> {
                 sandbox_policy_cwd: self.sandbox_cwd,
                 sandbox_exe: self.sandbox_exe.map(std::path::PathBuf::as_path),
                 use_legacy_landlock: self.use_legacy_landlock,
-                windows_sandbox_level: self.windows_sandbox_level,
-                windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             })
             .map_err(GenexErr::from)?;
-        let workspace_roots = self
-            .workspace_roots
-            .iter()
-            .map(PathUri::to_abs_path)
-            .collect::<std::io::Result<Vec<_>>>()?;
-        crate::sandboxing::ExecRequest::from_sandbox_exec_request(request, options, workspace_roots)
+        crate::sandboxing::ExecRequest::from_sandbox_exec_request(request, options)
     }
 
     pub fn env_for_exec_server(
@@ -508,29 +470,18 @@ impl<'a> SandboxAttempt<'a> {
                 sandbox_policy_cwd: self.sandbox_cwd,
                 sandbox_exe: None,
                 use_legacy_landlock: self.use_legacy_landlock,
-                windows_sandbox_level: self.windows_sandbox_level,
-                windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             })
             .map_err(GenexErr::from)?;
-        let mut exec_request = crate::sandboxing::ExecRequest::from_sandbox_exec_request(
-            request,
-            options,
-            Vec::new(),
-        )?;
+        let mut exec_request =
+            crate::sandboxing::ExecRequest::from_sandbox_exec_request(request, options)?;
         exec_request.exec_server_managed_network = managed_network;
         if self.sandbox_requested {
             exec_request.exec_server_sandbox = Some(FileSystemSandboxContext {
                 permissions: exec_server_permissions,
-                cwd: exec_request.windows_sandbox_policy_cwd.clone(),
+                cwd: self.sandbox_cwd.clone(),
                 workspace_roots: self.workspace_roots.to_vec(),
                 user_home_dir: None,
                 temporary_directories: None,
-                windows_sandbox_selection: executor_windows_sandbox_selection(
-                    self.windows_sandbox_level,
-                    self.sandbox_cwd,
-                ),
-                windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
-                windows_sandbox_proxy_settings_mode: None,
                 use_legacy_landlock: self.use_legacy_landlock,
             });
             exec_request.exec_server_enforce_managed_network = self.enforce_managed_network;

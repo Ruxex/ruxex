@@ -23,6 +23,7 @@ use std::borrow::Cow;
 
 use crate::session::turn_context::TurnContext;
 pub(crate) use approvals::ApprovalContext;
+pub(crate) use executed_tool_calls::ExecutedToolCalls;
 use genex_features::Feature;
 use genex_protocol::exec_output::ExecToolCallOutput;
 use genex_protocol::model_types::ModelInfo;
@@ -31,7 +32,6 @@ use genex_tools::ToolName;
 use genex_utils_output_truncation::TruncationPolicy;
 use genex_utils_output_truncation::formatted_truncate_text;
 use genex_utils_output_truncation::truncate_text;
-pub(crate) use executed_tool_calls::ExecutedToolCalls;
 pub use router::ToolRouter;
 
 /// Legacy boundaries such as hook payloads, telemetry tags, and Responses tool
@@ -59,9 +59,7 @@ pub(crate) fn tool_user_shell_type(
     match user_shell.shell_type {
         crate::shell::ShellType::Zsh => genex_tools::ToolUserShellType::Zsh,
         crate::shell::ShellType::Bash => genex_tools::ToolUserShellType::Bash,
-        crate::shell::ShellType::PowerShell => genex_tools::ToolUserShellType::PowerShell,
         crate::shell::ShellType::Sh => genex_tools::ToolUserShellType::Sh,
-        crate::shell::ShellType::Cmd => genex_tools::ToolUserShellType::Cmd,
     }
 }
 

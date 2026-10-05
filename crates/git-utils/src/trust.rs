@@ -121,8 +121,7 @@ pub async fn resolve_root_git_project_for_trust(
         fs.canonicalize(&checkout_uri, /*sandbox*/ None),
         fs.canonicalize(&linked_common_dir_uri, /*sandbox*/ None),
     );
-    // PathUri equality folds Windows ASCII case, but even Windows directories
-    // can be case-sensitive. Canonical filesystem identities must match exactly.
+    // Canonical filesystem identities must match exactly.
     if registered_checkout.ok()?.to_url() != checkout.ok()?.to_url()
         || linked_common_dir.ok()?.to_url() != common_dir_uri.to_url()
     {

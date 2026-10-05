@@ -1,5 +1,6 @@
 use anyhow::Context;
 use anyhow::Result;
+use futures::TryStreamExt;
 use genex_exec_server::CopyOptions;
 use genex_exec_server::CreateDirectoryOptions;
 #[cfg(unix)]
@@ -31,7 +32,6 @@ use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
 use genex_sandboxing::policy_transforms::effective_network_sandbox_policy;
 use genex_utils_path_uri::PathUri;
-use futures::TryStreamExt;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use tempfile::TempDir;
@@ -40,8 +40,6 @@ use test_case::test_case;
 use super::support::FileSystemImplementation;
 use super::support::absolute_path;
 use super::support::create_file_system_context;
-#[cfg(windows)]
-use super::support::is_unsupported_restricted_token_host;
 use super::support::read_only_sandbox;
 use super::support::workspace_write_sandbox;
 
@@ -131,7 +129,7 @@ async fn file_system_get_metadata_reports_files_and_directories(
 
 #[test_case(FileSystemImplementation::Local, true, false ; "local_follow")]
 #[test_case(FileSystemImplementation::Local, false, false ; "local_no_follow")]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_create_directory_creates_nested_directories(
     implementation: FileSystemImplementation,
@@ -156,10 +154,6 @@ async fn file_system_create_directory_creates_nested_directories(
             sandbox.as_ref(),
         )
         .await;
-    #[cfg(windows)]
-    if is_unsupported_restricted_token_host(&result) {
-        return Ok(());
-    }
     result.with_context(|| format!("mode={implementation}, sandboxed={sandboxed}"))?;
     assert!(nested_dir.is_dir());
 
@@ -168,7 +162,7 @@ async fn file_system_create_directory_creates_nested_directories(
 
 #[test_case(FileSystemImplementation::Local, true, false ; "local_follow")]
 #[test_case(FileSystemImplementation::Local, false, false ; "local_no_follow")]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Local, false, true ; "local_sandboxed_no_follow"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_write_file_writes_bytes(
     implementation: FileSystemImplementation,
@@ -190,10 +184,6 @@ async fn file_system_write_file_writes_bytes(
             sandbox.as_ref(),
         )
         .await;
-    #[cfg(windows)]
-    if is_unsupported_restricted_token_host(&result) {
-        return Ok(());
-    }
     result.with_context(|| format!("mode={implementation}, sandboxed={sandboxed}"))?;
     assert_eq!(std::fs::read(file_path)?, b"hello from trait");
 
@@ -719,7 +709,7 @@ async fn file_system_remove_removes_directory(
 }
 
 #[test_case(FileSystemImplementation::Local, false ; "local")]
-#[cfg_attr(any(target_os = "linux", windows), test_case(FileSystemImplementation::Local, true ; "local_sandboxed"))]
+#[cfg_attr(target_os = "linux", test_case(FileSystemImplementation::Local, true ; "local_sandboxed"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_remove_no_follow_removes_file_and_empty_directory(
     implementation: FileSystemImplementation,
@@ -745,10 +735,6 @@ async fn file_system_remove_no_follow_removes_file_and_empty_directory(
             sandbox.as_ref(),
         )
         .await;
-    #[cfg(windows)]
-    if is_unsupported_restricted_token_host(&result) {
-        return Ok(());
-    }
     result.with_context(|| format!("mode={implementation}, sandboxed={sandboxed}"))?;
     assert!(!file_path.exists());
 
@@ -1210,10 +1196,6 @@ pub(crate) async fn assert_sandboxed_canonicalize_resolves_directory_alias(
 
 /// Verifies that effective additional permissions extend a read-only sandbox with a writable root.
 #[test_case(FileSystemImplementation::Local ; "local")]
-#[cfg_attr(
-    windows,
-    ignore = "Windows restricted-token sandbox cannot enforce split writable roots"
-)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_sandboxed_write_allows_additional_write_root(
     implementation: FileSystemImplementation,

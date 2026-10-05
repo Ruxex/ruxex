@@ -249,16 +249,3 @@ support for new `thread/rollback` requests.
 
 
 The origin of a required `managed_auth_base_url` must match the discovered origin by scheme, host, and effective port. The base URL's API path is not part of this comparison. Either origin alone is sufficient. If requirements specify no base URL and discovery explicitly returns `NO_CONSTRAINT`, the effective `managed_auth_base_url` supplies the origin, including its existing default. `backendOrigin` is always a resolved origin; `accountRoutingOverride` preserves `NO_CONSTRAINT` when the backend explicitly returns it. Discovering an origin does not change API paths or apply routing headers to requests.
-
-## Windows sandbox implementation selection
-
-`windowsSandbox/setupStart` and `windowsSandbox/readiness` apply only to the
-legacy `elevated` and `unelevated` backends. Clients resolve the desired sandbox
-implementation from configuration. When it is `mxc`, they skip both methods;
-`allowedWindowsSandboxImplementations` can allow `mxc` independently of the
-legacy setup modes. Non-Windows hosts report `notConfigured` for the legacy
-readiness API.
-
-MXC uses the standard `command/exec` streaming and process-control path, including
-ConPTY when `tty` is enabled. The buffered legacy Windows sandbox restrictions on
-process control and custom output caps do not apply to MXC.

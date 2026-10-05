@@ -99,8 +99,6 @@ pub(crate) async fn request(daemon: &Daemon) -> Result<UpdateOutput> {
         };
         let mut response = Vec::new();
         let transport = async {
-            #[cfg(windows)]
-            connection.ensure_non_elevated_peer()?;
             connection.write_all(b"update\n").await?;
             connection
                 .take(16 * 1024)
@@ -183,10 +181,6 @@ pub(super) async fn handle_request(
     terminate: &mut Signal,
     trigger: UpdateTrigger<'_>,
 ) -> Result<RequestDisposition> {
-    #[cfg(windows)]
-    if connection.ensure_non_elevated_peer().is_err() {
-        return Ok(RequestDisposition::Unchanged);
-    }
     let mut request = [0; 7];
     if !matches!(
         timeout(Duration::from_secs(5), connection.read_exact(&mut request)).await,

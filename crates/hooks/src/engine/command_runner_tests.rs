@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::ffi::OsString;
-#[cfg(windows)]
-use std::fs;
 #[cfg(unix)]
 use std::os::unix::ffi::OsStringExt;
 use std::path::Path;
@@ -146,65 +144,6 @@ async fn hook_shell_startup_does_not_stop_on_controlling_terminal() {
     assert_eq!(result.error, None);
 }
 
-#[cfg(windows)]
-#[tokio::test]
-async fn cmd_shell_runs_quoted_hook_command_path() {
-    let temp = tempdir().expect("create temp dir");
-    let hook_dir = temp.path().join("hook with spaces");
-    fs::create_dir(&hook_dir).expect("create hook dir");
-    let hook_path = hook_dir.join("hook.cmd");
-    fs::write(
-        &hook_path,
-        "@echo off\r\nif not \"%~1\"==\"notify\" exit /B 7\r\necho hook-ran\r\n",
-    )
-    .expect("write hook command");
-    let source_path =
-        AbsolutePathBuf::try_from(hook_path.clone()).expect("absolute hook command path");
-    let command = format!(r#""{}" notify"#, hook_path.display());
-    let env = HashMap::new();
-    let handler = ConfiguredHandler {
-        builtin: false,
-        event_name: HookEventName::SessionStart,
-        matcher: None,
-        timeout_sec: 10,
-        status_message: None,
-        additional_context_limit: Default::default(),
-        source_path: source_path.into(),
-        source: HookSource::User,
-        display_order: 0,
-        kind: ConfiguredHandlerKind::Command {
-            command: command.clone(),
-            r#async: false,
-            env: env.clone(),
-        },
-    };
-    let shells = [
-        CommandShell {
-            program: String::new(),
-            args: Vec::new(),
-        },
-        CommandShell {
-            program: std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string()),
-            args: vec!["/c".to_string()],
-        },
-    ];
-
-    for shell in shells {
-        let (result_sender, _result_receiver) = async_channel::unbounded();
-        let runtime = CommandHookRuntime::new(
-            shell,
-            Arc::new(std::env::vars_os().collect()),
-            ThreadId::new(),
-            result_sender,
-        );
-        let result = run_command(&runtime, &handler, &command, &env, "{}", temp.path()).await;
-
-        assert_eq!(result.exit_code, Some(0), "stderr: {}", result.stderr);
-        assert_eq!(result.stdout.trim(), "hook-ran");
-        assert!(result.error.is_none());
-    }
-}
-
 #[tokio::test]
 async fn fast_exiting_hook_preserves_stdout_when_stdin_is_not_consumed() {
     let temp = tempdir().expect("create temp dir");
@@ -263,16 +202,9 @@ time.sleep(30)
     let (runtime, _result_receiver) = runtime();
 
     // Keep user shell startup files out of the pipe I/O timeout test.
-    let runtime = runtime.reconfigured(if cfg!(windows) {
-        CommandShell {
-            program: "cmd.exe".to_string(),
-            args: vec!["/D".to_string(), "/C".to_string()],
-        }
-    } else {
-        CommandShell {
-            program: "/bin/sh".to_string(),
-            args: vec!["-c".to_string()],
-        }
+    let runtime = runtime.reconfigured(CommandShell {
+        program: "/bin/sh".to_string(),
+        args: vec!["-c".to_string()],
     });
 
     let result = timeout(
@@ -292,7 +224,7 @@ async fn command_hook_does_not_expose_configured_noise_auth_token() {
     let temp = tempdir().expect("create temp dir");
     let source_path = AbsolutePathBuf::try_from(temp.path().join("hooks.json"))
         .expect("absolute hook configuration path");
-    let command = if cfg!(windows) { "set" } else { "env" };
+    let command = "env";
     let env = HashMap::from([
         (
             GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_ascii_lowercase(),
@@ -396,9 +328,6 @@ fn build_command_replays_snapshot_before_hook_overrides_and_scrubbing() {
 
 #[test]
 fn fallback_shell_uses_snapshot() {
-    #[cfg(windows)]
-    let (name, program) = ("comspec", r"C:\captured\cmd.exe");
-    #[cfg(not(windows))]
     let (name, program) = ("SHELL", "/captured/shell");
     let command = build_command(
         &CommandShell {
@@ -411,7 +340,6 @@ fn fallback_shell_uses_snapshot() {
     );
 
     assert_eq!(command.as_std().get_program(), OsStr::new(program));
-    #[cfg(not(windows))]
     assert_eq!(
         command
             .as_std()

@@ -9,7 +9,6 @@ use genex_core::config::Constrained;
 use genex_core::config::NetworkProxySpec;
 use genex_core::shell::ShellType;
 use genex_core::shell::get_shell;
-use genex_core::windows_sandbox::WindowsSandboxLevelExt;
 use genex_exec_server::CreateDirectoryOptions;
 use genex_exec_server::LOCAL_ENVIRONMENT_ID;
 use genex_exec_server::REMOTE_ENVIRONMENT_ID;
@@ -24,7 +23,6 @@ use genex_protocol::approvals::NetworkPolicyRuleAction;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::Settings;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::NetworkPermissions;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::models::PermissionProfileSnapshot;
@@ -2428,11 +2426,6 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
                     test.config.permissions.permission_profile().clone()
                 }),
                 shell_environment_policy: test.config.permissions.shell_environment_policy.clone(),
-                windows_sandbox_level: WindowsSandboxLevel::from_config(&test.config),
-                windows_sandbox_private_desktop: test
-                    .config
-                    .permissions
-                    .windows_sandbox_private_desktop,
                 use_legacy_landlock: test.config.features.use_legacy_landlock(),
                 exec_policy: None,
                 mcp_policy: None,

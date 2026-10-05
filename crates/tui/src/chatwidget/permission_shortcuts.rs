@@ -45,16 +45,6 @@ impl ChatWidget {
                 continue;
             }
             // These modes still need explicit Windows setup.
-            #[cfg(target_os = "windows")]
-            if preset.id == "auto"
-                && (matches!(
-                    self.windows_sandbox_host,
-                    crate::app::WindowsSandboxHost::Mixed | crate::app::WindowsSandboxHost::Unknown
-                ) || (self.windows_sandbox_host != crate::app::WindowsSandboxHost::Remote
-                    && self.windows_sandbox_config.level() == WindowsSandboxLevel::Disabled))
-            {
-                continue;
-            }
             let is_current = current_approval == approval
                 && active_profile.as_ref().map_or_else(
                     || {

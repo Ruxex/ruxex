@@ -22,7 +22,6 @@ use crate::tools::runtimes::RuntimePathPrepends;
 use crate::tools::runtimes::apply_zsh_fork_path_prepend;
 use crate::tools::runtimes::exec_env_for_sandbox_permissions;
 use crate::tools::runtimes::maybe_wrap_shell_lc_with_snapshot;
-use crate::tools::runtimes::prepare_powershell_command_for_elevated_windows_sandbox;
 use crate::tools::runtimes::zsh_fork;
 use crate::tools::sandboxing::Approvable;
 use crate::tools::sandboxing::ApprovalAction;
@@ -50,7 +49,6 @@ use genex_protocol::models::AdditionalPermissionProfile;
 use genex_sandboxing::SandboxCommand;
 use genex_sandboxing::SandboxablePreference;
 use genex_sandboxing::policy_transforms::merge_permission_profiles;
-use genex_shell_command::powershell::prefix_powershell_script_with_utf8;
 use genex_tools::UnifiedExecShellMode;
 use genex_utils_path_uri::PathUri;
 use std::collections::HashMap;
@@ -261,7 +259,6 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         ctx: &ToolCtx,
     ) -> Result<UnifiedExecAttempt, ToolError> {
         let base_command = &req.command;
-        let windows_sandbox_proxy_settings_mode = ctx.session.windows_sandbox_proxy_settings_mode;
         let session_shell = ctx.session.user_shell();
         let environment_shell = req
             .turn_environment
@@ -526,27 +523,6 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                 *script = format!("{exports}\n{script}");
             }
         }
-        if !environment_is_remote
-            && matches!(shell.shell_type, ShellType::PowerShell | ShellType::Cmd)
-            && env
-                .get(CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
-                .is_some_and(|active| active == "1")
-            && let Some(network) = managed_network
-        {
-            network.restore_and_disable_brokered_credentials(&mut env, &mut command);
-        }
-        let command = prepare_powershell_command_for_elevated_windows_sandbox(
-            &command,
-            Some(&req.shell_type),
-            attempt.sandbox_requested,
-            attempt.windows_sandbox_level,
-            environment_is_remote,
-        );
-        let command = if matches!(req.shell_type, ShellType::PowerShell) {
-            prefix_powershell_script_with_utf8(&command)
-        } else {
-            command
-        };
         let sidecar_permissions = metrics_sidecar
             .as_ref()
             .map(PluginMetricsSidecar::additional_permissions);
@@ -627,7 +603,6 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                             req.process_id,
                             &prepared.exec_request,
                             Some(ctx),
-                            windows_sandbox_proxy_settings_mode,
                             /*network_policy_decider*/ None,
                             req.tty,
                             prepared.spawn_lifecycle,
@@ -684,7 +659,6 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                 /*environment_id*/ Some(&req.turn_environment.selection.environment_id),
                 req.exec_server_env_config.clone(),
                 req.shell_snapshot.clone(),
-                windows_sandbox_proxy_settings_mode,
                 req.tty,
                 Box::new(NoopSpawnLifecycle),
                 req.turn_environment.environment.as_ref(),
@@ -708,7 +682,6 @@ mod tests {
     use crate::tools::sandboxing::ToolRuntime;
     use genex_exec_server::Environment;
     use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use genex_protocol::config_types::WindowsSandboxLevel;
     use genex_protocol::models::PermissionProfile;
     use genex_protocol::protocol::EnvironmentConfig;
     use genex_protocol::protocol::EnvironmentConfigState;
@@ -730,8 +703,6 @@ mod tests {
                 config: EnvironmentConfigState::Ready(EnvironmentConfig {
                     allow_login_shell: true,
                     workspace_roots: Vec::new(),
-                    windows_sandbox_level: WindowsSandboxLevel::Disabled,
-                    windows_sandbox_private_desktop: true,
                     use_legacy_landlock: false,
                     permission_profile: PermissionProfileSnapshot::legacy(
                         PermissionProfile::read_only(),

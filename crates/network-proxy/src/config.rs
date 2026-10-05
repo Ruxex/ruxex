@@ -191,50 +191,16 @@ impl NetworkProxyConfig {
         }
     }
 
-    /// Retains trusted destination context without changing child environment policy. Conflicting
-    /// case-insensitive provider overrides disable brokerage on Windows.
+    /// Retains trusted destination context without changing child environment policy.
     pub fn configure_credential_broker_environment(
         &mut self,
         environment: &HashMap<String, String>,
     ) {
-        if cfg!(windows)
-            && self.credential_broker
-            && self.has_ambiguous_windows_credential_environment(environment)
-        {
-            warn!(
-                "credential brokerage disabled because shell environment overrides contain \
-                 conflicting case-insensitive provider keys"
-            );
-            self.set_credential_broker_enabled(/*enabled*/ false);
-        }
         self.credential_broker_context = if self.credential_broker {
             crate::CredentialBrokerContext::capture(self, environment)
         } else {
             crate::CredentialBrokerContext::default()
         };
-    }
-
-    fn has_ambiguous_windows_credential_environment(
-        &self,
-        environment: &HashMap<String, String>,
-    ) -> bool {
-        environment.iter().any(|(key, value)| {
-            let is_provider_key =
-                crate::credential_broker::is_credential_broker_provider_env_key(key)
-                    || self.credential_providers.values().any(|provider| {
-                        provider
-                            .env
-                            .iter()
-                            .chain(provider.url_prefix_from_env.iter())
-                            .any(|candidate| key.eq_ignore_ascii_case(candidate))
-                    });
-            is_provider_key
-                && environment.iter().any(|(candidate, candidate_value)| {
-                    key != candidate
-                        && key.eq_ignore_ascii_case(candidate)
-                        && value != candidate_value
-                })
-        })
     }
 
     pub fn allowed_domains(&self) -> Option<Vec<String>> {
@@ -724,25 +690,6 @@ mod tests {
                 original.mitm
             );
         }
-    }
-
-    #[test]
-    #[cfg(windows)]
-    fn ambiguous_credential_environment_preserves_remote_proxy_support() {
-        let mut config = NetworkProxyConfig {
-            enabled: true,
-            ..Default::default()
-        };
-        let expected = crate::RemoteNetworkProxyConfig::from_effective_config(&config).unwrap();
-        config.set_credential_broker_enabled(/*enabled*/ true);
-        config.configure_credential_broker_environment(&HashMap::from([
-            ("GH_HOST".to_string(), "first.example".to_string()),
-            ("gh_host".to_string(), "second.example".to_string()),
-        ]));
-        assert_eq!(
-            crate::RemoteNetworkProxyConfig::from_effective_config(&config).unwrap(),
-            expected
-        );
     }
 
     #[test]

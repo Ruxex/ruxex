@@ -96,7 +96,9 @@ impl SideParentStatus {
             ServerRequest::CommandExecutionRequestApproval { .. }
             | ServerRequest::FileChangeRequestApproval { .. }
             | ServerRequest::McpServerElicitationRequest { .. }
-            | ServerRequest::PermissionsRequestApproval { .. } => Some(SideParentStatus::NeedsApproval),
+            | ServerRequest::PermissionsRequestApproval { .. } => {
+                Some(SideParentStatus::NeedsApproval)
+            }
             ServerRequest::DynamicToolCall { .. }
             | ServerRequest::AttestationGenerate { .. }
             | ServerRequest::CurrentTimeRead { .. } => None,

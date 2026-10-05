@@ -19,7 +19,6 @@ use genex_otel::current_span_w3c_trace_context;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::mcp::CallToolResult;
@@ -140,7 +139,6 @@ pub struct GenexThreadSettingsOverrides {
     pub sandbox_policy: Option<SandboxPolicy>,
     pub permission_profile: Option<PermissionProfile>,
     pub active_permission_profile: Option<ActivePermissionProfile>,
-    pub windows_sandbox_level: Option<WindowsSandboxLevel>,
     pub model: Option<String>,
     pub effort: Option<Option<ReasoningEffort>>,
     pub summary: Option<ReasoningSummary>,
@@ -556,7 +554,6 @@ impl GenexThread {
             sandbox_policy,
             permission_profile,
             active_permission_profile,
-            windows_sandbox_level,
             model,
             effort,
             summary,
@@ -579,7 +576,6 @@ impl GenexThread {
             sandbox_policy,
             permission_profile,
             active_permission_profile,
-            windows_sandbox_level,
             disabled_plugin_ids,
             ..Default::default()
         }

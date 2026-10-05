@@ -28,7 +28,6 @@ use genex_git_utils::get_has_changes_in_repo;
 use genex_git_utils::get_head_commit_hash;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use genex_protocol::models::PermissionProfile;
@@ -143,16 +142,11 @@ impl TurnMetadataState {
         turn_id: String,
         cwd: AbsolutePathBuf,
         permission_profile: &PermissionProfile,
-        windows_sandbox_level: WindowsSandboxLevel,
         enforce_managed_network: bool,
         model_info: &ModelInfo,
     ) -> Self {
-        let sandbox_tags = SandboxTags::new(
-            permission_profile,
-            cwd.as_path(),
-            windows_sandbox_level,
-            enforce_managed_network,
-        );
+        let sandbox_tags =
+            SandboxTags::new(permission_profile, cwd.as_path(), enforce_managed_network);
         let agent_name = session_source
             .get_agent_path()
             .unwrap_or_else(AgentPath::root)

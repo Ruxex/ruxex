@@ -45,12 +45,11 @@ def assemble(
             "apple-darwin",
             "unknown-linux-gnu",
             "unknown-linux-musl",
-            "pc-windows-msvc",
         )
     }
     if targets.get(app_target) != voice_target:
         raise ValueError("incompatible app and helper targets")
-    suffix = ".exe" if app_target.endswith("windows-msvc") else ""
+    suffix = ""
     entrypoint = f"bin/codex{suffix}"
     expected = {
         "layoutVersion": 1,
@@ -114,7 +113,6 @@ def assemble(
             for relative in (
                 "NOTICE.md",
                 "sources.json",
-                *(("windows-crt.json",) if suffix else ()),
                 "licenses/LGPL-2.1.txt",
                 "licenses/Opus.txt",
                 "licenses/PCRE2.md",

@@ -70,8 +70,7 @@ mod tests {
             supports_standalone_web_search: false,
         };
 
-        let telemetry =
-            collect_auth_env_telemetry(&provider, /*api_key_env_enabled*/ false);
+        let telemetry = collect_auth_env_telemetry(&provider, /*api_key_env_enabled*/ false);
 
         assert_eq!(
             telemetry.provider_env_key_name,

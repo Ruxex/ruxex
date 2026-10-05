@@ -1,4 +1,5 @@
 use crate::error::ApiError;
+use futures::Stream;
 use genex_protocol::ResponseUsageMetadata;
 use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use genex_protocol::config_types::Verbosity as VerbosityConfig;
@@ -9,7 +10,6 @@ use genex_protocol::protocol::RateLimitSnapshot;
 use genex_protocol::protocol::TokenUsage;
 use genex_protocol::protocol::W3cTraceContext;
 use genex_protocol::turn_input::CyberAccessProgram;
-use futures::Stream;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;

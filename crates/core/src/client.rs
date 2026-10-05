@@ -75,6 +75,9 @@ use genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
 use genex_otel::current_span_w3c_trace_context;
 use genex_protocol::ResponseItemId;
 
+use eventsource_stream::Event;
+use eventsource_stream::EventStreamError;
+use futures::StreamExt;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use genex_protocol::config_types::Verbosity as VerbosityConfig;
@@ -92,9 +95,6 @@ use genex_tools::create_tools_json_for_chat_completions_api;
 use genex_tools::create_tools_json_for_responses_api;
 use genex_tools::create_tools_json_for_responses_lite;
 use genex_tools::create_tools_raw_json_for_responses_api;
-use eventsource_stream::Event;
-use eventsource_stream::EventStreamError;
-use futures::StreamExt;
 use http::HeaderMap as ApiHeaderMap;
 use http::HeaderValue;
 use http::StatusCode;
@@ -149,8 +149,7 @@ const X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
     "x-genex-ws-stream-request-start-ms";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
     "ws_request_header_x_provider_internal_genex_responses_lite";
-const X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER: &str =
-    "x-provider-internal-genex-responses-lite";
+const X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER: &str = "x-provider-internal-genex-responses-lite";
 #[cfg(test)]
 pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
     Duration::from_millis(DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS);

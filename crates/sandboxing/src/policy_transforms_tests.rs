@@ -5,6 +5,7 @@ use super::merge_file_system_policy_with_additional_permissions;
 use super::normalize_additional_permissions;
 use super::normalize_additional_permissions_with_context;
 use super::should_require_platform_sandbox;
+use dunce::canonicalize;
 use genex_protocol::models::AdditionalPermissionProfile as PermissionProfile;
 use genex_protocol::models::FileSystemPermissions;
 use genex_protocol::models::NetworkPermissions;
@@ -19,7 +20,6 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::LegacyAppPathString;
 use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-use dunce::canonicalize;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use tempfile::TempDir;
@@ -149,23 +149,18 @@ fn normalize_additional_permissions_preserves_network() {
 }
 
 #[test]
-fn normalize_additional_permissions_only_checks_convention_with_context() {
-    let windows_path = PathUri::parse("file:///C:/workspace/out").expect("Windows path URI");
+fn normalize_additional_permissions_accepts_matching_context() {
+    let path = PathUri::parse("file:///workspace/out").expect("POSIX path URI");
     let permissions = PermissionProfile {
         file_system: Some(FileSystemPermissions {
             entries: vec![FileSystemSandboxEntry::new(
-                FileSystemPath::Path { path: windows_path },
+                FileSystemPath::Path { path },
                 FileSystemAccessMode::Write,
             )],
             glob_scan_max_depth: None,
         }),
         ..Default::default()
     };
-
-    assert_eq!(
-        normalize_additional_permissions(permissions.clone()).expect("context-free permissions"),
-        permissions
-    );
 
     let cwd = PathUri::parse("file:///workspace").expect("POSIX cwd URI");
     let workspace_roots = [cwd.clone()];
@@ -175,28 +170,9 @@ fn normalize_additional_permissions_only_checks_convention_with_context() {
         user_home_dir: None,
         temporary_directories: None,
     };
-    assert!(
-        normalize_additional_permissions_with_context(permissions.clone(), &context).is_err(),
-        "context-aware normalization should reject mismatched conventions"
-    );
-
-    let cwd = LegacyAppPathString::from_string(
-        r"\\?\Volume{00000000-0000-0000-0000-000000000000}\workspace",
-    )
-    .to_path_uri(PathConvention::Windows)
-    .expect("opaque Windows cwd");
-    assert!(cwd.is_opaque(), "volume GUID cwd should stay opaque");
-    let workspace_roots = [cwd.clone()];
-    let context = FileSystemSandboxPolicyContext {
-        cwd: &cwd,
-        workspace_roots: &workspace_roots,
-        user_home_dir: None,
-        temporary_directories: None,
-    };
-
     assert_eq!(
         normalize_additional_permissions_with_context(permissions.clone(), &context)
-            .expect("absolute path with opaque cwd"),
+            .expect("matching POSIX cwd"),
         permissions
     );
 }

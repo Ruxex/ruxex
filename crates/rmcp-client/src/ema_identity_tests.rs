@@ -9,13 +9,13 @@ use std::time::UNIX_EPOCH;
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use futures::FutureExt;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_exec_server::RouteAwareHttpClient;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_keyring_store::CredentialStoreError;
 use genex_keyring_store::tests::MockKeyringStore;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use pretty_assertions::assert_ne;
 use serde_json::json;

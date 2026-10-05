@@ -30,7 +30,6 @@ use genex_exec_server::WalkEntry;
 use genex_exec_server::WalkEntryKind;
 use genex_exec_server::WalkOptions;
 use genex_exec_server::WalkOutcome;
-use genex_exec_server::WindowsSandboxSelection;
 use genex_exec_server::WriteFileOptions;
 use genex_protocol::capabilities::CapabilityRootLocation;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
@@ -302,64 +301,6 @@ async fn skill_loading_and_reads_use_the_supplied_executor_file_system() {
 }
 
 #[tokio::test]
-async fn windows_executor_skill_read_requires_a_requested_sandbox() {
-    let provider = ExecutorSkillProvider::new_with_restriction_product(
-        Arc::new(EnvironmentManager::default_for_tests()),
-        /*restriction_product*/ None,
-    );
-    let mut sandbox = FileSystemSandboxContext::from_permission_profile(
-        PermissionProfile::from_runtime_permissions(
-            &FileSystemSandboxPolicy::restricted(Vec::new()),
-            NetworkSandboxPolicy::Restricted,
-        ),
-        PathUri::parse("file:///C:/skill").expect("Windows resource cwd"),
-    );
-    let resource = SkillResourceId::environment(
-        "skill://windows-root/C:/skill/SKILL.md",
-        "local",
-        PathUri::parse("file:///C:/skill/SKILL.md").expect("Windows resource URI"),
-    );
-    let error = provider
-        .read(SkillReadRequest {
-            _lifetime: PhantomData,
-            authority: SkillAuthority::new(SkillSourceKind::Executor, "windows-root"),
-            package: SkillPackageId("skill://windows-root/C:/skill".into()),
-            resource: resource.clone(),
-            resolved_executor_roots: Vec::new(),
-            sandbox: Some(sandbox.clone()),
-            host_snapshot: None,
-            mcp_resources: None,
-        })
-        .await
-        .expect_err("disabled Windows sandbox must fail closed");
-    assert_eq!(
-        error.message,
-        "executor skill resource requires an unavailable filesystem sandbox"
-    );
-
-    sandbox.windows_sandbox_selection = WindowsSandboxSelection::Mxc;
-    let error = provider
-        .read(SkillReadRequest {
-            _lifetime: PhantomData,
-            authority: SkillAuthority::new(SkillSourceKind::Executor, "windows-root"),
-            package: SkillPackageId("skill://windows-root/C:/skill".into()),
-            resource,
-            resolved_executor_roots: Vec::new(),
-            sandbox: Some(sandbox),
-            host_snapshot: None,
-            mcp_resources: None,
-        })
-        .await
-        .expect_err("synthetic Windows resource should not be readable");
-    assert!(
-        error
-            .message
-            .starts_with("failed to read executor skill resource"),
-        "{error:?}"
-    );
-}
-
-#[tokio::test]
 async fn selected_root_id_distinguishes_identical_executor_paths() {
     let root_label = if cfg!(unix) {
         r"root\identity"
@@ -432,22 +373,16 @@ async fn selected_root_id_distinguishes_identical_executor_paths() {
 }
 
 #[tokio::test]
-async fn executor_discovery_preserves_posix_and_windows_locator_alias_roots() {
+async fn executor_discovery_preserves_locator_alias_roots() {
     let provider = ExecutorSkillProvider::new_with_restriction_product(
         Arc::new(EnvironmentManager::default_for_tests()),
         /*restriction_product*/ None,
     );
 
-    for (root_uri, alias_root) in [
-        (
-            "file:///workspace/skills",
-            "skill://cross-platform-root/workspace/skills",
-        ),
-        (
-            "file:///C:/workspace/skills",
-            "skill://cross-platform-root/C:/workspace/skills",
-        ),
-    ] {
+    for (root_uri, alias_root) in [(
+        "file:///workspace/skills",
+        "skill://cross-platform-root/workspace/skills",
+    )] {
         let root = PathUri::parse(root_uri).expect("executor root URI");
         let skill_path = root.join("skill/SKILL.md").expect("executor skill URI");
         let selected_root = SelectedCapabilityRoot {

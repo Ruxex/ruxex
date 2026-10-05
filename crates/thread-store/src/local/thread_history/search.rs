@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
+use futures::TryStreamExt;
 use genex_app_server_protocol::ThreadItem;
 use genex_app_server_protocol::UserInput;
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::strip_user_message_prefix;
-use futures::TryStreamExt;
 use pulldown_cmark::Event;
 use pulldown_cmark::Parser;
 use pulldown_cmark::TagEnd;

@@ -7,6 +7,11 @@ mod fake_bwrap;
 use anyhow::Context as _;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
+use common::exec_server::exec_server;
+#[cfg(target_os = "linux")]
+use common::exec_server::exec_server_with_env;
+#[cfg(target_os = "linux")]
+use fake_bwrap::write_fake_bwrap;
 use genex_exec_server::CAPABILITY_ROOTS_DISCOVER_METHOD;
 use genex_exec_server::CapabilityRootDiscovery;
 use genex_exec_server::CapabilityRootsDiscoverParams;
@@ -14,7 +19,6 @@ use genex_exec_server::CapabilityRootsDiscoverResponse;
 use genex_exec_server::FileSystemSandboxContext;
 use genex_exec_server::InitializeParams;
 use genex_exec_server::InitializeResponse;
-use genex_exec_server::WindowsSandboxSelection;
 use genex_exec_server_protocol::CapabilityRootDiscoverRequest;
 use genex_exec_server_protocol::EXEC_METHOD;
 #[cfg(unix)]
@@ -39,11 +43,6 @@ use genex_protocol::permissions::FileSystemSpecialPath;
 use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
-use common::exec_server::exec_server;
-#[cfg(target_os = "linux")]
-use common::exec_server::exec_server_with_env;
-#[cfg(target_os = "linux")]
-use fake_bwrap::write_fake_bwrap;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -202,7 +201,7 @@ async fn executor_legacy_missing_or_null_sandbox_cwd_keeps_absolute_requests_wor
     let cwd = PathUri::from_host_native_path(workspace.path())?;
     let path = cwd.join("note.txt")?;
     let program = std::env::current_exe()?.to_string_lossy().into_owned();
-    // A process with sandbox intent needs an enforceable profile and an enabled Windows backend.
+    // A process with sandbox intent needs an enforceable profile.
     let process_policy = FileSystemSandboxPolicy::restricted(vec![
         FileSystemSandboxEntry::new(
             FileSystemPath::Special {
@@ -215,11 +214,10 @@ async fn executor_legacy_missing_or_null_sandbox_cwd_keeps_absolute_requests_wor
             FileSystemAccessMode::Write,
         ),
     ]);
-    let mut process_sandbox = FileSystemSandboxContext::from_permission_profile(
+    let process_sandbox = FileSystemSandboxContext::from_permission_profile(
         PermissionProfile::from_runtime_permissions(&process_policy, NetworkSandboxPolicy::Enabled),
         cwd.clone(),
     );
-    process_sandbox.windows_sandbox_selection = WindowsSandboxSelection::RestrictedToken;
     let sandbox =
         FileSystemSandboxContext::from_permission_profile(PermissionProfile::Disabled, cwd.clone());
     let requests = [
@@ -476,12 +474,7 @@ async fn executor_legacy_nested_policy_context_cwd_uses_available_fallbacks() ->
     write_file(&workspace.path().join("allowed.txt"), "allowed")?;
     write_file(&workspace.path().join("secret.txt"), "secret")?;
     let cwd = PathUri::from_host_native_path(workspace.path())?;
-    let static_permissions = if cfg!(unix) {
-        PermissionProfile::read_only()
-    } else {
-        // The direct Windows test fixture has no enabled platform sandbox.
-        PermissionProfile::Disabled
-    };
+    let static_permissions = PermissionProfile::read_only();
     let static_sandbox =
         FileSystemSandboxContext::from_permission_profile(static_permissions, cwd.clone());
     let policy = FileSystemSandboxPolicy::restricted(vec![
@@ -534,8 +527,6 @@ async fn executor_legacy_nested_policy_context_cwd_uses_available_fallbacks() ->
                 "allowed.txt",
                 Err(-32602),
             ),
-            // The default Windows test backend cannot enforce read denials at runtime.
-            #[cfg(unix)]
             (
                 "dynamic allowed with legacy cwd",
                 &dynamic_sandbox,
@@ -885,8 +876,6 @@ async fn executor_legacy_filesystem_cwd_keeps_absolute_read_allow_and_deny_rules
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sandboxed_discovery_batches_roots_without_combining_different_permissions()
 -> anyhow::Result<()> {
-    #[cfg(windows)]
-    crate::skip_if_mxc_unavailable!(Ok(()));
     let workspace = tempfile::tempdir()?;
     let first_root = workspace.path().join("first");
     let second_root = workspace.path().join("second");
@@ -1245,9 +1234,6 @@ fn write_file(path: &std::path::Path, contents: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn with_native_sandbox(mut sandbox: FileSystemSandboxContext) -> FileSystemSandboxContext {
-    if cfg!(windows) {
-        sandbox.windows_sandbox_selection = WindowsSandboxSelection::Mxc;
-    }
+fn with_native_sandbox(sandbox: FileSystemSandboxContext) -> FileSystemSandboxContext {
     sandbox
 }

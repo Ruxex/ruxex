@@ -3078,12 +3078,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
     let permission_call_id = "strict-hook-permissions";
     let command_call_id = "strict-hook-exec-command";
     let marker_name = "strict-hook-exec-command-marker";
-    let command = match test_target_os() {
-        TestTargetOs::Linux | TestTargetOs::MacOs => format!("rm -f {marker_name}"),
-        TestTargetOs::Windows => {
-            format!("Remove-Item -Force -ErrorAction SilentlyContinue {marker_name}")
-        }
-    };
+    let command = format!("rm -f {marker_name}");
     let requested_permissions = RequestPermissionProfile {
         network: Some(NetworkPermissions {
             enabled: Some(true),

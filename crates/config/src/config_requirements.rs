@@ -32,7 +32,6 @@ use crate::config_toml::ConfigToml;
 use crate::mcp_requirements::validate_mcp_server_requirement;
 use crate::permissions_toml::PermissionProfileToml;
 use crate::types::AuthCredentialsStoreMode;
-use crate::types::WindowsSandboxModeToml;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RequirementSource {
@@ -157,8 +156,6 @@ pub struct ConfigRequirements {
     pub allow_login_shell: Option<Sourced<bool>>,
     pub approval_policy: ConstrainedWithSource<AskForApproval>,
     pub permission_profile: ConstrainedWithSource<PermissionProfile>,
-    pub windows_sandbox_mode: ConstrainedWithSource<Option<WindowsSandboxModeToml>>,
-    pub windows_sandbox_private_desktop: Option<Sourced<bool>>,
     pub web_search_mode: ConstrainedWithSource<WebSearchMode>,
     pub allow_managed_hooks_only: Option<Sourced<bool>>,
     pub allow_appshots: Option<Sourced<bool>>,
@@ -201,11 +198,6 @@ impl Default for ConfigRequirements {
                 Constrained::allow_any(PermissionProfile::read_only()),
                 /*source*/ None,
             ),
-            windows_sandbox_mode: ConstrainedWithSource::new(
-                Constrained::allow_any(/*initial_value*/ None),
-                /*source*/ None,
-            ),
-            windows_sandbox_private_desktop: None,
             web_search_mode: ConstrainedWithSource::new(
                 Constrained::allow_any(WebSearchMode::Cached),
                 /*source*/ None,
@@ -668,17 +660,6 @@ impl FilesystemDenyReadPattern {
         }
 
         let (directory_prefix, suffix) = split_glob_pattern(input);
-        if crate::path_context::convention() == genex_utils_path_uri::PathConvention::Windows
-            && matches!(input.as_bytes(), [b'/' | b'\\', b'/' | b'\\', ..])
-            && !matches!(
-                directory_prefix.as_bytes(),
-                [b'/' | b'\\', b'/' | b'\\', ..]
-            )
-        {
-            return Err(
-                "filesystem denial glob requires a literal UNC server and share".to_string(),
-            );
-        }
         let normalized_prefix = if directory_prefix.is_empty() {
             deserialize_absolute_path(".")?
         } else {
@@ -743,26 +724,13 @@ fn split_glob_pattern(input: &str) -> (&str, &str) {
 
     match separator_index {
         Some(0) => ("/", &input[1..]),
-        Some(index)
-            if crate::path_context::convention()
-                == genex_utils_path_uri::PathConvention::Windows
-                && index == 2
-                && input.as_bytes().get(1) == Some(&b':')
-                && input.as_bytes().get(2).is_some() =>
-        {
-            (&input[..=index], &input[index + 1..])
-        }
         Some(index) => (&input[..index], &input[index + 1..]),
         None => ("", input),
     }
 }
 
 fn is_path_separator(ch: char) -> bool {
-    if crate::path_context::convention() == genex_utils_path_uri::PathConvention::Windows {
-        ch == '/' || ch == '\\'
-    } else {
-        ch == '/'
-    }
+    ch == '/'
 }
 
 fn is_glob_metacharacter(ch: char) -> bool {
@@ -812,18 +780,6 @@ impl fmt::Display for WebSearchModeRequirement {
 }
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
-pub struct WindowsRequirementsToml {
-    pub allowed_sandbox_implementations: Option<Vec<WindowsSandboxModeToml>>,
-    pub sandbox_private_desktop: Option<bool>,
-}
-
-impl WindowsRequirementsToml {
-    pub fn is_empty(&self) -> bool {
-        self.allowed_sandbox_implementations.is_none() && self.sandbox_private_desktop.is_none()
-    }
-}
-
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct FeatureRequirementsToml {
     #[serde(flatten)]
     pub entries: BTreeMap<String, bool>,
@@ -863,7 +819,6 @@ pub struct ConfigRequirementsToml {
     pub computer_use: Option<ComputerUseRequirementsToml>,
     pub browser_use: Option<BrowserUseRequirementsToml>,
     pub in_app_browser: Option<InAppBrowserRequirementsToml>,
-    pub windows: Option<WindowsRequirementsToml>,
     #[serde(rename = "features")]
     pub feature_requirements: Option<FeatureRequirementsToml>,
     pub hooks: Option<ManagedHooksRequirementsToml>,
@@ -958,7 +913,6 @@ pub struct ConfigRequirementsWithSources {
     pub computer_use: Option<Sourced<ComputerUseRequirementsToml>>,
     pub browser_use: Option<Sourced<BrowserUseRequirementsToml>>,
     pub in_app_browser: Option<Sourced<InAppBrowserRequirementsToml>>,
-    pub windows: Option<Sourced<WindowsRequirementsToml>>,
     pub feature_requirements: Option<Sourced<FeatureRequirementsToml>>,
     pub hooks: Option<Sourced<ManagedHooksRequirementsToml>>,
     pub mcp_servers: Option<Sourced<BTreeMap<String, McpServerRequirement>>>,
@@ -1015,7 +969,6 @@ impl ConfigRequirementsWithSources {
             computer_use: _,
             browser_use: _,
             in_app_browser: _,
-            windows: _,
             feature_requirements: _,
             hooks: _,
             mcp_servers: _,
@@ -1058,7 +1011,6 @@ impl ConfigRequirementsWithSources {
                 computer_use,
                 browser_use,
                 in_app_browser,
-                windows,
                 feature_requirements,
                 hooks,
                 mcp_servers,
@@ -1099,7 +1051,6 @@ impl ConfigRequirementsWithSources {
             computer_use,
             browser_use,
             in_app_browser,
-            windows,
             feature_requirements,
             hooks,
             mcp_servers,
@@ -1138,7 +1089,6 @@ impl ConfigRequirementsWithSources {
             computer_use: computer_use.map(|sourced| sourced.value),
             browser_use: browser_use.map(|sourced| sourced.value),
             in_app_browser: in_app_browser.map(|sourced| sourced.value),
-            windows: windows.map(|sourced| sourced.value),
             feature_requirements: feature_requirements.map(|sourced| sourced.value),
             hooks: hooks.map(|sourced| sourced.value),
             mcp_servers: mcp_servers.map(|sourced| sourced.value),
@@ -1247,10 +1197,6 @@ impl ConfigRequirementsToml {
                 .as_ref()
                 .is_none_or(|requirements| requirements == &InAppBrowserRequirementsToml::default())
             && self
-                .windows
-                .as_ref()
-                .is_none_or(WindowsRequirementsToml::is_empty)
-            && self
                 .feature_requirements
                 .as_ref()
                 .is_none_or(FeatureRequirementsToml::is_empty)
@@ -1305,17 +1251,6 @@ impl ConfigRequirementsToml {
         }
         apply_exact!(check_for_update_on_startup);
         apply_exact!(allow_login_shell);
-
-        if let Some(sandbox_private_desktop) = self
-            .windows
-            .as_ref()
-            .and_then(|windows| windows.sandbox_private_desktop)
-        {
-            config
-                .windows
-                .get_or_insert_default()
-                .sandbox_private_desktop = Some(sandbox_private_desktop);
-        }
     }
 
     /// Returns the exact managed field affected by editing `segments`.
@@ -1327,7 +1262,7 @@ impl ConfigRequirementsToml {
         }) {
             return Some("model_providers");
         }
-        let managed_fields: [(bool, &[&str], &'static str); 9] = [
+        let managed_fields: [(bool, &[&str], &'static str); 8] = [
             (
                 self.model_provider.is_some(),
                 &["model_provider"],
@@ -1349,14 +1284,6 @@ impl ConfigRequirementsToml {
                 self.allow_login_shell.is_some(),
                 &["allow_login_shell"],
                 "allow_login_shell",
-            ),
-            (
-                self.windows
-                    .as_ref()
-                    .and_then(|windows| windows.sandbox_private_desktop)
-                    .is_some(),
-                &["windows", "sandbox_private_desktop"],
-                "windows.sandbox_private_desktop",
             ),
             (
                 self.cli_auth_credentials_store.is_some(),
@@ -1435,7 +1362,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             computer_use,
             browser_use: _,
             in_app_browser: _,
-            windows,
             feature_requirements,
             hooks,
             mcp_servers,
@@ -1534,62 +1460,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             None => ConstrainedWithSource::new(
                 Constrained::allow_any(default_permission_profile),
                 /*source*/ None,
-            ),
-        };
-        let (windows_sandbox_mode, windows_sandbox_private_desktop) = match windows {
-            Some(Sourced {
-                value:
-                    WindowsRequirementsToml {
-                        allowed_sandbox_implementations,
-                        sandbox_private_desktop,
-                    },
-                source: requirement_source,
-            }) => {
-                let sandbox_private_desktop = sandbox_private_desktop
-                    .map(|value| Sourced::new(value, requirement_source.clone()));
-                let sandbox_mode = match allowed_sandbox_implementations {
-                    Some(implementations) => {
-                        if implementations.is_empty() {
-                            return Err(ConstraintError::empty_field(
-                                "windows.allowed_sandbox_implementations",
-                            ));
-                        }
-                        // Prefer elevated when both Windows sandbox implementations are allowed.
-                        let initial_value =
-                            if implementations.contains(&WindowsSandboxModeToml::Elevated) {
-                                WindowsSandboxModeToml::Elevated
-                            } else {
-                                WindowsSandboxModeToml::Unelevated
-                            };
-
-                        let requirement_source_for_error = requirement_source.clone();
-                        let constrained = Constrained::new(
-                            Some(initial_value),
-                            move |candidate| match candidate {
-                                Some(candidate) if implementations.contains(candidate) => Ok(()),
-                                _ => Err(ConstraintError::InvalidValue {
-                                    field_name: "windows.sandbox",
-                                    candidate: format!("{candidate:?}"),
-                                    allowed: format!("{implementations:?}"),
-                                    requirement_source: requirement_source_for_error.clone(),
-                                }),
-                            },
-                        )?;
-                        ConstrainedWithSource::new(constrained, Some(requirement_source))
-                    }
-                    None => ConstrainedWithSource::new(
-                        Constrained::allow_any(/*initial_value*/ None),
-                        /*source*/ None,
-                    ),
-                };
-                (sandbox_mode, sandbox_private_desktop)
-            }
-            None => (
-                ConstrainedWithSource::new(
-                    Constrained::allow_any(/*initial_value*/ None),
-                    /*source*/ None,
-                ),
-                None,
             ),
         };
         let exec_policy = match rules {
@@ -1728,8 +1598,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             allow_login_shell,
             approval_policy,
             permission_profile,
-            windows_sandbox_mode,
-            windows_sandbox_private_desktop,
             web_search_mode,
             allow_managed_hooks_only,
             allow_appshots,
@@ -1779,8 +1647,6 @@ mod tests {
     use crate::BrowserUseAccessApprovalLifetimeToml;
     use crate::BrowserUseOriginPolicyToml;
     use crate::ComputerUseMacosRequirementsToml;
-    use crate::ComputerUseWindowsExeRequirementToml;
-    use crate::ComputerUseWindowsRequirementsToml;
     use crate::HookEventsToml;
     use crate::McpServerCommandMatcher;
     use crate::McpServerIdentity;
@@ -1824,10 +1690,6 @@ mod tests {
             model_catalog_json: Some(managed_path),
             check_for_update_on_startup: Some(false),
             allow_login_shell: Some(false),
-            windows: Some(WindowsRequirementsToml {
-                sandbox_private_desktop: Some(false),
-                ..Default::default()
-            }),
             ..Default::default()
         };
         let cases: &[(&[&str], Option<&str>)] = &[
@@ -1910,7 +1772,6 @@ mod tests {
             computer_use,
             browser_use,
             in_app_browser,
-            windows,
             feature_requirements,
             hooks,
             mcp_servers,
@@ -1965,7 +1826,6 @@ mod tests {
             browser_use: browser_use.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             in_app_browser: in_app_browser
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            windows: windows.map(|value| Sourced::new(value, RequirementSource::Unknown)),
             feature_requirements: feature_requirements
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             hooks: hooks.map(|value| Sourced::new(value, RequirementSource::Unknown)),
@@ -2192,20 +2052,6 @@ mod tests {
                         AllowDenyRequirementToml::Allow,
                     )])),
                 }),
-                windows: Some(ComputerUseWindowsRequirementsToml {
-                    aumids: Some(BTreeMap::from([(
-                        "Microsoft.Paint_8wekyb3d8bbwe!App".to_string(),
-                        AllowDenyRequirementToml::Allow,
-                    )])),
-                    exes: Some(vec![ComputerUseWindowsExeRequirementToml {
-                        publisher_name:
-                            "CN=Google LLC, O=Google LLC, L=Mountain View, S=California, C=US"
-                                .to_string(),
-                        product_name: "Google Chrome".to_string(),
-                        binary_name: Some("chrome.exe".to_string()),
-                        access: AllowDenyRequirementToml::Deny,
-                    }]),
-                }),
             })
         );
         assert!(!requirements.is_empty());
@@ -2366,7 +2212,6 @@ mod tests {
             allow_persistent_approval: Some(false),
             default_app_access: None,
             macos: None,
-            windows: None,
         };
         let models = ModelsRequirementsToml {
             new_thread: Some(NewThreadModelDefaultsToml {
@@ -2382,10 +2227,6 @@ mod tests {
         let model_catalog_json =
             AbsolutePathBuf::try_from(std::env::temp_dir().join("managed-models.json"))
                 .expect("managed model catalog path should be absolute");
-        let windows = WindowsRequirementsToml {
-            allowed_sandbox_implementations: None,
-            sandbox_private_desktop: Some(true),
-        };
         let enforce_residency = ResidencyRequirement::Us;
         let enforce_source = source.clone();
         let additional_developer_instructions = "Follow the company policy.".to_string();
@@ -2416,7 +2257,6 @@ mod tests {
             computer_use: Some(computer_use.clone()),
             browser_use: Some(browser_use.clone()),
             in_app_browser: None,
-            windows: Some(windows.clone()),
             feature_requirements: Some(feature_requirements.clone()),
             hooks: None,
             mcp_servers: None,
@@ -2488,7 +2328,6 @@ mod tests {
                 computer_use: Some(Sourced::new(computer_use, enforce_source.clone())),
                 browser_use: Some(Sourced::new(browser_use, enforce_source.clone())),
                 in_app_browser: None,
-                windows: Some(Sourced::new(windows, enforce_source.clone())),
                 feature_requirements: Some(Sourced::new(
                     feature_requirements,
                     enforce_source.clone(),
@@ -2542,7 +2381,6 @@ mod tests {
                 computer_use: None,
                 browser_use: None,
                 in_app_browser: None,
-                windows: None,
                 feature_requirements: None,
                 hooks: None,
                 mcp_servers: None,
@@ -2598,7 +2436,6 @@ mod tests {
                 computer_use: None,
                 browser_use: None,
                 in_app_browser: None,
-                windows: None,
                 feature_requirements: None,
                 hooks: None,
                 mcp_servers: None,
@@ -2837,70 +2674,6 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn deserialize_allowed_windows_sandbox_implementations() -> Result<()> {
-        let toml_str = r#"
-            [windows]
-            allowed_sandbox_implementations = ["elevated"]
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-        let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
-
-        assert_eq!(
-            requirements.windows_sandbox_mode.value(),
-            Some(WindowsSandboxModeToml::Elevated)
-        );
-        assert!(
-            requirements
-                .windows_sandbox_mode
-                .can_set(&Some(WindowsSandboxModeToml::Elevated))
-                .is_ok()
-        );
-        assert!(
-            requirements
-                .windows_sandbox_mode
-                .can_set(&Some(WindowsSandboxModeToml::Unelevated))
-                .is_err()
-        );
-        assert!(requirements.windows_sandbox_mode.can_set(&None).is_err());
-
-        Ok(())
-    }
-
-    #[test]
-    fn empty_allowed_windows_sandbox_implementations_is_rejected() -> Result<()> {
-        let toml_str = r#"
-            [windows]
-            allowed_sandbox_implementations = []
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-
-        assert_eq!(
-            ConfigRequirements::try_from(with_unknown_source(config)),
-            Err(ConstraintError::EmptyField {
-                field_name: "windows.allowed_sandbox_implementations".to_string(),
-            })
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn allowed_windows_sandbox_implementations_prefer_elevated_fallback() -> Result<()> {
-        let toml_str = r#"
-            [windows]
-            allowed_sandbox_implementations = ["unelevated", "elevated"]
-        "#;
-        let config: ConfigRequirementsToml = from_str(toml_str)?;
-        let requirements: ConfigRequirements = with_unknown_source(config).try_into()?;
-
-        assert_eq!(
-            requirements.windows_sandbox_mode.value(),
-            Some(WindowsSandboxModeToml::Elevated)
-        );
-
-        Ok(())
-    }
     #[test]
     fn deserialize_allowed_sandbox_modes() -> Result<()> {
         let toml_str = r#"
@@ -3274,7 +3047,6 @@ mod tests {
     fn deserialize_managed_hooks_requirements() -> Result<()> {
         let toml_str = r#"
 managed_dir = "/enterprise/hooks"
-windows_managed_dir = 'C:\enterprise\hooks'
 
 [[PreToolUse]]
 matcher = "^Bash$"
@@ -3372,7 +3144,6 @@ command = "python3 /enterprise/hooks/pre.py"
         let err = managed_hooks
             .set(ManagedHooksRequirementsToml {
                 managed_dir: Some(std::path::PathBuf::from("/other/hooks")),
-                windows_managed_dir: None,
                 hooks: HookEventsToml::default(),
             })
             .expect_err("managed hooks should reject drift");

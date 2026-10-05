@@ -8,7 +8,6 @@ use super::InvalidDenyReadGlobBehavior;
 use super::ReadDenyMatcher;
 use super::deny_read_validator::DenyReadValidator;
 use super::deny_read_validator::has_context_read_denials;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
 
 const INVALID_PATH: &str = "managed filesystem denial cannot be materialized safely";
@@ -135,9 +134,7 @@ fn validate_context_paths(
                 return Err(INVALID_PATH.into());
             }
             FileSystemPath::GlobPattern { pattern }
-                if (pattern.starts_with("~/")
-                    || convention == PathConvention::Windows && pattern.starts_with("~\\"))
-                    && !context.user_home_dir.is_some_and(valid) =>
+                if pattern.starts_with("~/") && !context.user_home_dir.is_some_and(valid) =>
             {
                 return Err(INVALID_PATH.into());
             }

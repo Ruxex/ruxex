@@ -18,8 +18,8 @@ use tracing::warn;
 
 use crate::model::AgentThreadId;
 use crate::model::CodeModeRuntimeToolId;
-use crate::model::GenexTurnId;
 use crate::model::ExecutionStatus;
+use crate::model::GenexTurnId;
 use crate::model::ModelVisibleCallId;
 use crate::model::ToolCallId;
 use crate::model::ToolCallKind;

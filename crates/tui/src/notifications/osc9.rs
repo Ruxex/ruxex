@@ -2,9 +2,9 @@ use std::fmt;
 use std::io;
 use std::io::stdout;
 
+use crossterm::Command;
 use genex_terminal_detection::Multiplexer;
 use genex_terminal_detection::terminal_info;
-use crossterm::Command;
 use ratatui::crossterm::execute;
 
 #[derive(Debug)]
@@ -51,18 +51,6 @@ impl Command for PostNotification {
         } else {
             write!(f, "\x1b]9;{}\x07", self.message)
         }
-    }
-
-    #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
-        Err(std::io::Error::other(
-            "tried to execute PostNotification using WinAPI; use ANSI instead",
-        ))
-    }
-
-    #[cfg(windows)]
-    fn is_ansi_code_supported(&self) -> bool {
-        true
     }
 }
 

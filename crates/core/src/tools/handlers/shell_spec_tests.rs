@@ -2,10 +2,6 @@ use super::*;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 
-fn windows_shell_guidance_description() -> String {
-    format!("\n\n{}", windows_shell_guidance())
-}
-
 fn has_parameter(tool: &ToolSpec, parameter_name: &str) -> bool {
     serde_json::to_value(tool)
         .expect("tool spec should serialize")
@@ -20,20 +16,11 @@ fn exec_command_tool_matches_expected_spec() {
         exec_permission_approvals_enabled: false,
     });
 
-    let description = if cfg!(windows) {
-        format!(
-            "Runs a command in a PTY, returning output or a session ID for ongoing interaction.{}",
-            windows_shell_guidance_description()
-        )
-    } else {
+    let description =
         "Runs a command in a PTY, returning output or a session ID for ongoing interaction."
-            .to_string()
-    };
-    let yield_time_ms_description = if cfg!(windows) {
-        "Maximum time to wait before returning a session ID for a still-running command. Commands that finish sooner return immediately. For ordinary commands, omit this parameter to use the 10000 ms default. Effective range on Windows is 10000-30000 ms."
-    } else {
-        "Wait before yielding output. Defaults to 10000 ms; effective range is 250-30000 ms."
-    };
+            .to_string();
+    let yield_time_ms_description =
+        "Wait before yielding output. Defaults to 10000 ms; effective range is 250-30000 ms.";
 
     let mut properties = BTreeMap::from([
         (
@@ -107,7 +94,6 @@ fn exec_command_tool_can_hide_shell_parameter() {
         },
         /*include_environment_id*/ false,
         /*include_shell_parameter*/ false,
-        /*include_windows_shell_guidance*/ cfg!(windows),
     );
 
     assert!(!has_parameter(&tool, "shell"));

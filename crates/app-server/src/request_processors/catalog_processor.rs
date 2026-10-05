@@ -1,11 +1,11 @@
 use super::*;
+use futures::StreamExt;
 use genex_config::ConfigPathContext;
 use genex_core::config::permission_profile_catalog;
 use genex_hooks::HookListEntryHandler;
 use genex_utils_absolute_path::AbsolutePathBufGuard;
 use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-use futures::StreamExt;
 
 #[derive(Clone)]
 pub(crate) struct CatalogRequestProcessor {

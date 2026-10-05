@@ -416,7 +416,6 @@ pub(super) async fn run_main_inner(
             TerminalName::Konsole => "konsole",
             TerminalName::GnomeTerminal => "gnome_terminal",
             TerminalName::Vte => "vte",
-            TerminalName::WindowsTerminal => "windows_terminal",
             TerminalName::Dumb => "dumb",
             TerminalName::Unknown => "unknown",
         };

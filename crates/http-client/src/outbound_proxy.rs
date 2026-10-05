@@ -12,7 +12,7 @@ use std::sync::Mutex;
 use std::sync::OnceLock;
 use std::time::Duration;
 use std::time::Instant;
-#[cfg(any(target_os = "windows", target_os = "macos"))]
+#[cfg(target_os = "macos")]
 use tokio::sync::Semaphore;
 
 use crate::NetworkPolicy;
@@ -25,13 +25,11 @@ use thiserror::Error;
 const SYSTEM_PROXY_SUCCESS_CACHE_TTL: Duration = Duration::from_secs(60);
 const SYSTEM_PROXY_UNAVAILABLE_CACHE_TTL: Duration = Duration::from_secs(5);
 const SYSTEM_PROXY_CACHE_MAX_ENTRIES: usize = 256;
-#[cfg(any(target_os = "windows", target_os = "macos"))]
+#[cfg(target_os = "macos")]
 static ASYNC_SYSTEM_PROXY_RESOLUTION_PERMIT: Semaphore = Semaphore::const_new(1);
 
 #[cfg(target_os = "macos")]
 mod macos;
-#[cfg(target_os = "windows")]
-mod windows;
 
 /// Coarse semantic bucket for the HTTP or WebSocket client being constructed.
 ///
@@ -238,10 +236,10 @@ impl HttpClientFactory {
             return Ok(route);
         }
 
-        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+        #[cfg(not(target_os = "macos"))]
         return Ok(self.resolve_proxy_route(&request_url));
 
-        #[cfg(any(target_os = "windows", target_os = "macos"))]
+        #[cfg(target_os = "macos")]
         {
             let permit = ASYNC_SYSTEM_PROXY_RESOLUTION_PERMIT
                 .acquire()
@@ -503,7 +501,7 @@ impl RequestOrigin {
 }
 
 #[cfg_attr(
-    not(any(target_os = "windows", target_os = "macos")),
+    not(target_os = "macos"),
     allow(
         dead_code,
         reason = "Direct and Proxy are constructed only by platform-specific resolvers"
@@ -551,12 +549,7 @@ fn resolve_platform_system_proxy(request_url: &str, origin: &RequestOrigin) -> S
     macos::resolve(request_url, origin)
 }
 
-#[cfg(target_os = "windows")]
-fn resolve_platform_system_proxy(request_url: &str, origin: &RequestOrigin) -> SystemProxyDecision {
-    windows::resolve(request_url, origin)
-}
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+#[cfg(not(target_os = "macos"))]
 fn resolve_platform_system_proxy(
     _request_url: &str,
     _origin: &RequestOrigin,
@@ -651,7 +644,7 @@ fn system_proxy_cache_key(request_url: &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 fn no_proxy_matches_origin(no_proxy: &str, origin: &RequestOrigin) -> bool {
     no_proxy
         .split(',')
@@ -660,7 +653,7 @@ fn no_proxy_matches_origin(no_proxy: &str, origin: &RequestOrigin) -> bool {
         .any(|entry| no_proxy_entry_matches_origin(entry, origin))
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 fn no_proxy_entry_matches_origin(entry: &str, origin: &RequestOrigin) -> bool {
     if entry == "*" {
         return true;
@@ -701,7 +694,7 @@ fn no_proxy_entry_matches_origin(entry: &str, origin: &RequestOrigin) -> bool {
     origin.host == entry
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 fn wildcard_host_match(pattern: &str, host: &str) -> bool {
     let mut remaining = host;
     let mut first = true;
@@ -725,7 +718,7 @@ fn wildcard_host_match(pattern: &str, host: &str) -> bool {
     pattern.ends_with('*') || remaining.is_empty()
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ParsedProxyListDecision {
     Direct,
@@ -734,7 +727,7 @@ enum ParsedProxyListDecision {
     Unavailable,
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 fn parse_proxy_list(input: &str, target_scheme: &str) -> ParsedProxyListDecision {
     let mut saw_unsupported = false;
 
@@ -788,7 +781,7 @@ fn parse_proxy_list(input: &str, target_scheme: &str) -> ParsedProxyListDecision
     }
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 fn parse_proxy_token(token: &str, target_scheme: &str) -> ParsedProxyListDecision {
     if token.eq_ignore_ascii_case("DIRECT") {
         return ParsedProxyListDecision::Direct;
@@ -816,7 +809,7 @@ fn parse_proxy_token(token: &str, target_scheme: &str) -> ParsedProxyListDecisio
     proxy_url_from_hostport("http", token)
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 fn parse_proxy_key_token(token: &str, target_scheme: &str) -> Option<ParsedProxyListDecision> {
     let (key, value) = token.split_once('=')?;
     if key.trim().eq_ignore_ascii_case(target_scheme) {
@@ -826,7 +819,7 @@ fn parse_proxy_key_token(token: &str, target_scheme: &str) -> Option<ParsedProxy
     }
 }
 
-#[cfg(any(test, target_os = "windows"))]
+#[cfg(test)]
 fn proxy_url_from_hostport(proxy_scheme: &str, hostport: &str) -> ParsedProxyListDecision {
     if hostport.is_empty() {
         return ParsedProxyListDecision::Unavailable;

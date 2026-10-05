@@ -62,10 +62,10 @@ pub struct InitializeResponse {
     /// Absolute path to the server's $GENEX_HOME directory.
     pub genex_home: AbsolutePathBuf,
     /// Platform family for the running app-server target, for example
-    /// `"unix"` or `"windows"`.
+    /// `"unix"`.
     pub platform_family: String,
     /// Operating system for the running app-server target, for example
-    /// `"macos"`, `"linux"`, or `"windows"`.
+    /// `"macos"` or `"linux"`.
     pub platform_os: String,
 }
 

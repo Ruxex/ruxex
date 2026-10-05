@@ -15,8 +15,6 @@ use std::collections::HashMap;
 use std::ffi::OsString;
 use std::future::Future;
 use std::io;
-#[cfg(windows)]
-use std::os::windows::io::OwnedHandle;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -30,6 +28,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::anyhow;
+use futures::FutureExt;
+use futures::future::BoxFuture;
 use genex_config::types::McpServerEnvVar;
 use genex_exec_server::ExecBackend;
 use genex_exec_server::ExecEnvPolicy;
@@ -46,8 +46,6 @@ use genex_utils_pty::process_group::kill_process_group_with_member_fallback as k
 use genex_utils_pty::process_group::terminate_process_group;
 #[cfg(target_os = "macos")]
 use genex_utils_pty::process_group::terminate_process_group_with_member_fallback as terminate_process_group;
-use futures::FutureExt;
-use futures::future::BoxFuture;
 use rmcp::service::RoleClient;
 use rmcp::service::RxJsonRpcMessage;
 use rmcp::service::TxJsonRpcMessage;
@@ -226,15 +224,6 @@ struct LocalProcessTerminator {
     process_group_id: u32,
 }
 
-#[cfg(windows)]
-enum LocalProcessTerminator {
-    Job(genex_utils_pty::JobObject),
-    Process(OwnedHandle),
-}
-
-#[cfg(not(any(unix, windows)))]
-struct LocalProcessTerminator;
-
 #[derive(Clone)]
 pub(crate) struct StdioServerProcessHandle {
     inner: Arc<StdioServerProcessHandleInner>,
@@ -289,21 +278,7 @@ impl LocalStdioServerLauncher {
             command.process_group(0);
             command
         };
-        #[cfg(windows)]
-        let mut command = build_command();
-        #[cfg(not(windows))]
         let command = build_command();
-        #[cfg(windows)]
-        let job = match genex_utils_pty::JobObject::create_without_breakaway() {
-            Ok(job) => {
-                job.prepare_suspended_spawn(&mut command);
-                Some(job)
-            }
-            Err(error) => {
-                warn!("Windows MCP process job containment unavailable: {error}");
-                None
-            }
-        };
 
         let spawn_transport = |command: Command| -> io::Result<(
             StdioServerTransportInner,
@@ -320,41 +295,6 @@ impl LocalStdioServerLauncher {
             ))
         };
         let (transport, stderr, process_id) = spawn_transport(command)?;
-        #[cfg(windows)]
-        let (transport, stderr, process_id, job) = match job {
-            Some(job) => match process_id
-                .ok_or_else(|| io::Error::other("missing suspended MCP server process id"))
-                .and_then(|process_id| job.assign_and_resume_process(process_id))
-            {
-                Ok(true) => (transport, stderr, process_id, Some(job)),
-                Ok(false) => (transport, stderr, process_id, None),
-                Err(error) => {
-                    warn!(
-                        "Windows MCP process job containment failed; retrying without it: {error}"
-                    );
-                    drop(stderr);
-                    drop(transport);
-                    drop(job);
-                    let (transport, stderr, process_id) = spawn_transport(build_command())?;
-                    (transport, stderr, process_id, None)
-                }
-            },
-            None => (transport, stderr, process_id, None),
-        };
-        #[cfg(windows)]
-        let terminator = match job {
-            Some(job) => Some(LocalProcessTerminator::Job(job)),
-            None => process_id.and_then(|process_id| {
-                match genex_utils_pty::JobObject::open_process_handle(process_id) {
-                    Ok(handle) => Some(LocalProcessTerminator::Process(handle)),
-                    Err(error) => {
-                        warn!("Windows MCP process handle unavailable: {error}");
-                        None
-                    }
-                }
-            }),
-        };
-        #[cfg(not(windows))]
         let terminator = process_id.map(LocalProcessTerminator::new);
         let stderr_reader = stderr.map(|stderr| {
             let program_name = program_name.clone();
@@ -403,17 +343,8 @@ impl LocalStdioServerLauncher {
 }
 
 impl LocalProcessTerminator {
-    #[cfg(not(windows))]
     fn new(process_group_id: u32) -> Self {
-        #[cfg(unix)]
-        {
-            Self { process_group_id }
-        }
-        #[cfg(not(any(unix, windows)))]
-        {
-            let _ = process_group_id;
-            Self
-        }
+        Self { process_group_id }
     }
 
     #[cfg(unix)]
@@ -435,22 +366,6 @@ impl LocalProcessTerminator {
             });
         }
     }
-
-    #[cfg(windows)]
-    fn terminate(&self) {
-        let result = match self {
-            Self::Job(job) => job.terminate(),
-            Self::Process(process_handle) => {
-                genex_utils_pty::JobObject::terminate_process_handle(process_handle)
-            }
-        };
-        if let Err(error) = result {
-            warn!("Failed to terminate Windows MCP process: {error}");
-        }
-    }
-
-    #[cfg(not(any(unix, windows)))]
-    fn terminate(&self) {}
 }
 
 impl StdioServerProcessHandle {
@@ -551,8 +466,8 @@ impl Drop for StdioServerProcessHandleInner {
 /// child process and transports raw stdin/stdout/stderr bytes, so it does not
 /// need to know about MCP methods such as `initialize` or `tools/list`.
 ///
-/// Windows executor-backed servers retain the executor's normal descendant
-/// lifetime. MCP-specific containment requires negotiated process ownership:
+/// Executor-backed servers retain the executor's normal descendant lifetime.
+/// MCP-specific containment requires negotiated process ownership:
 /// caller-controlled process IDs cannot safely select a destructive policy,
 /// and a wrapper may exit while its descendants continue serving requests.
 #[derive(Clone)]

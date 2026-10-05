@@ -123,7 +123,7 @@ impl App {
     }
 
     /// Wait until visible and queued startup decisions cannot consume a delayed OSC response.
-    #[cfg(any(windows, test))]
+    #[cfg(test)]
     pub(super) fn ready_for_terminal_color_probe(&self, has_pending_app_events: bool) -> bool {
         !has_pending_app_events
             && !self.chat_widget.has_active_view()
@@ -145,7 +145,6 @@ impl App {
         initial_images: Vec<PathBuf>,
         session_selection: SessionSelection,
         is_first_run: bool,
-        should_prompt_windows_sandbox_nux_at_startup: bool,
         app_server_target: AppServerTarget,
         state_db: Option<StateDbHandle>,
         environment_manager: Arc<EnvironmentManager>,
@@ -682,17 +681,6 @@ impl App {
             AppServerTarget::LocalDaemon { .. }
         ));
         let thread_and_widget_ms = thread_and_widget_started_at.elapsed().as_millis();
-        chat_widget.windows_sandbox_local_server = !app_server_target.uses_remote_workspace()
-            && app_server.app_server_platform_os() == Some("windows");
-        chat_widget.windows_sandbox_host = if app_server_target.uses_remote_workspace() {
-            WindowsSandboxHost::Remote
-        } else {
-            initial_started_thread
-                .as_ref()
-                .map_or(WindowsSandboxHost::Unknown, |started| {
-                    started.session.windows_sandbox_host
-                })
-        };
         // This launch warning belongs to the TUI, independent of picker/trust client replacement.
         if let Some(warning) = daemon_startup_warning {
             app_event_tx.send(AppEvent::InsertHistoryCell(Box::new(
@@ -760,10 +748,6 @@ See the Genex keymap documentation for supported actions and examples."
             daemon_cli_executable,
             pending_update_action: None,
             pending_shutdown_exit_thread_id: None,
-            windows_sandbox: WindowsSandboxState {
-                prompt_after_trust: should_prompt_windows_sandbox_nux_at_startup,
-                ..Default::default()
-            },
             thread_event_channels: HashMap::new(),
             temporary_structured_requests: HashMap::new(),
             pending_thread_titles: HashMap::new(),
@@ -901,14 +885,6 @@ See the Genex keymap documentation for supported actions and examples."
         if app_event_rx.is_empty() && !app.has_queued_startup_protected_request() {
             app.chat_widget
                 .restore_startup_draft_when_ready(&mut pending_startup_draft);
-        }
-
-        #[cfg(windows)]
-        let mut terminal_color_probe_pending = true;
-        #[cfg(windows)]
-        if app.ready_for_terminal_color_probe(!app_event_rx.is_empty()) {
-            tui.probe_default_colors_after_protected_startup();
-            terminal_color_probe_pending = false;
         }
 
         let event_stream_started_at = Instant::now();
@@ -1184,13 +1160,6 @@ See the Genex keymap documentation for supported actions and examples."
                         if app_event_rx.is_empty() && !app.has_queued_startup_protected_request() {
                             app.chat_widget
                                 .restore_startup_draft_when_ready(&mut pending_startup_draft);
-                        }
-                        #[cfg(windows)]
-                        if terminal_color_probe_pending
-                            && app.ready_for_terminal_color_probe(!app_event_rx.is_empty())
-                        {
-                            tui.probe_default_colors_after_protected_startup();
-                            terminal_color_probe_pending = false;
                         }
                     }
                     AppRunControl::Exit(reason) => break Ok(reason),

@@ -29,7 +29,6 @@ const START_TIMEOUT: Duration = Duration::from_secs(10);
 const STDERR_LOG_TAIL_BYTES: u64 = 4096;
 
 #[derive(Debug)]
-#[cfg_attr(not(any(unix, windows)), allow(dead_code))]
 pub(crate) struct PidBackend {
     genex_bin: PathBuf,
     pid_file: PathBuf,
@@ -77,7 +76,6 @@ enum PidFileState {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(not(any(unix, windows)), allow(dead_code))]
 enum PidCommandKind {
     AppServer,
     UpdateLoop { restore_release: Option<String> },
@@ -135,14 +133,9 @@ impl PidBackend {
         }
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     pub(crate) async fn start(&self) -> Result<Option<u32>> {
         self.start_inner(/*replacement*/ None).await
-    }
-
-    #[cfg(not(any(unix, windows)))]
-    pub(crate) async fn start(&self) -> Result<Option<u32>> {
-        bail!("pid-managed app-server startup is unsupported on this platform")
     }
 
     pub(crate) async fn stop(&self) -> Result<()> {
@@ -167,37 +160,6 @@ impl PidBackend {
             let deadline = started_at + force_after + STOP_FORCE_TIMEOUT;
             #[cfg(unix)]
             self.terminate_process(pid)?;
-            #[cfg(windows)]
-            let process = {
-                let Some(process) = super::windows::Process::open(pid)? else {
-                    continue;
-                };
-                if process.start_time()? != record.process_start_time {
-                    continue;
-                }
-                match self.command_kind {
-                    PidCommandKind::AppServer => {
-                        let genex_home = self
-                            .pid_file
-                            .parent()
-                            .and_then(Path::parent)
-                            .context("daemon pid path has no Genex home")?;
-                        let socket_path =
-                            genex_app_server_transport::app_server_control_socket_path(genex_home)?;
-                        if let Err(err) =
-                            crate::client::request_shutdown(socket_path.as_path(), pid).await
-                        {
-                            tracing::warn!(%pid, %err, "managed app-server shutdown request failed; waiting for force deadline");
-                        }
-                    }
-                    PidCommandKind::UpdateLoop { .. } => {
-                        fs::write(self.pid_file.with_extension("shutdown"), pid.to_string())
-                            .await
-                            .context("failed to request updater shutdown")?;
-                    }
-                }
-                process
-            };
             let mut forced = false;
             loop {
                 #[cfg(unix)]
@@ -219,8 +181,6 @@ impl PidBackend {
                 if !forced && started_at.elapsed() >= force_after {
                     #[cfg(unix)]
                     self.force_terminate_process(pid)?;
-                    #[cfg(windows)]
-                    process.terminate()?;
                     forced = true;
                 }
                 sleep(STOP_POLL_INTERVAL).await;
@@ -340,7 +300,7 @@ impl PidBackend {
         Ok(reservation_lock)
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     async fn open_stderr_log(&self) -> Result<fs::File> {
         let stderr_log_file = stderr_log_file_for_pid_file(&self.pid_file);
         fs::OpenOptions::new()
@@ -357,7 +317,7 @@ impl PidBackend {
             })
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     fn command_args(&self) -> Vec<&str> {
         match &self.command_kind {
             PidCommandKind::AppServer => vec!["app-server", "--listen", "unix://"],
@@ -371,18 +331,16 @@ impl PidBackend {
         }
     }
 
-    #[cfg(any(unix, windows))]
+    #[cfg(unix)]
     fn terminate_process(&self, pid: u32) -> Result<()> {
         match self.command_kind {
             PidCommandKind::AppServer => terminate_process(pid),
             #[cfg(unix)]
             PidCommandKind::UpdateLoop { .. } => terminate_process_group(pid),
-            #[cfg(not(unix))]
-            PidCommandKind::UpdateLoop { .. } => terminate_process(pid),
         }
     }
 
-    #[cfg(not(windows))]
+    #[cfg(unix)]
     fn force_terminate_process(&self, pid: u32) -> Result<()> {
         match self.command_kind {
             PidCommandKind::AppServer => force_terminate_process(pid),
@@ -514,21 +472,6 @@ fn force_terminate_process_group(pid: u32) -> Result<()> {
     Err(err).with_context(|| format!("failed to force terminate pid-managed updater group {pid}"))
 }
 
-#[cfg(not(any(unix, windows)))]
-fn terminate_process(_pid: u32) -> Result<()> {
-    bail!("pid-managed app-server shutdown is unsupported on this platform")
-}
-
-#[cfg(not(any(unix, windows)))]
-fn force_terminate_process(_pid: u32) -> Result<()> {
-    bail!("pid-managed app-server shutdown is unsupported on this platform")
-}
-
-#[cfg(not(any(unix, windows)))]
-fn force_terminate_process_group(_pid: u32) -> Result<()> {
-    bail!("pid-managed updater shutdown is unsupported on this platform")
-}
-
 #[cfg(unix)]
 async fn process_matches_record(record: &PidRecord) -> Result<bool> {
     if !process_exists(record.pid) {
@@ -572,13 +515,7 @@ async fn process_matches_record(record: &PidRecord) -> Result<bool> {
     }
 }
 
-#[cfg(not(any(unix, windows)))]
-async fn process_matches_record(_record: &PidRecord) -> Result<bool> {
-    Ok(false)
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(not(any(unix, windows)), allow(dead_code))]
 enum EmptyPidReservation {
     Active,
     Stale,
@@ -601,12 +538,7 @@ fn try_lock_file(file: &fs::File) -> Result<bool> {
     Err(err).context("failed to lock pid reservation")
 }
 
-#[cfg(not(any(unix, windows)))]
-fn try_lock_file(_file: &fs::File) -> Result<bool> {
-    bail!("pid-managed app-server startup is unsupported on this platform")
-}
-
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 async fn reservation_lock_is_active(path: &Path) -> Result<bool> {
     let file = match fs::OpenOptions::new()
         .write(true)
@@ -627,12 +559,7 @@ async fn reservation_lock_is_active(path: &Path) -> Result<bool> {
     Ok(!try_lock_file(&file)?)
 }
 
-#[cfg(not(any(unix, windows)))]
-async fn reservation_lock_is_active(_path: &Path) -> Result<bool> {
-    Ok(false)
-}
-
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 async fn inspect_empty_pid_reservation(
     pid_path: &Path,
     lock_path: &Path,
@@ -675,14 +602,6 @@ async fn inspect_empty_pid_reservation(
     Ok(EmptyPidReservation::Record(record))
 }
 
-#[cfg(not(any(unix, windows)))]
-async fn inspect_empty_pid_reservation(
-    _pid_path: &Path,
-    _lock_path: &Path,
-) -> Result<EmptyPidReservation> {
-    Ok(EmptyPidReservation::Stale)
-}
-
 #[cfg(unix)]
 async fn read_process_start_time(pid: u32) -> Result<String> {
     Ok(read_process_details(pid).await?.1)
@@ -711,43 +630,10 @@ async fn read_process_details(pid: u32) -> Result<(String, String)> {
     Ok((state.to_string(), start_time.to_string()))
 }
 
-#[cfg(all(test, any(unix, windows)))]
+#[cfg(all(test, unix))]
 #[path = "pid_tests.rs"]
 mod tests;
 
-#[cfg(windows)]
-use super::windows::try_lock_file;
-
-#[cfg(windows)]
-async fn read_process_start_time(pid: u32) -> Result<String> {
-    super::windows::Process::open(pid)?
-        .context("daemon process exited during startup")?
-        .start_time()
-}
-
-#[cfg(windows)]
-async fn process_matches_record(record: &PidRecord) -> Result<bool> {
-    let Some(process) = super::windows::Process::open(record.pid)? else {
-        return Ok(false);
-    };
-    Ok(process.is_running()? && process.start_time()? == record.process_start_time)
-}
-
-#[cfg(windows)]
-fn force_terminate_process(pid: u32) -> Result<()> {
-    if let Some(process) = super::windows::Process::open(pid)? {
-        process.terminate()?;
-    }
-    Ok(())
-}
-
-#[cfg(windows)]
-use force_terminate_process as terminate_process;
-
-#[cfg(windows)]
-#[path = "pid_windows.rs"]
-mod windows;
-
-#[cfg(any(unix, windows))]
+#[cfg(unix)]
 #[path = "pid_start.rs"]
 mod start;

@@ -123,7 +123,6 @@ mod tests {
             TerminalName::Unknown,
             TerminalName::VsCode,
             TerminalName::Vte,
-            TerminalName::WindowsTerminal,
         ] {
             assert_eq!(
                 supports_osc9(&test_terminal(name)),

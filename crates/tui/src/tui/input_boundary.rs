@@ -51,7 +51,7 @@ pub(crate) fn discard_pending_terminal_input() -> Result<()> {
             continue;
         }
 
-        #[cfg(any(unix, windows))]
+        #[cfg(unix)]
         match terminal_input_is_readable() {
             Ok(true) => continue,
             Ok(false) => {}
@@ -94,24 +94,4 @@ pub(super) fn terminal_input_is_readable() -> Result<bool> {
         )));
     }
     Ok(result > 0 && fd.revents & libc::POLLIN != 0)
-}
-
-/// Check the same Windows console input queue consumed by Crossterm.
-#[cfg(windows)]
-fn terminal_input_is_readable() -> Result<bool> {
-    use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
-    use windows_sys::Win32::System::Console::GetNumberOfConsoleInputEvents;
-    use windows_sys::Win32::System::Console::GetStdHandle;
-    use windows_sys::Win32::System::Console::STD_INPUT_HANDLE;
-
-    let handle = unsafe { GetStdHandle(STD_INPUT_HANDLE) };
-    if handle == INVALID_HANDLE_VALUE || handle == 0 {
-        return Err(io::Error::other("terminal input handle is unavailable"));
-    }
-
-    let mut pending = 0;
-    if unsafe { GetNumberOfConsoleInputEvents(handle, &mut pending) } == 0 {
-        return Err(io::Error::last_os_error());
-    }
-    Ok(pending != 0)
 }

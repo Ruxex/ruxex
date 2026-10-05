@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::io;
 
+use futures::StreamExt;
 use genex_exec_server::CapabilityRootDiscovery;
 use genex_exec_server::ExecutorFileSystem;
 use genex_exec_server::GetMetadataOptions;
@@ -13,7 +14,6 @@ use genex_skills::SkillPolicy;
 use genex_skills::parse_skill_frontmatter_metadata;
 use genex_utils_path_uri::PathUri;
 use genex_utils_plugins::SkillDiscoveryMode;
-use futures::StreamExt;
 
 use super::MAX_QUALIFIED_NAME_LEN;
 use super::discovery::DirectorySymlinkPolicy;

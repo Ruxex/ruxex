@@ -16,6 +16,8 @@ mod thread_metadata_sync;
 mod thread_sections;
 mod types;
 
+pub use error::ThreadStoreError;
+pub use error::ThreadStoreResult;
 pub use genex_state::AddThreadAttachmentOutcome;
 pub use genex_state::MAX_QUEUE_ITEMS;
 pub use genex_state::MAX_THREAD_ATTACHMENT_PAYLOAD_BYTES;
@@ -24,8 +26,6 @@ pub use genex_state::QueuedUserSubmissionRecord;
 pub use genex_state::RemoveThreadAttachmentOutcome;
 pub use genex_state::ThreadAttachment;
 pub use genex_state::ThreadAttachmentPage;
-pub use error::ThreadStoreError;
-pub use error::ThreadStoreResult;
 pub use in_memory::InMemoryThreadStore;
 pub use in_memory::InMemoryThreadStoreCalls;
 pub use live_thread::LiveThread;

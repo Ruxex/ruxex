@@ -8,22 +8,12 @@ use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::environment_selection::TurnEnvironmentState;
 use crate::session::turn_context::TurnContext;
 use crate::shell::ShellType;
-use genex_features::Feature;
 use genex_protocol::models::ContentItemKind;
 use genex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::BTreeMap;
-use std::path::Path;
 use std::path::PathBuf;
-use std::process::Stdio;
-use std::sync::LazyLock;
-use std::time::Duration;
-use tokio::process::Command;
-use tokio::sync::Mutex;
-
-static POWERSHELL_VERSIONS: LazyLock<Mutex<BTreeMap<PathBuf, Option<String>>>> =
-    LazyLock::new(Mutex::default);
 
 /// Environment values visible to the model.
 #[derive(Clone, Debug, Default)]
@@ -43,18 +33,7 @@ impl EnvironmentsState {
         environments: &TurnEnvironmentSnapshot,
         current_date: Option<String>,
     ) -> Self {
-        let shell_version = if turn_context
-            .config
-            .features
-            .enabled(Feature::PowerShellShellVersion)
-            && let Some(environment) = environments.single_local_environment()
-            && let Some(shell) = environment.shell.as_ref()
-            && shell.shell_type == ShellType::PowerShell
-        {
-            powershell_version(&shell.shell_path).await
-        } else {
-            None
-        };
+        let shell_version = None;
         Self {
             environments: environment_states(environments),
             shell_version,
@@ -414,46 +393,6 @@ enum EnvironmentStatus {
     Starting,
     Available,
     Failed,
-}
-
-async fn powershell_version(shell_path: &Path) -> Option<String> {
-    if let Some(version) = {
-        let versions = POWERSHELL_VERSIONS.lock().await;
-        versions.get(shell_path).cloned()
-    } {
-        return version;
-    }
-
-    let mut command = Command::new(shell_path);
-    command
-        .args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            "$PSVersionTable.PSVersion.ToString()",
-        ])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .kill_on_drop(true);
-    #[cfg(windows)]
-    command.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
-
-    let version = tokio::time::timeout(Duration::from_secs(2), command.output())
-        .await
-        .ok()
-        .and_then(Result::ok)
-        .filter(|output| output.status.success() && output.stdout.len() <= 64)
-        .and_then(|output| {
-            let mut components = std::str::from_utf8(&output.stdout).ok()?.trim().split('.');
-            let major = components.next()?.parse::<u16>().ok()?;
-            let minor = components.next()?.parse::<u16>().ok()?;
-            Some(format!("{major}.{minor}"))
-        });
-    POWERSHELL_VERSIONS
-        .lock()
-        .await
-        .insert(shell_path.to_owned(), version.clone());
-    version
 }
 
 fn environment_states(snapshot: &TurnEnvironmentSnapshot) -> BTreeMap<String, EnvironmentState> {

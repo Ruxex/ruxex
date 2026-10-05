@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 
+use futures::FutureExt;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
 use genex_exec_server::Environment;
@@ -12,7 +13,6 @@ use genex_rmcp_client::ElicitationResponse;
 use genex_rmcp_client::LocalStdioServerLauncher;
 use genex_rmcp_client::McpProtocolMode;
 use genex_rmcp_client::RmcpClient;
-use futures::FutureExt;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;

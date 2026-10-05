@@ -13,6 +13,7 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
+use futures::future::BoxFuture;
 use genex_attachment_store::AttachmentStore;
 use genex_core::GenexThread;
 pub use genex_core::StartThreadOptions;
@@ -60,10 +61,7 @@ use genex_protocol::protocol::TurnEnvironmentSelections;
 use genex_protocol::user_input::UserInput;
 use genex_thread_store::ThreadStore;
 use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-use futures::future::BoxFuture;
 use serde_json::Value;
 use tempfile::TempDir;
 use wiremock::MockServer;
@@ -128,16 +126,7 @@ pub fn local(cwd: AbsolutePathBuf) -> TurnEnvironmentSelection {
 /// Converts the host-shaped /C:/... cwd projection used by Wine tests back
 /// into the selected executor's Windows URI.
 pub fn executor_path_uri(path: impl AsRef<Path>) -> Result<PathUri> {
-    let path = path.as_ref();
-    if matches!(test_environment(), TestEnvironment::WineExec)
-        && let Some(path) = path.to_str()
-        && matches!(path.as_bytes(), [b'/', drive, b':', b'/' | b'\\', ..] if drive.is_ascii_alphabetic())
-    {
-        return LegacyAppPathString::from_string(path[1..].to_string())
-            .to_path_uri(PathConvention::Windows)
-            .map_err(Into::into);
-    }
-    Ok(PathUri::from_host_native_path(path)?)
+    Ok(PathUri::from_host_native_path(path.as_ref())?)
 }
 
 pub fn local_selections(cwd: AbsolutePathBuf) -> TurnEnvironmentSelections {
@@ -412,11 +401,7 @@ impl TestGenexBuilder {
     }
 
     pub fn with_windows_cmd_shell(self) -> Self {
-        if cfg!(windows) {
-            self.with_user_shell(get_shell_by_model_provided_path(&PathBuf::from("cmd.exe")))
-        } else {
-            self
-        }
+        self
     }
 
     pub async fn build(&mut self, server: &wiremock::MockServer) -> anyhow::Result<TestGenex> {
@@ -725,19 +710,7 @@ impl TestGenexBuilder {
                 .await?
             }
             (None, None) => {
-                let environments = if test_env.selection().cwd.infer_path_convention()
-                    == Some(PathConvention::Windows)
-                    && PathUri::from_abs_path(&config.cwd) != test_env.selection().cwd
-                {
-                    let cwd = executor_path_uri(&config.cwd)?;
-                    let mut selection = test_env.selection().clone();
-                    selection.cwd = cwd.clone();
-                    selection.workspace_roots = vec![cwd];
-                    test_env.selection = selection.clone();
-                    Some(vec![selection])
-                } else {
-                    None
-                };
+                let environments = None;
                 Box::pin(thread_manager.start_thread(StartThreadOptions {
                     history_mode: self.history_mode,
                     client_mcp_extensions: client_mcp_extensions(),

@@ -5,10 +5,10 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_http_client::OutboundProxyRoute;
-use genex_http_client::build_rustls_client_config_with_custom_ca;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
+use genex_http_client::OutboundProxyRoute;
+use genex_http_client::build_rustls_client_config_with_custom_ca;
 use rustls::ClientConfig;
 use rustls::pki_types::ServerName;
 use tokio::net::TcpStream;

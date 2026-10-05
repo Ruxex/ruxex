@@ -60,10 +60,8 @@ pub(crate) fn managed_genex_bin(genex_home: &Path) -> PathBuf {
     let root = package_root(genex_home);
     let current = root.join("current");
     let packaged = current.join("bin").join(managed_genex_file_name());
-    let legacy = current.join(if cfg!(windows) { "genex.exe" } else { "codex" });
-    if packaged.is_file()
-        || !legacy.is_file() && (cfg!(windows) || root.ends_with("app-server-daemon"))
-    {
+    let legacy = current.join("codex");
+    if packaged.is_file() || !legacy.is_file() && root.ends_with("app-server-daemon") {
         packaged
     } else {
         legacy
@@ -96,8 +94,6 @@ pub(crate) fn is_stable_standalone_release(genex_home: &Path, genex_bin: &Path) 
         "x86_64-unknown-linux-gnu",
         "aarch64-unknown-linux-musl",
         "x86_64-unknown-linux-musl",
-        "aarch64-pc-windows-msvc",
-        "x86_64-pc-windows-msvc",
     ];
     let Some(version) = targets
         .iter()
@@ -123,8 +119,6 @@ pub(crate) async fn supports_daemon_update_loop(genex_bin: &Path) -> bool {
 /// Probe an internal daemon command without running a long-lived process.
 pub(crate) async fn supports_daemon_command(genex_bin: &Path, args: &[&str]) -> bool {
     let mut command = Command::new(genex_bin);
-    #[cfg(windows)]
-    command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
     timeout(
         Duration::from_secs(5),
         command
@@ -151,8 +145,6 @@ pub(crate) async fn resolved_managed_genex_bin(genex_bin: &Path) -> Result<PathB
 
 pub(crate) async fn managed_genex_version(genex_bin: &Path) -> Result<String> {
     let mut command = Command::new(genex_bin);
-    #[cfg(windows)]
-    command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
     let output = command
         .arg("--version")
         .kill_on_drop(true)
@@ -200,7 +192,7 @@ pub(crate) fn executable_identity_from_bytes(bytes: &[u8]) -> ExecutableIdentity
 }
 
 fn managed_genex_file_name() -> &'static str {
-    if cfg!(windows) { "genex.exe" } else { "genex" }
+    "genex"
 }
 
 fn parse_genex_version(output: &str) -> Result<String> {

@@ -39,7 +39,7 @@ pub enum ConfigEdit {
     SetServiceTier { service_tier: Option<String> },
     /// Toggle the acknowledgement flag under `[notice]`.
     SetNoticeHideFullAccessWarning(bool),
-    /// Toggle the Windows world-writable directories warning acknowledgement flag.
+    /// Toggle the world-writable directories warning acknowledgement flag.
     SetNoticeHideWorldWritableWarning(bool),
     /// Toggle the rate limit model nudge acknowledgement flag.
     SetNoticeHideRateLimitModelNudge(bool),
@@ -892,26 +892,6 @@ impl ConfigEditsBuilder {
                 value: value(enabled),
             });
         } else {
-            self.edits.push(ConfigEdit::ClearPath { segments });
-        }
-        self
-    }
-
-    pub fn set_windows_sandbox_mode(mut self, mode: &str) -> Self {
-        self.edits.push(ConfigEdit::SetPath {
-            segments: vec!["windows".to_string(), "sandbox".to_string()],
-            value: value(mode),
-        });
-        self
-    }
-
-    pub fn clear_legacy_windows_sandbox_keys(mut self) -> Self {
-        for key in [
-            "experimental_windows_sandbox",
-            "elevated_windows_sandbox",
-            "enable_experimental_windows_sandbox",
-        ] {
-            let segments = vec!["features".to_string(), key.to_string()];
             self.edits.push(ConfigEdit::ClearPath { segments });
         }
         self

@@ -7,6 +7,12 @@
 use crate::history_cell::PlainHistoryCell;
 use crate::render::line_utils::prefix_lines;
 use crate::text_formatting::truncate_text;
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+#[cfg(target_os = "macos")]
+use crossterm::event::KeyEventKind;
+#[cfg(target_os = "macos")]
+use crossterm::event::KeyModifiers;
 use genex_app_server_protocol::CollabAgentState;
 use genex_app_server_protocol::CollabAgentStatus;
 use genex_app_server_protocol::CollabAgentTool;
@@ -15,12 +21,6 @@ use genex_app_server_protocol::SubAgentActivityKind;
 use genex_app_server_protocol::ThreadItem;
 use genex_protocol::ThreadId;
 use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-#[cfg(target_os = "macos")]
-use crossterm::event::KeyEventKind;
-#[cfg(target_os = "macos")]
-use crossterm::event::KeyModifiers;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use ratatui::text::Span;

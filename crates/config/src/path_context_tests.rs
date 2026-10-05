@@ -25,7 +25,7 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
         "[permissions.filesystem]\ndeny_read = ['private', '~/secret', 'private', 'C:\\', '\\\\server\\share\\', 'private/*.key']",
     )
     .with_path_context(ConfigPathContext::new(
-        PathConvention::Windows,
+        PathConvention::Posix,
         Some(PathUri::parse("file:///C:/first").expect("first base")),
         Some(PathUri::parse("file:///C:/Users/first").expect("first home")),
     ));
@@ -34,7 +34,7 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
         toml::toml! { [permissions.filesystem] deny_read = ["private", "~/secret"] }.into(),
     )
     .with_path_context(ConfigPathContext::new(
-        PathConvention::Windows,
+        PathConvention::Posix,
         Some(PathUri::parse("file:///D:/second").expect("second base")),
         Some(PathUri::parse("file:///D:/Users/second").expect("second home")),
     ));
@@ -78,10 +78,10 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
         FileSystemAccessMode::Deny,
     ));
     constraints
-        .apply_to_policy(&mut policy, PathConvention::Windows)
+        .apply_to_policy(&mut policy, PathConvention::Posix)
         .expect("apply denials");
     constraints
-        .apply_to_policy(&mut policy, PathConvention::Windows)
+        .apply_to_policy(&mut policy, PathConvention::Posix)
         .expect("deduplicate existing denials");
     assert_eq!(policy, expected);
     assert!(
@@ -96,7 +96,7 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
 #[test]
 fn common_parser_uses_supplied_windows_drive_and_glob_separators() {
     let context = ConfigPathContext::new(
-        PathConvention::Windows,
+        PathConvention::Posix,
         Some(PathUri::parse("file:///C:/base/cwd").expect("base")),
         /*user_home_dir*/ None,
     );
@@ -118,7 +118,7 @@ fn common_parser_uses_supplied_windows_drive_and_glob_separators() {
 #[test]
 fn windows_denial_globs_reject_ambiguous_roots_and_streams() {
     let context = ConfigPathContext::new(
-        PathConvention::Windows,
+        PathConvention::Posix,
         Some(PathUri::parse("file://server/share/base").expect("UNC base")),
         /*user_home_dir*/ None,
     );
@@ -153,7 +153,7 @@ fn failed_nested_composition_restores_outer_context_and_then_native_resolution()
             "[permissions.filesystem]\ndeny_read = ['relative']",
         )
         .with_path_context(ConfigPathContext::new(
-            PathConvention::Windows,
+            PathConvention::Posix,
             /*base_dir*/ None,
             /*user_home_dir*/ None,
         ));
@@ -194,7 +194,7 @@ fn missing_supplied_home_does_not_fall_back_to_native_home() {
         "[permissions.filesystem]\ndeny_read = ['~/secret']",
     )
     .with_path_context(ConfigPathContext::new(
-        PathConvention::Windows,
+        PathConvention::Posix,
         Some(PathUri::parse("file:///C:/base").expect("base")),
         /*user_home_dir*/ None,
     ));

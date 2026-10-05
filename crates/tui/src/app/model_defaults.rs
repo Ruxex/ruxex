@@ -5,12 +5,12 @@
 
 use super::App;
 use crate::app_server_session::AppServerSession;
+use color_eyre::eyre::Result;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_protocol::ConfigEdit;
 use genex_app_server_protocol::WriteStatus;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::model_types::ReasoningEffort;
-use color_eyre::eyre::Result;
 
 impl App {
     pub(super) async fn select_session_model(

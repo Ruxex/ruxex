@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use futures::StreamExt;
 use genex_exec_server::EnvironmentManager;
 use genex_exec_server::FileSystemSandboxContext;
 use genex_extension_api::SelectedPluginSnapshot;
@@ -9,9 +10,7 @@ use genex_protocol::capabilities::CapabilityRootLocation;
 use genex_protocol::protocol::Product;
 use genex_protocol::protocol::SkillScope;
 use genex_skills::EnvironmentSkillMetadata;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-use futures::StreamExt;
 
 use crate::catalog::SkillAuthority;
 use crate::catalog::SkillCatalog;
@@ -316,10 +315,8 @@ fn catalog_entry_from_skill(
 fn normalized_environment_path(path: &PathUri) -> String {
     let convention = path.infer_path_convention();
     let path = path.inferred_native_path_string();
-    match convention {
-        Some(PathConvention::Windows) => path.replace('\\', "/"),
-        Some(PathConvention::Posix) | None => path,
-    }
+    let _ = convention;
+    path
 }
 
 async fn read_bounded_text(
@@ -333,15 +330,6 @@ async fn read_bounded_text(
             "failed to read executor skill resource {resource}: {err}"
         ))
     };
-    if sandbox.is_some_and(FileSystemSandboxContext::should_read_from_sandbox)
-        && path.infer_path_convention() == Some(PathConvention::Windows)
-        && sandbox.is_some_and(|context| !context.windows_sandbox_is_requested())
-    {
-        return Err(SkillProviderError::new(
-            "executor skill resource requires an unavailable filesystem sandbox",
-        ));
-    }
-
     let mut stream = file_system
         .read_file_stream(path, sandbox)
         .await

@@ -52,11 +52,11 @@ fn each_endpoint_product_requires_vendor_specific_app_exclusions() {
             .as_deref()
             .expect("detected endpoint protection should require remediation")
             .to_ascii_lowercase();
-            assert_eq!(
-                remediation,
-                "ask your security administrator to verify genex exclusions and required helper allowances",
-                "{product}"
-            );
+        assert_eq!(
+            remediation,
+            "ask your security administrator to verify genex exclusions and required helper allowances",
+            "{product}"
+        );
         let rendered_check = serde_json::to_string(&redacted_json_check(&check))
             .expect("serialize endpoint check")
             .to_ascii_lowercase();

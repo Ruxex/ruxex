@@ -9,9 +9,7 @@ use std::path::PathBuf;
 pub enum ToolUserShellType {
     Zsh,
     Bash,
-    PowerShell,
     Sh,
-    Cmd,
 }
 
 pub fn request_user_input_available_modes(features: &Features) -> Vec<ModeKind> {

@@ -8,10 +8,10 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
+use futures::FutureExt;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::RouteAwareClientPool;
-use futures::FutureExt;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use tokio::io::AsyncWriteExt;
@@ -32,7 +32,7 @@ use crate::RestartMode;
 use crate::managed_install::ExecutableIdentity;
 use crate::managed_install::executable_identity;
 use crate::managed_install::resolved_managed_genex_bin;
-#[cfg(any(target_os = "linux", target_os = "macos", windows))]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 use crate::settings::DaemonSettings;
 use crate::settings::UpdaterSettings;
 
@@ -105,17 +105,6 @@ async fn run_with_http(
             let _ = backend.promote_legacy_identity().await;
         }
     }
-    #[cfg(windows)]
-    let updater = {
-        // Updater ownership needs only paths, not settings that may be mid-edit.
-        crate::backend::pid_update_loop_backend(daemon.backend_paths(&DaemonSettings::default()))
-    };
-    #[cfg(windows)]
-    updater.wait_for_ownership().await?;
-    #[cfg(windows)]
-    let mut terminate = Signal;
-    #[cfg(windows)]
-    let _installer_job = crate::backend::windows::updater_job()?;
     let socket_path = daemon.manual_update_socket_path();
     genex_uds::prepare_private_socket_directory(
         socket_path
@@ -127,8 +116,6 @@ async fn run_with_http(
         tokio::fs::remove_file(&socket_path).await?;
     }
     let mut listener = Some(genex_uds::UnixListener::bind(&socket_path).await?);
-    #[cfg(windows)]
-    updater.mark_ready().await?;
     let needs_managed_handoff =
         match resolved_managed_genex_bin(&daemon.current_managed_genex_bin()?).await {
             Ok(managed_bin) => {
@@ -192,8 +179,6 @@ async fn run_with_http(
                 }
                 // Failed successor cleanup leaves its PID published. The predecessor
                 // must stop instead of installing again without ownership.
-                #[cfg(windows)]
-                updater.wait_for_ownership().await?;
                 if manual_handoff_pending {
                     if !daemon.is_stable_standalone_release()? {
                         if !daemon.has_latest_selection_marker() {
@@ -263,25 +248,6 @@ async fn adopt_managed_updater(
     {
         let _ = listener;
         reexec_managed_updater(&managed_bin).map(|_| UpdateLoopControl::Stop)
-    }
-    #[cfg(windows)]
-    {
-        let replacement = crate::backend::pid_update_loop_backend(
-            daemon.backend_paths_with_bin(&daemon.load_settings().await?, &managed_bin),
-        );
-        listener.take();
-        if let Err(err) = replacement.replace_current_updater().await {
-            // A failed replacement may still own the PID if its cleanup could
-            // not terminate the successor. Never reopen our request socket then.
-            replacement.wait_for_ownership().await?;
-            let socket_path = daemon.manual_update_socket_path();
-            if socket_path.exists() {
-                tokio::fs::remove_file(&socket_path).await?;
-            }
-            *listener = Some(genex_uds::UnixListener::bind(&socket_path).await?);
-            return Err(err);
-        }
-        Ok(UpdateLoopControl::Stop)
     }
 }
 
@@ -382,11 +348,6 @@ async fn update_once(
         UpdateLoopControl::Stop
     ) {
         return Ok((UpdateLoopControl::Stop, None));
-    }
-    #[cfg(windows)]
-    tokio::select! {
-        result = run_installer_script(&script, installer_mode, &package_root) => { result?; },
-        _ = terminate.recv() => return Ok((UpdateLoopControl::Stop, None)),
     }
     anyhow::ensure!(
         trigger == UpdateTrigger::Scheduled || daemon.is_stable_standalone_release()?,
@@ -543,14 +504,6 @@ async fn run_installer_script(
         command.process_group(0);
         command
     };
-    #[cfg(windows)]
-    let mut command = {
-        let mut command = Command::new("powershell.exe");
-        command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
-        command.args(["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", "try { Invoke-Expression ([Console]::In.ReadToEnd()) } catch { Write-Error $_; exit 1 }"])
-            .kill_on_drop(true);
-        command
-    };
     let (latest_guard, current_guard, previous_release, defer_selection) = match mode {
         InstallerMode::Update(release) => ("1", "0", release, "0"),
         InstallerMode::RestoreProduction(release) => ("0", "1", release, "0"),
@@ -584,8 +537,6 @@ async fn run_installer_script(
         .stderr(Stdio::null())
         .spawn()
         .context("failed to invoke standalone Genex updater")?;
-    #[cfg(windows)]
-    let _installer_job = crate::backend::windows::installer_job(&child)?;
     let mut stdin = child
         .stdin
         .take()
@@ -597,8 +548,6 @@ async fn run_installer_script(
         result = stdin.write_all(script) => Some(result),
         _ = &mut terminate => None,
     };
-    #[cfg(windows)]
-    let write_result = Some(stdin.write_all(script).await);
     drop(stdin);
     #[cfg(unix)]
     if write_result.is_none() {
@@ -616,8 +565,6 @@ async fn run_installer_script(
             return Ok(UpdateLoopControl::Stop);
         }
     };
-    #[cfg(windows)]
-    let status = child.wait().await;
     let status = status.context("failed to wait for standalone Genex updater")?;
 
     if status.success() {
@@ -712,15 +659,3 @@ impl InstallerHttp for RouteAwareClientPool {
 #[cfg(test)]
 #[path = "update_loop_tests.rs"]
 mod tests;
-
-#[cfg(windows)]
-struct Signal;
-
-#[cfg(windows)]
-impl Signal {
-    async fn recv(&mut self) -> Option<()> {
-        // An unreadable control path must stop the updater rather than disable shutdown.
-        let _ = genex_app_server_transport::daemon_shutdown_signal().await;
-        Some(())
-    }
-}

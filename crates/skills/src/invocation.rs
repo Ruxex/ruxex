@@ -2,9 +2,7 @@ use std::path::Path;
 
 use genex_protocol::parse_command::ParsedCommand;
 use genex_shell_command::parse_command::parse_command_impl;
-use genex_shell_command::parse_command::tokenize_powershell_command;
 use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
 
 use crate::SkillMetadata;
@@ -29,11 +27,7 @@ pub fn detect_implicit_skill_invocation_for_command(
     workdir: &AbsolutePathBuf,
 ) -> Option<SkillMetadata> {
     let workdir = canonicalize_if_exists(workdir);
-    let tokens = if PathConvention::native() == PathConvention::Windows {
-        tokenize_powershell_command(command)
-    } else {
-        tokenize_command(command)
-    };
+    let tokens = tokenize_command(command);
 
     if let Some(candidate) = detect_skill_script_run(outcome, tokens.as_slice(), &workdir) {
         return Some(candidate);
@@ -47,11 +41,7 @@ pub fn implicit_skill_accesses_for_command(
     command: &str,
     workdir: &PathUri,
 ) -> Vec<ImplicitSkillAccess> {
-    let tokens = if workdir.infer_path_convention() == Some(PathConvention::Windows) {
-        tokenize_powershell_command(command)
-    } else {
-        tokenize_command(command)
-    };
+    let tokens = tokenize_command(command);
     let mut accesses = Vec::new();
     if let Some(script) = script_run_token(&tokens)
         && let Ok(path) = workdir.join(script)
@@ -77,10 +67,10 @@ fn tokenize_command(command: &str) -> Vec<String> {
 }
 
 fn script_run_token(tokens: &[String]) -> Option<&str> {
-    const RUNNERS: [&str; 10] = [
-        "python", "python3", "bash", "zsh", "sh", "node", "deno", "ruby", "perl", "pwsh",
+    const RUNNERS: [&str; 9] = [
+        "python", "python3", "bash", "zsh", "sh", "node", "deno", "ruby", "perl",
     ];
-    const SCRIPT_EXTENSIONS: [&str; 7] = [".py", ".sh", ".js", ".ts", ".rb", ".pl", ".ps1"];
+    const SCRIPT_EXTENSIONS: [&str; 6] = [".py", ".sh", ".js", ".ts", ".rb", ".pl"];
 
     let runner_token = tokens.first()?;
     let runner = command_basename(runner_token).to_ascii_lowercase();

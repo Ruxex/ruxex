@@ -8,9 +8,9 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
+use futures::future::BoxFuture;
 use genex_diagnostics::Gauge;
 use genex_extension_api::ThreadIdleCause;
-use futures::future::BoxFuture;
 use tokio::select;
 use tokio::sync::Mutex;
 use tokio::sync::Notify;
@@ -24,9 +24,9 @@ use tracing::trace;
 use tracing::trace_span;
 use tracing::warn;
 
-use crate::genex_thread::BackgroundTerminalInfo;
 use crate::config::Config;
 use crate::context::ContextualUserFragment;
+use crate::genex_thread::BackgroundTerminalInfo;
 use crate::hook_runtime::run_turn_interrupt_hooks;
 use crate::session::TurnInput;
 use crate::session::session::Session;
@@ -53,10 +53,10 @@ use genex_protocol::protocol::TurnCompleteEvent;
 use genex_protocol::protocol::WarningEvent;
 use genex_thread_store::PersistContext;
 
+pub(crate) use compact::CompactTask;
 use genex_features::Feature;
 use genex_protocol::error::GenexErrorDetails;
 use genex_protocol::error::Result as GenexResult;
-pub(crate) use compact::CompactTask;
 pub(crate) use regular::RegularTask;
 pub(crate) use review::ReviewTask;
 pub(crate) use user_shell::UserShellCommandMode;

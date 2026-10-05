@@ -17,8 +17,6 @@ use super::DoctorCheck;
 #[cfg(target_os = "macos")]
 mod macos_security;
 pub(super) mod platform;
-#[cfg(any(target_os = "windows", test))]
-mod windows_security;
 
 const MAX_DIRECTORY_ENTRIES: usize = 256;
 const MAX_LOG_FILES: usize = 64;
@@ -28,7 +26,7 @@ const HANDSHAKE_CHECK_ID: &str = "desktop.app_server.handshake";
 
 pub(super) struct DesktopDiagnostics {
     pub(super) checks: Vec<DoctorCheck>,
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     pub(super) application: Option<platform::InstalledApp>,
 }
 
@@ -61,15 +59,11 @@ pub(super) async fn collect() -> Option<DesktopDiagnostics> {
         Ok(None) => return None,
         Err(_) => {
             return Some(DesktopDiagnostics {
-                checks: vec![
-                    unavailable(
-                        "desktop.app.version",
-                        "the desktop application installation could not be inspected",
-                    ),
-                    #[cfg(target_os = "windows")]
-                    windows_security::collect().await,
-                ],
-                #[cfg(any(target_os = "macos", target_os = "windows"))]
+                checks: vec![unavailable(
+                    "desktop.app.version",
+                    "the desktop application installation could not be inspected",
+                )],
+                #[cfg(target_os = "macos")]
                 application: None,
             });
         }
@@ -101,10 +95,8 @@ pub(super) async fn collect() -> Option<DesktopDiagnostics> {
             handshake,
             #[cfg(target_os = "macos")]
             macos_security::collect(&application.bundle).await,
-            #[cfg(target_os = "windows")]
-            windows_security::collect().await,
         ],
-        #[cfg(any(target_os = "macos", target_os = "windows"))]
+        #[cfg(target_os = "macos")]
         application: Some(application),
     })
 }
@@ -137,12 +129,6 @@ fn desktop_log_root(identity: &str) -> Option<PathBuf> {
         "macos" => PathBuf::from(env::var_os("HOME")?)
             .join("Library/Logs")
             .join(identity),
-        "windows" => {
-            let local = env::var_os("LOCALAPPDATA").map(PathBuf::from).or_else(|| {
-                env::var_os("USERPROFILE").map(|home| PathBuf::from(home).join("AppData/Local"))
-            })?;
-            local.join("Genex/Logs")
-        }
         _ => return None,
     };
 

@@ -4,16 +4,11 @@
 use std::io;
 
 use genex_config::ConfigPathContext;
-use genex_utils_absolute_path::normalize_windows_device_path;
 use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
 
 pub(super) fn contains_glob(path: &str, context: &ConfigPathContext) -> io::Result<bool> {
-    Ok(contains_glob_chars_for_platform(
-        path,
-        context.convention() == PathConvention::Windows,
-    ))
+    Ok(contains_glob_chars(path))
 }
 
 pub(super) fn absolute_path(path: &str, context: &ConfigPathContext) -> io::Result<PathUri> {
@@ -37,15 +32,8 @@ pub(super) fn relative_subpath(subpath: &str, context: &ConfigPathContext) -> io
     let convention = context.convention();
     let mut components = convention.path_segments(subpath);
     let first = components.next();
-    let has_drive_prefix = convention == PathConvention::Windows
-        && subpath
-            .as_bytes()
-            .first()
-            .is_some_and(u8::is_ascii_alphabetic)
-        && subpath.as_bytes().get(1) == Some(&b':');
     if !subpath.is_empty()
         && !matches!(first, Some("" | "." | ".."))
-        && !has_drive_prefix
         && !components.any(|component| component == "..")
     {
         // Preserve spelling after the same validation as native components:
@@ -60,13 +48,7 @@ pub(super) fn relative_subpath(subpath: &str, context: &ConfigPathContext) -> io
     ))
 }
 
-pub(super) fn contains_glob_chars_for_platform(path: &str, is_windows: bool) -> bool {
-    let normalized_windows_path = if is_windows {
-        normalize_windows_device_path(path)
-    } else {
-        None
-    };
-    let path = normalized_windows_path.as_deref().unwrap_or(path);
+fn contains_glob_chars(path: &str) -> bool {
     path.chars().any(|ch| matches!(ch, '*' | '?' | '[' | ']'))
 }
 

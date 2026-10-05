@@ -26,8 +26,6 @@ def required_library_paths(target: str) -> tuple[str, ...]:
         return ("lib/libgio-2.0.0.dylib",)
     if target.endswith("-unknown-linux-gnu"):
         return ("lib/libgio-2.0.so.0",)
-    if target.endswith("-pc-windows-msvc"):
-        return ("bin/gio-2.0-0.dll",)
     raise ValueError("unsupported native runtime target")
 
 

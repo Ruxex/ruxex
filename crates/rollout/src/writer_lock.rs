@@ -181,7 +181,7 @@ impl Drop for WriterLockGuard {
             }
         };
 
-        // Close the writer lock before deleting it so cleanup works on Windows too.
+        // Close the writer lock before deleting it so cleanup is portable.
         drop(self.file.take());
         if let Err(err) = fs::remove_file(&self.path)
             && err.kind() != io::ErrorKind::NotFound

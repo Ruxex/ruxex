@@ -163,14 +163,12 @@ pub(crate) fn spawn_search(
             .take(MAX_SEARCH_RESULTS as usize)
             .collect::<Vec<_>>();
         let cwd = cwd.to_string_lossy();
-        let windows_cwd = cwd.as_bytes().get(1) == Some(&b':') || cwd.starts_with(r"\\");
         matches.sort_by_key(|task| {
             let Some((prefix, suffix)) = task.cwd.get(..cwd.len()).zip(task.cwd.get(cwd.len()..))
             else {
                 return true;
             };
-            !(prefix == cwd.as_ref() || windows_cwd && prefix.eq_ignore_ascii_case(cwd.as_ref()))
-                || !(suffix.is_empty() || suffix.starts_with(['/', '\\']))
+            !(prefix == cwd.as_ref()) || !(suffix.is_empty() || suffix.starts_with('/'))
         });
         app_event_tx.send(AppEvent::TaskSearchResult {
             thread_id: current_thread_id,

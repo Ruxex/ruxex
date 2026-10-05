@@ -1,6 +1,5 @@
 use super::*;
 use genex_core::exec_env::inject_apply_patch_env;
-use genex_core::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
 use genex_protocol::shell_environment::is_non_inheritable_env_var;
 
 #[derive(Clone)]
@@ -179,7 +178,6 @@ impl CommandExecRequestProcessor {
             },
             None => None,
         };
-        let windows_sandbox_level = WindowsSandboxLevel::from_config(&self.config);
         let output_bytes_cap = if disable_output_cap {
             None
         } else {
@@ -208,7 +206,6 @@ impl CommandExecRequestProcessor {
             network_proxy_spec,
             network_proxy_permission_profile,
             managed_network_requirements_enabled,
-            windows_sandbox_workspace_roots,
         ) = if let Some(permission_profile) = permission_profile {
             let overrides = ConfigOverrides {
                 cwd: Some(cwd.to_path_buf()),
@@ -236,7 +233,6 @@ impl CommandExecRequestProcessor {
                 config.permissions.network.clone(),
                 config.permissions.permission_profile().clone(),
                 config.managed_network_requirements_enabled(),
-                config.effective_workspace_roots(),
             )
         } else if let Some(policy) = sandbox_policy.map(|policy| policy.to_core()) {
             let mut permissions = self.config.permissions.clone();
@@ -248,7 +244,6 @@ impl CommandExecRequestProcessor {
                 self.config.permissions.network.clone(),
                 self.config.permissions.permission_profile().clone(),
                 self.config.managed_network_requirements_enabled(),
-                self.config.effective_workspace_roots(),
             )
         } else {
             (
@@ -256,16 +251,13 @@ impl CommandExecRequestProcessor {
                 self.config.permissions.network.clone(),
                 self.config.permissions.permission_profile().clone(),
                 self.config.managed_network_requirements_enabled(),
-                self.config.effective_workspace_roots(),
             )
         };
         let started_network_proxy = match network_proxy_spec.as_ref() {
             Some(spec) => match spec
                 .start_proxy(
                     &network_proxy_permission_profile,
-                    managed_proxy_routing_for_windows_sandbox(
-                        self.config.permissions.windows_sandbox_type,
-                    ),
+                    genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
                     /*policy_decider*/ None,
                     /*blocked_request_observer*/ None,
                     managed_network_requirements_enabled,
@@ -293,11 +285,6 @@ impl CommandExecRequestProcessor {
                 .map(genex_core::config::StartedNetworkProxy::proxy),
             network_environment_id: None,
             sandbox_permissions: SandboxPermissions::UseDefault,
-            windows_sandbox_level,
-            windows_sandbox_private_desktop: self
-                .config
-                .permissions
-                .windows_sandbox_private_desktop,
             justification: None,
             arg0: None,
         };
@@ -317,7 +304,6 @@ impl CommandExecRequestProcessor {
             exec_params,
             &effective_permission_profile,
             &sandbox_cwd,
-            windows_sandbox_workspace_roots.as_slice(),
             &genex_linux_sandbox_exe,
             &self.arg0_paths.genex_self_exe,
             use_legacy_landlock,

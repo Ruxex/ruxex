@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
+use futures::future::BoxFuture;
 use genex_exec_server::ExecServerError;
 use genex_exec_server::HttpClient;
 use genex_exec_server::HttpHeader;
 use genex_exec_server::HttpRequestParams;
 use genex_exec_server::HttpRequestResponse;
 use genex_exec_server::HttpResponseBodyStream;
-use futures::future::BoxFuture;
 
 pub(crate) struct ExecutorEnvironmentHttpClient {
     pub(crate) bearer_token_env_var: String,

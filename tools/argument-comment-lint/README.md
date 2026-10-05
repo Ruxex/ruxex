@@ -74,8 +74,7 @@ cargo test
 ```
 
 GitHub releases also publish a DotSlash file named
-`argument-comment-lint` for macOS arm64, Linux arm64, Linux x64, and Windows
-x64. The published package contains a small runner executable, a bundled
+`argument-comment-lint` for macOS arm64, Linux arm64, and Linux x64. The published package contains a small runner executable, a bundled
 `cargo-dylint`, and the prebuilt lint library.
 
 The package is not a full Rust toolchain. Running the prebuilt path still
@@ -104,11 +103,8 @@ argument-comment-lint/
     libargument_comment_lint@nightly-2025-09-18-<target>.dylib|so
 ```
 
-On Windows the same layout is published as a `.zip`, with `.exe` and `.dll`
-filenames instead.
-
 DotSlash resolves the package entrypoint to `argument-comment-lint/bin/argument-comment-lint`
-(or `.exe` on Windows). That runner finds the sibling bundled `cargo-dylint`
+That runner finds the sibling bundled `cargo-dylint`
 binary and the single packaged Dylint library under `lib/`, normalizes the
 host-qualified nightly filename to the plain `nightly-2025-09-18` channel when
 needed, and then invokes `cargo-dylint dylint --lib-path <that-library>` with
@@ -118,8 +114,7 @@ The checked-in `run-prebuilt-linter.py` wrapper uses the fetched package
 contents directly so the current checked-in alpha artifact works the same way.
 It also makes sure the `rustup` shims stay ahead of any direct toolchain
 `cargo` binary on `PATH`, and sets `RUSTUP_HOME` from `rustup show home` when
-the environment does not already provide it. That extra `RUSTUP_HOME` export is
-required for the current Windows Dylint driver path.
+the environment does not already provide it.
 
 If you are changing the lint crate itself, use the source-build wrapper:
 

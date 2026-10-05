@@ -52,7 +52,7 @@ where
 }
 
 pub fn normalize_for_native_workdir(path: impl AsRef<Path>) -> PathBuf {
-    normalize_for_native_workdir_with_flag(path.as_ref().to_path_buf(), cfg!(windows))
+    path.as_ref().to_path_buf()
 }
 
 pub struct SymlinkWritePaths {
@@ -159,14 +159,6 @@ fn normalize_for_wsl(path: PathBuf) -> PathBuf {
     normalize_for_wsl_with_flag(path, env::is_wsl())
 }
 
-fn normalize_for_native_workdir_with_flag(path: PathBuf, is_windows: bool) -> PathBuf {
-    if is_windows {
-        dunce::simplified(&path).to_path_buf()
-    } else {
-        path
-    }
-}
-
 fn normalize_for_wsl_with_flag(path: PathBuf, is_wsl: bool) -> PathBuf {
     if !is_wsl {
         return path;
@@ -223,7 +215,7 @@ fn lower_ascii_path(path: PathBuf) -> PathBuf {
     use std::os::unix::ffi::OsStrExt;
     use std::os::unix::ffi::OsStringExt;
 
-    // WSL mounts Windows drives under /mnt/<drive>, which are case-insensitive.
+    // WSL mounts host drives under /mnt/<drive>, which are case-insensitive.
     let bytes = path.as_os_str().as_bytes();
     let mut lowered = Vec::with_capacity(bytes.len());
     for byte in bytes {

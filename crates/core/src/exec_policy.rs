@@ -20,7 +20,6 @@ use genex_execpolicy::RuleMatch;
 use genex_execpolicy::blocking_append_allow_prefix_rule;
 use genex_execpolicy::blocking_append_network_rule;
 use genex_protocol::approvals::ExecPolicyAmendment;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::FileSystemSandboxKind;
 use genex_protocol::protocol::AskForApproval;
@@ -71,12 +70,6 @@ pub(crate) static BANNED_PREFIX_SUGGESTIONS: &[&[&str]] = &[
     &["bun"],
     &["bun", "-e"],
     &["bun", "run"],
-    &["cmd"],
-    &["cmd", "/c"],
-    &["cmd", "/k"],
-    &["cmd.exe"],
-    &["cmd.exe", "/c"],
-    &["cmd.exe", "/k"],
     &["dash"],
     &["dash", "-c"],
     &["deno"],
@@ -102,24 +95,6 @@ pub(crate) static BANNED_PREFIX_SUGGESTIONS: &[&[&str]] = &[
     &["php"],
     &["php", "-r"],
     &["pnpm", "run"],
-    &["powershell"],
-    &["powershell", "-Command"],
-    &["powershell", "-EncodedCommand"],
-    &["powershell", "-File"],
-    &["powershell", "-c"],
-    &["powershell.exe"],
-    &["powershell.exe", "-Command"],
-    &["powershell.exe", "-EncodedCommand"],
-    &["powershell.exe", "-File"],
-    &["powershell.exe", "-c"],
-    &["pwsh"],
-    &["pwsh", "-Command"],
-    &["pwsh", "-EncodedCommand"],
-    &["pwsh", "-File"],
-    &["pwsh", "-c"],
-    &["pwsh", "-e"],
-    &["pwsh", "-ec"],
-    &["pwsh", "-f"],
     &["py"],
     &["py", "-3"],
     &["pypy"],
@@ -149,27 +124,17 @@ pub(crate) static BANNED_PREFIX_SUGGESTIONS: &[&[&str]] = &[
 /// words being evaluated by exec-policy.
 ///
 /// The command tokens may be the original argv or a shell-specific lowering of
-/// a wrapper such as `bash -lc ...` or `powershell.exe -Command ...`. We only
-/// need to distinguish the PowerShell case because its dangerous-command
-/// heuristics operate on PowerShell-flavored inner command words rather than
-/// the generic command classifier.
+/// a POSIX shell wrapper.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ExecPolicyCommandOrigin {
     /// Use the generic unmatched-command heuristics.
     Generic,
-    /// The command words came from the `-Command` body of a top-level
-    /// PowerShell wrapper, so use PowerShell-specific unmatched-command
-    /// heuristics for the lowered words.
-    PowerShell,
 }
 
 #[derive(Clone, Copy)]
 pub(crate) struct UnmatchedCommandContext<'a> {
     pub(crate) approval_policy: AskForApproval,
     pub(crate) permission_profile: &'a PermissionProfile,
-    // TODO(anp): Reconcile this decision input with TurnEnvironment::sandbox_context
-    // so approval heuristics match the selected environment's Windows backend.
-    pub(crate) windows_sandbox_level: WindowsSandboxLevel,
     pub(crate) sandbox_permissions: SandboxPermissions,
     pub(crate) command_origin: ExecPolicyCommandOrigin,
 }
@@ -283,9 +248,6 @@ pub(crate) struct ExecApprovalRequest<'a> {
     pub(crate) approval_policy: AskForApproval,
     pub(crate) permission_profile: PermissionProfile,
     pub(crate) environment_policy: Option<&'a RequirementsExecPolicy>,
-    // TODO(anp): Reconcile this approval snapshot with TurnEnvironment::sandbox_context
-    // rather than taking the Windows backend from the turn-wide default.
-    pub(crate) windows_sandbox_level: WindowsSandboxLevel,
     pub(crate) sandbox_permissions: SandboxPermissions,
     pub(crate) prefix_rule: Option<Vec<String>>,
     pub(crate) allow_prefix_rules: AllowPrefixRules,
@@ -348,7 +310,6 @@ impl ExecPolicyManager {
             approval_policy,
             permission_profile,
             environment_policy,
-            windows_sandbox_level,
             sandbox_permissions,
             prefix_rule,
             allow_prefix_rules,
@@ -362,7 +323,6 @@ impl ExecPolicyManager {
                 UnmatchedCommandContext {
                     approval_policy,
                     permission_profile: &permission_profile,
-                    windows_sandbox_level,
                     sandbox_permissions,
                     command_origin,
                 },
@@ -724,12 +684,6 @@ fn dangerous_command_match_for_origin(
         ExecPolicyCommandOrigin::Generic => {
             dangerous_command_match_for_platform(command, command_platform)
         }
-        ExecPolicyCommandOrigin::PowerShell => {
-            genex_shell_command::is_dangerous_command::dangerous_powershell_words_match(
-                command,
-                command_platform,
-            )
-        }
     }
 }
 
@@ -777,27 +731,17 @@ fn render_decision_for_unmatched_command_for_platform(
     let UnmatchedCommandContext {
         approval_policy,
         permission_profile,
-        windows_sandbox_level,
         sandbox_permissions,
         command_origin: _,
     } = context;
     let file_system_sandbox_policy = permission_profile.file_system_sandbox_policy();
-    // When the Windows sandbox backend is disabled, managed filesystem
-    // restrictions are only a policy shape; there is no platform sandbox to
-    // enforce the boundary. Keep that legacy case conservative while still
-    // relying on the real Windows sandbox when it is enabled.
-    let windows_managed_fs_restrictions_without_sandbox_backend = cfg!(windows)
-        && windows_sandbox_level == WindowsSandboxLevel::Disabled
-        && profile_has_managed_filesystem_restrictions(permission_profile);
-
     // If the command is flagged as dangerous or we have no sandbox protection,
     // we should never allow it to run without approval.
     //
     // We prefer to prompt the user rather than outright forbid the command,
     // but if the user has explicitly disabled prompts, we must
     // forbid the command.
-    if dangerous_command_match.is_some() || windows_managed_fs_restrictions_without_sandbox_backend
-    {
+    if dangerous_command_match.is_some() {
         return match approval_policy {
             AskForApproval::Never => Decision::Forbidden,
             AskForApproval::OnRequest
@@ -883,17 +827,6 @@ fn commands_for_exec_policy_for_platform(
         return ExecPolicyCommands {
             commands,
             command_origin: ExecPolicyCommandOrigin::Generic,
-        };
-    }
-
-    if command_platform == DangerousCommandPlatform::Windows
-        && let Some(commands) =
-            genex_shell_command::powershell::parse_powershell_command_into_plain_commands(command)
-        && !commands.is_empty()
-    {
-        return ExecPolicyCommands {
-            commands,
-            command_origin: ExecPolicyCommandOrigin::PowerShell,
         };
     }
 

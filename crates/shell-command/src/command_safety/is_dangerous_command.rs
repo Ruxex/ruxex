@@ -1,24 +1,16 @@
 use crate::bash::parse_shell_lc_literal_commands;
-#[path = "windows_dangerous_commands.rs"]
-mod windows_dangerous_commands;
 
 /// The platform whose command semantics should be used for safety checks.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DangerousCommandPlatform {
     /// POSIX command and path semantics.
     Posix,
-    /// Windows command and path semantics.
-    Windows,
 }
 
 impl DangerousCommandPlatform {
     /// Returns the platform where the classifier is running.
     pub fn host() -> Self {
-        if cfg!(windows) {
-            Self::Windows
-        } else {
-            Self::Posix
-        }
+        Self::Posix
     }
 }
 
@@ -71,26 +63,7 @@ fn dangerous_command_match_with_depth(
         return Some(dangerous_match);
     }
 
-    if platform == DangerousCommandPlatform::Windows
-        && windows_dangerous_commands::is_dangerous_command_windows(command)
-    {
-        return Some(DangerousCommandMatch::Other);
-    }
-
     None
-}
-
-/// Returns the PowerShell-specific rule matched using the target platform's semantics.
-pub fn dangerous_powershell_words_match(
-    command: &[String],
-    platform: DangerousCommandPlatform,
-) -> Option<DangerousCommandMatch> {
-    if platform == DangerousCommandPlatform::Windows {
-        windows_dangerous_commands::is_dangerous_powershell_words(command)
-            .then_some(DangerousCommandMatch::Other)
-    } else {
-        None
-    }
 }
 
 fn executable_name_lookup_key(raw: &str, platform: DangerousCommandPlatform) -> Option<String> {
@@ -100,23 +73,6 @@ fn executable_name_lookup_key(raw: &str, platform: DangerousCommandPlatform) -> 
             .next()
             .filter(|name| !name.is_empty())
             .map(str::to_owned),
-        DangerousCommandPlatform::Windows => {
-            let name = raw
-                .rsplit(['/', '\\'])
-                .next()
-                .filter(|name| !name.is_empty())?;
-            let name = match name.as_bytes() {
-                [drive, b':', ..] if drive.is_ascii_alphabetic() => &name[2..],
-                _ => name,
-            };
-            let name = name.to_ascii_lowercase();
-            for suffix in [".exe", ".cmd", ".bat", ".com"] {
-                if let Some(stripped) = name.strip_suffix(suffix) {
-                    return Some(stripped.to_string());
-                }
-            }
-            (!name.is_empty()).then_some(name)
-        }
     }
 }
 
@@ -301,23 +257,6 @@ mod tests {
             vec_str(&["bash", "-lc", "trap 'echo rm -rf /tmp/example' EXIT"]),
         ] {
             assert_eq!(dangerous_command_match(&command), None, "{command:?}");
-        }
-    }
-
-    #[test]
-    fn direct_powershell_words_return_other_match_on_windows() {
-        let command = vec_str(&["Remove-Item", "test", "-Force"]);
-
-        if cfg!(windows) {
-            assert_eq!(
-                dangerous_powershell_words_match(&command, DangerousCommandPlatform::host()),
-                Some(DangerousCommandMatch::Other)
-            );
-        } else {
-            assert_eq!(
-                dangerous_powershell_words_match(&command, DangerousCommandPlatform::host()),
-                None
-            );
         }
     }
 }

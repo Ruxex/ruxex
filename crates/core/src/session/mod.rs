@@ -53,6 +53,9 @@ use async_channel::Receiver;
 use async_channel::Sender;
 use chrono::Local;
 use chrono::Utc;
+use futures::future::BoxFuture;
+use futures::future::Shared;
+use futures::prelude::*;
 use genex_async_utils::OrCancelExt;
 use genex_attachment_store::AttachmentStore;
 use genex_attachment_store::InlineAttachmentStore;
@@ -79,6 +82,7 @@ use genex_mcp::McpRuntimeContext;
 use genex_mcp::McpRuntimeInput;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
+use genex_network_proxy::ManagedProxyRouting;
 use genex_network_proxy::NetworkProxy;
 use genex_network_proxy::NetworkProxyAuditMetadata;
 use genex_network_proxy::normalize_host;
@@ -152,7 +156,6 @@ use genex_rollout::state_db;
 use genex_rollout_trace::AgentResultTracePayload;
 use genex_rollout_trace::ThreadStartedTraceMetadata;
 use genex_rollout_trace::ThreadTraceContext;
-use genex_sandboxing::SandboxType;
 use genex_sandboxing::policy_transforms::intersect_permission_profiles_with_context;
 use genex_shell_command::parse_command::parse_command;
 use genex_terminal_detection::user_agent;
@@ -169,9 +172,6 @@ use genex_utils_audio::prepare_response_items as prepare_audio_response_items;
 use genex_utils_git_discovery::GitRootDiscovery;
 use genex_utils_output_truncation::with_serialization_allowance;
 use genex_utils_path_uri::PathUri;
-use futures::future::BoxFuture;
-use futures::future::Shared;
-use futures::prelude::*;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
@@ -190,8 +190,6 @@ use tracing::warn;
 use uuid::Uuid;
 
 use crate::client::ModelClient;
-use crate::genex_thread::GenexThreadSettingsOverrides;
-use crate::genex_thread::ThreadConfigSnapshot;
 #[cfg(test)]
 use crate::compact::collect_user_messages;
 use crate::config::Config;
@@ -202,6 +200,8 @@ use crate::config::StartedNetworkProxy;
 use crate::config::resolve_web_search_mode_for_turn;
 use crate::context_manager::ContextManager;
 use crate::context_manager::HistoryReplacement;
+use crate::genex_thread::GenexThreadSettingsOverrides;
+use crate::genex_thread::ThreadConfigSnapshot;
 use crate::thread_rollout_truncation::initial_history_has_prior_user_turns;
 use genex_config::CONFIG_TOML_FILE;
 use genex_config::ConfigLayerSource;
@@ -306,13 +306,11 @@ use crate::tools::sandboxing::ApprovalStore;
 use crate::turn_timing::TurnTimingState;
 use crate::turn_timing::record_turn_ttfm_metric;
 use crate::unified_exec::UnifiedExecProcessManager;
-use crate::windows_sandbox::WindowsSandboxLevelExt;
-use crate::windows_sandbox::managed_proxy_routing_for_windows_sandbox;
 use genex_core_plugins::PluginCommandAttribution;
 use genex_core_plugins::PluginsManager;
 use genex_git_utils::get_git_repo_root;
-use genex_history::GenexHarnessMetadata;
 use genex_history::CompactedItem;
+use genex_history::GenexHarnessMetadata;
 use genex_history::InitialHistory;
 use genex_history::ResponseItemEnvelope;
 use genex_mcp::McpConfig;
@@ -326,7 +324,6 @@ use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
 use genex_protocol::config_types::Settings;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 use genex_protocol::models::LocalImagePreparation;
@@ -334,11 +331,11 @@ use genex_protocol::models::ResponseInputItem;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::DeprecationNoticeEvent;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::ModelRerouteEvent;
 use genex_protocol::protocol::ModelRerouteReason;
 use genex_protocol::protocol::ModelVerification;
@@ -449,8 +446,6 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) external_time_provider: Option<Arc<dyn TimeProvider>>,
     pub(crate) inherited_multi_agent_version: Option<MultiAgentVersion>,
     pub(crate) git_enrichment_policy: GitEnrichmentPolicy,
-    pub(crate) windows_sandbox_proxy_settings_mode:
-        genex_sandboxing::WindowsSandboxProxySettingsMode,
 }
 
 pub(crate) fn resolve_multi_agent_version(
@@ -549,7 +544,6 @@ impl Session {
             external_time_provider,
             inherited_multi_agent_version,
             git_enrichment_policy,
-            windows_sandbox_proxy_settings_mode,
         } = args;
         let (tx_sub, rx_sub) = async_channel::bounded(SUBMISSION_CHANNEL_CAPACITY);
         let (tx_event, rx_event) = async_channel::unbounded();
@@ -764,9 +758,6 @@ impl Session {
             permission_profile_state: session_permission_profile_state_from_config(&config)?,
             allow_login_shell: config.permissions.allow_login_shell,
             shell_environment_policy: config.permissions.shell_environment_policy.clone(),
-            windows_sandbox_level: WindowsSandboxLevel::from_config(&config),
-            windows_sandbox_type: config.permissions.windows_sandbox_type,
-            windows_sandbox_private_desktop: config.permissions.windows_sandbox_private_desktop,
             use_legacy_landlock: config.features.use_legacy_landlock(),
             legacy_fallback_cwd: config.cwd.clone(),
             runtime_workspace_roots: config.workspace_roots.clone(),
@@ -829,7 +820,6 @@ impl Session {
             external_time_provider,
             multi_agent_version,
             git_enrichment_policy,
-            windows_sandbox_proxy_settings_mode,
         ))
         .await
         .map_err(|e| {
@@ -1111,7 +1101,6 @@ impl Session {
         spec: &crate::config::NetworkProxySpec,
         exec_policy: &genex_execpolicy::Policy,
         permission_profile: &PermissionProfile,
-        windows_sandbox_type: SandboxType,
         network_policy_decider: Option<Arc<dyn genex_network_proxy::NetworkPolicyDecider>>,
         blocked_request_observer: Option<Arc<dyn genex_network_proxy::BlockedRequestObserver>>,
         managed_network_requirements_enabled: bool,
@@ -1129,7 +1118,7 @@ impl Session {
         let network_proxy = spec
             .start_proxy(
                 permission_profile,
-                managed_proxy_routing_for_windows_sandbox(windows_sandbox_type),
+                ManagedProxyRouting::DedicatedListeners,
                 network_policy_decider,
                 blocked_request_observer,
                 managed_network_requirements_enabled,
@@ -1198,8 +1187,7 @@ impl Session {
                 .set_snapshot_credential_broker(SnapshotCredentialBrokerState::Inactive);
             return;
         }
-        let managed_proxy_routing =
-            managed_proxy_routing_for_windows_sandbox(session_configuration.windows_sandbox_type);
+        let managed_proxy_routing = ManagedProxyRouting::DedicatedListeners;
         let started_proxy = self.services.network_proxy.load_full();
         let network_policy_decider = started_proxy
             .as_ref()
@@ -1225,7 +1213,6 @@ impl Session {
             &spec,
             current_exec_policy.as_ref(),
             &session_configuration.permission_profile(),
-            session_configuration.windows_sandbox_type,
             network_policy_decider,
             Some(build_blocked_request_observer(Arc::clone(
                 &self.services.network_approval,

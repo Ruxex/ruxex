@@ -765,7 +765,7 @@ pub(crate) fn configured_marketplace_plugins(
                     .policy
                     .products
                     .as_deref()
-            .is_none_or(|products| Product::Codex.matches_product_restriction(products))
+                    .is_none_or(|products| Product::Codex.matches_product_restriction(products))
             })
             .map(|plugin| plugin.name)
             .collect::<HashSet<_>>();

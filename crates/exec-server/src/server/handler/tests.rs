@@ -22,7 +22,7 @@ use crate::rpc::RpcNotificationSender;
 use crate::server::session_registry::SessionRegistry;
 
 fn exec_params(process_id: &str) -> ExecParams {
-    exec_params_with_argv(process_id, sleep_argv())
+    exec_params_with_argv(process_id, shell_argv("sleep 0.1"))
 }
 
 fn exec_params_with_argv(process_id: &str, argv: Vec<String>) -> ExecParams {
@@ -53,28 +53,8 @@ fn inherited_path_env() -> HashMap<String, String> {
     env
 }
 
-fn sleep_argv() -> Vec<String> {
-    shell_argv("sleep 0.1", "ping -n 2 127.0.0.1 >NUL")
-}
-
-fn shell_argv(unix_script: &str, windows_script: &str) -> Vec<String> {
-    if cfg!(windows) {
-        vec![
-            windows_command_processor(),
-            "/C".to_string(),
-            windows_script.to_string(),
-        ]
-    } else {
-        vec![
-            "/bin/sh".to_string(),
-            "-c".to_string(),
-            unix_script.to_string(),
-        ]
-    }
-}
-
-fn windows_command_processor() -> String {
-    std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string())
+fn shell_argv(script: &str) -> Vec<String> {
+    vec!["/bin/sh".to_string(), "-c".to_string(), script.to_string()]
 }
 
 fn test_runtime_paths() -> ExecServerRuntimePaths {
@@ -190,10 +170,7 @@ async fn long_poll_read_fails_after_session_resume() {
     // after session resume, not because the process produced output or exited.
     first_handler
         .exec(
-            exec_params_with_argv(
-                "proc-long-poll",
-                shell_argv("sleep 5", "ping -n 6 127.0.0.1 >NUL"),
-            ),
+            exec_params_with_argv("proc-long-poll", shell_argv("sleep 5")),
             /*launch_context*/ None,
         )
         .await
@@ -313,10 +290,7 @@ async fn output_and_exit_are_retained_after_notification_receiver_closes() {
         .exec(
             exec_params_with_argv(
                 process_id.as_str(),
-                shell_argv(
-                    "sleep 0.05; printf 'first\\n'; sleep 0.05; printf 'second\\n'",
-                    "echo first&& ping -n 2 127.0.0.1 >NUL&& echo second",
-                ),
+                shell_argv("sleep 0.05; printf 'first\\n'; sleep 0.05; printf 'second\\n'"),
             ),
             /*launch_context*/ None,
         )

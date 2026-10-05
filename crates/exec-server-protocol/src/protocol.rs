@@ -117,7 +117,6 @@ pub struct EnvironmentInfo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub platform_os: Option<String>,
     /// Executor-local default directories for resolving `:tmpdir`, when reported.
-    /// On Windows, a command's `TEMP` or `TMP` overrides take precedence.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub temporary_directories: Option<Vec<PathUri>>,
     /// Executor-native temporary directory for child-visible sidecars.
@@ -154,9 +153,6 @@ pub struct EnvironmentCapabilities {
     /// Whether shell state can be cached and restored entirely inside the executor.
     #[serde(default)]
     pub shell_snapshot_v2: bool,
-    /// Whether requests may explicitly select the MXC Windows sandbox backend.
-    #[serde(default)]
-    pub windows_mxc: bool,
 }
 
 /// Status returned by an initialized exec-server connection.
@@ -189,25 +185,17 @@ impl EnvironmentInfo {
     }
 
     fn local_temporary_directories_with_cwd(cwd: Option<&std::path::Path>) -> Vec<PathUri> {
-        let temporary_directory_env_vars: &[&str] = if cfg!(windows) {
-            &["TEMP", "TMP"]
-        } else {
-            &["TMPDIR"]
-        };
+        let temporary_directory_env_vars: &[&str] = &["TMPDIR"];
         let normalize_temp_path = |path: std::ffi::OsString| {
-            PathUri::from_host_native_path(&path).ok().or_else(|| {
-                if cfg!(unix) {
-                    PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok()
-                } else {
-                    None
-                }
-            })
+            PathUri::from_host_native_path(&path)
+                .ok()
+                .or_else(|| PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok())
         };
         let mut temporary_directories = Vec::new();
         for name in temporary_directory_env_vars {
             if let Some(path) = std::env::var_os(name)
                 .filter(|path| !path.is_empty())
-                .filter(|path| cfg!(unix) || std::path::Path::new(path).is_absolute())
+                .filter(|path| std::path::Path::new(path).is_absolute() || cwd.is_some())
                 .and_then(&normalize_temp_path)
                 && !temporary_directories.contains(&path)
             {
@@ -219,20 +207,12 @@ impl EnvironmentInfo {
 
     /// Returns information about the current local exec-server process.
     pub fn local() -> Self {
-        #[cfg(windows)]
-        let windows_mxc = genex_mxc_sandbox::is_available();
-        #[cfg(not(windows))]
-        let windows_mxc = false;
         let cwd = std::env::current_dir().ok();
         let temporary_directories = Self::local_temporary_directories_with_cwd(cwd.as_deref());
         let normalize_temp_path = |path: std::ffi::OsString| {
-            PathUri::from_host_native_path(&path).ok().or_else(|| {
-                if cfg!(unix) {
-                    PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok()
-                } else {
-                    None
-                }
-            })
+            PathUri::from_host_native_path(&path)
+                .ok()
+                .or_else(|| PathUri::from_host_native_path(cwd.as_ref()?.join(path)).ok())
         };
         let temp_dir = normalize_temp_path(std::env::temp_dir().into_os_string());
 
@@ -252,7 +232,6 @@ impl EnvironmentInfo {
                 http_header_env_vars: true,
                 sandboxed_file_streaming: true,
                 shell_snapshot_v2: cfg!(unix),
-                windows_mxc,
             },
         }
     }
@@ -262,10 +241,9 @@ impl EnvironmentInfo {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShellInfo {
-    /// Stable shell name, for example `zsh`, `bash`, `powershell`, `sh`, or `cmd`.
+    /// Stable shell name, for example `zsh`, `bash`, or `sh`.
     pub name: String,
-    /// Target-native shell executable path or command name. Fallbacks such as `cmd.exe` need not
-    /// be absolute, so this is not a [`PathUri`].
+    /// Target-native shell executable path or command name.
     pub path: String,
 }
 
@@ -431,8 +409,6 @@ pub enum ProcessSandboxType {
     None,
     MacosSeatbelt,
     LinuxSeccomp,
-    WindowsRestrictedToken,
-    WindowsMxc,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -1170,13 +1146,11 @@ mod tests {
     use super::WireFsOpenParams;
     use super::WireFsReadFileParams;
     use genex_file_system::FileSystemSandboxContext;
-    use genex_file_system::WindowsSandboxSelection;
     use genex_network_proxy::ManagedNetworkSandboxContext;
     use genex_network_proxy::NetworkProxyAuditMetadata;
     use genex_network_proxy::NetworkProxyConfig;
     use genex_network_proxy::RemoteNetworkProxyConfig;
     use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
-    use genex_protocol::config_types::WindowsSandboxProxySettingsMode;
     use genex_protocol::models::ManagedFileSystemPermissions;
     use genex_protocol::models::PermissionProfile;
     use genex_protocol::permissions::FileSystemAccessMode;
@@ -1367,61 +1341,23 @@ mod tests {
                 http_header_env_vars: false,
                 sandboxed_file_streaming: false,
                 shell_snapshot_v2: false,
-                windows_mxc: false,
             }
-        );
-    }
-
-    #[test]
-    fn environment_info_preserves_executor_metadata() {
-        let expected = serde_json::json!({
-            "shell": { "name": "powershell", "path": "powershell.exe" },
-            "executorVersion": "1.2.3-alpha.4",
-            "providerId": "sha256:e0a0cebe63ab8189ffe3eed378ccf6aa89ef15bc75e39dbbf1fc55951ec6888b",
-            "cwd": null,
-            "userHomeDir": "file:///C:/Users/remote",
-            "platformOs": "windows",
-            "temporaryDirectories": ["file:///C:/Temp", "file:///D:/Temp"],
-            "capabilities": {
-                "networkProxyLaunch": false,
-                "capabilityDiscoverySandbox": false,
-                "environmentConfigRead": false,
-                "httpHeaderEnvVars": false,
-                "sandboxedFileStreaming": false,
-                "shellSnapshotV2": false,
-                "windowsMxc": false,
-            },
-        });
-        let info: EnvironmentInfo = serde_json::from_value(expected.clone())
-            .expect("environment info with executor metadata should deserialize");
-
-        assert_eq!(
-            serde_json::to_value(info).expect("environment info should serialize"),
-            expected,
         );
     }
 
     #[test]
     fn local_environment_info_reads_platform_temporary_directories() {
         let cwd = std::env::current_dir().expect("current directory");
-        let names: &[&str] = if cfg!(windows) {
-            &["TEMP", "TMP"]
-        } else {
-            &["TMPDIR"]
-        };
+        let names: &[&str] = &["TMPDIR"];
         let mut expected = names
             .iter()
             .filter_map(std::env::var_os)
             .filter(|path| !path.is_empty())
-            .filter(|path| cfg!(unix) || std::path::Path::new(path).is_absolute())
+            .filter(|path| std::path::Path::new(path).is_absolute() || cwd.exists())
             .filter_map(|path| {
-                PathUri::from_host_native_path(&path).ok().or_else(|| {
-                    if cfg!(unix) {
-                        PathUri::from_host_native_path(cwd.join(path)).ok()
-                    } else {
-                        None
-                    }
-                })
+                PathUri::from_host_native_path(&path)
+                    .ok()
+                    .or_else(|| PathUri::from_host_native_path(cwd.join(path)).ok())
             })
             .collect::<Vec<_>>();
         expected.dedup();
@@ -1525,11 +1461,9 @@ mod tests {
         let mut sandbox =
             FileSystemSandboxContext::from_permission_profile(permissions, cwd.clone());
         sandbox.user_home_dir = Some(cwd.clone());
-        sandbox.windows_sandbox_selection = WindowsSandboxSelection::Mxc;
 
         let serialized = serde_json::to_value(&sandbox).expect("serialize sandbox");
 
-        assert_eq!(serialized["windowsSandboxLevel"], "mxc");
         assert_eq!(serialized["cwd"], serde_json::json!(cwd.to_string()));
         assert_eq!(
             serialized["userHomeDir"],
@@ -1561,70 +1495,6 @@ mod tests {
             serde_json::from_value::<FileSystemSandboxContext>(serialized)
                 .expect("deserialize sandbox"),
             sandbox
-        );
-        let preserve = FileSystemSandboxContext {
-            windows_sandbox_proxy_settings_mode: Some(WindowsSandboxProxySettingsMode::Preserve),
-            ..sandbox
-        };
-        let serialized = serde_json::to_value(&preserve).expect("serialize preserve mode");
-        assert_eq!(serialized["windowsSandboxProxySettingsMode"], "preserve");
-        assert_eq!(
-            serde_json::from_value::<FileSystemSandboxContext>(serialized)
-                .expect("deserialize preserve mode"),
-            preserve
-        );
-    }
-
-    /// The filesystem RPC preserves Windows drive and UNC permission URIs on any host.
-    #[test]
-    fn filesystem_protocol_preserves_foreign_permission_path_json() {
-        let cwd = PathUri::parse("file:///C:/a%20b").expect("drive cwd URI");
-        let unc = PathUri::parse("file://host/s/a%20b").expect("UNC path URI");
-        let permissions = PermissionProfile::Managed {
-            file_system: ManagedFileSystemPermissions::Restricted {
-                entries: [cwd.clone(), unc.clone()]
-                    .into_iter()
-                    .map(|path| {
-                        FileSystemSandboxEntry::new(path.into(), FileSystemAccessMode::Read)
-                    })
-                    .collect(),
-                glob_scan_max_depth: None,
-            },
-            network: NetworkSandboxPolicy::Restricted,
-        };
-        let params = FsReadFileParams {
-            path: unc,
-            follow_symlinks: None,
-            sandbox: Some(FileSystemSandboxContext::from_permission_profile(
-                permissions,
-                cwd,
-            )),
-        };
-        let serialized = serde_json::to_value(WireFsReadFileParams::from(params.clone()))
-            .expect("serialize filesystem wire request");
-        assert_eq!(
-            serialized["sandbox"]["permissions"],
-            serde_json::json!({
-                "type": "managed",
-                "file_system": {
-                    "type": "restricted",
-                    "entries": [
-                        {"path": {"type": "path", "path": "file:///C:/a%20b"}, "access": "read"},
-                        {"path": {"type": "path", "path": "file://host/s/a%20b"}, "access": "read"}
-                    ]
-                },
-                "network": "restricted"
-            }),
-        );
-        assert_eq!(
-            serde_json::from_value::<WireFsReadFileParams>(serialized)
-                .expect("deserialize filesystem wire request")
-                .try_into_request(|wire| {
-                    let cwd = wire.cwd().expect("explicit client policy cwd").clone();
-                    Ok(wire.into_context(cwd))
-                })
-                .expect("resolve filesystem request"),
-            params,
         );
     }
 
@@ -1660,13 +1530,12 @@ mod tests {
     /// Only filesystem RPCs need the additive policy field; capability discovery keeps its original wire cwd.
     #[test]
     fn filesystem_open_and_capability_discovery_keep_their_existing_cwd_contracts() {
-        let cwd = PathUri::parse("file:///D:/selected").expect("Windows policy cwd");
+        let cwd = PathUri::parse("file:///workspace/selected").expect("policy cwd");
         let path = cwd.join("note.txt").expect("read path");
         let mut sandbox = FileSystemSandboxContext::from_permission_profile(
             PermissionProfile::Disabled,
             cwd.clone(),
         );
-        sandbox.windows_sandbox_selection = WindowsSandboxSelection::Mxc;
         let open = FsOpenParams {
             handle_id: "handle".to_owned(),
             path: path.clone(),
@@ -1685,21 +1554,17 @@ mod tests {
                 open_wire["sandbox"].get("cwd"),
                 open_wire["sandbox"].get("workspaceRoots"),
                 open_wire["sandbox"].get("policyContext"),
-                open_wire["sandbox"].get("windowsSandboxLevel"),
                 capability_wire["sandbox"].get("cwd"),
                 capability_wire["sandbox"].get("workspaceRoots"),
                 capability_wire["sandbox"].get("policyContext"),
-                capability_wire["sandbox"].get("windowsSandboxLevel"),
             ),
             (
                 None,
                 None,
                 Some(&serde_json::json!({"cwd": cwd, "workspaceRoots": [cwd]})),
-                Some(&serde_json::json!("mxc")),
                 Some(&serde_json::json!(cwd)),
                 Some(&serde_json::json!([cwd])),
                 None,
-                Some(&serde_json::json!("mxc")),
             )
         );
         assert_eq!(

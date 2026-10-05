@@ -23,10 +23,10 @@ use crate::mcp_skill_dependencies::maybe_prompt_and_install_mcp_dependencies;
 use crate::mentions::collect_explicit_plugin_mentions;
 use crate::mentions::collect_tool_mentions_from_messages;
 use crate::plugins::build_plugin_injections;
-use crate::responses_metadata::GenexResponsesMetadata;
-use crate::responses_metadata::GenexResponsesRequestKind;
 use crate::responses_metadata::CompactionPhase;
 use crate::responses_metadata::CompactionReason;
+use crate::responses_metadata::GenexResponsesMetadata;
+use crate::responses_metadata::GenexResponsesRequestKind;
 use crate::responses_retry::ResponsesStreamRequest;
 use crate::responses_retry::ResponsesStreamRetryState;
 use crate::responses_retry::handle_retryable_response_stream_error;
@@ -58,6 +58,8 @@ use crate::tools::spec_plan::tool_suggest_enabled;
 use crate::turn_diff_tracker::TurnDiffTracker;
 use crate::turn_timing::record_turn_ttft_metric;
 use crate::util::error_or_panic;
+use futures::prelude::*;
+use futures::stream::FuturesOrdered;
 use genex_async_utils::OrCancelExt;
 use genex_extension_api::ExtensionData;
 use genex_extension_api::TurnInputContext;
@@ -83,9 +85,9 @@ use genex_protocol::models::MessagePhase;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::AgentMessageContentDeltaEvent;
 use genex_protocol::protocol::AgentReasoningSectionBreakEvent;
-use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::ErrorEvent;
 use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::PlanDeltaEvent;
 use genex_protocol::protocol::ReasoningContentDeltaEvent;
 use genex_protocol::protocol::ReasoningRawContentDeltaEvent;
@@ -104,8 +106,6 @@ use genex_utils_stream_parser::AssistantTextStreamParser;
 use genex_utils_stream_parser::ProposedPlanSegment;
 use genex_utils_stream_parser::extract_proposed_plan_text;
 use genex_utils_stream_parser::strip_citations;
-use futures::prelude::*;
-use futures::stream::FuturesOrdered;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
 use tracing::error;
@@ -648,7 +648,7 @@ pub(crate) async fn run_turn(
                     e.details(),
                     GenexErrorDetails::MisalignmentPolicyViolation { .. }
                 ) {}
-                        let error = e.to_genex_protocol_error();
+                let error = e.to_genex_protocol_error();
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                     .await;
                 let event = EventMsg::Error(e.to_error_event(/*message_prefix*/ None));

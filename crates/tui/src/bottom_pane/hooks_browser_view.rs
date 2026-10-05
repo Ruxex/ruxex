@@ -1,12 +1,12 @@
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+use crossterm::event::KeyModifiers;
 use genex_app_server_protocol::HookEventName;
 use genex_app_server_protocol::HookHandlerMetadata;
 use genex_app_server_protocol::HookMetadata;
 use genex_app_server_protocol::HookSource;
 use genex_app_server_protocol::HookTrustStatus;
 use genex_app_server_protocol::HooksListEntry;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyModifiers;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;

@@ -665,7 +665,7 @@ fn rollout_item_schema_matches_tagged_payload_and_sibling_metadata() -> Result<(
     );
     assert_eq!(
         compacted["properties"]["replacement_history_metadata"]["items"]["$ref"],
-            json!("#/definitions/GenexHarnessMetadata")
+        json!("#/definitions/GenexHarnessMetadata")
     );
     let required = compacted["required"].as_array().expect("required fields");
     assert!(!required.contains(&json!("replacement_history")));

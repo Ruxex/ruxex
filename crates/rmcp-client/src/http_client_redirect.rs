@@ -8,6 +8,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
+use futures::FutureExt;
+use futures::future::BoxFuture;
 use genex_exec_server::ExecServerError;
 use genex_exec_server::HttpClient;
 use genex_exec_server::HttpHeader;
@@ -15,8 +17,6 @@ use genex_exec_server::HttpRedirectPolicy;
 use genex_exec_server::HttpRequestParams;
 use genex_exec_server::HttpRequestResponse;
 use genex_exec_server::HttpResponseBodyStream;
-use futures::FutureExt;
-use futures::future::BoxFuture;
 use http::HeaderValue;
 use http::StatusCode;
 use url::Url;

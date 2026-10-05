@@ -18,9 +18,9 @@ use uuid::Uuid;
 
 use crate::AgentThreadId;
 use crate::CodeCellTraceContext;
-use crate::GenexTurnId;
 use crate::CompactionId;
 use crate::CompactionTraceContext;
+use crate::GenexTurnId;
 use crate::InferenceTraceContext;
 use crate::McpCallTraceContext;
 use crate::RawPayloadKind;

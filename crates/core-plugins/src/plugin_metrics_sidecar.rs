@@ -1,4 +1,5 @@
 use crate::ResolvedPluginMetricsOperation;
+use futures::StreamExt;
 use genex_exec_server::CreateDirectoryOptions;
 use genex_exec_server::Environment;
 use genex_exec_server::ExecutorFileSystem;
@@ -10,7 +11,6 @@ use genex_protocol::models::FileSystemPermissions;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-use futures::StreamExt;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -251,11 +251,7 @@ impl PluginMetricsSidecar {
 }
 
 pub fn strip_output_env(env: &mut HashMap<String, String>) {
-    if cfg!(windows) {
-        env.retain(|key, _| !key.eq_ignore_ascii_case(PLUGIN_METRICS_OUTPUT_ENV_VAR));
-    } else {
-        env.remove(PLUGIN_METRICS_OUTPUT_ENV_VAR);
-    }
+    env.remove(PLUGIN_METRICS_OUTPUT_ENV_VAR);
 }
 
 fn parse_output(

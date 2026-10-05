@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
-use super::GenexHarnessMetadata;
 use super::CompactedItem;
 use super::EventMsg;
+use super::GenexHarnessMetadata;
 use super::InterAgentCommunication;
 use super::ResponseItem;
 use super::ResponseItemEnvelope;

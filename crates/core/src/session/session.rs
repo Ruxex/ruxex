@@ -13,9 +13,9 @@ use crate::environment_selection::ThreadEnvironments;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::hook_mcp_executor::CoreHookMcpExecutor;
 use crate::mcp_tool_call::McpToolApprovalMetadata;
+use crate::responses_metadata::CompactionTurnMetadata;
 use crate::responses_metadata::GenexResponsesMetadata;
 use crate::responses_metadata::GenexResponsesRequestKind;
-use crate::responses_metadata::CompactionTurnMetadata;
 use crate::shell_snapshot::ShellSnapshot;
 use crate::shell_snapshot::SnapshotCredentialBrokerState;
 use crate::state::ActiveTurn;
@@ -38,7 +38,6 @@ use genex_protocol::protocol::MultiAgentVersion;
 use genex_protocol::protocol::ThreadHistoryMode;
 use genex_protocol::protocol::ThreadSource;
 use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_sandboxing::SandboxType;
 use genex_skills::SkillError;
 use genex_utils_git_discovery::GitRootDiscovery;
 use genex_utils_path::replace_path_and_deduplicate;
@@ -68,8 +67,6 @@ pub(crate) struct Session {
     pub(super) features: ManagedFeatures,
     pub(super) isolation: genex_extension_api::SessionIsolation,
     pub(crate) allowed_tools: Option<Arc<genex_extension_api::AllowedTools>>,
-    pub(crate) windows_sandbox_proxy_settings_mode:
-        genex_sandboxing::WindowsSandboxProxySettingsMode,
     pub(super) multi_agent_version: OnceLock<MultiAgentVersion>,
     /// Owns invalidation and serializes refreshes without blocking captured calls.
     pub(super) mcp_refresh: McpRefresh,
@@ -112,11 +109,6 @@ pub(crate) struct SessionConfiguration {
     pub(super) permission_profile_state: PermissionProfileState,
     pub(super) allow_login_shell: bool,
     pub(super) shell_environment_policy: ShellEnvironmentPolicy,
-    // TODO(anp): Reconcile these legacy thread defaults with TurnEnvironment::sandbox_context;
-    // internal sandbox decisions should use the selected environment's configuration.
-    pub(super) windows_sandbox_level: WindowsSandboxLevel,
-    pub(super) windows_sandbox_type: SandboxType,
-    pub(super) windows_sandbox_private_desktop: bool,
     pub(super) use_legacy_landlock: bool,
 
     /// Legacy thread cwd used when a turn does not select an environment.
@@ -167,8 +159,6 @@ impl SessionConfiguration {
             workspace_roots: Vec::new(),
             permission_profile: self.permission_profile_state.snapshot(),
             shell_environment_policy: self.shell_environment_policy.clone(),
-            windows_sandbox_level: self.windows_sandbox_level,
-            windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,
             use_legacy_landlock: self.use_legacy_landlock,
             exec_policy: None,
             mcp_policy: None,
@@ -333,7 +323,6 @@ impl SessionConfiguration {
             approval_policy: Some(self.step_settings.approval_policy.value()),
             permission_profile: Some(self.permission_profile()),
             active_permission_profile: self.active_permission_profile(),
-            windows_sandbox_level: Some(self.windows_sandbox_level),
             summary: self.step_settings.reasoning_summary,
             service_tier: Some(self.step_settings.service_tier.clone()),
             collaboration_mode: Some(self.step_settings.collaboration_mode.clone()),
@@ -391,9 +380,6 @@ impl SessionConfiguration {
                             }
                         )
                 });
-        if let Some(windows_sandbox_level) = updates.windows_sandbox_level {
-            next_configuration.windows_sandbox_level = windows_sandbox_level;
-        }
 
         let current_cwd = self.cwd().clone();
         if let Some(environments) = &updates.environments {
@@ -575,7 +561,6 @@ pub(crate) struct SessionSettingsUpdate {
     pub(crate) sandbox_policy: Option<SandboxPolicy>,
     pub(crate) permission_profile: Option<PermissionProfile>,
     pub(crate) active_permission_profile: Option<ActivePermissionProfile>,
-    pub(crate) windows_sandbox_level: Option<WindowsSandboxLevel>,
     pub(crate) service_tier_for_turn: Option<String>,
     pub(crate) app_server_client_name: Option<String>,
     pub(crate) app_server_client_version: Option<String>,
@@ -744,7 +729,6 @@ impl Session {
         external_time_provider: Option<Arc<dyn TimeProvider>>,
         multi_agent_version: Option<MultiAgentVersion>,
         git_enrichment_policy: GitEnrichmentPolicy,
-        windows_sandbox_proxy_settings_mode: genex_sandboxing::WindowsSandboxProxySettingsMode,
     ) -> anyhow::Result<Arc<Self>> {
         debug!(
             "Configuring session: model={}; provider={:?}",
@@ -1442,7 +1426,6 @@ impl Session {
                         spec,
                         current_exec_policy.as_ref(),
                         config.permissions.permission_profile(),
-                        config.permissions.windows_sandbox_type,
                         network_policy_decider.as_ref().map(Arc::clone),
                         blocked_request_observer.as_ref().map(Arc::clone),
                         managed_network_requirements_configured,
@@ -1628,7 +1611,6 @@ impl Session {
                 features: config.features.clone(),
                 isolation,
                 allowed_tools,
-                windows_sandbox_proxy_settings_mode,
                 multi_agent_version,
                 mcp_refresh: McpRefresh::new(),
                 mcp_tool_approval_metadata: Default::default(),

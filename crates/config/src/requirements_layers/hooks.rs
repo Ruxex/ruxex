@@ -18,30 +18,15 @@ use super::stack::merge_output_source;
 pub(super) enum HookDirectoryField {
     #[default]
     ManagedDir,
-    WindowsManagedDir,
 }
 
 impl HookDirectoryField {
     pub(super) fn current_platform() -> Self {
-        if cfg!(windows) {
-            Self::WindowsManagedDir
-        } else {
-            Self::ManagedDir
-        }
+        Self::ManagedDir
     }
 
     fn field_name(self) -> &'static str {
-        match self {
-            Self::ManagedDir => "hooks.managed_dir",
-            Self::WindowsManagedDir => "hooks.windows_managed_dir",
-        }
-    }
-
-    fn inactive(self) -> Self {
-        match self {
-            Self::ManagedDir => Self::WindowsManagedDir,
-            Self::WindowsManagedDir => Self::ManagedDir,
-        }
+        "hooks.managed_dir"
     }
 }
 
@@ -73,19 +58,12 @@ impl HookMergeState {
                 &incoming.managed_dir,
                 source,
             );
-            self.track_singleton_source(
-                HookDirectoryField::WindowsManagedDir,
-                &incoming.windows_managed_dir,
-                source,
-            );
             *target = Some(Sourced::new(incoming, source.clone()));
             return Ok(());
         };
 
         let active_field = self.directory_field;
-        let inactive_field = active_field.inactive();
         let incoming_active_dir = take_hook_dir(&mut incoming, active_field);
-        let incoming_inactive_dir = take_hook_dir(&mut incoming, inactive_field);
         let mut changed = false;
         changed |= self.merge_active_singleton(
             active_field,
@@ -93,12 +71,6 @@ impl HookMergeState {
             incoming_active_dir,
             source,
         )?;
-        changed |= self.fill_singleton(
-            inactive_field,
-            hook_dir_mut(&mut existing.value, inactive_field),
-            incoming_inactive_dir,
-            source,
-        );
         changed |= append_hook_events(&mut existing.value.hooks, incoming.hooks);
         if changed {
             merge_output_source(&mut existing.source, source);
@@ -186,7 +158,6 @@ fn take_hook_dir(
 ) -> Option<PathBuf> {
     match field {
         HookDirectoryField::ManagedDir => hooks.managed_dir.take(),
-        HookDirectoryField::WindowsManagedDir => hooks.windows_managed_dir.take(),
     }
 }
 
@@ -196,7 +167,6 @@ fn hook_dir_mut(
 ) -> &mut Option<PathBuf> {
     match field {
         HookDirectoryField::ManagedDir => &mut hooks.managed_dir,
-        HookDirectoryField::WindowsManagedDir => &mut hooks.windows_managed_dir,
     }
 }
 

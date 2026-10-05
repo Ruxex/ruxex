@@ -8,8 +8,8 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
-use super::GenexHomeUserInstructionsProvider;
 use super::DEFAULT_AGENTS_MD_FILENAME;
+use super::GenexHomeUserInstructionsProvider;
 use super::LOCAL_AGENTS_MD_FILENAME;
 
 fn provider(home: &TempDir) -> GenexHomeUserInstructionsProvider {

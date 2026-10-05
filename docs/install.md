@@ -4,11 +4,14 @@
 
 | Requirement                 | Details                                                         |
 | --------------------------- | --------------------------------------------------------------- |
-| Operating systems           | macOS 12+, Ubuntu 20.04+/Debian 10+, or Windows 11 **via WSL2** |
+| Operating systems           | macOS 12+, Ubuntu 20.04+/Debian 10+ |
 | Git (optional, recommended) | 2.23+ for built-in PR helpers                                   |
 | RAM                         | 4-GB minimum (8-GB recommended)                                 |
 
 ### Build from source
+
+Windows is not a supported host. Windows users should install and run Genex in
+WSL2 using a supported Linux distribution.
 
 ```bash
 # Clone the repository and navigate to the root of the Cargo workspace.

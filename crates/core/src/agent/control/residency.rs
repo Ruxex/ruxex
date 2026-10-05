@@ -1,7 +1,7 @@
 use super::AgentControl;
 use crate::agent::AgentStatus;
-use crate::genex_thread::GenexThread;
 use crate::config::Config;
+use crate::genex_thread::GenexThread;
 use crate::thread_manager::ThreadManagerState;
 use genex_protocol::ThreadId;
 use genex_protocol::error::GenexErr;

@@ -17,6 +17,7 @@ use crate::onboarding::trust_directory::TrustDirectorySelection;
 use crate::onboarding::trust_directory::TrustDirectoryWidget;
 use crate::startup_draft::StartupDraftPump;
 use crate::tui::Tui;
+use color_eyre::eyre::Result;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::RequestId;
 use genex_app_server_protocol::Thread;
@@ -25,7 +26,6 @@ use genex_app_server_protocol::ThreadReadResponse;
 use genex_exec_server::LOCAL_FS;
 use genex_git_utils::resolve_root_git_project_for_trust;
 use genex_protocol::config_types::TrustLevel;
-use color_eyre::eyre::Result;
 use std::collections::VecDeque;
 use std::path::Path;
 use uuid::Uuid;
@@ -112,7 +112,6 @@ pub(crate) async fn check_directory_trust(
                 },
                 cwd: project.cwd,
                 trust_target: project.trust_target,
-                show_windows_create_sandbox_hint: false,
                 should_quit: false,
                 selection: None,
                 highlighted: TrustDirectorySelection::Trust,

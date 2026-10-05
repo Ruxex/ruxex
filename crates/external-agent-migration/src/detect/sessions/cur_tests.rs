@@ -251,19 +251,6 @@ fn rejects_ambiguous_cur_project_with_multiple_punctuated_ancestors() {
 }
 
 #[test]
-fn parses_windows_cursor_fixture_project_directory() {
-    assert_eq!(
-        decode_cur_windows_project_drive("C--Users-fixture-Cursor"),
-        Some(('C', "-Users-fixture-Cursor"))
-    );
-    assert_eq!(
-        decode_cur_windows_project_drive("C-Users-fixture-Cursor"),
-        Some(('C', "Users-fixture-Cursor"))
-    );
-    assert_eq!(decode_cur_windows_project_drive("1-Users-fixture"), None);
-}
-
-#[test]
 fn ignores_cur_sessions_older_than_import_window() {
     let root = TempDir::new().expect("tempdir");
     let project_root = root.path().join("workspace");

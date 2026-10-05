@@ -203,7 +203,11 @@ fn send_merges_default_tags_per_line() -> Result<()> {
 fn client_sends_enqueued_metric() -> Result<()> {
     let (metrics, exporter) = build_metrics_with_defaults(&[])?;
 
-    metrics.counter("genex.turns", /*inc*/ 1, &[("model", "example-model-1")])?;
+    metrics.counter(
+        "genex.turns",
+        /*inc*/ 1,
+        &[("model", "example-model-1")],
+    )?;
     metrics.shutdown()?;
 
     let resource_metrics = latest_metrics(&exporter);
@@ -221,7 +225,10 @@ fn client_sends_enqueued_metric() -> Result<()> {
     let point = points[0];
     assert_eq!(point.value(), 1);
     let attrs = attributes_to_map(point.attributes());
-    assert_eq!(attrs.get("model").map(String::as_str), Some("example-model-1"));
+    assert_eq!(
+        attrs.get("model").map(String::as_str),
+        Some("example-model-1")
+    );
 
     Ok(())
 }

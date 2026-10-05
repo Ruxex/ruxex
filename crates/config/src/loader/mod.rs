@@ -6,8 +6,6 @@ mod managed_requirements;
 mod project_discovery;
 #[cfg(test)]
 mod tests;
-#[cfg(windows)]
-mod windows;
 
 use self::layer_io::LoadedConfigLayers;
 use crate::CONFIG_TOML_FILE;
@@ -37,6 +35,7 @@ use crate::strict_config::ignored_toml_value_fields;
 use crate::strict_config::unknown_feature_toml_value_field;
 use crate::thread_config::ThreadConfigContext;
 use crate::thread_config::ThreadConfigLoader;
+use dunce::canonicalize as normalize_path;
 use genex_file_system::ExecutorFileSystem;
 use genex_git_utils::resolve_root_git_project_for_trust;
 use genex_network_proxy::is_credential_broker_provider_env_key;
@@ -44,12 +43,9 @@ use genex_protocol::config_types::TrustLevel;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_absolute_path::AbsolutePathBufGuard;
 use genex_utils_path_uri::PathUri;
-use dunce::canonicalize as normalize_path;
 use serde::Deserialize;
 use std::io;
 use std::path::Path;
-#[cfg(windows)]
-use std::path::PathBuf;
 use toml::Value as TomlValue;
 
 pub use local::LocalConfigLayers;
@@ -57,16 +53,9 @@ pub use local::LocalTomlLayer;
 pub use local::LocalTomlLayerStack;
 pub use local::load_local_config_layers;
 pub use managed_requirements::load_managed_requirements_state;
-#[cfg(windows)]
-pub use windows::WindowsSystemConfigNamespaceProbe;
-#[cfg(windows)]
-pub use windows::probe_windows_system_config_namespace;
 
 #[cfg(unix)]
 const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/genex/config.toml";
-
-#[cfg(windows)]
-const DEFAULT_PROGRAM_DATA_DIR_WINDOWS: &str = r"C:\ProgramData";
 
 // Project-local config comes from repository contents, so it should not get to
 // choose where a user's credentials are sent or which local commands are run.
@@ -92,16 +81,14 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// composed with config-style TOML merging plus field-specific handling for
 /// hooks, rules, deny-read permissions, and remote sandbox config:
 ///
-/// - system    `/etc/genex/requirements.toml` (Unix) or
-///   `%ProgramData%\provider\Genex\requirements.toml` (Windows)
+/// - system    `/etc/genex/requirements.toml`
 /// - admin:    managed preferences (*)
 ///
 /// Configuration is built up from multiple layers in the following order:
 ///
 /// - package:  optional default configuration supplied with the Genex package
 /// - admin:    managed preferences (*)
-/// - system    `/etc/genex/config.toml` (Unix) or
-///   `%ProgramData%\provider\Genex\config.toml` (Windows)
+/// - system    `/etc/genex/config.toml`
 /// - user      `${GENEX_HOME}/config.toml`
 /// - profile   `${GENEX_HOME}/<name>.config.toml`, when selected
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
@@ -653,11 +640,6 @@ fn system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(Path::new("/etc/genex/requirements.toml"))
 }
 
-#[cfg(windows)]
-fn system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    windows_system_requirements_toml_file()
-}
-
 fn system_requirements_toml_file_with_overrides(
     overrides: &LoaderOverrides,
 ) -> io::Result<AbsolutePathBuf> {
@@ -683,10 +665,6 @@ fn has_local_managed_configuration_with_system_requirements_path(
     _genex_home: &Path,
     system_requirements_path: &Path,
 ) -> io::Result<bool> {
-    #[cfg(windows)]
-    let _ = genex_home;
-
-    #[cfg(not(windows))]
     if system_requirements_path.try_exists()? {
         return Ok(true);
     }
@@ -704,11 +682,6 @@ pub fn system_config_toml_file() -> io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(Path::new(SYSTEM_CONFIG_TOML_FILE_UNIX))
 }
 
-#[cfg(windows)]
-pub fn system_config_toml_file() -> io::Result<AbsolutePathBuf> {
-    windows_system_config_toml_file()
-}
-
 fn system_config_toml_file_with_overrides(
     overrides: &LoaderOverrides,
 ) -> io::Result<AbsolutePathBuf> {
@@ -716,79 +689,6 @@ fn system_config_toml_file_with_overrides(
         Some(path) => AbsolutePathBuf::from_absolute_path(path),
         None => system_config_toml_file(),
     }
-}
-
-#[cfg(windows)]
-fn windows_genex_system_dir() -> PathBuf {
-    let program_data = windows_program_data_dir_from_known_folder().unwrap_or_else(|err| {
-        tracing::warn!(
-            error = %err,
-            "Failed to resolve ProgramData known folder; using default path"
-        );
-        PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS)
-    });
-    program_data.join("provider").join("Genex")
-}
-
-#[cfg(windows)]
-fn windows_system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    let requirements_toml_file = windows_genex_system_dir().join("requirements.toml");
-    AbsolutePathBuf::try_from(requirements_toml_file)
-}
-
-#[cfg(windows)]
-fn windows_system_config_toml_file() -> io::Result<AbsolutePathBuf> {
-    let config_toml_file = windows_genex_system_dir().join("config.toml");
-    AbsolutePathBuf::try_from(config_toml_file)
-}
-
-#[cfg(windows)]
-fn windows_program_data_dir_from_known_folder() -> io::Result<PathBuf> {
-    use std::ffi::OsString;
-    use std::os::windows::ffi::OsStringExt;
-    use windows_sys::Win32::System::Com::CoTaskMemFree;
-    use windows_sys::Win32::UI::Shell::FOLDERID_ProgramData;
-    use windows_sys::Win32::UI::Shell::KF_FLAG_DEFAULT;
-    use windows_sys::Win32::UI::Shell::SHGetKnownFolderPath;
-
-    let mut path_ptr = std::ptr::null_mut::<u16>();
-    let known_folder_flags = u32::try_from(KF_FLAG_DEFAULT).map_err(|_| {
-        io::Error::other(format!(
-            "KF_FLAG_DEFAULT did not fit in u32: {KF_FLAG_DEFAULT}"
-        ))
-    })?;
-    // Known folder IDs reference:
-    // https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid
-    // SAFETY: SHGetKnownFolderPath initializes path_ptr with a CoTaskMem-allocated,
-    // null-terminated UTF-16 string on success.
-    let hr = unsafe {
-        SHGetKnownFolderPath(&FOLDERID_ProgramData, known_folder_flags, 0, &mut path_ptr)
-    };
-    if hr != 0 {
-        return Err(io::Error::other(format!(
-            "SHGetKnownFolderPath(FOLDERID_ProgramData) failed with HRESULT {hr:#010x}"
-        )));
-    }
-    if path_ptr.is_null() {
-        return Err(io::Error::other(
-            "SHGetKnownFolderPath(FOLDERID_ProgramData) returned a null pointer",
-        ));
-    }
-
-    // SAFETY: path_ptr is a valid null-terminated UTF-16 string allocated by
-    // SHGetKnownFolderPath and must be freed with CoTaskMemFree.
-    let path = unsafe {
-        let mut len = 0usize;
-        while *path_ptr.add(len) != 0 {
-            len += 1;
-        }
-        let wide = std::slice::from_raw_parts(path_ptr, len);
-        let path = PathBuf::from(OsString::from_wide(wide));
-        CoTaskMemFree(path_ptr.cast());
-        path
-    };
-
-    Ok(path)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -1006,13 +906,11 @@ fn sanitize_project_config(
         if policy.remove("experimental_use_profile").is_some() {
             ignored_keys.push("shell_environment_policy.experimental_use_profile".to_string());
         }
-        let environment_keys_match = |left: &str, right: &str| {
-            left == right || cfg!(windows) && left.eq_ignore_ascii_case(right)
-        };
+        let environment_keys_match = |left: &str, right: &str| left == right;
         if let Some(overrides) = policy.get_mut("set").and_then(TomlValue::as_table_mut) {
             overrides.retain(|key, _| {
-                if key.eq_ignore_ascii_case("ZDOTDIR")
-                    || key.eq_ignore_ascii_case("BASH_ENV")
+                if key == "ZDOTDIR"
+                    || key == "BASH_ENV"
                     || is_credential_broker_provider_env_key(key)
                     || trusted_provider_env_keys
                         .iter()
@@ -1173,8 +1071,7 @@ fn credential_broker_trusted_config(
 }
 
 /// Canonicalize the path and convert it to a string to be used as a key in the
-/// projects trust map. On Windows, strips UNC, when possible, to try to ensure
-/// that different paths that point to the same location have the same key.
+/// projects trust map.
 pub fn project_trust_key(path: &Path) -> String {
     normalized_project_trust_keys(path)
         .into_iter()
@@ -1199,11 +1096,7 @@ pub fn normalized_project_trust_keys(path: &Path) -> Vec<String> {
 }
 
 fn normalize_project_trust_lookup_key(key: String) -> String {
-    if cfg!(windows) {
-        key.to_ascii_lowercase()
-    } else {
-        key
-    }
+    key
 }
 fn project_trust_for_lookup_key(
     projects_trust: &std::collections::HashMap<String, TrustLevel>,
@@ -1646,8 +1539,6 @@ async fn load_root_checkout_project_config(
 #[cfg(test)]
 mod unit_tests {
     use super::*;
-    #[cfg(windows)]
-    use std::path::Path;
     use tempfile::tempdir;
 
     #[test]
@@ -1685,53 +1576,5 @@ foo = "xyzzy"
         expected_toml_value.insert("foo".to_string(), TomlValue::String("xyzzy".to_string()));
         assert_eq!(normalized_toml_value, TomlValue::Table(expected_toml_value));
         Ok(())
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn windows_system_requirements_toml_file_uses_expected_suffix() {
-        let expected = windows_program_data_dir_from_known_folder()
-            .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
-            .join("provider")
-            .join("Genex")
-            .join("requirements.toml");
-        assert_eq!(
-            windows_system_requirements_toml_file()
-                .expect("requirements.toml path")
-                .as_path(),
-            expected.as_path()
-        );
-        assert!(
-            windows_system_requirements_toml_file()
-                .expect("requirements.toml path")
-                .as_path()
-                .ends_with(
-                    Path::new("provider")
-                        .join("Genex")
-                        .join("requirements.toml")
-                )
-        );
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn windows_system_config_toml_file_uses_expected_suffix() {
-        let expected = windows_program_data_dir_from_known_folder()
-            .unwrap_or_else(|_| PathBuf::from(DEFAULT_PROGRAM_DATA_DIR_WINDOWS))
-            .join("provider")
-            .join("Genex")
-            .join("config.toml");
-        assert_eq!(
-            windows_system_config_toml_file()
-                .expect("config.toml path")
-                .as_path(),
-            expected.as_path()
-        );
-        assert!(
-            windows_system_config_toml_file()
-                .expect("config.toml path")
-                .as_path()
-                .ends_with(Path::new("provider").join("Genex").join("config.toml"))
-        );
     }
 }

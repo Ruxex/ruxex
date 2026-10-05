@@ -2,6 +2,8 @@ use std::collections::HashSet;
 use std::io;
 use std::sync::Arc;
 
+use dirs::home_dir;
+use futures::StreamExt;
 use genex_config::ConfigLayerSource;
 use genex_config::ConfigLayerStack;
 use genex_config::default_project_root_markers;
@@ -15,8 +17,6 @@ use genex_skills::system_cache_root_dir;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
 use genex_utils_plugins::PluginSkillRoot;
-use dirs::home_dir;
-use futures::StreamExt;
 use toml::Value as TomlValue;
 
 use crate::loader::HostSkillRoot;

@@ -46,8 +46,6 @@ pub async fn update_from_cli(
     confirm: impl FnOnce(&InstallRequest) -> Result<bool>,
 ) -> Result<Option<crate::UpdateOutput>> {
     crate::ensure_supported_platform()?;
-    #[cfg(windows)]
-    crate::backend::windows::ensure_not_elevated()?;
     let daemon = Daemon::from_environment()?;
     let settings = daemon.load_settings().await?;
     let source = InstallContext::current().package_layout.as_ref();
@@ -155,11 +153,7 @@ async fn prepare_from_package(
     let version = manifest.version.to_string();
     let target = platform_target()?;
     let metadata: serde_json::Value = serde_json::from_slice(&manifest_bytes)?;
-    let entrypoint = if cfg!(windows) {
-        "bin/genex.exe"
-    } else {
-        "bin/genex"
-    };
+    let entrypoint = "bin/genex";
     anyhow::ensure!(
         metadata["target"] == target && metadata["entrypoint"] == entrypoint,
         "the CLI package does not match this platform or executable"
@@ -279,12 +273,6 @@ async fn prepare_from_package(
             && (backend.is_some() || crate::client::probe(&daemon.socket_path).await.is_err()),
         "daemon package location or socket ownership changed while preparing its package; retry the command"
     );
-    #[cfg(windows)]
-    if backend.is_some() {
-        crate::backend::windows::ensure_detached_launch(&release.join(entrypoint))?;
-    }
-    #[cfg(windows)]
-    windows::validate_selection(&root)?;
     if mode == InstallMode::Replace {
         let stopped = async {
             crate::backend::pid_update_loop_backend(daemon.backend_paths(settings))
@@ -339,8 +327,6 @@ async fn prepare_from_package(
         std::os::unix::fs::symlink(&release, &link)?;
         std::fs::rename(link, root.join("current"))?;
     }
-    #[cfg(windows)]
-    windows::select_release(&root, &release)?;
     if backend.is_some() {
         let selected = Daemon {
             pid_file: daemon.pid_file.with_file_name(crate::DAEMON_PID_FILE_NAME),
@@ -427,28 +413,11 @@ fn stable_version(value: &str) -> Option<semver::Version> {
 fn validate_package(root: &Path) -> Result<()> {
     let mut names = vec![
         "genex-package.json",
-        if cfg!(windows) {
-            "bin/genex.exe"
-        } else {
-            "bin/genex"
-        },
-        if cfg!(windows) {
-            "bin/genex-code-mode-host.exe"
-        } else {
-            "bin/genex-code-mode-host"
-        },
-        if cfg!(windows) {
-            "genex-path/rg.exe"
-        } else {
-            "genex-path/rg"
-        },
+        "bin/genex",
+        "bin/genex-code-mode-host",
+        "genex-path/rg",
     ];
-    if cfg!(windows) {
-        names.extend([
-            "genex-resources/genex-command-runner.exe",
-            "genex-resources/genex-windows-sandbox-setup.exe",
-        ]);
-    } else if cfg!(target_os = "linux") {
+    if cfg!(target_os = "linux") {
         names.push("genex-resources/bwrap");
     }
     for name in names {
@@ -478,15 +447,9 @@ fn platform_target() -> Result<&'static str> {
         ("linux", "aarch64") => Ok("aarch64-unknown-linux-musl"),
         ("linux", "x86_64") if cfg!(target_env = "gnu") => Ok("x86_64-unknown-linux-gnu"),
         ("linux", "x86_64") => Ok("x86_64-unknown-linux-musl"),
-        ("windows", "aarch64") => Ok("aarch64-pc-windows-msvc"),
-        ("windows", "x86_64") => Ok("x86_64-pc-windows-msvc"),
         (os, arch) => Err(anyhow!("unsupported packaged daemon platform {os}/{arch}")),
     }
 }
-
-#[cfg(windows)]
-#[path = "prepare_install_windows.rs"]
-mod windows;
 
 #[cfg(test)]
 #[path = "prepare_install_tests.rs"]

@@ -164,8 +164,6 @@ pub enum HookHandlerConfig {
     #[serde(rename = "command")]
     Command {
         command: String,
-        #[serde(default, rename = "commandWindows", alias = "command_windows")]
-        command_windows: Option<String>,
         #[serde(default, rename = "timeout")]
         timeout_sec: Option<u64>,
         #[serde(default)]
@@ -219,19 +217,13 @@ where
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ManagedHooksRequirementsToml {
     pub managed_dir: Option<PathBuf>,
-    pub windows_managed_dir: Option<PathBuf>,
     #[serde(flatten)]
     pub hooks: HookEventsToml,
 }
 
 impl ManagedHooksRequirementsToml {
     pub fn is_empty(&self) -> bool {
-        let Self {
-            managed_dir,
-            windows_managed_dir,
-            hooks,
-        } = self;
-        managed_dir.is_none() && windows_managed_dir.is_none() && hooks.is_empty()
+        self.managed_dir.is_none() && self.hooks.is_empty()
     }
 
     pub fn handler_count(&self) -> usize {
@@ -239,15 +231,7 @@ impl ManagedHooksRequirementsToml {
     }
 
     pub fn managed_dir_for_current_platform(&self) -> Option<&Path> {
-        #[cfg(windows)]
-        {
-            self.windows_managed_dir.as_deref()
-        }
-
-        #[cfg(not(windows))]
-        {
-            self.managed_dir.as_deref()
-        }
+        self.managed_dir.as_deref()
     }
 }
 

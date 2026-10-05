@@ -234,28 +234,6 @@ impl Default for ShellEnvironmentPolicy {
     }
 }
 
-#[derive(
-    Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Display, JsonSchema, TS,
-)]
-#[serde(rename_all = "kebab-case")]
-#[strum(serialize_all = "kebab-case")]
-pub enum WindowsSandboxLevel {
-    #[default]
-    Disabled,
-    RestrictedToken,
-    Elevated,
-}
-
-/// Controls whether a Windows sandbox launch reconciles persistent proxy settings or preserves
-/// the settings established by another launch.
-#[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum WindowsSandboxProxySettingsMode {
-    #[default]
-    Reconcile,
-    Preserve,
-}
-
 /// Controls the effective multi-agent delegation instructions for a turn. `custom` means the
 /// configured mode hint defines the policy instead of a built-in policy.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Display, JsonSchema, TS, Default)]

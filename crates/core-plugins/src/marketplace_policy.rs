@@ -492,18 +492,7 @@ fn is_expected_managed_path(path: &Path, expected: &Path) -> bool {
                 .strip_prefix("/private/var")
                 .is_ok_and(|suffix| Path::new("/var").join(suffix) == path)
     }
-    #[cfg(windows)]
-    {
-        let path = path.to_string_lossy();
-        let expected = expected.to_string_lossy();
-        let path = genex_utils_absolute_path::normalize_windows_device_path(&path)
-            .unwrap_or_else(|| path.into_owned());
-        let expected = genex_utils_absolute_path::normalize_windows_device_path(&expected)
-            .unwrap_or_else(|| expected.into_owned());
-        path.replace('/', "\\")
-            .eq_ignore_ascii_case(&expected.replace('/', "\\"))
-    }
-    #[cfg(not(any(target_os = "macos", windows)))]
+    #[cfg(not(target_os = "macos"))]
     {
         false
     }
@@ -517,22 +506,12 @@ pub(crate) fn primary_runtime_marketplace_root() -> Option<PathBuf> {
     )
 }
 
-#[cfg(target_os = "windows")]
-fn primary_runtime_cache_dir() -> Option<PathBuf> {
-    primary_runtime_cache_dir_from_user_profile(std::env::var_os("USERPROFILE").map(PathBuf::from))
-}
-
-#[cfg(target_os = "windows")]
-fn primary_runtime_cache_dir_from_user_profile(user_profile: Option<PathBuf>) -> Option<PathBuf> {
-    user_profile.map(|profile| profile.join(".cache"))
-}
-
 #[cfg(target_os = "macos")]
 fn primary_runtime_cache_dir() -> Option<PathBuf> {
     dirs::home_dir().map(|home| home.join(".cache"))
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[cfg(not(target_os = "macos"))]
 fn primary_runtime_cache_dir() -> Option<PathBuf> {
     dirs::cache_dir()
 }

@@ -119,17 +119,6 @@ mod tests {
             }),
             None
         );
-        assert_eq!(
-            UpdateAction::from_install_context(&InstallContext {
-                method: InstallMethod::Standalone {
-                    platform: StandalonePlatform::Windows,
-                    release_dir: native_release_dir.clone(),
-                    resources_dir: Some(native_release_dir.join("genex-resources")),
-                },
-                package_layout: None,
-            }),
-            None
-        );
     }
 }
 

@@ -13,8 +13,6 @@ use tokio::time::timeout;
 
 use super::respond_to_terminal_queries;
 #[cfg(unix)]
-use crate::SandboxType;
-#[cfg(unix)]
 use crate::SpawnRequest;
 #[cfg(unix)]
 use crate::spawn_process;
@@ -32,8 +30,6 @@ async fn driver_backed_terminal_queries_are_answered() -> anyhow::Result<()> {
         terminator: None,
         writer_handle: None,
         resizer: None,
-        #[cfg(windows)]
-        tty: true,
     }));
     let SpawnedProcess {
         session: _session,
@@ -75,8 +71,6 @@ async fn direct_terminal_queries_are_answered() -> anyhow::Result<()> {
         cwd: Path::new("."),
         env: &env,
         arg0: &None,
-        sandbox: SandboxType::None,
-        windows_sandbox: None,
         tty: true,
         stdin_open: true,
         inherited_fds: &[],

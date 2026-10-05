@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-#[cfg(not(windows))]
 use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::future::Future;
@@ -13,10 +12,8 @@ use std::time::Duration;
 use std::time::Instant;
 
 use async_channel::Sender;
-use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
-#[cfg(windows)]
-use genex_utils_pty::JobObject;
 use futures::future::try_join;
+use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 use tokio::sync::Semaphore;
@@ -230,21 +227,6 @@ pub(crate) async fn run_command(
         command.pre_exec(genex_utils_pty::process_group::detach_from_tty);
     }
 
-    #[cfg(windows)]
-    let mut process_tree_job = JobObject::create().ok();
-    #[cfg(windows)]
-    let child = match process_tree_job.as_ref() {
-        Some(job) => match job.spawn_contained(&mut command) {
-            Ok(child) => Ok(child),
-            Err(_) => {
-                process_tree_job = None;
-                command.creation_flags(0);
-                command.spawn()
-            }
-        },
-        None => command.spawn(),
-    };
-    #[cfg(not(windows))]
     let child = command.spawn();
 
     let mut child = match child {
@@ -266,8 +248,6 @@ pub(crate) async fn run_command(
 
     let mut process_tree_guard = ProcessTreeGuard {
         process_id: child.id(),
-        #[cfg(windows)]
-        job: process_tree_job,
     };
 
     let stdin = child.stdin.take();
@@ -292,11 +272,6 @@ pub(crate) async fn run_command(
     // include stdin writes in the deadline even when the hook never reads them.
     match timeout(timeout_duration, try_join(write_stdin, wait_with_output)).await {
         Ok(Ok(((), output))) => {
-            // Successfully completed hooks may intentionally leave detached helpers running.
-            #[cfg(windows)]
-            if let Some(job) = process_tree_guard.job.as_ref() {
-                let _ = job.preserve_descendants();
-            }
             process_tree_guard.process_id = None;
             finish_command_run(
                 started_at,
@@ -338,8 +313,6 @@ pub(crate) async fn run_command(
 // Needed only until command hooks move to the exec server, which owns process-tree cleanup.
 struct ProcessTreeGuard {
     process_id: Option<u32>,
-    #[cfg(windows)]
-    job: Option<JobObject>,
 }
 
 impl Drop for ProcessTreeGuard {
@@ -348,24 +321,7 @@ impl Drop for ProcessTreeGuard {
             return;
         };
 
-        #[cfg(unix)]
-        {
-            let _ = genex_utils_pty::process_group::kill_process_group(process_id);
-        }
-
-        #[cfg(windows)]
-        {
-            if let Some(job) = self.job.as_ref() {
-                let _ = job.terminate();
-            } else {
-                let _ = std::process::Command::new("taskkill")
-                    .args(["/PID", &process_id.to_string(), "/T", "/F"])
-                    .stdin(Stdio::null())
-                    .stdout(Stdio::null())
-                    .stderr(Stdio::null())
-                    .spawn();
-            }
-        }
+        let _ = genex_utils_pty::process_group::kill_process_group(process_id);
     }
 }
 
@@ -406,22 +362,9 @@ fn build_command(
         Command::new(&shell.program)
     };
     if shell.program.is_empty() {
-        #[cfg(windows)]
-        command.raw_arg(format!(r#""{command_line}""#));
-
-        #[cfg(not(windows))]
         command.arg(command_line);
     } else {
         command.args(&shell.args);
-
-        #[cfg(windows)]
-        if shell.args.iter().any(|arg| arg.eq_ignore_ascii_case("/c")) {
-            command.raw_arg(format!(r#""{command_line}""#));
-        } else {
-            command.arg(command_line);
-        }
-
-        #[cfg(not(windows))]
         command.arg(command_line);
     }
     // Replay the session snapshot instead of inheriting the live process environment.
@@ -433,26 +376,11 @@ fn build_command(
 }
 
 fn default_shell_command(environment: &[(OsString, OsString)]) -> Command {
-    #[cfg(windows)]
-    let (environment_variable, fallback_program, argument) = ("COMSPEC", "cmd.exe", "/C");
-
-    #[cfg(not(windows))]
     let (environment_variable, fallback_program, argument) = ("SHELL", "/bin/sh", "-lc");
 
     let program = environment
         .iter()
-        .find(|(key, _)| {
-            #[cfg(windows)]
-            {
-                key.to_str()
-                    .is_some_and(|key| key.eq_ignore_ascii_case(environment_variable))
-            }
-
-            #[cfg(not(windows))]
-            {
-                key == OsStr::new(environment_variable)
-            }
-        })
+        .find(|(key, _)| key == OsStr::new(environment_variable))
         .map(|(_, value)| value.clone())
         .unwrap_or_else(|| OsString::from(fallback_program));
 

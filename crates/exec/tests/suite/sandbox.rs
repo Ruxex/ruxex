@@ -24,7 +24,6 @@ pub(super) async fn spawn_command_under_sandbox(
     use genex_core::exec::ExecParams;
     use genex_core::exec::build_exec_request;
     use genex_core::sandboxing::SandboxPermissions;
-    use genex_protocol::config_types::WindowsSandboxLevel;
     use std::process::Stdio;
 
     #[cfg(target_os = "linux")]
@@ -44,8 +43,6 @@ pub(super) async fn spawn_command_under_sandbox(
             network: None,
             network_environment_id: None,
             sandbox_permissions: SandboxPermissions::UseDefault,
-            windows_sandbox_level: WindowsSandboxLevel::Disabled,
-            windows_sandbox_private_desktop: false,
             justification: None,
             arg0: None,
         },

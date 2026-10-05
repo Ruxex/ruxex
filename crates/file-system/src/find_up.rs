@@ -1,9 +1,9 @@
 use crate::ExecutorFileSystem;
 use crate::FileSystemResult;
 use crate::FileSystemSandboxContext;
+use futures::StreamExt;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
-use futures::StreamExt;
 use std::io;
 
 // Keep enough ordinary metadata calls in flight to cover typical ancestor chains in one remote

@@ -7,15 +7,15 @@
 
 #![allow(clippy::unwrap_used)]
 
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+use crossterm::event::KeyEventKind;
+use crossterm::event::KeyModifiers;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::LoginAccountParams;
 use genex_app_server_protocol::LoginAccountResponse;
 use genex_login::AuthConfig;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyEventKind;
-use crossterm::event::KeyModifiers;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -548,9 +548,7 @@ impl StepStateProvider for AuthModeWidget {
     fn get_step_state(&self) -> StepState {
         let sign_in_state = self.sign_in_state.read().unwrap();
         match &*sign_in_state {
-            SignInState::PickMode | SignInState::ApiKeyEntry(_) => {
-                StepState::InProgress
-            }
+            SignInState::PickMode | SignInState::ApiKeyEntry(_) => StepState::InProgress,
             SignInState::ApiKeyConfigured => StepState::Complete,
         }
     }

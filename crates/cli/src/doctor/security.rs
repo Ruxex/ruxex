@@ -1,33 +1,29 @@
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use std::ffi::OsStr;
-#[cfg(target_os = "windows")]
-use std::path::PathBuf;
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use std::process::Output;
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use std::process::Stdio;
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use std::time::Duration;
 
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use tokio::process::Command;
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use tokio::time::timeout;
 
 use super::CheckStatus;
 use super::DoctorCheck;
 use super::DoctorIssue;
 
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 const PRODUCT_QUERY_TIMEOUT: Duration = Duration::from_secs(5);
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 const MAX_PRODUCT_OUTPUT_BYTES: usize = 64 * 1024;
 
 pub(super) enum EndpointInspection {
     Complete(Vec<&'static str>),
-    #[cfg(any(target_os = "windows", test))]
     Partial(Vec<&'static str>),
-    #[cfg(any(target_os = "macos", target_os = "windows", test))]
     Unavailable,
 }
 
@@ -38,9 +34,7 @@ pub(super) async fn check() -> DoctorCheck {
 pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     let (products, visibility_incomplete) = match inspection {
         EndpointInspection::Complete(products) => (products, false),
-        #[cfg(any(target_os = "windows", test))]
         EndpointInspection::Partial(products) => (products, true),
-        #[cfg(any(target_os = "macos", target_os = "windows", test))]
         EndpointInspection::Unavailable => {
             return DoctorCheck::new(
                 "security.endpoint",
@@ -53,21 +47,16 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     };
 
     if products.is_empty() {
-        let (summary, detail) = if cfg!(any(target_os = "macos", target_os = "windows")) {
-            ("no supported endpoint protection detected", "none detected")
-        } else {
-            (
-                "endpoint protection is not inspected on this platform",
-                "not inspected on this platform",
-            )
-        };
-        return DoctorCheck::new("security.endpoint", "security", CheckStatus::Ok, summary)
-            .detail(format!("endpoint products: {detail}"));
+        return DoctorCheck::new(
+            "security.endpoint",
+            "security",
+            CheckStatus::Ok,
+            "no supported endpoint protection detected",
+        )
+        .detail("endpoint products: none detected");
     }
 
-    let targets = if cfg!(target_os = "windows") {
-        "signed Genex app; genex.exe; genex-windows-sandbox-setup.exe; genex-command-runner.exe; genex-code-mode-host.exe"
-    } else if cfg!(target_os = "macos") {
+    let targets = if cfg!(target_os = "macos") {
         "signing team 2DC432GLL2 plus the installed Genex app identity, signed genex agent, and required helpers"
     } else {
         "verified Genex app, genex agent, and required helpers"
@@ -91,19 +80,19 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     for product in products {
         let remedy = match product {
             "CrowdStrike Falcon" => {
-                "CrowdStrike Falcon: Add a certificate or IOA exclusion for Genex. If sensor overhead continues, exclude the Genex agent from sensor visibility. Keep monitoring descendant processes."
+                "CrowdStrike Falcon: Add a certificate or IOA exclusion for Genex and monitor descendant processes."
             }
             "BeyondTrust Privilege Management" => {
-                "BeyondTrust: Remove Genex from application blocking rules. Add allow rules for Genex helper executables. Do not grant administrator privileges."
+                "BeyondTrust: Remove Genex from application blocking rules and allow Genex helper executables."
             }
             "Microsoft Defender" => {
-                "Microsoft Defender: Add a certificate or executable-path exclusion for Genex and its helpers. If Attack Surface Reduction blocks Genex, add a rule exclusion. If Controlled Folder Access blocks Genex, allow the app."
+                "Microsoft Defender: Add a certificate or executable-path exclusion for Genex and its helpers."
             }
             "SentinelOne" => {
                 "SentinelOne: Add a signer, file-hash, or executable-path exclusion for Genex and its helpers."
             }
             "Jamf Protect" => {
-                "Jamf Protect: Add an Override Threat Prevention exception for Genex app and helper signing identities. If analytics cause delays, add an Ignore System Events for Analytics exception."
+                "Jamf Protect: Add an exception for Genex app and helper signing identities."
             }
             _ => {
                 "Add an exclusion for Genex and its helpers. Use the endpoint product instructions."
@@ -125,56 +114,6 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
 }
 
 async fn endpoint_products() -> EndpointInspection {
-    #[cfg(target_os = "windows")]
-    {
-        let system32 = std::env::var_os("SystemRoot")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from(r"C:\Windows"))
-            .join("System32");
-        let service = system32.join("sc.exe");
-        let (crowdstrike, beyondtrust, defender, sentinelone) = tokio::join!(
-            product_command(&service, &["query", "CSFalconService"]),
-            product_command(&service, &["query", "DefendpointService"]),
-            product_command(&service, &["query", "WinDefend"]),
-            product_command(&service, &["query", "SentinelAgent"]),
-        );
-
-        let mut products = Vec::new();
-        let mut visibility_incomplete = false;
-        for (product, output) in [
-            ("CrowdStrike Falcon", crowdstrike),
-            ("BeyondTrust Privilege Management", beyondtrust),
-            ("Microsoft Defender", defender),
-            ("SentinelOne", sentinelone),
-        ] {
-            match output {
-                Some(output) if output.status.success() => {
-                    if product != "Microsoft Defender"
-                        || String::from_utf8_lossy(&output.stdout).lines().any(|line| {
-                            line.split_once(':').is_some_and(|(_, value)| {
-                                value.split_whitespace().next() == Some("4")
-                            })
-                        })
-                    {
-                        products.push(product);
-                    }
-                }
-                Some(output) if output.status.code() == Some(1060) => {}
-                Some(_) | None => visibility_incomplete = true,
-            }
-        }
-
-        if visibility_incomplete {
-            if products.is_empty() {
-                EndpointInspection::Unavailable
-            } else {
-                EndpointInspection::Partial(products)
-            }
-        } else {
-            EndpointInspection::Complete(products)
-        }
-    }
-
     #[cfg(target_os = "macos")]
     {
         const PRODUCTS: &[(&str, &str, &str)] = &[
@@ -210,7 +149,7 @@ async fn endpoint_products() -> EndpointInspection {
         else {
             return EndpointInspection::Unavailable;
         };
-        EndpointInspection::Complete(
+        return EndpointInspection::Complete(
             String::from_utf8_lossy(&output.stdout)
                 .lines()
                 .filter_map(|line| {
@@ -225,16 +164,13 @@ async fn endpoint_products() -> EndpointInspection {
                     })
                 })
                 .collect(),
-        )
+        );
     }
 
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    {
-        EndpointInspection::Complete(Vec::new())
-    }
+    EndpointInspection::Complete(Vec::new())
 }
 
-#[cfg(any(target_os = "macos", target_os = "windows"))]
+#[cfg(target_os = "macos")]
 async fn product_command(program: impl AsRef<OsStr>, args: &[&str]) -> Option<Output> {
     let mut command = Command::new(program);
     command

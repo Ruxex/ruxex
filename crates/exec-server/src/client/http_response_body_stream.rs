@@ -10,9 +10,9 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use bytes::Bytes;
+use futures::StreamExt;
 use genex_http_client::HttpError;
 use genex_http_client::HttpResponse;
-use futures::StreamExt;
 use serde_json::Value;
 use serde_json::from_value;
 use tokio::runtime::Handle;

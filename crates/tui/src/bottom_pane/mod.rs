@@ -38,6 +38,9 @@ use crate::terminal_palette::effective_stdout_color_level;
 use crate::tui::FrameRequester;
 pub(crate) use bottom_pane_view::BottomPaneView;
 pub(crate) use bottom_pane_view::ViewCompletion;
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+use crossterm::event::KeyEventKind;
 use genex_app_server_protocol::SkillMetadata;
 use genex_app_server_protocol::ToolRequestUserInputParams;
 use genex_features::Features;
@@ -46,9 +49,6 @@ use genex_plugin::PluginCapabilitySummary;
 use genex_protocol::ThreadId;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::user_input::TextElement;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyEventKind;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize;
@@ -459,12 +459,6 @@ impl BottomPane {
 
     pub fn set_collaboration_modes_enabled(&mut self, enabled: bool) {
         self.composer.set_collaboration_modes_enabled(enabled);
-        self.request_redraw();
-    }
-
-    #[cfg(target_os = "windows")]
-    pub fn set_windows_degraded_sandbox_active(&mut self, enabled: bool) {
-        self.composer.set_windows_degraded_sandbox_active(enabled);
         self.request_redraw();
     }
 

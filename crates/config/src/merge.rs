@@ -119,14 +119,10 @@ fn merge_toml_values_at_path(base: &mut TomlValue, overlay: &TomlValue, path: &m
                             .is_some_and(|existing_sources| {
                                 existing_sources.iter().filter_map(TomlValue::as_str).any(
                                     |existing_source| {
-                                        overlay_sources.iter().filter_map(TomlValue::as_str).any(
-                                            |overlay_source| {
-                                                existing_source == overlay_source
-                                                    || cfg!(windows)
-                                                        && existing_source
-                                                            .eq_ignore_ascii_case(overlay_source)
-                                            },
-                                        )
+                                        overlay_sources
+                                            .iter()
+                                            .filter_map(TomlValue::as_str)
+                                            .any(|overlay_source| existing_source == overlay_source)
                                     },
                                 )
                             })

@@ -1,6 +1,5 @@
 use genex_apply_patch::ApplyPatchAction;
 use genex_apply_patch::ApplyPatchFileChange;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::FileSystemSandboxPolicy;
 use genex_protocol::permissions::FileSystemSandboxPolicyContext;
@@ -23,7 +22,7 @@ pub enum SafetyCheck {
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum PatchSandboxRoute {
     ExecutorManaged,
-    Platform(WindowsSandboxLevel),
+    Platform,
 }
 
 pub fn assess_patch_safety(
@@ -58,9 +57,7 @@ pub fn assess_patch_safety(
         );
     let sandbox_available = match sandbox_route {
         PatchSandboxRoute::ExecutorManaged => true,
-        PatchSandboxRoute::Platform(windows_sandbox_level) => {
-            get_platform_sandbox(windows_sandbox_level != WindowsSandboxLevel::Disabled).is_some()
-        }
+        PatchSandboxRoute::Platform => get_platform_sandbox().is_some(),
     };
 
     // Even though the patch appears to be constrained to writable paths, it is

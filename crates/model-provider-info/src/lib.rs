@@ -12,8 +12,8 @@ use genex_api::Provider as ApiProvider;
 use genex_api::RetryConfig as ApiRetryConfig;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::ModelProviderAuthInfo;
-use genex_protocol::error::GenexErr;
 use genex_protocol::error::EnvVarError;
+use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_utils_redacted_string::RedactedString;
 use http::HeaderMap;
@@ -164,7 +164,6 @@ pub struct ModelProviderInfo {
 
 impl ModelProviderInfo {
     pub fn validate(&self) -> std::result::Result<(), String> {
-
         let Some(auth) = self.auth.as_ref() else {
             return Ok(());
         };
@@ -354,9 +353,9 @@ impl ModelProviderInfo {
 /// Built-in default provider list.
 pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
     [(MY_PROVIDER_ID, ModelProviderInfo::create_my_provider())]
-    .into_iter()
-    .map(|(k, v)| (k.to_string(), v))
-    .collect()
+        .into_iter()
+        .map(|(k, v)| (k.to_string(), v))
+        .collect()
 }
 
 /// Merge configured providers into the built-in provider catalog.

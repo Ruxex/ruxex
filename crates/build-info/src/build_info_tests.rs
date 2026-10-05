@@ -116,30 +116,6 @@ fn invalid_package_version_uses_build_commit() {
     );
 }
 
-/// Serializing build information preserves release version, commit, and target.
-#[test]
-fn build_info_serialization_preserves_build_provenance() {
-    let build_info = BuildInfo {
-        version: Version::parse("1.2.3-alpha.4").expect("valid release version"),
-        build_commit: BUILD_COMMIT.to_string(),
-        target: Some("x86_64-pc-windows-msvc".to_string()),
-    };
-    let serialized = serde_json::json!({
-        "version": "1.2.3-alpha.4",
-        "build_commit": BUILD_COMMIT,
-        "target": "x86_64-pc-windows-msvc",
-    });
-
-    assert_eq!(
-        serde_json::to_value(&build_info).expect("serialize build information"),
-        serialized,
-    );
-    assert_eq!(
-        serde_json::from_value::<BuildInfo>(serialized).expect("deserialize build information"),
-        build_info,
-    );
-}
-
 #[test]
 fn historical_build_info_does_not_infer_the_current_target() {
     let legacy = serde_json::json!({ "version": "1.2.3", "build_commit": BUILD_COMMIT });

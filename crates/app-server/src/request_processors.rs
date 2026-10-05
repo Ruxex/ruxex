@@ -26,7 +26,6 @@ use genex_app_server_protocol::CancelLoginAccountResponse;
 use genex_app_server_protocol::CancelLoginAccountStatus;
 use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::ClientResponsePayload;
-use genex_app_server_protocol::GenexErrorInfo;
 use genex_app_server_protocol::CollaborationModeListParams;
 use genex_app_server_protocol::CollaborationModeListResponse;
 use genex_app_server_protocol::CommandExecParams;
@@ -48,6 +47,7 @@ use genex_app_server_protocol::EnvironmentShellInfo;
 use genex_app_server_protocol::EnvironmentStatusKind;
 use genex_app_server_protocol::EnvironmentStatusParams;
 use genex_app_server_protocol::EnvironmentStatusResponse;
+use genex_app_server_protocol::GenexErrorInfo;
 use genex_app_server_protocol::GetAccountParams;
 use genex_app_server_protocol::GitInfo as ApiGitInfo;
 use genex_app_server_protocol::HookHandlerMetadata;
@@ -206,19 +206,13 @@ use genex_app_server_protocol::TurnStatus;
 use genex_app_server_protocol::TurnSteerParams;
 use genex_app_server_protocol::TurnSteerResponse;
 use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_app_server_protocol::WindowsSandboxReadiness;
-use genex_app_server_protocol::WindowsSandboxReadinessResponse;
-use genex_app_server_protocol::WindowsSandboxSetupCompletedNotification;
-use genex_app_server_protocol::WindowsSandboxSetupMode;
-use genex_app_server_protocol::WindowsSandboxSetupStartParams;
-use genex_app_server_protocol::WindowsSandboxSetupStartResponse;
 use genex_arg0::Arg0DispatchPaths;
 use genex_config::ConfigLayerStack;
 use genex_config::loader::project_trust_key;
 use genex_config::types::McpServerTransportConfig;
+use genex_core::ForkSnapshot;
 use genex_core::GenexThread;
 use genex_core::GenexThreadSettingsOverrides;
-use genex_core::ForkSnapshot;
 use genex_core::NewThread;
 use genex_core::NotSubmittedReason;
 #[cfg(test)]
@@ -246,10 +240,6 @@ use genex_core::read_head_for_summary;
 use genex_core::sandboxing::SandboxPermissions;
 use genex_core::truncate_rollout_after_turn_id;
 use genex_core::truncate_rollout_before_turn_id;
-use genex_core::windows_sandbox::WindowsSandboxLevelExt;
-use genex_core::windows_sandbox::WindowsSandboxSetupMode as CoreWindowsSandboxSetupMode;
-use genex_core::windows_sandbox::WindowsSandboxSetupRequest;
-use genex_core::windows_sandbox::sandbox_setup_is_complete;
 use genex_core_plugins::marketplace_add::MarketplaceAddError;
 use genex_core_plugins::marketplace_add::MarketplaceAddRequest;
 use genex_core_plugins::marketplace_add::add_marketplace as add_marketplace_to_genex_home;
@@ -278,7 +268,6 @@ use genex_protocol::config_types::CollaborationMode;
 use genex_protocol::config_types::ForcedLoginMethod;
 use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::TrustLevel;
-use genex_protocol::config_types::WindowsSandboxLevel;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 #[cfg(test)]
@@ -393,7 +382,6 @@ mod thread_queue_processor;
 mod thread_sections;
 mod token_usage_replay;
 mod turn_processor;
-mod windows_sandbox_processor;
 
 pub(crate) use account_processor::AccountRequestProcessor;
 pub(crate) use catalog_processor::CatalogRequestProcessor;
@@ -414,7 +402,6 @@ pub(crate) use thread_processor::ThreadRequestProcessor;
 pub(crate) use thread_processor::ThreadResumeTarget;
 pub(crate) use thread_queue_processor::ThreadQueueRequestProcessor;
 pub(crate) use turn_processor::TurnRequestProcessor;
-pub(crate) use windows_sandbox_processor::WindowsSandboxRequestProcessor;
 
 use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
@@ -465,7 +452,7 @@ fn resolve_turn_environment_selections(
             .to_inferred_path_uri()
             .ok_or_else(|| {
                 invalid_request(format!(
-                    "invalid cwd for environment `{environment_id}`: path `{}` does not use absolute POSIX or Windows path syntax",
+                    "invalid cwd for environment `{environment_id}`: path `{}` does not use absolute POSIX path syntax",
                     environment.cwd
                 ))
             })?;
@@ -476,7 +463,7 @@ fn resolve_turn_environment_selections(
                 for root in roots {
                     let root = root.to_inferred_path_uri().ok_or_else(|| {
                         invalid_request(format!(
-                            "invalid runtime workspace root for environment `{environment_id}`: path `{root}` does not use absolute POSIX or Windows path syntax"
+                            "invalid runtime workspace root for environment `{environment_id}`: path `{root}` does not use absolute POSIX path syntax"
                         ))
                     })?;
                     if !resolved_roots.contains(&root) {

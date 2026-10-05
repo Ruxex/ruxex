@@ -86,13 +86,13 @@ pub const ARCHIVED_SESSIONS_SUBDIR: &str = "archived_sessions";
 pub static INTERACTIVE_SESSION_SOURCES: LazyLock<Vec<SessionSource>> =
     LazyLock::new(|| vec![SessionSource::Cli, SessionSource::VSCode]);
 
-pub use genex_protocol::protocol::SessionMeta;
 pub use compression::RolloutCompressionTrigger;
 pub use compression::RolloutLineReader;
 pub use compression::existing_rollout_path;
 pub use compression::open_rollout_line_reader;
 pub use compression::plain_rollout_path;
 pub use compression::spawn_rollout_compression_worker;
+pub use genex_protocol::protocol::SessionMeta;
 pub use seekable_reader::open_rollout_seekable_reader;
 pub use seekable_reader::read_rollout_prefix;
 pub use seekable_reader::rollout_contains_prefix;

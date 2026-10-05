@@ -252,10 +252,7 @@ impl ShellSnapshot {
         sandbox: Option<&ShellSnapshotSandbox>,
     ) -> std::result::Result<ShellSnapshotFile, &'static str> {
         // File to store the snapshot
-        let extension = match shell.shell_type {
-            ShellType::PowerShell => "ps1",
-            _ => "sh",
-        };
+        let extension = "sh";
         let nonce = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .map(|duration| duration.as_nanos())
@@ -535,9 +532,6 @@ async fn write_shell_snapshot(
     sandbox: Option<&ShellSnapshotSandbox>,
 ) -> Result<Option<SnapshotCredentials>> {
     let shell_type = shell.shell_type;
-    if shell_type == ShellType::PowerShell || shell_type == ShellType::Cmd {
-        bail!("Shell snapshot not supported yet for {shell_type:?}");
-    }
     let (snapshot, credentials) = capture_snapshot(shell, cwd, credential_broker, sandbox).await?;
 
     if let Some(parent) = output_path.parent() {
@@ -636,7 +630,7 @@ async fn capture_snapshot(
         if !contains_env_key(&discovery_env, key)
             || provider_context_keys
                 .iter()
-                .any(|context_key| context_key.eq_ignore_ascii_case(key))
+                .any(|context_key| context_key == key)
         {
             insert_env_value(&mut discovery_env, key, value);
         }
@@ -691,11 +685,12 @@ async fn capture_snapshot(
     let unbrokered_credentials: HashMap<String, String> = env
         .iter()
         .filter(|(key, _)| {
-            allowed_metadata.provider_keys.iter().any(|provider_key| {
-                provider_key == *key || cfg!(windows) && provider_key.eq_ignore_ascii_case(key)
-            }) && !provider_context_keys.iter().any(|context| {
-                context == *key || cfg!(windows) && context.eq_ignore_ascii_case(key)
-            }) && !allowed_brokered_keys.contains(key)
+            allowed_metadata
+                .provider_keys
+                .iter()
+                .any(|provider_key| provider_key == *key)
+                && !provider_context_keys.iter().any(|context| context == *key)
+                && !allowed_brokered_keys.contains(key)
         })
         .map(|(key, value)| (key.clone(), value.clone()))
         .collect();
@@ -722,9 +717,10 @@ async fn capture_snapshot(
     let fail_open_aliases: HashMap<String, FailOpenAlias> = env
         .iter()
         .filter(|(key, _)| {
-            !allowed_metadata.provider_keys.iter().any(|provider_key| {
-                provider_key == *key || cfg!(windows) && provider_key.eq_ignore_ascii_case(key)
-            })
+            !allowed_metadata
+                .provider_keys
+                .iter()
+                .any(|provider_key| provider_key == *key)
         })
         .filter_map(|(key, value)| {
             let mut real_value = env_value(&restored_env, key)
@@ -795,11 +791,12 @@ async fn capture_snapshot(
         restored_env
             .iter()
             .filter(|&(key, value)| {
-                discovery_metadata.provider_keys.iter().any(|source| {
-                    source == key || cfg!(windows) && source.eq_ignore_ascii_case(key)
-                }) && !provider_context_keys.iter().any(|context| {
-                    context == key || cfg!(windows) && context.eq_ignore_ascii_case(key)
-                }) && !value.is_empty()
+                discovery_metadata
+                    .provider_keys
+                    .iter()
+                    .any(|source| source == key)
+                    && !provider_context_keys.iter().any(|context| context == key)
+                    && !value.is_empty()
             })
             .map(|(key, _)| key.clone()),
     );
@@ -937,9 +934,10 @@ fn replace_provider_context_with_trusted(
     for key in context_keys {
         if let Some(value) = env_value(trusted_env, &key) {
             insert_env_value(env, &key, value);
-        } else if !preserve_untrusted_keys.iter().any(|candidate| {
-            candidate == &key || cfg!(windows) && candidate.eq_ignore_ascii_case(&key)
-        }) {
+        } else if !preserve_untrusted_keys
+            .iter()
+            .any(|candidate| candidate == &key)
+        {
             remove_env_value(env, &key);
         }
     }
@@ -950,27 +948,14 @@ fn contains_env_key(env: &HashMap<String, String>, key: &str) -> bool {
 }
 
 fn env_value<'a>(env: &'a HashMap<String, String>, key: &str) -> Option<&'a String> {
-    env.get(key).or_else(|| {
-        cfg!(windows)
-            .then(|| {
-                env.iter().find_map(|(candidate, value)| {
-                    candidate.eq_ignore_ascii_case(key).then_some(value)
-                })
-            })
-            .flatten()
-    })
+    env.get(key).or_else(|| None)
 }
 
 fn insert_env_value(env: &mut HashMap<String, String>, key: &str, value: &str) {
-    #[cfg(windows)]
-    env.retain(|candidate, _| !candidate.eq_ignore_ascii_case(key));
     env.insert(key.to_string(), value.to_string());
 }
 
 fn remove_env_value(env: &mut HashMap<String, String>, key: &str) {
-    #[cfg(windows)]
-    env.retain(|candidate, _| !candidate.eq_ignore_ascii_case(key));
-    #[cfg(not(windows))]
     env.remove(key);
 }
 

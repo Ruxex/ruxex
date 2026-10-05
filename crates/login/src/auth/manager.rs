@@ -374,10 +374,7 @@ impl AuthConfig {
             .is_ok()
     }
 
-    pub async fn load_auth(
-        &self,
-        enable_api_key_env: bool,
-    ) -> std::io::Result<Option<GenexAuth>> {
+    pub async fn load_auth(&self, enable_api_key_env: bool) -> std::io::Result<Option<GenexAuth>> {
         let allowed_login_methods = self.allowed_login_methods();
         let workspaces = self.effective_managed_workspaces();
         let auth = load_auth(
@@ -1542,10 +1539,7 @@ impl AuthManager {
                 .await
         } else {
             match attempted_auth.as_ref() {
-                Some(
-                    GenexAuth::ApiKey(_) | GenexAuth::Headers(_),
-                )
-                | None => Ok(()),
+                Some(GenexAuth::ApiKey(_) | GenexAuth::Headers(_)) | None => Ok(()),
             }
         };
         if let Some(attempted_auth) = attempted_auth.as_ref()

@@ -815,27 +815,6 @@ impl App {
             self.chat_widget.set_feature_enabled(*feature, enabled);
         }
     }
-
-    #[cfg(target_os = "windows")]
-    pub(super) async fn verify_windows_sandbox_mode_after_setup(
-        &mut self,
-        app_server: &mut AppServerSession,
-        requested_mode: genex_app_server_protocol::WindowsSandboxSetupMode,
-    ) -> bool {
-        if !self.refresh_windows_sandbox_config(app_server).await {
-            return false;
-        }
-        if self.chat_widget.windows_sandbox_config.mode == Some(requested_mode)
-            && self
-                .chat_widget
-                .windows_sandbox_config
-                .allows(requested_mode)
-        {
-            return true;
-        }
-        self.chat_widget.add_error_message("Windows sandbox setup completed, but its mode was overridden by the effective configuration.".to_string());
-        false
-    }
 }
 
 pub(super) fn overridden_write_message(write_response: &ConfigWriteResponse) -> &str {

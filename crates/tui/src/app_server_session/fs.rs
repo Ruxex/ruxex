@@ -1,6 +1,8 @@
 use super::AppServerSession;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
+use color_eyre::eyre::Result;
+use color_eyre::eyre::WrapErr;
 use genex_app_server_client::AppServerPath;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_protocol::ClientRequest;
@@ -15,8 +17,6 @@ use genex_app_server_protocol::FsWriteFileResponse;
 use genex_app_server_protocol::JSONRPCRequest;
 use genex_app_server_protocol::RequestId;
 use genex_utils_absolute_path::AbsolutePathBuf;
-use color_eyre::eyre::Result;
-use color_eyre::eyre::WrapErr;
 use serde::de::DeserializeOwned;
 use serde_json::json;
 

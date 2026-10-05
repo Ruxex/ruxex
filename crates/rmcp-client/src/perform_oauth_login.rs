@@ -473,7 +473,6 @@ fn local_redirect_uri(server: &Server) -> Result<String> {
             let port = addr.port();
             Ok(format!("http://[{ip}]:{port}/callback"))
         }
-        #[cfg(not(target_os = "windows"))]
         _ => Err(anyhow!("unable to determine callback address")),
     }
 }
@@ -904,6 +903,7 @@ mod tests {
     use axum::Router;
     use axum::routing::get;
     use axum::routing::post;
+    use futures::future::BoxFuture;
     use genex_config::types::AuthKeyringBackendKind;
     use genex_config::types::OAuthCredentialsStoreMode;
     use genex_exec_server::ExecServerError;
@@ -914,7 +914,6 @@ mod tests {
     use genex_exec_server::RouteAwareHttpClient;
     use genex_http_client::HttpClientFactory;
     use genex_http_client::OutboundProxyPolicy;
-    use futures::future::BoxFuture;
     use http::HeaderMap;
     use oauth2::TokenResponse;
     use pretty_assertions::assert_eq;

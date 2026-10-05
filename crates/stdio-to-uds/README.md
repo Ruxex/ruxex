@@ -13,8 +13,4 @@ To that end, this crate provides an adapter between a UDS and stdio. The idea is
 genex --config mcp_servers.example={command="genex-stdio-to-uds",args=["/tmp/mcp.sock"]}
 ```
 
-Unfortunately, the Rust standard library does not provide support for UNIX domain sockets on Windows today even though support was added in October 2018 in Windows 10:
-
-https://github.com/rust-lang/rust/issues/56533
-
-As a workaround, this crate uses `genex-uds`, which provides a cross-platform async UDS API backed by https://crates.io/crates/uds_windows on Windows.
+The adapter uses `genex-uds` for its cross-platform asynchronous UDS implementation.

@@ -19,6 +19,7 @@ use crate::tools::registry::PostToolUsePayload;
 use crate::tools::registry::PreToolUsePayload;
 use crate::tools::registry::ToolExecutor;
 use crate::tools::registry::ToolTelemetryTags;
+use futures::future::BoxFuture;
 use genex_extension_api::McpToolContext;
 use genex_mcp::ToolInfo;
 use genex_tools::ResponsesApiNamespace;
@@ -31,7 +32,6 @@ use genex_tools::agent_plugin_mcp_tool_to_responses_api_tool;
 use genex_tools::mcp_tool_to_responses_api_tool;
 use genex_utils_output_truncation::TruncationPolicy;
 use genex_utils_string::take_bytes_at_char_boundary;
-use futures::future::BoxFuture;
 use serde_json::Map;
 use serde_json::Value;
 

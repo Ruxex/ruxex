@@ -32,22 +32,14 @@ pub(crate) fn create_env_for_mcp_server(
             continue;
         }
         let value = std::path::absolute(value)?.into_os_string();
-        #[cfg(windows)]
-        env.retain(|key, _| !key.to_string_lossy().eq_ignore_ascii_case(name));
         env.insert(OsString::from(name), value);
     }
     for (name, value) in extra_env.unwrap_or_default() {
-        if cfg!(windows)
-            || name.to_str().is_some_and(|name| {
-                CUSTOM_CA_ENV_KEYS
-                    .iter()
-                    .any(|ca_name| ca_name.eq_ignore_ascii_case(name))
-            })
+        if name
+            .to_str()
+            .is_some_and(|name| CUSTOM_CA_ENV_KEYS.iter().any(|ca_name| *ca_name == name))
         {
-            env.retain(|key, _| {
-                !key.to_string_lossy()
-                    .eq_ignore_ascii_case(&name.to_string_lossy())
-            });
+            env.retain(|key, _| key != &name);
         }
         env.insert(name, value);
     }
@@ -159,7 +151,6 @@ pub(crate) fn build_default_headers(
     Ok(headers)
 }
 
-#[cfg(unix)]
 pub(crate) const DEFAULT_ENV_VARS: &[&str] = &[
     "HOME",
     "LOGNAME",
@@ -173,10 +164,6 @@ pub(crate) const DEFAULT_ENV_VARS: &[&str] = &[
     "TMPDIR",
     "TZ",
 ];
-
-#[cfg(windows)]
-pub(crate) const DEFAULT_ENV_VARS: &[&str] =
-    genex_protocol::shell_environment::WINDOWS_CORE_ENV_VARS;
 
 #[cfg(test)]
 mod tests {

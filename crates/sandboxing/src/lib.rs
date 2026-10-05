@@ -9,18 +9,11 @@ pub mod seatbelt;
 mod spawn;
 mod terminal_queries;
 mod violation;
-mod windows;
-#[cfg(windows)]
-mod windows_mxc;
 
 #[cfg(target_os = "linux")]
 pub use bwrap::find_system_bwrap_in_path;
 #[cfg(target_os = "linux")]
 pub use bwrap::system_bwrap_warning;
-pub use genex_mxc_sandbox::GENEX_WINDOWS_MXC_ARG1;
-pub use genex_mxc_sandbox::is_available as windows_mxc_available;
-pub use genex_mxc_sandbox::run_main as run_windows_mxc_main;
-pub use genex_windows_sandbox::WindowsSandboxProxySettingsMode;
 pub use denial::is_likely_executor_managed_sandbox_denied;
 pub use denial::is_likely_sandbox_denied;
 pub use manager::SandboxCommand;
@@ -35,7 +28,6 @@ pub use manager::compatibility_sandbox_policy_for_permission_profile;
 pub use manager::get_platform_sandbox;
 pub use manager::with_managed_mitm_ca_readable_root;
 pub use spawn::SpawnRequest;
-pub use spawn::WindowsSandboxSpawnRequest;
 pub use spawn::spawn_process;
 pub use violation::FileSystemSandboxViolation;
 pub use violation::FileSystemSandboxViolationReason;
@@ -45,12 +37,6 @@ pub use violation::SandboxViolationEvent;
 pub use violation::record_filesystem_sandbox_violation;
 pub use violation::record_network_sandbox_violation;
 pub use violation::record_sandbox_violation;
-pub use windows::WindowsSandboxFilesystemOverrides;
-pub use windows::permission_profile_supports_windows_restricted_token_sandbox;
-pub use windows::resolve_windows_elevated_filesystem_overrides;
-pub use windows::resolve_windows_restricted_token_filesystem_overrides;
-pub use windows::unsupported_windows_restricted_token_sandbox_reason;
-pub use windows::windows_sandbox_uses_elevated_backend;
 
 use genex_protocol::error::GenexErr;
 
@@ -74,9 +60,6 @@ impl From<SandboxTransformError> for GenexErr {
             SandboxTransformError::EnvironmentNetworkProxy(message) => {
                 GenexErr::UnsupportedOperation(message)
             }
-            SandboxTransformError::WindowsMxcPreparation(message) => {
-                GenexErr::UnsupportedOperation(message)
-            }
             #[cfg(target_os = "macos")]
             SandboxTransformError::SeatbeltPreparation(message) => {
                 GenexErr::UnsupportedOperation(message)
@@ -89,10 +72,6 @@ impl From<SandboxTransformError> for GenexErr {
             SandboxTransformError::SeatbeltUnavailable => GenexErr::UnsupportedOperation(
                 "seatbelt sandbox is only available on macOS".to_string(),
             ),
-            #[cfg(target_os = "windows")]
-            SandboxTransformError::WindowsSandboxPreparation(message) => {
-                GenexErr::UnsupportedOperation(message)
-            }
         }
     }
 }

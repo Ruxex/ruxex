@@ -1,7 +1,4 @@
 mod pid;
-#[cfg(windows)]
-pub(crate) mod windows;
-
 use std::path::Path;
 use std::path::PathBuf;
 

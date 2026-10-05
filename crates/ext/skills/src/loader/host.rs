@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use futures::StreamExt;
 use genex_exec_server::ExecutorFileSystem;
 use genex_exec_server::GetMetadataOptions;
 use genex_exec_server::ReadFileOptions;
@@ -14,7 +15,6 @@ use genex_utils_path_uri::PathUri;
 use genex_utils_plugins::PluginIdentity;
 use genex_utils_plugins::PluginSkillRoot;
 use genex_utils_plugins::SkillDiscoveryMode;
-use futures::StreamExt;
 use tracing::error;
 
 use super::MAX_QUALIFIED_NAME_LEN;

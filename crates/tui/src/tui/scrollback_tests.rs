@@ -4,9 +4,6 @@ use crate::insert_history::HistoryLineWrapPolicy;
 use crate::insert_history::InsertHistoryMode;
 use crate::insert_history::insert_history_lines_with_mode_and_wrap_policy;
 use crate::test_backend::VT100Backend;
-use genex_terminal_detection::Multiplexer;
-use genex_terminal_detection::TerminalInfo;
-use genex_terminal_detection::TerminalName;
 use crossterm::cursor::MoveTo;
 use crossterm::queue;
 use crossterm::style::Print;
@@ -16,30 +13,6 @@ use ratatui::layout::Position;
 use ratatui::layout::Rect;
 use ratatui::layout::Size;
 use ratatui::text::Line;
-
-#[test]
-fn windows_terminal_uses_full_screen_unless_zellij_is_active() {
-    let mut terminal = TerminalInfo {
-        name: TerminalName::WindowsTerminal,
-        term_program: None,
-        version: None,
-        term: None,
-        multiplexer: None,
-    };
-    let mut strategy = ScrollbackStrategy::detect(&terminal);
-
-    assert_eq!(
-        [
-            strategy.history_insertion_mode(HistoryLineWrapPolicy::PreWrap),
-            strategy.history_insertion_mode(HistoryLineWrapPolicy::Terminal),
-        ],
-        [InsertHistoryMode::FullScreen, InsertHistoryMode::FullScreen]
-    );
-
-    terminal.multiplexer = Some(Multiplexer::Zellij { version: None });
-    strategy = ScrollbackStrategy::detect(&terminal);
-    assert_eq!(strategy, ScrollbackStrategy::Zellij);
-}
 
 #[test]
 fn zellij_only_uses_full_screen_insertion_for_terminal_wrapped_history() {

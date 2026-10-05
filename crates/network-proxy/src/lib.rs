@@ -28,10 +28,6 @@ mod state;
 #[cfg(target_os = "macos")]
 mod system_dns;
 mod upstream;
-#[cfg(target_os = "windows")]
-mod windows_proxy_ingress;
-#[cfg(target_os = "windows")]
-mod windows_tcp_attribution;
 
 pub use attribution::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
 pub use attribution::write_attribution_frame;
@@ -81,9 +77,9 @@ pub use process_log_metadata::NetworkProxyProcessLogMetadata;
 pub use proxy::ALL_PROXY_ENV_KEYS;
 pub use proxy::ALLOW_LOCAL_BINDING_ENV_KEY;
 pub use proxy::Args;
+pub use proxy::DEFAULT_NO_PROXY_VALUE;
 #[cfg(target_os = "macos")]
 pub use proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
-pub use proxy::DEFAULT_NO_PROXY_VALUE;
 pub use proxy::ManagedNetworkSandboxContext;
 pub use proxy::ManagedProxyRouting;
 pub use proxy::NO_PROXY_ENV_KEYS;

@@ -6,10 +6,10 @@ use super::session::SessionSettingsUpdate;
 use super::step_settings::StepSettingsUpdate;
 use crate::config::ConstraintResult;
 use genex_history::RolloutItem;
-use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::ErrorEvent;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::ThreadSettingsAppliedEvent;
 use genex_protocol::protocol::ThreadSettingsOverrides;
 use genex_protocol::protocol::ThreadSettingsSnapshot;
@@ -66,7 +66,6 @@ pub(super) fn prepare_update(overrides: ThreadSettingsOverrides) -> SessionSetti
         sandbox_policy,
         permission_profile,
         active_permission_profile,
-        windows_sandbox_level,
         model,
         effort,
         summary,
@@ -89,7 +88,6 @@ pub(super) fn prepare_update(overrides: ThreadSettingsOverrides) -> SessionSetti
         sandbox_policy,
         permission_profile,
         active_permission_profile,
-        windows_sandbox_level,
         disabled_plugin_ids,
         ..Default::default()
     }

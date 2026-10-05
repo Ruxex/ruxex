@@ -4,6 +4,8 @@
 //! when a config mutation must be owned by the app server rather than written
 //! to the local `config.toml` directly.
 
+use color_eyre::eyre::Result;
+use color_eyre::eyre::WrapErr;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_client::TypedRequestError;
 use genex_app_server_protocol::ClientRequest;
@@ -30,9 +32,6 @@ use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 use genex_protocol::config_types::TrustLevel;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathConvention;
-use color_eyre::eyre::Result;
-use color_eyre::eyre::WrapErr;
 use serde_json::Value as JsonValue;
 use std::fmt::Display;
 use std::path::Path;
@@ -227,12 +226,7 @@ pub(crate) async fn read_remote_project_trust(
         .and_then(|layer| layer.get("disabledReason"))
         .and_then(JsonValue::as_str);
     let projects = response["config"]["projects"].as_object();
-    let windows_path = cwd_uri.infer_path_convention() == Some(PathConvention::Windows);
-    let cwd_key = if windows_path {
-        cwd.to_ascii_lowercase()
-    } else {
-        cwd.clone()
-    };
+    let cwd_key = cwd.clone();
     let project_entry = |key: &str| {
         let projects = projects?;
         projects
@@ -242,9 +236,7 @@ pub(crate) async fn read_remote_project_trust(
                 projects
                     .iter()
                     .filter(|(path, project)| {
-                        windows_path
-                            && path.eq_ignore_ascii_case(key)
-                            && project["trust_level"].as_str().is_some()
+                        *path == key && project["trust_level"].as_str().is_some()
                     })
                     .min_by_key(|(path, _)| *path)
             })

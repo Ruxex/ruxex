@@ -3,7 +3,6 @@ use super::AskForApproval;
 use super::BrowserUseConfig;
 use super::ComputerUseConfig;
 use super::SandboxMode;
-use super::WindowsSandboxImplementation;
 use crate::JsonSchema;
 use crate::TS;
 use genex_experimental_api_macros::ExperimentalApi;
@@ -299,7 +298,6 @@ pub struct ConfigRequirements {
     #[experimental(nested)]
     pub allowed_approval_policies: Option<Vec<AskForApproval>>,
     pub allowed_sandbox_modes: Option<Vec<SandboxMode>>,
-    pub allowed_windows_sandbox_implementations: Option<Vec<WindowsSandboxImplementation>>,
     pub allowed_permission_profiles: Option<BTreeMap<String, bool>>,
     pub default_permissions: Option<String>,
     pub allowed_web_search_modes: Option<Vec<WebSearchMode>>,
@@ -326,7 +324,6 @@ pub struct ConfigRequirements {
     pub model_catalog_json: Option<PathUri>,
     pub check_for_update_on_startup: Option<bool>,
     pub allow_login_shell: Option<bool>,
-    pub windows_sandbox_private_desktop: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema, TS)]
@@ -363,7 +360,6 @@ pub struct ComputerUseRequirements {
     pub allow_persistent_approval: Option<bool>,
     pub default_app_access: Option<AllowDenyRequirement>,
     pub macos: Option<ComputerUseMacosRequirements>,
-    pub windows: Option<ComputerUseWindowsRequirements>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
@@ -417,24 +413,6 @@ pub struct ComputerUseMacosRequirements {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
-pub struct ComputerUseWindowsRequirements {
-    pub aumids: Option<BTreeMap<String, AllowDenyRequirement>>,
-    pub exes: Option<Vec<ComputerUseWindowsExeRequirement>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct ComputerUseWindowsExeRequirement {
-    pub publisher_name: String,
-    pub product_name: String,
-    pub binary_name: Option<String>,
-    pub access: AllowDenyRequirement,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
 pub struct InAppBrowserRequirements {
     pub allow_external_browser_settings_import: Option<bool>,
 }
@@ -444,7 +422,6 @@ pub struct InAppBrowserRequirements {
 #[ts(export_to = "v2/")]
 pub struct ManagedHooksRequirements {
     pub managed_dir: Option<PathBuf>,
-    pub windows_managed_dir: Option<PathBuf>,
     #[serde(rename = "PreToolUse")]
     #[ts(rename = "PreToolUse")]
     pub pre_tool_use: Vec<ConfiguredHookMatcherGroup>,
@@ -499,9 +476,6 @@ pub enum ConfiguredHookHandler {
     #[ts(rename = "command")]
     Command {
         command: String,
-        #[serde(rename = "commandWindows")]
-        #[ts(rename = "commandWindows")]
-        command_windows: Option<String>,
         #[serde(rename = "timeoutSec")]
         #[ts(rename = "timeoutSec")]
         timeout_sec: Option<u64>,

@@ -1,6 +1,6 @@
 //! Clipboard copy backend for the TUI's `/copy` command and `Ctrl+O` hotkey.
 //!
-//! Local copying uses the native clipboard, with WSL PowerShell as a fallback.
+//! Local copying uses the native clipboard.
 //! In tmux, also forward to the attached terminal so clients attached after Genex
 //! started receive the copy. Over SSH without tmux, send OSC 52 directly.
 //!
@@ -14,8 +14,8 @@
 //! is always `None`.
 //!
 //! Empty selections fail without modifying a clipboard.
-//! Markdown copies also offer HTML on the native clipboard. Terminal and WSL
-//! fallbacks retain the original text. Image paste lives in `clipboard_paste`.
+//! Markdown copies also offer HTML on the native clipboard. Image paste lives in
+//! `clipboard_paste`.
 
 mod tmux;
 
@@ -57,13 +57,11 @@ pub(crate) fn copy_to_clipboard(
         format,
         CopyEnvironment {
             ssh_session: is_ssh_session(),
-            wsl_session: is_wsl_session(),
             tmux_session: is_tmux_session(),
         },
         tmux_clipboard_copy,
         osc52_copy,
         arboard_copy,
-        wsl_clipboard_copy,
     )
 }
 
@@ -102,7 +100,6 @@ impl ClipboardLease {
 #[derive(Clone, Copy)]
 struct CopyEnvironment {
     ssh_session: bool,
-    wsl_session: bool,
     tmux_session: bool,
 }
 
@@ -113,7 +110,6 @@ fn copy_to_clipboard_with(
     tmux_copy_fn: impl Fn(&str) -> Result<(), String>,
     osc52_copy_fn: impl Fn(&str) -> Result<(), String>,
     arboard_copy_fn: impl Fn(&str, Option<&str>) -> Result<Option<ClipboardLease>, String>,
-    wsl_copy_fn: impl Fn(&str) -> Result<(), String>,
 ) -> Result<Option<ClipboardLease>, String> {
     if text.is_empty() {
         return Err("nothing to copy: the selected content is empty".to_string());
@@ -142,15 +138,8 @@ fn copy_to_clipboard_with(
         CopyFormat::PlainText => None,
         CopyFormat::Markdown => Some(crate::clipboard_html::render_markdown(text)),
     };
-    let native_result = arboard_copy_fn(text, html.as_deref()).or_else(|native_error| {
-        if environment.wsl_session {
-            wsl_copy_fn(text).map(|()| None).map_err(|wsl_error| {
-                format!("native clipboard: {native_error}; WSL fallback: {wsl_error}")
-            })
-        } else {
-            Err(format!("native clipboard: {native_error}"))
-        }
-    });
+    let native_result = arboard_copy_fn(text, html.as_deref())
+        .map_err(|native_error| format!("native clipboard: {native_error}"));
     // Copy natively first: an X11 SelectionClear from a terminal write can otherwise
     // race with arboard reusing its ownership window and clear the new native data.
     // Persistent tmux sessions may gain remote clients after Genex starts, so still
@@ -175,16 +164,6 @@ fn is_ssh_session() -> bool {
 /// Detect whether the current process is running inside tmux.
 fn is_tmux_session() -> bool {
     std::env::var_os("TMUX").is_some() || std::env::var_os("TMUX_PANE").is_some()
-}
-
-#[cfg(target_os = "linux")]
-fn is_wsl_session() -> bool {
-    crate::clipboard_paste::is_probably_wsl()
-}
-
-#[cfg(not(target_os = "linux"))]
-fn is_wsl_session() -> bool {
-    false
 }
 
 /// Run arboard with stderr suppressed.
@@ -224,62 +203,6 @@ fn arboard_copy(text: &str, html: Option<&str>) -> Result<Option<ClipboardLease>
 #[cfg(target_os = "android")]
 fn arboard_copy(_text: &str, _html: Option<&str>) -> Result<Option<ClipboardLease>, String> {
     Err("native clipboard unavailable on Android".to_string())
-}
-
-/// Copy text into the Windows clipboard from a WSL process.
-#[cfg(target_os = "linux")]
-fn wsl_clipboard_copy(text: &str) -> Result<(), String> {
-    let executable = genex_utils_path::system_executable("powershell.exe")
-        .ok_or_else(|| "PowerShell is unavailable in the system PATH".to_string())?;
-    let path = genex_utils_path::system_path()
-        .map_err(|error| format!("failed to resolve system PATH: {error}"))?;
-    let mut child = std::process::Command::new(executable)
-        .env("PATH", path)
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::piped())
-        .args([
-            "-NoProfile",
-            "-Command",
-            "[Console]::InputEncoding = [System.Text.Encoding]::UTF8; $ErrorActionPreference = 'Stop'; $text = [Console]::In.ReadToEnd(); Set-Clipboard -Value $text",
-        ])
-        .spawn()
-        .map_err(|e| format!("failed to spawn powershell.exe: {e}"))?;
-
-    let Some(mut stdin) = child.stdin.take() else {
-        let _ = child.kill();
-        let _ = child.wait();
-        return Err("failed to open powershell.exe stdin".to_string());
-    };
-
-    if let Err(err) = stdin.write_all(text.as_bytes()) {
-        let _ = child.kill();
-        let _ = child.wait();
-        return Err(format!("failed to write to powershell.exe: {err}"));
-    }
-
-    drop(stdin);
-
-    let output = child
-        .wait_with_output()
-        .map_err(|e| format!("failed to wait for powershell.exe: {e}"))?;
-
-    if output.status.success() {
-        Ok(())
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        if stderr.is_empty() {
-            let status = output.status;
-            Err(format!("powershell.exe exited with status {status}"))
-        } else {
-            Err(format!("powershell.exe failed: {stderr}"))
-        }
-    }
-}
-
-#[cfg(not(target_os = "linux"))]
-fn wsl_clipboard_copy(_text: &str) -> Result<(), String> {
-    Err("WSL clipboard fallback unavailable on this platform".to_string())
 }
 
 /// RAII guard that redirects stderr (fd 2) to `/dev/null` on creation and
@@ -384,457 +307,3 @@ fn osc52_sequence(text: &str, tmux: bool) -> Result<String, String> {
         Ok(format!("\x1b]52;c;{encoded}\x07"))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use pretty_assertions::assert_eq;
-    use std::cell::Cell;
-
-    use super::CopyEnvironment;
-    use super::CopyFormat;
-    use super::OSC52_MAX_RAW_BYTES;
-    use super::copy_to_clipboard_with;
-    use super::osc52_sequence;
-    use super::write_osc52_to_writer;
-
-    fn remote_environment() -> CopyEnvironment {
-        CopyEnvironment {
-            ssh_session: true,
-            wsl_session: true,
-            tmux_session: false,
-        }
-    }
-
-    fn remote_tmux_environment() -> CopyEnvironment {
-        CopyEnvironment {
-            tmux_session: true,
-            ..remote_environment()
-        }
-    }
-
-    fn local_environment() -> CopyEnvironment {
-        CopyEnvironment {
-            ssh_session: false,
-            wsl_session: false,
-            tmux_session: false,
-        }
-    }
-
-    fn local_wsl_environment() -> CopyEnvironment {
-        CopyEnvironment {
-            wsl_session: true,
-            ..local_environment()
-        }
-    }
-
-    #[test]
-    fn osc52_encoding_roundtrips() {
-        use base64::Engine;
-        let text = "# Hello\n\n```rust\nfn main() {}\n```\n";
-        let sequence = osc52_sequence(text, /*tmux*/ false).expect("OSC 52 sequence");
-        let encoded = sequence
-            .trim_start_matches("\u{1b}]52;c;")
-            .trim_end_matches('\u{7}');
-        let decoded = base64::engine::general_purpose::STANDARD
-            .decode(encoded)
-            .unwrap();
-        assert_eq!(decoded, text.as_bytes());
-    }
-
-    #[test]
-    fn osc52_rejects_payload_larger_than_limit() {
-        let text = "x".repeat(OSC52_MAX_RAW_BYTES + 1);
-        assert_eq!(
-            osc52_sequence(&text, /*tmux*/ false),
-            Err(format!(
-                "OSC 52 payload too large ({} bytes; max {OSC52_MAX_RAW_BYTES})",
-                OSC52_MAX_RAW_BYTES + 1
-            ))
-        );
-    }
-
-    #[test]
-    fn osc52_wraps_tmux_passthrough() {
-        assert_eq!(
-            osc52_sequence("hello", /*tmux*/ true),
-            Ok("\u{1b}Ptmux;\u{1b}\u{1b}]52;c;aGVsbG8=\u{7}\u{1b}\\".to_string())
-        );
-    }
-
-    #[test]
-    fn write_osc52_to_writer_emits_sequence_verbatim() {
-        let sequence = "\u{1b}]52;c;aGVsbG8=\u{7}";
-        let mut output = Vec::new();
-        assert_eq!(write_osc52_to_writer(&mut output, sequence), Ok(()));
-        assert_eq!(output, sequence.as_bytes());
-    }
-
-    #[test]
-    fn ssh_attempts_both_native_and_osc52() {
-        let tmux_calls = Cell::new(0_u8);
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "**hello**",
-            CopyFormat::Markdown,
-            remote_environment(),
-            |_| {
-                tmux_calls.set(tmux_calls.get() + 1);
-                Ok(())
-            },
-            |text| {
-                assert_eq!(text, "**hello**");
-                osc_calls.set(osc_calls.get() + 1);
-                Ok(())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Ok(None)
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Ok(())
-            },
-        );
-
-        assert!(matches!(result, Ok(None)));
-        assert_eq!(tmux_calls.get(), 0);
-        assert_eq!(osc_calls.get(), 1);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 0);
-    }
-
-    #[test]
-    fn ssh_reports_failure_when_all_backends_fail() {
-        let tmux_calls = Cell::new(0_u8);
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            remote_environment(),
-            |_| {
-                tmux_calls.set(tmux_calls.get() + 1);
-                Ok(())
-            },
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Err("blocked".into())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Err("native unavailable".into())
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Err("powershell unavailable".into())
-            },
-        );
-
-        let Err(error) = result else {
-            panic!("expected OSC 52 error");
-        };
-        assert_eq!(
-            error,
-            "native clipboard: native unavailable; WSL fallback: powershell unavailable; terminal clipboard: blocked"
-        );
-        assert_eq!(tmux_calls.get(), 0);
-        assert_eq!(osc_calls.get(), 1);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 1);
-    }
-
-    #[test]
-    fn ssh_inside_tmux_attempts_both_native_and_tmux() {
-        let tmux_calls = Cell::new(0_u8);
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            remote_tmux_environment(),
-            |_| {
-                tmux_calls.set(tmux_calls.get() + 1);
-                Ok(())
-            },
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Ok(())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Ok(None)
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Ok(())
-            },
-        );
-
-        assert!(matches!(result, Ok(None)));
-        assert_eq!(tmux_calls.get(), 1);
-        assert_eq!(osc_calls.get(), 0);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 0);
-    }
-
-    #[test]
-    fn ssh_inside_tmux_falls_back_to_osc52_when_tmux_copy_fails() {
-        let tmux_calls = Cell::new(0_u8);
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            remote_tmux_environment(),
-            |_| {
-                tmux_calls.set(tmux_calls.get() + 1);
-                Err("tmux unavailable".into())
-            },
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Ok(())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Ok(None)
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Ok(())
-            },
-        );
-
-        assert!(matches!(result, Ok(None)));
-        assert_eq!(tmux_calls.get(), 1);
-        assert_eq!(osc_calls.get(), 1);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 0);
-    }
-
-    #[test]
-    fn local_uses_native_clipboard_first() {
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            local_wsl_environment(),
-            |_| Ok(()),
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Ok(())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Ok(Some(super::ClipboardLease::test()))
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Ok(())
-            },
-        );
-
-        assert!(matches!(result, Ok(Some(_))));
-        assert_eq!(osc_calls.get(), 0);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 0);
-    }
-
-    #[test]
-    fn local_copy_offers_html_only_for_markdown() {
-        for (format, html) in [
-            (
-                CopyFormat::Markdown,
-                Some("<p><strong>hello</strong></p>\n"),
-            ),
-            (CopyFormat::PlainText, None),
-        ] {
-            let result = copy_to_clipboard_with(
-                "**hello**",
-                format,
-                local_environment(),
-                |_| panic!("native copy should succeed"),
-                |_| panic!("native copy should succeed"),
-                |text, actual_html| {
-                    assert_eq!((text, actual_html), ("**hello**", html));
-                    Ok(None)
-                },
-                |_| panic!("native copy should succeed"),
-            );
-            assert!(matches!(result, Ok(None)));
-        }
-    }
-
-    #[test]
-    fn local_non_wsl_falls_back_to_osc52_when_native_fails() {
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "**hello**",
-            CopyFormat::Markdown,
-            local_environment(),
-            |_| Ok(()),
-            |text| {
-                assert_eq!(text, "**hello**");
-                osc_calls.set(osc_calls.get() + 1);
-                Ok(())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Err("native unavailable".into())
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Ok(())
-            },
-        );
-
-        assert!(matches!(result, Ok(None)));
-        assert_eq!(osc_calls.get(), 1);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 0);
-    }
-
-    #[test]
-    fn local_wsl_native_failure_uses_powershell_and_skips_osc52_on_success() {
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            local_wsl_environment(),
-            |_| Ok(()),
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Ok(())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Err("native unavailable".into())
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Ok(())
-            },
-        );
-
-        assert!(matches!(result, Ok(None)));
-        assert_eq!(osc_calls.get(), 0);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 1);
-    }
-
-    #[test]
-    fn local_wsl_falls_back_to_osc52_when_native_and_powershell_fail() {
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            local_wsl_environment(),
-            |_| Ok(()),
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Ok(())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Err("native unavailable".into())
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Err("powershell unavailable".into())
-            },
-        );
-
-        assert!(matches!(result, Ok(None)));
-        assert_eq!(osc_calls.get(), 1);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 1);
-    }
-
-    #[test]
-    fn local_reports_both_errors_when_native_and_osc52_fail() {
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            local_environment(),
-            |_| Ok(()),
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Err("osc blocked".into())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Err("native unavailable".into())
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Ok(())
-            },
-        );
-
-        let Err(error) = result else {
-            panic!("expected native and OSC 52 errors");
-        };
-        assert_eq!(
-            error,
-            "native clipboard: native unavailable; terminal clipboard: osc blocked"
-        );
-        assert_eq!(osc_calls.get(), 1);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 0);
-    }
-
-    #[test]
-    fn local_wsl_reports_native_powershell_and_osc52_errors_when_all_fail() {
-        let osc_calls = Cell::new(0_u8);
-        let native_calls = Cell::new(0_u8);
-        let wsl_calls = Cell::new(0_u8);
-        let result = copy_to_clipboard_with(
-            "hello",
-            CopyFormat::PlainText,
-            local_wsl_environment(),
-            |_| Ok(()),
-            |_| {
-                osc_calls.set(osc_calls.get() + 1);
-                Err("osc blocked".into())
-            },
-            |_, _| {
-                native_calls.set(native_calls.get() + 1);
-                Err("native unavailable".into())
-            },
-            |_| {
-                wsl_calls.set(wsl_calls.get() + 1);
-                Err("powershell unavailable".into())
-            },
-        );
-
-        let Err(error) = result else {
-            panic!("expected native, WSL, and OSC 52 errors");
-        };
-        assert_eq!(
-            error,
-            "native clipboard: native unavailable; WSL fallback: powershell unavailable; terminal clipboard: osc blocked"
-        );
-        assert_eq!(osc_calls.get(), 1);
-        assert_eq!(native_calls.get(), 1);
-        assert_eq!(wsl_calls.get(), 1);
-    }
-}
-
-#[cfg(test)]
-#[path = "clipboard_copy/routing_tests.rs"]
-mod routing_tests;

@@ -88,7 +88,6 @@ mod attestation;
 mod auth_mode;
 mod bespoke_event_handling;
 mod code_mode_host;
-mod genex_home_metrics;
 mod command_exec;
 mod config_layer;
 mod config_manager;
@@ -105,6 +104,7 @@ mod external_agent_migration;
 mod filters;
 mod fs_watch;
 mod fuzzy_file_search;
+mod genex_home_metrics;
 mod image_url;
 pub mod in_process;
 mod mcp_refresh;
@@ -207,18 +207,6 @@ async fn shutdown_signal() -> IoResult<ShutdownSignal> {
             _ = term.recv() => Ok(ShutdownSignal::Forceable),
             _ = hangup.recv() => Ok(ShutdownSignal::GracefulOnly),
         }
-    }
-
-    #[cfg(windows)]
-    {
-        let console_signal = async {
-            if tokio::signal::ctrl_c().await.is_err() {
-                // A detached daemon has no console; keep its local control path active.
-                std::future::pending::<()>().await;
-            }
-        };
-        console_signal.await;
-        Ok(ShutdownSignal::Forceable)
     }
 }
 
@@ -711,9 +699,8 @@ pub async fn run_main_with_transport_options(
                 socket_path.clone(),
                 transport_event_tx.clone(),
                 transport_shutdown_token.clone(),
-                if cfg!(windows)
-                    && std::env::var_os(genex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV)
-                        .is_some()
+                if std::env::var_os(genex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV)
+                    .is_some()
                 {
                     DaemonShutdownAccess::Managed
                 } else {
@@ -737,10 +724,9 @@ pub async fn run_main_with_transport_options(
     }
     drop(unix_socket_startup_lock);
 
-    let auth_manager =
-        AuthManager::shared_from_config(&config, /*enable_api_key_env*/ false)
-            .await
-            .map_err(std::io::Error::other)?;
+    let auth_manager = AuthManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+        .await
+        .map_err(std::io::Error::other)?;
 
     let no_local_transport = transport_accept_handles.is_empty();
     if no_local_transport {

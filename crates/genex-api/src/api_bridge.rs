@@ -1,8 +1,8 @@
 use crate::TransportError;
 use crate::error::ApiError;
+use genex_protocol::error::ConnectionFailedError;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::ConnectionFailedError;
 use genex_protocol::error::RetryLimitReachedError;
 use genex_protocol::error::UnexpectedResponseError;
 use genex_protocol::protocol::MisalignmentErrorDetails;

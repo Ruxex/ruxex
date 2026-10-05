@@ -31,7 +31,7 @@ Precedence is **top overrides bottom**:
 5. `User` profile config, when present
 6. `User` config (`config.toml`)
 7. `EnterpriseManaged` cloud-managed config bundle layers
-8. `System` config (`/etc/genex/config.toml` or the Windows system config path)
+8. `System` config (`/etc/genex/config.toml`)
 
 `ConfigLayerStack` stores layers in the opposite order internally: lowest
 precedence first, highest precedence last, so later layers override earlier

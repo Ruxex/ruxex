@@ -113,8 +113,6 @@ pub(crate) fn without_notification_media(notification: ServerNotification) -> Se
         | ServerNotification::ConfigWarning(_)
         | ServerNotification::FuzzyFileSearchSessionUpdated(_)
         | ServerNotification::FuzzyFileSearchSessionCompleted(_)
-        | ServerNotification::WindowsWorldWritableWarning(_)
-        | ServerNotification::WindowsSandboxSetupCompleted(_)
         | ServerNotification::AccountLoginCompleted(_) => notification,
     }
 }

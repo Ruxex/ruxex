@@ -1,9 +1,9 @@
 use crate::StartThreadOptions;
 use crate::ThreadManager;
 use crate::agent::AgentControl;
-use crate::genex_thread::GenexThread;
 use crate::config::Config;
 use crate::config::test_config;
+use crate::genex_thread::GenexThread;
 use crate::thread_manager::ThreadManagerState;
 use genex_features::Feature;
 use genex_login::GenexAuth;

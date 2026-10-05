@@ -1,4 +1,5 @@
 use anyhow::Result;
+use core_test_support::test_path_buf;
 use genex_protocol::SessionId;
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::EventMsg;
@@ -11,7 +12,6 @@ use genex_protocol::protocol::ThreadSource;
 use genex_protocol::protocol::TokenCountEvent;
 use genex_protocol::protocol::TokenUsage;
 use genex_protocol::protocol::TokenUsageInfo;
-use core_test_support::test_path_buf;
 use serde_json::json;
 use std::fs;
 use std::fs::FileTimes;

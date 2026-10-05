@@ -709,8 +709,6 @@ timeout = 900
             config.set_windows_elevated_sandbox_enabled(/*value*/ true);
         }
         if managed_network_configured {
-            #[cfg(windows)]
-            config.set_windows_sandbox_enabled(/*value*/ true);
             config.approvals_reviewer = ApprovalsReviewer::AutoReview;
             config.bypass_hook_trust = true;
         }

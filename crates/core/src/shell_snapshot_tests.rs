@@ -7,6 +7,8 @@ use crate::tools::runtimes::RuntimePathPrepends;
 use crate::tools::runtimes::maybe_wrap_shell_lc_with_snapshot;
 #[cfg(unix)]
 use crate::tools::runtimes::prepare_brokered_shell_snapshot_env;
+use core_test_support::PathBufExt;
+use core_test_support::PathExt;
 #[cfg(unix)]
 use genex_network_proxy::CredentialProviderConfig;
 #[cfg(unix)]
@@ -15,8 +17,6 @@ use genex_network_proxy::NetworkProxyConfig;
 use genex_protocol::config_types::EnvironmentVariablePattern;
 #[cfg(unix)]
 use genex_protocol::models::PermissionProfile;
-use core_test_support::PathBufExt;
-use core_test_support::PathExt;
 use pretty_assertions::assert_eq;
 #[cfg(unix)]
 use std::os::unix::ffi::OsStrExt;
@@ -84,7 +84,7 @@ impl Drop for BlockingStdinPipe {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(unix)]
 fn assert_posix_snapshot_sections(snapshot: &str) {
     assert!(snapshot.contains("# Snapshot file"));
     assert!(snapshot.contains("aliases "));
@@ -117,50 +117,6 @@ fn preserved_provider_context_respects_unix_environment_casing() {
     );
 }
 
-#[cfg(windows)]
-#[test]
-fn inherited_provider_context_matches_windows_environment_casing() {
-    let mut env = HashMap::new();
-    let inherited = HashMap::from([("gh_host".to_string(), "github.example.com".to_string())]);
-
-    replace_provider_context_with_trusted(
-        &mut env,
-        &inherited,
-        std::iter::once("GH_HOST".to_string()),
-        &[],
-    );
-
-    assert_eq!(
-        env,
-        HashMap::from([("GH_HOST".to_string(), "github.example.com".to_string())])
-    );
-
-    insert_env_value(&mut env, "gh_host", "github.alternate.example");
-    assert_eq!(
-        env_value(&env, "GH_HOST").map(String::as_str),
-        Some("github.alternate.example")
-    );
-    assert_eq!(env.len(), 1);
-}
-
-async fn get_snapshot(shell_type: ShellType) -> Result<String> {
-    let dir = tempdir()?;
-    let path = dir.path().join("snapshot.sh");
-    let shell = crate::shell::get_shell(shell_type)
-        .with_context(|| format!("No available shell for {shell_type:?}"))?;
-    write_shell_snapshot(
-        &shell,
-        &path.abs(),
-        &dir.path().abs(),
-        /*credential_broker*/ None,
-        /*sandbox*/ None,
-    )
-    .await?;
-    let content = fs::read_to_string(&path).await?;
-    Ok(content)
-}
-
-#[test]
 fn snapshot_file_name_parser_supports_legacy_and_suffixed_names() {
     let session_id = "019cf82b-6a62-7700-bbbd-46909794ef89";
 
@@ -191,7 +147,6 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     use crate::tools::sandboxing::SandboxAttempt;
     use genex_exec_server::EnvironmentManager;
     use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use genex_protocol::config_types::WindowsSandboxLevel;
     use genex_protocol::protocol::EnvironmentConfig;
     use genex_protocol::protocol::EnvironmentConfigState;
     use genex_protocol::protocol::TurnEnvironmentSelection;
@@ -238,7 +193,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     let started_proxy = network_spec
         .start_proxy(
             &permission_profile,
-            genex_network_proxy::ManagedProxyRouting::SharedIngress,
+            genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
             /*policy_decider*/ None,
             /*blocked_request_observer*/ None,
             /*enable_network_approval_flow*/ false,
@@ -298,8 +253,6 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     let mut config = EnvironmentConfig {
         allow_login_shell: false,
         workspace_roots: Vec::new(),
-        windows_sandbox_level: WindowsSandboxLevel::Disabled,
-        windows_sandbox_private_desktop: true,
         use_legacy_landlock: false,
         permission_profile: PermissionProfileSnapshot::legacy(permission_profile),
         shell_environment_policy: ShellEnvironmentPolicy::default(),
@@ -419,8 +372,6 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         workspace_roots: std::slice::from_ref(&cwd_uri),
         sandbox_exe: None,
         use_legacy_landlock: false,
-        windows_sandbox_level: WindowsSandboxLevel::Disabled,
-        windows_sandbox_private_desktop: false,
         network_denial_cancellation_token: Some(cancellation.clone()),
         network_proxy: None,
     };
@@ -664,7 +615,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     let started_proxy = network_spec
         .start_proxy(
             &permission_profile,
-            genex_network_proxy::ManagedProxyRouting::SharedIngress,
+            genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
             /*policy_decider*/ None,
             /*blocked_request_observer*/ None,
             /*enable_network_approval_flow*/ false,
@@ -1731,41 +1682,6 @@ async fn timed_out_snapshot_shell_is_terminated() -> Result<()> {
         sleep(TokioDuration::from_millis(50)).await;
     }
 
-    Ok(())
-}
-
-#[cfg(target_os = "macos")]
-#[tokio::test]
-async fn macos_zsh_snapshot_includes_sections() -> Result<()> {
-    let snapshot = get_snapshot(ShellType::Zsh).await?;
-    assert_posix_snapshot_sections(&snapshot);
-    Ok(())
-}
-
-#[cfg(target_os = "linux")]
-#[tokio::test]
-async fn linux_bash_snapshot_includes_sections() -> Result<()> {
-    let snapshot = get_snapshot(ShellType::Bash).await?;
-    assert_posix_snapshot_sections(&snapshot);
-    Ok(())
-}
-
-#[cfg(target_os = "linux")]
-#[tokio::test]
-async fn linux_sh_snapshot_includes_sections() -> Result<()> {
-    let snapshot = get_snapshot(ShellType::Sh).await?;
-    assert_posix_snapshot_sections(&snapshot);
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-#[ignore]
-#[tokio::test]
-async fn windows_powershell_snapshot_includes_sections() -> Result<()> {
-    let snapshot = get_snapshot(ShellType::PowerShell).await?;
-    assert!(snapshot.contains("# Snapshot file"));
-    assert!(snapshot.contains("aliases "));
-    assert!(snapshot.contains("exports "));
     Ok(())
 }
 

@@ -27,9 +27,5 @@ dotenvy = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 
-[target.'cfg(windows)'.dependencies]
-genex-windows-sandbox = { workspace = true }
-pathdiff = { workspace = true }
-
 [dev-dependencies]
 pretty_assertions = { workspace = true }

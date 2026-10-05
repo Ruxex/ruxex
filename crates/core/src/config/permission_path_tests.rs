@@ -210,10 +210,7 @@ fn compiler_uses_shared_resolution_for_literal_and_glob_rules() {
 fn scoped_home_rules_resolve_and_deny_the_supplied_home() {
     for facts in executor_contexts() {
         let home = facts.user_home_dir.as_ref().unwrap();
-        let home_glob = match facts.context().convention() {
-            PathConvention::Posix => "~/private/*.env",
-            PathConvention::Windows => r"~\private\*.env",
-        };
+        let home_glob = "~/private/*.env";
         for outer in [
             facts.base_dir.inferred_native_path_string(),
             ":workspace_roots".into(),
@@ -385,7 +382,7 @@ fn permission_rules_require_absolute_paths_and_descendant_subpaths() {
 #[test]
 fn executor_scoped_globs_preserve_native_separator_spelling() {
     for facts in
-        executor_contexts().filter(|facts| facts.context().convention() == PathConvention::Windows)
+        executor_contexts().filter(|facts| facts.context().convention() == PathConvention::Posix)
     {
         for subpath in ["secrets/*.env", r"secrets\*.env", r"nested/secrets\*.env"] {
             assert_executor_rule(

@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::Result;
+use futures::FutureExt;
+use futures::future::join_all;
 use genex_config::McpServerAuth;
 use genex_config::McpServerConfig;
 use genex_config::McpServerTransportConfig;
@@ -18,8 +20,6 @@ use genex_rmcp_client::determine_streamable_http_auth_status;
 use genex_rmcp_client::determine_streamable_http_auth_status_from_credentials;
 use genex_rmcp_client::discover_streamable_http_oauth;
 use genex_rmcp_client::resolve_mcp_oauth_callback_url;
-use futures::FutureExt;
-use futures::future::join_all;
 use tracing::warn;
 
 use crate::runtime::McpRuntimeContext;

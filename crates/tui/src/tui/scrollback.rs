@@ -5,11 +5,10 @@ use crate::insert_history::HistoryLineWrapPolicy;
 use crate::insert_history::InsertHistoryMode;
 use crate::insert_history::ResetScrollRegion;
 use crate::insert_history::SetScrollRegion;
-use genex_terminal_detection::TerminalInfo;
-use genex_terminal_detection::TerminalName;
 use crossterm::cursor::MoveTo;
 use crossterm::queue;
 use crossterm::style::Print;
+use genex_terminal_detection::TerminalInfo;
 use ratatui::backend::Backend;
 use ratatui::layout::Position;
 use ratatui::layout::Size;
@@ -27,10 +26,6 @@ impl ScrollbackStrategy {
     pub(super) fn detect(terminal: &TerminalInfo) -> Self {
         if terminal.is_zellij() {
             Self::Zellij
-        } else if terminal.name == TerminalName::WindowsTerminal
-            || std::env::var_os("WT_SESSION").is_some()
-        {
-            Self::FullScreen
         } else {
             Self::Standard
         }

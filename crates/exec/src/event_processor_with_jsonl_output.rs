@@ -18,8 +18,8 @@ use genex_protocol::models::WebSearchAction;
 use genex_protocol::protocol::SessionConfiguredEvent;
 use serde_json::json;
 
-pub use crate::event_processor::GenexStatus;
 use crate::event_processor::EventProcessor;
+pub use crate::event_processor::GenexStatus;
 use crate::event_processor::handle_last_message;
 use crate::exec_events::AgentMessageItem;
 use crate::exec_events::CollabAgentState;

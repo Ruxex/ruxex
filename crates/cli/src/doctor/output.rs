@@ -1358,17 +1358,6 @@ Background Server
             CheckStatus::Ok,
             "sufficient free disk space (42.0 GiB)",
         ));
-        report.checks.push(
-            DoctorCheck::new(
-                "git.worktree.dev_drive",
-                "git",
-                CheckStatus::Warning,
-                "this worktree is not on a Windows Dev Drive",
-            )
-            .remediation(
-                "create a trusted Windows Dev Drive: https://learn.microsoft.com/en-us/windows/dev-drive/",
-            ),
-        );
         let mut security = super::super::security::endpoint_check(
             super::super::security::EndpointInspection::Complete(vec!["Microsoft Defender"]),
         );
@@ -1377,7 +1366,7 @@ Background Server
             .iter_mut()
             .find(|detail| detail.starts_with("exclusion targets: "))
             .expect("endpoint security check should include exclusion targets");
-            *targets = "exclusion targets: verified Genex app and required helpers".into();
+        *targets = "exclusion targets: verified Genex app and required helpers".into();
         report.checks.push(security);
         report.checks.extend([
             DoctorCheck::new(

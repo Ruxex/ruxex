@@ -6,7 +6,6 @@ use genex_exec_server::ExecServerRuntimePaths;
 use genex_exec_server::ExecutorFileSystem;
 use genex_exec_server::FileSystemSandboxContext;
 use genex_exec_server::LocalFileSystem;
-use genex_exec_server::WindowsSandboxSelection;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::FileSystemAccessMode;
 use genex_protocol::permissions::FileSystemPath;
@@ -56,14 +55,6 @@ pub(crate) async fn create_file_system_context(
     }
 }
 
-#[cfg(windows)]
-pub(crate) fn is_unsupported_restricted_token_host<T>(result: &std::io::Result<T>) -> bool {
-    result
-        .as_ref()
-        .err()
-        .is_some_and(|err| err.to_string().contains("CreateRestrictedToken failed: 87"))
-}
-
 pub(crate) fn absolute_path(path: std::path::PathBuf) -> AbsolutePathBuf {
     assert!(
         path.is_absolute(),
@@ -86,7 +77,6 @@ pub(crate) fn read_only_sandbox(readable_root: std::path::PathBuf) -> FileSystem
     sandbox_context(entries, cwd)
 }
 
-#[cfg(not(windows))]
 pub(crate) fn workspace_write_sandbox(
     writable_root: std::path::PathBuf,
 ) -> FileSystemSandboxContext {
@@ -102,58 +92,12 @@ pub(crate) fn workspace_write_sandbox(
     sandbox_context(entries, cwd)
 }
 
-#[cfg(windows)]
-pub(crate) fn workspace_write_sandbox(
-    writable_root: std::path::PathBuf,
-) -> FileSystemSandboxContext {
-    let writable_root = absolute_path(writable_root);
-    // Keep the runtime policy aligned with the legacy workspace-write projection used by the
-    // unelevated restricted-token preflight.
-    let policy = FileSystemSandboxPolicy::restricted(vec![
-        FileSystemSandboxEntry::new(
-            FileSystemPath::Special {
-                value: FileSystemSpecialPath::Root,
-            },
-            FileSystemAccessMode::Read,
-        ),
-        FileSystemSandboxEntry::new(
-            FileSystemPath::Special {
-                value: FileSystemSpecialPath::project_roots(/*subpath*/ None),
-            },
-            FileSystemAccessMode::Write,
-        ),
-    ]);
-    let mut sandbox = FileSystemSandboxContext::from_permission_profile(
-        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted),
-        PathUri::from_abs_path(&writable_root),
-    );
-    sandbox.windows_sandbox_selection = WindowsSandboxSelection::RestrictedToken;
-    sandbox
-}
-
-fn sandbox_context(
-    mut entries: Vec<FileSystemSandboxEntry>,
-    cwd: PathUri,
-) -> FileSystemSandboxContext {
-    if cfg!(windows) {
-        // Restricted-token sandboxing cannot enforce read restrictions, so leave the root
-        // readable while exercising the requested write restrictions.
-        entries.push(FileSystemSandboxEntry::new(
-            FileSystemPath::Special {
-                value: FileSystemSpecialPath::Root,
-            },
-            FileSystemAccessMode::Read,
-        ));
-    }
-    let mut sandbox = FileSystemSandboxContext::from_permission_profile(
+fn sandbox_context(entries: Vec<FileSystemSandboxEntry>, cwd: PathUri) -> FileSystemSandboxContext {
+    FileSystemSandboxContext::from_permission_profile(
         PermissionProfile::from_runtime_permissions(
             &FileSystemSandboxPolicy::restricted(entries),
             NetworkSandboxPolicy::Restricted,
         ),
         cwd,
-    );
-    if cfg!(windows) {
-        sandbox.windows_sandbox_selection = WindowsSandboxSelection::RestrictedToken;
-    }
-    sandbox
+    )
 }

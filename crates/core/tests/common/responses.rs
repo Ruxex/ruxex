@@ -7,11 +7,11 @@ use std::time::Duration;
 
 use anyhow::Result;
 use base64::Engine;
+use futures::SinkExt;
+use futures::StreamExt;
 use genex_protocol::model_types::ModelsResponse;
 use genex_protocol::models::ContentItem;
 use genex_protocol::models::ResponseItem;
-use futures::SinkExt;
-use futures::StreamExt;
 use serde_json::Value;
 use tokio::net::TcpListener;
 use tokio::sync::Notify;

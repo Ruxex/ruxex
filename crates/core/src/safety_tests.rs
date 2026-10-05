@@ -1,4 +1,5 @@
 use super::*;
+use core_test_support::PathExt;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::permissions::FileSystemSandboxPolicyContext;
 use genex_protocol::permissions::NetworkSandboxPolicy;
@@ -9,7 +10,6 @@ use genex_protocol::protocol::FileSystemSpecialPath;
 use genex_protocol::protocol::GranularApprovalConfig;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
-use core_test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -20,37 +20,6 @@ fn local_context(cwd: &PathUri) -> FileSystemSandboxPolicyContext<'_> {
         user_home_dir: None,
         temporary_directories: None,
     }
-}
-
-#[test]
-fn windows_patch_matching_is_uri_native() {
-    let cwd = PathUri::parse("file:///C:/workspace").expect("Windows cwd");
-    let context = local_context(&cwd);
-    let permission_profile = PermissionProfile::workspace_write();
-    let policy = permission_profile.file_system_sandbox_policy();
-    let inside = ApplyPatchAction::new_add_for_test(
-        &PathUri::parse("file:///C:/workspace/in.txt").expect("inside"),
-        String::new(),
-    );
-    let outside = ApplyPatchAction::new_add_for_test(
-        &PathUri::parse("file:///C:/outside.txt").expect("outside"),
-        String::new(),
-    );
-
-    assert!(!is_write_patch_constrained_to_writable_paths(
-        &outside, &policy, &context,
-    ));
-    assert_eq!(
-        assess_patch_safety(
-            &inside,
-            AskForApproval::Never,
-            &permission_profile,
-            &policy,
-            &context,
-            PatchSandboxRoute::ExecutorManaged,
-        ),
-        SafetyCheck::AutoApprove,
-    );
 }
 
 #[test]
@@ -190,7 +159,7 @@ fn external_sandbox_auto_approves_in_on_request() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled)
+            PatchSandboxRoute::Platform
         ),
         SafetyCheck::AutoApprove
     );
@@ -220,7 +189,7 @@ fn granular_with_all_flags_true_matches_on_request_for_out_of_root_patch() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled),
+            PatchSandboxRoute::Platform,
         ),
         SafetyCheck::AskUser,
     );
@@ -237,7 +206,7 @@ fn granular_with_all_flags_true_matches_on_request_for_out_of_root_patch() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled),
+            PatchSandboxRoute::Platform,
         ),
         SafetyCheck::AskUser,
     );
@@ -273,7 +242,7 @@ fn granular_sandbox_approval_false_rejects_out_of_root_patch() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled),
+            PatchSandboxRoute::Platform,
         ),
         SafetyCheck::Reject {
             reason: PATCH_REJECTED_OUTSIDE_PROJECT_REASON.to_string(),
@@ -304,7 +273,7 @@ fn read_only_policy_rejects_patch_with_read_only_reason() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled),
+            PatchSandboxRoute::Platform,
         ),
         SafetyCheck::Reject {
             reason: PATCH_REJECTED_READ_ONLY_REASON.to_string(),
@@ -354,7 +323,7 @@ fn explicit_unreadable_paths_prevent_auto_approval_for_external_sandbox() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled),
+            PatchSandboxRoute::Platform,
         ),
         SafetyCheck::AskUser,
     );
@@ -404,7 +373,7 @@ fn explicit_read_only_subpaths_prevent_auto_approval_for_external_sandbox() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled),
+            PatchSandboxRoute::Platform,
         ),
         SafetyCheck::AskUser,
     );
@@ -447,7 +416,7 @@ fn missing_project_dot_genex_config_requires_approval() {
             &permission_profile,
             &file_system_sandbox_policy,
             &local_context(&cwd_uri),
-            PatchSandboxRoute::Platform(WindowsSandboxLevel::Disabled),
+            PatchSandboxRoute::Platform,
         ),
         SafetyCheck::AskUser,
     );

@@ -25,8 +25,6 @@ use genex_exec_server::ShellInfo;
 #[cfg(unix)]
 use genex_exec_server::ShellSnapshotRequest;
 use genex_exec_server::StartedExecProcess;
-#[cfg(any(unix, windows))]
-use genex_exec_server::WindowsSandboxSelection;
 use genex_exec_server::WriteStatus;
 #[cfg(unix)]
 use genex_network_proxy::NetworkProxyConfig;
@@ -50,7 +48,6 @@ use genex_protocol::permissions::FileSystemSandboxPolicy;
 use genex_protocol::permissions::FileSystemSpecialPath;
 #[cfg(unix)]
 use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::SandboxPolicy;
 use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -97,8 +94,8 @@ async fn create_process_context(_use_remote: bool) -> Result<ProcessContext> {
 #[cfg(target_os = "macos")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn genex_home_symlink_opt_out_respects_host_config_and_scope() -> Result<()> {
-    use genex_exec_server::WriteFileOptions;
     use common::exec_server::exec_server_with_env;
+    use genex_exec_server::WriteFileOptions;
     use std::os::unix::fs::symlink;
 
     let workspace = TempDir::new()?;
@@ -1280,87 +1277,6 @@ async fn assert_exec_process_write_then_read_without_tty(use_remote: bool) -> Re
     Ok(())
 }
 
-async fn assert_remote_windows_sandbox_process_write(
-    expected_sandbox_type: genex_sandboxing::SandboxType,
-    tty: bool,
-) -> Result<()> {
-    if expected_sandbox_type == genex_sandboxing::SandboxType::WindowsMxc {
-        crate::skip_if_mxc_unavailable!(Ok(()));
-    }
-    let context = create_process_context(/*use_remote*/ true).await?;
-    let workspace = TempDir::new()?;
-    let blocked_file = workspace.path().join("blocked.txt");
-    let cwd = PathUri::from_host_native_path(workspace.path())?;
-    let mut sandbox = FileSystemSandboxContext::from_legacy_sandbox_policy(
-        SandboxPolicy::new_read_only_policy(),
-        cwd.clone(),
-    )?;
-    match expected_sandbox_type {
-        genex_sandboxing::SandboxType::WindowsRestrictedToken => {
-            sandbox.windows_sandbox_selection = WindowsSandboxSelection::RestrictedToken;
-        }
-        genex_sandboxing::SandboxType::WindowsMxc => {
-            sandbox.windows_sandbox_selection = WindowsSandboxSelection::Mxc;
-        }
-        genex_sandboxing::SandboxType::None
-        | genex_sandboxing::SandboxType::MacosSeatbelt
-        | genex_sandboxing::SandboxType::LinuxSeccomp => {
-            anyhow::bail!("expected a Windows sandbox type")
-        }
-    }
-
-    let session = match context
-        .backend
-        .start(ExecParams {
-            metadata: Default::default(),
-            process_id: ProcessId::from("proc-windows-sandbox-stdin"),
-            argv: vec![
-                r"C:\Windows\System32\cmd.exe".to_string(),
-                "/D".to_string(),
-                "/V:ON".to_string(),
-                "/S".to_string(),
-                "/C".to_string(),
-                format!(
-                    "set /P line= & echo blocked > \"{}\" & echo from-stdin:!line!",
-                    blocked_file.display()
-                ),
-            ],
-            cwd,
-            shell_snapshot: None,
-            env_policy: /*env_policy*/ None,
-            env: Default::default(),
-            tty,
-            pipe_stdin: !tty,
-            arg0: None,
-            sandbox: Some(sandbox),
-            enforce_managed_network: false,
-            managed_network: None,
-            network_proxy: None,
-        })
-        .await
-    {
-        Ok(session) => session,
-        Err(err) => return Err(err.into()),
-    };
-    assert_eq!(session.sandbox_type, Some(expected_sandbox_type));
-
-    let input = if tty { b"hello\r" } else { b"hello\n" };
-    let write_response = session.process.write(input.to_vec()).await?;
-    assert_eq!(write_response.status, WriteStatus::Accepted);
-    let StartedExecProcess { process, .. } = session;
-    let wake_rx = process.subscribe_wake();
-    let (output, exit_code, closed) = collect_process_output_from_reads(process, wake_rx).await?;
-
-    assert!(
-        output.contains("from-stdin:hello"),
-        "unexpected output: {output:?}"
-    );
-    assert_eq!(exit_code, Some(0));
-    assert!(closed);
-    assert!(!blocked_file.exists());
-    Ok(())
-}
-
 async fn assert_exec_process_rejects_write_without_pipe_stdin(use_remote: bool) -> Result<()> {
     let context = create_process_context(use_remote).await?;
     let process_id = "proc-stdin-closed".to_string();
@@ -1457,42 +1373,6 @@ async fn assert_exec_process_signal_interrupts_process(use_remote: bool) -> Resu
         "expected signal handler output, got {output:?}"
     );
     assert_eq!(exit_code, Some(7));
-    assert!(closed);
-    Ok(())
-}
-
-async fn assert_exec_process_signal_terminates_on_windows(use_remote: bool) -> Result<()> {
-    let context = create_process_context(use_remote).await?;
-    let session = context
-        .backend
-        .start(ExecParams {
-            metadata: Default::default(),
-            process_id: ProcessId::from("proc-windows-signal"),
-            argv: vec![
-                "cmd".to_string(),
-                "/C".to_string(),
-                "echo ready && ping -n 30 127.0.0.1 >NUL".to_string(),
-            ],
-            cwd: PathUri::from_host_native_path(std::env::current_dir()?)?,
-            shell_snapshot: None,
-            env_policy: /*env_policy*/ None,
-            env: Default::default(),
-            tty: false,
-            pipe_stdin: false,
-            arg0: None,
-            sandbox: None,
-            enforce_managed_network: false,
-            managed_network: None,
-            network_proxy: None,
-        })
-        .await?;
-
-    let StartedExecProcess { process, .. } = session;
-    let wake_rx = process.subscribe_wake();
-    process.signal(ProcessSignal::Interrupt).await?;
-    let (_output, exit_code, closed) = collect_process_output_from_reads(process, wake_rx).await?;
-
-    assert_eq!(exit_code, Some(1));
     assert!(closed);
     Ok(())
 }
@@ -1608,31 +1488,6 @@ async fn exec_process_write_then_read_without_tty(use_remote: bool) -> Result<()
     assert_exec_process_write_then_read_without_tty(use_remote).await
 }
 
-#[test_case(
-    genex_sandboxing::SandboxType::WindowsRestrictedToken,
-    false;
-    "restricted_token"
-)]
-#[test_case(
-    genex_sandboxing::SandboxType::WindowsMxc,
-    false;
-    "mxc_pipe"
-)]
-#[test_case(
-    genex_sandboxing::SandboxType::WindowsMxc,
-    true;
-    "mxc_conpty"
-)]
-#[cfg_attr(not(windows), ignore = "Windows-only exec-server sandbox process test")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[serial_test::serial(remote_exec_server)]
-async fn remote_windows_sandbox_process_accepts_process_write(
-    expected_sandbox_type: genex_sandboxing::SandboxType,
-    tty: bool,
-) -> Result<()> {
-    assert_remote_windows_sandbox_process_write(expected_sandbox_type, tty).await
-}
-
 #[test_case(false ; "local")]
 #[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
@@ -1651,16 +1506,6 @@ async fn exec_process_rejects_write_without_pipe_stdin(use_remote: bool) -> Resu
 #[serial_test::serial(remote_exec_server)]
 async fn exec_process_signal_interrupts_process(use_remote: bool) -> Result<()> {
     assert_exec_process_signal_interrupts_process(use_remote).await
-}
-
-#[test_case(false ; "local")]
-#[test_case(true ; "remote")]
-#[cfg_attr(not(windows), ignore = "Windows-only exec-server process test")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-// Serialize tests that launch a real exec-server process through the full CLI.
-#[serial_test::serial(remote_exec_server)]
-async fn exec_process_signal_terminates_on_windows(use_remote: bool) -> Result<()> {
-    assert_exec_process_signal_terminates_on_windows(use_remote).await
 }
 
 #[test_case(false ; "local")]

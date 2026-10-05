@@ -2,6 +2,8 @@
 
 use std::sync::Arc;
 
+use core_test_support::responses;
+use core_test_support::test_genex::test_genex;
 use genex_core::config::Config;
 use genex_core::config::TokenBudgetConfig;
 use genex_extension_api::ExtensionRegistryBuilder;
@@ -9,8 +11,6 @@ use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
-use core_test_support::responses;
-use core_test_support::test_genex::test_genex;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
 use serde_json::json;

@@ -7,15 +7,15 @@
 
 use std::time::Duration;
 
+use futures::FutureExt;
+use futures::StreamExt;
+use futures::future::BoxFuture;
 use genex_exec_server_protocol::JSONRPCErrorError;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::RouteAwareClientPool;
 use genex_http_client::RouteAwareRequestError;
 use genex_protocol::shell_environment::GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
-use futures::FutureExt;
-use futures::StreamExt;
-use futures::future::BoxFuture;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;

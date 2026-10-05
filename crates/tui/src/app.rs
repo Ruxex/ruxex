@@ -14,8 +14,6 @@ use crate::app_event::PermissionProfileSelection;
 use crate::app_event::PluginLocation;
 use crate::app_event::RunningTaskExitAction;
 use crate::app_event::ThreadTitleDestination;
-#[cfg(target_os = "windows")]
-use crate::app_event::WindowsSandboxEnableMode;
 use crate::app_event_sender::AppEventSender;
 use crate::app_server_session::AppServerBootstrap;
 use crate::app_server_session::AppServerSession;
@@ -78,16 +76,22 @@ use crate::update_action::UpdateAction;
 use crate::version::GENEX_CLI_VERSION;
 use crate::workspace_command::AppServerWorkspaceCommandRunner;
 use crate::workspace_command::WorkspaceCommandRunner;
+use color_eyre::eyre::Result;
+use color_eyre::eyre::WrapErr;
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+use crossterm::event::KeyEventKind;
+use crossterm::event::KeyModifiers;
 use genex_ansi_escape::ansi_escape_line;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_client::TypedRequestError;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
 use genex_app_server_protocol::ConfigBatchWriteParams;
 use genex_app_server_protocol::ConfigReadResponse;
 use genex_app_server_protocol::ConfigValueWriteParams;
 use genex_app_server_protocol::ConfigWriteResponse;
+use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
 use genex_app_server_protocol::HooksListEntry;
 use genex_app_server_protocol::ListMcpServerStatusParams;
 use genex_app_server_protocol::ListMcpServerStatusResponse;
@@ -136,12 +140,6 @@ use genex_rollout::StateDbHandle;
 use genex_terminal_detection::user_agent;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_approval_presets::builtin_permission_profile_for_active_permission_profile;
-use color_eyre::eyre::Result;
-use color_eyre::eyre::WrapErr;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyEventKind;
-use crossterm::event::KeyModifiers;
 use ratatui::backend::Backend;
 use ratatui::layout::Rect;
 use ratatui::layout::Size;
@@ -235,7 +233,6 @@ use self::agent_navigation::AgentNavigationState;
 use self::app_server_requests::PendingAppServerRequests;
 use self::loaded_threads::find_loaded_subagent_threads_for_primary;
 use self::pending_interactive_replay::PendingInteractiveReplayState;
-pub(crate) use self::platform_actions::WindowsSandboxHost;
 use self::platform_actions::*;
 use self::side::SideParentStatus;
 use self::side::SideParentStatusChange;
@@ -550,8 +547,6 @@ pub(crate) struct App {
     /// This is thread-scoped state (`Option<ThreadId>`) instead of a global bool
     /// so shutdown events from other threads still take the normal failover path.
     pending_shutdown_exit_thread_id: Option<ThreadId>,
-
-    windows_sandbox: WindowsSandboxState,
 
     thread_event_channels: HashMap<ThreadId, ThreadEventChannel>,
     temporary_structured_requests: HashMap<ThreadId, mpsc::UnboundedSender<ServerNotification>>,

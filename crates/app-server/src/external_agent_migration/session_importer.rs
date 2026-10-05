@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use chrono::DateTime;
 use chrono::Utc;
+use futures::StreamExt;
 use genex_arg0::Arg0DispatchPaths;
 use genex_core::ThreadManager;
 use genex_core::config::ConfigOverrides;
@@ -41,7 +42,6 @@ use genex_thread_store::ThreadMetadataPatch;
 use genex_thread_store::ThreadPersistenceMetadata;
 use genex_thread_store::ThreadStore;
 use genex_thread_store::UpdateThreadMetadataParams;
-use futures::StreamExt;
 use tokio::sync::Semaphore;
 
 use crate::config_manager::ConfigManager;

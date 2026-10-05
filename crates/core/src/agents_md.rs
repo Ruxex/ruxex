@@ -20,6 +20,7 @@
 use crate::config::Config;
 use crate::context::UserInstructions as ContextUserInstructions;
 use crate::environment_selection::TurnEnvironmentSnapshot;
+use futures::StreamExt;
 use genex_config::ConfigLayerSource;
 use genex_config::default_project_root_markers;
 use genex_config::merge_toml_values;
@@ -32,9 +33,7 @@ use genex_file_system::FileSystemSandboxContext;
 use genex_file_system::FindUpErrorPolicy;
 use genex_file_system::find_nearest_ancestor_with_markers;
 use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
-use futures::StreamExt;
 use std::io;
 use toml::Value as TomlValue;
 use tracing::error;
@@ -278,13 +277,7 @@ fn candidate_filenames<'a>(config: &'a Config, cwd: &PathUri) -> Vec<&'a str> {
         if candidate.is_empty() {
             continue;
         }
-        // Use the executor's path convention, not the host's: resolving a Windows
-        // network path can send ambient credentials even during metadata probes.
-        if matches!(candidate, "." | "..")
-            || candidate.contains(['/', '\0'])
-            || cwd.infer_path_convention() == Some(PathConvention::Windows)
-                && candidate.contains(['\\', ':'])
-        {
+        if matches!(candidate, "." | "..") || candidate.contains(['/', '\0']) {
             tracing::warn!("ignoring project_doc_fallback_filenames entry that is not a filename");
             continue;
         }

@@ -354,10 +354,6 @@ fn single_plain_command(command: &[String]) -> Option<Vec<String>> {
         };
         return single_plain_command(command);
     }
-    if let Some(script) = windows_shell_script(command) {
-        let wrapper = ["sh".to_string(), "-lc".to_string(), script.to_string()];
-        return single_plain_command(&wrapper);
-    }
     if extract_bash_command(command).is_some() {
         return None;
     }
@@ -385,21 +381,9 @@ fn script_invocation(command: &[String]) -> Option<ScriptInvocation<'_>> {
 fn interpreter_name(program: &str) -> Option<String> {
     let basename = executable_basename(program)?;
     let basename = basename.to_ascii_lowercase();
-    let basename = basename.strip_suffix(".exe").unwrap_or(&basename);
     matches!(
-        basename,
-        "bash"
-            | "node"
-            | "nodejs"
-            | "perl"
-            | "php"
-            | "powershell"
-            | "pwsh"
-            | "python"
-            | "python3"
-            | "ruby"
-            | "sh"
-            | "zsh"
+        basename.as_str(),
+        "bash" | "node" | "nodejs" | "perl" | "php" | "python" | "python3" | "ruby" | "sh" | "zsh"
     )
     .then(|| basename.to_string())
 }
@@ -408,14 +392,6 @@ fn interpreter_script_invocation<'a>(
     interpreter: &str,
     args: &'a [String],
 ) -> Option<ScriptInvocation<'a>> {
-    if matches!(interpreter, "powershell" | "pwsh") {
-        let [file_flag, script, arguments @ ..] = args else {
-            return None;
-        };
-        return (file_flag.eq_ignore_ascii_case("-file") && !script.starts_with('-'))
-            .then_some(ScriptInvocation { script, arguments });
-    }
-
     let mut args = args;
     loop {
         match args {
@@ -447,44 +423,6 @@ fn executable_basename(program: &str) -> Option<&str> {
         .rsplit(['/', '\\'])
         .next()
         .filter(|basename| !basename.is_empty())
-}
-
-fn windows_shell_script(command: &[String]) -> Option<&str> {
-    let [program, args @ ..] = command else {
-        return None;
-    };
-    let basename = executable_basename(program)?.to_ascii_lowercase();
-    if matches!(basename.as_str(), "cmd" | "cmd.exe") {
-        let [flag, script] = args else {
-            return None;
-        };
-        return flag.eq_ignore_ascii_case("/c").then_some(script);
-    }
-    if !matches!(
-        basename.as_str(),
-        "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe"
-    ) {
-        return None;
-    }
-
-    let [flags @ .., command_flag, script] = args else {
-        return None;
-    };
-    if !matches!(
-        command_flag.to_ascii_lowercase().as_str(),
-        "-command" | "-c"
-    ) {
-        return None;
-    }
-    flags
-        .iter()
-        .all(|flag| {
-            matches!(
-                flag.to_ascii_lowercase().as_str(),
-                "-nologo" | "-noprofile" | "-noninteractive"
-            )
-        })
-        .then_some(script)
 }
 
 #[cfg(test)]

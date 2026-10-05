@@ -5,14 +5,14 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
+use futures::FutureExt as _;
+use futures::future::BoxFuture;
 use genex_exec_server::Environment;
 use genex_exec_server::ExecServerError;
 use genex_exec_server::HttpClient;
 use genex_exec_server::HttpRequestParams;
 use genex_exec_server::HttpRequestResponse;
 use genex_exec_server::HttpResponseBodyStream;
-use futures::FutureExt as _;
-use futures::future::BoxFuture;
 use pretty_assertions::assert_eq;
 use rmcp::model::CallToolResult;
 use rmcp::model::ContentBlock;

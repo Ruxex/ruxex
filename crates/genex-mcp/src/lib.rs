@@ -1,13 +1,13 @@
 pub use binding::McpBinding;
 pub use binding::PreparedMcpCall;
 pub use client_capabilities::client_mcp_extensions;
-pub use genex_rmcp_client::McpProtocolMode;
 pub use connection_manager::tool_is_model_visible;
 pub use elicitation::ElicitationLifecycle;
 pub use elicitation::ElicitationReviewRequest;
 pub use elicitation::ElicitationReviewer;
 pub use elicitation::ElicitationReviewerHandle;
 pub use elicitation::MCP_ELICITATION_HANDOFF_MESSAGE;
+pub use genex_rmcp_client::McpProtocolMode;
 pub use resource_client::McpResourceClient;
 pub use resource_client::McpResourceClientCacheKey;
 pub use resource_client::McpResourcePage;

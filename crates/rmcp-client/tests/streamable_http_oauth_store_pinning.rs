@@ -7,6 +7,7 @@ use std::sync::PoisonError;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
+use futures::future::BoxFuture;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
 use genex_exec_server::Environment;
@@ -24,7 +25,6 @@ use genex_rmcp_client::StreamableHttpRedirectMode;
 use genex_rmcp_client::WrappedOAuthTokenResponse;
 use genex_rmcp_client::save_oauth_tokens;
 use genex_rmcp_client::stored_oauth_credential_snapshot;
-use futures::future::BoxFuture;
 use keyring::credential::Credential;
 use keyring::credential::CredentialApi;
 use keyring::credential::CredentialBuilderApi;

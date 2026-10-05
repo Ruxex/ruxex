@@ -123,41 +123,7 @@ impl PathUri {
         input: &str,
         convention: PathConvention,
     ) -> Result<(), LegacyAppPathStringError> {
-        let namespace_alias = genex_utils_absolute_path::normalize_windows_device_path(input);
-        let native_input = namespace_alias.as_deref().unwrap_or(input);
-        let has_windows_component_colon = convention == PathConvention::Windows
-            && convention
-                .path_segments(native_input)
-                .enumerate()
-                .any(|(index, segment)| {
-                    let segment = if index == 0
-                        && segment
-                            .as_bytes()
-                            .first()
-                            .is_some_and(u8::is_ascii_alphabetic)
-                        && segment.as_bytes().get(/*index*/ 1) == Some(&b':')
-                    {
-                        &segment[2..]
-                    } else {
-                        segment
-                    };
-                    segment.contains(':')
-                });
-        let mixed_home_separators = convention == PathConvention::Windows
-            && convention
-                .home_relative_suffix(input)
-                .is_some_and(|suffix| {
-                    suffix.starts_with('/') && suffix.trim_start_matches('/').starts_with('\\')
-                        || suffix.starts_with('\\')
-                            && suffix.trim_start_matches('\\').starts_with('/')
-                });
-        let bare_windows_drive = convention == PathConvention::Windows
-            && matches!(native_input.as_bytes(), [drive, b':'] if drive.is_ascii_alphabetic());
-        if input.contains('\0')
-            || has_windows_component_colon
-            || mixed_home_separators
-            || bare_windows_drive
-        {
+        if input.contains('\0') {
             return Err(LegacyAppPathStringError::UnsupportedConfigPath {
                 path: input.to_string(),
                 convention,

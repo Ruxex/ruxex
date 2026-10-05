@@ -85,31 +85,16 @@ fn project_config_uses_platform_case_for_custom_credential_environment_keys() {
         &["STRIPE_API_KEY".to_string(), "STRIPE_HOST".to_string()],
     );
 
-    if cfg!(windows) {
-        assert_eq!(
-            ignored,
-            [
-                "shell_environment_policy.set.stripe_api_key",
-                "shell_environment_policy.set.stripe_host",
-            ]
-        );
-        assert_eq!(
-            config,
-            toml::from_str::<TomlValue>("[shell_environment_policy.set]")
-                .expect("valid expected config")
-        );
-    } else {
-        assert!(ignored.is_empty());
-        assert_eq!(
-            config,
-            toml::from_str::<TomlValue>(
-                "[shell_environment_policy.set]\n\
-                 stripe_api_key = 'application-value'\n\
-                 stripe_host = 'application.example'"
-            )
-            .expect("valid expected config")
-        );
-    }
+    assert!(ignored.is_empty());
+    assert_eq!(
+        config,
+        toml::from_str::<TomlValue>(
+            "[shell_environment_policy.set]\n\
+             stripe_api_key = 'application-value'\n\
+             stripe_host = 'application.example'"
+        )
+        .expect("valid expected config")
+    );
 }
 
 #[test]
@@ -578,47 +563,6 @@ async fn missing_packaged_defaults_file_returns_an_error() {
             packaged_defaults_path.display()
         )
     );
-}
-
-#[cfg(windows)]
-#[tokio::test]
-async fn default_windows_managed_config_is_not_read() {
-    let tmp = tempdir().expect("tempdir");
-    let genex_home = tmp.path().join("genex-home");
-    std::fs::create_dir_all(&genex_home).expect("create genex home");
-    std::fs::write(
-        genex_home.join("managed_config.toml"),
-        r#"
-model = "legacy-model"
-approval_policy = "never"
-sandbox_mode = "danger-full-access"
-"#,
-    )
-    .expect("write default legacy managed config");
-    std::fs::write(genex_home.join(CONFIG_TOML_FILE), r#"model = "user-model""#)
-        .expect("write user config");
-
-    let mut overrides = LoaderOverrides::without_managed_config_for_tests();
-    overrides.system_config_path = Some(tmp.path().join("system-config.toml"));
-    overrides.system_requirements_path = Some(tmp.path().join("requirements.toml"));
-    let stack = load_config_layers_state(
-        &TestFileSystem,
-        &genex_home,
-        /*cwd*/ None,
-        &[],
-        overrides,
-        &crate::NoopThreadConfigLoader,
-    )
-    .await
-    .expect("load config layers");
-
-    assert_eq!(
-        stack.effective_config().get("model"),
-        Some(&TomlValue::String("user-model".to_string()))
-    );
-    assert_eq!(stack.requirements_toml().allowed_approval_policies, None);
-    assert_eq!(stack.requirements_toml().allowed_sandbox_modes, None);
-    assert_eq!(stack.startup_warnings(), None);
 }
 
 #[tokio::test]

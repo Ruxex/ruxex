@@ -3,12 +3,12 @@ use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
+use futures::SinkExt;
+use futures::StreamExt;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_http_client::OutboundProxyRoute;
 use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
-use futures::SinkExt;
-use futures::StreamExt;
 use pretty_assertions::assert_eq;
 use rcgen::CertifiedKey;
 use rcgen::generate_simple_self_signed;

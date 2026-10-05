@@ -89,8 +89,7 @@ pub struct ProviderAuthRecoveryMessages {
 
 /// Error returned when a provider cannot construct its app-visible account state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProviderAccountError {
-}
+pub enum ProviderAccountError {}
 
 impl fmt::Display for ProviderAccountError {
     fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -99,7 +98,6 @@ impl fmt::Display for ProviderAccountError {
 }
 
 impl std::error::Error for ProviderAccountError {}
-
 
 pub type ProviderAccountResult = std::result::Result<ProviderAccountState, ProviderAccountError>;
 

@@ -965,7 +965,7 @@ mod tests {
         assert_eq!(git_info.branch.as_deref(), Some("main"));
         assert_eq!(
             git_info.repository_url.as_deref(),
-                            Some("https://github.com/owner/repo")
+            Some("https://github.com/owner/repo")
         );
     }
 

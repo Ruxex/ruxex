@@ -370,12 +370,10 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
         ..TokenBudgetConfig::default()
     });
 
-    for (provider, auth) in [
-        (
-            config.model_provider.clone(),
-            GenexAuth::from_api_key("test-api-key"),
-        ),
-    ] {
+    for (provider, auth) in [(
+        config.model_provider.clone(),
+        GenexAuth::from_api_key("test-api-key"),
+    )] {
         config.model_provider = provider;
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
         install(&mut builder, AuthManager::from_auth_for_testing(auth));

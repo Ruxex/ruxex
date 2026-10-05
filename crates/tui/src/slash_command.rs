@@ -18,7 +18,6 @@ pub enum SlashCommand {
     Keymap,
     Vim,
     #[strum(serialize = "setup-default-sandbox")]
-    ElevateSandbox,
     Skills,
     Import,
     Hooks,
@@ -121,7 +120,6 @@ impl SlashCommand {
             SlashCommand::Permissions => "choose what Genex is allowed to do",
             SlashCommand::Keymap => "remap TUI shortcuts",
             SlashCommand::Vim => "toggle Vim mode for the composer",
-            SlashCommand::ElevateSandbox => "set up elevated agent sandbox",
             SlashCommand::Mcp => "list configured MCP tools; use /mcp verbose for details",
             SlashCommand::Plugins => "browse plugins",
             SlashCommand::Logout => "log out of Genex",
@@ -194,7 +192,6 @@ impl SlashCommand {
             | SlashCommand::Export
             | SlashCommand::Keymap
             | SlashCommand::Vim
-            | SlashCommand::ElevateSandbox
             | SlashCommand::Import
             | SlashCommand::Review
             | SlashCommand::Plan

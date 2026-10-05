@@ -39,9 +39,6 @@ Level 3 の削除判断では通常実行の16件を主起点としつつ、対�
 | `codex-linux-sandbox` | `codex-linux-sandbox` | Landlock と seccomp を使ってサンドボックス内でコマンドを実行する。 | Linux |
 | `genex-shell-escalation` | `genex-execve-wrapper` | 権限昇格用の execve ラッパーを提供する。 | Unix |
 | `genex-stdio-to-uds` | `genex-stdio-to-uds` | 標準入出力を Unix domain socket に中継する。 | Unix |
-| `genex-windows-sandbox` | `genex-windows-sandbox-setup` | Windows sandbox のセットアップを行う。 | Windows |
-| `genex-windows-sandbox` | `codex-command-runner` | Windows sandbox 内のコマンド実行を担う。 | Windows |
-| `genex-windows-sandbox` | `codex-windows-managed-deny-probe` | managed 環境の ACL deny 設定を検査する。 | Windows |
 
 ## 開発・補助
 

@@ -18,8 +18,8 @@ use genex_app_server_protocol::CreditsSnapshot as CoreCreditsSnapshot;
 use genex_app_server_protocol::RateLimitSnapshot;
 use genex_app_server_protocol::RateLimitWindow;
 use genex_app_server_protocol::SpendControlLimitSnapshot as CoreSpendControlLimitSnapshot;
-use genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
 use genex_protocol::num_format::format_with_separators;
+use genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
 
 const STATUS_LIMIT_BAR_SEGMENTS: usize = 20;
 const STATUS_LIMIT_BAR_FILLED: &str = "█";
@@ -222,8 +222,11 @@ pub(crate) fn compose_rate_limit_data_many(
 
     // Show ordinary plan usage before model-specific quotas, regardless of backend bucket IDs.
     let mut ordered_snapshots = snapshots.iter().collect::<Vec<_>>();
-    ordered_snapshots
-        .sort_by_key(|snapshot| !snapshot.limit_name.eq_ignore_ascii_case(DEFAULT_RATE_LIMIT_ID));
+    ordered_snapshots.sort_by_key(|snapshot| {
+        !snapshot
+            .limit_name
+            .eq_ignore_ascii_case(DEFAULT_RATE_LIMIT_ID)
+    });
     for snapshot in ordered_snapshots {
         let credit_row = snapshot.credits.as_ref().and_then(credit_status_row);
         // Metadata-only buckets have no visible values and should not leave an empty heading.

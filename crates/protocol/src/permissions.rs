@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::io;
@@ -26,12 +25,9 @@ use crate::protocol::WritableRoot;
 
 mod deny_read_validator;
 mod target;
-mod windows_glob;
 
 pub use deny_read_validator::DenyReadValidator;
 pub use deny_read_validator::DenyReadViolation;
-pub use windows_glob::WindowsDenyReadGlobScan;
-pub use windows_glob::windows_deny_read_glob_scan;
 
 const PROTECTED_METADATA_GIT_PATH_NAME: &str = ".git";
 const PROTECTED_METADATA_AGENTS_PATH_NAME: &str = ".agents";
@@ -674,24 +670,18 @@ impl FileSystemSandboxPolicy {
     }
 
     pub fn has_denied_read_restrictions(&self) -> bool {
-        // TODO(anp) Migrate callers to select the executor's path convention explicitly.
         self.has_denied_read_restrictions_for_convention(Some(PathConvention::native()))
     }
 
     fn has_denied_read_restrictions_for_convention(
         &self,
-        convention: Option<PathConvention>,
+        _convention: Option<PathConvention>,
     ) -> bool {
         matches!(self.kind, FileSystemSandboxKind::Restricted)
-            && self.entries.iter().any(|entry| {
-                entry.access == FileSystemAccessMode::Deny
-                    && !matches!(
-                        &entry.path,
-                        FileSystemPath::Special {
-                            value: FileSystemSpecialPath::SlashTmp,
-                        } if convention == Some(PathConvention::Windows)
-                    )
-            })
+            && self
+                .entries
+                .iter()
+                .any(|entry| entry.access == FileSystemAccessMode::Deny)
     }
 
     pub fn from_legacy_sandbox_policy_preserving_deny_entries(
@@ -774,11 +764,6 @@ impl FileSystemSandboxPolicy {
                     FileSystemPath::GlobPattern { .. } => true,
                     FileSystemPath::Special { value } => match value {
                         FileSystemSpecialPath::Root => entry.access == FileSystemAccessMode::Deny,
-                        FileSystemSpecialPath::SlashTmp
-                            if convention == PathConvention::Windows =>
-                        {
-                            false
-                        }
                         FileSystemSpecialPath::Minimal | FileSystemSpecialPath::Unknown { .. } => {
                             false
                         }
@@ -1149,14 +1134,7 @@ impl FileSystemSandboxPolicy {
             .iter()
             .any(|root| path.starts_with(root))
             || prepared.deny_read_matchers.iter().any(|matcher| {
-                let path = match convention {
-                    PathConvention::Posix => path.decoded_path_bytes(),
-                    PathConvention::Windows => Cow::Owned(
-                        path.inferred_native_path_string()
-                            .replace('\\', "/")
-                            .into_bytes(),
-                    ),
-                };
+                let path = path.decoded_path_bytes();
                 matcher.is_match_candidate(&Candidate::from_bytes(path.as_ref()))
             })
     }
@@ -1172,18 +1150,12 @@ impl FileSystemSandboxPolicy {
                 let FileSystemPath::GlobPattern { pattern } = &entry.path else {
                     return None;
                 };
-                let is_windows =
-                    context.cwd.infer_path_convention() == Some(PathConvention::Windows);
-                let home_relative = pattern.strip_prefix("~/").or_else(|| {
-                    is_windows.then(|| pattern.strip_prefix("~\\")).flatten()
-                });
+                let home_relative = pattern.strip_prefix("~/");
                 let (root, pattern) = match home_relative {
                     Some(suffix) => match context.user_home_dir {
                         Some(home) => (
                             home,
-                            suffix.trim_start_matches(|separator| {
-                                separator == '/' || is_windows && separator == '\\'
-                            }),
+                            suffix.trim_start_matches('/'),
                         ),
                         None => {
                             return Some(Err(format!(
@@ -1193,11 +1165,7 @@ impl FileSystemSandboxPolicy {
                     },
                     None => (context.cwd, pattern.as_str()),
                 };
-                let convention = if is_windows {
-                    PathConvention::Windows
-                } else {
-                    PathConvention::Posix
-                };
+                let convention = PathConvention::Posix;
                 if LegacyAppPathString::from_string(pattern)
                     .to_path_uri(convention)
                     .is_err()
@@ -1959,14 +1927,9 @@ fn resolve_candidate_path(path: &Path, cwd: &Path) -> Option<AbsolutePathBuf> {
 fn resolve_scoped_workspace_path(root: &PathUri, subpath: &str) -> Option<PathUri> {
     let convention = root.infer_path_convention()?;
     if subpath.starts_with('/')
-        || convention == PathConvention::Windows && subpath.starts_with('\\')
         || convention
             .path_segments(subpath)
             .any(|segment| segment == "." || segment == "..")
-        || convention == PathConvention::Windows
-            && convention
-                .path_segments(subpath)
-                .any(|segment| segment.contains(':'))
     {
         return None;
     }
@@ -2096,16 +2059,12 @@ fn absolute_root_path_for_cwd(cwd: &AbsolutePathBuf) -> AbsolutePathBuf {
 fn build_glob_matcher(pattern: &str, convention: PathConvention) -> Result<GlobMatcher, String> {
     // Keep `*` and `?` within a single path component and preserve an unclosed
     // `[` as a literal so matcher behavior stays aligned with config parsing.
-    let pattern = if convention == PathConvention::Windows {
-        pattern.replace('\\', "/")
-    } else {
-        pattern.to_string()
-    };
+    let pattern = pattern.to_string();
     GlobBuilder::new(&pattern)
         .literal_separator(true)
         .allow_unclosed_class(true)
         .backslash_escape(convention == PathConvention::Posix)
-        .case_insensitive(convention == PathConvention::Windows)
+        .case_insensitive(false)
         .build()
         .map(|glob| glob.compile_matcher())
         .map_err(|err| err.to_string())

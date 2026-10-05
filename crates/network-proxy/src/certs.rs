@@ -745,17 +745,11 @@ fn write_atomic_create_new(path: &Path, contents: &[u8], mode: u32) -> Result<()
     Ok(())
 }
 
-#[cfg(not(windows))]
 fn sync_parent_dir(parent: &Path) -> Result<()> {
     // Best-effort durability: ensure the directory entry is persisted too.
     let dir = File::open(parent).with_context(|| format!("failed to open {}", parent.display()))?;
     dir.sync_all()
         .with_context(|| format!("failed to fsync {}", parent.display()))
-}
-
-#[cfg(windows)]
-fn sync_parent_dir(_parent: &Path) -> Result<()> {
-    Ok(())
 }
 
 fn write_atomic_create_new_or_reuse(path: &Path, contents: &[u8], mode: u32) -> Result<()> {
@@ -781,7 +775,6 @@ fn write_atomic_create_new_or_reuse(path: &Path, contents: &[u8], mode: u32) -> 
     }
 }
 
-#[cfg(unix)]
 fn open_create_new_with_mode(path: &Path, mode: u32) -> Result<File> {
     use std::os::unix::fs::OpenOptionsExt;
 
@@ -789,15 +782,6 @@ fn open_create_new_with_mode(path: &Path, mode: u32) -> Result<File> {
         .write(true)
         .create_new(true)
         .mode(mode)
-        .open(path)
-        .with_context(|| format!("failed to create {}", path.display()))
-}
-
-#[cfg(not(unix))]
-fn open_create_new_with_mode(path: &Path, _mode: u32) -> Result<File> {
-    OpenOptions::new()
-        .write(true)
-        .create_new(true)
         .open(path)
         .with_context(|| format!("failed to create {}", path.display()))
 }

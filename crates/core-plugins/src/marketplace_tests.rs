@@ -304,8 +304,7 @@ fn find_marketplace_plugin_supports_npm_sources() {
     assert_eq!(
         resolved,
         ResolvedMarketplacePlugin {
-            plugin_id: PluginId::new("npm-plugin".to_string(), "test-curated".to_string())
-                .unwrap(),
+            plugin_id: PluginId::new("npm-plugin".to_string(), "test-curated".to_string()).unwrap(),
             source: MarketplacePluginSource::Npm {
                 package: "@acme/codex-plugin".to_string(),
                 version: Some("^1.2.0".to_string()),

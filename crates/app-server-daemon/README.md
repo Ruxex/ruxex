@@ -10,14 +10,7 @@ machines that should expose app-server through the managed local socket.
 
 ## Platform support
 
-The daemon supports Linux, macOS, and Windows using platform-specific process
-and file-locking primitives. Windows startup requires a non-elevated terminal
-whose host permits detached child processes.
-
-Windows automatic attachment requires the canonical socket address to fit the
-108-byte AF_UNIX limit (including its terminator). A short junction alias whose
-resolved address exceeds that limit falls back to the embedded server. Use a
-shorter `GENEX_HOME` to share the daemon; discovery does not trust a mutable alias.
+The daemon supports Linux and macOS using Unix process and file-locking primitives.
 
 Shared clients use the environment inherited when the daemon started. Opening a
 new terminal or clearing variables there does not clear the running daemon's
@@ -79,15 +72,6 @@ standalone updates, then run the provider's documented installation command.
 $HOME/.genex/packages/standalone/current/codex app-server daemon bootstrap
 ```
 
-On Windows, use a non-elevated PowerShell terminal whose host allows breakaway:
-
-```powershell
-The installer endpoint is provider-specific; configure it through
-`CODEX_INSTALLER_URL` rather than relying on a built-in hosted URL.
-$genexHome = if ($env:GENEX_HOME) { $env:GENEX_HOME } else { Join-Path $HOME '.genex' }
-& "$genexHome\packages\standalone\current\bin\codex.exe" app-server daemon bootstrap
-```
-
 `bootstrap` can use any complete CLI package. If no daemon package is installed,
 it copies the invoking package into `GENEX_HOME/packages/app-server-daemon` and
 prints an installation message without asking for confirmation. Existing daemon
@@ -101,8 +85,8 @@ channel, and the managed binary supports the updater command.
 
 ## Installation and update cases
 
-New daemons use `GENEX_HOME/packages/app-server-daemon/current/bin/genex`
-(`codex.exe` on Windows). The package contains the executable and its helpers.
+New daemons use `GENEX_HOME/packages/app-server-daemon/current/bin/genex`.
+The package contains the executable and its helpers.
 Daemon-only installer updates leave the user's CLI command and shell setup alone.
 
 Previously launched legacy daemons retain `GENEX_HOME/packages/standalone/current`,

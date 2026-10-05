@@ -1146,9 +1146,6 @@ fn live_elicitation_timeout_pause(
     script: Option<PathBuf>,
     hold_seconds: u64,
 ) -> Result<()> {
-    if cfg!(windows) {
-        bail!("live-elicitation-timeout-pause currently requires a POSIX shell");
-    }
     if hold_seconds <= 10 {
         bail!("--hold-seconds must be greater than 10 to exceed the unified exec timeout");
     }

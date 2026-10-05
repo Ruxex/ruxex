@@ -8,11 +8,7 @@ use semver::Version;
 use serde::Deserialize;
 
 const BIN_DIRNAME: &str = "bin";
-const CODE_MODE_HOST_EXECUTABLE_NAME: &str = if cfg!(windows) {
-    "genex-code-mode-host.exe"
-} else {
-    "genex-code-mode-host"
-};
+const CODE_MODE_HOST_EXECUTABLE_NAME: &str = "genex-code-mode-host";
 const PACKAGE_METADATA_FILENAME: &str = "genex-package.json";
 const PATH_DIRNAME: &str = "genex-path";
 const RELEASES_DIRNAME: &str = "releases";
@@ -24,7 +20,6 @@ static INSTALL_CONTEXT: OnceLock<InstallContext> = OnceLock::new();
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum StandalonePlatform {
     Unix,
-    Windows,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -62,7 +57,7 @@ pub enum InstallMethod {
         release_dir: AbsolutePathBuf,
         /// The bundled resource directory for managed dependencies.
         resources_dir: Option<AbsolutePathBuf>,
-        /// The platform of the standalone release, either `Unix` or `Windows`.
+        /// The platform of the standalone release.
         platform: StandalonePlatform,
     },
     /// A Genex binary launched through the npm-managed `genex.js` shim.
@@ -230,11 +225,7 @@ impl InstallContext {
     }
 
     pub fn bundled_zsh_path(&self) -> Option<AbsolutePathBuf> {
-        if cfg!(windows) {
-            None
-        } else {
-            self.bundled_resource(zsh_resource_path())
-        }
+        self.bundled_resource(zsh_resource_path())
     }
 
     pub fn bundled_zsh_bin_dir(&self) -> Option<AbsolutePathBuf> {
@@ -246,21 +237,6 @@ impl GenexPackageLayout {
     fn from_exe(exe_path: &Path) -> Option<Self> {
         let canonical_exe = canonical_absolute_path(exe_path)?;
         let exe_dir = canonical_exe.parent()?;
-        // WinGet preserves a target-qualified executable at the package root.
-        // Only recognize that layout when metadata names this exact executable.
-        #[cfg(windows)]
-        if let Ok(contents) = std::fs::read(exe_dir.join(PACKAGE_METADATA_FILENAME))
-            && let Ok(metadata) = serde_json::from_slice::<serde_json::Value>(&contents)
-            && metadata["layoutVersion"] == 1
-            && metadata["entrypoint"].as_str().map(OsStr::new) == canonical_exe.file_name()
-        {
-            return Some(Self {
-                resources_dir: existing_dir(exe_dir.join(RESOURCES_DIRNAME)),
-                path_dir: existing_dir(exe_dir.join(PATH_DIRNAME)),
-                package_dir: exe_dir.clone(),
-                bin_dir: exe_dir,
-            });
-        }
         match exe_dir.file_name() {
             Some(name) if name == OsStr::new(BIN_DIRNAME) => Self::from_package_bin_dir(exe_dir),
             Some(name) if name == OsStr::new(RESOURCES_DIRNAME) => {
@@ -352,11 +328,7 @@ fn canonical_absolute_path(path: &Path) -> Option<AbsolutePathBuf> {
 }
 
 fn standalone_platform() -> StandalonePlatform {
-    if cfg!(windows) {
-        StandalonePlatform::Windows
-    } else {
-        StandalonePlatform::Unix
-    }
+    StandalonePlatform::Unix
 }
 
 fn existing_dir(path: AbsolutePathBuf) -> Option<AbsolutePathBuf> {
@@ -364,11 +336,7 @@ fn existing_dir(path: AbsolutePathBuf) -> Option<AbsolutePathBuf> {
 }
 
 fn default_rg_command() -> PathBuf {
-    if cfg!(windows) {
-        PathBuf::from("rg.exe")
-    } else {
-        PathBuf::from("rg")
-    }
+    PathBuf::from("rg")
 }
 
 fn zsh_resource_path() -> PathBuf {
@@ -395,7 +363,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "legacy host")?;
@@ -422,7 +390,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&resource_host, "managed host")?;
@@ -449,7 +417,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         let legacy_host = bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&legacy_host, "legacy host")?;
@@ -475,7 +443,7 @@ mod tests {
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         let resources_dir = release_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&resources_dir)?;
-        let exe_path = release_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = release_dir.join("genex");
         fs::write(&exe_path, "")?;
         fs::write(release_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(
@@ -532,7 +500,7 @@ mod tests {
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         fs::create_dir_all(&release_dir)?;
-        let exe_path = release_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = release_dir.join("genex");
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_genex_home(
@@ -567,16 +535,14 @@ mod tests {
 }
 "#,
         )?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
-        if !cfg!(windows) {
-            let zsh_path = resources_dir.join(zsh_resource_path());
-            fs::create_dir_all(zsh_path.parent().expect("zsh path should have parent"))?;
-            fs::write(&zsh_path, "")?;
-        }
+        let zsh_path = resources_dir.join(zsh_resource_path());
+        fs::create_dir_all(zsh_path.parent().expect("zsh path should have parent"))?;
+        fs::write(&zsh_path, "")?;
         let canonical_package_dir =
             AbsolutePathBuf::from_absolute_path(package_dir.path().canonicalize()?)?;
         let canonical_bin_dir = AbsolutePathBuf::from_absolute_path(bin_dir.canonicalize()?)?;
@@ -631,19 +597,14 @@ mod tests {
             context.bundled_resource(TEST_RESOURCE_NAME),
             Some(canonical_resources_dir.join(TEST_RESOURCE_NAME))
         );
-        if cfg!(windows) {
-            assert_eq!(context.bundled_zsh_path(), None);
-            assert_eq!(context.bundled_zsh_bin_dir(), None);
-        } else {
-            assert_eq!(
-                context.bundled_zsh_path(),
-                Some(canonical_resources_dir.join(zsh_resource_path()))
-            );
-            assert_eq!(
-                context.bundled_zsh_bin_dir(),
-                Some(canonical_resources_dir.join(ZSH_DIRNAME).join(BIN_DIRNAME))
-            );
-        }
+        assert_eq!(
+            context.bundled_zsh_path(),
+            Some(canonical_resources_dir.join(zsh_resource_path()))
+        );
+        assert_eq!(
+            context.bundled_zsh_bin_dir(),
+            Some(canonical_resources_dir.join(ZSH_DIRNAME).join(BIN_DIRNAME))
+        );
         Ok(())
     }
 
@@ -690,7 +651,7 @@ mod tests {
         fs::create_dir_all(&resources_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         fs::write(&exe_path, "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
@@ -744,7 +705,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         fs::write(&exe_path, "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
@@ -771,7 +732,7 @@ mod tests {
         let bin_dir = package_dir.path().join(BIN_DIRNAME);
         fs::create_dir_all(&bin_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         fs::write(&exe_path, "")?;
 
         let context = InstallContext::from_exe_with_genex_home(
@@ -795,7 +756,7 @@ mod tests {
         fs::create_dir_all(resources_dir.join(TEST_RESOURCE_NAME))?;
         fs::create_dir_all(path_dir.join(default_rg_command()))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join(if cfg!(windows) { "genex.exe" } else { "genex" });
+        let exe_path = bin_dir.join("genex");
         fs::write(&exe_path, "")?;
         let fallback_exe_path = package_dir.path().join("fallback-genex");
         fs::write(&fallback_exe_path, "")?;

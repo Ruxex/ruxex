@@ -18,6 +18,7 @@ use std::time::Duration;
 use std::time::Instant;
 
 use anyhow::Context as _;
+use futures::FutureExt as _;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
 use genex_exec_server::Environment;
@@ -26,7 +27,6 @@ use genex_rmcp_client::ElicitationAction;
 use genex_rmcp_client::ElicitationResponse;
 use genex_rmcp_client::RmcpClient;
 use genex_utils_cargo_bin::CargoBinError;
-use futures::FutureExt as _;
 use pretty_assertions::assert_eq;
 use rmcp::model::CallToolResult;
 use rmcp::model::ClientCapabilities;

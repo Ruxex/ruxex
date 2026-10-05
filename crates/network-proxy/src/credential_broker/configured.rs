@@ -110,9 +110,7 @@ impl ConfiguredCredentialProvider {
         if let Some(key) = config.url_prefix_from_env.as_deref() {
             ensure!(
                 valid_environment_key(key)
-                    && !config.env.iter().any(|source| {
-                        source.as_str() == key || cfg!(windows) && source.eq_ignore_ascii_case(key)
-                    }),
+                    && !config.env.iter().any(|source| source.as_str() == key),
                 "credential provider `{id}` has an invalid host environment key"
             );
         }

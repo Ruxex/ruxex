@@ -29,24 +29,6 @@ async fn detect() -> Option<MotionMode> {
     })
 }
 
-#[cfg(windows)]
-async fn detect() -> Option<MotionMode> {
-    use windows_sys::Win32::UI::WindowsAndMessaging::SPI_GETCLIENTAREAANIMATION;
-    use windows_sys::Win32::UI::WindowsAndMessaging::SystemParametersInfoW;
-
-    let mut enabled: windows_sys::Win32::Foundation::BOOL = 0;
-    // SAFETY: SPI_GETCLIENTAREAANIMATION writes one BOOL to this valid, aligned pointer.
-    let success = unsafe {
-        SystemParametersInfoW(
-            SPI_GETCLIENTAREAANIMATION,
-            /*uiparam*/ 0,
-            (&mut enabled as *mut windows_sys::Win32::Foundation::BOOL).cast(),
-            /*fwinini*/ 0,
-        )
-    };
-    (success != 0).then(|| MotionMode::from_animations_enabled(enabled != 0))
-}
-
 #[cfg(target_os = "linux")]
 async fn detect() -> Option<MotionMode> {
     // A missing or unresponsive session bus must not hold up terminal startup.
@@ -77,7 +59,7 @@ async fn detect() -> Option<MotionMode> {
     .flatten()
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 async fn detect() -> Option<MotionMode> {
     None
 }

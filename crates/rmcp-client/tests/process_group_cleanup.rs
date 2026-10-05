@@ -10,11 +10,11 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
+use futures::FutureExt as _;
 use genex_rmcp_client::ElicitationAction;
 use genex_rmcp_client::ElicitationResponse;
 use genex_rmcp_client::LocalStdioServerLauncher;
 use genex_rmcp_client::RmcpClient;
-use futures::FutureExt as _;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;
 use rmcp::model::InitializeRequestParams;

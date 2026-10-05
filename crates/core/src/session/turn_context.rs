@@ -9,8 +9,10 @@ use crate::exec_policy::AllowPrefixRules;
 use crate::shell_snapshot::ShellSnapshot;
 use crate::shell_snapshot::ShellSnapshotFile;
 use crate::shell_snapshot::ShellSnapshotSandbox;
-use crate::tools::sandboxing::executor_windows_sandbox_selection;
 use arc_swap::ArcSwap;
+use futures::FutureExt;
+use futures::future::BoxFuture;
+use futures::future::Shared;
 use genex_core_plugins::PluginCommandAttribution;
 use genex_core_plugins::ResolvedPluginMetricsOperation;
 use genex_core_plugins::TrustedPluginRoots;
@@ -36,9 +38,6 @@ use genex_sandboxing::policy_transforms::effective_permission_profile;
 use genex_skills_extension::HostSkillsSnapshot;
 use genex_skills_extension::SkillLoadOutcome;
 use genex_utils_path_uri::PathUri;
-use futures::FutureExt;
-use futures::future::BoxFuture;
-use futures::future::Shared;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
@@ -227,12 +226,6 @@ impl TurnEnvironment {
             workspace_roots: self.workspace_roots().to_vec(),
             user_home_dir: self.user_home_dir.clone(),
             temporary_directories: self.temporary_directories.clone(),
-            windows_sandbox_selection: executor_windows_sandbox_selection(
-                config.windows_sandbox_level,
-                self.cwd(),
-            ),
-            windows_sandbox_private_desktop: config.windows_sandbox_private_desktop,
-            windows_sandbox_proxy_settings_mode: None,
             use_legacy_landlock: config.use_legacy_landlock,
         }
     }
@@ -317,9 +310,6 @@ pub struct TurnContext {
     pub(crate) developer_instructions: Option<String>,
     pub(crate) multi_agent_version: MultiAgentVersion,
     pub(crate) network: Option<NetworkProxy>,
-    // TODO(anp): Reconcile this parallel turn snapshot with TurnEnvironment::sandbox_context
-    // so owner-provided environment settings govern the remaining sandbox decisions.
-    pub(crate) windows_sandbox_level: WindowsSandboxLevel,
     pub(crate) available_models: Vec<ModelPreset>,
     pub(crate) unified_exec_shell_mode: UnifiedExecShellMode,
     pub(crate) final_output_json_schema: Option<Value>,
@@ -580,7 +570,6 @@ impl TurnContext {
             developer_instructions: self.developer_instructions.clone(),
             multi_agent_version: self.multi_agent_version,
             network: self.network.clone(),
-            windows_sandbox_level: self.windows_sandbox_level,
             available_models,
             unified_exec_shell_mode: self.unified_exec_shell_mode.clone(),
             final_output_json_schema: self.final_output_json_schema.clone(),
@@ -832,7 +821,6 @@ impl Session {
             sub_id.clone(),
             cwd.clone(),
             &permission_profile,
-            session_configuration.windows_sandbox_level,
             network.is_some(),
             model_info,
         ));
@@ -867,7 +855,6 @@ impl Session {
             developer_instructions: session_configuration.developer_instructions.clone(),
             multi_agent_version,
             network,
-            windows_sandbox_level: session_configuration.windows_sandbox_level,
             available_models,
             unified_exec_shell_mode,
             final_output_json_schema: None,

@@ -1,3 +1,4 @@
+use futures::Stream;
 pub use genex_api::ResponseEvent;
 use genex_protocol::error::Result;
 use genex_protocol::model_types::ModelInfo;
@@ -8,7 +9,6 @@ use genex_protocol::models::FunctionCallOutputContentItem;
 use genex_protocol::models::ImageDetail;
 use genex_protocol::models::ResponseItem;
 use genex_tools::ToolSpec;
-use futures::Stream;
 use serde_json::Value;
 use std::pin::Pin;
 use std::sync::Arc;

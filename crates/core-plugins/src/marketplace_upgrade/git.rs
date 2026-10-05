@@ -158,26 +158,8 @@ fn git_command(mode: PluginGitMode) -> Command {
     command
 }
 
-#[cfg(windows)]
-fn git_path_arg(path: &Path) -> PathBuf {
-    strip_windows_verbatim_path_prefix(&path.to_string_lossy())
-        .map(PathBuf::from)
-        .unwrap_or_else(|| path.to_path_buf())
-}
-
-#[cfg(not(windows))]
 fn git_path_arg(path: &Path) -> PathBuf {
     path.to_path_buf()
-}
-
-#[cfg(any(windows, test))]
-fn strip_windows_verbatim_path_prefix(path: &str) -> Option<String> {
-    let stripped = path.strip_prefix(r"\\?\")?;
-    let stripped = stripped
-        .strip_prefix(r"UNC\")
-        .map(|unc_path| format!(r"\\{unc_path}"))
-        .unwrap_or_else(|| stripped.to_string());
-    Some(stripped)
 }
 
 fn run_git_command_with_timeout(
@@ -242,7 +224,6 @@ fn ensure_git_success(output: &Output, context: &str) -> Result<(), String> {
 mod tests {
     use super::git_command;
     use super::is_full_git_sha;
-    use super::strip_windows_verbatim_path_prefix;
     use pretty_assertions::assert_eq;
     use std::ffi::OsStr;
 
@@ -274,27 +255,6 @@ mod tests {
             Some(Some(OsStr::new("0")))
         );
         assert_eq!(command_env(&command, "PATH"), None);
-    }
-
-    #[test]
-    fn strips_windows_verbatim_disk_prefix_for_git() {
-        assert_eq!(
-            strip_windows_verbatim_path_prefix(r"\\?\C:\Users\alice\marketplace"),
-            Some(r"C:\Users\alice\marketplace".to_string())
-        );
-    }
-
-    #[test]
-    fn strips_windows_verbatim_unc_prefix_for_git() {
-        assert_eq!(
-            strip_windows_verbatim_path_prefix(r"\\?\UNC\server\share\marketplace"),
-            Some(r"\\server\share\marketplace".to_string())
-        );
-    }
-
-    #[test]
-    fn leaves_non_verbatim_path_without_rewrite() {
-        assert_eq!(strip_windows_verbatim_path_prefix(r"C:\Users\alice"), None);
     }
 
     fn command_env<'a>(

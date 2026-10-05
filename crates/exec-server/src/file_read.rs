@@ -105,11 +105,6 @@ fn read_file_at(file: &File, bytes: &mut [u8], offset: u64) -> io::Result<usize>
     std::os::unix::fs::FileExt::read_at(file, bytes, offset)
 }
 
-#[cfg(windows)]
-fn read_file_at(file: &File, bytes: &mut [u8], offset: u64) -> io::Result<usize> {
-    std::os::windows::fs::FileExt::seek_read(file, bytes, offset)
-}
-
 fn validate_read_block_len(len: usize) -> io::Result<()> {
     if !(1..=FILE_READ_CHUNK_SIZE).contains(&len) {
         return Err(io::Error::new(

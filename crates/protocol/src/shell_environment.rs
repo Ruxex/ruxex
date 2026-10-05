@@ -60,24 +60,7 @@ pub fn create_env_from_vars<I>(
 where
     I: IntoIterator<Item = (String, String)>,
 {
-    let mut env_map = populate_env(vars, policy, thread_id);
-
-    if cfg!(target_os = "windows") {
-        // This is a workaround for failures in the following tests under the
-        // restricted Windows CI environment:
-        //
-        // ```
-        // suite::shell_command::unicode_output::with_login
-        // suite::shell_command::unicode_output::without_login
-        // ```
-        //
-        // The failures are only reproducible in CI, so keep this small
-        // fallback for the current Windows test environment.
-        if !env_map.keys().any(|k| k.eq_ignore_ascii_case("PATHEXT")) {
-            env_map.insert("PATHEXT".to_string(), ".COM;.EXE;.BAT;.CMD".to_string());
-        }
-    }
-    env_map
+    populate_env(vars, policy, thread_id)
 }
 
 pub fn populate_env<I>(
@@ -94,10 +77,7 @@ where
         ShellEnvironmentPolicyInherit::All => vars.into_iter().collect(),
         ShellEnvironmentPolicyInherit::None => HashMap::new(),
         ShellEnvironmentPolicyInherit::Core => {
-            #[cfg(not(target_os = "windows"))]
             let core_env_vars = UNIX_CORE_ENV_VARS;
-            #[cfg(target_os = "windows")]
-            let core_env_vars = WINDOWS_CORE_ENV_VARS;
 
             vars.into_iter()
                 .filter(|(k, _)| {
@@ -130,8 +110,6 @@ where
 
     // Step 4 - Apply user-provided overrides.
     for (key, val) in &policy.r#set {
-        #[cfg(windows)]
-        env_map.retain(|existing, _| !existing.eq_ignore_ascii_case(key));
         env_map.insert(key.clone(), val.clone());
     }
 
@@ -152,131 +130,16 @@ where
     env_map
 }
 
-#[cfg(not(target_os = "windows"))]
 const UNIX_CORE_ENV_VARS: &[&str] = &[
     "PATH", "SHELL", "TMPDIR", "TEMP", "TMP", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "LOGNAME",
     "USER",
-];
-
-#[cfg(target_os = "windows")]
-pub const WINDOWS_CORE_ENV_VARS: &[&str] = &[
-    // Core path resolution
-    "PATH",
-    "PATHEXT",
-    // Shell and system roots
-    "SHELL",
-    "COMSPEC",
-    "SYSTEMROOT",
-    "WINDIR",
-    "SYSTEMDRIVE",
-    // User context and profiles
-    "USERNAME",
-    "USERDOMAIN",
-    "USERPROFILE",
-    "HOMEDRIVE",
-    "HOMEPATH",
-    // Program locations
-    "PROGRAMFILES",
-    "PROGRAMFILES(X86)",
-    "PROGRAMW6432",
-    "PROGRAMDATA",
-    // App data and caches
-    "LOCALAPPDATA",
-    "APPDATA",
-    // Temp locations
-    "TEMP",
-    "TMP",
-    "TMPDIR",
-    // Common shells/pwsh hints
-    "POWERSHELL",
-    "PWSH",
 ];
 
 #[cfg(test)]
 #[path = "shell_environment_tests.rs"]
 mod tests;
 
-#[cfg(all(test, target_os = "windows"))]
-mod windows_tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    fn make_vars(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
-        pairs
-            .iter()
-            .map(|(key, value)| (key.to_string(), value.to_string()))
-            .collect()
-    }
-
-    #[test]
-    #[cfg(target_os = "windows")]
-    fn core_inherit_preserves_windows_startup_vars_case_insensitively() {
-        let vars = make_vars(&[
-            ("Shell", "C:\\Program Files\\Git\\bin\\bash.exe"),
-            ("SystemRoot", "C:\\Windows"),
-            ("WinDir", "C:\\Windows"),
-            ("AppData", "C:\\Users\\genex\\AppData\\Roaming"),
-            ("TmpDir", "C:\\Temp\\custom"),
-            ("PROVIDER_API_KEY", "secret"),
-        ]);
-
-        let policy = ShellEnvironmentPolicy {
-            inherit: ShellEnvironmentPolicyInherit::Core,
-            ignore_default_excludes: true,
-            ..Default::default()
-        };
-
-        // Check a few sample vars instead of the full Windows core list.
-        let result = populate_env(vars, &policy, /*thread_id*/ None);
-        let expected = HashMap::from([
-            (
-                "Shell".to_string(),
-                "C:\\Program Files\\Git\\bin\\bash.exe".to_string(),
-            ),
-            ("SystemRoot".to_string(), "C:\\Windows".to_string()),
-            ("WinDir".to_string(), "C:\\Windows".to_string()),
-            (
-                "AppData".to_string(),
-                "C:\\Users\\genex\\AppData\\Roaming".to_string(),
-            ),
-            ("TmpDir".to_string(), "C:\\Temp\\custom".to_string()),
-        ]);
-
-        assert_eq!(result, expected);
-
-        let policy = ShellEnvironmentPolicy {
-            inherit: ShellEnvironmentPolicyInherit::All,
-            ignore_default_excludes: true,
-            r#set: HashMap::from([("gh_host".to_string(), "github.trusted.example".to_string())]),
-            ..Default::default()
-        };
-        assert_eq!(
-            populate_env(
-                make_vars(&[("GH_HOST", "github.stale.example")]),
-                &policy,
-                /*thread_id*/ None,
-            ),
-            HashMap::from([("gh_host".to_string(), "github.trusted.example".to_string(),)]),
-        );
-    }
-
-    #[test]
-    #[cfg(target_os = "windows")]
-    fn create_env_inserts_pathext_on_windows_when_missing() {
-        let policy = ShellEnvironmentPolicy {
-            inherit: ShellEnvironmentPolicyInherit::None,
-            ignore_default_excludes: true,
-            ..Default::default()
-        };
-
-        let result = create_env_from_vars(Vec::new(), &policy, /*thread_id*/ None);
-        let expected = HashMap::from([("PATHEXT".to_string(), ".COM;.EXE;.BAT;.CMD".to_string())]);
-
-        assert_eq!(result, expected);
-    }
-}
-
-#[cfg(all(test, not(target_os = "windows")))]
+#[cfg(test)]
 mod non_windows_tests {
     use super::*;
     use pretty_assertions::assert_eq;

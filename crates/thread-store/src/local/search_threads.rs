@@ -7,7 +7,6 @@ use genex_rollout::RolloutConfig;
 use genex_rollout::first_rollout_content_match_snippet;
 use genex_rollout::parse_cursor;
 use genex_rollout::search_rollout_matches;
-use genex_utils_absolute_path::normalize_windows_device_path;
 
 use super::LocalThreadStore;
 use super::helpers::resolve_thread_names;
@@ -201,16 +200,7 @@ pub(super) async fn search_threads(
 }
 
 fn rollout_search_path(path: &Path) -> PathBuf {
-    let path = genex_rollout::plain_rollout_path(path);
-    // Resume can persist a Windows namespace prefix while filesystem search returns the
-    // ordinary spelling. Normalize both join keys without requiring the uncompressed file
-    // to exist, and retain the filename identifying the selected rollout after a revert.
-    if cfg!(windows)
-        && let Some(normalized) = path.to_str().and_then(normalize_windows_device_path)
-    {
-        return PathBuf::from(normalized);
-    }
-    path
+    genex_rollout::plain_rollout_path(path)
 }
 
 fn cursor_from_thread_search_item(
