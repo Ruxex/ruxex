@@ -458,6 +458,30 @@ The following decisions are recorded for the next cleanup slice:
 | `applyPatchApproval` / `execCommandApproval` | No production producer; canonical v2 approval requests are emitted instead. | `remove` legacy server requests and dead consumer arms |
 | `item/fileChange/outputDelta` / `thread/compacted` | Raw-event/rollout compatibility rationale remains, and notification consumers still exist. | `retain` pending replay audit |
 
+### Windows support removal audit (2026-10-06)
+
+The repository-wide platform audit found 122 workspace packages. Two workspace
+packages are Windows-specific (`genex-windows-sandbox` and
+`genex-mxc-sandbox`); 18 additional packages have direct Windows-targeted
+dependencies or Windows-only conditional modules. Tracked Windows-named paths
+are concentrated in `crates/windows-sandbox-rs`, app-server protocol, core,
+CLI, TUI, low-level platform crates, `third_party/voice`, CI, and setup/docs.
+
+The user-approved target is Linux/macOS only. The following producer/consumer
+families are the implementation queue; earlier rows that retained ordinary
+Windows support are superseded by this audit for the current slice.
+
+| Family | Producer/consumer audit | Decision |
+|---|---|---|
+| `genex-windows-sandbox` and `genex-mxc-sandbox` | Workspace members are consumed by `core`, `sandboxing`, `app-server`, `cli`, `tui`, `arg0`, `network-proxy`, and `exec-server-protocol`. Their public exports and binaries are Windows-only; no Linux/macOS consumer requires them. | `remove` |
+| Windows sandbox protocol/config/app-server surface | Windows sandbox protocol module, generated JSON/TypeScript schema, app-server request processor/events, config loader/types, feature registry, and tests form one in-repository producer/consumer graph. | `remove` |
+| Core, sandboxing, CLI, and TUI Windows paths | Windows sandbox state/config/grants, setup/readiness branches, doctor diagnostics, prompts/events, console/screen-reader/terminal-probe/IDE-pipe modules, and snapshots are guarded Windows producers with no supported-platform consumer. Unix/macOS managers and security paths are separate consumers. | `remove` Windows branches; `migrate-in-place` supported-platform code |
+| Low-level Windows modules | `exec-server`, `http-client`, `network-proxy`, `uds`, `utils/pty`, `utils/sleep-inhibitor`, `path-utils`, `arg0`, `hooks`, `rmcp-client`, `keyring-store`, and `app-server-daemon` each have Windows-only files or target dependencies. Their Linux/macOS implementations remain reachable independently. | `remove` Windows modules/dependencies; `migrate-in-place` shared selectors |
+| PowerShell parser and Windows shell tooling | `tree-sitter-powershell` is a direct dependency of `shell-command`; parser branches and fixtures are consumed only by shell parsing/tests. `just-shell.py` PowerShell execution and Windows Just recipes are consumed only by Windows recipes. | `remove` |
+| CI, setup, and native Windows packaging | GitHub issue templates, `justfile` Windows recipes, `scripts/setup-windows.ps1`, Windows artifact/package paths, and voice Windows build helpers are Windows-specific operational producers. | `remove`; update active docs to recommend WSL |
+| Third-party/transitive Windows target entries | Cargo lockfile may retain Windows target packages pulled by supported third-party crates. They are not repository-owned Windows support and have no direct supported-path producer in this slice. | `retain` only when Cargo metadata shows a supported consumer |
+| Historical, legal, upstream, and external protocol strings | Existing upstream fixtures, legal/history records, external protocol/package names, and non-Windows external contracts require separate consumers and are not native Windows support. | `retain` and document exact path |
+
 ## 5. 次回以降の精査順序
 
 各単位で、先に [pre-release compatibility inventory](pre-release-compatibility-inventory.md) の順序に従って producer/consumer を記録する。

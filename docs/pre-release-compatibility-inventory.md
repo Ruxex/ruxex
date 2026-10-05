@@ -924,3 +924,20 @@ auth, UI, test, and provider surfaces can be removed together without compatibil
 | Protocol/schema | `AuthMode`, account/login variants, `account/bedrock/discover`, and `account/bedrock/setup` are produced by app-server protocol and consumed by app-server/TUI/test clients and checked-in JSON/TypeScript schemas. | `remove` | Protocol producer/consumer audit; `just generate`; generated diff inspection |
 | Configuration and UI | Bedrock `model_providers.*.aws` validation/edit/schema, CLI doctor/login, TUI onboarding, and app-server setup processors have no non-Bedrock consumer. | `remove` | Config/schema/CLI/TUI audit; `just check --tests`; `just check` |
 | OpenAI/provider-neutral contracts | OpenAI endpoint URLs, wire fields, auth variables/headers/model identifiers, custom providers, API key/headers auth, generic `/models`, platform fallback, and security behavior are separate retained consumers. | `retain` | Retain-only search and generated diff review |
+
+### Windows support removal (2026-10-06)
+
+This section supersedes earlier inventory rows that retained native Windows
+support, ordinary Windows sandboxing, MXC/AppContainer behavior, or Windows
+platform fallbacks. The current pre-release product supports Linux and macOS
+only; Windows users are directed to use the Linux build through WSL.
+
+| Area | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| Windows sandbox and MXC crates | `genex-windows-sandbox` and `genex-mxc-sandbox` are workspace producers consumed only by Windows-targeted core, sandboxing, app-server, CLI, TUI, arg0, network-proxy, and exec-server-protocol paths. | `remove` | `cargo metadata --no-deps`; exact workspace/dependency audit; crate deletion |
+| Windows sandbox protocol/config/app-server | Windows protocol module, generated schema, request processor, config loader, feature registry, app-server events, and tests are an in-repository producer/consumer graph with no Linux/macOS consumer. | `remove` | `just generate`; generated schema diff; exact symbol audit |
+| Core/sandboxing/CLI/TUI Windows behavior | Windows state, setup/readiness, grants, desktop/security doctor, prompts/events, console/screen-reader/terminal-probe/IDE-pipe modules are Windows-only. Unix/macOS sandbox managers and UI paths are independently consumed. | `remove` Windows code; `migrate-in-place` supported paths | `cargo check --tests -p genex-core -p genex-sandboxing -p genex-cli -p genex-tui` |
+| Low-level Windows implementations | `exec-server`, `http-client`, `network-proxy`, `uds`, `utils/pty`, `utils/sleep-inhibitor`, `path-utils`, `arg0`, `hooks`, `rmcp-client`, `keyring-store`, and daemon target tables provide Windows-only implementations; supported-platform consumers use separate implementations. | `remove` Windows modules/dependencies; `migrate-in-place` shared selectors | `cargo check --tests`; Cargo manifest and metadata audit |
+| PowerShell and native Windows tooling | PowerShell parser/dependency, Windows Just recipes, `scripts/setup-windows.ps1`, Windows CI/issue/package paths, and Windows voice build helpers have no Linux/macOS production consumer. | `remove` | active CI/package/docs search; `git diff --check` |
+| Transitive third-party Windows targets | Upstream crates may retain Windows target packages in `Cargo.lock` while serving Linux/macOS code. No repository-owned Windows feature is implied by those entries. | `retain` only with supported consumer evidence | `cargo metadata --no-deps`; lockfile dependency audit |
+| History/legal/upstream/external identifiers | Historical records, legal notices, upstream fixtures, third-party protocol/package names, and non-Windows external contracts are not native Windows support. | `retain` with exact path and reason | retain-only residual audit |
