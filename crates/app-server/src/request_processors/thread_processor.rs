@@ -899,15 +899,6 @@ impl ThreadRequestProcessor {
             .map(|response| Some(response.into()))
     }
 
-    pub(crate) async fn conversation_summary(
-        &self,
-        params: GetConversationSummaryParams,
-    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        self.get_thread_summary_response_inner(params)
-            .await
-            .map(|response| Some(response.into()))
-    }
-
     async fn load_thread(
         &self,
         thread_id: &str,
@@ -5198,48 +5189,6 @@ impl ThreadRequestProcessor {
         Ok(())
     }
 
-    async fn get_thread_summary_response_inner(
-        &self,
-        params: GetConversationSummaryParams,
-    ) -> Result<GetConversationSummaryResponse, JSONRPCErrorError> {
-        let fallback_provider = self.config.model_provider_id.as_str();
-        let read_result = match params {
-            GetConversationSummaryParams::ThreadId { conversation_id } => self
-                .thread_store
-                .read_thread(StoreReadThreadParams {
-                    thread_id: conversation_id,
-                    include_archived: true,
-                    include_history: false,
-                })
-                .await
-                .map_err(|err| conversation_summary_thread_id_read_error(conversation_id, err)),
-            GetConversationSummaryParams::RolloutPath { rollout_path } => {
-                let Some(local_thread_store) = self
-                    .thread_store
-                    .as_any()
-                    .downcast_ref::<LocalThreadStore>()
-                else {
-                    return Err(invalid_request(
-                        "rollout path queries are only supported with the local thread store",
-                    ));
-                };
-
-                local_thread_store
-                    .read_thread_by_rollout_path(
-                        rollout_path.clone(),
-                        /*include_archived*/ true,
-                        /*include_history*/ false,
-                    )
-                    .await
-                    .map_err(|err| conversation_summary_rollout_path_read_error(&rollout_path, err))
-            }
-        };
-
-        let stored_thread = read_result?;
-        let summary = summary_from_stored_thread(stored_thread, fallback_provider);
-        Ok(GetConversationSummaryResponse { summary })
-    }
-
     async fn list_threads_common(
         &self,
         requested_page_size: usize,
@@ -5791,51 +5740,6 @@ fn thread_read_history_load_error(
     }
 }
 
-fn conversation_summary_thread_id_read_error(
-    conversation_id: ThreadId,
-    err: ThreadStoreError,
-) -> JSONRPCErrorError {
-    let no_rollout_message = format!("no rollout found for thread id {conversation_id}");
-    match err {
-        ThreadStoreError::InvalidRequest { message } if message == no_rollout_message => {
-            conversation_summary_not_found_error(conversation_id)
-        }
-        ThreadStoreError::Unsupported { operation } => {
-            unsupported_thread_store_operation(operation)
-        }
-        ThreadStoreError::ThreadNotFound { thread_id } if thread_id == conversation_id => {
-            conversation_summary_not_found_error(conversation_id)
-        }
-        ThreadStoreError::InvalidRequest { message } => invalid_request(message),
-        err => internal_error(format!(
-            "failed to load conversation summary for {conversation_id}: {err}"
-        )),
-    }
-}
-
-fn conversation_summary_not_found_error(conversation_id: ThreadId) -> JSONRPCErrorError {
-    invalid_request(format!(
-        "no rollout found for conversation id {conversation_id}"
-    ))
-}
-
-fn conversation_summary_rollout_path_read_error(
-    path: &Path,
-    err: ThreadStoreError,
-) -> JSONRPCErrorError {
-    match err {
-        ThreadStoreError::InvalidRequest { message } => invalid_request(message),
-        ThreadStoreError::Unsupported { operation } => {
-            unsupported_thread_store_operation(operation)
-        }
-        err => internal_error(format!(
-            "failed to load conversation summary from {}: {}",
-            path.display(),
-            err
-        )),
-    }
-}
-
 pub(super) fn core_thread_write_error(operation: &str, err: GenexErr) -> JSONRPCErrorError {
     match err.details() {
         GenexErrorDetails::ThreadNotFound(thread_id) => {
@@ -5941,123 +5845,6 @@ pub(crate) fn thread_from_stored_thread(
         turns: Vec::new(),
     };
     (thread, history)
-}
-
-fn summary_from_stored_thread(
-    thread: StoredThread,
-    fallback_provider: &str,
-) -> ConversationSummary {
-    let path = thread.rollout_path.unwrap_or_default();
-    let source = with_thread_spawn_agent_metadata(
-        thread.source,
-        thread.agent_nickname.clone(),
-        thread.agent_role.clone(),
-    );
-    let git_info = thread.git_info.map(|git| ConversationGitInfo {
-        sha: git.commit_hash.map(|sha| sha.0),
-        branch: git.branch,
-        origin_url: git.repository_url.map(String::from),
-    });
-    ConversationSummary {
-        conversation_id: thread.thread_id,
-        path,
-        preview: thread.preview,
-        // Preserve millisecond precision from the thread store so thread/list cursors
-        // round-trip the same ordering key used by pagination queries.
-        timestamp: Some(
-            thread
-                .created_at
-                .to_rfc3339_opts(SecondsFormat::Millis, true),
-        ),
-        updated_at: Some(
-            thread
-                .updated_at
-                .to_rfc3339_opts(SecondsFormat::Millis, true),
-        ),
-        model_provider: if thread.model_provider.is_empty() {
-            fallback_provider.to_string()
-        } else {
-            thread.model_provider
-        },
-        cwd: thread.cwd,
-        cli_version: thread.cli_version,
-        source,
-        git_info,
-    }
-}
-
-#[allow(clippy::too_many_arguments)]
-#[cfg(test)]
-fn summary_from_state_db_metadata(
-    conversation_id: ThreadId,
-    path: PathBuf,
-    first_user_message: Option<String>,
-    preview: Option<String>,
-    timestamp: String,
-    updated_at: String,
-    model_provider: String,
-    cwd: PathBuf,
-    cli_version: String,
-    source: String,
-    _thread_source: Option<genex_protocol::protocol::ThreadSource>,
-    agent_nickname: Option<String>,
-    agent_role: Option<String>,
-    git_sha: Option<String>,
-    git_branch: Option<String>,
-    git_origin_url: Option<String>,
-) -> ConversationSummary {
-    let preview = preview.or(first_user_message).unwrap_or_default();
-    let source = serde_json::from_str(&source)
-        .or_else(|_| serde_json::from_value(serde_json::Value::String(source.clone())))
-        .unwrap_or(genex_protocol::protocol::SessionSource::Unknown);
-    let source = with_thread_spawn_agent_metadata(source, agent_nickname, agent_role);
-    let git_info = if git_sha.is_none() && git_branch.is_none() && git_origin_url.is_none() {
-        None
-    } else {
-        Some(ConversationGitInfo {
-            sha: git_sha,
-            branch: git_branch,
-            origin_url: git_origin_url,
-        })
-    };
-    ConversationSummary {
-        conversation_id,
-        path,
-        preview,
-        timestamp: Some(timestamp),
-        updated_at: Some(updated_at),
-        model_provider,
-        cwd,
-        cli_version,
-        source,
-        git_info,
-    }
-}
-
-#[cfg(test)]
-fn summary_from_thread_metadata(metadata: &ThreadMetadata) -> ConversationSummary {
-    summary_from_state_db_metadata(
-        metadata.id,
-        metadata.rollout_path.clone(),
-        metadata.first_user_message.clone(),
-        metadata.preview.clone(),
-        metadata
-            .created_at
-            .to_rfc3339_opts(SecondsFormat::Secs, true),
-        metadata
-            .updated_at
-            .to_rfc3339_opts(SecondsFormat::Secs, true),
-        metadata.model_provider.clone(),
-        metadata.cwd.clone(),
-        metadata.cli_version.clone(),
-        metadata.source.clone(),
-        metadata.thread_source.clone(),
-        metadata.agent_nickname.clone(),
-        metadata.agent_role.clone(),
-        metadata.git_sha.clone(),
-        metadata.git_branch.clone(),
-        metadata.git_origin_url.clone().map(String::from),
-    )
 }
 
 fn preview_from_rollout_items(items: &[RolloutItem]) -> String {

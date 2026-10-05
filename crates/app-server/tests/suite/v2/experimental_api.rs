@@ -10,7 +10,6 @@ use genex_app_server_protocol::InitializeCapabilities;
 use genex_app_server_protocol::JSONRPCError;
 use genex_app_server_protocol::JSONRPCMessage;
 use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::MockExperimentalMethodParams;
 use genex_app_server_protocol::RequestId;
 use genex_app_server_protocol::ThreadStartParams;
 use genex_app_server_protocol::ThreadStartResponse;
@@ -21,43 +20,6 @@ use test_case::test_case;
 use tokio::time::timeout;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
-
-#[tokio::test]
-async fn mock_experimental_method_requires_experimental_api_capability() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .without_auto_env()
-        .build()
-        .await?;
-
-    let init = mcp
-        .initialize_with_capabilities(
-            default_client_info(),
-            Some(InitializeCapabilities {
-                experimental_api: false,
-                request_attestation: false,
-                opt_out_notification_methods: None,
-                mcp_server_provider_form_elicitation: false,
-                extensions: None,
-            }),
-        )
-        .await?;
-    let JSONRPCMessage::Response(_) = init else {
-        anyhow::bail!("expected initialize response, got {init:?}");
-    };
-
-    let request_id = mcp
-        .send_mock_experimental_method_request(MockExperimentalMethodParams::default())
-        .await?;
-    let error = timeout(
-        DEFAULT_TIMEOUT,
-        mcp.read_stream_until_error_message(RequestId::Integer(request_id)),
-    )
-    .await??;
-    assert_experimental_capability_error(error, "mock/experimentalMethod");
-    Ok(())
-}
 
 #[test_case("thread/settings/update"; "future settings")]
 #[test_case("turn/settings/update"; "turn settings")]

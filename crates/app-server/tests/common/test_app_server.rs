@@ -36,7 +36,6 @@ use genex_app_server_protocol::FsUnwatchParams;
 use genex_app_server_protocol::FsWatchParams;
 use genex_app_server_protocol::FsWriteFileParams;
 use genex_app_server_protocol::GetAccountParams;
-use genex_app_server_protocol::GetAuthStatusParams;
 use genex_app_server_protocol::HooksListParams;
 use genex_app_server_protocol::InitializeCapabilities;
 use genex_app_server_protocol::InitializeParams;
@@ -52,7 +51,6 @@ use genex_app_server_protocol::MarketplaceRemoveParams;
 use genex_app_server_protocol::MarketplaceUpgradeParams;
 use genex_app_server_protocol::McpResourceReadParams;
 use genex_app_server_protocol::McpServerToolCallParams;
-use genex_app_server_protocol::MockExperimentalMethodParams;
 use genex_app_server_protocol::ModelListParams;
 use genex_app_server_protocol::ModelProviderCapabilitiesReadParams;
 use genex_app_server_protocol::PermissionProfileListParams;
@@ -386,15 +384,6 @@ impl TestAppServer {
                 anyhow::bail!("unexpected JSONRPCMessage::Request: {request:?}");
             }
         }
-    }
-
-    /// Send a `getAuthStatus` JSON-RPC request.
-    pub async fn send_get_auth_status_request(
-        &mut self,
-        params: GetAuthStatusParams,
-    ) -> anyhow::Result<i64> {
-        let params = Some(serde_json::to_value(params)?);
-        self.send_request("getAuthStatus", params).await
     }
 
     /// Send an `account/read` JSON-RPC request.
@@ -815,15 +804,6 @@ impl TestAppServer {
     ) -> anyhow::Result<i64> {
         let params = Some(serde_json::to_value(params)?);
         self.send_request("collaborationMode/list", params).await
-    }
-
-    /// Send a `mock/experimentalMethod` JSON-RPC request.
-    pub async fn send_mock_experimental_method_request(
-        &mut self,
-        params: MockExperimentalMethodParams,
-    ) -> anyhow::Result<i64> {
-        let params = Some(serde_json::to_value(params)?);
-        self.send_request("mock/experimentalMethod", params).await
     }
 
     /// Send a `turn/start` JSON-RPC request (v2).

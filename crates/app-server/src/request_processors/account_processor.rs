@@ -102,15 +102,6 @@ impl AccountRequestProcessor {
         })
     }
 
-    pub(crate) async fn get_auth_status(
-        &self,
-        params: GetAuthStatusParams,
-    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        self.get_auth_status_response(params)
-            .await
-            .map(|response| Some(response.into()))
-    }
-
     pub(crate) async fn cancel_active_login(&self) {}
 
     pub(crate) fn clear_external_auth(&self) {
@@ -126,20 +117,6 @@ impl AccountRequestProcessor {
                 .map(GenexAuth::api_auth_mode)
                 .map(auth_mode_to_api),
             plan_type: None,
-        }
-    }
-
-    async fn load_latest_config(&self) -> Config {
-        match self
-            .config_manager
-            .load_latest_config(/*fallback_cwd*/ None)
-            .await
-        {
-            Ok(config) => config,
-            Err(err) => {
-                tracing::warn!("failed to reload config, using startup config: {err}");
-                self.config.as_ref().clone()
-            }
         }
     }
 
@@ -384,70 +361,4 @@ impl AccountRequestProcessor {
         RefreshTokenRequestOutcome::NotAttemptedOrSucceeded
     }
 
-    async fn get_auth_status_response(
-        &self,
-        params: GetAuthStatusParams,
-    ) -> Result<GetAuthStatusResponse, JSONRPCErrorError> {
-        let include_token = params.include_token.unwrap_or(false);
-        let do_refresh = params.refresh_token.unwrap_or(false);
-
-        self.refresh_token_if_requested(do_refresh).await;
-
-        // Determine whether auth is required based on the active model provider.
-        // If a custom provider is configured with `requires_auth == false`,
-        // then no auth step is required; otherwise, default to requiring auth.
-        let config = self.load_latest_config().await;
-        let requires_auth = config.model_provider.requires_auth;
-
-        let response = if !requires_auth {
-            GetAuthStatusResponse {
-                auth_method: None,
-                auth_token: None,
-                requires_auth: Some(false),
-            }
-        } else {
-            let auth = if do_refresh {
-                self.auth_manager.auth_cached()
-            } else {
-                self.auth_manager.auth().await
-            };
-            match auth {
-                Some(auth) => {
-                    let permanent_refresh_failure =
-                        self.auth_manager.refresh_failure_for_auth(&auth).is_some();
-                    let auth_mode = auth_mode_to_api(auth.api_auth_mode());
-                    let (reported_auth_method, token_opt) = if matches!(auth, GenexAuth::Headers(_))
-                        || include_token && permanent_refresh_failure
-                    {
-                        // Host-owned and metadata-bearing credentials are never exported.
-                        (Some(auth_mode), None)
-                    } else {
-                        match auth.get_token() {
-                            Ok(token) if !token.is_empty() => {
-                                let tok = if include_token { Some(token) } else { None };
-                                (Some(auth_mode), tok)
-                            }
-                            Ok(_) => (None, None),
-                            Err(err) => {
-                                tracing::warn!("failed to get token for auth status: {err}");
-                                (None, None)
-                            }
-                        }
-                    };
-                    GetAuthStatusResponse {
-                        auth_method: reported_auth_method,
-                        auth_token: token_opt,
-                        requires_auth: Some(true),
-                    }
-                }
-                None => GetAuthStatusResponse {
-                    auth_method: None,
-                    auth_token: None,
-                    requires_auth: Some(true),
-                },
-            }
-        };
-
-        Ok(response)
-    }
 }

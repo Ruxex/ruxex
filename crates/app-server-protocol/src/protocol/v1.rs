@@ -9,11 +9,7 @@ use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::SandboxMode;
 use genex_protocol::config_types::Verbosity;
 use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::parse_command::ParsedCommand;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::FileChange;
-pub use genex_protocol::protocol::GitSha;
-use genex_protocol::protocol::ReviewDecision;
 use genex_protocol::protocol::SandboxPolicy;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::protocol::TurnAbortReason;
@@ -21,7 +17,6 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::protocol::common::AuthMode;
 use crate::protocol::v2::ForcedManagedWorkspaceIds;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema, TS)]
@@ -75,25 +70,6 @@ pub struct InitializeResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(untagged)]
-pub enum GetConversationSummaryParams {
-    RolloutPath {
-        #[serde(rename = "rolloutPath")]
-        rollout_path: PathBuf,
-    },
-    ThreadId {
-        #[serde(rename = "conversationId")]
-        conversation_id: ThreadId,
-    },
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-pub struct GetConversationSummaryResponse {
-    pub summary: ConversationSummary,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct ConversationSummary {
     pub conversation_id: ThreadId,
@@ -124,80 +100,11 @@ pub struct LoginApiKeyParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
-pub struct GitDiffToRemoteResponse {
-    pub sha: GitSha,
-    pub diff: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-pub struct ApplyPatchApprovalParams {
-    pub conversation_id: ThreadId,
-    /// Use to correlate this with [genex_protocol::protocol::PatchApplyBeginEvent]
-    /// and [genex_protocol::protocol::PatchApplyEndEvent].
-    pub call_id: String,
-    pub file_changes: HashMap<PathBuf, FileChange>,
-    /// Optional explanatory reason (e.g. request for extra write access).
-    pub reason: Option<String>,
-    /// When set, the agent is asking the user to allow writes under this root
-    /// for the remainder of the session (unclear if this is honored today).
-    pub grant_root: Option<PathBuf>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-pub struct ApplyPatchApprovalResponse {
-    pub decision: ReviewDecision,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-pub struct ExecCommandApprovalParams {
-    pub conversation_id: ThreadId,
-    /// Use to correlate this with [genex_protocol::protocol::ExecCommandBeginEvent]
-    /// and [genex_protocol::protocol::ExecCommandEndEvent].
-    pub call_id: String,
-    /// Identifier for this specific approval callback.
-    pub approval_id: Option<String>,
-    pub command: Vec<String>,
-    pub cwd: PathBuf,
-    pub reason: Option<String>,
-    pub parsed_cmd: Vec<ParsedCommand>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-pub struct ExecCommandApprovalResponse {
-    pub decision: ReviewDecision,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-pub struct GitDiffToRemoteParams {
-    pub cwd: PathBuf,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-pub struct GetAuthStatusParams {
-    pub include_token: Option<bool>,
-    pub refresh_token: Option<bool>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
 pub struct ExecOneOffCommandParams {
     pub command: Vec<String>,
     pub timeout_ms: Option<u64>,
     pub cwd: Option<PathBuf>,
     pub sandbox_policy: Option<SandboxPolicy>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-pub struct GetAuthStatusResponse {
-    pub auth_method: Option<AuthMode>,
-    pub auth_token: Option<String>,
-    pub requires_auth: Option<bool>,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Serialize, JsonSchema, TS)]

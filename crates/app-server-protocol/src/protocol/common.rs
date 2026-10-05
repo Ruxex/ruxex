@@ -948,13 +948,6 @@ client_request_definitions! {
         serialization: None,
         response: v2::CollaborationModeListResponse,
     },
-    #[experimental("mock/experimentalMethod")]
-    /// Test-only method used to validate experimental gating.
-    MockExperimentalMethod => "mock/experimentalMethod" {
-        params: v2::MockExperimentalMethodParams,
-        serialization: None,
-        response: v2::MockExperimentalMethodResponse,
-    },
     #[experimental("environment/info")]
     /// Reads information from a configured execution environment.
     EnvironmentInfo => "environment/info" {
@@ -1134,23 +1127,6 @@ client_request_definitions! {
         response: v2::GetAccountResponse,
     },
 
-    /// DEPRECATED APIs below
-    GetConversationSummary => "getConversationSummary" {
-        params: v1::GetConversationSummaryParams,
-        serialization: None,
-        response: v1::GetConversationSummaryResponse,
-    },
-    GitDiffToRemote => "gitDiffToRemote" {
-        params: v1::GitDiffToRemoteParams,
-        serialization: None,
-        response: v1::GitDiffToRemoteResponse,
-    },
-    /// DEPRECATED in favor of GetAccount
-    GetAuthStatus => "getAuthStatus" {
-        params: v1::GetAuthStatusParams,
-        serialization: global("account-auth"),
-        response: v1::GetAuthStatusResponse,
-    },
     // Legacy fuzzy search cancellation is intentionally concurrent: clients reuse a
     // cancellation token so a newer request can cancel an older in-flight search.
     FuzzyFileSearch => "fuzzyFileSearch" {
@@ -1499,19 +1475,6 @@ server_request_definitions! {
         response: v2::CurrentTimeReadResponse,
     },
 
-    /// DEPRECATED APIs below
-    /// Request to approve a patch.
-    /// This request is used for Turns started via the legacy APIs (i.e. SendUserTurn, SendUserMessage).
-    ApplyPatchApproval {
-        params: v1::ApplyPatchApprovalParams,
-        response: v1::ApplyPatchApprovalResponse,
-    },
-    /// Request to exec a command.
-    /// This request is used for Turns started via the legacy APIs (i.e. SendUserTurn, SendUserMessage).
-    ExecCommandApproval {
-        params: v1::ExecCommandApprovalParams,
-        response: v1::ExecCommandApprovalResponse,
-    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -1716,13 +1679,11 @@ mod tests {
     use anyhow::Result;
     use genex_protocol::ThreadId;
     use genex_protocol::config_types::MultiAgentMode;
-    use genex_protocol::parse_command::ParsedCommand;
     use genex_utils_absolute_path::AbsolutePathBuf;
     use genex_utils_absolute_path::test_support::PathBufExt;
     use genex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
-    use std::path::PathBuf;
 
     fn absolute_path_string(path: &str) -> String {
         let path = format!("/{}", path.trim_start_matches('/'));
@@ -1770,14 +1731,6 @@ mod tests {
                 id: RequestId::Integer(3),
                 method: "thread/archive".to_string(),
                 params: Some(serde_json::Value::Null),
-                trace: None,
-            },
-            JSONRPCRequest {
-                id: RequestId::Integer(4),
-                method: "getConversationSummary".to_string(),
-                params: Some(json!({
-                    "conversationId": "67e55044-10b1-426f-9247-bb680e5fe0c8"
-                })),
                 trace: None,
             },
             JSONRPCRequest {
@@ -2259,27 +2212,6 @@ mod tests {
     }
 
     #[test]
-    fn serialize_get_conversation_summary() -> Result<()> {
-        let request = ClientRequest::GetConversationSummary {
-            request_id: RequestId::Integer(42),
-            params: v1::GetConversationSummaryParams::ThreadId {
-                conversation_id: ThreadId::from_string("67e55044-10b1-426f-9247-bb680e5fe0c8")?,
-            },
-        };
-        assert_eq!(
-            json!({
-                "method": "getConversationSummary",
-                "id": 42,
-                "params": {
-                    "conversationId": "67e55044-10b1-426f-9247-bb680e5fe0c8"
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-        Ok(())
-    }
-
-    #[test]
     fn serialize_initialize_capabilities() -> Result<()> {
         let request = ClientRequest::Initialize {
             request_id: RequestId::Integer(42),
@@ -2425,53 +2357,6 @@ mod tests {
             }),
             serde_json::to_value(&notification)?,
         );
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_server_request() -> Result<()> {
-        let conversation_id = ThreadId::from_string("67e55044-10b1-426f-9247-bb680e5fe0c8")?;
-        let params = v1::ExecCommandApprovalParams {
-            conversation_id,
-            call_id: "call-42".to_string(),
-            approval_id: Some("approval-42".to_string()),
-            command: vec!["echo".to_string(), "hello".to_string()],
-            cwd: PathBuf::from("/tmp"),
-            reason: Some("because tests".to_string()),
-            parsed_cmd: vec![ParsedCommand::Unknown {
-                cmd: "echo hello".to_string(),
-            }],
-        };
-        let request = ServerRequest::ExecCommandApproval {
-            request_id: RequestId::Integer(7),
-            params: params.clone(),
-        };
-
-        assert_eq!(
-            json!({
-                "method": "execCommandApproval",
-                "id": 7,
-                "params": {
-                    "conversationId": "67e55044-10b1-426f-9247-bb680e5fe0c8",
-                    "callId": "call-42",
-                    "approvalId": "approval-42",
-                    "command": ["echo", "hello"],
-                    "cwd": "/tmp",
-                    "reason": "because tests",
-                    "parsedCmd": [
-                        {
-                            "type": "unknown",
-                            "cmd": "echo hello"
-                        }
-                    ]
-                }
-            }),
-            serde_json::to_value(&request)?,
-        );
-
-        let payload = ServerRequestPayload::ExecCommandApproval(params);
-        assert_eq!(request.id(), &RequestId::Integer(7));
-        assert_eq!(payload.request_with_id(RequestId::Integer(7)), request);
         Ok(())
     }
 

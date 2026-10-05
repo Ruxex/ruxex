@@ -434,6 +434,30 @@ consumer、code-mode説明、テストサーバー、OTELタグを同時に更�
 
 これらは provider 由来の名前や adapter を含むものの、現行の custom provider、Bedrock、local execution、plugin/MCP、platform fallback から利用されている。provider 固有 capability を外した後に依存元がなくなった場合のみ、クレート単位の削除を再評価する。
 
+### Protocol experimental/deprecated surface audit (2026-10-06)
+
+The app-server protocol audit confirmed that most experimental methods are unique
+capabilities rather than duplicate stable APIs. TUI production callers use
+`thread/settings/update`, `thread/backgroundTerminals/clean`,
+`thread/backgroundTerminals/list`, `environment/info`, `thread/search`,
+`collaborationMode/list`, `thread/queue/add`, and
+`userVerification/verify`; the CLI `queue` command delegates to the TUI helper
+and ultimately sends `thread/queue/add`. The stable-looking neighbors
+`command/exec`, `fuzzyFileSearch`, `thread/list`, and `turn/diff/updated` have
+different sandbox, streaming, search, or diff scopes and are not drop-in
+replacements.
+
+The following decisions are recorded for the next cleanup slice:
+
+| Surface | Producer/consumer audit | Decision |
+|---|---|---|
+| `gitDiffToRemote` | No TUI/CLI caller; only app-server dispatch/processor and protocol/schema definitions remain. The internal Git utility is still consumed by core Git-state tests. | `remove` wire API; retain internal utility |
+| `mock/experimentalMethod` | Test-only method for capability/schema gating; no product caller. | `remove` method, payloads, processor, helpers, and generated entries |
+| `getAuthStatus` | Auth integration tests only; explicitly deprecated in favor of `account/read`, with legacy token fields not carried forward. | `migrate-in-place` tests, then `remove` |
+| `getConversationSummary` | Deprecated implementation and integration tests only; no TUI/CLI caller and no exact stable wire replacement. | `remove` |
+| `applyPatchApproval` / `execCommandApproval` | No production producer; canonical v2 approval requests are emitted instead. | `remove` legacy server requests and dead consumer arms |
+| `item/fileChange/outputDelta` / `thread/compacted` | Raw-event/rollout compatibility rationale remains, and notification consumers still exist. | `retain` pending replay audit |
+
 ## 5. 次回以降の精査順序
 
 各単位で、先に [pre-release compatibility inventory](pre-release-compatibility-inventory.md) の順序に従って producer/consumer を記録する。

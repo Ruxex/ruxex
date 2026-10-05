@@ -28,7 +28,6 @@ use crate::request_processors::CommandExecRequestProcessor;
 use crate::request_processors::ConfigRequestProcessor;
 use crate::request_processors::EnvironmentRequestProcessor;
 use crate::request_processors::FsRequestProcessor;
-use crate::request_processors::GitRequestProcessor;
 use crate::request_processors::InitializeRequestProcessor;
 use crate::request_processors::MarketplaceRequestProcessor;
 use crate::request_processors::McpRequestProcessor;
@@ -141,7 +140,6 @@ pub(crate) struct MessageProcessor {
     environment_processor: EnvironmentRequestProcessor,
     external_agent_config_processor: ExternalAgentConfigRequestProcessor,
     fs_processor: FsRequestProcessor,
-    git_processor: GitRequestProcessor,
     initialize_processor: InitializeRequestProcessor,
     marketplace_processor: MarketplaceRequestProcessor,
     mcp_processor: McpRequestProcessor,
@@ -395,7 +393,6 @@ impl MessageProcessor {
             outgoing.clone(),
             Arc::clone(&environment_manager_for_requests),
         );
-        let git_processor = GitRequestProcessor::new();
         let initialize_processor = InitializeRequestProcessor::new(
             outgoing.clone(),
             Arc::clone(&config),
@@ -532,7 +529,6 @@ impl MessageProcessor {
             environment_processor,
             external_agent_config_processor,
             fs_processor,
-            git_processor,
             initialize_processor,
             marketplace_processor,
             mcp_processor,
@@ -1363,9 +1359,6 @@ impl MessageProcessor {
                     .thread_shell_command(&request_id, params)
                     .await
             }
-            ClientRequest::GetConversationSummary { params, .. } => {
-                self.thread_processor.conversation_summary(params).await
-            }
             ClientRequest::SkillsList { params, .. } => {
                 self.catalog_processor.skills_list(params).await
             }
@@ -1422,11 +1415,6 @@ impl MessageProcessor {
             }
             ClientRequest::CollaborationModeList { params, .. } => {
                 self.catalog_processor.collaboration_mode_list(params).await
-            }
-            ClientRequest::MockExperimentalMethod { params, .. } => {
-                self.catalog_processor
-                    .mock_experimental_method(params)
-                    .await
             }
             ClientRequest::TurnStart { params, .. } => {
                 self.turn_processor
@@ -1503,12 +1491,6 @@ impl MessageProcessor {
             }
             ClientRequest::GetAccount { params, .. } => {
                 self.account_processor.get_account(params).await
-            }
-            ClientRequest::GetAuthStatus { params, .. } => {
-                self.account_processor.get_auth_status(params).await
-            }
-            ClientRequest::GitDiffToRemote { params, .. } => {
-                self.git_processor.git_diff_to_remote(params).await
             }
             ClientRequest::FuzzyFileSearch { params, .. } => self
                 .search_processor

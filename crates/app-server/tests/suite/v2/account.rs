@@ -22,8 +22,6 @@ use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::DesktopOnboardingEntrypoint;
 use genex_app_server_protocol::GetAccountParams;
 use genex_app_server_protocol::GetAccountResponse;
-use genex_app_server_protocol::GetAuthStatusParams;
-use genex_app_server_protocol::GetAuthStatusResponse;
 use genex_app_server_protocol::InitializeCapabilities;
 use genex_app_server_protocol::JSONRPCError;
 use genex_app_server_protocol::JSONRPCErrorError;
@@ -585,26 +583,6 @@ async fn account_reads_use_startup_config_when_config_reload_fails() -> Result<(
         GetAccountResponse {
             account: None,
             requires_auth: false,
-        }
-    );
-
-    let request_id = mcp
-        .send_get_auth_status_request(GetAuthStatusParams {
-            include_token: Some(false),
-            refresh_token: Some(false),
-        })
-        .await?;
-    let response = timeout(
-        DEFAULT_READ_TIMEOUT,
-        mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
-    )
-    .await??;
-    assert_eq!(
-        to_response::<GetAuthStatusResponse>(response)?,
-        GetAuthStatusResponse {
-            auth_method: None,
-            auth_token: None,
-            requires_auth: Some(false),
         }
     );
 

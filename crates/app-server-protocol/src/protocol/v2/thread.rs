@@ -158,23 +158,6 @@ pub struct ThreadStartParams {
     pub experimental_raw_events: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct MockExperimentalMethodParams {
-    /// Test-only payload field.
-    #[ts(optional = nullable)]
-    pub value: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct MockExperimentalMethodResponse {
-    /// Echoes the input `value`.
-    pub echoed: Option<String>,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS, ExperimentalApi)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]

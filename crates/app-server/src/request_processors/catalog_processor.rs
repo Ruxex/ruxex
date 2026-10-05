@@ -201,15 +201,6 @@ impl CatalogRequestProcessor {
             .map(|response| Some(response.into()))
     }
 
-    pub(crate) async fn mock_experimental_method(
-        &self,
-        params: MockExperimentalMethodParams,
-    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        self.mock_experimental_method_inner(params)
-            .await
-            .map(|response| Some(response.into()))
-    }
-
     async fn resolve_cwd_config(
         &self,
         cwd: &Path,
@@ -356,15 +347,6 @@ impl CatalogRequestProcessor {
         let next_cursor = (end < total).then_some(end.to_string());
 
         Ok(PermissionProfileListResponse { data, next_cursor })
-    }
-
-    async fn mock_experimental_method_inner(
-        &self,
-        params: MockExperimentalMethodParams,
-    ) -> Result<MockExperimentalMethodResponse, JSONRPCErrorError> {
-        let MockExperimentalMethodParams { value } = params;
-        let response = MockExperimentalMethodResponse { echoed: value };
-        Ok(response)
     }
 
     async fn skills_list_response(

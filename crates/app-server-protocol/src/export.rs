@@ -66,8 +66,6 @@ const SPECIAL_DEFINITIONS: &[&str] = &[
     "ServerRequest",
 ];
 const FLAT_V2_SHARED_DEFINITIONS: &[&str] = &["ClientRequest", "ServerNotification"];
-const V1_CLIENT_REQUEST_METHODS: &[&str] =
-    &["getConversationSummary", "gitDiffToRemote", "getAuthStatus"];
 const EXCLUDED_SERVER_NOTIFICATION_METHODS_FOR_JSON: &[&str] =
     &["rawResponseItem/completed", "rawResponse/completed"];
 
@@ -1331,9 +1329,7 @@ where
     let schema = schema_for!(T);
     let mut schema_value = serde_json::to_value(schema)?;
     if include_in_json_codegen {
-        if file_stem == "ClientRequest" {
-            strip_v1_client_request_variants_from_json_schema(&mut schema_value);
-        } else if file_stem == "ServerNotification" {
+        if file_stem == "ServerNotification" {
             strip_v1_server_notification_variants_from_json_schema(&mut schema_value);
             add_server_notification_emitted_at_to_json_schema(&mut schema_value)?;
         }
@@ -1394,11 +1390,6 @@ fn enforce_numbered_definition_collision_overrides(schema_name: &str, schema: &m
         };
         detect_numbered_definition_collisions(schema_name, defs_key, defs);
     }
-}
-
-fn strip_v1_client_request_variants_from_json_schema(schema: &mut Value) {
-    let v1_methods: HashSet<&str> = V1_CLIENT_REQUEST_METHODS.iter().copied().collect();
-    strip_method_variants_from_json_schema(schema, &v1_methods);
 }
 
 fn strip_v1_server_notification_variants_from_json_schema(schema: &mut Value) {
@@ -2138,16 +2129,6 @@ mod tests {
         // Assert that "?: T | null" only appears in generated *Params types.
         let fixture_tree = read_schema_fixture_subtree(&schema_root()?, "typescript")?;
 
-        let client_request_ts = std::str::from_utf8(
-            fixture_tree
-                .get(Path::new("ClientRequest.ts"))
-                .ok_or_else(|| anyhow::anyhow!("missing ClientRequest.ts fixture"))?,
-        )?;
-        assert_eq!(client_request_ts.contains("mock/experimentalMethod"), false);
-        assert_eq!(
-            client_request_ts.contains("MockExperimentalMethodParams"),
-            false
-        );
         let server_request_ts = std::str::from_utf8(
             fixture_tree
                 .get(Path::new("ServerRequest.ts"))
@@ -2167,14 +2148,6 @@ mod tests {
                 .ok_or_else(|| anyhow::anyhow!("missing v2/ThreadStartParams.ts fixture"))?,
         )?;
         assert_eq!(thread_start_ts.contains("mockExperimentalField"), false);
-        assert_eq!(
-            fixture_tree.contains_key(Path::new("v2/MockExperimentalMethodParams.ts")),
-            false
-        );
-        assert_eq!(
-            fixture_tree.contains_key(Path::new("v2/MockExperimentalMethodResponse.ts")),
-            false
-        );
         assert_eq!(
             fixture_tree.contains_key(Path::new("v2/CurrentTimeReadParams.ts")),
             false
@@ -2375,23 +2348,6 @@ mod tests {
 
     #[test]
     fn generate_ts_with_experimental_api_retains_experimental_entries() -> Result<()> {
-        let client_request_ts = ClientRequest::export_to_string()?;
-        assert_eq!(client_request_ts.contains("mock/experimentalMethod"), true);
-        assert_eq!(
-            client_request_ts.contains("MockExperimentalMethodParams"),
-            true
-        );
-        assert_eq!(
-            v2::MockExperimentalMethodParams::export_to_string()?
-                .contains("MockExperimentalMethodParams"),
-            true
-        );
-        assert_eq!(
-            v2::MockExperimentalMethodResponse::export_to_string()?
-                .contains("MockExperimentalMethodResponse"),
-            true
-        );
-
         let thread_start_ts = v2::ThreadStartParams::export_to_string()?;
         assert_eq!(thread_start_ts.contains("mockExperimentalField"), true);
         let command_execution_request_approval_ts =
@@ -2839,21 +2795,6 @@ permissionProfile?: string | null};
     }
 
     #[test]
-    fn stable_schema_filter_removes_mock_experimental_method() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("genex_schema_{}", Uuid::now_v7()));
-        fs::create_dir(&output_dir)?;
-        let schema =
-            write_json_schema_with_return::<crate::ClientRequest>(&output_dir, "ClientRequest")?;
-        let mut bundle = build_schema_bundle(vec![schema])?;
-        filter_experimental_schema(&mut bundle)?;
-
-        let bundle_str = serde_json::to_string(&bundle)?;
-        assert_eq!(bundle_str.contains("mock/experimentalMethod"), false);
-        let _cleanup = fs::remove_dir_all(&output_dir);
-        Ok(())
-    }
-
-    #[test]
     fn generate_json_filters_experimental_fields_and_methods() -> Result<()> {
         let output_dir = std::env::temp_dir().join(format!("genex_schema_{}", Uuid::now_v7()));
         fs::create_dir(&output_dir)?;
@@ -2869,34 +2810,16 @@ permissionProfile?: string | null};
             false
         );
 
-        let client_request_json = fs::read_to_string(output_dir.join("ClientRequest.json"))?;
-        assert_eq!(
-            client_request_json.contains("mock/experimentalMethod"),
-            false
-        );
         assert_eq!(output_dir.join("EventMsg.json").exists(), false);
 
         let bundle_json =
             fs::read_to_string(output_dir.join("genex_app_server_protocol.schemas.json"))?;
         assert_eq!(bundle_json.contains("mockExperimentalField"), false);
         assert_eq!(bundle_json.contains("additionalPermissions"), false);
-        assert_eq!(bundle_json.contains("MockExperimentalMethodParams"), false);
-        assert_eq!(
-            bundle_json.contains("MockExperimentalMethodResponse"),
-            false
-        );
         let flat_v2_bundle_json =
             fs::read_to_string(output_dir.join("genex_app_server_protocol.v2.schemas.json"))?;
         assert_eq!(flat_v2_bundle_json.contains("mockExperimentalField"), false);
         assert_eq!(flat_v2_bundle_json.contains("additionalPermissions"), false);
-        assert_eq!(
-            flat_v2_bundle_json.contains("MockExperimentalMethodParams"),
-            false
-        );
-        assert_eq!(
-            flat_v2_bundle_json.contains("MockExperimentalMethodResponse"),
-            false
-        );
         assert_eq!(flat_v2_bundle_json.contains("#/definitions/v2/"), false);
         assert_eq!(
             flat_v2_bundle_json.contains("\"title\": \"GenexAppServerProtocolV2\""),
@@ -2955,21 +2878,6 @@ permissionProfile?: string | null};
         .collect();
         assert_eq!(missing_server_notification_methods, Vec::<String>::new());
         assert_eq!(definitions.contains_key("EventMsg"), false);
-        assert_eq!(
-            output_dir
-                .join("v2")
-                .join("MockExperimentalMethodParams.json")
-                .exists(),
-            false
-        );
-        assert_eq!(
-            output_dir
-                .join("v2")
-                .join("MockExperimentalMethodResponse.json")
-                .exists(),
-            false
-        );
-
         let _cleanup = fs::remove_dir_all(&output_dir);
         Ok(())
     }
