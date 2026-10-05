@@ -29,7 +29,7 @@ mod tests {
         let provider = provider();
         let input = ChatRequestInput {
             provider: &provider,
-            model: "gpt-test",
+            model: "model-test",
             instructions: "be concise",
             input: &[] as &[ResponseItem],
             tools: &[] as &[Value],
@@ -41,7 +41,7 @@ mod tests {
             .build_request(input)
             .expect("standard Chat adapter should build a request");
 
-        assert_eq!(request.body["model"], "gpt-test");
+        assert_eq!(request.body["model"], "model-test");
         assert_eq!(
             request.body["messages"],
             serde_json::json!([

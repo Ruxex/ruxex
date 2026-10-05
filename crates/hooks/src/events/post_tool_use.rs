@@ -625,7 +625,7 @@ mod tests {
             subagent: None,
             cwd: test_path_buf("/tmp").abs(),
             transcript_path: None,
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             permission_mode: "default".to_string(),
             tool_name: "Bash".to_string(),
             matcher_aliases: Vec::new(),

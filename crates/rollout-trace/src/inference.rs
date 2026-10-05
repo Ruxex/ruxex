@@ -424,7 +424,7 @@ mod tests {
             writer,
             "thread-root".to_string(),
             "turn-1".to_string(),
-            "gpt-test".to_string(),
+            "model-test".to_string(),
             "test-provider".to_string(),
         );
         let attempt = context.start_attempt();
@@ -462,13 +462,13 @@ mod tests {
             writer,
             "thread-root".to_string(),
             "turn-1".to_string(),
-            "gpt-test".to_string(),
+            "model-test".to_string(),
             "test-provider".to_string(),
         );
 
         let attempt = context.start_attempt();
         attempt.record_started(&json!({
-            "model": "gpt-test",
+            "model": "model-test",
             "input": [{
                 "type": "message",
                 "role": "user",

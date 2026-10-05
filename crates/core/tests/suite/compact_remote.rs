@@ -12,7 +12,6 @@ use genex_history::InitialHistory;
 use genex_history::RolloutItem;
 use genex_login::GenexAuth;
 use genex_login::auth::BedrockApiKeyAuth;
-use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_5_MODEL_ID;
 use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::AgentPath;
@@ -187,7 +186,7 @@ fn amazon_bedrock_test_genex() -> TestGenexBuilder {
     });
     test_genex()
         .with_auth(auth)
-        .with_model(AMAZON_BEDROCK_GPT_5_5_MODEL_ID)
+        .with_model("bedrock-model")
         .with_config(|config| {
             config.model_provider = ModelProviderInfo {
                 base_url: config.model_provider.base_url.clone(),
@@ -591,7 +590,7 @@ async fn amazon_bedrock_automatic_compaction_uses_v2_responses_endpoint() -> Res
     );
     assert_eq!(
         compact_request.body_json()["model"],
-        AMAZON_BEDROCK_GPT_5_5_MODEL_ID
+        "bedrock-model"
     );
     assert_eq!(
         compact_request.inputs_of_type("compaction_trigger").len(),

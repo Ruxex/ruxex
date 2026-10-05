@@ -22,7 +22,7 @@ fn insert_splash(app: &mut App, tui: &mut tui::Tui) {
         Box::new(history_cell::new_session_info(
             &app.config,
             &app.local_settings,
-            "gpt-test",
+            "model-test",
             &session,
             /*is_first_event*/ false,
             /*tooltip_override*/ None,

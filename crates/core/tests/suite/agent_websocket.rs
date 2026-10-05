@@ -31,16 +31,16 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
     .await;
 
     let mut builder = test_genex()
-        .with_model_info_override("gpt-5.2", |model_info| {
+        .with_model_info_override("example-model-2", |model_info| {
             model_info.tool_mode = Some(ToolMode::CodeMode);
             model_info.node_repl_auto_review_required = true;
         })
-        .with_model_info_override("gpt-5.4", |model_info| {
+        .with_model_info_override("legacy-model", |model_info| {
             model_info.use_responses_lite = true;
             model_info.tool_mode = Some(ToolMode::CodeMode);
             model_info.node_repl_disabled = true;
         })
-        .with_model("gpt-5.2");
+        .with_model("example-model-2");
     let test = builder.build_with_websocket_server(&server).await?;
 
     test.submit_turn("non-lite turn").await?;
@@ -51,7 +51,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
                 text_elements: Vec::new(),
             }])
             .with_thread_settings(ThreadSettingsOverrides {
-                model: Some("gpt-5.4".to_string()),
+                model: Some("legacy-model".to_string()),
                 ..Default::default()
             }),
         )
@@ -73,8 +73,8 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
         .expect("missing lite turn request")
         .body_json();
 
-    assert_eq!(non_lite_turn["model"].as_str(), Some("gpt-5.2"));
-    assert_eq!(lite_turn["model"].as_str(), Some("gpt-5.4"));
+    assert_eq!(non_lite_turn["model"].as_str(), Some("example-model-2"));
+    assert_eq!(lite_turn["model"].as_str(), Some("legacy-model"));
     for (request, auto_review_required, disabled) in
         [(&non_lite_turn, true, false), (&lite_turn, false, true)]
     {
@@ -181,7 +181,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     .await;
 
     let mut builder = test_genex()
-        .with_model("gpt-5.2")
+        .with_model("example-model-2")
         .with_config(move |config| {
             config.update_plan_enabled = update_plan_enabled;
             config.metrics_enabled = Some(false);

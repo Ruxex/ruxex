@@ -168,7 +168,7 @@ fn cancelling_history_search_preserves_a_typed_command_despite_attachment_previe
     palette(|| {
         let now = Instant::now();
         let mut pane = pane();
-        pane.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+        pane.mark_fresh_task_for_sparkle("example-model", &enabled());
         type_text(&mut pane, "/status");
         let mut entry = HistoryEntry::new("history attachment".into());
         entry.local_image_paths = vec![crate::test_support::test_path_buf("/tmp/image.png")];
@@ -195,7 +195,7 @@ fn cancelling_history_search_preserves_a_typed_command_despite_attachment_previe
 #[test]
 fn replacing_a_draft_outside_the_history_preview_dismisses_sparkles_during_search() {
     let mut pane = pane();
-    pane.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+    pane.mark_fresh_task_for_sparkle("example-model", &enabled());
     pane.handle_key_event(KeyEvent::new(KeyCode::Char('r'), KeyModifiers::CONTROL));
     assert!(pane.composer.history_search_active());
     pane.composer
@@ -212,7 +212,7 @@ fn arbitrary_commands_preserve_a_never_used_fresh_opportunity() {
         let now = Instant::now();
         for completion in [false, true] {
             let mut pane = pane();
-            pane.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+            pane.mark_fresh_task_for_sparkle("example-model", &enabled());
             assert!(dots(&draw(&pane.composer, /*width*/ 80, now).0).is_empty());
             for command in ["/status", "/diff", "/pwd"] {
                 type_text(&mut pane, command);
@@ -231,16 +231,16 @@ fn arbitrary_commands_preserve_a_never_used_fresh_opportunity() {
                 InputResult::Command(SlashCommand::Model)
             ));
             assert_eq!(pane.composer.sparkle.draft.get(), SparkleDraft::Untouched);
-            pane.select_sparkle_model("gpt-6-astra", &enabled());
+            pane.select_sparkle_model("provider-model-a", &enabled());
             assert!(!dots(&draw(&pane.composer, /*width*/ 80, now).0).is_empty());
         }
         for input in ["hello", "/model extra", "/other", "漢", "/tmp/file"] {
             let mut pane = pane();
-            pane.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+            pane.mark_fresh_task_for_sparkle("example-model", &enabled());
             type_text(&mut pane, input);
             pane.composer
                 .set_text_content(String::new(), Vec::new(), Vec::new());
-            pane.select_sparkle_model("gpt-6-astra", &enabled());
+            pane.select_sparkle_model("provider-model-a", &enabled());
             assert_eq!(
                 pane.composer.sparkle.draft.get(),
                 SparkleDraft::Dismissed,
@@ -269,7 +269,7 @@ fn canceled_commands_remain_eligible_but_inserted_content_and_ordinary_paste_do_
         assert!(dots(&draw(&initialized.composer, /*width*/ 80, now).0).is_empty());
 
         let mut canceled = pane();
-        canceled.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+        canceled.mark_fresh_task_for_sparkle("example-model", &enabled());
         type_text(&mut canceled, "/sta");
         for _ in 0..4 {
             key(&mut canceled, KeyCode::Backspace);
@@ -283,7 +283,7 @@ fn canceled_commands_remain_eligible_but_inserted_content_and_ordinary_paste_do_
 
         for input in ["paste draft", "inserted"] {
             let mut pane = pane();
-            pane.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+            pane.mark_fresh_task_for_sparkle("example-model", &enabled());
             if input == "inserted" {
                 type_text(&mut pane, "/mention");
                 assert!(matches!(
@@ -312,7 +312,7 @@ fn buffered_commands_and_read_only_inline_arguments_preserve_eligibility() {
         buffered
             .composer
             .set_disable_paste_burst(/*disabled*/ false);
-        buffered.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+        buffered.mark_fresh_task_for_sparkle("example-model", &enabled());
         type_text(&mut buffered, "/status");
         buffered
             .composer
@@ -327,7 +327,7 @@ fn buffered_commands_and_read_only_inline_arguments_preserve_eligibility() {
         );
 
         let mut inline = pane();
-        inline.mark_fresh_task_for_sparkle("gpt-5.5", &enabled());
+        inline.mark_fresh_task_for_sparkle("example-model", &enabled());
         type_text(&mut inline, "/rename task name");
         assert_eq!(inline.composer.sparkle.draft.get(), SparkleDraft::Command);
         assert!(matches!(

@@ -171,13 +171,13 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
     let settings: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_id": conversation_id,
         "thread_settings": {
-            "model": "gpt-5.4",
+            "model": "legacy-model",
             "model_provider_id": "mock_provider",
             "cwd": saved_cwd,
             "approval_policy": "never",
             "approvals_reviewer": "user",
             "permission_profile": PermissionProfile::read_only(),
-            "collaboration_mode": { "mode": "default", "settings": { "model": "gpt-5.4" } },
+            "collaboration_mode": { "mode": "default", "settings": { "model": "legacy-model" } },
         },
     }))?;
     append_rollout_item_to_path(
@@ -325,7 +325,7 @@ async fn assert_thread_resume_rejects_writer_owned_by_another_process(
         .await?;
     let ThreadStartResponse { thread, .. } = primary
         .start_thread(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             history_mode: Some(history_mode),
             ..Default::default()
         })
@@ -447,7 +447,7 @@ async fn thread_resume_rejects_unmaterialized_thread() -> Result<()> {
     // Start a thread.
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -491,7 +491,7 @@ async fn thread_resume_with_empty_path_uses_running_thread_id() -> Result<()> {
 
     let start_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -640,7 +640,7 @@ async fn thread_resume_restores_startup_and_updated_runtime_workspace_roots() ->
 
     let start_id = mcp
         .send_thread_start_request(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             cwd: Some(initial_cwd.to_string_lossy().into_owned()),
             runtime_workspace_roots: Some(initial_roots.clone()),
             environments: Some(explicit_environments.clone()),
@@ -787,14 +787,14 @@ async fn cold_resume_workspace_roots_honor_owned_snapshot_and_caller_overrides()
     let owned: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_id": thread_id,
         "thread_settings": {
-            "model": "gpt-5.4",
+            "model": "legacy-model",
             "model_provider_id": "mock_provider",
             "cwd": saved_cwd,
             "runtime_workspace_roots": [saved_cwd, new_cwd, extra_root],
             "approval_policy": "never",
             "approvals_reviewer": "user",
             "permission_profile": PermissionProfile::read_only(),
-            "collaboration_mode": { "mode": "default", "settings": { "model": "gpt-5.4" } },
+            "collaboration_mode": { "mode": "default", "settings": { "model": "legacy-model" } },
         },
     }))?;
     let mut foreign = owned.clone();
@@ -976,7 +976,7 @@ async fn thread_resume_preserves_persisted_approvals_reviewer() -> Result<()> {
 
         let start_id = mcp
             .send_thread_start_request(ThreadStartParams {
-                model: Some("gpt-5.4".to_string()),
+                model: Some("legacy-model".to_string()),
                 approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
                 ..Default::default()
             })
@@ -1081,7 +1081,7 @@ async fn assert_thread_resume_approval_policy(
         &config_path,
         format!(
             r#"
-model = "gpt-5.4"
+model = "legacy-model"
 approval_policy = "never"
 model_provider = "mock_provider"
 
@@ -1105,7 +1105,7 @@ stream_max_retries = 0
 
         let start_id = mcp
             .send_thread_start_request(ThreadStartParams {
-                model: Some("gpt-5.4".to_string()),
+                model: Some("legacy-model".to_string()),
                 history_mode: Some(history_mode),
                 ..Default::default()
             })
@@ -1309,8 +1309,8 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
     std::fs::write(
         &config_path,
         config_toml.replace(
-            "model = \"gpt-5.4\"",
-            "model = \"gpt-5.4\"\nmodel_reasoning_effort = \"high\"",
+            "model = \"legacy-model\"",
+            "model = \"legacy-model\"\nmodel_reasoning_effort = \"high\"",
         ),
     )?;
 
@@ -1322,7 +1322,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
 
         let start_id = mcp
             .send_thread_start_request_with_auto_env(ThreadStartParams {
-                model: Some("gpt-5.4".to_string()),
+                model: Some("legacy-model".to_string()),
                 history_mode: Some(ThreadHistoryMode::Paginated),
                 ..Default::default()
             })
@@ -1472,7 +1472,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
     let resume_id = mcp
         .send_thread_resume_request(ThreadResumeParams {
             thread_id: thread_id.clone(),
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -1501,7 +1501,7 @@ async fn thread_resume_preserves_acknowledged_model_effort_and_approvals_reviewe
         Some(CollaborationMode {
             mode: ModeKind::Plan,
             settings: Settings {
-                model: "gpt-5.4".to_string(),
+                model: "legacy-model".to_string(),
                 reasoning_effort: Some(ReasoningEffort::High),
                 developer_instructions: Some("Persisted plan instructions".to_string())
             },
@@ -1553,7 +1553,7 @@ async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() ->
     let resume_id = mcp
         .send_thread_resume_request(ThreadResumeParams {
             thread_id: fixture.conversation_id,
-            model: Some("gpt-5.4".into()),
+            model: Some("legacy-model".into()),
             ..Default::default()
         })
         .await?;
@@ -1562,7 +1562,7 @@ async fn thread_resume_restores_collaboration_mode_from_legacy_turn_context() ->
     assert_eq!(
         response.collaboration_mode,
         Some(saved_mode.with_updates(
-            Some("gpt-5.4".into()),
+            Some("legacy-model".into()),
             Some(Some(ReasoningEffort::High)),
             /*developer_instructions*/ None,
         ))
@@ -2351,7 +2351,7 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
         &thread.id,
         &thread.session_id,
         "genex_work_desktop",
-        "gpt-5.4",
+        "legacy-model",
         "resumed",
         "user",
     );
@@ -2485,13 +2485,13 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
     // Old snapshots have no owner ID: keep them readable without adopting their cwd.
     let settings: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_settings": {
-            "model": "gpt-5.4",
+            "model": "legacy-model",
             "model_provider_id": "mock_provider",
             "cwd": saved_cwd,
             "approval_policy": "never",
             "approvals_reviewer": "user",
             "permission_profile": PermissionProfile::read_only(),
-            "collaboration_mode": { "mode": "default", "settings": { "model": "gpt-5.4" } },
+            "collaboration_mode": { "mode": "default", "settings": { "model": "legacy-model" } },
         },
     }))?;
     append_rollout_item_to_path(
@@ -4517,7 +4517,7 @@ async fn thread_resume_keeps_in_flight_turn_streaming() -> Result<()> {
 
     let start_id = primary
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -4615,7 +4615,7 @@ async fn thread_resume_rejects_history_when_thread_is_running() -> Result<()> {
 
     let start_id = primary
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -4732,7 +4732,7 @@ async fn thread_resume_rejects_mismatched_path_for_running_thread_id() -> Result
 
     let start_id = primary
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -4905,7 +4905,7 @@ async fn thread_resume_rejoins_running_paginated_thread_with_initial_page() -> R
 
     let start_id = primary
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             history_mode: Some(ThreadHistoryMode::Paginated),
             ..Default::default()
         })
@@ -4976,7 +4976,7 @@ async fn thread_resume_rejoins_running_paginated_thread_with_initial_page() -> R
         initial_turns_page,
         ..
     } = timeout(DEFAULT_READ_TIMEOUT, primary.read_response(resume_id)).await??;
-    assert_eq!(model, "gpt-5.4");
+    assert_eq!(model, "legacy-model");
     let initial_turns_page = initial_turns_page.expect("resume should include initial turns page");
     assert_eq!(initial_turns_page.data.len(), 1);
     let resumed_running_turn = initial_turns_page
@@ -5082,7 +5082,7 @@ async fn thread_resume_can_skip_turns_when_thread_is_running() -> Result<()> {
 
     let start_id = primary
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -5162,7 +5162,7 @@ async fn thread_resume_replays_pending_command_execution_request_approval() -> R
 
     let start_id = primary
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -5302,7 +5302,7 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
 
     let start_id = primary
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             cwd: Some(workspace.to_string_lossy().into_owned()),
             ..Default::default()
         })
@@ -5789,7 +5789,7 @@ async fn start_materialized_thread_and_restart(
 
     let start_id = first_mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -5850,7 +5850,7 @@ async fn start_materialized_thread_and_restart(
 
 
 fn mock_responses_config(server_uri: &str) -> MockResponsesConfig {
-    MockResponsesConfig::new(server_uri).with_model("gpt-5.4")
+    MockResponsesConfig::new(server_uri).with_model("legacy-model")
 }
 
 #[allow(dead_code)]

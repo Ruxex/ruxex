@@ -17,7 +17,7 @@ fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
         "genex.turns",
         "Total number of Genex turns.",
         /*inc*/ 1,
-        &[("model", "gpt-5.1"), ("env", "dev")],
+        &[("model", "example-model-1"), ("env", "dev")],
     )?;
     metrics.histogram(
         "genex.tool_latency",
@@ -52,7 +52,7 @@ fn send_builds_payload_with_tags_and_histograms() -> Result<()> {
     let expected_counter_attributes = BTreeMap::from([
         ("service".to_string(), "genex-cli".to_string()),
         ("env".to_string(), "dev".to_string()),
-        ("model".to_string(), "gpt-5.1".to_string()),
+        ("model".to_string(), "example-model-1".to_string()),
     ]);
     assert_eq!(counter_attributes, expected_counter_attributes);
 
@@ -203,7 +203,7 @@ fn send_merges_default_tags_per_line() -> Result<()> {
 fn client_sends_enqueued_metric() -> Result<()> {
     let (metrics, exporter) = build_metrics_with_defaults(&[])?;
 
-    metrics.counter("genex.turns", /*inc*/ 1, &[("model", "gpt-5.1")])?;
+    metrics.counter("genex.turns", /*inc*/ 1, &[("model", "example-model-1")])?;
     metrics.shutdown()?;
 
     let resource_metrics = latest_metrics(&exporter);
@@ -221,7 +221,7 @@ fn client_sends_enqueued_metric() -> Result<()> {
     let point = points[0];
     assert_eq!(point.value(), 1);
     let attrs = attributes_to_map(point.attributes());
-    assert_eq!(attrs.get("model").map(String::as_str), Some("gpt-5.1"));
+    assert_eq!(attrs.get("model").map(String::as_str), Some("example-model-1"));
 
     Ok(())
 }

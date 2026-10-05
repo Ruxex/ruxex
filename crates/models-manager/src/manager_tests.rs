@@ -440,7 +440,7 @@ async fn get_model_info_tracks_fallback_usage() {
 }
 
 #[tokio::test]
-async fn get_model_info_applies_long_context_override_to_bundled_gpt_5_6_models() {
+async fn get_model_info_applies_long_context_override_to_bundled_model_5_6_models() {
     let genex_home = tempdir().expect("temp dir");
     let manager = provider_manager_for_tests(
         genex_home.path().to_path_buf(),
@@ -451,7 +451,7 @@ async fn get_model_info_applies_long_context_override_to_bundled_gpt_5_6_models(
         ..Default::default()
     };
 
-    for slug in ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"] {
+    for slug in ["provider-model-b", "provider-model-d", "provider-model-c"] {
         let model_info = manager.get_model_info(slug, &config).await;
         let mut expected = manager
             .get_model_info(slug, &ModelsManagerConfig::default())
@@ -465,7 +465,7 @@ async fn get_model_info_applies_long_context_override_to_bundled_gpt_5_6_models(
 #[tokio::test]
 async fn get_model_info_uses_custom_catalog() {
     let config = ModelsManagerConfig::default();
-    let mut overlay = remote_model("gpt-overlay", "Overlay", /*priority*/ 0);
+    let mut overlay = remote_model("model-overlay", "Overlay", /*priority*/ 0);
     overlay.supports_image_detail_original = true;
 
     let manager = static_manager_for_tests(ModelsResponse {
@@ -473,10 +473,10 @@ async fn get_model_info_uses_custom_catalog() {
     });
 
     let model_info = manager
-        .get_model_info("gpt-overlay-experiment", &config)
+        .get_model_info("model-overlay-experiment", &config)
         .await;
 
-    assert_eq!(model_info.slug, "gpt-overlay-experiment");
+    assert_eq!(model_info.slug, "model-overlay-experiment");
     assert_eq!(model_info.display_name, "Overlay");
     assert_eq!(model_info.context_window, Some(272_000));
     assert!(model_info.supports_image_detail_original);
@@ -486,12 +486,12 @@ async fn get_model_info_uses_custom_catalog() {
 #[tokio::test]
 async fn get_model_info_matches_namespaced_suffix() {
     let config = ModelsManagerConfig::default();
-    let mut remote = remote_model("gpt-image", "Image", /*priority*/ 0);
+    let mut remote = remote_model("model-image", "Image", /*priority*/ 0);
     remote.supports_image_detail_original = true;
     let manager = static_manager_for_tests(ModelsResponse {
         models: vec![remote],
     });
-    let namespaced_model = "custom/gpt-image".to_string();
+    let namespaced_model = "custom/model-image".to_string();
 
     let model_info = manager.get_model_info(&namespaced_model, &config).await;
 
@@ -503,11 +503,11 @@ async fn get_model_info_matches_namespaced_suffix() {
 #[tokio::test]
 async fn get_model_info_matches_hyphenated_provider_namespace_suffix() {
     let config = ModelsManagerConfig::default();
-    let remote = remote_model("gpt-image", "Image", /*priority*/ 0);
+    let remote = remote_model("model-image", "Image", /*priority*/ 0);
     let manager = static_manager_for_tests(ModelsResponse {
         models: vec![remote],
     });
-    let namespaced_model = "provider-codex/gpt-image".to_string();
+    let namespaced_model = "provider-codex/model-image".to_string();
 
     let model_info = manager.get_model_info(&namespaced_model, &config).await;
 

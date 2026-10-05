@@ -2473,7 +2473,7 @@ mod tests {
         for provenance in [
             BaseInstructionsProvenance::Custom,
             BaseInstructionsProvenance::Model {
-                model: "gpt-5.2".to_string(),
+                model: "example-model-2".to_string(),
             },
         ] {
             let instructions = BaseInstructions {

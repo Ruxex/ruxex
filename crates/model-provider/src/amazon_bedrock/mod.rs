@@ -4,8 +4,8 @@ mod catalog;
 mod credential_export;
 mod error;
 mod mantle;
+mod remote_models_endpoint;
 mod runtime;
-mod runtime_catalog;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -16,12 +16,9 @@ use genex_api::SharedAuthProvider;
 use genex_api::TransportError;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
-use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID;
-use genex_model_provider_info::AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID;
-use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID;
-use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_TERRA_MODEL_ID;
 use genex_model_provider_info::ModelProviderAwsAuthInfo;
 use genex_model_provider_info::ModelProviderInfo;
+use genex_models_manager::manager::RemoteModelsManager;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_models_manager::manager::StaticModelsManager;
 use genex_protocol::account::ProviderAccount;
@@ -43,12 +40,11 @@ use crate::shared_state::process_shared_state;
 use auth::resolve_provider_auth as resolve_bedrock_provider_auth;
 pub(crate) use auth_refresh::AwsAuthRecovery;
 use catalog::normalize_bedrock_catalog;
-pub(crate) use catalog::static_model_catalog;
 pub(crate) use credential_export::AwsCredentialExport;
 use mantle::bedrock_mantle_runtime_base_url;
 pub use mantle::is_supported_amazon_bedrock_region;
 use runtime::bedrock_runtime_base_url;
-use runtime_catalog::static_runtime_model_catalog;
+use remote_models_endpoint::BedrockModelsEndpoint;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum BedrockEndpoint {
@@ -198,12 +194,6 @@ impl AmazonBedrockModelProvider {
         resolve_bedrock_provider_auth(source, managed_auth.as_ref(), &self.aws, self.endpoint).await
     }
 
-    fn default_model_catalog(&self) -> ModelsResponse {
-        match self.endpoint {
-            BedrockEndpoint::Mantle => static_model_catalog(),
-            BedrockEndpoint::Runtime => static_runtime_model_catalog(),
-        }
-    }
 }
 
 impl ModelProvider for AmazonBedrockModelProvider {
@@ -217,20 +207,6 @@ impl ModelProvider for AmazonBedrockModelProvider {
             web_search: self.endpoint == BedrockEndpoint::Mantle,
             external_web_access: false,
             remote_compaction: RemoteCompactionSupport::V2,
-        }
-    }
-
-    fn memory_extraction_preferred_model(&self) -> &'static str {
-        match self.endpoint {
-            BedrockEndpoint::Mantle => AMAZON_BEDROCK_GPT_5_6_LUNA_MODEL_ID,
-            BedrockEndpoint::Runtime => AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_LUNA_MODEL_ID,
-        }
-    }
-
-    fn memory_consolidation_preferred_model(&self) -> &'static str {
-        match self.endpoint {
-            BedrockEndpoint::Mantle => AMAZON_BEDROCK_GPT_5_6_TERRA_MODEL_ID,
-            BedrockEndpoint::Runtime => AMAZON_BEDROCK_RUNTIME_GLOBAL_GPT_5_6_TERRA_MODEL_ID,
         }
     }
 
@@ -343,25 +319,36 @@ impl ModelProvider for AmazonBedrockModelProvider {
 
     fn models_manager(
         &self,
-        _genex_home: PathBuf,
+        genex_home: PathBuf,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager {
-        Arc::new(StaticModelsManager::new(
-            /*auth_manager*/ None,
-            config_model_catalog
-                .map_or_else(|| self.default_model_catalog(), normalize_bedrock_catalog),
-        ))
+        match config_model_catalog {
+            Some(model_catalog) => Arc::new(StaticModelsManager::new(
+                self.auth_manager.clone(),
+                normalize_bedrock_catalog(model_catalog),
+            )),
+            None => Arc::new(RemoteModelsManager::new(
+                genex_home,
+                Arc::new(BedrockModelsEndpoint::new(self.clone())),
+                self.auth_manager.clone(),
+            )),
+        }
     }
 
     fn models_manager_without_cache(
         &self,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager {
-        Arc::new(StaticModelsManager::new(
-            /*auth_manager*/ None,
-            config_model_catalog
-                .map_or_else(|| self.default_model_catalog(), normalize_bedrock_catalog),
-        ))
+        match config_model_catalog {
+            Some(model_catalog) => Arc::new(StaticModelsManager::new(
+                self.auth_manager.clone(),
+                normalize_bedrock_catalog(model_catalog),
+            )),
+            None => Arc::new(RemoteModelsManager::new_without_cache(
+                Arc::new(BedrockModelsEndpoint::new(self.clone())),
+                self.auth_manager.clone(),
+            )),
+        }
     }
 }
 

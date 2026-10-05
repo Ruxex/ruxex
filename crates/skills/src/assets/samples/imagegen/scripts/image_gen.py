@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Fallback CLI for explicit image generation or editing with GPT Image models.
+"""Fallback CLI for explicit image generation or editing with provider image models.
 
 Used only when the user explicitly opts into CLI fallback mode, or when explicit
-transparent output requires the `gpt-image-1.5` fallback path.
+transparent output requires the `provider-image-model-transparent` fallback path.
 
-Defaults to gpt-image-2 and a structured prompt augmentation workflow.
+Defaults to provider-image-model and a structured prompt augmentation workflow.
 """
 
 from __future__ import annotations
@@ -22,25 +22,25 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from io import BytesIO
 
-DEFAULT_MODEL = "gpt-image-2"
+DEFAULT_MODEL = "provider-image-model"
 DEFAULT_SIZE = "auto"
 DEFAULT_QUALITY = "medium"
 DEFAULT_OUTPUT_FORMAT = "png"
 DEFAULT_CONCURRENCY = 5
 DEFAULT_DOWNSCALE_SUFFIX = "-web"
 DEFAULT_OUTPUT_PATH = "output/imagegen/output.png"
-GPT_IMAGE_MODEL_PREFIX = "gpt-image-"
+PROVIDER_IMAGE_MODEL_PREFIX = "provider-image-model-"
 
 ALLOWED_LEGACY_SIZES = {"1024x1024", "1536x1024", "1024x1536", "auto"}
 ALLOWED_QUALITIES = {"low", "medium", "high", "auto"}
 ALLOWED_BACKGROUNDS = {"transparent", "opaque", "auto", None}
 ALLOWED_INPUT_FIDELITIES = {"low", "high", None}
 
-GPT_IMAGE_2_MODEL = "gpt-image-2"
-GPT_IMAGE_2_MIN_PIXELS = 655_360
-GPT_IMAGE_2_MAX_PIXELS = 8_294_400
-GPT_IMAGE_2_MAX_EDGE = 3840
-GPT_IMAGE_2_MAX_RATIO = 3.0
+PROVIDER_IMAGE_MODEL_MODEL = "provider-image-model"
+PROVIDER_IMAGE_MODEL_MIN_PIXELS = 655_360
+PROVIDER_IMAGE_MODEL_MAX_PIXELS = 8_294_400
+PROVIDER_IMAGE_MODEL_MAX_EDGE = 3840
+PROVIDER_IMAGE_MODEL_MAX_RATIO = 3.0
 
 MAX_IMAGE_BYTES = 50 * 1024 * 1024
 MAX_BATCH_JOBS = 500
@@ -118,7 +118,7 @@ def _parse_size(size: str) -> Optional[Tuple[int, int]]:
     return int(match.group(1)), int(match.group(2))
 
 
-def _validate_gpt_image_2_size(size: str) -> None:
+def _validate_PROVIDER_IMAGE_MODEL_size(size: str) -> None:
     if size == "auto":
         return
 
@@ -131,28 +131,28 @@ def _validate_gpt_image_2_size(size: str) -> None:
     min_edge = min(width, height)
     total_pixels = width * height
 
-    if max_edge > GPT_IMAGE_2_MAX_EDGE:
+    if max_edge > PROVIDER_IMAGE_MODEL_MAX_EDGE:
         _die(
-            "gpt-image-2 size maximum edge length must be less than or equal to 3840px."
+            "provider-image-model size maximum edge length must be less than or equal to 3840px."
         )
     if width % 16 != 0 or height % 16 != 0:
-        _die("gpt-image-2 size width and height must be multiples of 16px.")
-    if max_edge / min_edge > GPT_IMAGE_2_MAX_RATIO:
-        _die("gpt-image-2 size long edge to short edge ratio must not exceed 3:1.")
-    if total_pixels < GPT_IMAGE_2_MIN_PIXELS or total_pixels > GPT_IMAGE_2_MAX_PIXELS:
+        _die("provider-image-model size width and height must be multiples of 16px.")
+    if max_edge / min_edge > PROVIDER_IMAGE_MODEL_MAX_RATIO:
+        _die("provider-image-model size long edge to short edge ratio must not exceed 3:1.")
+    if total_pixels < PROVIDER_IMAGE_MODEL_MIN_PIXELS or total_pixels > PROVIDER_IMAGE_MODEL_MAX_PIXELS:
         _die(
-            "gpt-image-2 size total pixels must be at least 655,360 and no more than 8,294,400."
+            "provider-image-model size total pixels must be at least 655,360 and no more than 8,294,400."
         )
 
 
 def _validate_size(size: str, model: str) -> None:
-    if model == GPT_IMAGE_2_MODEL:
-        _validate_gpt_image_2_size(size)
+    if model == PROVIDER_IMAGE_MODEL_MODEL:
+        _validate_PROVIDER_IMAGE_MODEL_size(size)
         return
 
     if size not in ALLOWED_LEGACY_SIZES:
         _die(
-            "size must be one of 1024x1024, 1536x1024, 1024x1536, or auto for this GPT Image model."
+            "size must be one of 1024x1024, 1536x1024, 1024x1536, or auto for this provider image model."
         )
 
 
@@ -172,9 +172,9 @@ def _validate_input_fidelity(input_fidelity: Optional[str]) -> None:
 
 
 def _validate_model(model: str) -> None:
-    if not model.startswith(GPT_IMAGE_MODEL_PREFIX):
+    if not model.startswith(PROVIDER_IMAGE_MODEL_PREFIX):
         _die(
-            "model must be a GPT Image model (for example gpt-image-1.5, gpt-image-1, or gpt-image-1-mini)."
+            "model must be a provider image model (for example provider-image-model-transparent, provider-image-model-legacy, or provider-image-model-mini)."
         )
 
 
@@ -189,16 +189,16 @@ def _validate_model_specific_options(
     background: Optional[str],
     input_fidelity: Optional[str] = None,
 ) -> None:
-    if model != GPT_IMAGE_2_MODEL:
+    if model != PROVIDER_IMAGE_MODEL_MODEL:
         return
     if background == "transparent":
         _die(
-            "transparent backgrounds are not supported in gpt-image-2, the latest model. "
-            "Use --model gpt-image-1.5 --background transparent --output-format png instead."
+            "transparent backgrounds are not supported in provider-image-model, the latest model. "
+            "Use --model provider-image-model-transparent --background transparent --output-format png instead."
         )
     if input_fidelity is not None:
         _die(
-            "input_fidelity is not supported in gpt-image-2 because image inputs always use high fidelity for this model."
+            "input_fidelity is not supported in provider-image-model because image inputs always use high fidelity for this model."
         )
 
 
@@ -964,7 +964,7 @@ def _add_shared_args(parser: argparse.ArgumentParser) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Fallback CLI for explicit image generation or editing via GPT Image models"
+        description="Fallback CLI for explicit image generation or editing via provider image models"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

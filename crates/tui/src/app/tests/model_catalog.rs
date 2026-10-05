@@ -18,7 +18,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     let service_tier = Some(ServiceTier::Flex.request_value());
     let thread_id = ThreadId::new();
     let mut session = test_thread_session(thread_id, test_path_buf("/tmp/project"));
-    session.model = "gpt-5.5".to_string();
+    session.model = "example-model".to_string();
     app.primary_thread_id = Some(thread_id);
     app.active_thread_id = Some(thread_id);
     app.primary_session_configured = Some(session.clone());
@@ -70,7 +70,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     };
     assert!(!models.is_empty());
     for model in models.iter_mut() {
-        model.is_default = model.model == "gpt-5.5";
+        model.is_default = model.model == "example-model";
         if model.is_default {
             model.service_tiers = vec![genex_protocol::model_types::ModelServiceTier {
                 id: ServiceTier::Flex.request_value().to_string(),
@@ -113,7 +113,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     );
     let mut config = app.config.clone();
     config.service_tier = None;
-    for (model, expected_tier) in [(None, service_tier), (Some("gpt-5.6-terra"), Some("default"))] {
+    for (model, expected_tier) in [(None, service_tier), (Some("provider-model-d"), Some("default"))] {
         config.model = model.map(str::to_string);
         let started = app_server.start_thread(&config).await?;
         assert_eq!(started.session.service_tier.as_deref(), expected_tier);
@@ -126,14 +126,14 @@ fn model_presets_with_test_upgrades() -> Vec<ModelPreset> {
     let mut presets = all_model_presets();
     let mut preset = presets
         .iter()
-        .find(|preset| preset.model == "gpt-5.5")
+        .find(|preset| preset.model == "example-model")
         .expect("current model template")
         .clone();
     // Catalog-provided migration metadata is independent of the retired model's prompts.
-    preset.id = "gpt-5.2".to_string();
-    preset.model = "gpt-5.2".to_string();
+    preset.id = "example-model-2".to_string();
+    preset.model = "example-model-2".to_string();
     preset.upgrade = Some(ModelUpgrade {
-        id: "gpt-5.5".to_string(),
+        id: "example-model".to_string(),
         model_link: None,
         upgrade_copy: None,
         migration_markdown: None,
@@ -176,16 +176,16 @@ async fn model_migration_prompt_only_shows_for_deprecated_models() {
     let seen = BTreeMap::new();
     let presets = model_presets_with_test_upgrades();
     assert!(should_show_model_migration_prompt(
-        "gpt-5.2", "gpt-5.5", &seen, &presets
+        "example-model-2", "example-model", &seen, &presets
     ));
     assert!(should_show_model_migration_prompt(
-        "gpt-5.4",
-        "gpt-5.6-terra",
+        "legacy-model",
+        "provider-model-d",
         &seen,
         &presets
     ));
     assert!(!should_show_model_migration_prompt(
-        "gpt-5.4", "gpt-5.4", &seen, &presets
+        "legacy-model", "legacy-model", &seen, &presets
     ));
 }
 
@@ -194,22 +194,22 @@ fn retired_model_migration_respects_catalog_metadata() {
     let mut presets = model_presets_with_test_upgrades();
     let current = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.2")
+        .find(|preset| preset.model == "example-model-2")
         .expect("test preset");
-    current.id = "gpt-5.4-mini".to_string();
-    current.model = "gpt-5.4-mini".to_string();
+    current.id = "legacy-model".to_string();
+    current.model = "legacy-model".to_string();
     let expected = current.upgrade.clone();
     assert_eq!(
-        model_upgrade_for_migration("gpt-5.4-mini", &presets),
+        model_upgrade_for_migration("legacy-model", &presets),
         expected
     );
 
     presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.4-mini")
+        .find(|preset| preset.model == "legacy-model")
         .expect("catalog preset")
         .upgrade = None;
-    assert_eq!(model_upgrade_for_migration("gpt-5.4-mini", &presets), None);
+    assert_eq!(model_upgrade_for_migration("legacy-model", &presets), None);
 }
 
 #[test]
@@ -220,10 +220,10 @@ fn select_model_availability_nux_picks_only_eligible_model() {
     });
     let target = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.6-terra")
+        .find(|preset| preset.model == "provider-model-d")
         .expect("target preset present");
     target.availability_nux = Some(ModelAvailabilityNux {
-        message: "gpt-5.6-terra is available".to_string(),
+        message: "provider-model-d is available".to_string(),
     });
 
     let selected = select_model_availability_nux(&presets, &model_availability_nux_config(&[]));
@@ -231,8 +231,8 @@ fn select_model_availability_nux_picks_only_eligible_model() {
     assert_eq!(
         selected,
         Some(StartupTooltipOverride {
-            model_slug: "gpt-5.6-terra".to_string(),
-            message: "gpt-5.6-terra is available".to_string(),
+            model_slug: "provider-model-d".to_string(),
+            message: "provider-model-d is available".to_string(),
         })
     );
 }
@@ -243,24 +243,24 @@ fn select_model_availability_nux_does_not_fall_back_to_older_announcement() {
     presets.iter_mut().for_each(|preset| {
         preset.availability_nux = None;
     });
-    let gpt_5 = presets
+    let model_5 = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.6-terra")
-        .expect("gpt-5.6-terra preset present");
-    gpt_5.availability_nux = Some(ModelAvailabilityNux {
-        message: "gpt-5.6-terra is available".to_string(),
+        .find(|preset| preset.model == "provider-model-d")
+        .expect("provider-model-d preset present");
+    model_5.availability_nux = Some(ModelAvailabilityNux {
+        message: "provider-model-d is available".to_string(),
     });
-    let gpt_5_2 = presets
+    let model_5_2 = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.5")
-        .expect("gpt-5.5 preset present");
-    gpt_5_2.availability_nux = Some(ModelAvailabilityNux {
-        message: "gpt-5.5 is available".to_string(),
+        .find(|preset| preset.model == "example-model")
+        .expect("example-model preset present");
+    model_5_2.availability_nux = Some(ModelAvailabilityNux {
+        message: "example-model is available".to_string(),
     });
 
     let selected = select_model_availability_nux(
         &presets,
-        &model_availability_nux_config(&[("gpt-5.6-terra", MODEL_AVAILABILITY_NUX_MAX_SHOW_COUNT)]),
+        &model_availability_nux_config(&[("provider-model-d", MODEL_AVAILABILITY_NUX_MAX_SHOW_COUNT)]),
     );
 
     assert_eq!(selected, None);
@@ -274,15 +274,15 @@ fn select_model_availability_nux_uses_existing_model_order_as_priority() {
     });
     let first = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.5")
-        .expect("gpt-5.5 preset present");
+        .find(|preset| preset.model == "example-model")
+        .expect("example-model preset present");
     first.availability_nux = Some(ModelAvailabilityNux {
         message: "first".to_string(),
     });
     let second = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.6-terra")
-        .expect("gpt-5.6-terra preset present");
+        .find(|preset| preset.model == "provider-model-d")
+        .expect("provider-model-d preset present");
     second.availability_nux = Some(ModelAvailabilityNux {
         message: "second".to_string(),
     });
@@ -292,7 +292,7 @@ fn select_model_availability_nux_uses_existing_model_order_as_priority() {
     assert_eq!(
         selected,
         Some(StartupTooltipOverride {
-            model_slug: "gpt-5.6-terra".to_string(),
+            model_slug: "provider-model-d".to_string(),
             message: "second".to_string(),
         })
     );
@@ -306,15 +306,15 @@ fn select_model_availability_nux_returns_none_when_all_models_are_exhausted() {
     });
     let target = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.6-terra")
+        .find(|preset| preset.model == "provider-model-d")
         .expect("target preset present");
     target.availability_nux = Some(ModelAvailabilityNux {
-        message: "gpt-5.6-terra is available".to_string(),
+        message: "provider-model-d is available".to_string(),
     });
 
     let selected = select_model_availability_nux(
         &presets,
-        &model_availability_nux_config(&[("gpt-5.6-terra", MODEL_AVAILABILITY_NUX_MAX_SHOW_COUNT)]),
+        &model_availability_nux_config(&[("provider-model-d", MODEL_AVAILABILITY_NUX_MAX_SHOW_COUNT)]),
     );
 
     assert_eq!(selected, None);
@@ -334,10 +334,10 @@ async fn prepare_startup_tooltip_override_persists_model_availability_nux_count(
     });
     let target = presets
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.6-terra")
+        .find(|preset| preset.model == "provider-model-d")
         .expect("target preset present");
     target.availability_nux = Some(ModelAvailabilityNux {
-        message: "gpt-5.6-terra is available".to_string(),
+        message: "provider-model-d is available".to_string(),
     });
 
     let mut local_settings = crate::local_settings::LocalSettings::from(&config);
@@ -348,10 +348,10 @@ async fn prepare_startup_tooltip_override_persists_model_availability_nux_count(
     )
     .await;
 
-    assert_eq!(tooltip.as_deref(), Some("gpt-5.6-terra is available"));
+    assert_eq!(tooltip.as_deref(), Some("provider-model-d is available"));
     assert_eq!(
         local_settings.tui.model_availability_nux.shown_count,
-        HashMap::from([("gpt-5.6-terra".to_string(), 1)])
+        HashMap::from([("provider-model-d".to_string(), 1)])
     );
 
     let reloaded = ConfigBuilder::default()
@@ -361,7 +361,7 @@ async fn prepare_startup_tooltip_override_persists_model_availability_nux_count(
         .expect("reloaded config");
     assert_eq!(
         reloaded.model_availability_nux.shown_count,
-        HashMap::from([("gpt-5.6-terra".to_string(), 1)])
+        HashMap::from([("provider-model-d".to_string(), 1)])
     );
 }
 
@@ -370,16 +370,16 @@ async fn prepare_startup_tooltip_override_persists_model_availability_nux_count(
 async fn model_migration_prompt_respects_hide_flag_and_self_target() {
     let presets = all_model_presets();
     let mut seen = BTreeMap::new();
-    seen.insert("gpt-5.4-mini".to_string(), "gpt-5.6-luna".to_string());
+    seen.insert("legacy-model".to_string(), "provider-model-c".to_string());
     assert!(!should_show_model_migration_prompt(
-        "gpt-5.4-mini",
-        "gpt-5.6-luna",
+        "legacy-model",
+        "provider-model-c",
         &seen,
         &presets
     ));
     assert!(!should_show_model_migration_prompt(
-        "gpt-5.6-luna",
-        "gpt-5.6-luna",
+        "provider-model-c",
+        "provider-model-c",
         &seen,
         &presets
     ));
@@ -388,29 +388,29 @@ async fn model_migration_prompt_respects_hide_flag_and_self_target() {
 #[tokio::test]
 async fn model_migration_prompt_skips_when_target_missing_or_hidden() {
     let mut available = all_model_presets();
-    available.retain(|preset| preset.model != "gpt-5.6-luna");
+    available.retain(|preset| preset.model != "provider-model-c");
 
     assert!(!should_show_model_migration_prompt(
-        "gpt-5.4-mini",
-        "gpt-5.6-luna",
+        "legacy-model",
+        "provider-model-c",
         &BTreeMap::new(),
         &available,
     ));
 
-    assert!(target_preset_for_upgrade(&available, "gpt-5.6-luna").is_none());
+    assert!(target_preset_for_upgrade(&available, "provider-model-c").is_none());
 
     let mut with_hidden_target = all_model_presets();
     let target = with_hidden_target
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.6-luna")
+        .find(|preset| preset.model == "provider-model-c")
         .expect("target preset present");
     target.show_in_picker = false;
 
     assert!(!should_show_model_migration_prompt(
-        "gpt-5.4-mini",
-        "gpt-5.6-luna",
+        "legacy-model",
+        "provider-model-c",
         &BTreeMap::new(),
         &with_hidden_target,
     ));
-    assert!(target_preset_for_upgrade(&with_hidden_target, "gpt-5.6-luna").is_none());
+    assert!(target_preset_for_upgrade(&with_hidden_target, "provider-model-c").is_none());
 }

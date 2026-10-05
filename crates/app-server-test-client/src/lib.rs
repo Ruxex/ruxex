@@ -267,7 +267,7 @@ enum CliCommand {
     #[command(name = "live-elicitation-timeout-pause")]
     LiveElicitationTimeoutPause {
         /// Model passed to `thread/start`.
-        #[arg(long, env = "GENEX_E2E_MODEL", default_value = "gpt-5")]
+        #[arg(long, env = "GENEX_E2E_MODEL", default_value = "example-model")]
         model: String,
         /// Existing workspace path used as the turn cwd.
         #[arg(long, value_name = "path", default_value = ".")]

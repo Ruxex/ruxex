@@ -14,22 +14,22 @@ fn text(line: &Line<'static>) -> String {
 #[test]
 fn clock_waits_for_the_first_visible_frame() {
     let transition =
-        EffortStatusLineTransition::new(EffortTier::Ultra, Line::from("gpt-5.4 high · main"));
+        EffortStatusLineTransition::new(EffortTier::Ultra, Line::from("legacy-model high · main"));
     assert!(!transition.is_finished());
     assert_eq!(transition.started_at.get(), None);
 
-    let current = Line::from("gpt-5.4 ultra · main");
+    let current = Line::from("legacy-model ultra · main");
     let line = transition
         .render_line(Some(&current), /*width*/ 40)
         .expect("first frame should render the outgoing line");
-    assert_eq!(text(&line), "gpt-5.4 high · main");
+    assert_eq!(text(&line), "legacy-model high · main");
     assert!(transition.started_at.get().is_some());
 }
 
 #[test]
 fn outgoing_status_line_moves_right_and_clips_at_the_edge() {
-    let previous = Line::from("gpt-5.4 high · main");
-    let current = Line::from("gpt-5.4 ultra · main");
+    let previous = Line::from("legacy-model high · main");
+    let current = Line::from("legacy-model ultra · main");
 
     let first = transition_line_at(
         EffortTier::Ultra,
@@ -48,12 +48,12 @@ fn outgoing_status_line_moves_right_and_clips_at_the_edge() {
     )
     .expect("outgoing line should be visible");
 
-    assert_eq!(text(&first), "gpt-5.4 high · main");
+    assert_eq!(text(&first), "legacy-model high · main");
     let first_offset = text(&first)
-        .find("gpt-5.4")
+        .find("legacy-model")
         .expect("first frame should contain the outgoing model");
     let middle_offset = text(&middle)
-        .find("gpt-5.4")
+        .find("legacy-model")
         .expect("middle frame should contain the outgoing model");
     assert!(middle_offset > first_offset);
     assert!(middle.width() <= 28);
@@ -61,8 +61,8 @@ fn outgoing_status_line_moves_right_and_clips_at_the_edge() {
 
 #[test]
 fn label_and_refreshed_line_appear_in_order() {
-    let previous = Line::from("gpt-5.4 high · main");
-    let current = Line::from("gpt-5.4 max · main");
+    let previous = Line::from("legacy-model high · main");
+    let current = Line::from("legacy-model max · main");
 
     let label = transition_line_at(
         EffortTier::Max,
@@ -82,7 +82,7 @@ fn label_and_refreshed_line_appear_in_order() {
     .expect("refreshed status line should be visible");
 
     assert_eq!(text(&label), "             M A X");
-    assert_eq!(text(&refreshed), "gpt-5.4 max · main");
+    assert_eq!(text(&refreshed), "legacy-model max · main");
 }
 
 #[test]

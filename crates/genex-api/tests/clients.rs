@@ -331,7 +331,7 @@ async fn responses_client_stream_request_preserves_item_ids() -> Result<()> {
     let transport = RecordingTransport::new(state.clone());
     let client = ResponsesClient::new(transport, provider("provider"), Arc::new(NoAuth));
     let request = ResponsesApiRequest {
-        model: "gpt-test".into(),
+        model: "model-test".into(),
         instructions: "Say hi".into(),
         input: vec![ResponseItem::Message {
             id: Some(ResponseItemId::with_suffix("msg", "1")),
@@ -383,7 +383,7 @@ async fn streaming_client_adds_auth_headers() -> Result<()> {
     let auth = Arc::new(StaticAuth::new("secret-token"));
     let client = ResponsesClient::new(transport, provider("provider"), auth);
 
-    let body = serde_json::json!({ "model": "gpt-test" });
+    let body = serde_json::json!({ "model": "model-test" });
     let _stream = client
         .stream(
             body,
@@ -421,7 +421,7 @@ async fn streaming_client_retries_on_transport_error() -> Result<()> {
     provider.retry.max_attempts = 2;
 
     let request = ResponsesApiRequest {
-        model: "gpt-test".into(),
+        model: "model-test".into(),
         instructions: "Say hi".into(),
         input: Vec::new(),
         tools: Some(empty_tools().into()),
@@ -481,7 +481,7 @@ async fn streaming_client_retries_on_transient_auth_error() -> Result<()> {
     provider.retry.max_attempts = 2;
 
     let client = ResponsesClient::new(transport, provider, Arc::new(auth.clone()));
-    let body = serde_json::json!({ "model": "gpt-test" });
+    let body = serde_json::json!({ "model": "model-test" });
     let _stream = client
         .stream(
             body,
@@ -506,7 +506,7 @@ async fn streaming_client_does_not_retry_auth_build_error() -> Result<()> {
     provider.retry.max_attempts = 2;
 
     let client = ResponsesClient::new(transport, provider, Arc::new(auth.clone()));
-    let body = serde_json::json!({ "model": "gpt-test" });
+    let body = serde_json::json!({ "model": "model-test" });
     let result = client
         .stream(
             body,
@@ -536,7 +536,7 @@ async fn azure_store_sends_ids_and_headers() -> Result<()> {
     let client = ResponsesClient::new(transport, provider("azure"), Arc::new(NoAuth));
 
     let request = ResponsesApiRequest {
-        model: "gpt-test".into(),
+        model: "model-test".into(),
         instructions: "Say hi".into(),
         input: vec![ResponseItem::Message {
             id: Some(ResponseItemId::with_suffix("msg", "1")),

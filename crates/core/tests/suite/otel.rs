@@ -122,7 +122,7 @@ async fn responses_api_emits_api_request_event() {
     let response_mock = mount_sse_once(&server, sse(vec![ev_completed("done")])).await;
 
     let TestGenex { genex, .. } = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
             config.model_reasoning_effort = Some(ReasoningEffort::High);
@@ -787,7 +787,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
     .await;
 
     let TestGenex { genex, .. } = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::High);
             config
@@ -1134,8 +1134,8 @@ fn sandbox_outcome_assertion<'a>(
 fn network_policy_decisions_omit_source_and_destination() {
     let telemetry = SessionTelemetry::new(
         ThreadId::new(),
-        "gpt-5.5",
-        "gpt-5.5",
+        "example-model",
+        "example-model",
         /*account_id*/ None,
         /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),
@@ -1204,8 +1204,8 @@ fn network_policy_decisions_omit_source_and_destination() {
 fn sandbox_outcome_event_records_outcome() {
     let telemetry = SessionTelemetry::new(
         ThreadId::new(),
-        "gpt-5.5",
-        "gpt-5.5",
+        "example-model",
+        "example-model",
         /*account_id*/ None,
         /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),

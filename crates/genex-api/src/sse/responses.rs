@@ -1084,7 +1084,7 @@ mod tests {
 
     #[tokio::test]
     async fn rate_limit_error_preserves_retry_delay() {
-        let raw_error = r#"{"type":"response.failed","sequence_number":3,"response":{"id":"resp_689bcf18d7f08194bf3440ba62fe05d803fee0cdac429894","object":"response","created_at":1755041560,"status":"failed","background":false,"error":{"code":"rate_limit_exceeded","message":"Rate limit reached for gpt-5.1 in organization org-AAA on tokens per min (TPM): Limit 30000, Used 22999, Requested 12528. Please try again in 11.054s. Visit https://platform.provider.com/account/rate-limits to learn more."}, "usage":null,"user":null,"metadata":{}}}"#;
+        let raw_error = r#"{"type":"response.failed","sequence_number":3,"response":{"id":"resp_689bcf18d7f08194bf3440ba62fe05d803fee0cdac429894","object":"response","created_at":1755041560,"status":"failed","background":false,"error":{"code":"rate_limit_exceeded","message":"Rate limit reached for example-model-1 in organization org-AAA on tokens per min (TPM): Limit 30000, Used 22999, Requested 12528. Please try again in 11.054s. Visit https://platform.provider.com/account/rate-limits to learn more."}, "usage":null,"user":null,"metadata":{}}}"#;
 
         let sse1 = format!("event: response.failed\ndata: {raw_error}\n\n");
 
@@ -1096,7 +1096,7 @@ mod tests {
             Err(ApiError::RateLimitExceeded { message, delay }) => {
                 assert_eq!(
                     message,
-                    "Rate limit reached for gpt-5.1 in organization org-AAA on tokens per min (TPM): Limit 30000, Used 22999, Requested 12528. Please try again in 11.054s. Visit https://platform.provider.com/account/rate-limits to learn more."
+                    "Rate limit reached for example-model-1 in organization org-AAA on tokens per min (TPM): Limit 30000, Used 22999, Requested 12528. Please try again in 11.054s. Visit https://platform.provider.com/account/rate-limits to learn more."
                 );
                 assert_eq!(*delay, Some(Duration::from_secs_f64(11.054)));
             }
@@ -1681,7 +1681,7 @@ mod tests {
                 "safety_buffering": {
                     "use_cases": ["cyber"],
                     "reasons": ["user_risk"],
-                    "retry_model": "gpt-fast-wire"
+                    "retry_model": "model-fast-wire"
                 }
             }),
             json!({
@@ -1711,7 +1711,7 @@ mod tests {
                 if buffering.use_cases == ["cyber"]
                     && buffering.reasons == ["user_risk"]
                     && buffering.show_buffering_ui
-                    && buffering.faster_model.as_deref() == Some("gpt-fast-wire")
+                    && buffering.faster_model.as_deref() == Some("model-fast-wire")
         );
         assert_matches!(&events[2], ResponseEvent::OutputTextDelta(delta) if delta == "hello");
         assert_matches!(
@@ -1731,13 +1731,13 @@ mod tests {
     #[test]
     fn safety_buffering_prefers_wire_retry_model_and_only_falls_back_when_omitted() {
         let treatment = SafetyBufferingTreatment {
-            faster_model: Some("gpt-fast-header".to_string()),
+            faster_model: Some("model-fast-header".to_string()),
         };
 
         for (retry_model, expected_faster_model) in [
-            (None, Some("gpt-fast-header")),
+            (None, Some("model-fast-header")),
             (Some(Value::Null), None),
-            (Some(json!("gpt-fast-wire")), Some("gpt-fast-wire")),
+            (Some(json!("model-fast-wire")), Some("model-fast-wire")),
         ] {
             let mut event = json!({
                 "type": "response.output_text.delta",
@@ -1771,7 +1771,7 @@ mod tests {
     #[test]
     fn safety_buffering_falls_back_to_response_metadata() {
         let treatment = SafetyBufferingTreatment {
-            faster_model: Some("gpt-fast-header".to_string()),
+            faster_model: Some("model-fast-header".to_string()),
         };
         let event: ResponsesStreamEvent = serde_json::from_value(json!({
             "type": "response.metadata",
@@ -1789,7 +1789,7 @@ mod tests {
                 use_cases: vec!["cyber".to_string()],
                 reasons: vec!["user_risk".to_string()],
                 show_buffering_ui: true,
-                faster_model: Some("gpt-fast-header".to_string()),
+                faster_model: Some("model-fast-header".to_string()),
             })
         );
     }
@@ -1977,7 +1977,7 @@ mod tests {
     fn test_try_parse_retry_after() {
         let err = Error {
             r#type: None,
-            message: Some("Rate limit reached for gpt-5.1 in organization org- on tokens per min (TPM): Limit 1, Used 1, Requested 19304. Please try again in 28ms. Visit https://platform.provider.com/account/rate-limits to learn more.".to_string()),
+            message: Some("Rate limit reached for example-model-1 in organization org- on tokens per min (TPM): Limit 1, Used 1, Requested 19304. Please try again in 28ms. Visit https://platform.provider.com/account/rate-limits to learn more.".to_string()),
             code: Some("rate_limit_exceeded".to_string()),
             plan_type: None,
             resets_at: None,
@@ -1992,7 +1992,7 @@ mod tests {
     fn test_try_parse_retry_after_no_delay() {
         let err = Error {
             r#type: None,
-            message: Some("Rate limit reached for gpt-5.1 in organization <ORG> on tokens per min (TPM): Limit 30000, Used 6899, Requested 24050. Please try again in 1.898s. Visit https://platform.provider.com/account/rate-limits to learn more.".to_string()),
+            message: Some("Rate limit reached for example-model-1 in organization <ORG> on tokens per min (TPM): Limit 30000, Used 6899, Requested 24050. Please try again in 1.898s. Visit https://platform.provider.com/account/rate-limits to learn more.".to_string()),
             code: Some("rate_limit_exceeded".to_string()),
             plan_type: None,
             resets_at: None,

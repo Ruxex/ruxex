@@ -1398,7 +1398,7 @@ async fn replay_thread_snapshot_restores_collaboration_mode_for_draft_submit() {
         .set_collaboration_mask(CollaborationModeMask {
             name: "Plan".to_string(),
             mode: Some(ModeKind::Plan),
-            model: Some("gpt-restored".to_string()),
+            model: Some("model-restored".to_string()),
             reasoning_effort: Some(Some(ReasoningEffortConfig::High)),
             developer_instructions: None,
         });
@@ -1419,7 +1419,7 @@ async fn replay_thread_snapshot_restores_collaboration_mode_for_draft_submit() {
         .set_collaboration_mask(CollaborationModeMask {
             name: "Default".to_string(),
             mode: Some(ModeKind::Default),
-            model: Some("gpt-replacement".to_string()),
+            model: Some("model-replacement".to_string()),
             reasoning_effort: Some(Some(ReasoningEffortConfig::Low)),
             developer_instructions: None,
         });
@@ -1454,14 +1454,14 @@ async fn replay_thread_snapshot_restores_collaboration_mode_for_draft_submit() {
                     text_elements: Vec::new(),
                 }]
             );
-            assert_eq!(model, "gpt-restored".to_string());
+            assert_eq!(model, "model-restored".to_string());
             assert_eq!(effort, Some(ReasoningEffortConfig::High));
             assert_eq!(
                 collaboration_mode,
                 Some(CollaborationMode {
                     mode: ModeKind::Plan,
                     settings: Settings {
-                        model: "gpt-restored".to_string(),
+                        model: "model-restored".to_string(),
                         reasoning_effort: Some(ReasoningEffortConfig::High),
                         developer_instructions: None,
                     },
@@ -1484,7 +1484,7 @@ async fn replay_thread_snapshot_restores_collaboration_mode_without_input() {
         .set_collaboration_mask(CollaborationModeMask {
             name: "Plan".to_string(),
             mode: Some(ModeKind::Plan),
-            model: Some("gpt-restored".to_string()),
+            model: Some("model-restored".to_string()),
             reasoning_effort: Some(Some(ReasoningEffortConfig::High)),
             developer_instructions: None,
         });
@@ -1506,7 +1506,7 @@ async fn replay_thread_snapshot_restores_collaboration_mode_without_input() {
         .set_collaboration_mask(CollaborationModeMask {
             name: "Default".to_string(),
             mode: Some(ModeKind::Default),
-            model: Some("gpt-replacement".to_string()),
+            model: Some("model-replacement".to_string()),
             reasoning_effort: Some(Some(ReasoningEffortConfig::Low)),
             developer_instructions: None,
         });
@@ -1527,7 +1527,7 @@ async fn replay_thread_snapshot_restores_collaboration_mode_without_input() {
         app.chat_widget.active_collaboration_mode_kind(),
         ModeKind::Plan
     );
-    assert_eq!(app.chat_widget.current_model(), "gpt-restored");
+    assert_eq!(app.chat_widget.current_model(), "model-restored");
     assert_eq!(
         app.chat_widget.current_reasoning_effort(),
         Some(ReasoningEffortConfig::High)
@@ -3614,7 +3614,7 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
                 daybreak_enabled: None,
                 history_mode: Default::default(),
                 model_provider: "agent-provider".to_string(),
-                model: Some("gpt-agent".to_string()),
+                model: Some("model-agent".to_string()),
                 reasoning_effort: None,
                 created_at: 1,
                 updated_at: 2,
@@ -3649,7 +3649,7 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
     assert_eq!(session.thread_id, agent_thread_id);
     assert_eq!(session.windows_sandbox_host, WindowsSandboxHost::Remote);
     assert_eq!(session.thread_name, Some("agent thread".to_string()));
-    assert_eq!(session.model, "gpt-agent");
+    assert_eq!(session.model, "model-agent");
     assert_eq!(session.model_provider_id, "agent-provider");
     assert_eq!(session.approval_policy, primary_session.approval_policy);
     assert_eq!(session.cwd.as_path(), test_path_buf("/tmp/agent").as_path());
@@ -4540,7 +4540,7 @@ async fn active_non_primary_shutdown_target_still_switches_for_other_pending_exi
 async fn render_clear_ui_header_after_long_transcript_for_snapshot() -> String {
     let mut app = make_test_app().await;
     app.config.cwd = test_path_buf("/tmp/project").abs();
-    app.chat_widget.set_model("gpt-test");
+    app.chat_widget.set_model("model-test");
     app.chat_widget
         .set_reasoning_effort(Some(ReasoningEffortConfig::High));
     let story_part_one = "In the cliffside town of Bracken Ferry, the lighthouse had been dark for \
@@ -4589,7 +4589,7 @@ async fn render_clear_ui_header_after_long_transcript_for_snapshot() -> String {
             forked_from_id: None,
             fork_parent_title: None,
             thread_name: None,
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
@@ -5079,7 +5079,7 @@ fn test_thread_session(thread_id: ThreadId, cwd: PathBuf) -> ThreadSessionState 
         forked_from_id: None,
         fork_parent_title: None,
         thread_name: None,
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         model_provider_id: "test-provider".to_string(),
         service_tier: None,
         approval_policy: AskForApproval::Never,
@@ -5727,7 +5727,7 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
             forked_from_id: None,
             fork_parent_title: None,
             thread_name: None,
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
@@ -5798,7 +5798,7 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
             forked_from_id: None,
             fork_parent_title: None,
             thread_name: None,
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
@@ -6454,7 +6454,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
     Box::pin(app.handle_event(
         &mut tui,
         &mut app_server,
-        AppEvent::UpdateModel("gpt-5.4".into()),
+        AppEvent::UpdateModel("legacy-model".into()),
     ))
     .await?;
     let control = Box::pin(app.handle_event(
@@ -6481,7 +6481,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
         &child,
         &app.thread_event_channels[&child_id].store
     ));
-    assert_eq!(app.chat_widget.current_model(), "gpt-5.4");
+    assert_eq!(app.chat_widget.current_model(), "legacy-model");
     assert!(render_bottom_popup(&app.chat_widget, /*width*/ 120).contains("Goal paused"));
     assert!(matches!(control, AppRunControl::Continue));
     let reverted_thread_id = app
@@ -6857,7 +6857,7 @@ async fn new_session_requests_shutdown_for_previous_conversation() {
             forked_from_id: None,
             fork_parent_title: None,
             thread_name: None,
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
@@ -6994,7 +6994,7 @@ async fn override_turn_context_sends_thread_settings_update() {
         let collaboration_mode = CollaborationMode {
             mode: ModeKind::Plan,
             settings: Settings {
-                model: "gpt-5.4".to_string(),
+                model: "legacy-model".to_string(),
                 reasoning_effort: Some(ReasoningEffortConfig::High),
                 developer_instructions: None,
             },
@@ -7007,7 +7007,7 @@ async fn override_turn_context_sends_thread_settings_update() {
             Some(ActivePermissionProfile::new(
                 genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
             )),
-            Some("gpt-5.4".to_string()),
+            Some("legacy-model".to_string()),
             Some(Some(ReasoningEffortConfig::High)),
             /*summary*/ None,
             Some(Some(service_tier.clone())),
@@ -7030,7 +7030,7 @@ async fn override_turn_context_sends_thread_settings_update() {
         );
 
         let notification = next_thread_settings_updated(&mut app_server, thread_id).await;
-        assert_eq!(notification.thread_settings.model, "gpt-5.4");
+        assert_eq!(notification.thread_settings.model, "legacy-model");
         assert_eq!(
             notification.thread_settings.effort,
             Some(ReasoningEffortConfig::High)
@@ -7118,8 +7118,8 @@ async fn selecting_cyber_model_defaults_active_thread_to_auto_review() {
             .try_list_models()
             .expect("model catalog")
             .into_iter()
-            .find(|model| model.model == "gpt-5.5")
-            .expect("gpt-5.5 model");
+            .find(|model| model.model == "example-model")
+            .expect("example-model model");
         model.model_specialty = Some(MODEL_SPECIALTY_CYBER.to_string());
         app.model_catalog = Arc::new(ModelCatalog::new(vec![model]));
 
@@ -7156,7 +7156,7 @@ async fn selecting_cyber_model_defaults_active_thread_to_auto_review() {
             &mut tui,
             &mut app_server,
             AppEvent::ApplyAdvancedReasoning {
-                model: "gpt-5.5".to_string(),
+                model: "example-model".to_string(),
                 effort: ReasoningEffortConfig::High,
             },
         )
@@ -7167,7 +7167,7 @@ async fn selecting_cyber_model_defaults_active_thread_to_auto_review() {
         app.handle_event(
             &mut tui,
             &mut app_server,
-            AppEvent::UpdateModel("gpt-5.5".to_string()),
+            AppEvent::UpdateModel("example-model".to_string()),
         )
         .await
         .expect("model selection should succeed");
@@ -7332,8 +7332,8 @@ async fn selecting_cyber_model_falls_back_to_user_when_auto_review_is_unavailabl
         .try_list_models()
         .expect("model catalog")
         .into_iter()
-        .find(|model| model.model == "gpt-5.5")
-        .expect("gpt-5.5 model");
+        .find(|model| model.model == "example-model")
+        .expect("example-model model");
     model.model_specialty = Some(MODEL_SPECIALTY_CYBER.to_string());
     app.model_catalog = Arc::new(ModelCatalog::new(vec![model]));
     let _ = app.config.features.disable(Feature::GuardianApproval);
@@ -7342,7 +7342,7 @@ async fn selecting_cyber_model_falls_back_to_user_when_auto_review_is_unavailabl
     app.active_thread_id = Some(ThreadId::new());
 
     let params = app
-        .active_thread_model_setting_update_params("gpt-5.5".to_string())
+        .active_thread_model_setting_update_params("example-model".to_string())
         .expect("active thread should produce update params");
 
     assert_eq!(
@@ -7387,8 +7387,8 @@ async fn selecting_cyber_model_respects_auto_review_requirements() {
             .try_list_models()
             .expect("model catalog")
             .into_iter()
-            .find(|model| model.model == "gpt-5.5")
-            .expect("gpt-5.5 model");
+            .find(|model| model.model == "example-model")
+            .expect("example-model model");
         model.model_specialty = Some(MODEL_SPECIALTY_CYBER.to_string());
         app.model_catalog = Arc::new(ModelCatalog::new(vec![model]));
 
@@ -7413,7 +7413,7 @@ async fn selecting_cyber_model_respects_auto_review_requirements() {
         app.handle_event(
             &mut tui,
             &mut app_server,
-            AppEvent::UpdateModel("gpt-5.5".to_string()),
+            AppEvent::UpdateModel("example-model".to_string()),
         )
         .await
         .expect("model selection should succeed");
@@ -7441,13 +7441,13 @@ async fn thread_setting_update_params_sync_model_and_default_reasoning() {
     let thread_id = ThreadId::new();
     app.active_thread_id = Some(thread_id);
 
-    app.chat_widget.set_model("gpt-5.4");
+    app.chat_widget.set_model("legacy-model");
     let params = app
-        .active_thread_model_setting_update_params("gpt-5.4".to_string())
+        .active_thread_model_setting_update_params("legacy-model".to_string())
         .expect("active thread should produce update params");
 
     assert_eq!(params.thread_id, thread_id.to_string());
-    assert_eq!(params.model, Some("gpt-5.4".to_string()));
+    assert_eq!(params.model, Some("legacy-model".to_string()));
     assert_eq!(
         params
             .collaboration_mode
@@ -7455,7 +7455,7 @@ async fn thread_setting_update_params_sync_model_and_default_reasoning() {
             .expect("collaboration mode should sync with model")
             .settings
             .model,
-        "gpt-5.4"
+        "legacy-model"
     );
 
     app.chat_widget
@@ -7464,7 +7464,7 @@ async fn thread_setting_update_params_sync_model_and_default_reasoning() {
         .set_collaboration_mask(CollaborationModeMask {
             name: "Plan".to_string(),
             mode: Some(ModeKind::Plan),
-            model: Some("gpt-plan".to_string()),
+            model: Some("model-plan".to_string()),
             reasoning_effort: Some(Some(ReasoningEffortConfig::Medium)),
             developer_instructions: None,
         });
@@ -7496,7 +7496,7 @@ async fn inactive_thread_settings_notification_updates_cached_collaboration_mode
     let collaboration_mode = CollaborationMode {
         mode: ModeKind::Plan,
         settings: Settings {
-            model: "gpt-plan".to_string(),
+            model: "model-plan".to_string(),
             reasoning_effort: Some(ReasoningEffortConfig::High),
             developer_instructions: Some("draft a plan first".to_string()),
         },
@@ -7535,7 +7535,7 @@ async fn inactive_thread_settings_notification_updates_cached_collaboration_mode
             active_permission_profile: Some(
                 genex_app_server_protocol::ActivePermissionProfile::read_only(),
             ),
-            model: "gpt-plan".to_string(),
+            model: "model-plan".to_string(),
             model_provider: "provider".to_string(),
             service_tier: None,
             effort: collaboration_mode.settings.reasoning_effort.clone(),
@@ -7561,7 +7561,7 @@ async fn inactive_thread_settings_notification_updates_cached_collaboration_mode
         .session
         .clone()
         .expect("inactive session should remain cached");
-    assert_eq!(cached_session.model, "gpt-test");
+    assert_eq!(cached_session.model, "model-test");
     assert_eq!(
         cached_session.collaboration_mode.as_deref(),
         Some(&collaboration_mode)
@@ -7572,10 +7572,10 @@ async fn inactive_thread_settings_notification_updates_cached_collaboration_mode
         app.chat_widget.active_collaboration_mode_kind(),
         ModeKind::Plan
     );
-    assert_eq!(app.chat_widget.current_model(), "gpt-plan");
+    assert_eq!(app.chat_widget.current_model(), "model-plan");
     assert_eq!(
         app.chat_widget.current_collaboration_mode().model(),
-        "gpt-test"
+        "model-test"
     );
     assert_eq!(
         app.chat_widget.current_reasoning_effort(),
@@ -7594,7 +7594,7 @@ async fn clear_only_ui_reset_preserves_chat_session_state() {
             forked_from_id: None,
             fork_parent_title: None,
             thread_name: Some("keep me".to_string()),
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,

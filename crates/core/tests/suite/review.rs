@@ -595,7 +595,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     let genex_home = Arc::new(TempDir::new().unwrap());
     let test = test_genex()
         .with_home(genex_home.clone())
-        .with_model_info_override("gpt-5.2", |model_info| {
+        .with_model_info_override("example-model-2", |model_info| {
             model_info.service_tiers.clear();
             model_info
                 .model_messages
@@ -603,7 +603,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
                 .expect("parent model should have model messages")
                 .token_budget = Some(model_defaults("PARENT MODEL ONLY"));
         })
-        .with_model_info_override("gpt-5.4", |model_info| {
+        .with_model_info_override("legacy-model", |model_info| {
             model_info.service_tiers = vec![ModelServiceTier {
                 id: ServiceTier::Flex.request_value().to_string(),
                 name: "Flex".to_string(),
@@ -627,9 +627,9 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
                 .expect("review model should have model messages")
                 .token_budget = Some(model_defaults("REVIEW MODEL ONLY"));
         })
-        .with_model("gpt-5.2")
+        .with_model("example-model-2")
         .with_config(|config| {
-            config.review_model = Some("gpt-5.4".to_string());
+            config.review_model = Some("legacy-model".to_string());
             config.model_context_window = Some(128_000);
             config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
             config
@@ -679,7 +679,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
             collaboration_mode: Some(CollaborationMode {
                 mode: ModeKind::Plan,
                 settings: Settings {
-                    model: "gpt-5.2".to_string(),
+                    model: "example-model-2".to_string(),
                     reasoning_effort: Some(ReasoningEffort::XHigh),
                     developer_instructions: Some("Parent planning instructions".to_string()),
                 },
@@ -787,7 +787,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         Some(CollaborationMode {
             mode: ModeKind::Default,
             settings: Settings {
-                model: "gpt-5.4".to_string(),
+                model: "legacy-model".to_string(),
                 reasoning_effort: Some(ReasoningEffort::Medium),
                 developer_instructions: None,
             },
@@ -804,15 +804,15 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 2).await;
     let test = test_genex()
-        .with_model_info_override("gpt-5.2", |model| {
+        .with_model_info_override("example-model-2", |model| {
             model.default_reasoning_summary = ReasoningSummary::Auto;
         })
-        .with_model_info_override("gpt-5.4", |model| {
+        .with_model_info_override("legacy-model", |model| {
             model.default_reasoning_summary = ReasoningSummary::Detailed;
         })
-        .with_model("gpt-5.2")
+        .with_model("example-model-2")
         .with_config(|config| {
-            config.review_model = Some("gpt-5.4".to_string());
+            config.review_model = Some("legacy-model".to_string());
             config.model_reasoning_summary = None;
         })
         .build_with_auto_env(&server)
@@ -858,8 +858,8 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
     assert_eq!(
         actual,
         vec![
-            serde_json::json!(["gpt-5.4", "detailed"]),
-            serde_json::json!(["gpt-5.4", "concise"]),
+            serde_json::json!(["legacy-model", "detailed"]),
+            serde_json::json!(["legacy-model", "concise"]),
         ]
     );
     Ok(())
@@ -878,7 +878,7 @@ async fn review_uses_custom_review_model_from_config() {
         .with_home(Arc::clone(&genex_home))
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
-            config.model = Some("gpt-4.1".to_string());
+            config.model = Some("legacy-model-4".to_string());
             config.review_model = Some("custom-review-model".to_string());
             config.model_reasoning_effort = Some(ReasoningEffort::Max);
         })
@@ -893,7 +893,7 @@ async fn review_uses_custom_review_model_from_config() {
     let model = models
         .models
         .iter_mut()
-        .find(|model| model.slug == "gpt-5.6-sol")
+        .find(|model| model.slug == "provider-model-b")
         .expect("bundled model should exist");
     model.slug = "custom-review-model".to_string();
     model.node_repl_auto_review_required = true;
@@ -958,7 +958,7 @@ async fn review_uses_session_model_when_review_model_unset() {
     let test = test_genex()
         .with_home(Arc::clone(&genex_home))
         .with_config(|config| {
-            config.model = Some("gpt-5.4".to_string());
+            config.model = Some("legacy-model".to_string());
             config.review_model = None;
             config.model_reasoning_effort = Some(ReasoningEffort::Persistent);
         })
@@ -995,7 +995,7 @@ async fn review_uses_session_model_when_review_model_unset() {
     let request = request_log.single_request();
     assert_eq!(request.path(), "/v1/responses");
     let body = request.body_json();
-    assert_eq!(body["model"].as_str().unwrap(), "gpt-5.4");
+    assert_eq!(body["model"].as_str().unwrap(), "legacy-model");
     assert_eq!(body["reasoning"]["effort"].as_str(), Some("disabled"));
     assert_eq!(
         ["curr_time", "sleep"].map(|name| request.tool_by_name("clock", name).is_some()),

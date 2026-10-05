@@ -524,7 +524,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
 async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let server = responses::start_mock_server().await;
     let test = test_genex()
-        .with_model("gpt-5.6-sol")
+        .with_model("provider-model-b")
         .build_with_auto_env(&server)
         .await
         .unwrap();
@@ -654,7 +654,7 @@ async fn turn_input_submission_reports_started_and_steered_for_concurrent_submis
     ])
     .await;
     let test = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build_with_streaming_server(&server)
         .await
         .expect("build turn-input submission session");
@@ -756,7 +756,7 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
     ])
     .await;
     let test = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         })

@@ -444,7 +444,7 @@ mod tests {
                 active_permission_profile: None,
                 network: None,
                 file_system_sandbox_policy: None,
-                model: "gpt-5".to_string(),
+                model: "example-model".to_string(),
                 comp_hash: None,
                 collaboration_mode: None,
                 multi_agent_version: None,
@@ -491,7 +491,7 @@ mod tests {
                 active_permission_profile: None,
                 network: None,
                 file_system_sandbox_policy: None,
-                model: "gpt-5".to_string(),
+                model: "example-model".to_string(),
                 comp_hash: None,
                 collaboration_mode: None,
                 multi_agent_version: None,
@@ -534,7 +534,7 @@ mod tests {
                 active_permission_profile: None,
                 network: None,
                 file_system_sandbox_policy: None,
-                model: "gpt-5".to_string(),
+                model: "example-model".to_string(),
                 comp_hash: None,
                 collaboration_mode: None,
                 multi_agent_version: None,
@@ -574,7 +574,7 @@ mod tests {
                 active_permission_profile: None,
                 network: None,
                 file_system_sandbox_policy: None,
-                model: "gpt-5".to_string(),
+                model: "example-model".to_string(),
                 comp_hash: None,
                 collaboration_mode: None,
                 multi_agent_version: None,
@@ -586,7 +586,7 @@ mod tests {
             "test-provider",
         );
 
-        assert_eq!(metadata.model.as_deref(), Some("gpt-5"));
+        assert_eq!(metadata.model.as_deref(), Some("example-model"));
         assert_eq!(metadata.reasoning_effort, Some(ReasoningEffort::High));
     }
 

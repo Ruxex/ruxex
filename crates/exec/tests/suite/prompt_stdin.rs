@@ -16,13 +16,13 @@ async fn exec_appends_piped_stdin_to_prompt_argument() -> anyhow::Result<()> {
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    // echo "my output" | genex exec --skip-git-repo-check -C <cwd> -m gpt-5.1 "Summarize this concisely"
+    // echo "my output" | genex exec --skip-git-repo-check -C <cwd> -m example-model-1 "Summarize this concisely"
     test.cmd_with_server(&server)
         .arg("--skip-git-repo-check")
         .arg("-C")
         .arg(test.cwd_path())
         .arg("-m")
-        .arg("gpt-5.1")
+        .arg("example-model-1")
         .arg("Summarize this concisely")
         .write_stdin("my output\n")
         .assert()
@@ -50,13 +50,13 @@ async fn exec_ignores_empty_piped_stdin_when_prompt_argument_is_present() -> any
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    // printf "" | genex exec --skip-git-repo-check -C <cwd> -m gpt-5.1 "Summarize this concisely"
+    // printf "" | genex exec --skip-git-repo-check -C <cwd> -m example-model-1 "Summarize this concisely"
     test.cmd_with_server(&server)
         .arg("--skip-git-repo-check")
         .arg("-C")
         .arg(test.cwd_path())
         .arg("-m")
-        .arg("gpt-5.1")
+        .arg("example-model-1")
         .arg("Summarize this concisely")
         .write_stdin("")
         .assert()
@@ -83,13 +83,13 @@ async fn exec_dash_prompt_reads_stdin_as_the_prompt() -> anyhow::Result<()> {
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    // echo "prompt from stdin" | genex exec --skip-git-repo-check -C <cwd> -m gpt-5.1 -
+    // echo "prompt from stdin" | genex exec --skip-git-repo-check -C <cwd> -m example-model-1 -
     test.cmd_with_server(&server)
         .arg("--skip-git-repo-check")
         .arg("-C")
         .arg(test.cwd_path())
         .arg("-m")
-        .arg("gpt-5.1")
+        .arg("example-model-1")
         .arg("-")
         .write_stdin("prompt from stdin\n")
         .assert()
@@ -117,13 +117,13 @@ async fn exec_without_prompt_argument_reads_piped_stdin_as_the_prompt() -> anyho
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    // echo "prompt from stdin" | genex exec --skip-git-repo-check -C <cwd> -m gpt-5.1
+    // echo "prompt from stdin" | genex exec --skip-git-repo-check -C <cwd> -m example-model-1
     test.cmd_with_server(&server)
         .arg("--skip-git-repo-check")
         .arg("-C")
         .arg(test.cwd_path())
         .arg("-m")
-        .arg("gpt-5.1")
+        .arg("example-model-1")
         .write_stdin("prompt from stdin\n")
         .assert()
         .success();

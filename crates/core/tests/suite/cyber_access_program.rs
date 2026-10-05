@@ -291,7 +291,7 @@ async fn cyber_access_program_is_inherited_by_child_turns() -> Result<()> {
         .await;
         let test = test_genex()
             .with_auth(GenexAuth::from_api_key("test-api-key"))
-            .with_model(if is_v2 { "gpt-5.6-sol" } else { "gpt-5.1" })
+            .with_model(if is_v2 { "provider-model-b" } else { "example-model-1" })
             .with_config(move |config| {
                 config
                     .features

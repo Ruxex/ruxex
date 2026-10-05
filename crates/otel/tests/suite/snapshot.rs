@@ -103,8 +103,8 @@ fn manager_snapshot_metrics_collects_without_shutdown() -> Result<()> {
     let metrics = MetricsClient::new(config)?;
     let manager = SessionTelemetry::new(
         ThreadId::new(),
-        "gpt-5.1",
-        "gpt-5.1",
+        "example-model-1",
+        "example-model-1",
         Some("account-id".to_string()),
         /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),
@@ -144,7 +144,7 @@ fn manager_snapshot_metrics_collects_without_shutdown() -> Result<()> {
             "auth_mode".to_string(),
             TelemetryAuthMode::ApiKey.to_string(),
         ),
-        ("model".to_string(), "gpt-5.1".to_string()),
+        ("model".to_string(), "example-model-1".to_string()),
         ("originator".to_string(), "test_originator".to_string()),
         ("service".to_string(), "genex-cli".to_string()),
         ("session_source".to_string(), "cli".to_string()),
@@ -166,8 +166,8 @@ fn manager_turn_cost_records_microusd_metric() -> Result<()> {
     let conversation_id = thread_id.to_string();
     let manager = SessionTelemetry::new(
         thread_id,
-        "gpt-5.6",
-        "gpt-5.6",
+        "provider-model",
+        "provider-model",
         /*account_id*/ None,
         /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),
@@ -208,7 +208,7 @@ fn manager_turn_cost_records_microusd_metric() -> Result<()> {
                 TelemetryAuthMode::ApiKey.to_string(),
             ),
             ("conversation.id".to_string(), conversation_id),
-            ("model".to_string(), "gpt-5.6".to_string()),
+            ("model".to_string(), "provider-model".to_string()),
             ("originator".to_string(), "test_originator".to_string()),
             ("reasoning_effort".to_string(), "high".to_string()),
             ("session_source".to_string(), "cli".to_string()),

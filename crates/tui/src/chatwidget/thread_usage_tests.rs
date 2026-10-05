@@ -378,7 +378,7 @@ async fn transient_zero_cost_preserves_fresh_credits_and_breakdowns() {
     let request_id = thread_usage_request_id(&mut rx);
     let fresh_usage = ThreadUsage {
         groups: vec![ThreadUsageBreakdownGroup {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             reasoning_effort: Some("high".to_string()),
             speed: Some("fast".to_string()),
             estimated_usage_credits_micros: 50_000_000,
@@ -431,7 +431,7 @@ async fn transient_zero_credits_preserves_credits_only_estimates() {
     let request_id = thread_usage_request_id(&mut rx);
     let previous_usage = ThreadUsage {
         groups: vec![ThreadUsageBreakdownGroup {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             reasoning_effort: Some("high".to_string()),
             speed: Some("fast".to_string()),
             estimated_usage_credits_micros: 46_000_000,

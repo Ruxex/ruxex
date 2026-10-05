@@ -65,7 +65,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
         models: bundled
             .models
             .into_iter()
-            .filter(|model| ["gpt-5.4", "review-model"].contains(&model.slug.as_str()))
+            .filter(|model| ["legacy-model", "review-model"].contains(&model.slug.as_str()))
             .collect(),
     };
     assert_eq!(catalog.models.len(), 2);
@@ -74,7 +74,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
 
     let mut builder = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
-        .with_model("gpt-5.4");
+        .with_model("legacy-model");
     builder = builder.with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         config.approvals_reviewer = ApprovalsReviewer::AutoReview;
@@ -171,7 +171,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
 
     let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
-        config.model = Some("gpt-5.2".to_string());
+        config.model = Some("example-model-2".to_string());
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(1);
     });
@@ -276,7 +276,7 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
 
     let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
-        config.model = Some("gpt-5.2".to_string());
+        config.model = Some("example-model-2".to_string());
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(1);
     });
@@ -336,7 +336,7 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
 
     let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
-        config.model = Some("gpt-5.2".to_string());
+        config.model = Some("example-model-2".to_string());
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(1);
     });

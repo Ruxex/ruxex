@@ -172,7 +172,7 @@ async fn v2_nested_spawn_checks_shared_active_execution_capacity() -> Result<()>
     .await;
 
     let mut builder = test_genex()
-        .with_model("gpt-5.6-sol")
+        .with_model("provider-model-b")
         .with_config(|config| {
             config
                 .features
@@ -220,7 +220,7 @@ async fn child_turn_start_preserves_root_attribution() -> Result<()> {
     .await;
     let worker = mount_completed_worker(&server, FIRST_TASK, "first-call").await;
     let test = test_genex()
-        .with_model("gpt-5.6-sol")
+        .with_model("provider-model-b")
         .with_config(|config| {
             config.features.enable(Feature::Collab).unwrap();
             config.features.enable(Feature::MultiAgentV2).unwrap();
@@ -314,7 +314,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
         mount_completed_worker(&server, FOLLOWUP_TASK, "followup-call").await;
 
     let mut builder = test_genex()
-        .with_model("gpt-5.6-sol")
+        .with_model("provider-model-b")
         .with_exec_server_url("none")
         .with_config(|config| {
             for feature in [Feature::Collab, Feature::MultiAgentV2] {

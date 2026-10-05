@@ -248,7 +248,7 @@ async fn profile_mcp_reports_legacy_profile_migration() -> Result<()> {
     std::fs::write(
         genex_home.path().join("config.toml"),
         r#"[profiles.work]
-model = "gpt-5"
+model = "example-model"
 "#,
     )?;
 

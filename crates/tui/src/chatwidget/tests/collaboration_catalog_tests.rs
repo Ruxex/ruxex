@@ -5,11 +5,11 @@ use pretty_assertions::assert_eq;
 
 #[tokio::test]
 async fn collaboration_catalog_selection_clears_restored_prompt_and_survives_model_refresh() {
-    let (mut chat, _events, _ops) = make_chatwidget_manual(Some("gpt-5.2")).await;
+    let (mut chat, _events, _ops) = make_chatwidget_manual(Some("example-model-2")).await;
     let restored = CollaborationMode {
         mode: ModeKind::Default,
         settings: Settings {
-            model: "gpt-5.2".into(),
+            model: "example-model-2".into(),
             reasoning_effort: Some(ReasoningEffortConfig::Low),
             developer_instructions: Some("stale restored prompt".into()),
         },
@@ -38,7 +38,7 @@ async fn collaboration_catalog_selection_clears_restored_prompt_and_survives_mod
         CollaborationMode {
             mode: ModeKind::Plan,
             settings: Settings {
-                model: "gpt-5.2".into(),
+                model: "example-model-2".into(),
                 reasoning_effort: Some(ReasoningEffortConfig::High),
                 developer_instructions: None,
             },
@@ -59,7 +59,7 @@ async fn collaboration_catalog_selection_clears_restored_prompt_and_survives_mod
 
 #[tokio::test]
 async fn collaboration_catalog_unavailable_preserves_task_and_plan_input() {
-    let (mut chat, _events, _ops) = make_chatwidget_manual(Some("gpt-5.2")).await;
+    let (mut chat, _events, _ops) = make_chatwidget_manual(Some("example-model-2")).await;
     Arc::make_mut(&mut chat.model_catalog)
         .collaboration_modes
         .clear();

@@ -370,7 +370,7 @@ async fn system_time_source_adds_current_time_reminder(clock_setup: ClockSetup) 
     )
     .await;
     let mut builder = test_genex()
-        .with_model_info_override("gpt-5.5", move |model_info| {
+        .with_model_info_override("example-model", move |model_info| {
             if matches!(clock_setup, ClockSetup::Configured | ClockSetup::ModelTools) {
                 model_info
                     .experimental_supported_tools
@@ -464,7 +464,7 @@ async fn client_feature_map_can_disable_sleep_tool(
     )
     .await;
     let test = test_genex()
-        .with_model_info_override("gpt-5.5", |model_info| {
+        .with_model_info_override("example-model", |model_info| {
             model_info
                 .experimental_supported_tools
                 .push("clock".to_string());
@@ -526,7 +526,7 @@ async fn sleep_tool_configuration_controls_registration(
         ));
     }
     let test = test_genex()
-        .with_model_info_override("gpt-5.5", |model_info| {
+        .with_model_info_override("example-model", |model_info| {
             model_info
                 .experimental_supported_tools
                 .retain(|tool| tool != "clock");

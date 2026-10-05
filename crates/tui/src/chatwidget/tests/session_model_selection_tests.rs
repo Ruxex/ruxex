@@ -12,13 +12,13 @@ async fn session_model_selection_accepts_final_choices_without_saving() {
         "max",
         "ultra",
     ] {
-        let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.5")).await;
+        let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("example-model")).await;
         let effort = match picker {
             "max" => ReasoningEffortConfig::Max,
             "ultra" => ReasoningEffortConfig::Ultra,
             _ => ReasoningEffortConfig::High,
         };
-        let mut preset = get_available_model(&chat, "gpt-5.5");
+        let mut preset = get_available_model(&chat, "example-model");
         preset.default_reasoning_effort = effort.clone();
         preset.supported_reasoning_efforts = vec![ReasoningEffortPreset {
             effort: effort.clone(),
@@ -65,11 +65,11 @@ async fn session_model_selection_accepts_final_choices_without_saving() {
 #[tokio::test]
 async fn session_model_selection_notifies_the_original_task_after_each_final_astra_choice() {
     for picker in ["model", "reasoning", "advanced"] {
-        let (mut chat, mut events, _ops) = make_chatwidget_manual(Some("gpt-5.5")).await;
+        let (mut chat, mut events, _ops) = make_chatwidget_manual(Some("example-model")).await;
         let thread_id = ThreadId::new();
         chat.thread_id = Some(thread_id);
-        let mut preset = get_available_model(&chat, "gpt-5.5");
-        preset.model = "gpt-6-astra".into();
+        let mut preset = get_available_model(&chat, "example-model");
+        preset.model = "provider-model-a".into();
         let effort = if picker == "advanced" {
             ReasoningEffortConfig::Max
         } else {
@@ -101,7 +101,7 @@ async fn session_model_selection_notifies_the_original_task_after_each_final_ast
             thread_id: selected_thread,
             model,
             action: AstraModelPickerAction::SelectSessionModel { effort: selected_effort },
-        }) if selected_thread == thread_id && model == "gpt-6-astra" && selected_effort == Some(effort));
+        }) if selected_thread == thread_id && model == "provider-model-a" && selected_effort == Some(effort));
         assert!(
             std::iter::from_fn(|| events.try_recv().ok()).all(|event| matches!(
                 event,
@@ -114,14 +114,14 @@ async fn session_model_selection_notifies_the_original_task_after_each_final_ast
 
 #[tokio::test]
 async fn session_model_selection_hides_conflicting_shortcut() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.5")).await;
+    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("example-model")).await;
     let mut config = genex_config::types::TuiKeymap::default();
     config.list.accept = Some(genex_config::types::KeybindingsSpec::One(
         genex_config::types::KeybindingSpec("s".into()),
     ));
     let keymap = RuntimeKeymap::from_config(&config).expect("valid list keymap");
     chat.bottom_pane.set_keymap_bindings(&keymap);
-    let preset = get_available_model(&chat, "gpt-5.5");
+    let preset = get_available_model(&chat, "example-model");
     chat.open_reasoning_popup(preset);
     let popup = render_bottom_popup(&chat, /*width*/ 100);
     assert!(!popup.contains("for this session"), "{popup}");

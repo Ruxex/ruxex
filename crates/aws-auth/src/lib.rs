@@ -296,7 +296,7 @@ mod tests {
             method: Method::POST,
             url: "https://bedrock-runtime.us-east-1.amazonaws.com/v1/responses".to_string(),
             headers,
-            body: Bytes::from_static(br#"{"model":"provider.gpt-oss-120b-1:0"}"#),
+            body: Bytes::from_static(br#"{"model":"provider.model-oss-120b-1:0"}"#),
         }
     }
 

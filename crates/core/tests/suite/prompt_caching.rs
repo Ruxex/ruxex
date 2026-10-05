@@ -145,8 +145,8 @@ async fn prompt_tools_are_consistent_across_requests(
     let mut model = test_models_response()?
         .models
         .into_iter()
-        .find(|model| model.slug == "gpt-5.5")
-        .expect("bundled gpt-5.5 model");
+        .find(|model| model.slug == "example-model")
+        .expect("bundled example-model model");
     model
         .model_messages
         .as_mut()
@@ -183,7 +183,7 @@ async fn prompt_tools_are_consistent_across_requests(
         .with_models_manager(models_manager)
         .with_pre_build_hook(write_global_instructions)
         .with_config(move |config| {
-            config.model = Some("gpt-5.5".to_string());
+            config.model = Some("example-model".to_string());
             if let Some(update_plan_enabled) = update_plan_enabled {
                 config.update_plan_enabled = update_plan_enabled;
             }
@@ -247,7 +247,7 @@ async fn prompt_tools_are_consistent_across_requests(
                 collaboration_mode: Some(CollaborationMode {
                     mode: ModeKind::Plan,
                     settings: Settings {
-                        model: "gpt-5.5".to_string(),
+                        model: "example-model".to_string(),
                         reasoning_effort: None,
                         developer_instructions: Some(mode_instructions.clone()),
                     },
@@ -312,7 +312,7 @@ async fn prompt_tools_are_consistent_across_requests(
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn gpt_5_tools_without_apply_patch_append_apply_patch_instructions() -> anyhow::Result<()> {
+async fn model_5_tools_without_apply_patch_append_apply_patch_instructions() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
     use pretty_assertions::assert_eq;
 
@@ -337,7 +337,7 @@ async fn gpt_5_tools_without_apply_patch_append_apply_patch_instructions() -> an
                 .features
                 .enable(Feature::CollaborationModes)
                 .expect("test config should allow feature update");
-            config.model = Some("gpt-5.2".to_string());
+            config.model = Some("example-model-2".to_string());
         })
         .build(&server)
         .await?;
@@ -617,7 +617,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     let collaboration_mode = CollaborationMode {
         mode: ModeKind::Default,
         settings: Settings {
-            model: "gpt-5.4".to_string(),
+            model: "legacy-model".to_string(),
             reasoning_effort: Some(ReasoningEffort::High),
             developer_instructions: None,
         },
@@ -627,7 +627,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
         &genex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             effort: Some(Some(ReasoningEffort::Low)),
             collaboration_mode: Some(collaboration_mode),
             ..Default::default()
@@ -645,7 +645,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let body = req.single_request().body_json();
-    assert_eq!(body["model"].as_str(), Some("gpt-5.4"));
+    assert_eq!(body["model"].as_str(), Some("legacy-model"));
     assert_eq!(
         body.get("reasoning")
             .and_then(|reasoning| reasoning.get("effort"))

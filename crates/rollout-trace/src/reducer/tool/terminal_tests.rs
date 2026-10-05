@@ -531,7 +531,7 @@ fn append_inference_with_tool_call(writer: &TraceWriter) -> anyhow::Result<()> {
         inference_call_id: "inference-1".to_string(),
         thread_id: "thread-root".to_string(),
         genex_turn_id: "turn-1".to_string(),
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         provider_name: "test-provider".to_string(),
         request_payload: request,
     })?;
@@ -573,7 +573,7 @@ fn append_followup_with_tool_output(writer: &TraceWriter) -> anyhow::Result<()> 
         inference_call_id: "inference-2".to_string(),
         thread_id: "thread-root".to_string(),
         genex_turn_id: "turn-2".to_string(),
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         provider_name: "test-provider".to_string(),
         request_payload: request,
     })?;

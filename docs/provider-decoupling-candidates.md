@@ -391,7 +391,7 @@ BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Rese
 
 Bedrock、custom `model_providers`、汎用 credential storage、Responses-compatible provider の consumer があるため、クレート全体の削除ではなく first-party adapter の分割・削除を先に検討する。
 
-モデル一覧については、`MyModelProvider` も `ModelProvider::models_manager()` 経由で provider の `/models` を動的取得するよう移行済み。provider の bundled catalog と暗黙 fallback は削除し、明示的な `model_catalog_json` と Bedrock の provider-owned catalog だけを静的経路として保持する。
+モデル一覧については、`MyModelProvider` と Amazon Bedrock が `ModelProvider::models_manager()` 経由で provider の `/models` を動的取得するよう移行済み。provider の bundled catalog と暗黙 fallback は削除し、明示的な `model_catalog_json` だけを静的なローカル上書き経路として保持する。
 
 ### 3.4 Apps / host-owned MCP
 
@@ -464,17 +464,18 @@ status-surface previews, model migration notices, and Rust test fixtures found t
 items were repository-owned assumptions rather than required external endpoint names:
 
 - `codex-auto-*` picker partitioning/order and reasoning-label suppression;
-- model warning checks for `gpt-5.1-codex*`/`gpt-5.2` and the Plus-plan wording;
-- the hardcoded `gpt-reserve`/`gpt-5.6-luna` TUI branches;
+- model warning checks for built-in model prefixes and the Plus-plan wording;
+- hardcoded reserve-model TUI branches;
 - the default rate-limit bucket identifier `codex` and its TUI/core consumers;
-- the `gpt-5.2-codex` status preview and Codex/GPT model test fixtures;
-- stale GPT/Codex migration notice keys and config fields.
+- built-in model status previews and model test fixtures;
+- stale provider-specific migration notice keys and config fields.
 
 The model catalog remains the producer of available model IDs and reasoning capabilities. Rate-limit
 nudges now consume the server-provided `normal_model_slug`, warnings are based on advertised
 reasoning effort, and the default bucket is `default`. These are `remove`/`migrate-in-place`.
-External provider model IDs, Product::Codex restrictions, GitHub/upstream fixtures, security and
-OS identities, and required endpoint wire names remain separate retained contracts.
+External provider model IDs may still be supplied by a provider response, but no built-in model ID
+is shipped by Genex. Product::Codex restrictions, GitHub/upstream fixtures, security and OS
+identities, and required endpoint wire names remain separate retained contracts.
 
 ### OS security, history, and telemetry genericization (2026-10-04)
 

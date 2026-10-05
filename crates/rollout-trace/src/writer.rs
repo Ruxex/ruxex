@@ -185,7 +185,7 @@ mod tests {
             RawPayloadKind::ProtocolEvent,
             &json!({
                 "source": "test",
-                "model": "gpt-test",
+                "model": "model-test",
             }),
         )?;
         writer.append(RawTraceEventPayload::ThreadStarted {
@@ -200,7 +200,7 @@ mod tests {
         let inference_request = writer.write_json_payload(
             RawPayloadKind::InferenceRequest,
             &json!({
-                "model": "gpt-test",
+                "model": "model-test",
                 "input": [{
                     "type": "message",
                     "role": "user",
@@ -212,7 +212,7 @@ mod tests {
             inference_call_id: "inference-1".to_string(),
             thread_id: "thread-root".to_string(),
             genex_turn_id: "turn-1".to_string(),
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             provider_name: "test-provider".to_string(),
             request_payload: inference_request.clone(),
         })?;

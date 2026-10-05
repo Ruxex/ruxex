@@ -340,7 +340,7 @@ pub struct ConfigToml {
     pub model_reasoning_effort: Option<ReasoningEffort>,
     pub plan_mode_reasoning_effort: Option<ReasoningEffort>,
     pub model_reasoning_summary: Option<ReasoningSummary>,
-    /// Optional verbosity control for GPT-5 models (Responses API `text.verbosity`).
+    /// Optional verbosity control for models supporting Responses API `text.verbosity`.
     pub model_verbosity: Option<Verbosity>,
 
     /// Optional path to a JSON model catalog (applied on startup only).

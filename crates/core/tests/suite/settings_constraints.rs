@@ -27,8 +27,8 @@ use std::time::Duration;
 use test_case::test_case;
 use tokio::time::timeout;
 
-const INITIAL_MODEL: &str = "gpt-5.4";
-const PROTECTED_MODEL: &str = "gpt-5.2";
+const INITIAL_MODEL: &str = "legacy-model";
+const PROTECTED_MODEL: &str = "example-model-2";
 const REVIEW_INSTRUCTIONS: &str = "Protected-model automatic review instructions.";
 const PERMISSION_INSTRUCTIONS: &str = "Protected-model read-only instructions.";
 
@@ -116,7 +116,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
         .with_model(INITIAL_MODEL)
         .with_cloud_config_bundle(
             CloudConfigBundleFixture::loader_with_enterprise_requirement(
-                "[auto_review]\nrequired_on_models = [\"gpt-5.2\"]\n",
+                "[auto_review]\nrequired_on_models = [\"example-model-2\"]\n",
             ),
         )
         .with_config(move |config| {

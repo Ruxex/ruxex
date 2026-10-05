@@ -1,6 +1,6 @@
 //! Read-only Daybreak eligibility used to choose cyber refusal copy.
 //! Account-scoped discovery runs in the background; pending/failed reads use neutral copy.
-//! Astra takes precedence; the TUI does not configure the app’s Daybreak access program.
+//! The TUI does not configure the app’s Daybreak access program.
 
 use crate::app_server_session::AppServerSession;
 use crate::legacy_core::config::Config;
@@ -30,13 +30,9 @@ pub(crate) fn prefetch_notice(config: &Config, server: &AppServerSession, cache:
 }
 
 impl Notice {
-    pub(crate) fn for_model(self, model: &str) -> Self {
-        match model {
-            // Same identifiers as the app's isDaybreakUnavailableModel.
-            "gpt-6-astra" | "gpt-6-astra-wm" => Self::Astra,
-            "gpt-5.6-sol" => self,
-            // Other model/access-program mappings are not established for the TUI.
-            _ => Self::Limited,
-        }
+    pub(crate) fn for_model(self, _model: &str) -> Self {
+        // Model availability is provider-owned. The TUI only renders the
+        // account-scoped access result and does not maintain a model catalog.
+        self
     }
 }

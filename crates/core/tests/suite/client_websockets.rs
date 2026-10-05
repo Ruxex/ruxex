@@ -72,7 +72,7 @@ use tempfile::TempDir;
 use tracing::Instrument;
 use tracing_test::traced_test;
 
-const MODEL: &str = "gpt-5.4";
+const MODEL: &str = "legacy-model";
 const USER_AGENT_HEADER: &str = "user-agent";
 const X_CLIENT_REQUEST_ID_HEADER: &str = "x-client-request-id";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =

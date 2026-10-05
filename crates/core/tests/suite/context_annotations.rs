@@ -36,7 +36,7 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
     )
     .await;
     let test = test_genex()
-        .with_model_info_override("gpt-5.5", |model_info| {
+        .with_model_info_override("example-model", |model_info| {
             model_info.input_modalities.push(InputModality::Audio);
         })
         .with_config(|config| {

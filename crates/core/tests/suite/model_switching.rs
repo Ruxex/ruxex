@@ -177,9 +177,9 @@ async fn first_turn_model_change_appends_model_instructions_developer_message() 
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
     let mut builder =
-        test_genex().with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture);
+        test_genex().with_model_info_override("provider-model-d", configure_model_switching_fixture);
     let test = builder.build_with_auto_env(&server).await?;
-    let next_model = "gpt-5.5";
+    let next_model = "example-model";
 
     submit_model_turn(
         &test.genex,
@@ -206,10 +206,10 @@ async fn first_turn_model_change_appends_model_instructions_developer_message() 
     Ok(())
 }
 
-#[test_case(None, "gpt-5.6-terra"; "model-generated base instructions and original model")]
-#[test_case(None, "gpt-5.5"; "model-generated base instructions and fork model")]
-#[test_case(Some("inherited custom base instructions"), "gpt-5.6-terra"; "custom base instructions and original model")]
-#[test_case(Some("inherited custom base instructions"), "gpt-5.5"; "custom base instructions and fork model")]
+#[test_case(None, "provider-model-d"; "model-generated base instructions and original model")]
+#[test_case(None, "example-model"; "model-generated base instructions and fork model")]
+#[test_case(Some("inherited custom base instructions"), "provider-model-d"; "custom base instructions and original model")]
+#[test_case(Some("inherited custom base instructions"), "example-model"; "custom base instructions and fork model")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn first_turn_after_empty_prefix_fork_preserves_inherited_base_instructions(
     custom_base_instructions: Option<&'static str>,
@@ -220,7 +220,7 @@ async fn first_turn_after_empty_prefix_fork_preserves_inherited_base_instruction
     let server = MockServer::start().await;
     let resp_mock = mount_sse_once(&server, sse_completed("resp-fork")).await;
 
-    let initial_model = "gpt-5.6-terra";
+    let initial_model = "provider-model-d";
     let mut builder = test_genex()
         .with_model_info_override(initial_model, configure_model_switching_fixture)
         .with_config(move |config| {
@@ -246,7 +246,7 @@ async fn first_turn_after_empty_prefix_fork_preserves_inherited_base_instruction
     );
 
     let mut fork_config = test.config.clone();
-    fork_config.model = Some("gpt-5.5".to_string());
+    fork_config.model = Some("example-model".to_string());
     fork_config.base_instructions = None;
     let fork = test
         .thread_manager
@@ -289,9 +289,9 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
     .await;
 
     let mut builder =
-        test_genex().with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture);
+        test_genex().with_model_info_override("provider-model-d", configure_model_switching_fixture);
     let test = builder.build(&server).await?;
-    let next_model = "gpt-5.5";
+    let next_model = "example-model";
 
     test.genex
         .start_or_steer_turn(read_only_user_turn(
@@ -414,7 +414,7 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
     )
     .await;
     let mut builder = test_genex()
-        .with_model_info_override("gpt-5.6-terra", configure_model_switching_fixture)
+        .with_model_info_override("provider-model-d", configure_model_switching_fixture)
         .with_config(|config| {
             config
                 .features
@@ -442,7 +442,7 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
     core_test_support::submit_thread_settings(
         &test.genex,
         ThreadSettingsOverrides {
-            model: Some("gpt-5.5".to_string()),
+            model: Some("example-model".to_string()),
             effort: Some(Some(ReasoningEffort::High)),
             summary: Some(ReasoningSummary::Detailed),
             service_tier: Some(Some(ServiceTier::Flex.request_value().to_string())),
@@ -492,19 +492,19 @@ async fn settings_update_during_active_turn_applies_to_next_turn_only() -> Resul
         request_settings,
         vec![
             json!({
-                "model": "gpt-5.6-terra",
+                "model": "provider-model-d",
                 "reasoning": { "effort": "low", "summary": "concise" },
                 "service_tier": null,
                 "approval_policy_never": false,
             }),
             json!({
-                "model": "gpt-5.6-terra",
+                "model": "provider-model-d",
                 "reasoning": { "effort": "low", "summary": "concise" },
                 "service_tier": null,
                 "approval_policy_never": false,
             }),
             json!({
-                "model": "gpt-5.5",
+                "model": "example-model",
                 "reasoning": { "effort": "high", "summary": "detailed" },
                 "service_tier": "flex",
                 "approval_policy_never": true,

@@ -1678,7 +1678,7 @@ Run genex doctor without --summary for detailed diagnostics.
             genex_version: "0.0.0".to_string(),
             checks: vec![
                 DoctorCheck::new("config.load", "config", CheckStatus::Ok, "config loaded")
-                    .detail("model: gpt-5.5")
+                    .detail("model: example-model")
                     .detail("model provider: provider")
                     .detail("feature flags enabled: 3")
                     .detail("enabled feature flags: shell_tool, goals")

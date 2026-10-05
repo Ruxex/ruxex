@@ -327,7 +327,7 @@ async fn assert_cancelled_queued_menu_drains_next_input(
     expected_popup_text: &str,
     cancel_key: KeyEvent,
 ) {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(Some("gpt-5.2")).await;
+    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(Some("example-model-2")).await;
     chat.thread_id = Some(ThreadId::new());
     handle_turn_started(&mut chat, "turn-1");
 
@@ -384,9 +384,9 @@ async fn queued_slash_menu_cancel_drains_next_input() {
 
 #[tokio::test]
 async fn queued_settings_selection_applies_before_next_input() {
-    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(Some("gpt-5.2")).await;
+    let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(Some("example-model-2")).await;
     chat.thread_id = Some(ThreadId::new());
-    let mut preset = get_available_model(&chat, "gpt-5.6-terra");
+    let mut preset = get_available_model(&chat, "provider-model-d");
     preset.supported_reasoning_efforts.truncate(1);
     let selected_effort = preset.supported_reasoning_efforts[0].effort.clone();
     chat.model_catalog = std::sync::Arc::new(ModelCatalog::new(vec![preset]));
@@ -424,7 +424,7 @@ async fn queued_settings_selection_applies_before_next_input() {
     match next_submit_op(&mut op_rx) {
         Op::UserTurn { model, effort, .. } => assert_eq!(
             (model, effort),
-            ("gpt-5.6-terra".to_string(), Some(selected_effort))
+            ("provider-model-d".to_string(), Some(selected_effort))
         ),
         other => panic!("expected queued message with updated model, got {other:?}"),
     }
@@ -1235,7 +1235,7 @@ async fn slash_rename_without_existing_thread_name_starts_empty() {
 
 #[tokio::test]
 async fn usage_error_slash_command_is_available_from_local_recall() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.2")).await;
+    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("example-model-2")).await;
 
     submit_composer_text(&mut chat, "/raw maybe");
 
@@ -1599,7 +1599,7 @@ async fn slash_copy_picker_previews_whole_response_code_blocks_and_blockquotes()
 
 #[tokio::test]
 async fn slash_copy_status_omits_missing_fields_and_copies_full_directory() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.4")).await;
+    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("legacy-model")).await;
     chat.config.cwd = test_path_buf(&format!("/workspace/{}", "nested/".repeat(/*n*/ 20))).abs();
     let directory = chat.config.cwd.display().to_string();
     chat.thread_name = Some(String::new());
@@ -1639,7 +1639,7 @@ async fn slash_copy_status_yields_to_later_turns_and_commands_even_after_refresh
         NextTurn::ServiceTier,
         NextTurn::ShellCommand,
     ] {
-        let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.4")).await;
+        let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("legacy-model")).await;
         chat.thread_id = Some(ThreadId::new());
         complete_turn_with_message(&mut chat, "turn-1", Some("Original reply"));
         set_managed_auth(&mut chat);
@@ -2237,7 +2237,7 @@ async fn queued_follow_up_suppresses_agent_turn_complete_notification() {
 
 #[tokio::test]
 async fn queued_menu_slash_keeps_agent_turn_complete_notification() {
-    let (mut chat, _rx, mut op_rx) = make_chatwidget_manual(Some("gpt-5.2")).await;
+    let (mut chat, _rx, mut op_rx) = make_chatwidget_manual(Some("example-model-2")).await;
     chat.thread_id = Some(ThreadId::new());
     handle_turn_started(&mut chat, "turn-1");
     queue_composer_text_with_tab(&mut chat, "/model");

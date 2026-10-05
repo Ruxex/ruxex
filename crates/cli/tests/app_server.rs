@@ -39,7 +39,7 @@ fn agents_accept_interactive_configuration_overrides() -> Result<()> {
     for args in [
         ["--yolo", "agents"].as_slice(),
         ["--search", "agents"].as_slice(),
-        ["--model", "gpt-5", "agents"].as_slice(),
+        ["--model", "example-model", "agents"].as_slice(),
         ["--approve-for-me", "agents"].as_slice(),
         ["--cd", ".", "agents"].as_slice(),
     ] {

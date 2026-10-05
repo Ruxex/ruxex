@@ -275,7 +275,7 @@ pub(crate) async fn test_config() -> Config {
     let genex_home = tempfile::tempdir().expect("create temp dir");
     Config::load_from_base_config_with_overrides(
         ConfigToml {
-            model: Some("gpt-5.5".to_string()),
+            model: Some("test-model".to_string()),
             ..Default::default()
         },
         ConfigOverrides::default(),
@@ -920,7 +920,7 @@ pub struct Config {
     /// When set, this replaces the bundled catalog for the current process.
     pub model_catalog: Option<ModelsResponse>,
 
-    /// Optional verbosity control for GPT-5 models (Responses API `text.verbosity`).
+    /// Optional verbosity control for models supporting Responses API `text.verbosity`.
     pub model_verbosity: Option<Verbosity>,
 
     /// Optional base URL for host-managed authentication requests.

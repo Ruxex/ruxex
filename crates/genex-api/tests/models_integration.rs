@@ -104,8 +104,8 @@ async fn models_client_hits_models_endpoint() {
 
     let response = ModelsResponse {
         models: vec![ModelInfo {
-            slug: "gpt-test".to_string(),
-            display_name: "gpt-test".to_string(),
+            slug: "model-test".to_string(),
+            display_name: "model-test".to_string(),
             description: Some("desc".to_string()),
             default_reasoning_level: Some(ReasoningEffort::Medium),
             supported_reasoning_levels: vec![
@@ -187,7 +187,7 @@ async fn models_client_hits_models_endpoint() {
         .expect("models request should succeed");
 
     assert_eq!(models.len(), 1);
-    assert_eq!(models[0].slug, "gpt-test");
+    assert_eq!(models[0].slug, "model-test");
     assert!(models[0].node_repl_disabled);
 
     let received = server

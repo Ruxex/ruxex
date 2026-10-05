@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 #[test]
 fn thread_usage_breakdown_groups_aggregate_model_credit_percentages() {
     let group = ThreadUsageBreakdownGroup {
-        model: Some("gpt-5.4".to_string()),
+        model: Some("legacy-model".to_string()),
         reasoning_effort: Some("high".to_string()),
         speed: Some("fast".to_string()),
         estimated_usage_credits_micros: 30_000_000,
@@ -27,7 +27,7 @@ fn thread_usage_breakdown_groups_aggregate_model_credit_percentages() {
             ..group.clone()
         },
         ThreadUsageBreakdownGroup {
-            model: Some("gpt-5-mini".to_string()),
+            model: Some("example-model-mini".to_string()),
             reasoning_effort: Some("low".to_string()),
             speed: Some("standard".to_string()),
             estimated_usage_credits_micros: 10_000_000,
@@ -37,7 +37,7 @@ fn thread_usage_breakdown_groups_aggregate_model_credit_percentages() {
 
     assert_eq!(
         grouped_usage(&groups, BreakdownDimension::Model),
-        Some("GPT-5.4 80%, GPT-5 Mini 20%".to_string())
+        Some("legacy-model 80%, example-model Mini 20%".to_string())
     );
     assert_eq!(
         grouped_usage(&groups, BreakdownDimension::Reasoning),

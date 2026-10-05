@@ -157,7 +157,7 @@ async fn external_agent_config_import_skips_repository_redirect_after_detection(
         repo_root.join(".mcp.json"),
         r#"{"mcpServers":{"repository-server":{"command":"repository-server"}}}"#,
     )?;
-    std::fs::write(&global_config, "model = \"gpt-5.4\"\n")?;
+    std::fs::write(&global_config, "model = \"legacy-model\"\n")?;
 
     let home_dir = genex_home.path().display().to_string();
     let mut mcp = TestAppServer::builder()
@@ -281,7 +281,7 @@ async fn external_agent_config_detect_does_not_block_configuration_reads() -> Re
         .send_config_value_write_request(ConfigValueWriteParams {
             file_path: None,
             key_path: "model".to_string(),
-            value: serde_json::json!("gpt-concurrent"),
+            value: serde_json::json!("model-concurrent"),
             merge_strategy: MergeStrategy::Replace,
             expected_version: None,
         })
@@ -327,7 +327,7 @@ async fn external_agent_config_detect_does_not_block_configuration_reads() -> Re
     );
     assert!(
         std::fs::read_to_string(genex_home.path().join("config.toml"))?
-            .contains("model = \"gpt-concurrent\"")
+            .contains("model = \"model-concurrent\"")
     );
 
     Ok(())

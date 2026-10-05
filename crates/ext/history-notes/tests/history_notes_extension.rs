@@ -426,7 +426,7 @@ fn tool_call(tool_name: ToolName, arguments: serde_json::Value) -> ToolCall<'sta
         turn_id: "turn-1".to_string(),
         call_id: "call-read-file".to_string(),
         tool_name,
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         turn_metadata: None,
         truncation_policy: TruncationPolicy::Bytes(1024),
         source: ToolCallSource::Direct,

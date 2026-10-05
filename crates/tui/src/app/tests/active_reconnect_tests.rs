@@ -70,7 +70,7 @@ async fn reconnect_reconciles_offscreen_pending_profile_before_restoring_permiss
                 "thread/resume" => {
                     let pending = id == Some(primary.to_string().as_str());
                     json!({"result": {"thread": thread(if pending { primary } else { displayed }),
-                        "model": "gpt-test", "modelProvider": "test-provider", "cwd": cwd,
+                        "model": "model-test", "modelProvider": "test-provider", "cwd": cwd,
                         "approvalPolicy": if pending { "on-request" } else { "never" },
                         "approvalsReviewer": "user",
                         "sandbox": {"type": if pending { "readOnly" } else { "dangerFullAccess" }},

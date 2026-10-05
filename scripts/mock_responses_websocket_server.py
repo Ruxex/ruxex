@@ -165,7 +165,7 @@ wire_api = "responses_websocket"
 env_key = "PROVIDER_API_KEY_STAGING"
 
 [profiles.localapi_ws]
-model = "gpt-5.2"
+model = "example-model"
 model_provider = "localapi_ws"
 model_reasoning_effort = "medium"
 

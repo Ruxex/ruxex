@@ -285,7 +285,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
 
     let mut builder = test_genex()
         .with_extensions(skills_extensions())
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config.update_plan_enabled = true;
         });
@@ -398,7 +398,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
     let mut builder = test_genex()
         .with_config(|config| config.update_plan_enabled = true)
         .with_extensions(skills_extensions())
-        .with_model("gpt-5.4");
+        .with_model("legacy-model");
     let test = builder.build(&server).await?;
     let cwd_one = test.cwd_path().join("agents_one");
     let cwd_two = test.cwd_path().join("agents_two");
@@ -510,7 +510,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
-            config.model = Some("gpt-5.5".to_string());
+            config.model = Some("example-model".to_string());
         });
     let initial = initial_builder.build(&server).await?;
     let genex = Arc::clone(&initial.genex);
@@ -547,7 +547,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
-            config.model = Some("gpt-5.4".to_string());
+            config.model = Some("legacy-model".to_string());
         });
     let resumed = resume_builder.restart(&server, &initial).await?;
     let resume_override_cwd = resumed.cwd_path().join(PRETURN_CONTEXT_DIFF_CWD);
@@ -616,7 +616,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
-            config.model = Some("gpt-5.2".to_string());
+            config.model = Some("example-model-2".to_string());
         });
     let initial = initial_builder.build(&server).await?;
     let genex = Arc::clone(&initial.genex);
@@ -653,7 +653,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
-            config.model = Some("gpt-5.4".to_string());
+            config.model = Some("legacy-model".to_string());
         });
     let resumed = resume_builder.restart(&server, &initial).await?;
     let resume_override_cwd = resumed.cwd_path().join(PRETURN_CONTEXT_DIFF_CWD);
@@ -663,7 +663,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
         &resumed.genex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(resume_override_cwd)),
-            model: Some("gpt-5.2".to_string()),
+            model: Some("example-model-2".to_string()),
             ..Default::default()
         },
     )

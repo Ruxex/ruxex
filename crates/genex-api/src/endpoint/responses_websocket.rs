@@ -154,7 +154,6 @@ const X_MODELS_ETAG_HEADER: &str = "x-models-etag";
 const X_REASONING_INCLUDED_HEADER: &str = "x-reasoning-included";
 // Temporarily disabled while the Responses WebSocket model header remains a
 // first-party contract that is not shared by compatible providers.
-// const MODEL_HEADER: &str = "openai-model";
 const WEBSOCKET_CONNECTION_LIMIT_REACHED_CODE: &str = "websocket_connection_limit_reached";
 const WEBSOCKET_CONNECTION_LIMIT_REACHED_MESSAGE: &str = "Responses websocket connection limit reached (60 minutes). Create a new websocket connection to continue.";
 const PREVIOUS_RESPONSE_NOT_FOUND_CODE: &str = "previous_response_not_found";
@@ -906,7 +905,7 @@ mod tests {
     #[test]
     fn direct_serialization_preserves_websocket_request_payload() {
         let api_request = ResponsesApiRequest {
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             instructions: "Use the available tools.".to_string(),
             input: vec![ResponseItem::Message {
                 id: Some(ResponseItemId::with_suffix("msg", "1")),
@@ -1140,7 +1139,7 @@ mod tests {
             "type": "genex.response.metadata",
             "headers": {
                 "x-genex-safety-buffering-enabled": "true",
-                "x-genex-safety-buffering-faster-model": "gpt-fast-header"
+                "x-genex-safety-buffering-faster-model": "model-fast-header"
             }
         }))
         .expect("deserialize treatment metadata");
@@ -1149,7 +1148,7 @@ mod tests {
             "safety_buffering": {
                 "use_cases": ["cyber"],
                 "reasons": ["user_risk"],
-                "retry_model": "gpt-fast-wire"
+                "retry_model": "model-fast-wire"
             }
         }))
         .expect("deserialize safety buffering event");
@@ -1165,7 +1164,7 @@ mod tests {
                 use_cases: vec!["cyber".to_string()],
                 reasons: vec!["user_risk".to_string()],
                 show_buffering_ui: true,
-                faster_model: Some("gpt-fast-wire".to_string()),
+                faster_model: Some("model-fast-wire".to_string()),
             }
         );
     }
@@ -1176,7 +1175,7 @@ mod tests {
             "type": "genex.response.metadata",
             "headers": {
                 "x-genex-safety-buffering-enabled": "false",
-                "x-genex-safety-buffering-faster-model": "gpt-fast-header"
+                "x-genex-safety-buffering-faster-model": "model-fast-header"
             }
         }))
         .expect("deserialize treatment metadata");
@@ -1200,7 +1199,7 @@ mod tests {
                 use_cases: vec!["cyber".to_string()],
                 reasons: vec!["user_risk".to_string()],
                 show_buffering_ui: true,
-                faster_model: Some("gpt-fast-header".to_string()),
+                faster_model: Some("model-fast-header".to_string()),
             }
         );
     }

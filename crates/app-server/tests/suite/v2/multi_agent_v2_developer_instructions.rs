@@ -186,9 +186,9 @@ async fn spawned_subagents_apply_configured_developer_instruction_precedence(
     }
     let genex_home = TempDir::new()?;
     let configured_model = if case == "full history configured role" {
-        "gpt-5.5"
+        "example-model"
     } else {
-        "gpt-5.4"
+        "legacy-model"
     };
     let mut config = MockResponsesConfig::new(&server.uri()).with_model(configured_model);
     if role_has_instructions {
@@ -205,7 +205,7 @@ async fn spawned_subagents_apply_configured_developer_instruction_precedence(
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
         .start_thread(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             developer_instructions: parent.map(str::to_string),
             ..Default::default()
         })
@@ -248,7 +248,7 @@ async fn spawned_subagents_apply_configured_developer_instruction_precedence(
     }
     let child_texts = child_request.message_input_texts("developer");
     if case == "full history configured role" {
-        assert_eq!(child_request.body_json()["model"], json!("gpt-5.5"));
+        assert_eq!(child_request.body_json()["model"], json!("example-model"));
         assert!(
             child_request.body_contains_text(PARENT_PROMPT),
             "the child should inherit the parent's conversation history"
@@ -371,7 +371,7 @@ async fn compacted_full_history_fork_replaces_parent_developer_instructions() ->
 
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_root_config(&format!(
             "developer_instructions = {PARENT_INSTRUCTIONS:?}\nmodel_context_window = 100\nmodel_auto_compact_token_limit = 90\ncompact_prompt = {COMPACT_PROMPT:?}"
         ))
@@ -387,7 +387,7 @@ async fn compacted_full_history_fork_replaces_parent_developer_instructions() ->
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
         .start_thread(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         })
         .await?;
@@ -635,7 +635,7 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
         ));
     }
     MockResponsesConfig::new(&server.uri())
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_root_config(&format!(
             "developer_instructions = {PARENT_INSTRUCTIONS:?}\nmodel_reasoning_effort = \"high\""
         ))
@@ -650,7 +650,7 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
             .await?;
         let ThreadStartResponse { thread, .. } = app_server
             .start_thread(ThreadStartParams {
-                model: Some("gpt-5.4".to_string()),
+                model: Some("legacy-model".to_string()),
                 history_mode: Some(history_mode),
                 ..Default::default()
             })

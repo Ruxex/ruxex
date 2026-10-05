@@ -11,14 +11,14 @@ const CONFIG_TOML: &str = "config.toml";
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn thread_settings_update_does_not_persist_when_config_exists() {
     let server = start_mock_server().await;
-    let initial_contents = "model = \"gpt-4o\"\n";
+    let initial_contents = "model = \"legacy-model-4o\"\n";
     let mut builder = test_genex()
         .with_pre_build_hook(move |home| {
             let config_path = home.join(CONFIG_TOML);
             std::fs::write(config_path, initial_contents).expect("seed config.toml");
         })
         .with_config(|config| {
-            config.model = Some("gpt-4o".to_string());
+            config.model = Some("legacy-model-4o".to_string());
         });
     let test = builder.build(&server).await.expect("create conversation");
     let genex = test.genex.clone();

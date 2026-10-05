@@ -813,7 +813,7 @@ async fn login_amazon_bedrock_allows_bedrock_provider_override() -> Result<()> {
 }
 
 #[test_case("amazon-bedrock", "mock-model"; "mantle_clears_generic_model")]
-#[test_case("amazon-bedrock-runtime", "global.provider.gpt-5.6-terra"; "runtime_clears_bedrock_model")]
+#[test_case("amazon-bedrock-runtime", "global.provider.provider-model-d"; "runtime_clears_bedrock_model")]
 #[tokio::test]
 async fn logout_managed_bedrock_restores_default_account(
     model_provider_id: &str,
@@ -915,7 +915,7 @@ async fn logout_aws_managed_bedrock_clears_provider_and_restores_default_account
         let config = std::fs::read_to_string(&config_path)?
             .replace(
                 "model = \"mock-model\"",
-                "model = \"provider.gpt-5.6-sol\"\nmodel_reasoning_effort = \"high\"",
+                "model = \"provider.provider-model-b\"\nmodel_reasoning_effort = \"high\"",
             )
             .replace(
                 "[model_providers.amazon-bedrock.aws]",

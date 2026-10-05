@@ -42,7 +42,7 @@ async fn embedded_reasoning_defaults_reach_responses() -> Result<()> {
             home.path().join("config.toml"),
             format!(
                 r#"
-model = "gpt-5.2"
+model = "example-model-2"
 model_provider = "reasoning-test"
 {settings}
 [model_providers.reasoning-test]

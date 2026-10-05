@@ -15,7 +15,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use serde_json::Value;
 
-const MODEL: &str = "gpt-5.2";
+const MODEL: &str = "example-model-2";
 const MODEL_PROVIDER_ID: &str = "recap-generation-test";
 
 fn render_chat_widget(app: &App) -> String {

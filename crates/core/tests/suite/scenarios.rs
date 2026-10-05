@@ -236,7 +236,7 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
     let config_server = start_mock_server().await;
     let base_url = format!("{}/v1", streaming.uri());
     let test = test_genex()
-        .with_model("gpt-6-astra")
+        .with_model("provider-model-a")
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             configure_scenario_catalog(config);
@@ -342,7 +342,7 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
     )
     .await;
     let mut builder = test_genex()
-        .with_model("gpt-6-astra")
+        .with_model("provider-model-a")
         .with_home(home)
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(skills_extensions())
@@ -469,7 +469,7 @@ async fn astra_omits_disabled_executor_skills_from_model_context() -> Result<()>
     )
     .await;
     let test = test_genex()
-        .with_model("gpt-6-astra")
+        .with_model("provider-model-a")
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_scenario_catalog)
@@ -537,7 +537,7 @@ async fn astra_settings_release_check_with_direct_and_code_mode_tools() -> Resul
     let rmcp_server_bin = stdio_server_bin()?;
     let home = Arc::new(TempDir::new()?);
     let mut builder = test_genex()
-        .with_model("gpt-6-astra")
+        .with_model("provider-model-a")
         .with_home(home)
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
@@ -698,7 +698,7 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread() -> Resu
     )
     .await;
     let mut builder = test_genex()
-        .with_model("gpt-6-astra")
+        .with_model("provider-model-a")
         .with_home(Arc::clone(&home))
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(skills_extensions())

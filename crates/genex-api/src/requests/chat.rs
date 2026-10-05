@@ -365,7 +365,7 @@ mod tests {
             phase: None,
             internal_chat_message_metadata_passthrough: None,
         }];
-        let request = ChatRequestBuilder::new("gpt-test", "instructions", &input, &[])
+        let request = ChatRequestBuilder::new("model-test", "instructions", &input, &[])
             .conversation_id(Some("conv-1".to_string()))
             .session_source(Some(SessionSource::SubAgent(SubAgentSource::Review)))
             .build(&provider())
@@ -416,7 +416,7 @@ mod tests {
             });
         }
 
-        let request = ChatRequestBuilder::new("gpt-test", "instructions", &input, &[])
+        let request = ChatRequestBuilder::new("model-test", "instructions", &input, &[])
             .build(&provider())
             .expect("request");
         let messages = request.body["messages"].as_array().expect("messages array");

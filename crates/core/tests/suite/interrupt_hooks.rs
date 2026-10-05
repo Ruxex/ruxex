@@ -89,7 +89,7 @@ fn read_interrupt_hook_inputs(home: &Path) -> Result<Vec<Value>> {
 async fn build_test(server: &MockServer, system_message: Option<&str>) -> Result<TestGenex> {
     let system_message = system_message.map(str::to_string);
     test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_pre_build_hook(move |home| {
             write_interrupt_hook(home, system_message.as_deref())
                 .unwrap_or_else(|error| panic!("failed to write interrupt hook fixture: {error}"));
@@ -191,7 +191,7 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
     );
     assert_eq!(
         payload.get("model"),
-        Some(&Value::String("gpt-5.4".to_string()))
+        Some(&Value::String("legacy-model".to_string()))
     );
     assert!(
         payload
@@ -362,7 +362,7 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
 
     let server = start_mock_server().await;
     let test = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_pre_build_hook(|home| {
             write_interrupt_hook(home, Some("compaction was interrupted"))
                 .expect("write interrupt hook fixture");

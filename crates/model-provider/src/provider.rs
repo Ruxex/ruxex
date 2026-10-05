@@ -120,14 +120,6 @@ pub enum ProviderApi {
     Chat(Arc<dyn ChatCompletionApi>),
 }
 
-/// Default model used for memory extraction when a provider does not require a
-/// backend-specific model ID.
-pub const DEFAULT_MEMORY_EXTRACTION_PREFERRED_MODEL: &str = "gpt-5.6-luna";
-
-/// Default model used for memory consolidation when a provider does not require
-/// a backend-specific model ID.
-pub const DEFAULT_MEMORY_CONSOLIDATION_PREFERRED_MODEL: &str = "gpt-5.6-terra";
-
 /// Runtime provider abstraction used by model execution.
 ///
 /// Implementations own provider-specific behavior for a model backend. The
@@ -148,20 +140,6 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Returns the provider-owned capability upper bounds.
     fn capabilities(&self) -> ProviderCapabilities {
         ProviderCapabilities::default()
-    }
-
-    /// Returns the preferred model used for memory extraction.
-    ///
-    /// Providers that require backend-specific model IDs should override this.
-    fn memory_extraction_preferred_model(&self) -> &'static str {
-        DEFAULT_MEMORY_EXTRACTION_PREFERRED_MODEL
-    }
-
-    /// Returns the preferred model used for memory consolidation.
-    ///
-    /// Providers that require backend-specific model IDs should override this.
-    fn memory_consolidation_preferred_model(&self) -> &'static str {
-        DEFAULT_MEMORY_CONSOLIDATION_PREFERRED_MODEL
     }
 
     /// Returns whether requests made through this provider should include attestation.
@@ -486,11 +464,13 @@ mod tests {
     use genex_model_provider_info::ModelProviderAwsAuthInfo;
     use genex_model_provider_info::WireApi;
     use genex_model_provider_info::create_responses_provider_with_base_url;
-    use genex_models_manager::ModelsManagerConfig;
     use genex_models_manager::manager::RefreshStrategy;
     use genex_protocol::config_types::ModelProviderAuthInfo;
     use genex_protocol::model_types::ModelInfo;
+    use genex_protocol::model_types::ModelServiceTier;
     use genex_protocol::model_types::ModelsResponse;
+    use genex_protocol::model_types::WebSearchToolType;
+    use genex_protocol::protocol::MultiAgentVersion;
     use genex_utils_redacted_string::RedactedString;
     use pretty_assertions::assert_eq;
     use serde_json::json;
@@ -1069,15 +1049,37 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
     }
 
     #[tokio::test]
-    async fn amazon_bedrock_provider_creates_static_models_manager() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
-            /*auth_manager*/ None,
-        );
-        let manager =
-            provider.models_manager(test_genex_home(), /*config_model_catalog*/ None);
-        let uncached_manager =
-            provider.models_manager_without_cache(/*config_model_catalog*/ None);
+    async fn amazon_bedrock_provider_fetches_models_dynamically() {
+        let server = MockServer::start().await;
+        let remote_models = vec![remote_model("bedrock-model")];
+        Mock::given(method("GET"))
+            .and(path("/models"))
+            .and(header_regex("Authorization", "Bearer bedrock-token"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-type", "application/json")
+                    .set_body_json(ModelsResponse {
+                        models: remote_models.clone(),
+                    }),
+            )
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let mut provider_info = ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None);
+        provider_info.base_url = Some(server.uri());
+        provider_info.auth = Some(ModelProviderAuthInfo {
+            command: "printf".to_string(),
+            args: vec!["bedrock-token".into()],
+            timeout_ms: NonZeroU64::new(5_000).expect("timeout should be non-zero"),
+            refresh_interval_ms: 300_000,
+            cwd: std::env::current_dir()
+                .expect("current dir should be available")
+                .try_into()
+                .expect("current dir should be absolute"),
+        });
+        let provider = create_model_provider(provider_info, /*auth_manager*/ None);
+        let manager = provider.models_manager_without_cache(/*config_model_catalog*/ None);
 
         let catalog = manager
             .raw_model_catalog(
@@ -1085,85 +1087,26 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
                 HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
             )
             .await;
-        let uncached_catalog = uncached_manager
-            .raw_model_catalog(
-                RefreshStrategy::Online,
-                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            )
-            .await;
-        assert_eq!(uncached_catalog, catalog);
-        for slug in ["provider.gpt-5.6-sol", "provider.gpt-6-astra"] {
-            let model_info = manager
-                .get_model_info(
-                    slug,
-                    &ModelsManagerConfig {
-                        model_context_window: Some(1_000_000),
-                        ..Default::default()
-                    },
-                )
-                .await;
-            let mut expected_model_info = manager
-                .get_model_info(slug, &ModelsManagerConfig::default())
-                .await;
-            expected_model_info.context_window = Some(872_000);
-            assert_eq!(model_info, expected_model_info);
-        }
 
-        let models = catalog
-            .models
-            .iter()
-            .map(|model| (model.slug.as_str(), model.display_name.as_str()))
-            .collect::<Vec<_>>();
-
+        assert_eq!(catalog.models.len(), 1);
+        assert_eq!(catalog.models[0].slug, remote_models[0].slug);
+        assert_eq!(catalog.models[0].display_name, remote_models[0].display_name);
+        assert_eq!(catalog.models[0].web_search_tool_type, WebSearchToolType::Text);
         assert_eq!(
-            models,
-            vec![
-                ("provider.gpt-5.6-sol", "GPT-5.6 Sol"),
-                ("provider.gpt-6-astra", "GPT-6-Astra"),
-                ("provider.gpt-5.6-terra", "GPT-5.6 Terra"),
-                ("provider.gpt-5.6-luna", "GPT-5.6 Luna"),
-                ("provider.gpt-5.5", "GPT-5.5"),
-                ("provider.gpt-5.4", "GPT-5.4"),
-            ]
+            catalog.models[0].multi_agent_version,
+            Some(MultiAgentVersion::V1)
         );
-
-        let available_models = manager
-            .list_models(
-                RefreshStrategy::Online,
-                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            )
-            .await;
-        assert_eq!(
-            available_models
-                .iter()
-                .map(|preset| preset.model.as_str())
-                .collect::<Vec<_>>(),
-            vec![
-                "provider.gpt-5.6-sol",
-                "provider.gpt-6-astra",
-                "provider.gpt-5.6-terra",
-                "provider.gpt-5.6-luna",
-                "provider.gpt-5.5",
-                "provider.gpt-5.4",
-            ]
-        );
-
-        let default_model = available_models
-            .iter()
-            .find(|preset| preset.is_default)
-            .expect("Bedrock catalog should have a default model");
-
-        assert_eq!(default_model.model, "provider.gpt-5.6-sol");
     }
 
     #[tokio::test]
     async fn configured_bedrock_catalog_only_allows_default_service_tier() {
-        let configured_model = genex_models_manager::test_support::test_models_response()
-            .expect("bundled models should parse")
-            .models
-            .into_iter()
-            .find(|model| model.slug == "gpt-5.5")
-            .expect("bundled models should include GPT-5.5");
+        let mut configured_model = remote_model("configured-model");
+        configured_model.additional_speed_tiers = vec!["fast".to_string()];
+        configured_model.service_tiers = vec![ModelServiceTier {
+            id: "standard".to_string(),
+            name: "Standard".to_string(),
+            description: "Standard service tier".to_string(),
+        }];
         assert!(!configured_model.additional_speed_tiers.is_empty());
         assert!(!configured_model.service_tiers.is_empty());
 
@@ -1186,7 +1129,7 @@ printf '%s\n' '{"AccessKeyId":"exported","SecretAccessKey":"secret"}'
             .await;
 
         assert_eq!(catalog.models.len(), 1);
-        assert_eq!(catalog.models[0].slug, "gpt-5.5");
+        assert_eq!(catalog.models[0].slug, "configured-model");
         assert_eq!(
             catalog.models[0].additional_speed_tiers,
             Vec::<String>::new()

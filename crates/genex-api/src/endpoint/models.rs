@@ -293,8 +293,8 @@ mod tests {
         let response = ModelsResponse {
             models: vec![
                 serde_json::from_value(json!({
-                    "slug": "gpt-test",
-                    "display_name": "gpt-test",
+                    "slug": "model-test",
+                    "display_name": "model-test",
                     "description": "desc",
                     "default_reasoning_level": "medium",
                     "supported_reasoning_levels": [{"effort": "low", "description": "low"}, {"effort": "medium", "description": "medium"}, {"effort": "high", "description": "high"}],
@@ -332,7 +332,7 @@ mod tests {
             .expect("request should succeed");
 
         assert_eq!(models.len(), 1);
-        assert_eq!(models[0].slug, "gpt-test");
+        assert_eq!(models[0].slug, "model-test");
         assert_eq!(models[0].supported_in_api, true);
         assert_eq!(models[0].priority, 1);
     }

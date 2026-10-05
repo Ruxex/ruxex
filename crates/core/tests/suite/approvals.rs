@@ -931,7 +931,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "danger_full_access_on_request_allows_outside_write_gpt_5_1_no_exit",
+            name: "danger_full_access_on_request_allows_outside_write_model_5_1_no_exit",
             approval_policy: OnRequest,
             sandbox_policy: SandboxPolicy::DangerFullAccess,
             action: ActionKind::WriteFile {
@@ -962,7 +962,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "danger_full_access_on_request_allows_network_gpt_5_1_no_exit",
+            name: "danger_full_access_on_request_allows_network_model_5_1_no_exit",
             approval_policy: OnRequest,
             sandbox_policy: SandboxPolicy::DangerFullAccess,
             action: ActionKind::FetchUrlNoProxy {
@@ -994,7 +994,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "simple_command_unless_trusted_requires_approval_gpt_5_1_no_exit",
+            name: "simple_command_unless_trusted_requires_approval_model_5_1_no_exit",
             approval_policy: UnlessTrusted,
             sandbox_policy: SandboxPolicy::DangerFullAccess,
             action: ActionKind::RunCommand {
@@ -1212,7 +1212,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "danger_full_access_unless_trusted_requests_approval_gpt_5_1_no_exit",
+            name: "danger_full_access_unless_trusted_requests_approval_model_5_1_no_exit",
             approval_policy: UnlessTrusted,
             sandbox_policy: SandboxPolicy::DangerFullAccess,
             action: ActionKind::WriteFile {
@@ -1247,7 +1247,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "danger_full_access_never_allows_outside_write_gpt_5_1_no_exit",
+            name: "danger_full_access_never_allows_outside_write_model_5_1_no_exit",
             approval_policy: Never,
             sandbox_policy: SandboxPolicy::DangerFullAccess,
             action: ActionKind::WriteFile {
@@ -1282,7 +1282,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "read_only_on_request_requires_approval_gpt_5_1_no_exit",
+            name: "read_only_on_request_requires_approval_model_5_1_no_exit",
             approval_policy: OnRequest,
             sandbox_policy: SandboxPolicy::new_read_only_policy(),
             action: ActionKind::WriteFile {
@@ -1315,7 +1315,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "simple_command_on_request_read_only_runs_without_prompt_gpt_5_1_no_exit",
+            name: "simple_command_on_request_read_only_runs_without_prompt_model_5_1_no_exit",
             approval_policy: OnRequest,
             sandbox_policy: SandboxPolicy::new_read_only_policy(),
             action: ActionKind::RunCommand {
@@ -1379,7 +1379,7 @@ fn scenarios() -> Vec<ScenarioSpec> {
             },
         },
         ScenarioSpec {
-            name: "read_only_on_request_network_escalates_when_approved_gpt_5_1_no_exit",
+            name: "read_only_on_request_network_escalates_when_approved_model_5_1_no_exit",
             approval_policy: OnRequest,
             sandbox_policy: SandboxPolicy::new_read_only_policy(),
             action: ActionKind::FetchUrl {
@@ -1972,7 +1972,7 @@ async fn run_scenario(scenario: &ScenarioSpec) -> Result<()> {
     let thread_store_id = format!("approval-scenario-{}", scenario.name);
 
     let mut builder = test_genex()
-        .with_model("gpt-5.5")
+        .with_model("example-model")
         .with_config(move |config| {
             // These scenarios assert tool behavior, not rollout persistence.
             config.experimental_thread_store = ThreadStoreConfig::InMemory {
@@ -2152,7 +2152,7 @@ async fn approving_apply_patch_for_session_skips_future_prompts_for_same_file() 
     let sandbox_policy_for_config = sandbox_policy.clone();
 
     let mut builder = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(approval_policy);
             config
@@ -2287,7 +2287,7 @@ async fn assert_execpolicy_amendment_context(
     let sandbox_policy = SandboxPolicy::new_read_only_policy();
     let sandbox_policy_for_config = sandbox_policy.clone();
     let mut builder = test_genex()
-        .with_model_info_override("gpt-5.4", |model_info| {
+        .with_model_info_override("legacy-model", |model_info| {
             model_info.model_messages = None;
         })
         .with_config(move |config| {

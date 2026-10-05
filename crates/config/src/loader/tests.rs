@@ -629,14 +629,14 @@ async fn profile_v2_rejects_matching_legacy_profile_in_base_user_config() {
     std::fs::write(
         tmp.path().join(CONFIG_TOML_FILE),
         r#"
-model = "gpt-main"
+model = "model-main"
 
 [profiles.work]
-model = "gpt-work"
+model = "model-work"
 "#,
     )
     .expect("write default user config");
-    std::fs::write(&selected_config, r#"model = "gpt-work-v2""#)
+    std::fs::write(&selected_config, r#"model = "model-work-v2""#)
         .expect("write selected user config");
 
     let mut overrides = LoaderOverrides::without_managed_config_for_tests();
@@ -690,11 +690,11 @@ async fn profile_v2_rejects_matching_legacy_profile_selector_in_base_user_config
         tmp.path().join(CONFIG_TOML_FILE),
         r#"
 profile = "work"
-model = "gpt-main"
+model = "model-main"
 "#,
     )
     .expect("write default user config");
-    std::fs::write(&selected_config, r#"model = "gpt-work-v2""#)
+    std::fs::write(&selected_config, r#"model = "model-work-v2""#)
         .expect("write selected user config");
 
     let mut overrides = LoaderOverrides::without_managed_config_for_tests();
@@ -743,14 +743,14 @@ async fn profile_v2_allows_unrelated_legacy_profiles_in_base_user_config() {
     std::fs::write(
         tmp.path().join(CONFIG_TOML_FILE),
         r#"
-model = "gpt-main"
+model = "model-main"
 
 [profiles.dev]
-model = "gpt-dev"
+model = "model-dev"
 "#,
     )
     .expect("write default user config");
-    std::fs::write(&selected_config, r#"model = "gpt-work-v2""#)
+    std::fs::write(&selected_config, r#"model = "model-work-v2""#)
         .expect("write selected user config");
 
     let mut overrides = LoaderOverrides::without_managed_config_for_tests();

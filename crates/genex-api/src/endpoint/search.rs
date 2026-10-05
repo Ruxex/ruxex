@@ -148,7 +148,7 @@ mod tests {
             .search(
                 &SearchRequest {
                     id: "search-session".to_string(),
-                    model: "gpt-test".to_string(),
+                    model: "model-test".to_string(),
                     reasoning: None,
                     input: Some(SearchInput::Items(vec![ResponseItem::Message {
                         id: Some(ResponseItemId::with_suffix("msg", "search")),
@@ -235,7 +235,7 @@ mod tests {
             body,
             &json!({
                 "id": "search-session",
-                "model": "gpt-test",
+                "model": "model-test",
                 "input": [{
                     "type": "message",
                     "id": "msg_search",

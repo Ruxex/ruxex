@@ -226,7 +226,7 @@ async fn assert_user_turn_local_image_resizes_to(
     let builder = match image_budget_policy {
         ImageBudgetPolicy::DetailBased | ImageBudgetPolicy::Unified => test_genex(),
         ImageBudgetPolicy::UnifiedResponsesLiteWithoutOriginalSupport => test_genex()
-            .with_model_info_override("gpt-5.4", |model_info| {
+            .with_model_info_override("legacy-model", |model_info| {
                 model_info.supports_image_detail_original = false;
                 model_info.use_responses_lite = true;
             }),
@@ -839,12 +839,12 @@ async fn view_image_routes_to_selected_remote_environment() -> anyhow::Result<()
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn view_image_tool_can_preserve_original_resolution_when_requested_on_gpt5_4()
+async fn view_image_tool_can_preserve_original_resolution_when_requested_on_model5_4()
 -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
         genex,
@@ -935,7 +935,7 @@ async fn view_image_unified_budget_hides_detail_but_accepts_legacy_hints() -> an
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.4").with_config(|config| {
+    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
         let _ = config.features.enable(Feature::UnifiedImageBudget);
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -1011,7 +1011,7 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
         genex,
@@ -1089,7 +1089,7 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
         genex,
@@ -1193,7 +1193,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
 ) -> anyhow::Result<()> {
     let server = start_mock_server().await;
     let mut builder = test_genex()
-        .with_model("gpt-5.2")
+        .with_model("example-model-2")
         .with_config(move |config| {
             if image_budget_policy == ImageBudgetPolicy::Unified {
                 let _ = config.features.enable(Feature::UnifiedImageBudget);
@@ -1292,7 +1292,7 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
     let TestGenex {
         genex,

@@ -44,7 +44,7 @@ async fn fresh_context_subagent_inherits_disabled_view_image_and_mcp_tools() -> 
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_provider_config("supports_websockets = false")
         .with_extra_config(&format!(
             "[mcp_servers.{TEST_SERVER_NAME}]\nurl = \"{mcp_server_url}/mcp\"\n\n[features.multi_agent_v2]\nenabled = true"
@@ -58,7 +58,7 @@ async fn fresh_context_subagent_inherits_disabled_view_image_and_mcp_tools() -> 
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             config: Some(
                 [("features.view_image".to_string(), json!(false))]
                     .into_iter()

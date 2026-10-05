@@ -397,11 +397,11 @@ async fn config_requirements_read_includes_managed_model_policy_and_instructions
 additional_developer_instructions = "Follow the managed policy.\nPreserve its formatting."
 
 [auto_review]
-required_on_models = ["gpt-protected", "gpt-sensitive"]
-ignore_rules = ["gpt-protected"]
+required_on_models = ["model-protected", "model-sensitive"]
+ignore_rules = ["model-protected"]
 
 [models.new_thread]
-model = "gpt-managed"
+model = "model-managed"
 model_reasoning_effort = "medium"
 service_tier = "legacy"
 "#,
@@ -427,17 +427,17 @@ service_tier = "legacy"
     assert_eq!(
         auto_review.required_on_models,
         Some(vec![
-            "gpt-protected".to_string(),
-            "gpt-sensitive".to_string()
+            "model-protected".to_string(),
+            "model-sensitive".to_string()
         ])
     );
     assert_eq!(
         auto_review.ignore_rules,
-        Some(vec!["gpt-protected".to_string()])
+        Some(vec!["model-protected".to_string()])
     );
     let models = requirements.models.expect("managed model requirements");
     let defaults = models.new_thread.expect("managed new-thread defaults");
-    assert_eq!(defaults.model.as_deref(), Some("gpt-managed"));
+    assert_eq!(defaults.model.as_deref(), Some("model-managed"));
     assert_eq!(
         defaults.model_reasoning_effort,
         Some(ReasoningEffort::Medium)
@@ -505,7 +505,7 @@ async fn config_read_returns_effective_and_layers() -> Result<()> {
     write_config(
         &genex_home,
         r#"
-model = "gpt-user"
+model = "model-user"
 sandbox_mode = "workspace-write"
 "#,
     )?;
@@ -530,7 +530,7 @@ sandbox_mode = "workspace-write"
         layers,
     } = timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
-    assert_eq!(config.model.as_deref(), Some("gpt-user"));
+    assert_eq!(config.model.as_deref(), Some("model-user"));
     assert_eq!(
         origins.get("model").expect("origin").name,
         ConfigLayerSource::User {
@@ -555,7 +555,7 @@ async fn config_read_includes_tools() -> Result<()> {
     write_config(
         &genex_home,
         r#"
-model = "gpt-user"
+model = "model-user"
 
 [tools.web_search]
 context_size = "low"
@@ -1258,7 +1258,7 @@ width = 320
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_includes_project_layers_for_cwd() -> Result<()> {
     let genex_home = TempDir::new()?;
-    write_config(&genex_home, r#"model = "gpt-user""#)?;
+    write_config(&genex_home, r#"model = "model-user""#)?;
 
     let workspace = TempDir::new()?;
     let project_config_dir = workspace.path().join(".genex");
@@ -1382,7 +1382,7 @@ async fn config_read_includes_system_layer_and_overrides() -> Result<()> {
         &genex_home,
         &format!(
             r#"
-model = "gpt-user"
+model = "model-user"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 
@@ -1402,7 +1402,7 @@ network_access = true
         &managed_path,
         format!(
             r#"
-model = "gpt-system"
+model = "model-system"
 approval_policy = "never"
 
 [sandbox_workspace_write]
@@ -1436,7 +1436,7 @@ writable_roots = [{}]
         layers,
     } = timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
-    assert_eq!(config.model.as_deref(), Some("gpt-system"));
+    assert_eq!(config.model.as_deref(), Some("model-system"));
     assert_eq!(
         origins.get("model").expect("origin").name,
         ConfigLayerSource::System {
@@ -1501,7 +1501,7 @@ async fn config_value_write_replaces_value() -> Result<()> {
     write_config(
         &temp_dir,
         r#"
-model = "gpt-old"
+model = "model-old"
 "#,
     )?;
 
@@ -1525,7 +1525,7 @@ model = "gpt-old"
         .send_config_value_write_request(ConfigValueWriteParams {
             file_path: None,
             key_path: "model".to_string(),
-            value: json!("gpt-new"),
+            value: json!("model-new"),
             merge_strategy: MergeStrategy::Replace,
             expected_version,
         })
@@ -1546,7 +1546,7 @@ model = "gpt-old"
         .await?;
     let verify: ConfigReadResponse =
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(verify_id)).await??;
-    assert_eq!(verify.config.model.as_deref(), Some("gpt-new"));
+    assert_eq!(verify.config.model.as_deref(), Some("model-new"));
 
     Ok(())
 }
@@ -1872,7 +1872,7 @@ async fn config_provider_upsert_persists_displaced_siblings() -> Result<()> {
                 upsert(".z_new", json!({ "env": ["VENDOR_PASSWORD"] })),
                 ConfigEdit {
                     key_path: "model".to_string(),
-                    value: json!("gpt-test"),
+                    value: json!("model-test"),
                     merge_strategy: MergeStrategy::Replace,
                 },
                 upsert("", json!({ "a_old": { "env": ["OTHER_PASSWORD"] } })),
@@ -2014,7 +2014,7 @@ async fn config_read_after_pipelined_write_sees_written_value() -> Result<()> {
     write_config(
         &temp_dir,
         r#"
-model = "gpt-old"
+model = "model-old"
 "#,
     )?;
 
@@ -2028,7 +2028,7 @@ model = "gpt-old"
         .send_config_value_write_request(ConfigValueWriteParams {
             file_path: None,
             key_path: "model".to_string(),
-            value: json!("gpt-new"),
+            value: json!("model-new"),
             merge_strategy: MergeStrategy::Replace,
             expected_version: None,
         })
@@ -2046,7 +2046,7 @@ model = "gpt-old"
 
     let read: ConfigReadResponse =
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(read_id)).await??;
-    assert_eq!(read.config.model.as_deref(), Some("gpt-new"));
+    assert_eq!(read.config.model.as_deref(), Some("model-new"));
 
     Ok(())
 }
@@ -2057,7 +2057,7 @@ async fn config_value_write_rejects_version_conflict() -> Result<()> {
     write_config(
         &genex_home,
         r#"
-model = "gpt-old"
+model = "model-old"
 "#,
     )?;
 
@@ -2071,7 +2071,7 @@ model = "gpt-old"
         .send_config_value_write_request(ConfigValueWriteParams {
             file_path: Some(genex_home.path().join("config.toml").display().to_string()),
             key_path: "model".to_string(),
-            value: json!("gpt-new"),
+            value: json!("model-new"),
             merge_strategy: MergeStrategy::Replace,
             expected_version: Some("sha256:stale".to_string()),
         })
@@ -2161,7 +2161,7 @@ async fn config_batch_write_round_trips_browser_and_computer_use_config() -> Res
     write_config(
         &tmp_dir,
         r#"
-model = "gpt-existing"
+model = "model-existing"
 
 [browser_use.origins."https://stale.example"]
 access = "deny"
@@ -2281,7 +2281,7 @@ access = "deny"
         toml::from_str(&std::fs::read_to_string(genex_home.join("config.toml"))?)?;
     let expected_persisted: toml::Value = toml::from_str(
         r#"
-model = "gpt-existing"
+model = "model-existing"
 
 [browser_use]
 allow_history_access = true
@@ -2394,7 +2394,7 @@ async fn config_batch_write_rejects_legacy_profile_tables() -> Result<()> {
         &tmp_dir,
         r#"
 [profiles."team.prod"]
-model = "gpt-5.3-spark"
+model = "example-model-3"
 "#,
     )?;
 
@@ -2410,7 +2410,7 @@ model = "gpt-5.3-spark"
             edits: vec![
                 ConfigEdit {
                     key_path: "profiles.\"team.prod\".model".to_string(),
-                    value: json!("gpt-5.5"),
+                    value: json!("example-model"),
                     merge_strategy: MergeStrategy::Replace,
                 },
                 ConfigEdit {
@@ -2444,7 +2444,7 @@ model = "gpt-5.3-spark"
         toml::from_str(&std::fs::read_to_string(genex_home.join("config.toml"))?)?;
     assert_eq!(
         config["profiles"]["team.prod"]["model"].as_str(),
-        Some("gpt-5.3-spark")
+        Some("example-model-3")
     );
     assert_eq!(config.get("items"), None);
 

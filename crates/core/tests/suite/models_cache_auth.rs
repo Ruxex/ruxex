@@ -26,7 +26,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     let mut model = test_models_response()?
         .models
         .into_iter()
-        .find(|model| model.slug == "gpt-5.5")
+        .find(|model| model.slug == "example-model")
         .unwrap();
     model.visibility = ModelVisibility::List;
     model.default_service_tier = Some("flex".into());
@@ -40,7 +40,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     let managed = test_genex()
         .with_home(home.clone())
         .with_auth(GenexAuth::from_api_key("test-api-key"))
-        .with_model("gpt-5.5")
+        .with_model("example-model")
         .build_with_auto_env(&server)
         .await?;
     assert!(home.path().join("models_cache.json").exists());
@@ -94,7 +94,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
                 .enable(genex_features::Feature::ApiKeyModelDiscovery)
                 .expect("enable API-key model discovery");
         })
-        .with_model("gpt-5.5")
+        .with_model("example-model")
         .build_with_auto_env(&server)
         .await?;
     let ordinary = responses::mount_sse_once(
@@ -141,7 +141,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     let other = test_genex()
         .with_home(home)
         .with_auth(GenexAuth::from_api_key("test-api-key"))
-        .with_model("gpt-5.5")
+        .with_model("example-model")
         .with_config(|config| {
             config.model_provider_id = "second".into();
             config.model_provider.name = "Second".into();

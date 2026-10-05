@@ -32,20 +32,20 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
     app.enqueue_primary_thread_session(session, Vec::new())
         .await?;
     for (status, enrolled, model, replace_account, expected) in [
-        (200, true, "gpt-5.6-sol", false, Notice::Limited),
-        (200, false, "gpt-5.6-sol", false, Notice::Apply),
-        (503, false, "gpt-5.6-sol", false, Notice::Limited),
-        (200, true, "gpt-6-astra", false, Notice::Astra),
-        (200, false, "gpt-6-astra", false, Notice::Astra),
-        (503, false, "gpt-6-astra", false, Notice::Astra),
-        (200, true, "gpt-6-astra-wm", false, Notice::Astra),
+        (200, true, "example-model", false, Notice::Limited),
+        (200, false, "example-model", false, Notice::Limited),
+        (503, false, "example-model", false, Notice::Limited),
+        (200, true, "alternate-model", false, Notice::Limited),
+        (200, false, "alternate-model", false, Notice::Limited),
+        (503, false, "alternate-model", false, Notice::Limited),
+        (200, true, "provider-model", false, Notice::Limited),
         (200, true, "unmapped-model", false, Notice::Limited),
-        (200, false, "gpt-5.6-sol", true, Notice::Limited),
+        (200, false, "example-model", true, Notice::Limited),
     ] {
         backend.reset().await;
         let genex_home = app.config.genex_home.clone();
         let response = wiremock::ResponseTemplate::new(status)
-            .set_delay(if model == "gpt-5.6-sol" && enrolled { Duration::from_secs(1) } else { Duration::ZERO })
+            .set_delay(if model == "example-model" && enrolled { Duration::from_secs(1) } else { Duration::ZERO })
             .set_body_json(json!({"programs": [{"program":"cyber", "state": if enrolled { "active" } else { "inactive" }, "grants": if enrolled { json!([{"level":"tac2"}]) } else { json!([]) }}]}));
         wiremock::Mock::given(wiremock::matchers::path("/accounts/verified_access"))
             .and(wiremock::matchers::header(
@@ -67,7 +67,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
             .mount(&backend)
             .await;
         // Account discovery starts before a subsequent model switch to Sol.
-        app.chat_widget.set_model("gpt-6-astra");
+        app.chat_widget.set_model("alternate-model");
         app.handle_app_server_event(
             &server,
             AppServerEvent::ServerNotification(Box::new(ServerNotification::AccountUpdated(
@@ -78,7 +78,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
             ))),
         )
         .await;
-        if model != "gpt-5.6-sol" || !enrolled {
+        if model != "example-model" || !enrolled {
             wait_for_notice(&app.chat_widget.cyber_policy_notice).await;
         }
         app.active_thread_id = Some(thread_id);

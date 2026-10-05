@@ -99,7 +99,7 @@ async fn thread_start_provider_model_fallback_applies_to_configured_model() -> R
     std::fs::write(
         genex_home.path().join("config.toml"),
         r#"model_provider = "amazon-bedrock"
-model = "gpt-5.4-mini"
+model = "legacy-model"
 "#,
     )?;
     let mut mcp = TestAppServer::builder()
@@ -114,7 +114,7 @@ model = "gpt-5.4-mini"
         })
         .await?;
 
-    assert_eq!(response.model, "provider.gpt-5.6-sol");
+    assert_eq!(response.model, "provider.provider-model-b");
     Ok(())
 }
 
@@ -239,19 +239,19 @@ async fn thread_start_provider_model_fallback_uses_bedrock_static_catalog() -> R
 
     let unsupported_with_fallback = start_thread_with_model(
         &mut mcp,
-        "gpt-5.4-mini",
+        "legacy-model",
         /*allow_provider_model_fallback*/ true,
     )
     .await?;
     let supported_with_fallback = start_thread_with_model(
         &mut mcp,
-        "provider.gpt-5.4",
+        "provider.legacy-model",
         /*allow_provider_model_fallback*/ true,
     )
     .await?;
     let unsupported_without_fallback = start_thread_with_model(
         &mut mcp,
-        "gpt-5.4-mini",
+        "legacy-model",
         /*allow_provider_model_fallback*/ false,
     )
     .await?;
@@ -262,7 +262,7 @@ async fn thread_start_provider_model_fallback_uses_bedrock_static_catalog() -> R
             supported_with_fallback.model,
             unsupported_without_fallback.model,
         ],
-        vec!["provider.gpt-5.6-sol", "provider.gpt-5.4", "gpt-5.4-mini"]
+        vec!["provider.provider-model-b", "provider.legacy-model", "legacy-model"]
     );
     Ok(())
 }
@@ -280,7 +280,7 @@ async fn thread_start_bedrock_runtime_prefers_global_cross_region_models() -> Re
         .build_initialized()
         .await?;
 
-    for model in ["global.provider.gpt-5.6-sol", "us.provider.gpt-5.6-sol"] {
+    for model in ["global.provider.provider-model-b", "us.provider.provider-model-b"] {
         let response =
             start_thread_with_model(&mut mcp, model, /*allow_provider_model_fallback*/ true)
                 .await?;
@@ -289,11 +289,11 @@ async fn thread_start_bedrock_runtime_prefers_global_cross_region_models() -> Re
 
     let response = start_thread_with_model(
         &mut mcp,
-        "provider.gpt-5.6-sol",
+        "provider.provider-model-b",
         /*allow_provider_model_fallback*/ true,
     )
     .await?;
-    assert_eq!(response.model, "global.provider.gpt-5.6-sol");
+    assert_eq!(response.model, "global.provider.provider-model-b");
 
     Ok(())
 }
@@ -341,7 +341,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
     // Start a v2 thread with an explicit model override.
     let req_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2".to_string()),
+            model: Some("example-model-2".to_string()),
             thread_source: Some(ThreadSource::User),
             service_name: Some("genex_work_desktop".to_string()),
             ..Default::default()
@@ -372,7 +372,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
     assert_eq!(model_provider, "mock_provider");
     assert_eq!(
         (thread.model.as_deref(), thread.reasoning_effort.clone()),
-        (Some("gpt-5.2"), Some(ReasoningEffort::High))
+        (Some("example-model-2"), Some(ReasoningEffort::High))
     );
     assert!(
         thread.created_at > 0,
@@ -1082,7 +1082,7 @@ async fn thread_start_ephemeral_remains_pathless() -> Result<()> {
 
     let req_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2".to_string()),
+            model: Some("example-model-2".to_string()),
             ephemeral: Some(true),
             ..Default::default()
         })

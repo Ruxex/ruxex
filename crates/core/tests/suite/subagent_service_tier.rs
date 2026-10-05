@@ -160,7 +160,7 @@ async fn root_service_tier_change_updates_existing_subagent(
     let updated_request_service_tier = updated_service_tier
         .filter(|service_tier| *service_tier != SERVICE_TIER_DEFAULT_REQUEST_VALUE);
     let mut builder = test_genex()
-        .with_model("gpt-5.6-sol")
+        .with_model("provider-model-b")
         .with_config(move |config| {
             config.service_tier = initial_service_tier_owned;
             configure_flex_role(config);
@@ -308,7 +308,7 @@ async fn root_service_tier_change_updates_existing_subagent(
 async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<()> {
     let server = start_mock_server().await;
     let mut builder = test_genex()
-        .with_model("gpt-5.6-sol")
+        .with_model("provider-model-b")
         .with_config(|config| {
             config.service_tier = Some("flex".to_string());
             config.multi_agent_v2.max_concurrent_threads_per_session = 2;

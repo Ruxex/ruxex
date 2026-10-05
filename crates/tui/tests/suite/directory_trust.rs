@@ -82,7 +82,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                                 {
                                     trust_reads.fetch_add(1, Ordering::SeqCst);
                                 }
-                                json!({"config": {"model": "gpt-5.6-terra", "projects": {
+                                json!({"config": {"model": "provider-model-d", "projects": {
                                     cwd.to_string_lossy(): {"trust_level": if trust_reads.load(Ordering::SeqCst) == 4 { Some("trusted") } else { trust_level }},
                                     other_cwd.to_string_lossy(): {"trust_level": "untrusted"},
                                     cwd.join("moved-folder").to_string_lossy(): {"trust_level": "untrusted"}

@@ -23,8 +23,8 @@ fn runtime_metrics_summary_collects_tool_api_and_streaming_metrics() -> Result<(
     )?;
     let manager = SessionTelemetry::new(
         ThreadId::new(),
-        "gpt-5.1",
-        "gpt-5.1",
+        "example-model-1",
+        "example-model-1",
         Some("account-id".to_string()),
         /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),

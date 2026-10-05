@@ -78,7 +78,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
     )?;
     wait_for_capture_contains(
         &genex_pane,
-        "gpt-5.4 default",
+        "legacy-model default",
         Duration::from_secs(/*secs*/ 15),
     )?;
     let draft = "Notice where we are here in terms of y location.";
@@ -246,7 +246,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
     )?;
     wait_for_capture_contains(
         &genex_pane,
-        "gpt-5.4 default",
+        "legacy-model default",
         Duration::from_secs(/*secs*/ 15),
     )?;
     let draft = "Notice where we are here in terms of y location.";
@@ -358,7 +358,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             .arg("PROVIDER_API_KEY=dummy")
             .arg(genex)
             .arg("--model")
-            .arg("gpt-5.6-terra")
+            .arg("provider-model-d")
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
@@ -371,7 +371,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
     anyhow::ensure!(!genex_pane.is_empty(), "tmux did not report a pane id");
     wait_for_capture_contains(
         &genex_pane,
-        "gpt-5.6-terra",
+        "provider-model-d",
         Duration::from_secs(/*secs*/ 15),
     )?;
 
@@ -505,7 +505,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
     )?;
     wait_for_capture_contains(
         &genex_pane,
-        "gpt-5.4 default",
+        "legacy-model default",
         Duration::from_secs(/*secs*/ 15),
     )?;
     let draft = "Notice where we are here in terms of y location.";
@@ -605,7 +605,7 @@ fn genex_binary(repo_root: &Path) -> Result<PathBuf> {
 fn write_config(genex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root_display = repo_root.display();
     let config = format!(
-        r#"model = "gpt-5.4"
+        r#"model = "legacy-model"
 model_provider = "provider"
 suppress_unstable_features_warning = true
 

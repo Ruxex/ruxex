@@ -40,7 +40,7 @@ fn child_thread_metadata_creates_spawn_origin_without_delivery_edge() -> anyhow:
             "nickname": "James",
             "agent_role": "explorer",
             "task_name": "repo_file_counter",
-            "model": "gpt-test",
+            "model": "model-test",
             "session_source": {
                 "subagent": {
                     "thread_spawn": {
@@ -62,7 +62,7 @@ fn child_thread_metadata_creates_spawn_origin_without_delivery_edge() -> anyhow:
     let replayed = replay_bundle(temp.path())?;
     let thread = &replayed.threads["019d0000-0000-7000-8000-000000000002"];
     assert_eq!(thread.nickname, Some("James".to_string()));
-    assert_eq!(thread.default_model, Some("gpt-test".to_string()));
+    assert_eq!(thread.default_model, Some("model-test".to_string()));
     assert_eq!(
         thread.origin,
         AgentOrigin::Spawned {
@@ -930,7 +930,7 @@ fn append_spawn_agent_tool_lifecycle(
             "sender_thread_id": "019d0000-0000-7000-8000-000000000001",
             "new_thread_id": "019d0000-0000-7000-8000-000000000002",
             "prompt": "count",
-            "model": "gpt-test",
+            "model": "model-test",
             "reasoning_effort": "medium",
             "status": "running"
         }),

@@ -781,7 +781,7 @@ mod tests {
                 sender_thread_id: sender_thread_id.to_string(),
                 receiver_thread_ids: vec![robie_id.to_string()],
                 prompt: Some(String::new()),
-                model: Some("gpt-5".to_string()),
+                model: Some("example-model".to_string()),
                 reasoning_effort: Some(ReasoningEffortConfig::High),
                 agents_states: HashMap::from([(
                     robie_id.to_string(),
@@ -801,7 +801,7 @@ mod tests {
         assert_eq!(title.spans[4].content.as_ref(), "[explorer]");
         assert_eq!(title.spans[4].style.fg, None);
         assert!(!title.spans[4].style.add_modifier.contains(Modifier::DIM));
-        assert_eq!(title.spans[6].content.as_ref(), "(gpt-5 high)");
+        assert_eq!(title.spans[6].content.as_ref(), "(example-model high)");
         assert_eq!(title.spans[6].style.fg, Some(Color::Magenta));
     }
 

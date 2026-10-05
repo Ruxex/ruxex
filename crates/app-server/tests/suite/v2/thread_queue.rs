@@ -453,7 +453,7 @@ async fn cold_thread_resume_dispatches_a_persisted_queued_submission() -> Result
     let update_id = first
         .send_thread_settings_update_request(ThreadSettingsUpdateParams {
             thread_id: thread_id.clone(),
-            model: Some("gpt-5.2".to_string()),
+            model: Some("example-model-2".to_string()),
             effort: Some(ReasoningEffort::High),
             ..Default::default()
         })
@@ -489,7 +489,7 @@ async fn cold_thread_resume_dispatches_a_persisted_queued_submission() -> Result
     let read: ThreadReadResponse = timeout(READ_TIMEOUT, resumed.read_response(read_id)).await??;
     assert_eq!(
         (read.thread.model.as_deref(), read.thread.reasoning_effort),
-        (Some("gpt-5.2"), Some(ReasoningEffort::High))
+        (Some("example-model-2"), Some(ReasoningEffort::High))
     );
     assert_eq!(read.thread.status, ThreadStatus::NotLoaded);
     for use_state_db_only in [false, true] {
@@ -508,7 +508,7 @@ async fn cold_thread_resume_dispatches_a_persisted_queued_submission() -> Result
             .expect("persisted thread should be listed");
         assert_eq!(
             (listed.model.as_deref(), listed.reasoning_effort.clone()),
-            (Some("gpt-5.2"), Some(ReasoningEffort::High))
+            (Some("example-model-2"), Some(ReasoningEffort::High))
         );
         assert_eq!(listed.status, ThreadStatus::NotLoaded);
     }

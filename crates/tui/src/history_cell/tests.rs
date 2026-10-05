@@ -510,8 +510,8 @@ async fn session_info_uses_availability_nux_tooltip_override() {
     let cell = new_session_info(
         &config,
         &crate::local_settings::LocalSettings::from(&config),
-        "gpt-5",
-        &session_configured_event("gpt-5"),
+        "example-model",
+        &session_configured_event("example-model"),
         /*is_first_event*/ false,
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
@@ -534,8 +534,8 @@ async fn session_info_first_event_suppresses_tooltips_and_nux() {
     let cell = new_session_info(
         &config,
         &crate::local_settings::LocalSettings::from(&config),
-        "gpt-5",
-        &session_configured_event("gpt-5"),
+        "example-model",
+        &session_configured_event("example-model"),
         /*is_first_event*/ true,
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
@@ -553,8 +553,8 @@ async fn session_info_hides_tooltips_when_disabled() {
     let cell = new_session_info(
         &config,
         &crate::local_settings::LocalSettings::from(&config),
-        "gpt-5",
-        &session_configured_event("gpt-5"),
+        "example-model",
+        &session_configured_event("example-model"),
         /*is_first_event*/ false,
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
@@ -786,7 +786,7 @@ fn mcp_inventory_loading_without_animations_is_stable() {
 #[test]
 fn session_header_includes_reasoning_level_when_present() {
     let cell = SessionHeaderHistoryCell::new(
-        "gpt-4o".to_string(),
+        "legacy-model-4o".to_string(),
         Some(ReasoningEffortConfig::High),
         std::env::temp_dir(),
         "test",
@@ -798,7 +798,7 @@ fn session_header_includes_reasoning_level_when_present() {
         .find(|line| line.contains("model:"))
         .expect("model line");
 
-    assert!(model_line.contains("gpt-4o high"));
+    assert!(model_line.contains("legacy-model-4o high"));
     assert!(model_line.contains("/model to change"));
 }
 
@@ -1116,7 +1116,7 @@ fn reasoning_summary_block_returns_reasoning_cell_when_feature_disabled() {
 #[tokio::test]
 async fn reasoning_summary_block_respects_config_overrides() {
     let mut config = test_config().await;
-    config.model = Some("gpt-3.5-turbo".to_string());
+    config.model = Some("legacy-model-3".to_string());
     let cell = new_reasoning_summary_block(
         vec!["**High level reasoning**\n\nDetailed reasoning goes here.".to_string()],
         &test_cwd(),

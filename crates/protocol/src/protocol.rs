@@ -5609,7 +5609,7 @@ mod tests {
             "cwd": test_path_buf("/tmp"),
             "approval_policy": "never",
             "sandbox_policy": { "type": "danger-full-access" },
-            "model": "gpt-5",
+            "model": "example-model",
             "personality": "friendly",
             "summary": "auto",
         }))?;
@@ -5631,7 +5631,7 @@ mod tests {
             "cwd": test_path_buf("/tmp"),
             "approval_policy": "on-failure",
             "sandbox_policy": { "type": "danger-full-access" },
-            "model": "gpt-5",
+            "model": "example-model",
             "summary": "auto",
         }))?;
 
@@ -5668,7 +5668,7 @@ mod tests {
                 .try_into()
                 .expect("serializable split policy"),
             ),
-            model: "gpt-5".to_string(),
+            model: "example-model".to_string(),
             comp_hash: None,
             collaboration_mode: None,
             multi_agent_version: None,

@@ -34,8 +34,8 @@ use test_case::test_case;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
 
-const INITIAL_MODEL: &str = "gpt-5.4";
-const COMMITTED_MODEL: &str = "gpt-5.2";
+const INITIAL_MODEL: &str = "legacy-model";
+const COMMITTED_MODEL: &str = "example-model-2";
 const TIMEOUT: Duration = Duration::from_secs(10);
 
 fn assert_checkpoints(test: &TestGenex, expected: &[ThreadSettingsSnapshot]) -> Result<()> {

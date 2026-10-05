@@ -35,7 +35,7 @@ fn create_in_root_writes_replayable_lifecycle_events() -> anyhow::Result<()> {
             session_source: SessionSource::Exec,
             cwd: PathBuf::from("/workspace"),
             rollout_path: Some(PathBuf::from("/tmp/rollout.jsonl")),
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             provider_name: "test-provider".to_string(),
             approval_policy: "never".to_string(),
             sandbox_policy: format!("{:?}", SandboxPolicy::DangerFullAccess),
@@ -82,7 +82,7 @@ fn spawned_thread_start_appends_to_root_bundle() -> anyhow::Result<()> {
         }),
         cwd: PathBuf::from("/workspace"),
         rollout_path: Some(PathBuf::from("/tmp/child-rollout.jsonl")),
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         provider_name: "test-provider".to_string(),
         approval_policy: "never".to_string(),
         sandbox_policy: format!("{:?}", SandboxPolicy::DangerFullAccess),
@@ -129,7 +129,7 @@ fn disabled_thread_context_accepts_trace_calls_without_writing() -> anyhow::Resu
     );
 
     let inference_trace =
-        thread_trace.inference_trace_context("turn-1", "gpt-test", "test-provider");
+        thread_trace.inference_trace_context("turn-1", "model-test", "test-provider");
     let inference_attempt = inference_trace.start_attempt();
     inference_attempt.record_started(&serde_json::json!({ "kind": "inference" }));
     let token_usage: Option<genex_protocol::protocol::TokenUsage> = None;
@@ -139,7 +139,7 @@ fn disabled_thread_context_accepts_trace_calls_without_writing() -> anyhow::Resu
     let compaction_trace = thread_trace.compaction_trace_context(
         "turn-1",
         "compaction-1",
-        "gpt-test",
+        "model-test",
         "test-provider",
     );
     assert!(!compaction_trace.is_enabled());
@@ -173,7 +173,7 @@ fn compaction_contexts_share_identity_across_models() -> anyhow::Result<()> {
         ThreadTraceContext::start_root_in_root_for_test(temp.path(), minimal_metadata(thread_id))?;
     thread_trace.record_genex_turn_started("turn-1");
 
-    for model in ["gpt-previous", "gpt-selected"] {
+    for model in ["model-previous", "model-selected"] {
         let compaction_trace =
             thread_trace.compaction_trace_context("turn-1", "compaction-1", model, "test-provider");
         assert!(compaction_trace.is_enabled());
@@ -192,8 +192,8 @@ fn compaction_contexts_share_identity_across_models() -> anyhow::Result<()> {
     assert_eq!(
         attempts,
         vec![
-            ("gpt-previous".to_string(), "compaction-1".to_string()),
-            ("gpt-selected".to_string(), "compaction-1".to_string()),
+            ("model-previous".to_string(), "compaction-1".to_string()),
+            ("model-selected".to_string(), "compaction-1".to_string()),
         ]
     );
 
@@ -235,7 +235,7 @@ fn minimal_metadata(thread_id: ThreadId) -> ThreadStartedTraceMetadata {
         session_source: SessionSource::Exec,
         cwd: PathBuf::from("/workspace"),
         rollout_path: None,
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         provider_name: "test-provider".to_string(),
         approval_policy: "never".to_string(),
         sandbox_policy: "danger-full-access".to_string(),

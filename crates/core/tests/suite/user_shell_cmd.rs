@@ -274,7 +274,7 @@ fn slow_user_shell_command() -> &'static str {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn user_shell_command_does_not_replace_active_turn() -> anyhow::Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("legacy-model");
     let fixture = builder.build(&server).await?;
 
     let call_id = "active-turn-shell-call";
@@ -596,7 +596,7 @@ async fn user_shell_command_is_truncated_only_once() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("gpt-5.4").with_config(|config| {
+    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
         config.tool_output_token_limit = Some(100);
     });
     let fixture = builder.build(&server).await?;

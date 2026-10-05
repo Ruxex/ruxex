@@ -110,7 +110,7 @@ async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
     skip_if_wine_exec!(Ok(()), "command approval requires host-native paths");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.2").with_config(|config| {
+    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -929,7 +929,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.2").with_config(|config| {
+    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -988,7 +988,7 @@ async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> R
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_whitespace_script_with_collaboration_mode_does_not_panic() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.2").with_config(|config| {
+    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)

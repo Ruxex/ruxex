@@ -45,7 +45,7 @@ async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
     let home = tempdir()?;
     std::fs::write(
         home.path().join("config.toml"),
-        "model = \"gpt-5.5\"\nmodel_reasoning_effort = \"low\"\nfeatures.network_proxy = true\n",
+        "model = \"example-model\"\nmodel_reasoning_effort = \"low\"\nfeatures.network_proxy = true\n",
     )?;
     let config = ConfigBuilder::default()
         .genex_home(home.path().to_path_buf())
@@ -77,7 +77,7 @@ async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
     let client_preset = bootstrap
         .available_models
         .iter_mut()
-        .find(|preset| preset.model == "gpt-5.5")
+        .find(|preset| preset.model == "example-model")
         .expect("client model in catalog");
     client_preset.upgrade = Some(genex_protocol::model_types::ModelUpgrade {
         id: "server-model".into(),
@@ -88,7 +88,7 @@ async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
     });
     assert!(
         crate::app::startup_prompts::should_show_model_migration_prompt(
-            "gpt-5.5",
+            "example-model",
             "server-model",
             &Default::default(),
             &bootstrap.available_models,

@@ -319,7 +319,7 @@ fn response_completed_chunks(response_id: &str) -> Vec<StreamingSseChunk> {
 async fn build_genex(server: &StreamingSseServer) -> Arc<GenexThread> {
     test_genex()
         .with_config(|config| config.update_plan_enabled = true)
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build_with_streaming_server(server)
         .await
         .expect("build streaming Genex test session")
@@ -517,7 +517,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
         genex_extension_api::ExtensionRegistryBuilder::<genex_core::config::Config>::new();
     extensions.thread_lifecycle_contributor(Arc::new(SleepingRootExtension));
     let genex = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
@@ -591,7 +591,7 @@ async fn steer_interrupts_wait_agent_and_is_sent_in_follow_up_request() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
     let genex = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config
                 .features
@@ -671,7 +671,7 @@ async fn any_new_input_interrupts_sleep() {
     ])
     .await;
     let genex = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config
                 .features
@@ -812,7 +812,7 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
         start_streaming_sse_server(vec![first_chunks, second_chunks]).await;
 
     let genex = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build_with_streaming_server(&server)
         .await
         .unwrap()
@@ -1243,7 +1243,7 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
     let config_server = responses::start_mock_server().await;
     let base_url = format!("{}/v1", server.uri());
     let test = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url);
@@ -1424,7 +1424,7 @@ async fn steered_user_input_waits_for_model_continuation_after_mid_turn_compact(
     .await;
 
     let genex = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
             config.model_provider.supports_websockets = false;
@@ -1509,7 +1509,7 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
             .await;
 
     let genex = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
             config.model_provider.supports_websockets = false;
@@ -1626,7 +1626,7 @@ async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_
     .await;
 
     let test = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
             config.model_provider.supports_websockets = false;

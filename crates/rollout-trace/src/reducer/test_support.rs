@@ -130,7 +130,7 @@ pub(crate) fn append_inference_start_for_thread(
         inference_call_id: inference_call_id.to_string(),
         thread_id: thread_id.to_string(),
         genex_turn_id: genex_turn_id.to_string(),
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         provider_name: "test-provider".to_string(),
         request_payload,
     })?;

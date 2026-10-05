@@ -83,15 +83,15 @@ const TURN_0_FORK_PROMPT: &str = "seed fork context";
 const TURN_1_PROMPT: &str = "spawn a child and continue";
 const TURN_2_NO_WAIT_PROMPT: &str = "follow up without wait";
 const CHILD_PROMPT: &str = "child: do work";
-const INHERITED_MODEL: &str = "gpt-5.5";
+const INHERITED_MODEL: &str = "example-model";
 const INHERITED_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::XHigh;
-const REQUESTED_MODEL: &str = "gpt-5.6-luna";
+const REQUESTED_MODEL: &str = "provider-model-c";
 const REQUESTED_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::Low;
-const V2_DEFAULT_MODEL: &str = "gpt-5.6-terra";
+const V2_DEFAULT_MODEL: &str = "provider-model-d";
 const V2_DEFAULT_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::High;
-const V2_REQUESTED_MODEL: &str = "gpt-5.6-sol";
+const V2_REQUESTED_MODEL: &str = "provider-model-b";
 const V2_REQUESTED_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::Low;
-const ROLE_MODEL: &str = "gpt-5.5";
+const ROLE_MODEL: &str = "example-model";
 const ROLE_REASONING_EFFORT: ReasoningEffort = ReasoningEffort::High;
 const SUBAGENT_START_CONTEXT: &str = "subagent start context reaches child";
 const SUBAGENT_STOP_CONTINUATION: &str = "continue only the child";
@@ -2198,8 +2198,8 @@ async fn spawned_multi_agent_v2_child_inherits_parent_developer_context() -> Res
 
 #[test_case(None, false; "encrypted")]
 #[test_case(None, true; "plaintext")]
-#[test_case(Some("gpt-5.6-luna"), false; "luna encrypted leaf")]
-#[test_case(Some("gpt-5.5"), false; "legacy encrypted leaf")]
+#[test_case(Some("provider-model-c"), false; "luna encrypted leaf")]
+#[test_case(Some("example-model"), false; "legacy encrypted leaf")]
 #[tokio::test]
 async fn multi_agent_v2_spawn_sends_agent_message_to_child(
     model: Option<&str>,
@@ -2230,7 +2230,7 @@ async fn multi_agent_v2_spawn_sends_agent_message_to_child(
     });
     if let Some(model) = model {
         spawn_args["model"] = json!(model);
-        if model == "gpt-5.5" {
+        if model == "example-model" {
             spawn_args["fork_turns"] = json!("none");
         }
     }
@@ -2277,7 +2277,7 @@ async fn multi_agent_v2_spawn_sends_agent_message_to_child(
     .await;
 
     let parent_model = if model.is_some() {
-        "gpt-5.6-sol"
+        "provider-model-b"
     } else {
         "koffing"
     };
@@ -2793,7 +2793,7 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
 
     let server = start_mock_server().await;
     let mut builder = test_genex()
-        .with_model("gpt-5.6-sol")
+        .with_model("provider-model-b")
         .with_config(|config| {
             for feature in [Feature::Collab, Feature::MultiAgentV2] {
                 config
@@ -3301,7 +3301,7 @@ async fn spawn_agent_rejects_reasoning_effort_unsupported_by_role_model() -> Res
                     nickname_candidates: None,
                 },
             );
-            config.agent_default_subagent_model = Some("gpt-5.6-sol".to_string());
+            config.agent_default_subagent_model = Some("provider-model-b".to_string());
             config.agent_default_subagent_reasoning_effort = Some(ReasoningEffort::Ultra);
         })
         .build_with_auto_env(&server)
@@ -3316,7 +3316,7 @@ async fn spawn_agent_rejects_reasoning_effort_unsupported_by_role_model() -> Res
     assert_eq!(
         output.as_deref(),
         Some(
-            "Reasoning effort `ultra` is not supported for model `gpt-5.5`. Supported reasoning efforts: low, medium, high, xhigh"
+            "Reasoning effort `ultra` is not supported for model `example-model`. Supported reasoning efforts: low, medium, high, xhigh"
         )
     );
     Ok(())
@@ -3389,7 +3389,7 @@ async fn spawn_agent_tool_description_mentions_role_locked_settings() -> Result<
         role_block(&agent_type_description, "custom").expect("custom role description");
     assert_eq!(
         custom_role_description,
-        "custom: {\nCustom role\n- This role's model is set to `gpt-5.5` and its reasoning effort is set to `high`. These settings cannot be changed.\n}"
+        "custom: {\nCustom role\n- This role's model is set to `example-model` and its reasoning effort is set to `high`. These settings cannot be changed.\n}"
     );
 
     Ok(())

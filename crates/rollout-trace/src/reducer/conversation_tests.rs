@@ -976,7 +976,7 @@ fn missing_request_input_is_reducer_error() -> anyhow::Result<()> {
     let request = writer.write_json_payload(
         RawPayloadKind::InferenceRequest,
         &json!({
-            "model": "gpt-test"
+            "model": "model-test"
         }),
     )?;
     append_inference_start(&writer, "inference-1", "turn-1", request)?;

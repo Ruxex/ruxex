@@ -42,7 +42,7 @@ async fn spawn_agent_catalog_descriptions_preserve_outbound_schema(
         serde_json::from_value::<Option<ToolMessages>>(tool_messages.clone())?,
     ] {
         let test = test_genex()
-            .with_model_info_override("gpt-5.2", move |model| {
+            .with_model_info_override("example-model-2", move |model| {
                 model.multi_agent_version = Some(MultiAgentVersion::V2);
                 model.model_messages.as_mut().expect("model messages").tools = messages;
             })

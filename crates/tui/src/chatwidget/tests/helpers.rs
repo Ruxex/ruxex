@@ -16,7 +16,7 @@ pub(super) async fn test_config() -> Config {
             .await
             .expect("config");
     // Keep generic UI snapshots stable when the bundled catalog default changes.
-    config.model = Some("gpt-5.6-sol".to_string());
+    config.model = Some("provider-model-b".to_string());
     config.genex_home = genex_home.abs();
     config.sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs());
     config.log_dir = genex_home.join("log");
@@ -299,7 +299,7 @@ fn test_model_info(slug: &str, priority: i32, supports_service_tier: bool) -> Mo
 }
 
 pub(crate) fn set_service_tier_test_catalog(chat: &mut ChatWidget) {
-    set_service_tier_test_catalog_for_models(chat, "gpt-5.4", "gpt-5.2");
+    set_service_tier_test_catalog_for_models(chat, "legacy-model", "example-model-2");
 }
 
 pub(crate) fn set_service_tier_test_catalog_for_models(

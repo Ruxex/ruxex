@@ -60,7 +60,7 @@ async fn empty_goal_continuations_block_after_three_without_activity(
     let server = create_mock_responses_server_sequence(scripts).await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .enable_feature(Feature::Goals)
         .write(genex_home.path())?;
     let mut mcp = TestAppServer::builder()

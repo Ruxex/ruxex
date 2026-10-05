@@ -425,12 +425,12 @@ mod tests {
         let mut screen = ModelMigrationScreen::new(
             FrameRequester::test_dummy(),
             migration_copy_for_models(
-                "gpt-old",
-                "gpt-new",
-                Some("https://www.codex.com/models/gpt-new".to_string()),
+                "model-old",
+                "model-new",
+                Some("https://www.codex.com/models/model-new".to_string()),
                 /*migration_copy*/ None,
                 /*migration_markdown*/ None,
-                "gpt-new".to_string(),
+                "model-new".to_string(),
                 Some("Latest recommended model for better performance.".to_string()),
                 /*can_opt_out*/ true,
             ),
@@ -454,12 +454,12 @@ mod tests {
         let mut screen = ModelMigrationScreen::new(
             FrameRequester::test_dummy(),
             migration_copy_for_models(
-                "gpt-old",
-                "gpt-new",
-                Some("https://www.codex.com/models/gpt-new".to_string()),
+                "model-old",
+                "model-new",
+                Some("https://www.codex.com/models/model-new".to_string()),
                 /*migration_copy*/ None,
                 /*migration_markdown*/ None,
-                "gpt-new".to_string(),
+                "model-new".to_string(),
                 Some("Latest recommended model for better performance.".to_string()),
                 /*can_opt_out*/ true,
             ),

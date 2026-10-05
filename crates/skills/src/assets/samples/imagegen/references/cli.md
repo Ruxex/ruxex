@@ -1,6 +1,6 @@
 # CLI reference (`scripts/image_gen.py`)
 
-This file is for the fallback CLI mode only. Read it when the user explicitly asks to use `scripts/image_gen.py` / CLI / API / model controls, or after the user explicitly confirms that a transparent-output request should use the `gpt-image-1.5` true-transparency fallback path.
+This file is for the fallback CLI mode only. Read it when the user explicitly asks to use `scripts/image_gen.py` / CLI / API / model controls, or after the user explicitly confirms that a transparent-output request should use the `provider-image-model-transparent` true-transparency fallback path.
 
 `generate-batch` is a CLI subcommand in this fallback path. It is not a top-level mode of the skill.
 The word `batch` in a user request is not CLI opt-in by itself.
@@ -59,29 +59,29 @@ python "$IMAGE_GEN" edit \
 - Use the bundled CLI directly (`python "$IMAGE_GEN" ...`) after activating the correct environment.
 - Do **not** create one-off runners (for example `gen_images.py`) unless the user explicitly asks for a custom wrapper.
 - **Never modify** `scripts/image_gen.py`. If something is missing, ask the user before doing anything else.
-- Do not silently downgrade from CLI `gpt-image-2` or built-in `image_gen` to CLI `gpt-image-1.5`; ask first unless the user explicitly requested `gpt-image-1.5`.
+- Do not silently downgrade from CLI `provider-image-model` or built-in `image_gen` to CLI `provider-image-model-transparent`; ask first unless the user explicitly requested `provider-image-model-transparent`.
 
 ## Defaults
-- Model: `gpt-image-2`
-- Supported model family for this CLI: GPT Image models (`gpt-image-*`)
+- Model: `provider-image-model`
+- Supported model family for this CLI: provider image models (`provider-image-model-*`)
 - Size: `auto`
 - Quality: `medium`
 - Output format: `png`
 - Default one-off output path: `output/imagegen/output.png`
 - Background: unspecified unless `--background` is set
 
-## gpt-image-2 size and model guidance
+## provider-image-model size and model guidance
 
-`gpt-image-2` is the default model for new CLI fallback work.
+`provider-image-model` is the default model for new CLI fallback work.
 
 - Use `--quality low` for fast drafts, thumbnails, and quick iterations.
 - Use `--quality medium`, `--quality high`, or `--quality auto` for final assets, dense text, diagrams, identity-sensitive edits, and high-resolution outputs.
 - Square images are typically fastest. Use `--size 1024x1024` for quick square drafts.
 - If the user asks for 4K-style output, use `--size 3840x2160` for landscape or `--size 2160x3840` for portrait.
-- Do not pass `--input-fidelity` with `gpt-image-2`; this model always uses high fidelity for image inputs.
-- Do not use `--background transparent` with CLI `gpt-image-2`; ask before using `gpt-image-1.5` unless the user explicitly requested that model.
+- Do not pass `--input-fidelity` with `provider-image-model`; this model always uses high fidelity for image inputs.
+- Do not use `--background transparent` with CLI `provider-image-model`; ask before using `provider-image-model-transparent` unless the user explicitly requested that model.
 
-Popular `gpt-image-2` sizes:
+Popular `provider-image-model` sizes:
 - `1024x1024`
 - `1536x1024`
 - `1024x1536`
@@ -91,7 +91,7 @@ Popular `gpt-image-2` sizes:
 - `2160x3840`
 - `auto`
 
-`gpt-image-2` size constraints:
+`provider-image-model` size constraints:
 - max edge `<= 3840px`
 - both edges multiples of `16px`
 - long edge to short edge ratio `<= 3:1`
@@ -130,31 +130,31 @@ python "$IMAGE_GEN" generate \
 
 True transparent fallback request:
 
-Ask for confirmation before using this command unless the user explicitly requested `gpt-image-1.5`.
+Ask for confirmation before using this command unless the user explicitly requested `provider-image-model-transparent`.
 
 ```bash
 python "$IMAGE_GEN" generate \
-  --model gpt-image-1.5 \
+  --model provider-image-model-transparent \
   --prompt "A clean product cutout on a transparent background" \
   --background transparent \
   --output-format png \
   --out output/imagegen/product-cutout.png
 ```
 
-Explain that CLI `gpt-image-2` does not support `background=transparent`, so transparent CLI output requires the confirmed `gpt-image-1.5` fallback.
+Explain that CLI `provider-image-model` does not support `background=transparent`, so transparent CLI output requires the confirmed `provider-image-model-transparent` fallback.
 
 ## Quality, input fidelity, and masks (CLI fallback only)
 These are explicit CLI controls. They are not built-in `image_gen` tool arguments.
 
 - `--quality` works for `generate`, `edit`, and `generate-batch`: `low|medium|high|auto`
-- `--input-fidelity` is **edit-only** and validated as `low|high`; it is not supported for `gpt-image-2`
+- `--input-fidelity` is **edit-only** and validated as `low|high`; it is not supported for `provider-image-model`
 - `--mask` is **edit-only**
 
 Example:
 
 ```bash
 python "$IMAGE_GEN" edit \
-  --model gpt-image-1.5 \
+  --model provider-image-model-transparent \
   --image input.png \
   --prompt "Change only the background" \
   --quality high \
@@ -230,10 +230,10 @@ Notes:
 - For many requested deliverable assets, provide one prompt/job per distinct asset and use semantic filenames when possible.
 
 ## CLI notes
-- Supported sizes depend on the model. `gpt-image-2` supports flexible constrained sizes; older GPT Image models support `1024x1024`, `1536x1024`, `1024x1536`, or `auto`.
-- True transparent CLI outputs require `output_format` to be `png` or `webp` and are not supported by `gpt-image-2`.
+- Supported sizes depend on the model. `provider-image-model` supports flexible constrained sizes; older provider image models support `1024x1024`, `1536x1024`, `1024x1536`, or `auto`.
+- True transparent CLI outputs require `output_format` to be `png` or `webp` and are not supported by `provider-image-model`.
 - `--prompt-file`, `--output-compression`, `--moderation`, `--max-attempts`, `--fail-fast`, `--force`, and `--no-augment` are supported.
-- This CLI is intended for GPT Image models. Do not assume older non-GPT image-model behavior applies here.
+- This CLI is intended for provider image models. Do not assume older non-provider image model behavior applies here.
 
 ## See also
 - API parameter quick reference for fallback CLI mode: `references/image-api.md`

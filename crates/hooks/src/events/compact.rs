@@ -375,7 +375,7 @@ mod tests {
                 "transcript_path": null,
                 "cwd": test_path_buf("/tmp").display().to_string(),
                 "hook_event_name": "PreCompact",
-                "model": "gpt-test",
+                "model": "model-test",
                 "trigger": "manual",
             })
         );
@@ -396,7 +396,7 @@ mod tests {
                 "transcript_path": null,
                 "cwd": test_path_buf("/tmp").display().to_string(),
                 "hook_event_name": "PostCompact",
-                "model": "gpt-test",
+                "model": "model-test",
                 "trigger": "manual",
             })
         );
@@ -503,7 +503,7 @@ mod tests {
             subagent: None,
             cwd: test_path_buf("/tmp").abs(),
             transcript_path: None,
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             trigger: "manual".to_string(),
         }
     }
@@ -516,7 +516,7 @@ mod tests {
             subagent: None,
             cwd: test_path_buf("/tmp").abs(),
             transcript_path: None,
-            model: "gpt-test".to_string(),
+            model: "model-test".to_string(),
             trigger: "manual".to_string(),
         }
     }

@@ -46,7 +46,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
     fs::write(
         home.path().join("config.toml"),
         format!(
-            "model = \"gpt-5.6-terra\"\nfeatures.daemon_auto_start = true\n\
+            "model = \"provider-model-d\"\nfeatures.daemon_auto_start = true\n\
          features.bedrock_setup_wizard = true\ncli_auth_credentials_store = \"file\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\
          windows.sandbox = \"unelevated\"\n\
@@ -113,14 +113,14 @@ async fn daemon_startup(command: &str) -> Result<()> {
         };
         let expected = if command == "start" {
             // The draft header is visible before the session's command composer is ready.
-            steps.push_back(("gpt-5.6-terra", b"/status\r"));
+            steps.push_back(("provider-model-d", b"/status\r"));
             "app-server-control.sock"
         } else if bedrock_onboarding {
             "UseAmazonBedrock"
         } else {
             args.extend([command.into(), "--strict-config".into()]);
             steps.push_back(("Nosessionsyet", b"\x1b"));
-            steps.push_back(("gpt-5.6-terra", b"\x14"));
+            steps.push_back(("provider-model-d", b"\x14"));
             "Runningwithoutthesharedbackgroundserver:--strict-config"
         };
         let spawned = genex_utils_pty::spawn_pty_process(

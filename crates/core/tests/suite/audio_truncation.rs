@@ -73,7 +73,7 @@ async fn dynamic_tool_audio_exceeding_the_output_budget_is_omitted() -> Result<(
     )
     .await;
 
-    let mut builder = test_genex().with_model_info_override("gpt-5.5", |model_info| {
+    let mut builder = test_genex().with_model_info_override("example-model", |model_info| {
         model_info.input_modalities.push(InputModality::Audio);
         model_info.truncation_policy = TruncationPolicyConfig::tokens(/*limit*/ 50);
     });

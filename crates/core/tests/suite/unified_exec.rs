@@ -263,7 +263,7 @@ async fn create_workspace_directory(
 async fn exec_command_hides_and_rejects_login_when_disabled() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let builder = test_genex().with_model("gpt-5.4").with_config(|config| {
+    let builder = test_genex().with_model("legacy-model").with_config(|config| {
         config.permissions.allow_login_shell = false;
     });
     let harness = TestGenexHarness::with_builder(builder).await?;
@@ -310,7 +310,7 @@ async fn exec_command_hides_and_rejects_login_when_disabled() -> Result<()> {
 async fn exec_command_hides_and_rejects_tty_when_disabled() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let builder = test_genex().with_model("gpt-5.4").with_cloud_config_bundle(
+    let builder = test_genex().with_model("legacy-model").with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             "[features]\nunified_exec_tty = false\n",
         ),
@@ -361,7 +361,7 @@ async fn exec_command_runs_without_tty_when_tty_disabled() -> Result<()> {
         "basic PowerShell execution through Wine is unavailable"
     );
 
-    let builder = test_genex().with_model("gpt-5.4").with_cloud_config_bundle(
+    let builder = test_genex().with_model("legacy-model").with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             "[features]\nunified_exec_tty = false\n",
         ),
@@ -404,7 +404,7 @@ async fn exec_command_does_not_expose_configured_noise_auth_token() -> Result<()
         "basic PowerShell execution through Wine is unavailable"
     );
 
-    let builder = test_genex().with_model("gpt-5.4").with_config(|config| {
+    let builder = test_genex().with_model("legacy-model").with_config(|config| {
         config.permissions.shell_environment_policy.r#set.insert(
             GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_string(),
             "configured-noise-token".to_string(),
@@ -459,7 +459,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
     );
     skip_if_no_network!(Ok(()));
 
-    let builder = test_genex().with_model("gpt-5.4").with_config(|config| {
+    let builder = test_genex().with_model("legacy-model").with_config(|config| {
         config.permissions.shell_environment_policy = ShellEnvironmentPolicy {
             inherit: ShellEnvironmentPolicyInherit::None,
             include_only: vec![EnvironmentVariablePattern::new_case_insensitive("DROP")],
@@ -702,7 +702,7 @@ async fn unified_exec_rejects_justification_without_sandbox_permissions() -> Res
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.2");
+    let mut builder = test_genex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-missing-sandbox-permissions";
@@ -775,7 +775,7 @@ async fn unified_exec_emits_exec_command_begin_event() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("gpt-5.2");
+    let mut builder = test_genex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
     let cwd = test.config.cwd.to_path_buf();
 
@@ -832,7 +832,7 @@ async fn unified_exec_resolves_relative_workdir() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("gpt-5.2");
+    let mut builder = test_genex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
 
     let workdir_rel = std::path::PathBuf::from("uexec_relative_workdir");
@@ -896,7 +896,7 @@ async fn unified_exec_respects_workdir_override() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("gpt-5.2");
+    let mut builder = test_genex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
 
     let workdir = create_workspace_directory(&test, "uexec_workdir_test").await?;
@@ -1977,7 +1977,7 @@ async fn exec_command_clamps_model_requested_max_output_tokens_to_policy() -> Re
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("gpt-5.4").with_config(|config| {
+    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
         config.tool_output_token_limit = Some(50);
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -2036,7 +2036,7 @@ async fn write_stdin_clamps_model_requested_max_output_tokens_to_policy() -> Res
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("gpt-5.4").with_config(|config| {
+    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
         config.tool_output_token_limit = Some(50);
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -3968,7 +3968,7 @@ async fn write_stdin_calls_run_in_parallel_across_sessions() -> Result<()> {
     skip_if_target_windows!(Ok(()), "uses bash and POSIX file rendezvous commands");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("gpt-5.4");
+    let mut builder = test_genex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
 
     let start_args = serde_json::to_string(&json!({

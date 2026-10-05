@@ -82,13 +82,13 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                     }
                     "model/list" => json!({"data": [], "nextCursor": null}),
                     "config/read" => {
-                        json!({"config": {"model": "gpt-5.6-terra", "model_provider": "provider", "projects": {
+                        json!({"config": {"model": "provider-model-d", "model_provider": "provider", "projects": {
                         server_cwd.to_string_lossy(): {"trust_level": "trusted"}
                     }}, "origins": {}, "layers": []})
                     }
                     "configRequirements/read" => json!({"requirements": null}),
                     "thread/start" | "thread/resume" => {
-                        json!({"thread": thread, "model": "gpt-5.6-terra", "modelProvider": "provider",
+                        json!({"thread": thread, "model": "provider-model-d", "modelProvider": "provider",
                             "cwd": server_cwd, "approvalPolicy": "never", "approvalsReviewer": "user",
                             "sandbox": {"type": "readOnly"}, "reasoningEffort": null})
                     }
@@ -140,7 +140,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
     let mut disconnect_tx = Some(disconnect_tx);
     let mut restore_tx = Some(restore_tx);
     for expected in [
-        "gpt-5.6-terra",
+        "provider-model-d",
         "preserved-draft",
         "Reconnecting",
         "preserved-draft!",
@@ -156,7 +156,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
             terminal.screen_contents()
         );
         match expected {
-            "gpt-5.6-terra" => terminal.write_input(b"preserved-draft")?,
+            "provider-model-d" => terminal.write_input(b"preserved-draft")?,
             "preserved-draft" => {
                 disconnect_tx.take().unwrap().send(()).unwrap();
             }

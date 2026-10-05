@@ -255,7 +255,7 @@ async fn token_budget_guidance_precedes_standalone_context_window(
     let guidance_message = "Preserve important state before compaction.";
     let backend_url = format!("{}/backend-api/genex", server.uri());
     let test = test_genex()
-        .with_model_info_override("gpt-5.2", |model| {
+        .with_model_info_override("example-model-2", |model| {
             model.supports_experimental_context = true;
         })
         .with_auth(GenexAuth::from_api_key("test-api-key"))
@@ -321,7 +321,7 @@ async fn experimental_context_requires_capable_model_and_genex_backend(
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
     let base_url = format!("{}{base_path}", server.uri());
     let test = test_genex()
-        .with_model_info_override("gpt-5.2", move |model| {
+        .with_model_info_override("example-model-2", move |model| {
             model.supports_experimental_context = supports_context;
         })
         .with_auth(GenexAuth::from_api_key("test-api-key"))
@@ -385,7 +385,7 @@ async fn token_budget_history_notes_requires_capable_starting_model(
             std::fs::write(home.join("config.toml"), config)
                 .expect("write token-budget configuration");
         })
-        .with_model_info_override("gpt-5.2", move |model_info| {
+        .with_model_info_override("example-model-2", move |model_info| {
             model_info.supports_experimental_context = supports_context;
             let mut defaults = model_token_budget_config();
             defaults.enabled = use_model_defaults;
@@ -408,7 +408,7 @@ async fn token_budget_history_notes_requires_capable_starting_model(
             .err()
             .expect("unsupported history/notes must fail at startup");
         assert!(error.to_string().contains(
-            "features.token_budget.use_history_notes_extension is not supported by model `gpt-5.2`"
+            "features.token_budget.use_history_notes_extension is not supported by model `example-model-2`"
         ));
         return Ok(());
     }
@@ -437,7 +437,7 @@ async fn token_budget_uses_model_message_defaults() -> Result<()> {
     model_defaults.use_history_notes_extension = true;
     let expected_guidance = model_defaults.guidance_message.clone();
     let test = test_genex()
-        .with_model_info_override("gpt-5.2", move |model_info| {
+        .with_model_info_override("example-model-2", move |model_info| {
             model_info.supports_experimental_context = true;
             model_info
                 .model_messages
@@ -488,7 +488,7 @@ async fn token_budget_explicit_default_template_overrides_model_defaults() -> Re
             )
             .expect("write explicit default token-budget configuration");
         })
-        .with_model_info_override("gpt-5.2", |model_info| {
+        .with_model_info_override("example-model-2", |model_info| {
             model_info
                 .model_messages
                 .as_mut()
@@ -531,7 +531,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
     let backend_url = format!("{}/backend-api/genex", server.uri());
     let test = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
-        .with_model_info_override("gpt-5.2", |model_info| {
+        .with_model_info_override("example-model-2", |model_info| {
             model_info.supports_experimental_context = true;
             let mut defaults = model_token_budget_config();
             defaults.guidance_message = "Use first-model context-window guidance.".to_string();
@@ -541,7 +541,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
                 .expect("bundled model should have model messages")
                 .token_budget = Some(defaults);
         })
-        .with_model_info_override("gpt-5.4", |model_info| {
+        .with_model_info_override("legacy-model", |model_info| {
             let mut defaults = model_token_budget_config();
             defaults.guidance_message = "Use second-model context-window guidance.".to_string();
             model_info
@@ -550,7 +550,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
                 .expect("bundled model should have model messages")
                 .token_budget = Some(defaults);
         })
-        .with_model("gpt-5.2")
+        .with_model("example-model-2")
         .with_config(move |config| {
             config.model_provider.base_url = Some(backend_url);
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
@@ -566,7 +566,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
     core_test_support::submit_thread_settings(
         &test.genex,
         ThreadSettingsOverrides {
-            model: Some("gpt-5.4".to_string()),
+            model: Some("legacy-model".to_string()),
             ..Default::default()
         },
     )
@@ -584,7 +584,7 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
 
     let requests = responses.requests();
     assert_eq!(requests.len(), 2);
-    assert_eq!(requests[1].body_json()["model"], "gpt-5.4");
+    assert_eq!(requests[1].body_json()["model"], "legacy-model");
     assert!(requests[0].body_contains_text("Use first-model context-window guidance."));
     assert!(
         requests[1].body_contains_text("Use first-model context-window guidance."),
@@ -637,7 +637,7 @@ async fn token_budget_ignores_invalid_model_message_defaults() -> Result<()> {
         let server = start_mock_server().await;
         let response = mount_sse_once(&server, sse_completed("resp-1")).await;
         let test = test_genex()
-            .with_model_info_override("gpt-5.2", move |model_info| {
+            .with_model_info_override("example-model-2", move |model_info| {
                 model_info
                     .model_messages
                     .as_mut()
@@ -677,7 +677,7 @@ async fn model_token_budget_defaults_do_not_enable_disabled_feature() -> Result<
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
     let test = test_genex()
-        .with_model_info_override("gpt-5.2", |model_info| {
+        .with_model_info_override("example-model-2", |model_info| {
             model_info
                 .model_messages
                 .as_mut()
@@ -1058,7 +1058,7 @@ async fn get_context_remaining_returns_unknown_when_threshold_is_unbounded() -> 
     )
     .await;
     let test = test_genex()
-        .with_model_info_override("gpt-5.2", |model_info| {
+        .with_model_info_override("example-model-2", |model_info| {
             model_info.context_window = None;
             model_info.max_context_window = None;
         })
@@ -1293,7 +1293,7 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
     let test = test_genex()
-        .with_model_info_override("gpt-5.2", |model_info| {
+        .with_model_info_override("example-model-2", |model_info| {
             model_info
                 .model_messages
                 .as_mut()

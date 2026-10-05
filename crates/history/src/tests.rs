@@ -9,7 +9,7 @@ use super::*;
 
 fn thread_settings_snapshot(disabled_plugin_ids: Vec<String>) -> Result<ThreadSettingsSnapshot> {
     Ok(serde_json::from_value(json!({
-        "model": "gpt-5",
+        "model": "example-model",
         "model_provider_id": "provider",
         "approval_policy": "never",
         "permission_profile": genex_protocol::models::PermissionProfile::read_only(),
@@ -17,7 +17,7 @@ fn thread_settings_snapshot(disabled_plugin_ids: Vec<String>) -> Result<ThreadSe
         "collaboration_mode": {
             "mode": "default",
             "settings": {
-                "model": "gpt-5",
+                "model": "example-model",
                 "reasoning_effort": null,
                 "developer_instructions": null
             }
@@ -72,7 +72,7 @@ fn turn_context_with_disabled_plugins(
         "cwd": std::env::current_dir()?,
         "approval_policy": "never",
         "sandbox_policy": { "type": "danger-full-access" },
-        "model": "gpt-5",
+        "model": "example-model",
         "summary": "auto"
     }))?;
     context.disabled_plugin_ids = disabled_plugin_ids;
@@ -552,7 +552,7 @@ fn rollout_item_variants_preserve_existing_payload_shapes() -> Result<()> {
                 "cwd": cwd,
                 "approval_policy": "never",
                 "sandbox_policy": { "type": "danger-full-access" },
-                "model": "gpt-5",
+                "model": "example-model",
                 "summary": "auto",
             },
         }),

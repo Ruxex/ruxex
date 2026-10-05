@@ -45,11 +45,11 @@ pub(crate) const CHANGE_CONTEXT_MARKER: &str = "@@ ";
 pub(crate) const EMPTY_CHANGE_CONTEXT_MARKER: &str = "@@";
 
 /// Currently, the only provider model that knowingly requires lenient parsing is
-/// gpt-4.1. While we could try to require everyone to pass in a strictness
+/// legacy-model-4. While we could try to require everyone to pass in a strictness
 /// param when invoking apply_patch, it is a pain to thread it through all of
 /// the call sites, so we resign ourselves allowing lenient parsing for all
 /// models. See [`ParseMode::Lenient`] for details on the exceptions we make for
-/// gpt-4.1.
+/// legacy-model-4.
 const PARSE_IN_STRICT_MODE: bool = false;
 
 #[derive(Debug, PartialEq, Error, Clone)]
@@ -155,7 +155,7 @@ enum ParseMode {
     /// Parse the patch text argument as is.
     Strict,
 
-    /// GPT-4.1 is known to formulate the `command` array for the `local_shell`
+    /// legacy-model-4 is known to formulate the `command` array for the `local_shell`
     /// tool call for `apply_patch` call using something like the following:
     ///
     /// ```json

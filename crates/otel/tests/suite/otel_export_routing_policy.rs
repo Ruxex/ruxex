@@ -123,8 +123,8 @@ fn otel_export_routing_policy_routes_user_prompt_log_and_trace_events() {
         tracing::callsite::rebuild_interest_cache();
         let manager = SessionTelemetry::new(
             ThreadId::new(),
-            "gpt-5.1",
-            "gpt-5.1",
+            "example-model-1",
+            "example-model-1",
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
@@ -217,8 +217,8 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
     let make_manager = |thread_id, source| {
         SessionTelemetry::new(
             thread_id,
-            "gpt-5.1",
-            "gpt-5.1",
+            "example-model-1",
+            "example-model-1",
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
@@ -470,8 +470,8 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
         tracing::callsite::rebuild_interest_cache();
         let manager = SessionTelemetry::new(
             ThreadId::new(),
-            "gpt-5.1",
-            "gpt-5.1",
+            "example-model-1",
+            "example-model-1",
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
@@ -594,8 +594,8 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
         tracing::callsite::rebuild_interest_cache();
         let manager = SessionTelemetry::new(
             ThreadId::new(),
-            "gpt-5.1",
-            "gpt-5.1",
+            "example-model-1",
+            "example-model-1",
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
@@ -754,8 +754,8 @@ fn otel_export_routing_policy_routes_websocket_connect_auth_observability() {
         tracing::callsite::rebuild_interest_cache();
         let manager = SessionTelemetry::new(
             ThreadId::new(),
-            "gpt-5.1",
-            "gpt-5.1",
+            "example-model-1",
+            "example-model-1",
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
@@ -859,8 +859,8 @@ fn otel_export_routing_policy_routes_websocket_request_transport_observability()
         tracing::callsite::rebuild_interest_cache();
         let manager = SessionTelemetry::new(
             ThreadId::new(),
-            "gpt-5.1",
-            "gpt-5.1",
+            "example-model-1",
+            "example-model-1",
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),

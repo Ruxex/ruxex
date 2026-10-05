@@ -74,7 +74,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             format!(
                 "model = \"{}\"\nmodel_reasoning_effort = \"low\"\n{}",
                 if mode == "remote-null-service-tier" {
-                    "gpt-5.2"
+                    "example-model-2"
                 } else {
                     "client-model"
                 },

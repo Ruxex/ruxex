@@ -78,15 +78,15 @@ async fn disabled_update_plan_preserves_custom_catalog_instructions() -> Result<
     let model = catalog
         .models
         .iter_mut()
-        .find(|model| model.slug == "gpt-5.5")
-        .expect("bundled gpt-5.5 model");
+        .find(|model| model.slug == "example-model")
+        .expect("bundled example-model model");
     let messages = model
         .model_messages
         .as_mut()
         .expect("model prompt templates");
     messages.instructions_template = Some(INSTRUCTIONS.to_string());
     let test = test_genex()
-        .with_model("gpt-5.5")
+        .with_model("example-model")
         .with_config(move |config| {
             config.update_plan_enabled = false;
             config.model_catalog = Some(catalog);
@@ -141,13 +141,13 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
 
     let server = MockServer::start().await;
     let generic = test_remote_model_with_policy(
-        "model-5.3",
+        "example-model-3",
         ModelVisibility::List,
         /*priority*/ 1_000,
         TruncationPolicyConfig::bytes(/*limit*/ 10_000),
     );
     let specific = test_remote_model_with_policy(
-        "model-5.3-special",
+        "example-model-3",
         ModelVisibility::List,
         /*priority*/ 1_000,
         TruncationPolicyConfig::bytes(/*limit*/ 10_000),
@@ -198,10 +198,10 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
         .await;
 
     let model_info = manager
-        .get_model_info("model-5.3-special-test", &config.to_models_manager_config())
+        .get_model_info("example-model-3", &config.to_models_manager_config())
         .await;
 
-    assert_eq!(model_info.slug, "model-5.3-special-test");
+    assert_eq!(model_info.slug, "example-model-3");
     assert_eq!(
         render_model_instructions(&model_info),
         render_model_instructions(&specific)
@@ -219,9 +219,9 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let requested_model = "gpt-5.4-test";
+    let requested_model = "legacy-model";
     let mut remote_model =
-        test_remote_model("gpt-5.4", ModelVisibility::List, /*priority*/ 1_000);
+        test_remote_model("legacy-model", ModelVisibility::List, /*priority*/ 1_000);
     remote_model.context_window = Some(273_000);
     remote_model.max_context_window = Some(400_000);
     remote_model.effective_context_window_percent = 100;
@@ -280,9 +280,9 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let requested_model = "gpt-5.4-test";
+    let requested_model = "legacy-model";
     let mut remote_model =
-        test_remote_model("gpt-5.4", ModelVisibility::List, /*priority*/ 1_000);
+        test_remote_model("legacy-model", ModelVisibility::List, /*priority*/ 1_000);
     remote_model.context_window = Some(273_000);
     remote_model.max_context_window = Some(400_000);
     remote_model.effective_context_window_percent = 100;
@@ -341,9 +341,9 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let requested_model = "gpt-5.4-test";
+    let requested_model = "legacy-model";
     let mut remote_model =
-        test_remote_model("gpt-5.4", ModelVisibility::List, /*priority*/ 1_000);
+        test_remote_model("legacy-model", ModelVisibility::List, /*priority*/ 1_000);
     remote_model.context_window = Some(273_000);
     remote_model.max_context_window = Some(400_000);
     remote_model.effective_context_window_percent = 100;
@@ -406,8 +406,8 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let requested_model = "model-5.3-special-test";
-    let prefix_model = "model-5.3-special";
+    let requested_model = "example-model-3";
+    let prefix_model = "example-model-3";
     let base_instructions = "Keep the catalog base instructions.";
     let developer_instructions = "Keep the configured developer instructions.";
     let mut remote_model = test_remote_model_with_policy(
@@ -632,7 +632,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
     let mut builder = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
-            config.model = Some("gpt-5.4".to_string());
+            config.model = Some("legacy-model".to_string());
         });
     let TestGenex {
         genex,
@@ -759,7 +759,7 @@ async fn remote_models_truncation_policy_without_override_preserves_remote() -> 
     let mut builder = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
-            config.model = Some("gpt-5.4".to_string());
+            config.model = Some("legacy-model".to_string());
         });
     let test = builder.build(&server).await?;
 
@@ -805,7 +805,7 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
     let mut builder = test_genex()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
-            config.model = Some("gpt-5.4".to_string());
+            config.model = Some("legacy-model".to_string());
             config.tool_output_token_limit = Some(50);
         });
     let test = builder.build(&server).await?;
@@ -836,7 +836,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         .start()
         .await;
 
-    let model = "test-gpt-5-remote";
+    let model = "test-remote-model";
 
     let remote_instructions = "Use the remote instructions template only.";
     let remote_model = ModelInfo {
@@ -929,7 +929,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
             .enable(Feature::ApiKeyModelDiscovery)
             .expect("enable API-key model discovery");
         config.update_plan_enabled = true;
-        config.model = Some("gpt-5.2".to_string());
+        config.model = Some("example-model-2".to_string());
     });
     let TestGenex {
         genex,
@@ -995,7 +995,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
     wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let base_model_info = models_manager
-        .get_model_info("gpt-5.2", &config.to_models_manager_config())
+        .get_model_info("example-model-2", &config.to_models_manager_config())
         .await;
     let requests = response_mock.requests();
     assert_eq!(requests.len(), 2, "expected two model requests");

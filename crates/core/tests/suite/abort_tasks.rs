@@ -45,7 +45,7 @@ async fn interrupt_long_running_tool_emits_turn_aborted() {
     mount_sse_once(&server, body).await;
 
     let fixture = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build(&server)
         .await
         .unwrap();
@@ -85,7 +85,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
     )
     .await;
     let test = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build_with_auto_env(&server)
         .await
         .expect("start persistent root thread");
@@ -174,7 +174,7 @@ async fn root_turn_suspension_preserves_unfinished_turn_history() {
     )
     .await;
     let resumed = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .resume(&recovery_server, Arc::clone(&test.home), rollout_path)
         .await
         .expect("resume the suspended root on a replacement runtime");
@@ -232,7 +232,7 @@ async fn interrupt_tool_records_history_entries() {
     let response_mock = mount_sse_sequence(&server, vec![first_body, follow_up_body]).await;
 
     let fixture = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build(&server)
         .await
         .unwrap();
@@ -325,7 +325,7 @@ async fn interrupt_persists_turn_aborted_marker_in_next_request() {
     let response_mock = mount_sse_sequence(&server, vec![first_body, follow_up_body]).await;
 
     let fixture = test_genex()
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build(&server)
         .await
         .unwrap();

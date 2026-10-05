@@ -34,7 +34,7 @@ async fn write_provider_config(
 ) -> Result<()> {
     let supports_websockets = matches!(transport, ModelTransport::Websocket);
     let config = format!(
-        r#"model = "gpt-5.4"
+        r#"model = "legacy-model"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 model_provider = "custom-provider"

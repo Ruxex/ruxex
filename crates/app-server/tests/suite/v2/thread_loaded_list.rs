@@ -88,7 +88,7 @@ async fn thread_loaded_list_paginates() -> Result<()> {
 async fn start_thread(mcp: &mut TestAppServer) -> Result<String> {
     let req_id = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            model: Some("gpt-5.2".to_string()),
+            model: Some("example-model-2".to_string()),
             ..Default::default()
         })
         .await?;

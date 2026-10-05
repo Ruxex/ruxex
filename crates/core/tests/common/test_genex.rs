@@ -339,8 +339,8 @@ impl TestGenexBuilder {
                     .expect("bundled model catalog should parse")
                     .models
                     .into_iter()
-                    .find(|candidate| candidate.slug == "gpt-5.5")
-                    .expect("missing bundled model gpt-5.5");
+                    .find(|candidate| candidate.slug == "example-model")
+                    .expect("missing bundled model example-model");
                 fixture.slug = model.clone();
                 fixture.display_name = model.clone();
                 model_catalog.models.push(fixture);
@@ -780,7 +780,7 @@ impl TestGenexBuilder {
         let mut config = load_default_config_for_test(home).await;
         // Keep generic tests stable when the bundled catalog default changes. Tests that need a
         // specific model can still override this with a config mutator.
-        config.model = Some("gpt-5.5".to_string());
+        config.model = Some("example-model".to_string());
         config.cwd = cwd_override;
         config.model_provider = model_provider;
         if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex") {
@@ -823,9 +823,9 @@ fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
     let mut model = bundled_models
         .models
         .iter()
-        .find(|candidate| candidate.slug == "gpt-5.5")
+        .find(|candidate| candidate.slug == "example-model")
         .cloned()
-        .expect("missing bundled model gpt-5.5");
+        .expect("missing bundled model example-model");
     model.slug = TEST_MODEL_WITH_EXPERIMENTAL_TOOLS.to_string();
     model.display_name = TEST_MODEL_WITH_EXPERIMENTAL_TOOLS.to_string();
     model.experimental_supported_tools = vec!["test_sync_tool".to_string()];

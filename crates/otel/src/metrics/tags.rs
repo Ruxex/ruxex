@@ -89,7 +89,7 @@ mod tests {
             session_source: "cli",
             originator: "genex_cli",
             service_name: Some("desktop_app"),
-            model: "gpt-5.1",
+            model: "example-model-1",
             app_version: "1.2.3",
         }
         .into_tags()
@@ -102,7 +102,7 @@ mod tests {
                 (SESSION_SOURCE_TAG, "cli"),
                 (ORIGINATOR_TAG, "genex_cli"),
                 (SERVICE_NAME_TAG, "desktop_app"),
-                (MODEL_TAG, "gpt-5.1"),
+                (MODEL_TAG, "example-model-1"),
                 (APP_VERSION_TAG, "1.2.3"),
             ]
         );
@@ -115,7 +115,7 @@ mod tests {
             session_source: "exec",
             originator: "genex_exec",
             service_name: None,
-            model: "gpt-5.1",
+            model: "example-model-1",
             app_version: "1.2.3",
         }
         .into_tags()
@@ -126,7 +126,7 @@ mod tests {
             vec![
                 (SESSION_SOURCE_TAG, "exec"),
                 (ORIGINATOR_TAG, "genex_exec"),
-                (MODEL_TAG, "gpt-5.1"),
+                (MODEL_TAG, "example-model-1"),
                 (APP_VERSION_TAG, "1.2.3"),
             ]
         );

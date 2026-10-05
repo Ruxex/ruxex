@@ -24,7 +24,7 @@ Rules:
 - Use the built-in `image_gen` tool by default for normal image generation and editing requests.
 - Do not switch to CLI fallback for ordinary quality, size, or file-path control.
 - For transparent images, ask built-in `image_gen` for a transparent background and preserve the generated alpha.
-- Never silently switch from built-in `image_gen` or CLI `gpt-image-2` to CLI `gpt-image-1.5`; ask the user first unless they explicitly requested `gpt-image-1.5`.
+- Never silently switch from built-in `image_gen` or CLI `provider-image-model` to CLI `provider-image-model-transparent`; ask the user first unless they explicitly requested `provider-image-model-transparent`.
 - The word `batch` by itself does not mean CLI fallback. If the user asks for many assets or says to batch-generate assets without explicitly asking for CLI/API/model controls, stay on the built-in path and issue one built-in call per requested asset or variant.
 - If the built-in tool fails or is unavailable, tell the user the CLI fallback exists and that it requires `PROVIDER_API_KEY`. Proceed only if the user explicitly asks for that fallback.
 - If the user explicitly asks for CLI mode, use the bundled `scripts/image_gen.py` workflow. Do not create one-off SDK runners.
@@ -241,20 +241,20 @@ Copy/paste specs shared by both modes: `references/sample-prompts.md`.
 ## Guidance by asset type
 Asset-type templates (website assets, game assets, wireframes, logo) are consolidated in `references/sample-prompts.md`.
 
-## gpt-image-2 guidance for CLI fallback
+## provider-image-model guidance for CLI fallback
 
-The fallback CLI defaults to `gpt-image-2`.
+The fallback CLI defaults to `provider-image-model`.
 
-- Use `gpt-image-2` for new CLI/API workflows unless the user confirms a different model.
-- CLI `gpt-image-2` does not support `background=transparent`; ask before using `gpt-image-1.5` unless the user explicitly requested that model.
-- `gpt-image-2` always uses high fidelity for image inputs; do not set `input_fidelity` with this model.
-- `gpt-image-2` supports `quality` values `low`, `medium`, `high`, and `auto`.
+- Use `provider-image-model` for new CLI/API workflows unless the user confirms a different model.
+- CLI `provider-image-model` does not support `background=transparent`; ask before using `provider-image-model-transparent` unless the user explicitly requested that model.
+- `provider-image-model` always uses high fidelity for image inputs; do not set `input_fidelity` with this model.
+- `provider-image-model` supports `quality` values `low`, `medium`, `high`, and `auto`.
 - Use `quality low` for fast drafts, thumbnails, and quick iterations. Use `medium`, `high`, or `auto` for final assets, dense text, diagrams, identity-sensitive edits, or high-resolution outputs.
 - Square images are typically fastest to generate. Use `1024x1024` for fast square drafts.
 - If the user asks for 4K-style output, use `3840x2160` for landscape or `2160x3840` for portrait.
-- `gpt-image-2` size may be `auto` or `WIDTHxHEIGHT` if all constraints hold: max edge `<= 3840px`, both edges multiples of `16px`, long-to-short ratio `<= 3:1`, total pixels between `655,360` and `8,294,400`.
+- `provider-image-model` size may be `auto` or `WIDTHxHEIGHT` if all constraints hold: max edge `<= 3840px`, both edges multiples of `16px`, long-to-short ratio `<= 3:1`, total pixels between `655,360` and `8,294,400`.
 
-Popular `gpt-image-2` sizes:
+Popular `provider-image-model` sizes:
 - `1024x1024` square
 - `1536x1024` landscape
 - `1024x1536` portrait

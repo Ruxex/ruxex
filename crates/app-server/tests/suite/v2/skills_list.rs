@@ -1026,7 +1026,7 @@ async fn skills_list_uses_cached_result_after_session_default_writes_until_force
         vec![
             ConfigEdit {
                 key_path: "model".to_string(),
-                value: serde_json::json!("gpt-5.4"),
+                value: serde_json::json!("legacy-model"),
                 merge_strategy: MergeStrategy::Replace,
             },
             ConfigEdit {

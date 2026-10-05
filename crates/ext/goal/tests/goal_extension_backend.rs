@@ -1908,7 +1908,7 @@ fn tool_call(tool_name: &str, call_id: &str, arguments: serde_json::Value) -> To
         turn_id: "turn-1".to_string(),
         call_id: call_id.to_string(),
         tool_name: genex_extension_api::ToolName::plain(tool_name),
-        model: "gpt-test".to_string(),
+        model: "model-test".to_string(),
         turn_metadata: None,
         truncation_policy: TruncationPolicy::Bytes(1024),
         source: ToolCallSource::Direct,
@@ -2002,7 +2002,7 @@ fn default_collaboration_mode() -> CollaborationMode {
     CollaborationMode {
         mode: ModeKind::Default,
         settings: Settings {
-            model: "gpt-5".to_string(),
+            model: "example-model".to_string(),
             reasoning_effort: None,
             developer_instructions: None,
         },

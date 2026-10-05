@@ -2675,7 +2675,7 @@ mod tests {
                     daybreak_enabled: None,
                     turns: Vec::new(),
                 },
-                model: "gpt-5".to_string(),
+                model: "example-model".to_string(),
                 model_provider: "provider".to_string(),
                 service_tier: None,
                 cwd,
@@ -2736,7 +2736,7 @@ mod tests {
                         "daybreakEnabled": null,
                         "turns": []
                     },
-                    "model": "gpt-5",
+                    "model": "example-model",
                     "modelProvider": "provider",
                     "serviceTier": null,
                     "disabledPluginIds": [],

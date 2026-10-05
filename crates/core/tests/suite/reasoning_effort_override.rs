@@ -32,7 +32,7 @@ use wiremock::ResponseTemplate;
 
 fn override_builder() -> TestGenexBuilder {
     test_genex()
-        .with_model_info_override("gpt-5.4", |model| {
+        .with_model_info_override("legacy-model", |model| {
             model.use_responses_lite = true;
         })
         .with_config(|config| {
@@ -329,7 +329,7 @@ async fn reasoning_effort_override_normalizes_ultra_before_comparing_updates(
     .await;
     let model_effort = resolved_effort.clone();
     let test = override_builder()
-        .with_model_info_override("gpt-5.4", move |model| {
+        .with_model_info_override("legacy-model", move |model| {
             model.multi_agent_reasoning_effort = Some(model_effort.clone());
             model.supported_reasoning_levels = vec![ReasoningEffortPreset {
                 effort: model_effort,
@@ -626,7 +626,7 @@ async fn reasoning_effort_override_unavailable_uses_request_effort(
             config.model_provider.name = "unsupported provider".into();
         }),
         OverrideUnavailable::ResponsesLiteDisabled => override_builder()
-            .with_model_info_override("gpt-5.4", |model| model.use_responses_lite = false),
+            .with_model_info_override("legacy-model", |model| model.use_responses_lite = false),
     };
     let test = builder.build_with_auto_env(&server).await?;
     test.submit_text_turn("first").await?;
@@ -754,19 +754,19 @@ async fn reasoning_effort_override_model_switch_reestablishes_selected_effort(
     )
     .await;
     let test = override_builder()
-        .with_model_info_override("gpt-5.4", |model| model.comp_hash = None)
-        .with_model_info_override("gpt-5.5", |model| {
+        .with_model_info_override("legacy-model", |model| model.comp_hash = None)
+        .with_model_info_override("example-model", |model| {
             model.comp_hash = None;
             model.use_responses_lite = true;
         })
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .build_with_auto_env(&server)
         .await?;
     test.submit_text_turn("first model").await?;
     submit_thread_settings(
         &test.genex,
         ThreadSettingsOverrides {
-            model: Some("gpt-5.5".to_string()),
+            model: Some("example-model".to_string()),
             effort: Some(Some(effort.clone())),
             ..Default::default()
         },
@@ -790,7 +790,7 @@ async fn reasoning_effort_override_model_switch_reestablishes_selected_effort(
             request.body_json()["model"],
             request.body_json()["reasoning"]["effort"]
         ]),
-        serde_json::json!(["gpt-5.5", effort])
+        serde_json::json!(["example-model", effort])
     );
     Ok(())
 }
@@ -897,14 +897,14 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let test = override_builder()
         .with_auth(GenexAuth::from_api_key("test-api-key"))
-        .with_model_info_override("gpt-5.4", |model| {
+        .with_model_info_override("legacy-model", |model| {
             model.comp_hash = Some("original".to_string());
         })
-        .with_model_info_override("gpt-5.2", |model| {
+        .with_model_info_override("example-model-2", |model| {
             model.comp_hash = Some("fallback".to_string());
             model.use_responses_lite = true;
         })
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_config(move |config| {
             config.managed_auth_base_url = managed_auth_base_url;
             config.model_provider.stream_max_retries = Some(0);
@@ -924,7 +924,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
     submit_thread_settings(
         &test.genex,
         ThreadSettingsOverrides {
-            model: Some("gpt-5.2".to_string()),
+            model: Some("example-model-2".to_string()),
             ..Default::default()
         },
     )
@@ -946,11 +946,11 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
             serde_json::json!([body["model"], body["reasoning"]["effort"]])
         }),
         [
-            serde_json::json!(["gpt-5.4", "medium"]),
-            serde_json::json!(["gpt-5.4", "medium"]),
-            serde_json::json!(["gpt-5.4", "medium"]),
-            serde_json::json!(["gpt-5.2", "high"]),
-            serde_json::json!(["gpt-5.2", "high"]),
+            serde_json::json!(["legacy-model", "medium"]),
+            serde_json::json!(["legacy-model", "medium"]),
+            serde_json::json!(["legacy-model", "medium"]),
+            serde_json::json!(["example-model-2", "high"]),
+            serde_json::json!(["example-model-2", "high"]),
         ]
     );
     assert_eq!(

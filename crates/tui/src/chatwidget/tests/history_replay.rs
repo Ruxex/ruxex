@@ -80,7 +80,7 @@ async fn resumed_initial_messages_render_history() {
 
 #[tokio::test]
 async fn restored_conversation_ultra_remains_selected_after_switching_to_plan() {
-    let (mut chat, _rx, _ops) = make_chatwidget_manual(Some("gpt-5.4")).await;
+    let (mut chat, _rx, _ops) = make_chatwidget_manual(Some("legacy-model")).await;
     chat.set_feature_enabled(Feature::CollaborationModes, /*enabled*/ true);
     chat.set_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::High));
 
@@ -90,7 +90,7 @@ async fn restored_conversation_ultra_remains_selected_after_switching_to_plan() 
         forked_from_id: None,
         fork_parent_title: None,
         thread_name: None,
-        model: "gpt-5.4".to_string(),
+        model: "legacy-model".to_string(),
         model_provider_id: "test-provider".to_string(),
         service_tier: None,
         approval_policy: AskForApproval::Never,

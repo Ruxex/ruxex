@@ -316,7 +316,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     });
     let manager = create_model_provider(provider_info.clone(), Some(auth.clone()))
         .models_manager_with_cache(/*config_model_catalog*/ None, cache.clone());
-    let mut old_model = remote_model("gpt-5.4");
+    let mut old_model = remote_model("legacy-model");
     old_model.default_reasoning_summary = ReasoningSummary::Concise;
     let initial = responses::mount_models_once(
         &server,
@@ -328,7 +328,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     let test = test_genex()
         .with_home(home.clone())
         .with_auth(initial_auth.clone())
-        .with_model("gpt-5.4")
+        .with_model("legacy-model")
         .with_models_manager(manager.clone())
         .with_config(move |config| {
             config.model_provider = provider_info;
@@ -374,7 +374,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     auth.reload().await;
     test.thread_manager.auth_manager().reload().await;
 
-    let mut new_model = remote_model("gpt-5.4");
+    let mut new_model = remote_model("legacy-model");
     new_model.default_reasoning_summary = ReasoningSummary::Detailed;
     let new_request = responses::mount_models_once(
         &server,

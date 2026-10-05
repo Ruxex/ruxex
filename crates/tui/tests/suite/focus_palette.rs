@@ -383,7 +383,7 @@ fn contains_bytes(buffer: &[u8], needle: &[u8]) -> bool {
 pub(super) fn write_test_config(genex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root = repo_root.display();
     let config = format!(
-        "model = \"gpt-5.6-terra\"\nmodel_provider = \"provider\"\n\
+        "model = \"provider-model-d\"\nmodel_provider = \"provider\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\n\
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
     );

@@ -1401,9 +1401,9 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
     let mut loaded_settings = HashMap::new();
     for (thread_id, source, capability) in threads_to_resume {
         let (model, effort) = if thread_id == cli_id {
-            ("gpt-5.2", "high")
+            ("example-model-2", "high")
         } else {
-            ("gpt-5.4", "low")
+            ("legacy-model", "low")
         };
         let request_id = mcp
             .send_thread_resume_request(ThreadResumeParams {

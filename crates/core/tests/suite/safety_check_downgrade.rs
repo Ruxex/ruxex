@@ -32,7 +32,7 @@ use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use wiremock::ResponseTemplate;
 
-const SERVER_MODEL: &str = "gpt-5.2";
+const SERVER_MODEL: &str = "example-model-2";
 const REQUESTED_MODEL: &str = "example-model";
 const TRUSTED_ACCESS_FOR_CYBER_VERIFICATION: &str = "trusted_access_for_cyber";
 
@@ -310,7 +310,7 @@ async fn model_verification_emits_structured_event_without_reroute_or_warning() 
     ]));
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_genex().with_model("gpt-5.5");
+    let mut builder = test_genex().with_model("example-model");
     let test = builder.build(&server).await?;
 
     test.genex
