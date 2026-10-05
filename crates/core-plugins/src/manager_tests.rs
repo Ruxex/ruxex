@@ -44,7 +44,6 @@ use genex_config::SkillConfigRules;
 use genex_config::compose_requirements;
 use genex_config::types::McpServerTransportConfig;
 use genex_login::GenexAuth;
-use genex_model_provider::AMAZON_BEDROCK_PROVIDER_ID;
 use genex_plugin::PluginId;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::HookEventName;
@@ -2356,7 +2355,7 @@ plugins = true
     let manager = test_plugins_manager_with_options(
         tmp.path().to_path_buf(),
         Some(Product::Codex),
-        Some(AuthMode::BedrockApiKey),
+        Some(AuthMode::ApiKey),
     );
     let outcome = manager.list_marketplaces_for_config(&config, &[]).unwrap();
 

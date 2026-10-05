@@ -1,8 +1,6 @@
 //! CLI authentication status and logout commands.
 
 use genex_core::config::Config;
-use genex_core::config::edit::ConfigEdit;
-use genex_core::config::edit::ConfigEditsBuilder;
 use genex_login::logout;
 use genex_protocol::auth::AuthMode;
 use genex_utils_cli::CliConfigOverrides;
@@ -28,14 +26,6 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
             },
             AuthMode::Headers => {
                 unreachable!("header auth cannot be loaded from auth storage")
-            }
-            AuthMode::BedrockApiKey => {
-                eprintln!("Logged in using Amazon Bedrock API key");
-                std::process::exit(0);
-            }
-            AuthMode::BedrockAccessKeys => {
-                eprintln!("Logged in using Amazon Bedrock AWS access keys");
-                std::process::exit(0);
             }
         },
         Ok(None) => {
@@ -63,25 +53,7 @@ pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
         }
     };
 
-    let cleared_bedrock_config =
-        if let Some(paths) = ConfigEditsBuilder::bedrock_provider_config_paths_to_clear(&config) {
-            let edits = paths
-                .into_iter()
-                .map(|segments| ConfigEdit::ClearPath { segments });
-            if let Err(err) = ConfigEditsBuilder::for_config(&config)
-                .with_edits(edits)
-                .apply()
-                .await
-            {
-                eprintln!("Error clearing Amazon Bedrock configuration after logout: {err}");
-                std::process::exit(1);
-            }
-            true
-        } else {
-            false
-        };
-
-    if logged_out || cleared_bedrock_config {
+    if logged_out {
         eprintln!("Successfully logged out");
     } else {
         eprintln!("Not logged in");

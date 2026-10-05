@@ -1,6 +1,6 @@
 //! Authentication step UI and state transitions used by onboarding.
 //!
-//! This module owns the auth-step state machine for API-key and Bedrock setup,
+//! This module owns the auth-step state machine for API-key login,
 //! renders the corresponding UI, and handles auth-scoped keyboard input.
 //! It intentionally does not decide onboarding flow completion; the enclosing
 //! onboarding screen coordinates step progression.
@@ -39,7 +39,6 @@ use std::sync::RwLock;
 
 use crate::key_hint::KeyBinding;
 use crate::key_hint::KeyBindingListExt;
-use crate::onboarding::bedrock::BedrockState;
 use crate::onboarding::keys;
 use crate::onboarding::onboarding_screen::KeyboardHandler;
 use crate::onboarding::onboarding_screen::StepStateProvider;
@@ -57,14 +56,11 @@ pub(crate) enum SignInState {
     PickMode,
     ApiKeyEntry(ApiKeyInputState),
     ApiKeyConfigured,
-    Bedrock(BedrockState),
-    BedrockConfigured,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum SignInOption {
     ApiKey,
-    Bedrock,
 }
 
 const API_KEY_DISABLED_MESSAGE: &str = "API key login is disabled.";
@@ -80,9 +76,6 @@ pub(crate) struct ApiKeyInputState {
 
 impl KeyboardHandler for AuthModeWidget {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
-        if self.handle_bedrock_key_event(&key_event) {
-            return;
-        }
         if self.handle_api_key_entry_key_event(&key_event) {
             return;
         }
@@ -130,10 +123,6 @@ impl KeyboardHandler for AuthModeWidget {
     fn handle_paste(&mut self, pasted: String) {
         let sign_in_state = self.sign_in_state.read().unwrap();
         match &*sign_in_state {
-            SignInState::Bedrock(_) => {
-                drop(sign_in_state);
-                let _ = self.handle_bedrock_paste(&pasted);
-            }
             SignInState::ApiKeyEntry(_) => {
                 drop(sign_in_state);
                 let _ = self.handle_api_key_entry_paste(pasted);
@@ -152,7 +141,6 @@ pub(crate) struct AuthModeWidget {
     pub sign_in_state: Arc<RwLock<SignInState>>,
     pub app_server_request_handle: AppServerRequestHandle,
     pub auth_config: AuthConfig,
-    pub bedrock_setup_enabled: bool,
 }
 
 impl AuthModeWidget {
@@ -174,19 +162,16 @@ impl AuthModeWidget {
     pub(crate) fn is_text_entry_active(&self) -> bool {
         self.sign_in_state.read().is_ok_and(|guard| match &*guard {
             SignInState::ApiKeyEntry(_) => true,
-            SignInState::Bedrock(state) => state.is_text_entry_active(),
             _ => false,
         })
     }
 
     /// Returns whether printable quit shortcuts must be treated as text input.
     ///
-    /// provider API-key entry keeps its existing empty-field quit behavior, while
-    /// Bedrock fields accept printable input from their first character.
+    /// provider API-key entry keeps its existing empty-field quit behavior.
     pub(crate) fn should_suppress_printable_quit(&self) -> bool {
         self.sign_in_state.read().is_ok_and(|guard| match &*guard {
             SignInState::ApiKeyEntry(state) => !state.value.is_empty(),
-            SignInState::Bedrock(state) => state.is_text_entry_active(),
             _ => false,
         })
     }
@@ -208,9 +193,6 @@ impl AuthModeWidget {
         let mut options = Vec::new();
         if self.is_api_login_allowed() {
             options.push(SignInOption::ApiKey);
-        }
-        if self.bedrock_setup_enabled && self.is_api_login_allowed() {
-            options.push(SignInOption::Bedrock);
         }
         options
     }
@@ -247,13 +229,6 @@ impl AuthModeWidget {
                 if self.is_api_login_allowed() {
                     self.start_api_key_entry();
                 } else {
-                    self.disallow_api_login();
-                }
-            }
-            SignInOption::Bedrock => {
-                if self.bedrock_setup_enabled && self.is_api_login_allowed() {
-                    self.start_bedrock_discovery();
-                } else if !self.is_api_login_allowed() {
                     self.disallow_api_login();
                 }
             }
@@ -305,20 +280,8 @@ impl AuthModeWidget {
                     lines.extend(create_mode_item(
                         idx,
                         option,
-                        if self.bedrock_setup_enabled {
-                            "Use an provider API key"
-                        } else {
-                            "Provide your own API key"
-                        },
+                        "Provide your own API key",
                         "Pay for what you use",
-                    ));
-                }
-                SignInOption::Bedrock => {
-                    lines.extend(create_mode_item(
-                        idx,
-                        option,
-                        "Use Amazon Bedrock",
-                        "Connect using your AWS credentials",
                     ));
                 }
             }
@@ -567,15 +530,6 @@ impl AuthModeWidget {
                     *error.write().unwrap() = None;
                     *sign_in_state.write().unwrap() = SignInState::ApiKeyConfigured;
                 }
-                Ok(other) => {
-                    *error.write().unwrap() = Some(format!(
-                        "Unexpected account/login/start response: {other:?}"
-                    ));
-                    *sign_in_state.write().unwrap() = SignInState::ApiKeyEntry(ApiKeyInputState {
-                        value: api_key,
-                        prepopulated_from_env: false,
-                    });
-                }
                 Err(err) => {
                     *error.write().unwrap() = Some(format!("Failed to save API key: {err}"));
                     *sign_in_state.write().unwrap() = SignInState::ApiKeyEntry(ApiKeyInputState {
@@ -594,10 +548,10 @@ impl StepStateProvider for AuthModeWidget {
     fn get_step_state(&self) -> StepState {
         let sign_in_state = self.sign_in_state.read().unwrap();
         match &*sign_in_state {
-            SignInState::PickMode | SignInState::ApiKeyEntry(_) | SignInState::Bedrock(_) => {
+            SignInState::PickMode | SignInState::ApiKeyEntry(_) => {
                 StepState::InProgress
             }
-            SignInState::ApiKeyConfigured | SignInState::BedrockConfigured => StepState::Complete,
+            SignInState::ApiKeyConfigured => StepState::Complete,
         }
     }
 }
@@ -614,14 +568,6 @@ impl WidgetRef for AuthModeWidget {
             }
             SignInState::ApiKeyConfigured => {
                 self.render_api_key_configured(area, buf);
-            }
-            SignInState::Bedrock(state) => {
-                state.render(area, buf, self.error_message());
-            }
-            SignInState::BedrockConfigured => {
-                Paragraph::new("✓ Amazon Bedrock configured".green())
-                    .wrap(Wrap { trim: false })
-                    .render(area, buf);
             }
         }
     }

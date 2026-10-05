@@ -26,8 +26,6 @@ pub use auth::default_client;
 pub use auth::enforce_login_restrictions;
 pub use auth::load_auth_dot_json;
 pub use auth::login_with_api_key;
-pub use auth::login_with_bedrock_access_keys;
-pub use auth::login_with_bedrock_api_key;
 pub use auth::logout;
 pub use auth::save_auth;
 pub use auth_env_telemetry::AuthEnvTelemetry;

@@ -56,7 +56,6 @@ use genex_login::enforce_login_restrictions;
 use genex_protocol::ThreadId;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::AltScreenMode;
-use genex_protocol::config_types::ForcedLoginMethod;
 use genex_protocol::config_types::SandboxMode;
 use genex_rollout::StateDbHandle;
 use genex_rollout::state_db;
@@ -1105,16 +1104,9 @@ async fn run_ratatui_app(
         // Authentication can change while any interactive onboarding screen is open.
         startup_account = None;
         let show_login_screen = should_show_login_screen(login_status, requires_auth);
-        let bedrock_setup_enabled = should_show_bedrock_setup_wizard(
-            login_status,
-            requires_auth,
-            &initial_config,
-            &app_server_target,
-        );
         let onboarding_result = run_onboarding_app(
             OnboardingScreenArgs {
                 show_login_screen,
-                bedrock_setup_enabled,
                 show_trust_screen: should_show_trust_screen_flag,
                 remote_project_trust: None,
                 login_status,
@@ -1872,7 +1864,7 @@ async fn get_login_status(
     let account = app_server.read_account().await?;
     let login_status = match &account.account {
         Some(AppServerAccount::ApiKey {}) => LoginStatus::AuthMode(AuthMode::ApiKey),
-        Some(AppServerAccount::AmazonBedrock { .. }) | None => LoginStatus::NotAuthenticated,
+        None => LoginStatus::NotAuthenticated,
     };
     Ok((login_status, account))
 }
@@ -2020,26 +2012,6 @@ fn should_show_login_screen(login_status: LoginStatus, requires_auth: bool) -> b
     }
 
     login_status == LoginStatus::NotAuthenticated
-}
-
-fn should_show_bedrock_setup_wizard(
-    login_status: LoginStatus,
-    requires_auth: bool,
-    config: &Config,
-    app_server_target: &AppServerTarget,
-) -> bool {
-    matches!(app_server_target, AppServerTarget::Embedded)
-        && should_show_login_screen(login_status, requires_auth)
-        && config.features.enabled(Feature::BedrockSetupWizard)
-        && config.model_provider_id == "provider"
-        && config
-            .config_layer_stack
-            .effective_config()
-            .get("model_provider")
-            .is_none()
-        && config
-            .auth_config()
-            .is_login_method_allowed(ForcedLoginMethod::Api)
 }
 
 mod daemon_startup;

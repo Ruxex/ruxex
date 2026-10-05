@@ -1,7 +1,7 @@
 [[production]]
 package = "genex-cli"
-bin = "codex"
-reason = "codex CLI binary"
+bin = "genex"
+reason = "genex CLI binary"
 
 [[production]]
 package = "genex-app-server"

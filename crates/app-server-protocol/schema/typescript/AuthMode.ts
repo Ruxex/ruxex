@@ -5,4 +5,4 @@
 /**
  * Authentication mode for configured model providers.
  */
-export type AuthMode = "apikey" | "headers" | "bedrockApiKey" | "bedrockAccessKeys";
+export type AuthMode = "apikey" | "headers";

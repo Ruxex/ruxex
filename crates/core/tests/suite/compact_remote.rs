@@ -11,8 +11,6 @@ use genex_history::GenexHarnessMetadata;
 use genex_history::InitialHistory;
 use genex_history::RolloutItem;
 use genex_login::GenexAuth;
-use genex_login::auth::BedrockApiKeyAuth;
-use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::AgentPath;
 use genex_protocol::models::ContentItem;
@@ -177,23 +175,6 @@ async fn wait_for_turn_complete(genex: &genex_core::GenexThread) {
         REMOTE_COMPACT_TURN_COMPLETE_TIMEOUT,
     )
     .await;
-}
-
-fn amazon_bedrock_test_genex() -> TestGenexBuilder {
-    let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
-        api_key: "bedrock-test-api-key".to_string(),
-        region: "us-east-1".to_string(),
-    });
-    test_genex()
-        .with_auth(auth)
-        .with_model("bedrock-model")
-        .with_config(|config| {
-            config.model_provider = ModelProviderInfo {
-                base_url: config.model_provider.base_url.clone(),
-                ..ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None)
-            };
-            config.model_provider_id = AMAZON_BEDROCK_PROVIDER_ID.to_string();
-        })
 }
 
 fn is_retained_user_message(item: &ResponseItem, retained_text: &str) -> bool {
@@ -525,89 +506,6 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
 
     Ok(())
 }
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn amazon_bedrock_automatic_compaction_uses_v2_responses_endpoint() -> Result<()> {
-    skip_if_no_network!(Ok(()));
-
-    let harness = TestGenexHarness::with_auto_env_builder(amazon_bedrock_test_genex().with_config(
-        |config| {
-            config.model_auto_compact_token_limit = Some(200);
-        },
-    ))
-    .await?;
-    let response_mock = responses::mount_sse_sequence(
-        harness.server(),
-        vec![
-            sse(vec![
-                responses::ev_assistant_message("message-1", "before automatic compaction"),
-                responses::ev_completed_with_tokens("response-1", /*total_tokens*/ 500),
-            ]),
-            sse(vec![
-                json!({
-                    "type": "response.output_item.done",
-                    "item": {
-                        "type": "compaction",
-                        "encrypted_content": "BEDROCK_AUTOMATIC_REMOTE_COMPACTED_SUMMARY",
-                    }
-                }),
-                responses::ev_completed("response-compact"),
-            ]),
-            sse(vec![
-                responses::ev_assistant_message("message-2", "after automatic compaction"),
-                responses::ev_completed("response-2"),
-            ]),
-        ],
-    )
-    .await;
-
-    harness
-        .test()
-        .submit_turn("before automatic compact")
-        .await?;
-    harness
-        .test()
-        .submit_turn("after automatic compact")
-        .await?;
-
-    let response_requests = response_mock.requests();
-    assert_eq!(response_requests.len(), 3);
-    assert!(
-        response_requests
-            .iter()
-            .all(|request| request.path() == "/v1/responses")
-    );
-    let compact_request = &response_requests[1];
-    assert_eq!(
-        compact_request.header("authorization").as_deref(),
-        Some("Bearer bedrock-test-api-key")
-    );
-    assert_eq!(
-        compact_request
-            .header("x-amzn-mantle-client-agent")
-            .as_deref(),
-        Some("codex")
-    );
-    assert_eq!(
-        compact_request.body_json()["model"],
-        "bedrock-model"
-    );
-    assert_eq!(
-        compact_request.inputs_of_type("compaction_trigger").len(),
-        1
-    );
-    assert!(response_requests[2].input().iter().any(|item| {
-        item["type"] == "compaction"
-            && item["encrypted_content"] == "BEDROCK_AUTOMATIC_REMOTE_COMPACTED_SUMMARY"
-    }));
-
-    Ok(())
-}
-
-#[test_case(None, "image_url"; "default_trims_images")]
-#[test_case(Some(false), "image_url"; "disabled_preserves_images")]
-#[test_case(None, "file_id"; "default_trims_file_images")]
-#[test_case(Some(false), "file_id"; "disabled_preserves_file_images")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn remote_compact_v2_charges_retained_images_to_token_budget(
     image_budget_enabled: Option<bool>,

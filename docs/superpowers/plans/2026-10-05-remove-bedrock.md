@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-05-remove-bedrock-design.md`
 
+**Status (2026-10-05):** 完了。Bedrock の protocol、認証、設定、CLI/TUI、runtime/provider、専用 AWS 認証クレート、テスト、生成スキーマを削除し、provider-neutral な custom provider、API key/Headers/external bearer 認証、一般的な `/models` 取得、OpenAI endpoint 契約は保持した。
+
 ## Global Constraints
 
 - Work directly on the existing `main` branch; do not create a worktree.
@@ -44,25 +46,25 @@
 - Consumes: Existing provider-neutral `AuthMode`, account, login, and app-server protocol definitions.
 - Produces: Protocol types containing only the remaining auth/account variants; no Bedrock request/response routes or schema variants.
 
-- [ ] **Step 1: Record the removal decision before changing production code**
+- [x] **Step 1: Record the removal decision before changing production code**
 
   Add the audited Bedrock producer/consumer groups, the `genex-aws-auth` boundary, and explicit `remove`/`retain` decisions to `docs/pre-release-compatibility-inventory.md` and `docs/provider-decoupling-candidates.md`. Record that OpenAI endpoint/wire/auth/model contracts and provider-neutral capabilities are retained.
 
-- [ ] **Step 2: Audit and remove Bedrock protocol producers and tests**
+- [x] **Step 2: Audit and remove Bedrock protocol producers and tests**
 
   Remove Bedrock API-key/access-key auth variants, Bedrock account/login variants, `account/bedrock/discover`, `account/bedrock/setup`, their request/response types, exports, modules, and serialization assertions. Keep API key, headers, and other active provider-neutral protocol shapes unchanged.
 
-- [ ] **Step 3: Regenerate checked-in protocol artifacts**
+- [x] **Step 3: Regenerate checked-in protocol artifacts**
 
   Run `just generate` and inspect the diff. Confirm generated JSON/TypeScript files remove only Bedrock-owned schemas and references.
 
-- [ ] **Step 4: Compile affected targets**
+- [x] **Step 4: Compile affected targets**
 
   Run `just check --tests`.
 
   Expected: exit 0; protocol, app-server protocol, and all test targets compile without Bedrock types.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add crates/app-server-protocol crates/protocol
@@ -86,21 +88,21 @@
 - Consumes: Task 1’s provider-neutral protocol types and routes.
 - Produces: app-server, login, CLI, TUI, and config paths with no Bedrock runtime or authentication branch.
 
-- [ ] **Step 1: Remove runtime and auth consumers**
+- [x] **Step 1: Remove runtime and auth consumers**
 
   Delete Bedrock app-server processors, login auth modules, test-client modes, CLI/TUI onboarding branches, Bedrock-only fixtures, and config edit/validation paths. Remove now-unused imports, modules, and dependency declarations while preserving active generic auth flows.
 
-- [ ] **Step 2: Audit config schemas and user-facing docs**
+- [x] **Step 2: Audit config schemas and user-facing docs**
 
   Remove Bedrock-only TOML fields, schema entries, examples, help text, and README instructions. Ensure unknown/removed Bedrock configuration is not silently accepted by a leftover schema or parser path.
 
-- [ ] **Step 3: Compile affected targets**
+- [x] **Step 3: Compile affected targets**
 
   Run `just check --tests`.
 
   Expected: exit 0; app-server, login, CLI, TUI, config, and integration test targets compile with no Bedrock references.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add crates/app-server crates/app-server-test-client crates/login crates/cli crates/tui crates/config crates/core
@@ -120,25 +122,25 @@
 - Consumes: Tasks 1–2’s protocol/auth/config surface with Bedrock consumers removed.
 - Produces: model-provider and model-provider-info containing only provider-neutral/configured provider implementations; no AWS SigV4 dependency or `genex-aws-auth` workspace crate.
 
-- [ ] **Step 1: Confirm AWS auth consumer boundary**
+- [x] **Step 1: Confirm AWS auth consumer boundary**
 
   Run `rg -n 'genex-aws-auth|AwsAuth|AwsAccessKeys|AwsRequestToSign|ModelProviderAwsAuthInfo|AwsAuthRefreshConfig' crates Cargo.toml Cargo.lock`. Classify every remaining match as Bedrock-only or unrelated and record the result in the compatibility inventory before deletion.
 
-- [ ] **Step 2: Remove Bedrock provider implementation and metadata**
+- [x] **Step 2: Remove Bedrock provider implementation and metadata**
 
   Delete the Bedrock provider module/tests, remove built-in Bedrock registry entries, constants, AWS config structs/fields, validation, built-in override behavior, exports, and shared credential export/auth recovery state. Keep custom provider registration and generic model retrieval intact.
 
-- [ ] **Step 3: Remove the AWS signing crate and dependencies**
+- [x] **Step 3: Remove the AWS signing crate and dependencies**
 
   Delete `crates/aws-auth`, remove workspace member/dependency declarations and direct consumers, then update `Cargo.lock` through the normal Cargo/check flow. Confirm no AWS SDK/SigV4 package remains solely because of Bedrock.
 
-- [ ] **Step 4: Compile affected targets**
+- [x] **Step 4: Compile affected targets**
 
   Run `just check --tests`.
 
   Expected: exit 0; model-provider, model-provider-info, core integration tests, and the remaining workspace test targets compile without Bedrock/AWS-auth code.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add Cargo.toml Cargo.lock crates/model-provider crates/model-provider-info crates/aws-auth crates/app-server crates/core crates/config
@@ -156,23 +158,23 @@
 - Consumes: Tasks 1–3’s removed producers and consumers, plus generated schema changes.
 - Produces: explicit audit trail, no active Bedrock support surface, and verified provider-neutral workspace.
 
-- [ ] **Step 1: Record producer/consumer decisions**
+- [x] **Step 1: Record producer/consumer decisions**
 
   Add a dated inventory entry covering protocol/schema, login/auth, config, runtime/UI, model-provider, and `genex-aws-auth` removal. Update candidate/plan status without deleting the audit evidence needed to explain the decision.
 
-- [ ] **Step 2: Regenerate and inspect artifacts**
+- [x] **Step 2: Regenerate and inspect artifacts**
 
   Run `just generate`, inspect all generated diffs, and update only artifacts whose deleted producers require changes. Run `git diff --check`.
 
-- [ ] **Step 3: Run exact residual and retain-only audits**
+- [x] **Step 3: Run exact residual and retain-only audits**
 
   Run searches for `bedrock`, `amazon_bedrock`, `AmazonBedrock`, `genex-aws-auth`, `AwsAuth`, and Bedrock config keys across active Rust/config/schema/README/test paths. Separately verify retained OpenAI endpoint/wire/auth/model identifiers are unchanged and that any remaining Bedrock wording is limited to removal/audit history.
 
-- [ ] **Step 4: Run repository verification**
+- [x] **Step 4: Run repository verification**
 
   Run `just check --tests`, then `just check`. Read the complete results and resolve any failures before completion.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add docs chatgpt-openai-line-counts.tsv chatgpt-openai-line-counts-needs-review.tsv hawk.json

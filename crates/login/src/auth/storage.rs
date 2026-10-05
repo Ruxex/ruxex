@@ -17,8 +17,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tracing::warn;
 
-use super::BedrockAccessKeysAuth;
-use super::BedrockApiKeyAuth;
 use genex_config::types::AuthCredentialsStoreMode;
 pub use genex_config::types::AuthKeyringBackendKind;
 use genex_keyring_store::DefaultKeyringStore;
@@ -42,12 +40,6 @@ pub struct AuthDotJson {
     pub auth_mode: Option<AuthMode>,
 
     pub api_key: Option<String>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub bedrock_api_key: Option<BedrockApiKeyAuth>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub bedrock_access_keys: Option<BedrockAccessKeysAuth>,
 }
 
 /// Ignore authentication modes removed from the persisted format so old
@@ -60,8 +52,6 @@ where
     Ok(value.and_then(|value| match value.as_str() {
         "apiKey" | "apikey" => Some(AuthMode::ApiKey),
         "headers" => Some(AuthMode::Headers),
-        "bedrockApiKey" => Some(AuthMode::BedrockApiKey),
-        "bedrockAccessKeys" => Some(AuthMode::BedrockAccessKeys),
         _ => None,
     }))
 }

@@ -20,24 +20,12 @@ pub enum Account {
     #[serde(rename = "apiKey", rename_all = "camelCase")]
     #[ts(rename = "apiKey", rename_all = "camelCase")]
     ApiKey {},
-
-    #[serde(rename = "amazonBedrock", rename_all = "camelCase")]
-    #[ts(rename = "amazonBedrock", rename_all = "camelCase")]
-    AmazonBedrock {
-        #[serde(default)]
-        uses_genex_managed_credentials: bool,
-    },
 }
 
 impl From<ProviderAccount> for Account {
     fn from(account: ProviderAccount) -> Self {
         match account {
             ProviderAccount::ApiKey => Self::ApiKey {},
-            ProviderAccount::AmazonBedrock {
-                uses_genex_managed_credentials,
-            } => Self::AmazonBedrock {
-                uses_genex_managed_credentials,
-            },
         }
     }
 }
@@ -54,22 +42,6 @@ pub enum LoginAccountParams {
         #[ts(rename = "apiKey")]
         api_key: String,
     },
-    /// [UNSTABLE] Managed Amazon Bedrock login is experimental.
-    #[experimental("account/login/start.amazonBedrock")]
-    #[serde(rename = "amazonBedrock", rename_all = "camelCase")]
-    #[ts(rename = "amazonBedrock", rename_all = "camelCase")]
-    AmazonBedrock { api_key: String, region: String },
-    /// [UNSTABLE] Managed Amazon Bedrock AWS access key login is experimental.
-    #[experimental("account/login/start.amazonBedrockAccessKeys")]
-    #[serde(rename = "amazonBedrockAccessKeys", rename_all = "camelCase")]
-    #[ts(rename = "amazonBedrockAccessKeys", rename_all = "camelCase")]
-    AmazonBedrockAccessKeys {
-        access_key_id: String,
-        secret_access_key: String,
-        #[ts(optional = nullable)]
-        session_token: Option<String>,
-        region: String,
-    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -80,9 +52,6 @@ pub enum LoginAccountResponse {
     #[serde(rename = "apiKey", rename_all = "camelCase")]
     #[ts(rename = "apiKey", rename_all = "camelCase")]
     ApiKey {},
-    #[serde(rename = "amazonBedrock", rename_all = "camelCase")]
-    #[ts(rename = "amazonBedrock", rename_all = "camelCase")]
-    AmazonBedrock {},
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

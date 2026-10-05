@@ -93,7 +93,6 @@ pub(crate) struct OnboardingScreenArgs {
     pub show_trust_screen: bool,
     pub remote_project_trust: Option<RemoteProjectTrust>,
     pub show_login_screen: bool,
-    pub bedrock_setup_enabled: bool,
     pub login_status: LoginStatus,
     pub app_server_request_handle: Option<AppServerRequestHandle>,
     pub config: Config,
@@ -119,7 +118,6 @@ impl OnboardingScreen {
             show_trust_screen,
             remote_project_trust,
             show_login_screen,
-            bedrock_setup_enabled,
             login_status,
             app_server_request_handle,
             config,
@@ -162,7 +160,6 @@ impl OnboardingScreen {
                     sign_in_state: Arc::new(RwLock::new(SignInState::PickMode)),
                     app_server_request_handle,
                     auth_config,
-                    bedrock_setup_enabled,
                 }));
             } else {
                 tracing::warn!("skipping onboarding login step without app-server request handle");
@@ -290,7 +287,7 @@ impl KeyboardHandler for OnboardingScreen {
     /// Route key events to onboarding steps while preserving text-entry safety.
     ///
     /// provider API-key entry suppresses printable quit bindings after typing
-    /// starts, while Bedrock fields suppress them from the first character.
+    /// starts.
     /// Control/alt quit chords still work as emergency exits.
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         if !matches!(key_event.kind, KeyEventKind::Press | KeyEventKind::Repeat) {

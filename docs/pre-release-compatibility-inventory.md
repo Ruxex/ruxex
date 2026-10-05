@@ -901,3 +901,21 @@ publicly discoverable and requests that it be open-sourced. No public extension 
 producer was found to update in lockstep. Therefore `codex_vscode`, `Codex VS Code Extension`, and
 the related User-Agent/originator values remain retained external client identities. The generic
 `VSCode`, `vscode-remote://`, and `.vscode` values remain VS Code platform contracts.
+
+### Amazon Bedrock support removal audit (2026-10-05)
+
+Producer/consumer audit for the Amazon Bedrock capability is complete before code changes.
+This section supersedes earlier inventory rows that described Bedrock as an active retained
+capability. Those rows remain as historical audit evidence; the current state is the completed
+`remove` decision below.
+The capability is repository-owned and the fork is pre-release, so the protocol, configuration,
+auth, UI, test, and provider surfaces can be removed together without compatibility aliases.
+
+| Area | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| Bedrock model provider and metadata | `genex-model-provider` produces the Mantle/Runtime adapter, AWS auth recovery/export, and Bedrock model-provider implementation; `genex-model-provider-info`, core external-auth tests, app-server, TUI, and model-provider tests consume it. | `remove` | Exact Bedrock/AWS symbol audit; `just check --tests`; `just check` |
+| AWS signing and credential loading | `genex-aws-auth` provides credential discovery, access keys, credential providers, and SigV4 signing. Workspace consumers are the Bedrock model-provider path and direct manifest edges; no unrelated production consumer was found. | `remove` | `rg -n 'genex-aws-auth|AwsAuth|AwsAccessKeys|AwsRequestToSign' crates Cargo.toml Cargo.lock`; `cargo metadata --no-deps` |
+| Login/auth and persistence | Bedrock API-key/access-key auth variants are produced by `genex-login` storage/manager and consumed by model-provider, app-server, CLI/TUI, and auth fixtures. | `remove` | Cross-crate `GenexAuth::Bedrock*`, `BedrockApiKeyAuth`, `BedrockAccessKeysAuth` audit; `just check --tests` |
+| Protocol/schema | `AuthMode`, account/login variants, `account/bedrock/discover`, and `account/bedrock/setup` are produced by app-server protocol and consumed by app-server/TUI/test clients and checked-in JSON/TypeScript schemas. | `remove` | Protocol producer/consumer audit; `just generate`; generated diff inspection |
+| Configuration and UI | Bedrock `model_providers.*.aws` validation/edit/schema, CLI doctor/login, TUI onboarding, and app-server setup processors have no non-Bedrock consumer. | `remove` | Config/schema/CLI/TUI audit; `just check --tests`; `just check` |
+| OpenAI/provider-neutral contracts | OpenAI endpoint URLs, wire fields, auth variables/headers/model identifiers, custom providers, API key/headers auth, generic `/models`, platform fallback, and security behavior are separate retained consumers. | `retain` | Retain-only search and generated diff review |

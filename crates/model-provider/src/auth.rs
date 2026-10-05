@@ -8,13 +8,9 @@ use genex_login::AuthHeaders;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::error::GenexErr;
 use http::HeaderMap;
 
 use crate::bearer_auth_provider::BearerAuthProvider;
-
-const BEDROCK_API_KEY_UNSUPPORTED_MESSAGE: &str =
-    "Bedrock API key auth is only supported by the Amazon Bedrock model provider";
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ProviderAuthScope;
@@ -122,15 +118,6 @@ pub(crate) fn resolve_provider_auth(
         return Ok(unauthenticated_auth_provider());
     }
 
-    if matches!(
-        auth,
-        Some(GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_))
-    ) {
-        return Err(GenexErr::UnsupportedOperation(
-            BEDROCK_API_KEY_UNSUPPORTED_MESSAGE.to_string(),
-        ));
-    }
-
     Ok(match auth {
         Some(auth) => auth_provider_from_auth(auth),
         None => unauthenticated_auth_provider(),
@@ -165,9 +152,6 @@ fn bearer_auth_for_provider(
 pub fn auth_provider_from_auth(auth: &GenexAuth) -> SharedAuthProvider {
     match auth {
         GenexAuth::Headers(auth) => Arc::new(HeaderAuthProvider { auth: auth.clone() }),
-        GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_) => {
-            unreachable!("{BEDROCK_API_KEY_UNSUPPORTED_MESSAGE}")
-        }
         GenexAuth::ApiKey(_) => Arc::new(BearerAuthProvider {
             token: auth.get_token().ok(),
         }),
@@ -191,11 +175,9 @@ pub fn auth_provider_from_auth_manager(
 
 #[cfg(test)]
 mod tests {
-    use genex_login::auth::BedrockApiKeyAuth;
     use genex_model_provider_info::WireApi;
     use genex_model_provider_info::create_responses_provider_with_base_url;
     use genex_protocol::config_types::ModelProviderAuthInfo;
-    use genex_protocol::error::GenexErrorDetails;
     use http::HeaderValue;
     use http::header::AUTHORIZATION;
     use pretty_assertions::assert_eq;
@@ -234,33 +216,13 @@ mod tests {
     }
 
     #[test]
-    fn custom_provider_does_not_inherit_ambient_bedrock_auth() {
-        let provider = create_responses_provider_with_base_url(
-            "http://localhost:11434/v1",
-            WireApi::Responses,
-        );
-        let ambient_auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
-            api_key: "bedrock-api-key-test".to_string(),
-            region: "us-east-1".to_string(),
-        });
-
-        let auth =
-            resolve_provider_auth(Some(&ambient_auth), &provider).expect("auth should resolve");
-
-        assert!(auth.to_auth_headers().is_empty());
-    }
-
-    #[test]
     fn custom_provider_uses_explicit_bearer_instead_of_ambient_auth() {
         let mut provider = create_responses_provider_with_base_url(
             "http://localhost:11434/v1",
             WireApi::Responses,
         );
         provider.experimental_bearer_token = Some("provider-token".into());
-        let ambient_auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
-            api_key: "bedrock-api-key-test".to_string(),
-            region: "us-east-1".to_string(),
-        });
+        let ambient_auth = GenexAuth::from_api_key("ambient-api-key");
 
         let headers = resolve_provider_auth(Some(&ambient_auth), &provider)
             .expect("auth should resolve")
@@ -330,24 +292,5 @@ mod tests {
         let actual = auth_provider_from_auth(&auth).to_auth_headers();
 
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn responses_provider_rejects_bedrock_api_key_auth() {
-        let provider = ModelProviderInfo::create_responses_provider(/*base_url*/ None);
-        let auth = GenexAuth::BedrockApiKey(BedrockApiKeyAuth {
-            api_key: "bedrock-api-key-test".to_string(),
-            region: "us-east-1".to_string(),
-        });
-
-        match resolve_provider_auth(Some(&auth), &provider) {
-            Err(err) => match err.details() {
-                GenexErrorDetails::UnsupportedOperation(message) => {
-                    assert_eq!(message, BEDROCK_API_KEY_UNSUPPORTED_MESSAGE);
-                }
-                details => panic!("unexpected auth error: {details:?}"),
-            },
-            Ok(_) => panic!("Bedrock API key auth should be rejected"),
-        }
     }
 }

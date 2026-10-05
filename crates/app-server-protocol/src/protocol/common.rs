@@ -30,16 +30,6 @@ pub enum AuthMode {
     #[ts(rename = "headers")]
     #[strum(serialize = "headers")]
     Headers,
-    /// Amazon Bedrock bearer token managed by Genex.
-    #[serde(rename = "bedrockApiKey")]
-    #[ts(rename = "bedrockApiKey")]
-    #[strum(serialize = "bedrockApiKey")]
-    BedrockApiKey,
-    /// Amazon Bedrock AWS access keys managed by Genex.
-    #[serde(rename = "bedrockAccessKeys")]
-    #[ts(rename = "bedrockAccessKeys")]
-    #[strum(serialize = "bedrockAccessKeys")]
-    BedrockAccessKeys,
 }
 
 macro_rules! experimental_reason_expr {
@@ -1028,20 +1018,6 @@ client_request_definitions! {
         response: v2::LoginAccountResponse,
     },
 
-    #[experimental("account/bedrock/discover")]
-    BedrockDiscover => "account/bedrock/discover" {
-        params: v2::BedrockDiscoverParams,
-        serialization: global_shared_read("account-auth"),
-        response: v2::BedrockDiscoverResponse,
-    },
-
-    #[experimental("account/bedrock/setup")]
-    BedrockSetup => "account/bedrock/setup" {
-        params: v2::BedrockSetupParams,
-        serialization: global("account-auth"),
-        response: v2::BedrockSetupResponse,
-    },
-
     CancelLoginAccount => "account/login/cancel" {
         params: v2::CancelLoginAccountParams,
         serialization: global("account-auth"),
@@ -1739,9 +1715,7 @@ mod tests {
     use super::*;
     use anyhow::Result;
     use genex_protocol::ThreadId;
-    use genex_protocol::account::PlanType;
     use genex_protocol::config_types::MultiAgentMode;
-    use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
     use genex_protocol::parse_command::ParsedCommand;
     use genex_utils_absolute_path::AbsolutePathBuf;
     use genex_utils_absolute_path::test_support::PathBufExt;
@@ -2797,56 +2771,6 @@ mod tests {
     }
 
     #[test]
-    fn serialize_account_login_amazon_bedrock() -> Result<()> {
-        for (params, expected_params) in [
-            (
-                v2::LoginAccountParams::AmazonBedrock {
-                    api_key: "secret".to_string(),
-                    region: "us-west-2".to_string(),
-                },
-                json!({
-                    "type": "amazonBedrock",
-                    "apiKey": "secret",
-                    "region": "us-west-2"
-                }),
-            ),
-            (
-                v2::LoginAccountParams::AmazonBedrockAccessKeys {
-                    access_key_id: "access-key-id".to_string(),
-                    secret_access_key: "secret-access-key".to_string(),
-                    session_token: Some("session-token".to_string()),
-                    region: "us-west-2".to_string(),
-                },
-                json!({
-                    "type": "amazonBedrockAccessKeys",
-                    "accessKeyId": "access-key-id",
-                    "secretAccessKey": "secret-access-key",
-                    "sessionToken": "session-token",
-                    "region": "us-west-2"
-                }),
-            ),
-        ] {
-            let request = ClientRequest::LoginAccount {
-                request_id: RequestId::Integer(2),
-                params,
-            };
-            assert_eq!(
-                json!({
-                    "method": "account/login/start",
-                    "id": 2,
-                    "params": expected_params,
-                }),
-                serde_json::to_value(&request)?,
-            );
-        }
-        assert_eq!(
-            json!({"type": "amazonBedrock"}),
-            serde_json::to_value(v2::LoginAccountResponse::AmazonBedrock {})?,
-        );
-        Ok(())
-    }
-
-    #[test]
     fn serialize_account_logout() -> Result<()> {
         let request = ClientRequest::LogoutAccount {
             request_id: RequestId::Integer(5),
@@ -2907,41 +2831,6 @@ mod tests {
             serde_json::to_value(&api_key)?,
         );
 
-        let genex_managed_bedrock = v2::Account::AmazonBedrock {
-            uses_genex_managed_credentials: true,
-        };
-        assert_eq!(
-            json!({
-                "type": "amazonBedrock",
-                "usesGenexManagedCredentials": true,
-            }),
-            serde_json::to_value(&genex_managed_bedrock)?,
-        );
-
-        let externally_managed_bedrock = v2::Account::AmazonBedrock {
-            uses_genex_managed_credentials: false,
-        };
-        assert_eq!(
-            json!({
-                "type": "amazonBedrock",
-                "usesGenexManagedCredentials": false,
-            }),
-            serde_json::to_value(&externally_managed_bedrock)?,
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn account_defaults_legacy_bedrock_managed_credentials_flag() -> Result<()> {
-        assert_eq!(
-            v2::Account::AmazonBedrock {
-                uses_genex_managed_credentials: false,
-            },
-            serde_json::from_value(json!({
-                "type": "amazonBedrock",
-            }))?,
-        );
         Ok(())
     }
 

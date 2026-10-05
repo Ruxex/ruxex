@@ -633,7 +633,6 @@ impl AppServerSession {
                     None,
                     false,
                 ),
-                Some(Account::AmazonBedrock { .. }) => (None, None, None, None, false),
                 None => (None, None, None, None, false),
             };
         Ok(AppServerBootstrap {
@@ -1626,9 +1625,7 @@ pub(crate) fn status_account_display_from_auth_mode(
 ) -> Option<StatusAccountDisplay> {
     match auth_mode {
         Some(AuthMode::ApiKey) => Some(StatusAccountDisplay::ApiKey),
-        Some(AuthMode::Headers)
-        | Some(AuthMode::BedrockApiKey)
-        | Some(AuthMode::BedrockAccessKeys) => None,
+        Some(AuthMode::Headers) => None,
         None => None,
     }
 }

@@ -95,8 +95,6 @@ pub fn write_api_key_auth(
     let auth = AuthDotJson {
         auth_mode: Some(AuthMode::ApiKey),
         api_key: Some(fixture.api_key),
-        bedrock_api_key: None,
-        bedrock_access_keys: None,
     };
 
     save_auth(

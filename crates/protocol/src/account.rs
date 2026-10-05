@@ -47,9 +47,6 @@ pub enum PlanType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProviderAccount {
     ApiKey,
-    AmazonBedrock {
-        uses_genex_managed_credentials: bool,
-    },
 }
 
 impl PlanType {

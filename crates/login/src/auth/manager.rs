@@ -18,8 +18,6 @@ use super::change_state::AuthChangeState;
 use super::change_state::same_owner;
 use super::external_bearer::BearerTokenRefresher;
 use crate::auth::AuthHeaders;
-pub use crate::auth::bedrock_access_keys::BedrockAccessKeysAuth;
-pub use crate::auth::bedrock_api_key::BedrockApiKeyAuth;
 pub use crate::auth::storage::AuthDotJson;
 pub use crate::auth::storage::AuthKeyringBackendKind;
 use crate::auth::storage::create_auth_storage;
@@ -37,16 +35,12 @@ use thiserror::Error;
 pub enum GenexAuth {
     ApiKey(ApiKeyAuth),
     Headers(AuthHeaders),
-    BedrockApiKey(BedrockApiKeyAuth),
-    BedrockAccessKeys(BedrockAccessKeysAuth),
 }
 
 impl PartialEq for GenexAuth {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Headers(a), Self::Headers(b)) => a == b,
-            (Self::BedrockApiKey(a), Self::BedrockApiKey(b)) => a == b,
-            (Self::BedrockAccessKeys(a), Self::BedrockAccessKeys(b)) => a == b,
             _ => self.api_auth_mode() == other.api_auth_mode(),
         }
     }
@@ -155,22 +149,6 @@ impl GenexAuth {
             };
             return Ok(Self::from_api_key(api_key));
         }
-        if auth_mode == AuthMode::BedrockApiKey {
-            let Some(auth) = auth_dot_json.bedrock_api_key else {
-                return Err(std::io::Error::other(
-                    "Bedrock API key auth is missing a Bedrock API key.",
-                ));
-            };
-            return Ok(Self::BedrockApiKey(auth));
-        }
-        if auth_mode == AuthMode::BedrockAccessKeys {
-            let Some(auth) = auth_dot_json.bedrock_access_keys else {
-                return Err(std::io::Error::other(
-                    "Bedrock access keys auth is missing AWS access keys.",
-                ));
-            };
-            return Ok(Self::BedrockAccessKeys(auth));
-        }
         if auth_mode == AuthMode::Headers {
             return Err(std::io::Error::other(
                 "externally provided auth cannot be loaded from auth storage.",
@@ -181,10 +159,6 @@ impl GenexAuth {
             AuthMode::ApiKey => unreachable!("api key mode is handled above"),
             AuthMode::Headers => {
                 unreachable!("externally provided auth is never loaded from auth storage")
-            }
-            AuthMode::BedrockApiKey => unreachable!("bedrock api key mode is handled above"),
-            AuthMode::BedrockAccessKeys => {
-                unreachable!("bedrock access keys mode is handled above")
             }
         }
     }
@@ -215,8 +189,6 @@ impl GenexAuth {
         match self {
             Self::ApiKey(_) => AuthMode::ApiKey,
             Self::Headers(_) => AuthMode::Headers,
-            Self::BedrockApiKey(_) => AuthMode::BedrockApiKey,
-            Self::BedrockAccessKeys(_) => AuthMode::BedrockAccessKeys,
         }
     }
 
@@ -225,8 +197,6 @@ impl GenexAuth {
         match self {
             Self::ApiKey(_) => AuthMode::ApiKey,
             Self::Headers(_) => AuthMode::Headers,
-            Self::BedrockApiKey(_) => AuthMode::BedrockApiKey,
-            Self::BedrockAccessKeys(_) => AuthMode::BedrockAccessKeys,
         }
     }
 
@@ -246,7 +216,7 @@ impl GenexAuth {
     pub fn api_key(&self) -> Option<&str> {
         match self {
             Self::ApiKey(auth) => Some(auth.api_key.as_str()),
-            Self::Headers(_) | Self::BedrockApiKey(_) | Self::BedrockAccessKeys(_) => None,
+            Self::Headers(_) => None,
         }
     }
 
@@ -256,9 +226,6 @@ impl GenexAuth {
             Self::ApiKey(auth) => Ok(auth.api_key.clone()),
             Self::Headers(_) => Err(std::io::Error::other(
                 "header auth does not expose a bearer token",
-            )),
-            Self::BedrockApiKey(_) | Self::BedrockAccessKeys(_) => Err(std::io::Error::other(
-                "Bedrock API key auth does not expose a Genex bearer token",
             )),
         }
     }
@@ -319,8 +286,6 @@ pub fn login_with_api_key(
     let auth_dot_json = AuthDotJson {
         auth_mode: Some(AuthMode::ApiKey),
         api_key: Some(api_key.to_string()),
-        bedrock_api_key: None,
-        bedrock_access_keys: None,
     };
     save_auth(
         genex_home,
@@ -467,10 +432,7 @@ fn validate_auth_restrictions(
     let Some(expected_workspaces) = expected_workspaces else {
         return Ok(());
     };
-    if matches!(
-        auth,
-        GenexAuth::ApiKey(_) | GenexAuth::BedrockApiKey(_) | GenexAuth::BedrockAccessKeys(_)
-    ) {
+    if matches!(auth, GenexAuth::ApiKey(_)) {
         return Ok(());
     }
 
@@ -513,17 +475,13 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 
     if let Some(required_method) = config.forced_login_method {
         let method_violation = match (required_method, auth.auth_mode()) {
-            (ForcedLoginMethod::Api, AuthMode::ApiKey)
-            | (ForcedLoginMethod::Api, AuthMode::BedrockApiKey)
-            | (ForcedLoginMethod::Api, AuthMode::BedrockAccessKeys) => None,
+            (ForcedLoginMethod::Api, AuthMode::ApiKey) => None,
             (ForcedLoginMethod::Managed, AuthMode::Headers) => None,
             (ForcedLoginMethod::Api, AuthMode::Headers) => Some(
                 "API key login is required, but managed authentication is currently being used. Logging out."
                     .to_string(),
             ),
-            (ForcedLoginMethod::Managed, AuthMode::ApiKey)
-            | (ForcedLoginMethod::Managed, AuthMode::BedrockApiKey)
-            | (ForcedLoginMethod::Managed, AuthMode::BedrockAccessKeys) => Some(
+            (ForcedLoginMethod::Managed, AuthMode::ApiKey) => Some(
                 "Managed authentication is required, but an API key is currently being used. Logging out."
                     .to_string(),
             ),
@@ -541,9 +499,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 
     if let Some(expected_account_ids) = config.forced_managed_workspace_id.as_deref() {
         let workspace_id = match &auth {
-            GenexAuth::ApiKey(_)
-            | GenexAuth::BedrockApiKey(_)
-            | GenexAuth::BedrockAccessKeys(_) => {
+            GenexAuth::ApiKey(_) => {
                 return Ok(());
             }
             GenexAuth::Headers(_) => auth.get_account_id(),
@@ -699,19 +655,11 @@ async fn load_auth(
 impl AuthDotJson {
     fn has_supported_credentials(&self) -> bool {
         self.api_key.is_some()
-            || self.bedrock_api_key.is_some()
-            || self.bedrock_access_keys.is_some()
     }
 
     pub(super) fn resolved_mode(&self) -> AuthMode {
         if let Some(mode) = self.auth_mode {
             return mode;
-        }
-        if self.bedrock_api_key.is_some() {
-            return AuthMode::BedrockApiKey;
-        }
-        if self.bedrock_access_keys.is_some() {
-            return AuthMode::BedrockAccessKeys;
         }
         if self.api_key.is_some() {
             return AuthMode::ApiKey;
@@ -1266,8 +1214,6 @@ impl AuthManager {
             (Some(a), Some(b)) => match (a.api_auth_mode(), b.api_auth_mode()) {
                 (AuthMode::ApiKey, AuthMode::ApiKey) => a.api_key() == b.api_key(),
                 (AuthMode::Headers, AuthMode::Headers) => a == b,
-                (AuthMode::BedrockApiKey, AuthMode::BedrockApiKey) => a == b,
-                (AuthMode::BedrockAccessKeys, AuthMode::BedrockAccessKeys) => a == b,
                 _ => false,
             },
             _ => false,
@@ -1597,10 +1543,7 @@ impl AuthManager {
         } else {
             match attempted_auth.as_ref() {
                 Some(
-                    GenexAuth::ApiKey(_)
-                    | GenexAuth::Headers(_)
-                    | GenexAuth::BedrockApiKey(_)
-                    | GenexAuth::BedrockAccessKeys(_),
+                    GenexAuth::ApiKey(_) | GenexAuth::Headers(_),
                 )
                 | None => Ok(()),
             }

@@ -1,6 +1,4 @@
 mod auth_headers;
-mod bedrock_access_keys;
-mod bedrock_api_key;
 mod change_state;
 pub mod default_client;
 pub mod error;
@@ -10,10 +8,6 @@ mod external_bearer;
 mod manager;
 
 pub use auth_headers::AuthHeaders;
-pub use bedrock_access_keys::BedrockAccessKeysAuth;
-pub use bedrock_access_keys::login_with_bedrock_access_keys;
-pub use bedrock_api_key::BedrockApiKeyAuth;
-pub use bedrock_api_key::login_with_bedrock_api_key;
 pub use change_state::AuthChangeState;
 pub use error::RefreshTokenFailedError;
 pub use error::RefreshTokenFailedReason;

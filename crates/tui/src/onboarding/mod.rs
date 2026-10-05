@@ -1,5 +1,4 @@
 mod auth;
-mod bedrock;
 mod keys;
 pub(crate) mod onboarding_screen;
 mod trust_directory;

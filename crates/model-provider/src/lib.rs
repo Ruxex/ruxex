@@ -1,11 +1,9 @@
-mod amazon_bedrock;
 mod auth;
 mod bearer_auth_provider;
 mod models_endpoint;
 mod models_identity;
 mod my_provider;
 mod provider;
-mod shared_state;
 pub mod test_support;
 
 /// Effective destination and credentials that permit reusing a Responses socket.
@@ -24,7 +22,6 @@ impl ResponsesConnectionKey {
     }
 }
 
-pub use amazon_bedrock::is_supported_amazon_bedrock_region;
 pub use auth::ProviderAuthScope;
 pub use auth::ResolvedProviderAuth;
 pub use auth::auth_provider_from_auth;
@@ -32,8 +29,6 @@ pub use auth::auth_provider_from_auth_manager;
 pub use auth::unauthenticated_auth_provider;
 pub use bearer_auth_provider::BearerAuthProvider;
 pub use bearer_auth_provider::BearerAuthProvider as CoreAuthProvider;
-pub use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-pub use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
 pub use genex_protocol::account::ProviderAccount;
 pub use provider::ModelProvider;
 pub use provider::ModelProviderFuture;

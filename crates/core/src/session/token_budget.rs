@@ -25,7 +25,6 @@ pub(super) fn apply_experimental_context(
         || provider.env_key.is_some()
         || provider.experimental_bearer_token.is_some()
         || provider.auth.is_some()
-        || provider.aws.is_some()
         || !auth.is_some_and(|auth| experimental_context_is_eligible(auth.auth_mode()))
         || config.features.enable(Feature::TokenBudget).is_err()
         || !config.features.enabled(Feature::TokenBudget)

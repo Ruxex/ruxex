@@ -35,7 +35,6 @@ axum = { workspace = true, default-features = false, features = [
 ] }
 genex-agent-extension = { workspace = true }
 genex-arg0 = { workspace = true }
-genex-aws-auth = { workspace = true }
 genex-code-mode = { workspace = true }
 genex-config = { workspace = true }
 genex-network-proxy = { workspace = true }

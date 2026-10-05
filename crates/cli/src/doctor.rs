@@ -1303,8 +1303,6 @@ fn stored_auth_mode(auth: &genex_login::AuthDotJson) -> &'static str {
     match stored_auth_mode_value(auth) {
         AuthMode::ApiKey => "api_key",
         AuthMode::Headers => "headers",
-        AuthMode::BedrockApiKey => "bedrock_api_key",
-        AuthMode::BedrockAccessKeys => "bedrock_access_keys",
     }
 }
 
@@ -1312,11 +1310,7 @@ fn stored_auth_mode_value(auth: &AuthDotJson) -> AuthMode {
     if let Some(mode) = auth.auth_mode {
         return mode;
     }
-    if auth.bedrock_api_key.is_some() {
-        AuthMode::BedrockApiKey
-    } else if auth.bedrock_access_keys.is_some() {
-        AuthMode::BedrockAccessKeys
-    } else if auth.api_key.is_some() {
+    if auth.api_key.is_some() {
         AuthMode::ApiKey
     } else {
         AuthMode::ApiKey
@@ -1342,22 +1336,6 @@ fn stored_auth_issues(
         AuthMode::Headers => {
             issues.push("header auth cannot be loaded from auth storage");
         }
-        AuthMode::BedrockApiKey => {
-            if auth.bedrock_api_key.is_none() {
-                issues.push("Bedrock API key auth is missing a Bedrock API key");
-            }
-        }
-        AuthMode::BedrockAccessKeys => match auth.bedrock_access_keys.as_ref() {
-            Some(access_keys) => {
-                if access_keys.access_key_id.trim().is_empty() {
-                    issues.push("Bedrock access key auth is missing an access key ID");
-                }
-                if access_keys.secret_access_key.trim().is_empty() {
-                    issues.push("Bedrock access key auth is missing a secret access key");
-                }
-            }
-            None => issues.push("Bedrock access key auth is missing AWS access keys"),
-        },
     }
     issues
 }
@@ -2296,8 +2274,6 @@ fn auth_mode_name(auth: &GenexAuth) -> &'static str {
     match auth.auth_mode() {
         AuthMode::ApiKey => "api_key",
         AuthMode::Headers => "headers",
-        AuthMode::BedrockApiKey => "bedrock_api_key",
-        AuthMode::BedrockAccessKeys => "bedrock_access_keys",
     }
 }
 
@@ -2405,7 +2381,6 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
         &config.model_provider.name,
         config.model_provider.base_url.as_deref(),
         query_params.as_ref(),
-        config.model_provider.is_amazon_bedrock(),
     );
     plan.http_client_factory = config.http_client_factory();
     plan
@@ -2418,7 +2393,6 @@ fn default_reachability_plan() -> ReachabilityPlan {
         "provider",
         /*provider_base_url*/ None,
         /*provider_query_params*/ None,
-        /*is_amazon_bedrock*/ false,
     )
 }
 
@@ -2440,9 +2414,7 @@ fn provider_auth_reachability_mode_from_auth(
         return ProviderAuthReachabilityMode::ApiKey;
     }
     match stored_auth.map(stored_auth_mode_value) {
-        Some(AuthMode::ApiKey | AuthMode::BedrockApiKey | AuthMode::BedrockAccessKeys) => {
-            ProviderAuthReachabilityMode::ApiKey
-        }
+        Some(AuthMode::ApiKey) => ProviderAuthReachabilityMode::ApiKey,
         Some(AuthMode::Headers) | None => ProviderAuthReachabilityMode::ApiKey,
     }
 }
@@ -2453,14 +2425,13 @@ fn provider_reachability_plan_from_parts(
     provider_name: &str,
     provider_base_url: Option<&str>,
     provider_query_params: Option<&HashMap<String, String>>,
-    is_amazon_bedrock: bool,
 ) -> ReachabilityPlan {
     let provider_route_probe_url = provider_base_url
         .or_else(|| {
             (mode == ProviderAuthReachabilityMode::ApiKey).then_some("https://api.example.com/v1")
         })
         .and_then(|url| {
-            should_probe_models_route(provider_name, url, is_amazon_bedrock)
+            should_probe_models_route(provider_name, url)
                 .then(|| provider_url_for_path(url, "models", provider_query_params))
         });
     let endpoints = match (mode, provider_base_url) {
@@ -2483,8 +2454,8 @@ fn provider_reachability_plan_from_parts(
     }
 }
 
-fn should_probe_models_route(provider_name: &str, base_url: &str, is_amazon_bedrock: bool) -> bool {
-    !is_amazon_bedrock && !is_azure_responses_provider(provider_name, Some(base_url))
+fn should_probe_models_route(provider_name: &str, base_url: &str) -> bool {
+    !is_azure_responses_provider(provider_name, Some(base_url))
 }
 
 fn provider_url_for_path(

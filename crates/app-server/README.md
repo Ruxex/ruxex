@@ -147,13 +147,6 @@ updates. Realtime connections use separate routing configuration and are not che
 Interrupt, realtime stop, and goal pause/clear remain available. User and project
 configuration changes alone do not invalidate existing threads.
 
-# Amazon Bedrock authentication
-
-If `model_providers.amazon-bedrock.aws.credential_export` is configured, Bedrock setup and
-Bedrock login return an error without changing configuration or saved credentials. Remove the
-exporter configuration before selecting another credential source. `aws.credential_export` and
-`aws.profile` cannot be configured together.
-
 ## Stored thread attachments
 
 - `thread/attachment/add` — add a durable resource reference to a stored thread without loading it. Repeated writes with the same attachment type and identity key return the existing attachment.

@@ -117,7 +117,7 @@ pub(super) async fn run_main_inner(
         .await;
     }
 
-    let mut daemon_exclusion =
+    let daemon_exclusion =
         daemon_startup::exclusion(&cli, &cli_kv_overrides, &launch_loader_overrides);
     let reuse_implicit_local_daemon = daemon_exclusion.is_none();
     let search_only_config_override = cli.web_search
@@ -259,29 +259,6 @@ pub(super) async fn run_main_inner(
         && !cli.agents_overview
         && !cli.no_daemon
         && !app_server_target.uses_remote_workspace();
-    if auto_start_daemon
-        && daemon_exclusion.is_none()
-        && should_show_bedrock_setup_wizard(
-            LoginStatus::NotAuthenticated,
-            config.model_provider.requires_auth,
-            &config,
-            &AppServerTarget::Embedded,
-        )
-        && startup_draft
-            .run_until(
-                config
-                    .auth_config()
-                    .load_auth(/*enable_api_key_env*/ false),
-            )
-            .await?
-            .ok()
-            .flatten()
-            .is_none()
-    {
-        // The Bedrock wizard configures its provider through the embedded server.
-        daemon_exclusion = Some("Bedrock sign-in");
-        app_server_target = AppServerTarget::Embedded;
-    }
     if auto_start_daemon && daemon_exclusion.is_none() {
         startup_draft.flush_pending_events().await?;
         let output = startup_draft

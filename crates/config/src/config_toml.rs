@@ -28,8 +28,6 @@ use crate::types::Tui;
 use crate::types::UriBasedFileOpener;
 use crate::types::WindowsToml;
 use genex_features::FeaturesToml;
-use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::config_types::ForcedLoginMethod;
@@ -52,11 +50,6 @@ use serde::Deserializer;
 use serde::Serialize;
 use serde::de::Error as SerdeError;
 use serde_json::Value as JsonValue;
-
-const RESERVED_MODEL_PROVIDER_IDS: [&str; 2] = [
-    AMAZON_BEDROCK_PROVIDER_ID,
-    AMAZON_BEDROCK_RUNTIME_PROVIDER_ID,
-];
 
 pub const DEFAULT_PROJECT_DOC_MAX_BYTES: usize = 32 * 1024;
 
@@ -719,55 +712,14 @@ fn project_config_for_lookup_key(
         .map(|(_, project_config)| (**project_config).clone())
 }
 
-pub fn validate_reserved_model_provider_ids(
-    model_providers: &HashMap<String, ModelProviderInfo>,
-) -> Result<(), String> {
-    let mut conflicts = model_providers
-        .keys()
-        .filter(|key| {
-            !matches!(
-                key.as_str(),
-                AMAZON_BEDROCK_PROVIDER_ID | AMAZON_BEDROCK_RUNTIME_PROVIDER_ID
-            ) && RESERVED_MODEL_PROVIDER_IDS.contains(&key.as_str())
-        })
-        .map(|key| format!("`{key}`"))
-        .collect::<Vec<_>>();
-    conflicts.sort_unstable();
-    if conflicts.is_empty() {
-        Ok(())
-    } else {
-        Err(format!(
-            "model_providers contains reserved built-in provider IDs: {}. \
-Built-in providers cannot be overridden. Rename your custom provider (for example, `provider-custom`).",
-            conflicts.join(", ")
-        ))
-    }
-}
-
 pub fn validate_model_providers(
     model_providers: &HashMap<String, ModelProviderInfo>,
 ) -> Result<(), String> {
-    validate_reserved_model_provider_ids(model_providers)?;
     for (key, provider) in model_providers {
-        if matches!(
-            key.as_str(),
-            AMAZON_BEDROCK_PROVIDER_ID | AMAZON_BEDROCK_RUNTIME_PROVIDER_ID
-        ) {
-            provider
-                .validate_bedrock_override()
-                .map_err(|message| format!("model_providers.{key} {message}"))?;
-        } else {
-            if provider.aws.is_some() {
-                return Err(format!(
-                    "model_providers.{key}: provider aws is only supported for \
-`{AMAZON_BEDROCK_PROVIDER_ID}` or `{AMAZON_BEDROCK_RUNTIME_PROVIDER_ID}`"
-                ));
-            }
-            if provider.name.trim().is_empty() {
-                return Err(format!(
-                    "model_providers.{key}: provider name must not be empty"
-                ));
-            }
+        if provider.name.trim().is_empty() {
+            return Err(format!(
+                "model_providers.{key}: provider name must not be empty"
+            ));
         }
         provider
             .validate()
@@ -786,10 +738,6 @@ where
     validate_model_providers(&model_providers).map_err(serde::de::Error::custom)?;
     Ok(model_providers)
 }
-
-#[cfg(test)]
-#[path = "bedrock_runtime_tests.rs"]
-mod bedrock_runtime_tests;
 
 #[cfg(test)]
 mod tests {
@@ -853,20 +801,4 @@ mod tests {
         assert!(message.contains("comma-separated strings are not supported"));
     }
 
-    #[test]
-    fn amazon_bedrock_auth_command_must_not_be_empty() {
-        let err = toml::from_str::<ConfigToml>(
-            r#"
-[model_providers.amazon-bedrock.auth]
-command = "   "
-"#,
-        )
-        .expect_err("empty Amazon Bedrock auth command should be rejected");
-
-        assert!(
-            err.to_string().contains(
-                "model_providers.amazon-bedrock: provider auth.command must not be empty"
-            )
-        );
-    }
 }

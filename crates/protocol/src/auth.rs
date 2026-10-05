@@ -13,14 +13,6 @@ pub enum AuthMode {
     #[serde(rename = "headers")]
     #[strum(serialize = "headers")]
     Headers,
-    /// Amazon Bedrock bearer token managed by Genex.
-    #[serde(rename = "bedrockApiKey")]
-    #[strum(serialize = "bedrockApiKey")]
-    BedrockApiKey,
-    /// Amazon Bedrock AWS access keys managed by Genex.
-    #[serde(rename = "bedrockAccessKeys")]
-    #[strum(serialize = "bedrockAccessKeys")]
-    BedrockAccessKeys,
 }
 
 impl AuthMode {

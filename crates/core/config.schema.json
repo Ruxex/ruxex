@@ -196,64 +196,6 @@
         }
       ]
     },
-    "AwsAuthRefreshConfig": {
-      "additionalProperties": false,
-      "description": "Command used to refresh AWS credentials for a model provider.",
-      "properties": {
-        "args": {
-          "default": [],
-          "description": "Arguments passed to the refresh command.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "command": {
-          "description": "Executable to invoke directly, without a shell.",
-          "type": "string"
-        },
-        "timeout_ms": {
-          "default": 300000,
-          "description": "Maximum time to wait for the refresh command to complete.",
-          "format": "uint64",
-          "minimum": 1.0,
-          "type": "integer"
-        }
-      },
-      "required": [
-        "command"
-      ],
-      "type": "object"
-    },
-    "AwsCredentialExportConfig": {
-      "additionalProperties": false,
-      "description": "Command used to export AWS signing credentials for a model provider.",
-      "properties": {
-        "args": {
-          "default": [],
-          "description": "Arguments passed to the credential export command.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "command": {
-          "description": "Executable to invoke directly, without a shell.",
-          "type": "string"
-        },
-        "timeout_ms": {
-          "default": 30000,
-          "description": "Maximum time to wait for the credential export command to complete.",
-          "format": "uint64",
-          "minimum": 1.0,
-          "type": "integer"
-        }
-      },
-      "required": [
-        "command"
-      ],
-      "type": "object"
-    },
     "BrowserUseConfigToml": {
       "additionalProperties": false,
       "properties": {
@@ -432,9 +374,6 @@
               "type": "boolean"
             },
             "apply_patch_streaming_events": {
-              "type": "boolean"
-            },
-            "bedrock_setup_wizard": {
               "type": "boolean"
             },
             "browser_use": {
@@ -1722,37 +1661,6 @@
       ],
       "type": "object"
     },
-    "ModelProviderAwsAuthInfo": {
-      "additionalProperties": false,
-      "description": "AWS SigV4 auth configuration for a model provider.",
-      "properties": {
-        "auth_refresh": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AwsAuthRefreshConfig"
-            }
-          ],
-          "description": "Optional command used to reauthenticate after a refreshable AWS auth failure."
-        },
-        "credential_export": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AwsCredentialExportConfig"
-            }
-          ],
-          "description": "Optional command whose exported credentials replace the AWS SDK credential chain."
-        },
-        "profile": {
-          "description": "AWS profile name to use. When unset, the AWS SDK default chain decides.",
-          "type": "string"
-        },
-        "region": {
-          "description": "AWS region to use for provider-specific endpoints.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "ModelProviderInfo": {
       "additionalProperties": false,
       "description": "Serializable representation of a provider definition.",
@@ -1764,14 +1672,6 @@
             }
           ],
           "description": "Command-backed bearer-token configuration for this provider."
-        },
-        "aws": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ModelProviderAwsAuthInfo"
-            }
-          ],
-          "description": "AWS SigV4 auth configuration for this provider."
         },
         "base_url": {
           "description": "Base URL for the provider's provider-compatible API.",
@@ -5453,9 +5353,6 @@
           "type": "boolean"
         },
         "apply_patch_streaming_events": {
-          "type": "boolean"
-        },
-        "bedrock_setup_wizard": {
           "type": "boolean"
         },
         "browser_use": {

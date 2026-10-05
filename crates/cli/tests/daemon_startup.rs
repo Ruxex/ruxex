@@ -24,17 +24,6 @@ async fn daemon_exclusion_survives_fork_picker() -> Result<()> {
     daemon_startup("fork").await
 }
 
-#[tokio::test]
-async fn daemon_auto_start_preserves_bedrock_onboarding() -> Result<()> {
-    daemon_startup("bedrock").await
-}
-
-#[tokio::test]
-#[cfg(unix)]
-async fn bedrock_onboarding_leaves_a_running_daemon_untouched() -> Result<()> {
-    daemon_startup("bedrock-running").await
-}
-
 async fn daemon_startup(command: &str) -> Result<()> {
     let genex = genex_utils_cargo_bin::cargo_bin("genex")?.canonicalize()?;
     let workspace = tempfile::tempdir()?;
@@ -47,7 +36,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
         home.path().join("config.toml"),
         format!(
             "model = \"provider-model-d\"\nfeatures.daemon_auto_start = true\n\
-         features.bedrock_setup_wizard = true\ncli_auth_credentials_store = \"file\"\n\
+         cli_auth_credentials_store = \"file\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\
          windows.sandbox = \"unelevated\"\n\
          tui.disable_paste_burst = true\n\
@@ -55,13 +44,10 @@ async fn daemon_startup(command: &str) -> Result<()> {
             serde_json::to_string(&workspace_path)?,
         ),
     )?;
-    let bedrock_onboarding = matches!(command, "bedrock" | "bedrock-running");
-    if !bedrock_onboarding {
-        fs::write(
-            home.path().join("auth.json"),
-            r#"{"PROVIDER_API_KEY":"daemon-startup-test","tokens":null,"last_refresh":null}"#,
-        )?;
-    }
+    fs::write(
+        home.path().join("auth.json"),
+        r#"{"PROVIDER_API_KEY":"daemon-startup-test","tokens":null,"last_refresh":null}"#,
+    )?;
     let mut env = std::env::vars().collect::<std::collections::HashMap<_, _>>();
     for key in [
         "GENEX_EXEC_SERVER_URL",
@@ -80,7 +66,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
     env.insert("TERM".into(), "xterm-256color".into());
     let mut args = vec!["--no-alt-screen".to_string()];
     let mut steps: VecDeque<(&str, &[u8])> = VecDeque::new();
-    if matches!(command, "start" | "bedrock-running") {
+    if command == "start" {
         // A selected package with a stopped daemon avoids installing a release.
         let managed = home
             .path()
@@ -93,30 +79,11 @@ async fn daemon_startup(command: &str) -> Result<()> {
             r#"{"shutdownGraceSeconds":0,"updater":{"autoUpdateEnabled":false}}"#,
         )?;
     }
-    let pid_file = home.path().join("app-server-daemon/daemon.pid");
     let result = async {
-        let existing_daemon = if command == "bedrock-running" {
-            let started = Command::new(&genex)
-                .env_clear()
-                .envs(&env)
-                .current_dir(&workspace_path)
-                .args(["app-server", "daemon", "start"])
-                .output()?;
-            ensure!(
-                started.status.success(),
-                "{}",
-                String::from_utf8_lossy(&started.stderr)
-            );
-            Some(fs::read(&pid_file)?)
-        } else {
-            None
-        };
         let expected = if command == "start" {
             // The draft header is visible before the session's command composer is ready.
             steps.push_back(("provider-model-d", b"/status\r"));
             "app-server-control.sock"
-        } else if bedrock_onboarding {
-            "UseAmazonBedrock"
         } else {
             args.extend([command.into(), "--strict-config".into()]);
             steps.push_back(("Nosessionsyet", b"\x1b"));
@@ -176,10 +143,6 @@ async fn daemon_startup(command: &str) -> Result<()> {
                     if command == "start" {
                         ensure!(text.contains("unix://"));
                         ensure!(home.path().join("app-server-daemon/daemon.pid").exists());
-                    } else if let Some(existing_daemon) = &existing_daemon {
-                        ensure!(fs::read(&pid_file)? == *existing_daemon);
-                    } else if bedrock_onboarding {
-                        ensure!(!pid_file.exists());
                     }
                     return Ok::<_, anyhow::Error>(());
                 }

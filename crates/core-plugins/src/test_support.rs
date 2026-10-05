@@ -103,9 +103,6 @@ fn test_genex_auth(auth_mode: Option<AuthMode>) -> Option<GenexAuth> {
     auth_mode.map(|auth_mode| match auth_mode {
         AuthMode::ApiKey => GenexAuth::from_api_key("test-api-key"),
         AuthMode::Headers => GenexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
-        AuthMode::BedrockApiKey | AuthMode::BedrockAccessKeys => {
-            panic!("test auth mode requires a purpose-built GenexAuth")
-        }
     })
 }
 

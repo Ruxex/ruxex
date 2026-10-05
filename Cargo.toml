@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "crates/aws-auth",
     "crates/agent-graph-store",
     "crates/agent-roles",
     "crates/bwrap",
@@ -139,7 +138,6 @@ genex-agent-roles = { path = "crates/agent-roles" }
 genex-ansi-escape = { path = "crates/ansi-escape" }
 genex-api = { path = "crates/genex-api" }
 genex-attachment-store = { path = "crates/attachment-store" }
-genex-aws-auth = { path = "crates/aws-auth" }
 genex-app-server = { path = "crates/app-server" }
 genex-app-server-transport = { path = "crates/app-server-transport" }
 genex-app-server-daemon = { path = "crates/app-server-daemon" }
@@ -267,10 +265,6 @@ assert_matches = "1.5.0"
 async-channel = "2.3.1"
 async-io = "2.6.0"
 async-stream = "0.3.6"
-aws-config = "1"
-aws-credential-types = "1"
-aws-sigv4 = "1"
-aws-types = "1"
 axum = { version = "0.8", default-features = false }
 base64 = "0.22.1"
 bitflags = "2.13.1"

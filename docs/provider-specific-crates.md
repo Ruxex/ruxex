@@ -30,7 +30,7 @@ Feedback の削除で確認したように、provider 固有性はクレート�
 | ChatGPT Remote Control | ChatGPT 専用 host allowlist、`/wham/remote/control` endpoint、ChatGPT account header、enrollment/pairing persistence | `app-server-transport` の remote-control transport、app-server protocol、daemon client、CLI、state runtime、設定、関連 UI/文書 | 現行の通常 app-server transport と localhost/platform transport | **capability 全体を削除済み** |
 | ChatGPT Apps / Connectors / host-owned Apps MCP | connector directory が ChatGPT backend を producer とし、Apps が ChatGPT auth/account と Apps protocolを要求する | `codex-connectors` と専用 extension の到達経路、Apps feature/config/protocol/UI、`codex_apps`、provider 固有 MCP adapter | 通常の MCP server、標準 OAuth/elicitation、provider-neutral な tool/plugin metadata | **capability 全体を削除** |
 | Hosted Plugin Marketplace / Sharing / Runtime | `test-remote`、ChatGPT base URL、remote catalog/mutation/bundle、Hosted Plugin Runtime に固定 | `core-plugins` の remote service、remote legacy/mutation/bundle/search/share、RemotePlugin feature と専用 CLI/app-server surface | local/bundled/Git/npm plugin loader、hook、tool、marketplace root | **Hosted 部分を削除、基盤は保持** |
-| ChatGPT 認証 / Agent Identity | issuer/JWKS、environment、JWT claims、OAuth/device/access-token が `chatgpt.com` と `auth.provider.com` に固定 | `codex-agent-identity` 全体候補、`genex-login` の ChatGPT branch、login protocol/UI、ChatGPT token consumer | Bedrock、workload identity、汎用 credential storage/keyring、他 provider auth | **Identity は全体削除候補、login は分割** |
+| ChatGPT 認証 / Agent Identity | issuer/JWKS、environment、JWT claims、OAuth/device/access-token が `chatgpt.com` と `auth.provider.com` に固定 | `codex-agent-identity` 全体候補、`genex-login` の ChatGPT branch、login protocol/UI、ChatGPT token consumer | 汎用 credential storage/keyring、他 provider auth。Bedrock は別 capability として削除済み | **Identity は全体削除候補、login は分割** |
 
 これらを削除した後に、`genex-model-provider-info`、`genex-api`、`genex-http-client`、`genex-mcp` の残存 provider adapter を再評価する。Responses-compatible な非 provider、標準 MCP、汎用 HTTP transport が現行 consumer を持つため、クレート全体を先に削除しない。
 
@@ -82,7 +82,7 @@ Feedback の削除で確認したように、provider 固有性はクレート�
 | `genex-core-plugins` | local / third-party plugin の load と管理 | provider curated marketplace と ChatGPT remote service だけを削除する。 |
 | `codex-analytics` | local event/reducer、diagnostic bundle | provider/ChatGPT backend sink とそれに専用の metadata を削除する。 |
 | `genex-response-debug-context` | 標準 HTTP/API の診断情報 | provider 固有 header・URL の extractor を削除する。 |
-| `genex-login`、`codex-agent-identity` | credential storage、鍵・署名 primitive、Bedrock、workload identity、他 provider の auth | `codex-agent-identity` は全体削除を先に検証する。`genex-login` は ChatGPT/provider login、issuer/JWKS policy、専用 token flow だけを削除し、汎用 credential 経路を残す。 |
+| `genex-login`、`codex-agent-identity` | credential storage、鍵・署名 primitive、workload identity、他 provider の auth | `codex-agent-identity` は全体削除を先に検証する。`genex-login` は ChatGPT/provider login、issuer/JWKS policy、専用 token flow だけを削除し、汎用 credential 経路を残す。Bedrock の専用経路は削除済み。 |
 | `genex-model-provider-info`、`genex-api` | provider registry、互換 provider transport、共通 HTTP client | provider built-in 定義と provider wire adapter を隔離後に削除する。 |
 
 ## 削除候補
@@ -152,9 +152,9 @@ Feedback の削除で確認したように、provider 固有性はクレート�
 
 ### ChatGPT 認証 / Agent Identity
 
-- **根拠:** `crates/agent-identity/src/lib.rs` の issuer、JWKS/auth URL、environment、JWT claims は ChatGPT/Codex backend に固定されており、現行の非 provider identity consumer は確認できない。`genex-login` はこの機能と、Bedrock・workload identity・汎用 credential storage を混在させている。
+- **根拠:** `crates/agent-identity/src/lib.rs` の issuer、JWKS/auth URL、environment、JWT claims は ChatGPT/Codex backend に固定されており、現行の非 provider identity consumer は確認できない。`genex-login` はこの機能と、workload identity・汎用 credential storage を混在させていた。Bedrock 専用経路は 2026-10-05 に分離削除済みである。
 - **対象:** `codex-agent-identity` 全体候補、`genex-login` の ChatGPT OAuth/device/access-token/AuthManager branch、ChatGPT login protocol/UI、app-server/TUI の ChatGPT auth token types と consumer、ChatGPT 専用 config/headers。
-- **非対象:** Bedrock access key、workload identity、external bearer、汎用 keyring/credential storage、provider-neutral な auth state と他 provider の credential flow。
+- **非対象:** workload identity、external bearer、汎用 keyring/credential storage、provider-neutral な auth state と他 provider の credential flow。Bedrock access key は別 capability として削除済み。
 - **推奨:** **Agent Identity はクレート全体削除を先に検証し、login は分割削除**。依存元がなくなった場合のみ `codex-agent-identity` を workspace から外す。
 - **難易度・リスク:** 非常に高。ChatGPT login の削除を理由に、非 provider の認証や credential storage を削除しないこと。
 
@@ -278,7 +278,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **依存元:** 直接 26、推移 56。CLI/TUI/app-server/core と大半の hosted integration が直接利用する。
 - **到達経路:** `codex login status` と `codex logout`、TUI onboarding、app-server account API、model request auth。CLI からの ChatGPT OAuth、device auth、provider API key、access token の各 login 経路は削除済み。
 - **影響:** `PROVIDER_API_KEY`、forced login method、ChatGPT auth modes、credential files/keyring、非常に多数の fixture とテスト、認証文書。
-- **推奨:** **ChatGPT 部分を削除して汎用 credential 部分を保持**。provider-neutral credential interface、API Key、Bedrock、Headers/external bearer、keyring/storage を残し、ChatGPT login provider、Workload Identity、専用 token consumer を削除する。クレート全体は即時削除しない。
+- **推奨:** **ChatGPT 部分を削除して汎用 credential 部分を保持**。provider-neutral credential interface、API Key、Headers/external bearer、keyring/storage を残し、ChatGPT login provider、Workload Identity、Bedrock 専用経路、専用 token consumer を削除する。クレート全体は即時削除しない。
 - **難易度・リスク:** 非常に高。認証、保存形式、後方互換性、非 provider の利用を同時に扱う必要がある。
 
 ### 16. `codex-agent-identity`
@@ -349,7 +349,7 @@ Phase 2 で完了した削除と、Phase 3 で扱う後続候補を次の順序�
 11. **ChatGPT Apps / Connectors / host-owned Apps MCP の削除（完了）**
    - connector directory、Apps protocol/UI/config、ChatGPT auth/account、provider 固有 MCP adapter を一つの capability として削除する。通常の MCP runtime は保持する。
 12. **ChatGPT 認証 / Agent Identity の削除（完了、working tree）**
-   - `codex-agent-identity` は全体削除を検証し、`genex-login` は ChatGPT login branch と protocol/UI だけを削除する。Bedrock、workload identity、汎用 credential storage は保持する。
+   - `codex-agent-identity` は全体削除を検証し、`genex-login` は ChatGPT login branch と protocol/UI だけを削除する。汎用 credential storage は保持し、Bedrock と workload identity の専用経路は削除済みである。
 
 Phase 2 の削除対象 1〜3 は完了した。4 以降は影響範囲または汎用責務が大きいため、Level 1 Phase 3 で capability ごとに到達経路を縮小してから扱う。特に 9〜12 は、既存の「共有クレートの汎用化」より先に Hosted capability の本体を削除し、その後に残存 adapter と共有境界を再評価する。11 の Apps / Connectors capability と 12 の ChatGPT 認証 / Agent Identity は、現行の Phase 3 working tree では完了扱いである。互換性クリーンアップの build-system slice は [pre-release compatibility inventory](pre-release-compatibility-inventory.md#build-system-and-experimental-scaffolding) を参照する。
 

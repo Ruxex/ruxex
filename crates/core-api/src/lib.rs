@@ -86,8 +86,6 @@ pub use genex_login::ExternalAuthFuture;
 pub use genex_login::ExternalAuthRefreshContext;
 pub use genex_login::ExternalAuthRefreshReason;
 pub use genex_login::default_client::set_default_originator;
-pub use genex_model_provider_info::AMAZON_BEDROCK_PROVIDER_ID;
-pub use genex_model_provider_info::AMAZON_BEDROCK_RUNTIME_PROVIDER_ID;
 pub use genex_model_provider_info::built_in_model_providers;
 pub use genex_models_manager::manager::RefreshStrategy;
 pub use genex_models_manager::manager::SharedModelsManager;

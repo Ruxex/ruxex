@@ -485,3 +485,15 @@ telemetry fields are repository-owned. They were migrated together with their in
 producers, consumers, tests, and snapshots. Trusted-process and enforcement predicates are
 unchanged. GitHub/upstream repository values, Product::Codex, OpenAI/provider wire names, and
 third-party originator identifiers remain external contracts.
+
+### Amazon Bedrock capability (2026-10-05)
+
+Producer/consumer audit is complete for the repository-owned Amazon Bedrock capability. This entry
+supersedes earlier candidate notes that treated Bedrock as retained; those notes remain
+historical context, while the current decision is the completed `remove` below. The
+Mantle/Runtime model-provider adapters, Bedrock auth/login, AWS credential export and refresh,
+app-server protocol/setup routes, config/schema, CLI/TUI onboarding, test clients, and generated
+artifacts form one reachable feature and are selected for `remove`. `genex-aws-auth` has no
+unrelated production consumer and is selected for `remove` with the feature. OpenAI endpoint
+wire/auth/model contracts, custom providers, generic model discovery, platform fallbacks, and
+security behavior are explicitly `retain` and must not be changed by this slice.

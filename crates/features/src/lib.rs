@@ -278,8 +278,6 @@ pub enum Feature {
     NonfatalClockReadErrors,
     /// Route MCP tool approval prompts through the MCP elicitation request path.
     ToolCallMcpElicitation,
-    /// Offer Amazon Bedrock setup during TUI sign-in onboarding.
-    BedrockSetupWizard,
     /// Enable native artifact tools.
     Artifact,
     /// Enable explicitly requested model changes for later step captures.
@@ -1329,12 +1327,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "tool_call_mcp_elicitation",
         stage: Stage::Stable,
         default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::BedrockSetupWizard,
-        key: "bedrock_setup_wizard",
-        stage: Stage::UnderDevelopment,
-        default_enabled: false,
     },
     FeatureSpec {
         id: Feature::Artifact,

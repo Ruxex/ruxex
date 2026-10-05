@@ -15,7 +15,6 @@ workspace = true
 [dependencies]
 chrono = { workspace = true }
 genex-api = { workspace = true }
-genex-aws-auth = { workspace = true }
 genex-http-client = { workspace = true }
 genex-login = { workspace = true }
 genex-model-provider-info = { workspace = true }

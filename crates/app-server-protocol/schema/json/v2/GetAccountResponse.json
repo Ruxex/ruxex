@@ -18,26 +18,6 @@
           ],
           "title": "ApiKeyAccount",
           "type": "object"
-        },
-        {
-          "properties": {
-            "type": {
-              "enum": [
-                "amazonBedrock"
-              ],
-              "title": "AmazonBedrockAccountType",
-              "type": "string"
-            },
-            "usesGenexManagedCredentials": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "title": "AmazonBedrockAccount",
-          "type": "object"
         }
       ]
     }

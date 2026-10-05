@@ -34,7 +34,6 @@ use genex_app_server_protocol::RateLimitWindow;
 use genex_app_server_protocol::SpendControlLimitSnapshot;
 use genex_config::LoaderOverrides;
 use genex_config::types::AuthCredentialsStoreMode;
-use genex_model_provider_info::ModelProviderAwsAuthInfo;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::test_support::construct_model_info_offline_for_tests;
 use genex_models_manager::test_support::get_model_offline_for_tests;

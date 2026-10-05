@@ -17,20 +17,6 @@
             "headers"
           ],
           "type": "string"
-        },
-        {
-          "description": "Amazon Bedrock bearer token managed by Genex.",
-          "enum": [
-            "bedrockApiKey"
-          ],
-          "type": "string"
-        },
-        {
-          "description": "Amazon Bedrock AWS access keys managed by Genex.",
-          "enum": [
-            "bedrockAccessKeys"
-          ],
-          "type": "string"
         }
       ]
     },

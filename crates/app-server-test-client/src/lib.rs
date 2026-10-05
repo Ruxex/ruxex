@@ -44,7 +44,6 @@ use genex_app_server_protocol::JSONRPCMessage;
 use genex_app_server_protocol::JSONRPCNotification;
 use genex_app_server_protocol::JSONRPCRequest;
 use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::LoginAccountResponse;
 use genex_app_server_protocol::LogoutAccountResponse;
 use genex_app_server_protocol::ModelListParams;
 use genex_app_server_protocol::ModelListResponse;
@@ -226,18 +225,6 @@ enum CliCommand {
         #[arg(long)]
         abort_on: Option<usize>,
     },
-    /// Trigger an Amazon Bedrock login flow.
-    TestLogin {
-        /// Use a Genex-managed Amazon Bedrock API key.
-        #[arg(long, default_value_t = true)]
-        amazon_bedrock: bool,
-        /// Amazon Bedrock API key.
-        #[arg(long, value_name = "API_KEY")]
-        api_key: Option<String>,
-        /// AWS Region for the Amazon Bedrock Mantle endpoint.
-        #[arg(long, value_name = "REGION")]
-        region: Option<String>,
-    },
     /// Log out of the current account and wait for the account update.
     TestLogout,
     /// List the available models from the Genex app-server.
@@ -280,10 +267,6 @@ enum CliCommand {
         #[arg(long, default_value_t = 15)]
         hold_seconds: u64,
     },
-}
-
-enum TestLoginMode {
-    AmazonBedrock { api_key: String, region: String },
 }
 
 pub async fn run() -> Result<()> {
@@ -387,22 +370,6 @@ pub async fn run() -> Result<()> {
                 &dynamic_tools,
             )
             .await
-        }
-        CliCommand::TestLogin {
-            amazon_bedrock,
-            api_key,
-            region,
-        } => {
-            ensure_dynamic_tools_unused(&dynamic_tools, "test-login")?;
-            let endpoint = resolve_endpoint(genex_bin, url)?;
-            let mode = if amazon_bedrock {
-                let api_key = api_key.context("--api-key is required with --amazon-bedrock")?;
-                let region = region.context("--region is required with --amazon-bedrock")?;
-                TestLoginMode::AmazonBedrock { api_key, region }
-            } else {
-                bail!("Amazon Bedrock login is required")
-            };
-            test_login(&endpoint, &config_overrides, mode).await
         }
         CliCommand::TestLogout => {
             ensure_dynamic_tools_unused(&dynamic_tools, "test-logout")?;
@@ -1053,51 +1020,6 @@ async fn send_follow_up_v2(
         client.stream_turn(&thread_response.thread.id, &follow_up_response.turn.id)?;
 
         Ok(())
-    })
-    .await
-}
-
-async fn test_login(
-    endpoint: &Endpoint,
-    config_overrides: &[String],
-    mode: TestLoginMode,
-) -> Result<()> {
-    with_client("test-login", endpoint, config_overrides, |client| {
-        let initialize = client.initialize()?;
-        println!("< initialize response: {initialize:?}");
-
-        match mode {
-            TestLoginMode::AmazonBedrock { api_key, region } => {
-                let request_id = client.request_id();
-                let login_response: LoginAccountResponse = client.send_request(
-                    ClientRequest::LoginAccount {
-                        request_id: request_id.clone(),
-                        params: genex_app_server_protocol::LoginAccountParams::AmazonBedrock {
-                            api_key,
-                            region,
-                        },
-                    },
-                    request_id,
-                    "account/login/start",
-                )?;
-                println!("< account/login/start response: {login_response:?}");
-
-                let completion =
-                    client.wait_for_account_login_completion(/*expected_login_id*/ None)?;
-                println!("< account/login/completed notification: {completion:?}");
-
-                loop {
-                    let notification = client.next_notification()?;
-                    if let Ok(ServerNotification::AccountUpdated(account_updated)) =
-                        ServerNotification::try_from(notification)
-                    {
-                        println!("< account/updated notification: {account_updated:?}");
-                        break;
-                    }
-                }
-                return Ok(());
-            }
-        }
     })
     .await
 }

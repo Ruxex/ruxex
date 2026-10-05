@@ -272,7 +272,6 @@ use genex_git_utils::resolve_root_git_project_for_trust;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
 use genex_login::login_with_api_key;
-use genex_login::login_with_bedrock_api_key;
 use genex_mcp::McpRuntimeContext;
 use genex_mcp::McpServerStatusSnapshot;
 use genex_mcp::McpSnapshotDetail;
@@ -381,7 +380,6 @@ use uuid::Uuid;
 use genex_app_server_protocol::ServerRequest;
 
 mod account_processor;
-mod bedrock_auth;
 mod catalog_processor;
 mod command_exec_processor;
 mod config_processor;

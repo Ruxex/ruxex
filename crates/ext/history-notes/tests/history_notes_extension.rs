@@ -22,7 +22,6 @@ use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
 use genex_protocol::models::FunctionCallOutputContentItem;
@@ -374,10 +373,6 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
     for (provider, auth) in [
         (
             config.model_provider.clone(),
-            GenexAuth::from_api_key("test-api-key"),
-        ),
-        (
-            ModelProviderInfo::create_amazon_bedrock_provider(/*aws*/ None),
             GenexAuth::from_api_key("test-api-key"),
         ),
     ] {

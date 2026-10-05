@@ -92,32 +92,6 @@ async fn start_thread_with_model(
     })
     .await
 }
-
-#[tokio::test]
-async fn thread_start_provider_model_fallback_applies_to_configured_model() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    std::fs::write(
-        genex_home.path().join("config.toml"),
-        r#"model_provider = "amazon-bedrock"
-model = "legacy-model"
-"#,
-    )?;
-    let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .build_initialized()
-        .await?;
-
-    let response = mcp
-        .start_thread(ThreadStartParams {
-            allow_provider_model_fallback: true,
-            ..Default::default()
-        })
-        .await?;
-
-    assert_eq!(response.model, "provider.provider-model-b");
-    Ok(())
-}
-
 #[tokio::test]
 async fn thread_start_warns_for_exec_policy_parse_failure_after_initialize() -> Result<()> {
     let genex_home = TempDir::new()?;
@@ -223,81 +197,6 @@ async fn thread_start_does_not_repeat_initialize_exec_policy_warning() -> Result
 
     Ok(())
 }
-
-#[tokio::test]
-async fn thread_start_provider_model_fallback_uses_bedrock_static_catalog() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    std::fs::write(
-        genex_home.path().join("config.toml"),
-        r#"model_provider = "amazon-bedrock"
-"#,
-    )?;
-    let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .build_initialized()
-        .await?;
-
-    let unsupported_with_fallback = start_thread_with_model(
-        &mut mcp,
-        "legacy-model",
-        /*allow_provider_model_fallback*/ true,
-    )
-    .await?;
-    let supported_with_fallback = start_thread_with_model(
-        &mut mcp,
-        "provider.legacy-model",
-        /*allow_provider_model_fallback*/ true,
-    )
-    .await?;
-    let unsupported_without_fallback = start_thread_with_model(
-        &mut mcp,
-        "legacy-model",
-        /*allow_provider_model_fallback*/ false,
-    )
-    .await?;
-
-    assert_eq!(
-        vec![
-            unsupported_with_fallback.model,
-            supported_with_fallback.model,
-            unsupported_without_fallback.model,
-        ],
-        vec!["provider.provider-model-b", "provider.legacy-model", "legacy-model"]
-    );
-    Ok(())
-}
-
-#[tokio::test]
-async fn thread_start_bedrock_runtime_prefers_global_cross_region_models() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    std::fs::write(
-        genex_home.path().join("config.toml"),
-        r#"model_provider = "amazon-bedrock-runtime"
-"#,
-    )?;
-    let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .build_initialized()
-        .await?;
-
-    for model in ["global.provider.provider-model-b", "us.provider.provider-model-b"] {
-        let response =
-            start_thread_with_model(&mut mcp, model, /*allow_provider_model_fallback*/ true)
-                .await?;
-        assert_eq!(response.model, model);
-    }
-
-    let response = start_thread_with_model(
-        &mut mcp,
-        "provider.provider-model-b",
-        /*allow_provider_model_fallback*/ true,
-    )
-    .await?;
-    assert_eq!(response.model, "global.provider.provider-model-b");
-
-    Ok(())
-}
-
 #[tokio::test]
 async fn thread_start_provider_model_fallback_ignores_dynamic_catalog() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;

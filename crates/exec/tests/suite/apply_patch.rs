@@ -193,8 +193,6 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         &AuthDotJson {
             auth_mode: Some(AuthMode::ApiKey),
             api_key: Some("test-api-key".to_string()),
-            bedrock_api_key: None,
-            bedrock_access_keys: None,
         },
         genex_login::AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
