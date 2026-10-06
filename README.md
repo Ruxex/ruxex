@@ -76,6 +76,30 @@ This snapshot uses the same scope as the preceding one: source, tests,
 documentation, and generated files are included, while untracked and ignored
 files are excluded.
 
+## Current repository snapshot
+
+- Snapshot commit: `1fe4724b63f366dd3c4584bede6a6067840ac6d1` (`chore: remove Windows support`)
+- Approximate size at this commit: 1,564,943 lines across 5,046 Git-tracked files
+
+Approximate line count by file type at this commit:
+
+| Category | Lines |
+| --- | ---: |
+| Rust | 1,112,338 |
+| TypeScript | 6,143 |
+| Python | 23,221 |
+| SQL | 753 |
+| Shell | 1,873 |
+| C/C headers | 6,265 |
+| Protocol Buffers | 269 |
+| Markdown | 22,019 |
+| Config/data (JSON, TOML, YAML, XML, lockfiles) | 373,178 |
+| Other tracked files | 18,884 |
+
+This snapshot uses the same scope as the preceding one: source, tests,
+documentation, and generated files are included, while untracked and ignored
+files are excluded.
+
 The Rust implementation remains in a root Cargo workspace. Member crates live
 under `crates/`; shared utility and extension crates retain their existing
 subdirectories. Vendored bubblewrap sources live in `crates/vendor/` to preserve
