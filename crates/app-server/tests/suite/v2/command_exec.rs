@@ -190,42 +190,18 @@ async fn command_exec_env_overrides_merge_with_server_environment_and_support_un
     Ok(())
 }
 
-#[derive(Clone, Copy)]
-enum CommandExecApplyPatchRollout {
-    Enabled,
-    Disabled,
-}
-
 #[tokio::test]
 async fn command_exec_apply_patch_preserves_line_endings_despite_client_override() -> Result<()> {
-    assert_command_exec_apply_patch_rollout(
-        CommandExecApplyPatchRollout::Enabled,
-        "0",
-        b"after\r\n",
-    )
-    .await
-}
-
-#[tokio::test]
-async fn command_exec_apply_patch_normalizes_line_endings_despite_stale_overrides() -> Result<()> {
-    assert_command_exec_apply_patch_rollout(CommandExecApplyPatchRollout::Disabled, "1", b"after\n")
-        .await
+    assert_command_exec_apply_patch_rollout("0", b"after\r\n").await
 }
 
 async fn assert_command_exec_apply_patch_rollout(
-    rollout: CommandExecApplyPatchRollout,
     client_override: &str,
     expected_contents: &[u8],
 ) -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let genex_home = TempDir::new()?;
     create_config_toml(genex_home.path(), &server.uri(), "never")?;
-
-    let feature_enabled = matches!(rollout, CommandExecApplyPatchRollout::Enabled);
-    insert_command_exec_config(
-        genex_home.path(),
-        &format!("[features]\napply_patch_preserve_line_endings = {feature_enabled}\n"),
-    )?;
 
     let workspace = TempDir::new()?;
     let file_path = workspace.path().join("crlf.txt");

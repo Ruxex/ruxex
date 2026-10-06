@@ -1,6 +1,4 @@
 pub use genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
-use genex_features::Feature;
-use genex_features::Features;
 use genex_protocol::SessionId;
 use genex_protocol::ThreadId;
 #[cfg(test)]
@@ -64,20 +62,15 @@ pub(crate) fn inject_permission_profile_env(
     }
 }
 
-/// Carries the configured apply-patch line-ending rollout state into child
-/// processes.
-///
-/// Apply this after inherited or client-provided environment overrides so the
-/// active feature configuration remains authoritative. The in-process
-/// apply-patch path reads the feature directly.
-pub fn inject_apply_patch_env(env: &mut HashMap<String, String>, features: &Features) {
+/// Enables line-ending preservation for older standalone patch executables,
+/// including those provided by remote executors. Override inherited values so
+/// they cannot restore the legacy normalization behavior.
+pub fn inject_apply_patch_env(env: &mut HashMap<String, String>) {
     env.retain(|key, _| !key.eq_ignore_ascii_case(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR));
-    if features.enabled(Feature::ApplyPatchPreserveLineEndings) {
-        env.insert(
-            GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
-            "1".to_string(),
-        );
-    }
+    env.insert(
+        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        "1".to_string(),
+    );
 }
 
 #[cfg(test)]

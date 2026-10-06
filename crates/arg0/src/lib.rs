@@ -123,13 +123,8 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
                     Err(_) => std::process::exit(1),
                 };
                 let cwd = cwd.into();
-                let update_file_mode = genex_apply_patch::apply_patch_file_update_mode_from_env();
-                match runtime.block_on(genex_apply_patch::apply_patch_with_options(
+                match runtime.block_on(genex_apply_patch::apply_patch(
                     &patch_arg,
-                    genex_apply_patch::ApplyPatchOptions {
-                        update_file_mode,
-                        ..Default::default()
-                    },
                     &cwd,
                     &mut stdout,
                     &mut stderr,

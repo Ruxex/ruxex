@@ -129,7 +129,7 @@ pub enum Feature {
     TerminalVisualizationInstructions,
     /// Stream structured progress while apply_patch input is being generated.
     ApplyPatchStreamingEvents,
-    /// Preserve existing line endings when apply_patch updates files.
+    /// Removed compatibility flag. Patches always preserve existing line endings.
     ApplyPatchPreserveLineEndings,
     /// Allow exec tools to request additional permissions while staying sandboxed.
     ExecPermissionApprovals,
@@ -811,7 +811,7 @@ pub const FEATURES: &[FeatureSpec] = &[
     FeatureSpec {
         id: Feature::ShellZshFork,
         key: "shell_zsh_fork",
-        stage: Stage::UnderDevelopment,
+        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {
@@ -943,7 +943,7 @@ pub const FEATURES: &[FeatureSpec] = &[
     FeatureSpec {
         id: Feature::ApplyPatchPreserveLineEndings,
         key: "apply_patch_preserve_line_endings",
-        stage: Stage::UnderDevelopment,
+        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {
