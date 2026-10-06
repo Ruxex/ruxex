@@ -6,6 +6,7 @@ use std::time::Duration;
 use futures::SinkExt;
 use futures::StreamExt;
 use genex_http_client::HttpClientFactory;
+use genex_http_client::NetworkPermit;
 use genex_http_client::OutboundProxyPolicy;
 use genex_http_client::OutboundProxyRoute;
 use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
@@ -198,7 +199,10 @@ async fn direct_route_connects_secure_websocket() {
     )
     .await
     .expect("direct websocket handshake should succeed");
-    drop(WebSocketConnection { inner });
+    drop(WebSocketConnection {
+        inner,
+        network_permit: NetworkPermit::unmanaged(),
+    });
 
     target_task.await.expect("target task should finish");
 }
@@ -286,7 +290,10 @@ async fn no_proxy_subprocess_probe() {
     )
     .await
     .expect("websocket handshake should succeed");
-    let mut websocket = WebSocketConnection { inner };
+    let mut websocket = WebSocketConnection {
+        inner,
+        network_permit: NetworkPermit::unmanaged(),
+    };
     websocket
         .send(Message::Text("probe".into()))
         .await
@@ -645,7 +652,10 @@ async fn assert_proxy_tunnels_secure_websocket(proxy_tls: bool) {
     )
     .await
     .expect("proxied websocket handshake should succeed");
-    drop(WebSocketConnection { inner });
+    drop(WebSocketConnection {
+        inner,
+        network_permit: NetworkPermit::unmanaged(),
+    });
 
     target_task.await.expect("target task should finish");
     proxy_task.await.expect("proxy task should finish");

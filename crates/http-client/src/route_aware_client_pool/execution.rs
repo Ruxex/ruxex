@@ -54,6 +54,7 @@ impl RouteAwareClientPool {
         let mut previous_route = None;
         loop {
             let current_url = request.url().clone();
+            let network_permit = self.http_client_factory.network_policy().acquire(&current_url)?;
             let (current_route, client, selected_tls_backend) = match timeout_deadline {
                 Some(timeout_deadline) => tokio::time::timeout_at(
                     timeout_deadline,
@@ -94,16 +95,23 @@ impl RouteAwareClientPool {
                     client.execute(request).await
                 }
             };
-            let response = match match timeout_deadline {
-                Some(timeout_deadline) => {
-                    tokio::time::timeout_at(timeout_deadline, execute_request)
-                        .await
-                        .map_err(|_| RouteAwareRequestError::Timeout)?
-                }
-                None => execute_request.await,
-            } {
-                Ok(response) => response,
-                Err(error) => {
+            let response = match network_permit
+                .run(async {
+                    match timeout_deadline {
+                        Some(timeout_deadline) => {
+                            tokio::time::timeout_at(timeout_deadline, execute_request)
+                                .await
+                                .map_err(|_| RouteAwareRequestError::Timeout)
+                        }
+                        None => Ok(execute_request.await),
+                    }
+                })
+                .await
+            {
+                Err(error) => return Err(RouteAwareRequestError::Policy(error)),
+                Ok(Err(error)) => return Err(error),
+                Ok(Ok(Ok(response))) => response,
+                Ok(Ok(Err(error))) => {
                     let result = self
                         .retry_with_rustls(
                             &current_url,

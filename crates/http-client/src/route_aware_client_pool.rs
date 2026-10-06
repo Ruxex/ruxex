@@ -26,6 +26,7 @@ use crate::HttpClientBuilder;
 use crate::HttpClientFactory;
 use crate::OutboundProxyPolicy;
 use crate::OutboundProxyRoute;
+use crate::NetworkPolicyDenied;
 use crate::RouteFailureClass;
 use crate::tls_backend_fallback::RustlsClientCache;
 
@@ -81,6 +82,8 @@ pub enum RouteAwareClientPoolError {
 /// Error returned while building, routing, or sending a route-aware request.
 #[derive(Debug, thiserror::Error)]
 pub enum RouteAwareRequestError {
+    #[error(transparent)]
+    Policy(#[from] NetworkPolicyDenied),
     #[error(transparent)]
     Request(#[from] reqwest::Error),
     #[error(transparent)]
@@ -143,6 +146,7 @@ impl RouteAwareRequestError {
                 Some(RouteFailureClass::ProxyResolutionUnavailable)
             }
             Self::Request(_)
+            | Self::Policy(_)
             | Self::Build(_)
             | Self::UnsupportedRedirectScheme(_)
             | Self::TooManyRedirects
@@ -153,7 +157,8 @@ impl RouteAwareRequestError {
     pub fn status(&self) -> Option<StatusCode> {
         match self {
             Self::Request(error) => error.status(),
-            Self::Route(_)
+            Self::Policy(_)
+            | Self::Route(_)
             | Self::Build(_)
             | Self::UnsupportedRedirectScheme(_)
             | Self::TooManyRedirects
@@ -183,6 +188,7 @@ impl RouteAwareRequestError {
     pub fn without_url(self) -> Self {
         match self {
             Self::Request(error) => Self::Request(error.without_url()),
+            Self::Policy(error) => Self::Policy(error),
             other => other,
         }
     }

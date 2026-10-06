@@ -14,6 +14,7 @@ use futures::Sink;
 use futures::Stream;
 use genex_http_client::BuildCustomCaTransportError;
 use genex_http_client::HttpClientFactory;
+use genex_http_client::NetworkPermit;
 use genex_http_client::OutboundProxyRoute;
 use genex_http_client::build_rustls_client_config_with_custom_ca;
 use rustls::ClientConfig;
@@ -98,12 +99,25 @@ impl WebSocketConnector {
         request: Request,
         config: WebSocketConfig,
     ) -> Result<(WebSocketConnection, Response), WebSocketError> {
+        let network_permit = self
+            .http_client_factory
+            .network_policy()
+            .acquire(&url::Url::parse(request.uri().to_string().as_str()).map_err(|error| {
+                WebSocketError::Io(io::Error::new(io::ErrorKind::InvalidInput, error))
+            })?)
+            .map_err(network_policy_error)?;
         let proxy_route = self
             .http_client_factory
             .resolve_proxy_route_async(request.uri().to_string())
             .await
             .map_err(WebSocketError::Io)?;
-        self.connect_with_route(request, config, proxy_route, /*loopback_direct*/ false)
+        self.connect_with_route(
+            request,
+            config,
+            proxy_route,
+            /*loopback_direct*/ false,
+            network_permit,
+        )
             .await
     }
 
@@ -122,11 +136,19 @@ impl WebSocketConnector {
                 "direct WebSocket connections require a loopback destination",
             )));
         }
+        let network_permit = self
+            .http_client_factory
+            .network_policy()
+            .acquire(&url::Url::parse(request.uri().to_string().as_str()).map_err(|error| {
+                WebSocketError::Io(io::Error::new(io::ErrorKind::InvalidInput, error))
+            })?)
+            .map_err(network_policy_error)?;
         self.connect_with_route(
             request,
             config,
             OutboundProxyRoute::Direct,
             /*loopback_direct*/ true,
+            network_permit,
         )
         .await
     }
@@ -137,6 +159,7 @@ impl WebSocketConnector {
         config: WebSocketConfig,
         proxy_route: OutboundProxyRoute,
         loopback_direct: bool,
+        network_permit: NetworkPermit,
     ) -> Result<(WebSocketConnection, Response), WebSocketError> {
         let (inner, response) = dialer::connect(
             request,
@@ -148,8 +171,12 @@ impl WebSocketConnector {
         )
         .boxed()
         .await?;
-        Ok((WebSocketConnection { inner }, response))
+        Ok((WebSocketConnection { inner, network_permit }, response))
     }
+}
+
+fn network_policy_error(error: genex_http_client::NetworkPolicyDenied) -> WebSocketError {
+    WebSocketError::Io(io::Error::new(io::ErrorKind::PermissionDenied, error))
 }
 
 fn is_loopback_destination(uri: &Uri) -> bool {
@@ -172,13 +199,18 @@ fn is_loopback_destination(uri: &Uri) -> bool {
 /// without knowing which concrete network stream route selection produced.
 pub struct WebSocketConnection {
     inner: ConnectionInner,
+    network_permit: NetworkPermit,
 }
 
 impl Stream for WebSocketConnection {
     type Item = Result<Message, WebSocketError>;
 
     fn poll_next(self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        match &mut self.get_mut().inner {
+        let this = self.get_mut();
+        if let Err(error) = this.network_permit.check() {
+            return Poll::Ready(Some(Err(network_policy_error(error))));
+        }
+        match &mut this.inner {
             ConnectionInner::TransportDefault(stream) => Pin::new(stream).poll_next(context),
             ConnectionInner::Routed(stream) => Pin::new(stream).poll_next(context),
         }
@@ -192,14 +224,20 @@ impl Sink<Message> for WebSocketConnection {
         self: Pin<&mut Self>,
         context: &mut Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
-        match &mut self.get_mut().inner {
+        let this = self.get_mut();
+        if let Err(error) = this.network_permit.check() {
+            return Poll::Ready(Err(network_policy_error(error)));
+        }
+        match &mut this.inner {
             ConnectionInner::TransportDefault(stream) => Pin::new(stream).poll_ready(context),
             ConnectionInner::Routed(stream) => Pin::new(stream).poll_ready(context),
         }
     }
 
     fn start_send(self: Pin<&mut Self>, message: Message) -> Result<(), Self::Error> {
-        match &mut self.get_mut().inner {
+        let this = self.get_mut();
+        this.network_permit.check().map_err(network_policy_error)?;
+        match &mut this.inner {
             ConnectionInner::TransportDefault(stream) => Pin::new(stream).start_send(message),
             ConnectionInner::Routed(stream) => Pin::new(stream).start_send(message),
         }
@@ -209,7 +247,11 @@ impl Sink<Message> for WebSocketConnection {
         self: Pin<&mut Self>,
         context: &mut Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
-        match &mut self.get_mut().inner {
+        let this = self.get_mut();
+        if let Err(error) = this.network_permit.check() {
+            return Poll::Ready(Err(network_policy_error(error)));
+        }
+        match &mut this.inner {
             ConnectionInner::TransportDefault(stream) => Pin::new(stream).poll_flush(context),
             ConnectionInner::Routed(stream) => Pin::new(stream).poll_flush(context),
         }
@@ -219,7 +261,11 @@ impl Sink<Message> for WebSocketConnection {
         self: Pin<&mut Self>,
         context: &mut Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
-        match &mut self.get_mut().inner {
+        let this = self.get_mut();
+        if let Err(error) = this.network_permit.check() {
+            return Poll::Ready(Err(network_policy_error(error)));
+        }
+        match &mut this.inner {
             ConnectionInner::TransportDefault(stream) => Pin::new(stream).poll_close(context),
             ConnectionInner::Routed(stream) => Pin::new(stream).poll_close(context),
         }

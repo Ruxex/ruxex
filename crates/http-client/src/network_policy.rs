@@ -311,6 +311,11 @@ impl fmt::Debug for NetworkPermit {
 }
 
 impl NetworkPermit {
+    /// Creates a no-op permit for callers that intentionally bypass managed policy.
+    pub const fn unmanaged() -> Self {
+        Self { inner: None }
+    }
+
     pub fn check(&self) -> Result<(), NetworkPolicyDenied> {
         if self
             .inner
