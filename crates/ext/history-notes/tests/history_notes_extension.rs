@@ -22,6 +22,7 @@ use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
+use genex_model_provider_info::WireApi;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
 use genex_protocol::models::FunctionCallOutputContentItem;
@@ -68,6 +69,9 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         .build()
         .await?;
     config.model_provider.base_url = Some(format!("{}/backend-api/genex", server.uri()));
+    config.model_provider.name = "provider".to_string();
+    config.model_provider.wire_api = WireApi::Responses;
+    config.model_provider.requires_auth = true;
     config.token_budget = Some(TokenBudgetConfig {
         use_history_notes_extension: true,
         ..TokenBudgetConfig::default()

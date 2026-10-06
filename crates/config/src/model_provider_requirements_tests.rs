@@ -84,8 +84,8 @@ name = "Other provider"
 #[test]
 fn required_provider_definitions_are_validated_without_local_defaults() -> anyhow::Result<()> {
     for invalid in [
-        "[model_providers.gateway]\nbase_url = 'https://example.test'",
-        "[model_providers.provider]\nname = 'Reserved'",
+        "[model_providers.gateway]\nname = ''",
+        "[model_providers.provider]\nname = ''",
     ] {
         let requirements = toml::from_str(invalid)?;
         let local =

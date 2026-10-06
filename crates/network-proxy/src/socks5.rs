@@ -1031,6 +1031,7 @@ mod tests {
             mode: NetworkMode::Full,
             mitm: true,
             credential_broker: true,
+            allow_local_binding: true,
             ..NetworkProxyConfig::default()
         };
         settings.set_allowed_domains(vec!["api.example.test".to_string()]);

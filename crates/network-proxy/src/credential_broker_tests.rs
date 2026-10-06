@@ -1216,7 +1216,11 @@ fn builtin_provider_credentials_ignore_base_url_environment_override() {
 
     let mut gateway_headers = headers_with_bearer(&dummy);
     broker.inject_request_headers("gateway.example", &mut gateway_headers);
-    assert_eq!(authorization(&gateway_headers), Some(dummy.as_str()));
+    let expected_gateway_authorization = format!("Bearer {dummy}");
+    assert_eq!(
+        authorization(&gateway_headers),
+        Some(expected_gateway_authorization.as_str())
+    );
 }
 
 #[test]

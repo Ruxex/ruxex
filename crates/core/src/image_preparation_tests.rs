@@ -593,9 +593,15 @@ async fn preparation_replaces_only_failed_tool_images_and_preserves_metadata() {
                     },
                     FunctionCallOutputContentItem::InputImage {
                         image: ImageReference::Inline {
-                            image_url: expected_valid_image_url
+                            image_url: expected_valid_image_url.clone()
                         },
                         detail: Some(ImageDetail::Low),
+                    },
+                    FunctionCallOutputContentItem::InputImage {
+                        image: ImageReference::Inline {
+                            image_url: expected_valid_image_url
+                        },
+                        detail: Some(ImageDetail::High),
                     },
                 ]),
                 success: Some(true),

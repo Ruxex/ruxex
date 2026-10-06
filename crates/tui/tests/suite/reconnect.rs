@@ -78,7 +78,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                 let result = match request.method.as_str() {
                     "initialize" => json!({"userAgent": "reconnect-pty"}),
                     "account/read" => {
-                        json!({"account": {"type": "apiKey"}, "requiresproviderAuth": false})
+                        json!({"account": {"type": "apiKey"}, "requiresAuth": false})
                     }
                     "model/list" => json!({"data": [], "nextCursor": null}),
                     "config/read" => {
@@ -93,6 +93,12 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                             "sandbox": {"type": "readOnly"}, "reasoningEffort": null})
                     }
                     "thread/read" => json!({"thread": thread}),
+                    "thread/turns/list" => {
+                        json!({"data": [], "nextCursor": null, "backwardsCursor": null})
+                    }
+                    "thread/items/list" => {
+                        json!({"data": [], "nextCursor": null, "backwardsCursor": null})
+                    }
                     "thread/goal/get" => json!({"goal": null}),
                     "skills/list" => json!({"data": []}),
                     _ => {

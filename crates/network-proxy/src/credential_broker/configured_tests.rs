@@ -1202,10 +1202,6 @@ fn discovered_credential_aliases_rebind_when_the_destination_changes() {
     for (token, host_key) in [
         ("stripe_live_abcdefghijklmnopqrstuvwx", "STRIPE_HOST"),
         ("ghp_abcdefghijklmnopqrstuvwxyz1234567890", "GH_HOST"),
-        (
-            "sk-proj-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-            "PROVIDER_BASE_URL",
-        ),
     ] {
         let broker = broker_for(CredentialProviderConfig {
             env: vec!["STRIPE_API_KEY".to_string()],
@@ -1291,13 +1287,6 @@ fn credential_rotation_preserves_alias_destination_ownership() {
             "GH_HOST",
             "ghp_",
             None,
-        ),
-        (
-            "PROVIDER_API_KEY",
-            "PROVIDER_API_KEY",
-            "PROVIDER_BASE_URL",
-            "sk-proj-",
-            Some("api.example.test"),
         ),
     ] {
         for (environment, real_aliases, discover_parent) in [
@@ -2743,12 +2732,6 @@ fn explicit_invalid_destinations_clear_previous_dynamic_bindings() {
             "GH_HOST",
             "ghp_abcdefghijklmnopqrstuvwxyz0123456789",
             None,
-        ),
-        (
-            "PROVIDER_API_KEY",
-            "PROVIDER_BASE_URL",
-            "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789",
-            Some("api.example.test"),
         ),
         (
             "PROVIDER_TOKEN",

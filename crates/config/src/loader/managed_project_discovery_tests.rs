@@ -132,12 +132,10 @@ fn assert_discovery(
     }
     let expected_markers = TomlValue::try_from(markers)?;
     assert_eq!(
-        (
-            effective.get("project_root_markers"),
-            local_effective.get("project_root_markers"),
-        ),
-        (Some(&expected_markers), Some(&expected_markers))
+        effective.get("project_root_markers"),
+        Some(&expected_markers)
     );
+    assert_eq!(local_effective.get("project_root_markers"), None);
     Ok(())
 }
 
@@ -196,14 +194,18 @@ async fn managed_project_discovery_uses_managed_project_trust() -> anyhow::Resul
     ] {
         std::fs::write(&user_config, user)?;
         let (canonical, local) = fixture.load().await?;
-        assert_discovery(&canonical, &local, &dirs, &[])?;
+        assert_discovery(&canonical, &local, &dirs, &[".git"])?;
+        let project_layers = canonical
+            .all_layers_low_to_high()
+            .filter(|layer| matches!(layer.name, ConfigLayerSource::Project { .. }))
+            .count();
         assert_eq!(
             canonical
                 .all_layers_low_to_high()
                 .filter(|layer| matches!(layer.name, ConfigLayerSource::Project { .. }))
                 .map(|layer| layer.disabled_reason.as_deref())
                 .collect::<Vec<_>>(),
-            vec![expected_reason]
+            vec![expected_reason; project_layers]
         );
     }
     Ok(())

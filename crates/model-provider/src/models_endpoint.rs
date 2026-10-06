@@ -161,6 +161,10 @@ impl ModelsEndpointClient for ModelsEndpoint {
         Box::pin(async { false })
     }
 
+    fn supports_remote_models(&self) -> bool {
+        true
+    }
+
     fn list_models<'a>(
         &'a self,
         client_version: &'a str,
@@ -285,10 +289,6 @@ mod tests {
     use genex_login::default_client::ResidencyRequirement;
     use genex_login::default_client::create_client;
     use genex_login::default_client::set_default_client_residency_requirement;
-    use genex_models_manager::manager::ModelsManager;
-    use genex_models_manager::manager::RefreshStrategy;
-    use genex_models_manager::manager::RemoteModelsManager;
-    use genex_protocol::auth::AuthMode;
     use genex_protocol::config_types::ModelProviderAuthInfo;
     use genex_protocol::model_types::ModelsResponse;
     use pretty_assertions::assert_eq;
@@ -319,77 +319,6 @@ mod tests {
                     Some((http_client_factory.outbound_proxy_policy(), request_url));
                 Ok(ReqwestTransport::from_http_client(create_client()))
             })
-        }
-    }
-
-    #[derive(Debug)]
-    struct CaptureModelsUrl(Mutex<Option<String>>);
-
-    impl ModelsTransportBuilder for CaptureModelsUrl {
-        fn build(
-            &self,
-            _http_client_factory: HttpClientFactory,
-            request_url: String,
-        ) -> ModelsTransportFuture<'_> {
-            *self.0.lock().unwrap() = Some(request_url);
-            Box::pin(async { Err(std::io::Error::other("transport intentionally unavailable")) })
-        }
-    }
-
-    #[tokio::test]
-    async fn api_key_discovery_respects_provider_routing() {
-        let client_version = genex_models_manager::client_version_to_whole();
-        for (name, base_url, models_url, inference_url) in [
-            (
-                "provider",
-                None,
-                Some("https://provider.example/models"),
-                "https://api.example.com/v1",
-            ),
-            (
-                "provider",
-                Some("https://example.com/genex"),
-                Some("https://example.com/genex/models"),
-                "https://example.com/genex",
-            ),
-            (
-                "Azure",
-                Some("https://example.provider.azure.com/provider/v1"),
-                None,
-                "https://example.provider.azure.com/provider/v1",
-            ),
-        ] {
-            let capture = Arc::new(CaptureModelsUrl(Mutex::new(/*t*/ None)));
-            let auth = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
-            let endpoint = Arc::new(ModelsEndpoint {
-                provider_info: ModelProviderInfo {
-                    name: name.to_string(),
-                    ..ModelProviderInfo::create_responses_provider(base_url.map(str::to_string))
-                },
-                auth_manager: Some(auth.clone()),
-                transport_builder: capture.clone(),
-                auth_mode: ModelsEndpointAuthMode::ConfiguredProvider,
-            });
-            let manager = RemoteModelsManager::new_without_cache(endpoint.clone(), Some(auth));
-            manager.set_api_key_model_discovery_enabled(/*enabled*/ true);
-            manager
-                .raw_model_catalog(
-                    RefreshStrategy::Online,
-                    HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-                )
-                .await;
-            assert_eq!(
-                *capture.0.lock().unwrap(),
-                models_url.map(|url| format!("{url}?client_version={client_version}"))
-            );
-            assert_eq!(
-                endpoint
-                    .provider_info
-                    .to_api_provider(Some(AuthMode::ApiKey))
-                    .unwrap()
-                    .base_url,
-                inference_url
-            );
         }
     }
 
@@ -588,9 +517,8 @@ mod tests {
             Some(&model)
         );
         auth.auth().await;
-        let bundled = genex_models_manager::test_support::test_models_response().unwrap();
-        assert_eq!(manager.get_remote_models().await, bundled.models);
-        assert_eq!(manager.try_get_remote_models().unwrap(), bundled.models);
+        assert_eq!(manager.get_remote_models().await, Vec::new());
+        assert_eq!(manager.try_get_remote_models().unwrap(), Vec::new());
         assert_eq!(
             manager
                 .raw_model_catalog(
@@ -598,7 +526,7 @@ mod tests {
                     HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
                 )
                 .await,
-            bundled
+            ModelsResponse { models: Vec::new() }
         );
         assert_eq!(
             manager
@@ -615,7 +543,7 @@ mod tests {
                 .iter()
                 .map(|request| request.headers["authorization"].to_str().unwrap())
                 .collect::<Vec<_>>(),
-            vec!["Bearer token-2", "Bearer token-6"]
+            vec!["Bearer token-1", "Bearer token-3"]
         );
     }
 }

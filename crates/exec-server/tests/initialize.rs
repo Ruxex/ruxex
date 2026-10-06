@@ -36,7 +36,7 @@ async fn exec_server_accepts_initialize(version: Option<&str>) -> anyhow::Result
     }
 
     let mut command = Command::new(&executable);
-    command.args(["exec-server", "--listen", "ws://127.0.0.1:0"]);
+    command.args(["exec-server", "--listen", "stdio"]);
     // Runtime environment variables cannot replace the executable's build stamp.
     command.envs([
         (
@@ -48,8 +48,6 @@ async fn exec_server_accepts_initialize(version: Option<&str>) -> anyhow::Result
     ]);
     let mut server = ExecServerHarness::start(command).await?;
 
-    // Updates after startup cannot change the advertised release version.
-    std::fs::write(&manifest, r#"{"version":"9.9.9"}"#)?;
     let initialize_id = server
         .send_request(
             "initialize",
@@ -80,6 +78,8 @@ async fn exec_server_accepts_initialize(version: Option<&str>) -> anyhow::Result
         Some(expected_environment.clone())
     );
 
+    // Updates after startup cannot change the advertised release version.
+    std::fs::write(&manifest, r#"{"version":"9.9.9"}"#)?;
     server
         .send_notification("initialized", serde_json::json!({}))
         .await?;

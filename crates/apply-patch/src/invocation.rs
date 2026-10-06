@@ -65,8 +65,8 @@ fn classify_shell(shell: &str, flag: &str, convention: PathConvention) -> Option
     })
 }
 
-fn can_skip_flag(shell: &str, flag: &str, convention: PathConvention) -> bool {
-    classify_shell_name(shell, convention).is_some_and(|name| false)
+fn can_skip_flag(_shell: &str, _flag: &str, _convention: PathConvention) -> bool {
+    false
 }
 
 fn parse_shell_script<'a>(argv: &'a [String], cwd: &PathUri) -> Option<(ApplyPatchShell, &'a str)> {

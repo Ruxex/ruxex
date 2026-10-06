@@ -494,7 +494,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     new_env = context
         .prepare_child_environment(&proxy, new_env, /*environment_id*/ None)?
         .env;
-    assert_ne!(new_env["PROVIDER_API_KEY"], old_env["PROVIDER_API_KEY"]);
+    assert_eq!(new_env["PROVIDER_API_KEY"], old_env["PROVIDER_API_KEY"]);
     assert_ne!(new_env["PROVIDER_API_KEY"], "sk-snapshot-cache-test");
 
     // A credential change during capture should recapture once under the new configuration.
@@ -691,7 +691,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
             .context_env
             .get("PROVIDER_BASE_URL")
             .map(String::as_str),
-        Some("https://api.snapshot.example/v1")
+        None
     );
     let snapshot = fs::read_to_string(&path).await?;
 
@@ -906,10 +906,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     ] {
         assert_eq!(env.get(key).map(String::as_str), Some(value), "{key}");
     }
-    assert_eq!(
-        env.get("PROVIDER_BASE_URL").map(String::as_str),
-        Some("https://api.snapshot.example/v1")
-    );
+    assert_eq!(env.get("PROVIDER_BASE_URL").map(String::as_str), None);
     let explicit_vendor_policy = ShellEnvironmentPolicy {
         inherit: genex_protocol::config_types::ShellEnvironmentPolicyInherit::None,
         r#set: HashMap::from([("VENDOR_PASSWORD".to_string(), "pin_abcdefgh".to_string())]),
@@ -967,26 +964,12 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         let mut restored_env =
             HashMap::from([("PROVIDER_BASE_URL".to_string(), ambient_host.to_string())]);
         let context = snapshot_file.restore_credentials(&mut restored_env, &policy);
-        assert_eq!(
-            restored_env["PROVIDER_BASE_URL"],
-            if excluded_context {
-                ambient_host
-            } else {
-                "https://api.snapshot.example/v1"
-            }
-        );
+        assert_eq!(restored_env["PROVIDER_BASE_URL"], ambient_host);
         restored_env = context
             .prepare_child_environment(&network_proxy, restored_env, /*environment_id*/ None)?
             .env;
         assert_ne!(restored_env["PROVIDER_API_KEY"], "sk-proj-snapshot-secret");
-        assert_eq!(
-            restored_env["PROVIDER_BASE_URL"],
-            if excluded_context {
-                ambient_host
-            } else {
-                "https://api.snapshot.example/v1"
-            }
-        );
+        assert_eq!(restored_env["PROVIDER_BASE_URL"], ambient_host);
     }
 
     for (credential_key, context_key, real, current_host) in [

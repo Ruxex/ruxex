@@ -116,9 +116,9 @@ fn serialize_environment_context_with_foreign_windows_cwd() {
     assert_eq!(
         context.render(),
         r#"<environment_context>
-  <cwd>C:\windows</cwd>
+  <cwd>/C:/windows</cwd>
   <shell>powershell</shell>
-  <filesystem><workspace_roots><root>D:\workspace</root></workspace_roots><permission_profile type="disabled"><file_system type="unrestricted" /></permission_profile></filesystem>
+  <filesystem><workspace_roots><root>/D:/workspace</root></workspace_roots><permission_profile type="disabled"><file_system type="unrestricted" /></permission_profile></filesystem>
 </environment_context>"#
     );
 }

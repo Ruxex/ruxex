@@ -1325,7 +1325,7 @@ Environment
 
 Configuration
   ✗ auth         token expired — Update the configured provider credentials.
-      PROVIDER_API_KEY           present
+      PROVIDER_API_KEY         present
 
 Updates
   ✓ updates      update configuration is locally consistent
@@ -1506,7 +1506,7 @@ Environment
   [ok] state        state paths inspectable
 
 Configuration
-  [XX] auth         token expired — Update the configured provider credentials.
+  [XX] auth         token expired - Update the configured provider credentials.
 
 Updates
   [ok] updates      update configuration is locally consistent
@@ -1541,7 +1541,7 @@ Run genex doctor without --summary for detailed diagnostics.
                 color_enabled: false,
             },
         );
-        assert!(rendered.contains("      PROVIDER_API_KEY           present"));
+        assert!(rendered.contains("      PROVIDER_API_KEY         present"));
     }
 
     #[test]
@@ -1681,7 +1681,7 @@ Run genex doctor without --summary for detailed diagnostics.
         assert!(!compact.contains("enabled flags"));
         assert!(
             compact.contains(
-                "feature flags            2 enabled · 1 overridden (full list with --all)"
+                "feature flags            3 enabled · 1 overridden (full list with --all)"
             )
         );
         assert!(expanded.contains("enabled flags            shell_tool, goals"));

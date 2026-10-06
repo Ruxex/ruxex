@@ -1,7 +1,6 @@
 use super::*;
 use genex_plugin::PluginId;
 use pretty_assertions::assert_eq;
-use serde_json::json;
 use tempfile::tempdir;
 
 fn write_plugin_with_version(

@@ -34,8 +34,6 @@ use genex_exec_server::WriteFileOptions;
 use genex_protocol::capabilities::CapabilityRootLocation;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
 use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_protocol::protocol::Product;
 use genex_skills_extension::ExecutorSkillProvider;
 use genex_skills_extension::HostSkillsLoadInput;

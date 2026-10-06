@@ -879,7 +879,10 @@ mod tests {
             .expect("local store returns updated thread");
 
         let git_info = thread.git_info.expect("git info");
-        assert_eq!(git_info.commit_hash, None);
+        assert_eq!(
+            git_info.commit_hash.as_ref().map(|sha| sha.0.as_str()),
+            None
+        );
         assert_eq!(git_info.branch.as_deref(), Some("feature"));
         assert_eq!(
             git_info.repository_url.as_deref(),
@@ -914,7 +917,10 @@ mod tests {
             .await
             .expect("read paginated thread by rollout path");
         let git_info = thread.git_info.expect("git info");
-        assert_eq!(git_info.commit_hash, None);
+        assert_eq!(
+            git_info.commit_hash.as_ref().map(|sha| sha.0.as_str()),
+            Some("abcdef")
+        );
         assert_eq!(git_info.branch.as_deref(), Some("feature"));
         assert_eq!(
             git_info.repository_url.as_deref(),
@@ -1159,7 +1165,18 @@ mod tests {
             })
             .await
             .expect("read thread after reconcile");
-        assert!(thread.git_info.is_none());
+        let git_info = thread
+            .git_info
+            .expect("rollout git info should be restored");
+        assert_eq!(
+            git_info.commit_hash.as_ref().map(|sha| sha.0.as_str()),
+            Some("abcdef")
+        );
+        assert_eq!(git_info.branch.as_deref(), Some("main"));
+        assert_eq!(
+            git_info.repository_url.as_deref(),
+            Some("https://example.com/repo.git")
+        );
 
         store
             .update_thread_metadata(UpdateThreadMetadataParams {
@@ -1188,7 +1205,18 @@ mod tests {
             })
             .await
             .expect("read thread after memory mode update with no git");
-        assert!(thread.git_info.is_none());
+        let git_info = thread
+            .git_info
+            .expect("rollout git info should remain authoritative");
+        assert_eq!(
+            git_info.commit_hash.as_ref().map(|sha| sha.0.as_str()),
+            Some("abcdef")
+        );
+        assert_eq!(git_info.branch.as_deref(), Some("main"));
+        assert_eq!(
+            git_info.repository_url.as_deref(),
+            Some("https://example.com/repo.git")
+        );
 
         assert_eq!(
             runtime

@@ -159,7 +159,7 @@ fn displays_foreign_paths_relative_to_their_environment_root() {
             .expect("valid Windows file path"),
     );
 
-    assert_eq!(tracker.display_path(&path), r"src\main.rs");
+    assert_eq!(tracker.display_path(&path), "src/main.rs");
 }
 
 #[tokio::test]

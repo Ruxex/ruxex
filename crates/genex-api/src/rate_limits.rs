@@ -58,13 +58,13 @@ pub fn parse_rate_limit_for_limit(
     headers: &HeaderMap,
     limit_id: Option<&str>,
 ) -> Option<RateLimitSnapshot> {
-    let normalized_limit = limit_id
-        .map(str::trim)
-        .filter(|name| !name.is_empty())
-        .unwrap_or(DEFAULT_RATE_LIMIT_ID)
-        .to_ascii_lowercase()
-        .replace('_', "-");
-    let prefix = format!("x-{normalized_limit}");
+    let (normalized_limit, prefix) = match limit_id.map(str::trim).filter(|name| !name.is_empty()) {
+        Some(limit_id) => {
+            let normalized = limit_id.to_ascii_lowercase().replace('_', "-");
+            (normalized.clone(), format!("x-{normalized}"))
+        }
+        None => (DEFAULT_RATE_LIMIT_ID.to_string(), "x-genex".to_string()),
+    };
     let primary = parse_rate_limit_window(
         headers,
         &format!("{prefix}-primary-used-percent"),
@@ -249,7 +249,12 @@ fn header_name_to_limit_id(header_name: &str) -> Option<String> {
     let suffix = "-primary-used-percent";
     let prefix = header_name.strip_suffix(suffix)?;
     let limit = prefix.strip_prefix("x-")?;
-    Some(normalize_limit_id(limit.to_string()))
+    let limit_id = normalize_limit_id(limit.to_string());
+    Some(if limit_id == "genex" {
+        DEFAULT_RATE_LIMIT_ID.to_string()
+    } else {
+        limit_id
+    })
 }
 
 fn normalize_limit_id(name: impl Into<String>) -> String {

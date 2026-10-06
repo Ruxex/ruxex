@@ -25,7 +25,6 @@ use anyhow::bail;
 use clap::ArgAction;
 use clap::Parser;
 use clap::Subcommand;
-use genex_app_server_protocol::AccountLoginCompletedNotification;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::ClientRequest;
@@ -1621,34 +1620,6 @@ impl GenexClient {
         };
 
         self.send_request(request, request_id, "thread/decrement_elicitation")
-    }
-
-    fn wait_for_account_login_completion(
-        &mut self,
-        expected_login_id: Option<&str>,
-    ) -> Result<AccountLoginCompletedNotification> {
-        loop {
-            let notification = self.next_notification()?;
-
-            if let Ok(server_notification) = ServerNotification::try_from(notification) {
-                match server_notification {
-                    ServerNotification::AccountLoginCompleted(completion) => {
-                        if completion.login_id.as_deref() == expected_login_id {
-                            return Ok(completion);
-                        }
-
-                        println!(
-                            "[ignoring account/login/completed for unexpected login_id: {:?}]",
-                            completion.login_id
-                        );
-                    }
-                    ServerNotification::AccountRateLimitsUpdated(snapshot) => {
-                        println!("< accountRateLimitsUpdated notification: {snapshot:?}");
-                    }
-                    _ => {}
-                }
-            }
-        }
     }
 
     fn stream_turn(&mut self, thread_id: &str, turn_id: &str) -> Result<()> {

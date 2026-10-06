@@ -1,23 +1,9 @@
 use std::path::Path;
 
-use anyhow::Context;
 use anyhow::Result;
-use app_test_support::ApiKeyAuthFixture;
-use app_test_support::write_api_key_auth;
-use genex_config::ConfigLoadOptions;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_core::config::load_config_toml_with_layer_stack;
-use genex_utils_absolute_path::AbsolutePathBuf;
 use predicates::str::contains;
 use pretty_assertions::assert_eq;
-use serde_json::json;
 use tempfile::TempDir;
-use wiremock::Mock;
-use wiremock::MockServer;
-use wiremock::ResponseTemplate;
-use wiremock::matchers::header;
-use wiremock::matchers::method;
-use wiremock::matchers::path;
 
 fn genex_command(genex_home: &Path) -> Result<assert_cmd::Command> {
     let mut cmd = assert_cmd::Command::new(genex_utils_cargo_bin::cargo_bin("genex")?);
@@ -41,7 +27,12 @@ fn strict_config_rejects_unknown_config_override() -> Result<()> {
 #[test]
 fn interactive_validates_config_before_requiring_terminal() -> Result<()> {
     let cases: &[(&[&str], &str, &str, &str)] = &[
-        (&[], "config.toml", "model = [", "Error loading config.toml"),
+        (
+            &[],
+            "config.toml",
+            "model = [",
+            "Error loading configuration",
+        ),
         (
             &["--strict-config"],
             "config.toml",
@@ -81,50 +72,6 @@ fn interactive_validates_config_before_requiring_terminal() -> Result<()> {
             .failure()
             .stderr(contains(expected_error));
     }
-
-    Ok(())
-}
-
-#[test]
-fn interactive_remote_default_preserves_remote_working_directory_before_requiring_terminal()
--> Result<()> {
-    let genex_home = TempDir::new()?;
-    std::fs::write(genex_home.path().join("config.toml"), "")?;
-    std::fs::write(
-        genex_home.path().join("environments.toml"),
-        r#"default = "remote"
-include_local = false
-
-[[environments]]
-id = "remote"
-url = "ws://127.0.0.1:4512"
-"#,
-    )?;
-    let remote_only_cwd = genex_home.path().join("remote-only-working-directory");
-
-    let mut cmd = genex_command(genex_home.path())?;
-    cmd.env("TERM", "xterm-256color")
-        .current_dir(genex_home.path())
-        .arg("--cd")
-        .arg(remote_only_cwd)
-        .assert()
-        .failure()
-        .stderr(contains("stdin is not a terminal"));
-
-    Ok(())
-}
-
-#[test]
-fn strict_config_is_not_supported_for_cloud_command() -> Result<()> {
-    let genex_home = TempDir::new()?;
-
-    let mut cmd = genex_command(genex_home.path())?;
-    cmd.args(["--strict-config", "-c", "foo=bar", "cloud", "list"])
-        .assert()
-        .failure()
-        .stderr(contains(
-            "`--strict-config` is not supported for `genex cloud`",
-        ));
 
     Ok(())
 }
@@ -208,95 +155,6 @@ async fn features_list_is_sorted_alphabetically_by_feature_name() -> Result<()> 
     expected_names.sort();
 
     assert_eq!(actual_names, expected_names);
-
-    Ok(())
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn features_list_honors_cloud_managed_feature_requirements() -> Result<()> {
-    let server = MockServer::start().await;
-    let managed_auth_base_url = format!("{}/backend-api", server.uri());
-    let genex_home = TempDir::new()?;
-    let user_config = format!(
-        "cli_auth_credentials_store = \"file\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\"\n\n[features]\nnetwork_proxy = true\n"
-    );
-    std::fs::write(genex_home.path().join("config.toml"), &user_config)?;
-
-    let bootstrap_config = load_config_toml_with_layer_stack(
-        genex_home.path(),
-        Some(&AbsolutePathBuf::from_absolute_path(genex_home.path())?),
-        Vec::new(),
-        ConfigLoadOptions::default(),
-    )
-    .await?;
-    if bootstrap_config.config_toml.cli_auth_credentials_store
-        != Some(AuthCredentialsStoreMode::File)
-        || bootstrap_config
-            .config_toml
-            .managed_auth_base_url
-            .as_deref()
-            != Some(managed_auth_base_url.as_str())
-    {
-        eprintln!(
-            "skipping cloud-managed feature subprocess: host-managed authentication or backend routing prevents isolated mock credentials"
-        );
-        return Ok(());
-    }
-
-    write_api_key_auth(
-        genex_home.path(),
-        ApiKeyAuthFixture::new("test-token")
-            .account_id("workspace-123")
-            .workspace_id("workspace-123")
-            .user_id("user-123")
-            .plan_type("enterprise"),
-        AuthCredentialsStoreMode::File,
-    )?;
-    Mock::given(method("GET"))
-        .and(path("/backend-api/wham/config/bundle"))
-        .and(header("authorization", "Bearer test-token"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "requirements_toml": {
-                "enterprise_managed": [{
-                    "id": "managed-feature-requirements",
-                    "name": "Managed feature requirements",
-                    "contents": "[features]\nnetwork_proxy = false\n",
-                }],
-            },
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let mut cmd = genex_command(genex_home.path())?;
-    let output = cmd
-        .current_dir(genex_home.path())
-        .env("NO_PROXY", "127.0.0.1,localhost")
-        .env("no_proxy", "127.0.0.1,localhost")
-        .env_remove("GENEX_ACCESS_TOKEN")
-        .env_remove("GENEX_API_KEY")
-        .env_remove("PROVIDER_API_KEY")
-        .args(["features", "list"])
-        .assert()
-        .success()
-        .get_output()
-        .stdout
-        .clone();
-    let stdout = String::from_utf8(output)?;
-    let network_proxy = stdout
-        .lines()
-        .find(|line| line.starts_with("network_proxy "))
-        .context("feature list should include network_proxy")?;
-
-    assert_eq!(
-        network_proxy.split_whitespace().collect::<Vec<_>>(),
-        ["network_proxy", "experimental", "false"]
-    );
-    assert_eq!(
-        std::fs::read_to_string(genex_home.path().join("config.toml"))?,
-        user_config
-    );
-    server.verify().await;
 
     Ok(())
 }

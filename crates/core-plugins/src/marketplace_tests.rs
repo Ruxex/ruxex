@@ -208,7 +208,7 @@ fn find_marketplace_plugin_supports_git_subdir_sources() {
             plugin_id: PluginId::new("remote-plugin".to_string(), "test-curated".to_string())
                 .unwrap(),
             source: MarketplacePluginSource::Git {
-                url: "https://github.com/codex/joey_marketplace3.git".to_string(),
+                url: "https://github.com/provider/joey_marketplace3.git".to_string(),
                 path: Some("plugins/toolkit".to_string()),
                 ref_name: Some("main".to_string()),
                 sha: Some("abc123".to_string()),
@@ -749,7 +749,7 @@ fn find_marketplace_plugin_normalizes_github_shorthand_with_dot_git_suffix() {
     assert_eq!(
         resolved.source,
         MarketplacePluginSource::Git {
-            url: "https://github.com/codex/toolkit.git".to_string(),
+            url: "https://github.com/provider/toolkit.git".to_string(),
             path: Some("plugins/toolkit".to_string()),
             ref_name: None,
             sha: None,

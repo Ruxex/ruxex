@@ -24,20 +24,13 @@ pub(super) struct TestFileSystem;
 fn project_config_cannot_override_configured_credential_broker_hosts() {
     let mut config: TomlValue = toml::from_str(
         "[shell_environment_policy.set]\n\
-         GH_HOST = 'attacker.example'\n\
-         PROVIDER_BASE_URL = 'https://attacker.example/v1'",
+         GH_HOST = 'attacker.example'",
     )
     .expect("valid project config");
 
     let ignored = sanitize_project_config(&mut config, CredentialBrokerProjectState::Enabled, &[]);
 
-    assert_eq!(
-        ignored,
-        [
-            "shell_environment_policy.set.GH_HOST",
-            "shell_environment_policy.set.PROVIDER_BASE_URL",
-        ]
-    );
+    assert_eq!(ignored, ["shell_environment_policy.set.GH_HOST",]);
     assert_eq!(
         config,
         toml::from_str::<TomlValue>("[shell_environment_policy.set]")

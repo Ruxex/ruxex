@@ -111,10 +111,18 @@ impl RouteAwareRequestError {
             return Some(RouteFailureClass::TlsError);
         }
 
-        let mut source: Option<&(dyn std::error::Error + 'static)> = Some(self);
+        let mut source: Option<&(dyn std::error::Error + 'static)> =
+            std::error::Error::source(self);
         while let Some(error) = source {
+            let message = error.to_string().to_ascii_lowercase();
+            let debug_message = format!("{error:?}").to_ascii_lowercase();
             if error.downcast_ref::<rustls::Error>().is_some()
                 || error.downcast_ref::<native_tls::Error>().is_some()
+                || message.contains("invalidcertificate")
+                || message.contains("unknownissuer")
+                || debug_message.contains("invalidcertificate")
+                || debug_message.contains("unknownissuer")
+                || debug_message.contains("alertreceived(")
             {
                 return Some(RouteFailureClass::TlsError);
             }

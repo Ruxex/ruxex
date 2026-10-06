@@ -503,14 +503,14 @@ mod tests {
     }
 
     #[test]
-    fn windows_terminal_wt_session_promotes_to_truecolor() {
+    fn windows_terminal_wt_session_keeps_reported_color_level() {
         assert_eq!(
             stdout_color_level_for_terminal(
                 StdoutColorLevel::Ansi16,
                 TerminalName::Unknown,
                 /*has_wt_session*/ true,
             ),
-            StdoutColorLevel::TrueColor
+            StdoutColorLevel::Ansi16
         );
     }
 
@@ -522,7 +522,7 @@ mod tests {
                 TerminalName::Unknown,
                 /*has_wt_session*/ false,
             ),
-            StdoutColorLevel::TrueColor
+            StdoutColorLevel::Ansi16
         );
     }
 

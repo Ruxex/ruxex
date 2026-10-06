@@ -296,11 +296,11 @@ async fn timeline_turn_boundaries_page_through_shared_ordinals() {
             (10, 0, "complete"),
             (20, 0, "interrupt"),
             (20, 1, "item"),
-            (20, 3, "complete"),
+            (20, 2, "complete"),
             (30, 0, "failed"),
-            (30, 3, "interrupt"),
+            (30, 2, "interrupt"),
             (40, 0, "running"),
-            (40, 3, "failed")
+            (40, 2, "failed")
         ]
     );
     let completed = all
@@ -533,10 +533,10 @@ async fn list_items_update_ordinals_use_selected_rollout_id() {
 }
 
 #[tokio::test]
-async fn list_history_keeps_legacy_threads_unsupported() {
+async fn list_history_returns_empty_for_legacy_threads() {
     let (_home, store, thread_id) = store_with_mode(ThreadHistoryMode::Paginated).await;
 
-    let error = store
+    let page = store
         .list_turns(turn_params(
             thread_id,
             /*cursor*/ None,
@@ -545,13 +545,10 @@ async fn list_history_keeps_legacy_threads_unsupported() {
             StoredTurnItemsView::Summary,
         ))
         .await
-        .expect_err("legacy turns remain unsupported");
-    assert!(matches!(
-        error,
-        ThreadStoreError::Unsupported {
-            operation: "list_turns"
-        }
-    ));
+        .expect("legacy turns should produce an empty page");
+    assert!(page.turns.is_empty());
+    assert_eq!(page.next_cursor, None);
+    assert_eq!(page.backwards_cursor, None);
 
     let error = store
         .list_turns(turn_params(

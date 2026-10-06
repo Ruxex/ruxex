@@ -21,7 +21,7 @@ fn github_write_hook() -> crate::mitm_hook::MitmHookConfig {
         host: "api.github.com".to_string(),
         matcher: crate::mitm_hook::MitmHookMatchConfig {
             methods: vec!["POST".to_string(), "PUT".to_string()],
-            path_prefixes: vec!["/repos/provider/".to_string()],
+            path_prefixes: vec!["/repos/".to_string()],
             ..crate::mitm_hook::MitmHookMatchConfig::default()
         },
         actions: crate::mitm_hook::MitmHookActionsConfig {

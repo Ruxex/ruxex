@@ -64,7 +64,7 @@ async fn explicit_update_migrates_running_and_stopped_installations() {
         if local {
             let package = root.join("releases/local-development");
             std::fs::create_dir(&package).unwrap();
-            std::fs::copy(&legacy.managed_genex_bin, package.join("genex")).unwrap();
+            std::fs::copy(&legacy.managed_genex_bin, package.join("codex")).unwrap();
             std::fs::remove_file(root.join("current")).unwrap();
             std::os::unix::fs::symlink(&package, root.join("current")).unwrap();
             std::fs::remove_file(root.join("auto-update-version")).unwrap();
@@ -282,7 +282,7 @@ fn manual_update_daemon(home: &TempDir) -> (Daemon, String) {
     };
     let release = format!("1.0.0-{target}");
     let standalone = home.path().join("packages/standalone");
-    let bin = standalone.join("releases").join(&release).join("genex");
+    let bin = standalone.join("releases").join(&release).join("codex");
     std::fs::create_dir_all(bin.parent().expect("binary parent")).expect("release directory");
     std::fs::write(
         &bin,

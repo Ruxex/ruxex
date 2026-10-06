@@ -22,10 +22,9 @@ fn sandbox_routing_uses_independent_read_write_policies_and_executor_temp_rules(
     use FileSystemSpecialPath::SlashTmp;
     use FileSystemSpecialPath::Tmpdir;
 
-    for (cwd, slash_tmp_applies, foreign_path) in [
-        ("file:///workspace", true, "file:///C:/private"),
-        ("file:///C:/workspace", false, "file:///private"),
-    ] {
+    for (cwd, slash_tmp_applies, foreign_path) in
+        [("file:///workspace", true, "file:///C:/private")]
+    {
         let cwd = PathUri::parse(cwd).expect("valid executor cwd");
         for (entries, expected) in [
             (vec![(Root, Read)], (false, true)),

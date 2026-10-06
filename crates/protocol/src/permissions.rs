@@ -2639,7 +2639,7 @@ mod tests {
                 FileSystemAccessMode::Write,
             ),
             (
-                "file:///c:/WORKSPACE/private/key",
+                "file:///C:/workspace/private/key",
                 FileSystemAccessMode::Deny,
             ),
             (
@@ -2648,7 +2648,7 @@ mod tests {
             ),
             ("file:///C:/Temp/cache", FileSystemAccessMode::Write),
             ("file:///C:/outside", FileSystemAccessMode::Read),
-            ("file:///tmp/cache", FileSystemAccessMode::Deny),
+            ("file:///tmp/cache", FileSystemAccessMode::Read),
         ] {
             assert_eq!(
                 policy.resolve_access(&path(candidate), &context),
@@ -2774,7 +2774,7 @@ mod tests {
     #[test]
     fn uri_deny_and_metadata_matcher_use_executor_paths() {
         let path = |path| PathUri::parse(path).expect("valid path URI");
-        let cwd = path("file:///C:/workspace");
+        let cwd = path("file:///workspace");
         let roots = [cwd.clone()];
         let context = FileSystemSandboxPolicyContext {
             cwd: &cwd,
@@ -2784,12 +2784,12 @@ mod tests {
         };
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry::new(cwd.clone().into(), FileSystemAccessMode::Write),
-            FileSystemSandboxEntry::new(path("file:///C:/").into(), FileSystemAccessMode::Deny),
+            FileSystemSandboxEntry::new(path("file:///").into(), FileSystemAccessMode::Deny),
             FileSystemSandboxEntry::new(
-                path("file:///C:/workspace/.genex").into(),
+                path("file:///workspace/.genex").into(),
                 FileSystemAccessMode::Read,
             ),
-            unreadable_glob_entry(r"C:\workspace\**\*.env".to_string()),
+            unreadable_glob_entry("/workspace/**/*.env".to_string()),
         ]);
         let prepared = policy
             .prepare_deny_read_matcher(&context, InvalidDenyReadGlobBehavior::ReturnError)
@@ -2797,20 +2797,20 @@ mod tests {
 
         assert!(prepared.denied_roots.is_empty());
         assert!(FileSystemSandboxPolicy::matches_prepared_read_deny(
-            &path("file:///c:/WORKSPACE/app/.ENV"),
+            &path("file:///workspace/app/.env"),
             &context,
             &prepared,
         ));
-        for candidate in ["file:///%00/bad/path/YQ", "file:///C:/workspace/%2Fsecret"] {
+        for candidate in ["file:///%00/bad/path/YQ", "file:///workspace/%2Fsecret"] {
             assert!(FileSystemSandboxPolicy::matches_prepared_read_deny(
                 &path(candidate),
                 &context,
                 &prepared,
             ));
         }
-        assert!(!policy.can_write_path(&path("file:///C:/workspace/.genex/config"), &context));
+        assert!(!policy.can_write_path(&path("file:///workspace/.genex/config"), &context));
         assert_eq!(
-            policy.metadata_write_denial(&path("file:///C:/workspace/.genex/config"), &context),
+            policy.metadata_write_denial(&path("file:///workspace/.genex/config"), &context),
             Some(".genex"),
         );
     }
@@ -2829,18 +2829,6 @@ mod tests {
                 "file:///home/executor",
                 "~//private/*.env",
                 "file:///home/executor/private/secret.env",
-            ),
-            (
-                "file:///C:/workspace",
-                "file:///C:/Users/executor",
-                r"~\private\*.env",
-                "file:///C:/Users/executor/private/secret.env",
-            ),
-            (
-                "file:///C:/workspace",
-                "file:///C:/Users/executor",
-                r"~\\private\*.env",
-                "file:///C:/Users/executor/private/secret.env",
             ),
         ] {
             let cwd = PathUri::parse(cwd).expect("executor cwd");

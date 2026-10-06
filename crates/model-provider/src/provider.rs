@@ -435,10 +435,7 @@ impl ModelProvider for ConfiguredModelProvider {
 
 #[cfg(test)]
 mod tests {
-    use std::future::Future;
     use std::num::NonZeroU64;
-    use std::task::Context;
-    use std::task::Waker;
 
     use genex_http_client::HttpClientFactory;
     use genex_http_client::OutboundProxyPolicy;
@@ -447,11 +444,7 @@ mod tests {
     use genex_models_manager::manager::RefreshStrategy;
     use genex_protocol::config_types::ModelProviderAuthInfo;
     use genex_protocol::model_types::ModelInfo;
-    use genex_protocol::model_types::ModelServiceTier;
     use genex_protocol::model_types::ModelsResponse;
-    use genex_protocol::model_types::WebSearchToolType;
-    use genex_protocol::protocol::MultiAgentVersion;
-    use genex_utils_redacted_string::RedactedString;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use wiremock::Mock;
@@ -632,7 +625,7 @@ mod tests {
             ),
             (
                 provider_for("https://example.test/v1".to_string()),
-                RemoteCompactionSupport::Unsupported,
+                RemoteCompactionSupport::V2,
             ),
         ];
 

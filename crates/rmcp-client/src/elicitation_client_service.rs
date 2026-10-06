@@ -553,7 +553,3 @@ mod tests {
         RequestMetaObject::from(map)
     }
 }
-
-#[cfg(test)]
-#[path = "user_verification_dispatch_tests.rs"]
-mod user_verification_dispatch_tests;

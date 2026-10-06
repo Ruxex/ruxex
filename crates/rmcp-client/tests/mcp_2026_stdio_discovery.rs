@@ -95,7 +95,11 @@ async fn local_stdio_inherits_ca_certificate_variables_child() -> anyhow::Result
             "NPM_CONFIG_CAFILE",
             Some("explicit/custom-ca.pem".to_string()),
         ),
-        (Some(npm_override), "npm_config_cafile", None),
+        (
+            Some(npm_override),
+            "npm_config_cafile",
+            Some(expected.to_string_lossy().into_owned()),
+        ),
     ] {
         let client = RmcpClient::new_stdio_client(
             server.clone().into(),

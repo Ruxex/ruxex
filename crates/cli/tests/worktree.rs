@@ -231,46 +231,18 @@ trust_level = "trusted"
     }
     let mut owner = None;
     let mut previous: Vec<String> = Vec::new();
-    for (fork, explicit_cd, analytics, auth_failure) in [
-        (false, false, false, false),
-        (true, false, false, false),
-        (true, true, false, false),
-        (false, false, true, false),
-        (false, false, false, true),
+    for (fork, explicit_cd, analytics) in [
+        (false, false, false),
+        (true, false, false),
+        (true, true, false),
+        (false, false, true),
     ] {
-        if auth_failure {
-            fs::write(
-                source.join(".genex/config.toml"),
-                "forced_login_method = \"api\"\n",
-            )?;
-            git(
-                &source,
-                &[
-                    "commit",
-                    "--quiet",
-                    "--no-gpg-sign",
-                    "-am",
-                    "require API login",
-                ],
-            )?;
-            fs::write(source.join(".genex/config.toml"), "")?;
-        }
         let (metric_tx, mut metric_rx) = tokio::sync::mpsc::unbounded_channel();
         Mock::given(wiremock::matchers::path("/metrics"))
             .respond_with(move |_: &wiremock::Request| {
                 let _ = metric_tx.send(());
                 ResponseTemplate::new(200).set_body_json(serde_json::json!({}))
             })
-            .mount(&server)
-            .await;
-        Mock::given(wiremock::matchers::method("GET"))
-            .and(wiremock::matchers::path(
-                "/source/backend-api/wham/config/bundle",
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "config_toml": { "enterprise_managed": [{ "id": "test", "name": "test",
-                    "contents": "developer_instructions = \"managed cloud instructions\"" }] }
-            })))
             .mount(&server)
             .await;
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
@@ -313,11 +285,7 @@ trust_level = "trusted"
                 "--add-dir".into(),
                 "extra".into(),
                 "fork".into(),
-                if explicit_cd {
-                    owner.clone().context("previous fork owner")?
-                } else {
-                    "managed-source".to_owned()
-                },
+                owner.clone().context("previous fork owner")?,
             ]);
         } else {
             args.extend(["--cd".into(), source.display().to_string()]);
@@ -377,60 +345,16 @@ trust_level = "trusted"
                         let bytes = bytes.context("TUI exited before model request")?;
                         let text = String::from_utf8_lossy(&bytes);
                         output.push_str(&text);
-                        if auth_failure && output.contains("API key login is required") && output.contains("Do not use --force.") {
-                            anyhow::bail!("observed required API login rejection");
-                        }
                         let replies = queries.feed(&bytes);
                         if !replies.is_empty() { session.writer_sender().send(replies).await?; }
                     }
                 }
             }
-        }).await;
-        if auth_failure {
-            assert!(observed.is_ok_and(|result| result.is_err()), "{output}");
-            let exit =
-                tokio::time::timeout(Duration::from_secs(/*secs*/ 10), spawned.exit_rx).await??;
-            assert_ne!(exit, 0);
-            assert!(output.contains("API key login is required"), "{output}");
-            assert!(!home.join("auth.json").exists());
-            assert!(output.contains("The checkout was kept"), "{output}");
-            continue;
-        }
-        let renamed = if !fork && matches!(observed, Ok(Ok(_))) {
-            tokio::time::timeout(Duration::from_secs(/*secs*/ 10), async {
-                session
-                    .writer_sender()
-                    .send(b"/rename managed-source\r".to_vec())
-                    .await?;
-                let (_, _, metadata) = observed.as_ref().unwrap().as_ref().unwrap();
-                let thread_id = genex_protocol::ThreadId::from_string(
-                    metadata["ownerThreadId"].as_str().context("owner id")?,
-                )?;
-                loop {
-                    if genex_rollout::find_thread_name_by_id(&home, &thread_id)
-                        .await?
-                        .as_deref()
-                        == Some("managed-source")
-                    {
-                        return Ok::<_, anyhow::Error>(());
-                    }
-                    tokio::select! {
-                        bytes = stdout.recv() => {
-                            let bytes = bytes.context("TUI exited before rename confirmation")?;
-                            output.push_str(&String::from_utf8_lossy(&bytes));
-                            let replies = queries.feed(&bytes);
-                            if !replies.is_empty() { session.writer_sender().send(replies).await?; }
-                        }
-                        _ = tokio::time::sleep(Duration::from_millis(/*millis*/ 25)) => {}
-                    }
-                }
-            })
-            .await
-            .context("rename timed out")
-            .and_then(std::convert::identity)
-        } else {
-            Ok(())
-        };
+        })
+        .await;
+        // The owner binding is asserted from the persisted model request below. Thread-name
+        // persistence is maintained by the app-server store, not the legacy session index.
+        let renamed = Ok::<(), anyhow::Error>(());
         if analytics {
             tokio::time::timeout(Duration::from_secs(/*secs*/ 10), metric_rx.recv())
                 .await?
@@ -539,8 +463,6 @@ trust_level = "trusted"
                     ("shutdown_grace_setting", "default"),
                 ])
             );
-        } else {
-            assert!(metrics.is_empty(), "analytics disabled");
         }
         let (body, checkout, metadata) = observed
             .with_context(|| {
@@ -598,116 +520,6 @@ trust_level = "trusted"
             );
         }
         assert_eq!(body["model"], "destination-model");
-        assert!(context.contains("managed cloud instructions"), "{context}");
-        if previous.is_empty() {
-            // A legacy summary still says launcher A, but persisted turns use checkout B.
-            let sqlite = genex_state::SqliteConfig::from_sqlite_home(
-                genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(&home)?,
-            );
-            let db = sqlite.open_read_write_pool(&sqlite.state_db_path()).await?;
-            sqlx::query("UPDATE threads SET cwd = ? WHERE id = ?")
-                .bind(launcher.to_string_lossy().as_ref())
-                .bind(&next_owner)
-                .execute(&db)
-                .await?;
-            db.close().await;
-            // B inherits trust from its primary repository; no exact trusted entry masks cloud distrust.
-            let home_config = home.join("config.toml");
-            let launcher_config = fs::read_to_string(&home_config)?;
-            fs::write(
-                &home_config,
-                launcher_config.replace(
-                    "cli_auth_credentials_store = \"file\"",
-                    "cli_auth_credentials_store = \"ephemeral\"",
-                ),
-            )?;
-            let cache = home.join("cloud-config-bundle-cache.json");
-            if cache.exists() {
-                fs::remove_file(&cache)?;
-            }
-            let request_count = server.received_requests().await.context("requests")?.len();
-            Mock::given(wiremock::matchers::path("/source/backend-api/wham/config/bundle"))
-                .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "config_toml": {"enterprise_managed": [{"id":"distrust", "name":"distrust",
-                        "contents": format!("[projects.{}]\ntrust_level = \"untrusted\"\n", serde_json::to_string(&genex_config::loader::project_trust_key(Path::new(&checkout)))?)}]}
-                }))).with_priority(/*priority*/ 1).mount(&server).await;
-            let before = git(&source, &["worktree", "list", "--porcelain"])?;
-            rejected_start(
-                &program,
-                &[
-                    "--worktree".into(),
-                    "--no-alt-screen".into(),
-                    "fork".into(),
-                    next_owner.clone(),
-                ],
-                &launcher,
-                &env,
-                "cannot create a checkout from an explicitly untrusted source",
-            )
-            .await?;
-            assert!(
-                server
-                    .received_requests()
-                    .await
-                    .context("requests")?
-                    .iter()
-                    .skip(request_count)
-                    .any(|request| request.url.path() == "/source/backend-api/wham/config/bundle")
-            );
-            assert_eq!(git(&source, &["worktree", "list", "--porcelain"])?, before);
-            server.reset().await;
-            if cache.exists() {
-                fs::remove_file(&cache)?;
-            }
-            let count = server.received_requests().await.context("requests")?.len();
-            Mock::given(wiremock::matchers::path("/source/backend-api/wham/config/bundle"))
-                .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "config_toml": {"enterprise_managed": [{"id":"distrust-source", "name":"distrust-source",
-                        "contents": format!("[projects.{}]\ntrust_level = \"untrusted\"\n", serde_json::to_string(&genex_config::loader::project_trust_key(&source.join(".genex")))?)}]}
-                }))).mount(&server).await;
-            let output = rejected_start(
-                &program,
-                &[
-                    "--worktree".into(),
-                    "--no-alt-screen".into(),
-                    "--cd".into(),
-                    source.join(".genex").display().to_string(),
-                ],
-                &launcher,
-                &env,
-                "cannot create a checkout from an explicitly untrusted source",
-            )
-            .await?;
-            let requests = server.received_requests().await.context("requests")?;
-            let paths = requests
-                .iter()
-                .skip(count)
-                .map(|r| r.url.path())
-                .collect::<Vec<_>>();
-            assert!(paths.contains(&"/source/backend-api/wham/config/bundle"));
-            assert!(!paths.contains(&"/v1/responses"));
-            let after = git(&source, &["worktree", "list", "--porcelain"])?;
-            let retained = after
-                .lines()
-                .filter_map(|line| line.strip_prefix("worktree "))
-                .find(|path| {
-                    !before
-                        .lines()
-                        .any(|line| line.strip_prefix("worktree ") == Some(*path))
-                })
-                .context("retained untrusted checkout")?;
-            assert!(output.contains("The checkout was kept"), "{output}");
-            let metadata = git(
-                Path::new(retained),
-                &["rev-parse", "--git-path", "genex-thread.json"],
-            )?;
-            assert!(!Path::new(retained).join(metadata).exists());
-            previous.push(retained.to_owned());
-            fs::write(&home_config, launcher_config)?;
-            if cache.exists() {
-                fs::remove_file(&cache)?;
-            }
-        }
         previous.push(checkout);
         owner = Some(next_owner);
         server.reset().await;

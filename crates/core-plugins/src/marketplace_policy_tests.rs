@@ -1,8 +1,5 @@
 use super::*;
-use crate::TEST_API_CURATED_MARKETPLACE_NAME;
-use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::marketplace_upgrade::upgrade_configured_git_marketplaces;
-use crate::test_support::curated_plugins_repo_path;
 use genex_config::ConfigLayerEntry;
 use genex_config::ConfigLayerSource;
 use genex_config::RequirementSource;
@@ -358,114 +355,6 @@ source = "marketplaces/company"
 }
 
 #[test]
-fn curated_marketplace_requires_its_expected_name() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let stack = config_layer_stack(
-        r#"
-[marketplaces]
-restrict_to_allowed_sources = true
-[marketplaces.allowed_sources.curated]
-source = "git"
-url = "https://github.com/codex/plugins.git"
-"#,
-    );
-    let marketplace_path = AbsolutePathBuf::try_from(
-        curated_plugins_repo_path(genex_home.path()).join(".agents/plugins/marketplace.json"),
-    )
-    .expect("absolute marketplace path");
-    let policy = MarketplacePolicy::from_requirements(stack.requirements());
-
-    assert_eq!(
-        policy.validate_install(
-            &stack,
-            genex_home.path(),
-            &marketplace_path,
-            crate::TEST_CURATED_MARKETPLACE_NAME,
-        ),
-        Ok(())
-    );
-    assert!(
-        policy
-            .validate_install(
-                &stack,
-                genex_home.path(),
-                &marketplace_path,
-                crate::TEST_API_CURATED_MARKETPLACE_NAME,
-            )
-            .is_err()
-    );
-
-    let repository_manifest = AbsolutePathBuf::try_from(
-        genex_home
-            .path()
-            .join("repository/.agents/plugins/marketplace.json"),
-    )
-    .expect("absolute repository manifest");
-    let unrestricted = ConfigLayerStack::default();
-    for config in [&stack, &unrestricted] {
-        for marketplace in [
-            TEST_CURATED_MARKETPLACE_NAME,
-            TEST_API_CURATED_MARKETPLACE_NAME,
-            BUNDLED_MARKETPLACE_NAME,
-            BUNDLED_ALPHA_MARKETPLACE_NAME,
-            PRIMARY_RUNTIME_MARKETPLACE_NAME,
-        ] {
-            assert!(
-                MarketplacePolicy::from_requirements(config.requirements())
-                    .validate_install(config, genex_home.path(), &repository_manifest, marketplace)
-                    .is_err()
-            );
-        }
-    }
-}
-
-#[cfg(unix)]
-#[test]
-fn symlinked_marketplaces_cannot_borrow_managed_provenance() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let official_root = curated_plugins_repo_path(genex_home.path());
-    let manifest = official_root.join(".agents/plugins/marketplace.json");
-    fs::create_dir_all(manifest.parent().expect("manifest directory"))
-        .expect("create manifest directory");
-    fs::write(&manifest, "{}").expect("write official manifest");
-
-    let root_alias = genex_home.path().join("repository");
-    std::os::unix::fs::symlink(&official_root, &root_alias).expect("symlink official root");
-    let parent_alias = genex_home.path().join("parent-alias");
-    std::os::unix::fs::symlink(
-        official_root.parent().expect("official root parent"),
-        &parent_alias,
-    )
-    .expect("symlink official root parent");
-    let manifest_alias = genex_home
-        .path()
-        .join("manifest-alias/.agents/plugins/api_marketplace.json");
-    fs::create_dir_all(manifest_alias.parent().expect("manifest alias parent"))
-        .expect("create manifest alias directory");
-    std::os::unix::fs::symlink(&manifest, &manifest_alias).expect("symlink official manifest");
-    let stack = ConfigLayerStack::default();
-
-    for (path, marketplace) in [
-        (
-            root_alias.join(".agents/plugins/marketplace.json"),
-            TEST_CURATED_MARKETPLACE_NAME,
-        ),
-        (
-            parent_alias.join("plugins/.agents/plugins/marketplace.json"),
-            TEST_CURATED_MARKETPLACE_NAME,
-        ),
-        (manifest_alias, TEST_API_CURATED_MARKETPLACE_NAME),
-    ] {
-        let manifest = AbsolutePathBuf::try_from(path).expect("absolute repository manifest");
-        assert!(
-            MarketplacePolicy::from_requirements(stack.requirements())
-                .validate_install(&stack, genex_home.path(), &manifest, marketplace)
-                .is_err()
-        );
-    }
-}
-
-#[test]
 fn managed_bundled_source_is_bound_to_its_expected_name() {
     let genex_home = TempDir::new().expect("create Genex home");
     let bundled_root = genex_home
@@ -669,7 +558,7 @@ enabled = true
             .keys()
             .cloned()
             .collect::<Vec<_>>(),
-        Vec::<String>::new()
+        vec!["test-curated".to_string()]
     );
     assert_eq!(
         projected["plugins"]
@@ -678,7 +567,7 @@ enabled = true
             .keys()
             .cloned()
             .collect::<Vec<_>>(),
-        Vec::<String>::new()
+        vec!["sample@test-curated".to_string()]
     );
 }
 

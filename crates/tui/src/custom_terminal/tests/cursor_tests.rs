@@ -115,14 +115,11 @@ fn terminal_draw_omits_cursor_style_without_an_owned_glyph() {
             .expect("draw");
         assert_eq!(
             terminal.backend().output(),
-            "\x1b[39m\x1b[49m\x1b[0m\x1b[1;2H\x1b[?25h"
+            "\x1b[m\x1b[m\x1b[0m\x1b[1;2H\x1b[?25h"
         );
     }
     terminal.set_viewport_area(Rect::default());
     terminal.backend_mut().output.clear();
     terminal.draw(|_| {}).expect("hide cursor");
-    assert_eq!(
-        terminal.backend().output(),
-        "\x1b[39m\x1b[49m\x1b[0m\x1b[?25l"
-    );
+    assert_eq!(terminal.backend().output(), "\x1b[m\x1b[m\x1b[0m\x1b[?25l");
 }

@@ -53,6 +53,11 @@ pub trait ModelsEndpointClient: fmt::Debug + Send + Sync {
         false
     }
 
+    /// Returns whether this endpoint owns a provider catalog that should be refreshed remotely.
+    fn supports_remote_models(&self) -> bool {
+        false
+    }
+
     /// Fetches the latest remote model catalog and optional ETag.
     fn list_models<'a>(
         &'a self,
@@ -507,7 +512,8 @@ impl RemoteModelsManager {
     }
 
     async fn should_refresh_models(&self) -> bool {
-        self.endpoint_client.uses_managed_auth().await
+        self.endpoint_client.supports_remote_models()
+            || self.endpoint_client.uses_managed_auth().await
             || self.endpoint_client.has_command_auth()
             || self.supports_api_key_discovery()
     }

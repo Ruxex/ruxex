@@ -328,14 +328,19 @@ impl ThreadMetadataBuilder {
 }
 
 impl ThreadMetadata {
-    /// Preserve SQLite-owned Git fields when rollout-derived metadata is reconciled.
+    /// Prefer SQLite-owned Git fields while filling missing values from rollout metadata.
     pub fn prefer_existing_git_info(&mut self, existing: &Self) {
-        // `self` was rebuilt from the rollout's initial SessionMeta. `existing` is the current
-        // SQLite row, so a NULL is an explicit clear, not missing data. Copy the whole tuple or
-        // the stale rollout value would be written back during reconciliation.
-        self.git_sha = existing.git_sha.clone();
-        self.git_branch = existing.git_branch.clone();
-        self.git_origin_url = existing.git_origin_url.clone();
+        // `self` was rebuilt from rollout items. Existing non-null SQLite values are authoritative,
+        // while a missing SQLite field should be filled from the rollout.
+        if existing.git_sha.is_some() {
+            self.git_sha = existing.git_sha.clone();
+        }
+        if existing.git_branch.is_some() {
+            self.git_branch = existing.git_branch.clone();
+        }
+        if existing.git_origin_url.is_some() {
+            self.git_origin_url = existing.git_origin_url.clone();
+        }
     }
 
     /// Preserve an existing user-facing title when reconciling rollout-derived metadata.
@@ -701,7 +706,6 @@ mod tests {
     use super::ThreadRow;
     use chrono::DateTime;
     use chrono::Utc;
-    use genex_protocol::SanitizedGitUrl;
     use genex_protocol::ThreadId;
     use genex_protocol::model_types::ReasoningEffort;
     use genex_protocol::protocol::ThreadHistoryMode;
@@ -815,23 +819,5 @@ mod tests {
         row.history_mode = "future".to_string();
 
         assert!(ThreadMetadata::try_from(row).is_err());
-    }
-
-    #[test]
-    fn paginated_rollout_git_info_keeps_rollout_values_until_sqlite_mode_is_paginated() {
-        let mut reconciled = expected_thread_metadata(/*reasoning_effort*/ None);
-        reconciled.history_mode = ThreadHistoryMode::Paginated;
-        reconciled.git_sha = Some("rollout-sha".to_string());
-        reconciled.git_branch = Some("rollout-branch".to_string());
-        reconciled.git_origin_url = Some(
-            SanitizedGitUrl::try_from("https://example.com/rollout-origin")
-                .expect("valid git remote URL"),
-        );
-        let existing = expected_thread_metadata(/*reasoning_effort*/ None);
-        let expected = reconciled.clone();
-
-        reconciled.prefer_existing_git_info(&existing);
-
-        assert_eq!(reconciled, expected);
     }
 }

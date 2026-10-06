@@ -1002,7 +1002,7 @@ mod tests {
                 },
                 MentionBinding {
                     sigil: '$',
-                    mention: "google-calendar".to_string(),
+                    mention: "Google Calendar".to_string(),
                     path: "app://google_calendar".to_string(),
                 },
             ]

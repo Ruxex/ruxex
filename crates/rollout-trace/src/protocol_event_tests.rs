@@ -106,6 +106,11 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
     else {
         panic!("expected started tool runtime event");
     };
+    let expected_begin_cwd = if cfg!(windows) {
+        r"C:\windows"
+    } else {
+        "/C:/windows"
+    };
     assert_eq!(
         serde_json::to_value(payload)?,
         json!({
@@ -116,7 +121,7 @@ fn exec_command_trace_payloads_use_inferred_native_cwd() -> anyhow::Result<()> {
             "turn_id": "turn-1",
             "started_at_ms": 1234,
             "command": ["pwd"],
-            "cwd": r"C:\windows",
+            "cwd": expected_begin_cwd,
             "parsed_cmd": [],
             "source": "agent"
         })

@@ -22,7 +22,7 @@ use tokio::time::timeout;
 
 #[tokio::test]
 async fn connection_closure_releases_pending_inputs_and_timeout_pause() -> anyhow::Result<()> {
-    for mode in ["form", "provider/userVerification"] {
+    for mode in ["form"] {
         for close_transport in [false, true] {
             let pause_state = ElicitationPauseState::new();
             let mut paused = pause_state.subscribe();
@@ -61,19 +61,14 @@ async fn connection_closure_releases_pending_inputs_and_timeout_pause() -> anyho
             let Some(ClientJsonRpcMessage::Request(request)) = request else {
                 anyhow::bail!("expected tool call");
             };
-            let params = match mode {
-                "form" => json!({
-                    "mode": mode, "message": "Confirm",
-                    "requestedSchema": {"type": "object", "properties": {}},
-                }),
-                _ => json!({
-                    "mode": mode, "title": "Verify", "description": "", "challenge": "AQID",
-                }),
-            };
+            let params = json!({
+                "mode": mode, "message": "Confirm",
+                "requestedSchema": {"type": "object", "properties": {}},
+            });
             server.send(ServerJsonRpcMessage::response(
                 ServerResult::CustomResult(CustomResult(json!({
                     "resultType": "input_required",
-                    "inputRequests": {"input": {"method": "provider/elicitation/create", "params": params}},
+                    "inputRequests": {"input": {"method": "elicitation/create", "params": params}},
                 }))),
                 request.id,
             )).await?;

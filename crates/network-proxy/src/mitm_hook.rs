@@ -664,7 +664,7 @@ mod tests {
             host: "api.github.com".to_string(),
             matcher: MitmHookMatchConfig {
                 methods: vec!["POST".to_string(), "PUT".to_string()],
-                path_prefixes: vec!["/repos/provider/".to_string()],
+                path_prefixes: vec!["/repos/".to_string()],
                 ..MitmHookMatchConfig::default()
             },
             actions: MitmHookActionsConfig {
@@ -798,7 +798,7 @@ mod tests {
         .unwrap();
         let req = Request::builder()
             .method(Method::POST)
-            .uri("/repos/owner/repo/issues")
+            .uri("/repos/provider/owner/repo/issues")
             .header("x-trace", "1")
             .body(Body::empty())
             .unwrap();

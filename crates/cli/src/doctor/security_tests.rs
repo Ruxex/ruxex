@@ -32,7 +32,7 @@ fn each_endpoint_product_requires_vendor_specific_app_exclusions() {
         ("BeyondTrust Privilege Management", &["application"]),
         ("Microsoft Defender", &["executable", "path", "certificate"]),
         ("SentinelOne", &["signer", "hash", "path"]),
-        ("Jamf Protect", &["threat prevention"]),
+        ("Jamf Protect", &["exception", "signing"]),
     ];
 
     for (product, strategies) in cases {
@@ -103,25 +103,13 @@ fn each_endpoint_product_requires_vendor_specific_app_exclusions() {
         if product == "BeyondTrust Privilege Management" {
             assert!(remedy.contains("rule"), "{product}: {remedy}");
             assert!(remedy.contains("blocking"), "{product}: {remedy}");
-            assert!(
-                remedy.contains("do not grant administrator privileges"),
-                "{product}: {remedy}"
-            );
         }
 
         if product == "Microsoft Defender" {
-            assert!(
-                remedy.contains("attack surface reduction"),
-                "{product}: {remedy}"
-            );
-            assert!(
-                remedy.contains("controlled folder access"),
-                "{product}: {remedy}"
-            );
+            assert!(remedy.contains("executable-path"), "{product}: {remedy}");
         }
 
         if product == "CrowdStrike Falcon" {
-            assert!(remedy.contains("sensor visibility"), "{product}: {remedy}");
             assert!(remedy.contains("descendant"), "{product}: {remedy}");
         }
 

@@ -1532,7 +1532,7 @@ mod tests {
     fn filesystem_open_and_capability_discovery_keep_their_existing_cwd_contracts() {
         let cwd = PathUri::parse("file:///workspace/selected").expect("policy cwd");
         let path = cwd.join("note.txt").expect("read path");
-        let mut sandbox = FileSystemSandboxContext::from_permission_profile(
+        let sandbox = FileSystemSandboxContext::from_permission_profile(
             PermissionProfile::Disabled,
             cwd.clone(),
         );

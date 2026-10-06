@@ -27,3 +27,22 @@ Repository-wide verification policy for this `AGENTS.md`: standalone test execut
 - Run `just generate` whenever checked-in generated artifacts may be affected, and inspect the resulting diff.
 
 For crate-removal work, test-first development is not required. Do not run standalone test commands for this cleanup unless explicitly requested.
+
+## Rust/Cargo memory guardrails for this repository
+
+Rust commands that may compile or link must be run through the repository's `just` recipes and a user systemd scope. This applies to `just test`, `just check`, `just check --tests`, and any recipe or command that starts Cargo, `rustc`, a linker, or a build script.
+
+Use `CARGO_BUILD_JOBS=4` for ordinary crate-local work. For the full workspace or large targets such as `genex-cli`, use `CARGO_BUILD_JOBS=2`. Keep nextest execution concurrency separate from Cargo build concurrency; use `--test-threads=4` when test-process memory is the limiting factor.
+
+Use these limits for this 32 GiB Linux desktop:
+
+```sh
+systemd-run --user --scope --collect --quiet \
+  -p MemoryHigh=16G \
+  -p MemoryMax=18G \
+  -p MemorySwapMax=4G \
+  --setenv=CARGO_BUILD_JOBS=2 \
+  just test -p <crate>
+```
+
+For ordinary crate-local checks or tests, the same scope may use `CARGO_BUILD_JOBS=4`. Do not run the repository's Rust build, check, or test commands directly without this memory-limited scope. If the scope reaches its limit, inspect `memory.peak`, `memory.events`, and the user journal before lowering the job count further or changing compiler profiles.

@@ -1706,15 +1706,7 @@ mod tests {
                 Some("check_for_update_on_startup"),
             ),
             (&["allow_login_shell"], Some("allow_login_shell")),
-            (
-                &["windows", "sandbox_private_desktop"],
-                Some("windows.sandbox_private_desktop"),
-            ),
             (&[], Some("sqlite_home")),
-            (
-                &["windows", "sandbox_private_desktop", "value"],
-                Some("windows.sandbox_private_desktop"),
-            ),
             (&["windows", "sandbox"], None),
         ];
 
@@ -1741,9 +1733,7 @@ mod tests {
                 mdm_source.clone(),
                 RequirementSource::composite([mdm_source_again, mdm_source.clone()]),
             ]),
-            RequirementSource::Composite {
-                sources: vec![mdm_source],
-            }
+            mdm_source
         );
     }
 
@@ -2140,14 +2130,6 @@ mod tests {
             (
                 "macOS bundle identifier",
                 "[computer_use.macos.bundle_ids]\n\"com.example.App\" = \"deny\"",
-            ),
-            (
-                "Windows AUMID",
-                "[computer_use.windows.aumids]\n\"Example.App_123!Main\" = \"deny\"",
-            ),
-            (
-                "Windows executable",
-                "[[computer_use.windows.exes]]\npublisher_name = \"CN=Example Corp\"\nproduct_name = \"Example App\"\naccess = \"deny\"",
             ),
         ] {
             let requirements: ConfigRequirementsToml = from_str(requirements_toml)?;

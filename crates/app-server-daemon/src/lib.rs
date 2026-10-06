@@ -832,11 +832,7 @@ mod tests {
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
-    use super::BackendKind;
-    use super::BootstrapOutput;
-    use super::BootstrapStatus;
     use super::Daemon;
-    use super::LifecycleOutput;
     use super::LifecycleStatus;
     use super::RestartDecision;
     use super::RestartMode;

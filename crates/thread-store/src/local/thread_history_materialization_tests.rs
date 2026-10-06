@@ -1113,7 +1113,7 @@ async fn subagent_prefix_advances_projection_without_materializing_history() {
         .await
         .expect("rollout path");
     let (child_start_byte_offset, _) =
-        rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 5);
+        rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 6);
     let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
@@ -1128,7 +1128,7 @@ async fn subagent_prefix_advances_projection_without_materializing_history() {
     .expect("read projected turns");
     assert_eq!(
         turns,
-        vec![("child-turn".to_string(), 5, Some(child_start_byte_offset))]
+        vec![("child-turn".to_string(), 6, Some(child_start_byte_offset))]
     );
     let items = sqlx::query_as::<_, (String, i64)>(
         "SELECT item_id, rollout_ordinal FROM thread_items WHERE thread_id = ?",
@@ -1137,7 +1137,7 @@ async fn subagent_prefix_advances_projection_without_materializing_history() {
     .fetch_all(&pool)
     .await
     .expect("read projected items");
-    assert_eq!(items, vec![("child-user".to_string(), 7)]);
+    assert_eq!(items, vec![("child-user".to_string(), 5)]);
     assert_eq!(projection_state(&pool, thread_id).await.1, 7);
 }
 

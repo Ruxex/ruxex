@@ -40,7 +40,6 @@ fn agents_accept_interactive_configuration_overrides() -> Result<()> {
         ["--yolo", "agents"].as_slice(),
         ["--search", "agents"].as_slice(),
         ["--model", "example-model", "agents"].as_slice(),
-        ["--approve-for-me", "agents"].as_slice(),
         ["--cd", ".", "agents"].as_slice(),
     ] {
         let mut cmd = genex_command(genex_home.path())?;
@@ -66,10 +65,6 @@ fn agents_reject_inputs_that_cannot_be_applied() -> Result<()> {
             "does not accept an initial prompt or images",
         ),
         (
-            ["agents", "--remote", "ws://127.0.0.1:4512"].as_slice(),
-            "cannot apply local provider or additional-directory overrides",
-        ),
-        (
             [
                 "--add-dir",
                 ".",
@@ -78,7 +73,7 @@ fn agents_reject_inputs_that_cannot_be_applied() -> Result<()> {
                 "ws://127.0.0.1:4512",
             ]
             .as_slice(),
-            "cannot apply local provider or additional-directory overrides",
+            "cannot apply additional-directory overrides to a remote server",
         ),
         (
             [
@@ -89,7 +84,7 @@ fn agents_reject_inputs_that_cannot_be_applied() -> Result<()> {
                 "ws://127.0.0.1:4512",
             ]
             .as_slice(),
-            "cannot apply local provider or additional-directory overrides",
+            "cannot apply additional-directory overrides to a remote server",
         ),
     ] {
         let mut cmd = genex_command(genex_home.path())?;

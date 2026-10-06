@@ -62,6 +62,12 @@ fn check_mounts(
         let [id, parent, mount_device, root, destination] = fields.as_slice() else {
             return Err(invalid());
         };
+        // Namespace mounts expose pseudo roots such as `mnt:[...]` or `net:[...]`.
+        // They do not describe a filesystem path that can alias the app-server socket,
+        // so ignore them while retaining strict validation for path-bearing mounts.
+        if root.starts_with(b"mnt:[") || root.starts_with(b"net:[") {
+            continue;
+        }
         let root = mount_path(root)?;
         let destination = mount_path(destination)?;
         mounts.push((*id, *parent, *mount_device, root, destination));

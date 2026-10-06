@@ -743,8 +743,6 @@ mod tests {
     use genex_app_server_protocol::JSONRPCResponse;
     use genex_app_server_protocol::ServerNotification;
     use genex_app_server_protocol::SessionSource as ApiSessionSource;
-    use genex_app_server_protocol::ThreadSettingsUpdateParams;
-    use genex_app_server_protocol::ThreadSettingsUpdateResponse;
     use genex_app_server_protocol::ThreadStartParams;
     use genex_app_server_protocol::ThreadStartResponse;
     use genex_app_server_protocol::ToolRequestUserInputParams;
@@ -766,15 +764,6 @@ mod tests {
     use tokio_tungstenite::tungstenite::handshake::server::Request as WebSocketRequest;
     use tokio_tungstenite::tungstenite::handshake::server::Response as WebSocketResponse;
     use tokio_tungstenite::tungstenite::http::header::AUTHORIZATION;
-
-    async fn build_test_config() -> Config {
-        match ConfigBuilder::default().build().await {
-            Ok(config) => config,
-            Err(_) => Config::load_default_with_cli_overrides(Vec::new())
-                .await
-                .expect("default config should load"),
-        }
-    }
 
     async fn build_test_config_for_genex_home(genex_home: &Path) -> Config {
         match ConfigBuilder::default()
@@ -1307,7 +1296,7 @@ mod tests {
                     id: request.id,
                     result: serde_json::json!({
                         "account": null,
-                        "requiresproviderAuth": false,
+                        "requiresAuth": false,
                         "padding": padding,
                     }),
                 }),

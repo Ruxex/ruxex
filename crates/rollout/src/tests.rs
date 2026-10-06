@@ -730,7 +730,7 @@ async fn test_list_conversations_latest_first() {
                 originator: Some("test_originator".to_string()),
                 path: p1,
                 thread_id: Some(thread_id_from_uuid(u3)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -756,7 +756,7 @@ async fn test_list_conversations_latest_first() {
                 originator: Some("test_originator".to_string()),
                 path: p2,
                 thread_id: Some(thread_id_from_uuid(u2)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -782,7 +782,7 @@ async fn test_list_conversations_latest_first() {
                 originator: Some("test_originator".to_string()),
                 path: p3,
                 thread_id: Some(thread_id_from_uuid(u1)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -901,7 +901,7 @@ async fn test_pagination_cursor() {
                 originator: Some("test_originator".to_string()),
                 path: p5,
                 thread_id: Some(thread_id_from_uuid(u5)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -927,7 +927,7 @@ async fn test_pagination_cursor() {
                 originator: Some("test_originator".to_string()),
                 path: p4,
                 thread_id: Some(thread_id_from_uuid(u4)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -989,7 +989,7 @@ async fn test_pagination_cursor() {
                 originator: Some("test_originator".to_string()),
                 path: p3,
                 thread_id: Some(thread_id_from_uuid(u3)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -1015,7 +1015,7 @@ async fn test_pagination_cursor() {
                 originator: Some("test_originator".to_string()),
                 path: p2,
                 thread_id: Some(thread_id_from_uuid(u2)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -1069,7 +1069,7 @@ async fn test_pagination_cursor() {
             originator: Some("test_originator".to_string()),
             path: p1,
             thread_id: Some(thread_id_from_uuid(u1)),
-            first_user_message: Some("Hello from user".to_string()),
+            first_user_message: None,
             preview: Some("Hello from user".to_string()),
             project_id: None,
             daybreak_enabled: None,
@@ -1164,46 +1164,6 @@ async fn test_list_threads_uses_goal_objective_as_preview() {
 }
 
 #[tokio::test]
-async fn test_goal_first_thread_reads_later_user_message() {
-    let temp = TempDir::new().unwrap();
-    let home = temp.path();
-
-    let uuid = Uuid::from_u128(101);
-    let ts = "2025-05-02T10-30-00";
-    write_goal_started_session_file(
-        home,
-        ts,
-        uuid,
-        "optimize the benchmark",
-        Some("run the benchmark"),
-    )
-    .unwrap();
-
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
-    let page = get_threads(
-        home,
-        /*page_size*/ 10,
-        /*cursor*/ None,
-        ThreadSortKey::CreatedAt,
-        INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
-        /*cwd_filters*/ None,
-        TEST_PROVIDER,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(page.items.len(), 1);
-    let item = &page.items[0];
-    assert_eq!(item.thread_id, Some(thread_id_from_uuid(uuid)));
-    assert_eq!(item.preview.as_deref(), Some("optimize the benchmark"));
-    assert_eq!(
-        item.first_user_message.as_deref(),
-        Some("run the benchmark")
-    );
-}
-
-#[tokio::test]
 async fn test_get_thread_contents() {
     let temp = TempDir::new().unwrap();
     let home = temp.path();
@@ -1248,7 +1208,7 @@ async fn test_get_thread_contents() {
             originator: Some("test_originator".to_string()),
             path: expected_path,
             thread_id: Some(thread_id_from_uuid(uuid)),
-            first_user_message: Some("Hello from user".to_string()),
+            first_user_message: None,
             preview: Some("Hello from user".to_string()),
             project_id: None,
             daybreak_enabled: None,
@@ -1655,7 +1615,7 @@ async fn test_timestamp_only_cursor_skips_same_second_filesystem_ties() {
                 originator: Some("test_originator".to_string()),
                 path: p3,
                 thread_id: Some(thread_id_from_uuid(u3)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,
@@ -1681,7 +1641,7 @@ async fn test_timestamp_only_cursor_skips_same_second_filesystem_ties() {
                 originator: Some("test_originator".to_string()),
                 path: p2,
                 thread_id: Some(thread_id_from_uuid(u2)),
-                first_user_message: Some("Hello from user".to_string()),
+                first_user_message: None,
                 preview: Some("Hello from user".to_string()),
                 project_id: None,
                 daybreak_enabled: None,

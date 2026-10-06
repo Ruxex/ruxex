@@ -63,6 +63,14 @@ pub(super) async fn read_thread(
             })?;
 
     let mut thread = read_thread_from_rollout_path(store, path).await?;
+    if thread.thread_id != thread_id {
+        return Err(ThreadStoreError::Internal {
+            message: format!(
+                "failed to read thread metadata for {thread_id}: rollout session metadata id mismatch: found {}",
+                thread.thread_id
+            ),
+        });
+    }
     thread.daybreak_enabled = daybreak_enabled;
     if let Some((model, reasoning_effort)) = persisted_model_settings {
         thread.model = model;

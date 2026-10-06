@@ -1,6 +1,6 @@
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use app_test_support::create_fake_rollout;
+use app_test_support::create_fake_paginated_rollout;
 use app_test_support::rollout_path;
 use genex_config::LoaderOverrides;
 use genex_protocol::ThreadId;
@@ -41,7 +41,7 @@ async fn archived_session_requires_confirmation_before_resume_or_fork() -> Resul
             .build()
             .await?;
         let timestamp = "2025-01-05T12-00-00";
-        let id = create_fake_rollout(
+        let id = create_fake_paginated_rollout(
             genex_home.path(),
             timestamp,
             "2025-01-05T12:00:00Z",

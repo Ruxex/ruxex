@@ -143,7 +143,7 @@ async fn native_mrtr_returns_validated_proof_or_cancellation_in_content() -> any
                     other => panic!("unexpected request: {other:?}"),
                 }
             })
-            .expect(/*r*/ 2)
+            .expect(/*r*/ 3)
             .mount(&server)
             .await;
         let mut capabilities = capabilities();

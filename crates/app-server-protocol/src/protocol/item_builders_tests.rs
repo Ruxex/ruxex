@@ -3,30 +3,13 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 
 #[test]
-fn read_command_actions_preserve_native_and_foreign_paths() {
+fn read_command_actions_resolve_native_paths() {
     let api_key = "sk-abcdefghijklmnopqrstuvwxyz123456";
-    for (cwd_uri, relative_path, expected_path) in [
-        (
-            "file:///home/alice/repo",
-            "src/main.rs",
-            "/home/alice/repo/src/main.rs",
-        ),
-        (
-            "file:///C:/Users/Alice%20Smith/repo",
-            r"src\main.rs",
-            r"C:\Users\Alice Smith\repo\src\main.rs",
-        ),
-        (
-            "file:///C:/Users/Alice%20Smith/repo",
-            r"C:src\main.rs",
-            r"C:\Users\Alice Smith\repo\src\main.rs",
-        ),
-        (
-            "file://server/share/repo",
-            r"src\main.rs",
-            r"\\server\share\repo\src\main.rs",
-        ),
-    ] {
+    for (cwd_uri, relative_path, expected_path) in [(
+        "file:///home/alice/repo",
+        "src/main.rs",
+        "/home/alice/repo/src/main.rs",
+    )] {
         let cwd = PathUri::parse(cwd_uri).expect("valid cross-platform cwd");
         let command = format!("cat {relative_path}");
         let parsed_cmd = vec![

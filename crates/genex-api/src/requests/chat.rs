@@ -406,6 +406,8 @@ mod tests {
                 call_id: call_id.to_string(),
                 internal_chat_message_metadata_passthrough: None,
             });
+        }
+        for call_id in ["call-a", "call-b", "call-c"] {
             input.push(ResponseItem::FunctionCallOutput {
                 id: None,
                 call_id: Some(call_id.to_string()),

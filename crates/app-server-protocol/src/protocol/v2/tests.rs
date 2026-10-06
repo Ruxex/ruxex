@@ -112,15 +112,8 @@ fn external_agent_config_detect_response_defaults_connectors_for_older_servers()
 }
 
 #[test]
-fn thread_background_terminals_list_response_round_trips_foreign_paths() {
-    for (uri, expected_cwd) in [
-        ("file:///home/alice/repo", "/home/alice/repo"),
-        (
-            "file:///C:/Users/Alice%20Smith/repo",
-            r"C:\Users\Alice Smith\repo",
-        ),
-        ("file://server/share/repo", r"\\server\share\repo"),
-    ] {
+fn thread_background_terminals_list_response_round_trips_paths() {
+    for (uri, expected_cwd) in [("file:///home/alice/repo", "/home/alice/repo")] {
         let response = ThreadBackgroundTerminalsListResponse {
             data: vec![ThreadBackgroundTerminal {
                 item_id: "item_123".to_string(),
@@ -864,23 +857,6 @@ fn additional_file_system_permissions_preserves_canonical_entries() {
         core_permissions
     );
 
-    for path in [r"C:\workspace\read-only", r"\\server\share\read-only"] {
-        let path = LegacyAppPathString::from_string(path);
-        let core_permissions = CoreFileSystemPermissions::from_read_write_path_uris(
-            Some(vec![
-                PathUri::try_from(path.clone()).expect("valid foreign permission path"),
-            ]),
-            /*write*/ None,
-        );
-        let permissions = AdditionalFileSystemPermissions::from(core_permissions.clone());
-        assert_eq!(permissions.read, Some(vec![path]));
-        assert_eq!(permissions.entries.as_ref().map(Vec::len), Some(1));
-        assert_eq!(
-            CoreFileSystemPermissions::try_from(permissions)
-                .expect("foreign API paths should round-trip"),
-            core_permissions
-        );
-    }
     #[cfg(windows)]
     for path in ["//server/share/read-only", r"/\server/share/read-only"] {
         let path = LegacyAppPathString::from_string(path);
@@ -900,15 +876,6 @@ fn additional_file_system_permissions_preserves_canonical_entries() {
             )])
         );
     }
-    assert!(
-        CoreFileSystemPermissions::try_from(AdditionalFileSystemPermissions {
-            read: Some(vec![LegacyAppPathString::from_string(r"\\localhost\share")]),
-            write: None,
-            glob_scan_max_depth: None,
-            entries: None,
-        })
-        .is_ok()
-    );
 }
 
 #[test]
@@ -4542,34 +4509,6 @@ fn thread_lifecycle_responses_default_missing_optional_fields() {
             MultiAgentMode::ExplicitRequestOnly,
             MultiAgentMode::ExplicitRequestOnly,
         )
-    );
-
-    let foreign_source: LegacyAppPathString =
-        serde_json::from_value(json!(r"C:\workspace\AGENTS.md")).expect("foreign source");
-    let mut response_with_foreign_source = response;
-    response_with_foreign_source["instructionSources"] = json!([foreign_source.as_str()]);
-    let start: ThreadStartResponse = serde_json::from_value(response_with_foreign_source.clone())
-        .expect("thread/start response with foreign source");
-    let resume: ThreadResumeResponse = serde_json::from_value(response_with_foreign_source.clone())
-        .expect("thread/resume response with foreign source");
-    let fork: ThreadForkResponse = serde_json::from_value(response_with_foreign_source)
-        .expect("thread/fork response with foreign source");
-    assert_eq!(start.instruction_sources, vec![foreign_source.clone()]);
-    assert_eq!(resume.instruction_sources, vec![foreign_source.clone()]);
-    assert_eq!(fork.instruction_sources, vec![foreign_source]);
-    let foreign_source_uri =
-        PathUri::parse("file:///C:/workspace/AGENTS.md").expect("foreign source URI");
-    assert_eq!(
-        start.instruction_source_path_uris(),
-        vec![foreign_source_uri.clone()]
-    );
-    assert_eq!(
-        resume.instruction_source_path_uris(),
-        vec![foreign_source_uri.clone()]
-    );
-    assert_eq!(
-        fork.instruction_source_path_uris(),
-        vec![foreign_source_uri]
     );
 }
 

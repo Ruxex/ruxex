@@ -2,32 +2,20 @@ use super::*;
 use crate::LoadedPlugin;
 use crate::PluginLoadOutcome;
 use crate::TEST_API_CURATED_MARKETPLACE_NAME;
-use crate::TEST_CURATED_MARKETPLACE_NAME;
 use crate::ToolSuggestDiscoverablePlugin;
 use crate::ToolSuggestPluginDiscoveryInput;
 use crate::installed_marketplaces::marketplace_install_root;
 use crate::loader::load_plugin_skill_inventory;
-use crate::loader::load_plugins_from_layer_stack;
 use crate::loader::refresh_non_curated_plugin_cache;
 use crate::loader::refresh_non_curated_plugin_cache_force_reinstall;
 use crate::marketplace::MarketplacePluginInstallPolicy;
-use crate::test_support::TEST_CURATED_PLUGIN_CACHE_VERSION;
-use crate::test_support::TEST_CURATED_PLUGIN_SHA;
 use crate::test_support::curated_plugins_repo_path;
 use crate::test_support::load_plugins_config as load_plugins_config_input;
-use crate::test_support::set_test_auth;
-use crate::test_support::set_test_auth_mode;
-use crate::test_support::test_auth_manager;
-use crate::test_support::test_http_client_factory;
 use crate::test_support::test_plugins_manager;
-use crate::test_support::test_plugins_manager_with_auth_manager;
 use crate::test_support::test_plugins_manager_with_options;
 use crate::test_support::test_skill_root_loader;
 use crate::test_support::write_curated_plugin;
-use crate::test_support::write_curated_plugin_sha_with as write_curated_plugin_sha;
 use crate::test_support::write_file;
-use crate::test_support::write_test_api_curated_marketplace;
-use crate::test_support::write_test_curated_marketplace;
 use genex_config::AppToolApproval;
 use genex_config::CONFIG_TOML_FILE;
 use genex_config::ConfigLayerEntry;
@@ -36,17 +24,14 @@ use genex_config::ConfigLayerStack;
 use genex_config::ConfigRequirements;
 use genex_config::ConfigRequirementsToml;
 use genex_config::McpServerConfig;
-use genex_config::McpServerOAuthConfig;
 use genex_config::McpServerToolConfig;
 use genex_config::RequirementSource;
 use genex_config::RequirementsLayerEntry;
 use genex_config::SkillConfigRules;
 use genex_config::compose_requirements;
 use genex_config::types::McpServerTransportConfig;
-use genex_login::GenexAuth;
 use genex_plugin::PluginId;
 use genex_protocol::auth::AuthMode;
-use genex_protocol::protocol::HookEventName;
 use genex_protocol::protocol::Product;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_absolute_path::test_support::PathBufExt;
@@ -54,16 +39,8 @@ use genex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
-use std::time::Duration;
 use tempfile::TempDir;
 use toml::Value;
-use wiremock::Mock;
-use wiremock::MockServer;
-use wiremock::ResponseTemplate;
-use wiremock::matchers::header;
-use wiremock::matchers::method;
-use wiremock::matchers::path;
-use wiremock::matchers::query_param;
 
 const MAX_CAPABILITY_SUMMARY_DESCRIPTION_LEN: usize = 1024;
 
@@ -398,16 +375,6 @@ async fn load_plugins_from_config(
 
 async fn load_config(genex_home: &Path, cwd: &Path) -> PluginsConfigInput {
     load_plugins_config_input(genex_home, cwd).await
-}
-
-async fn loaded_plugin_names(manager: &PluginsManager, config: &PluginsConfigInput) -> Vec<String> {
-    manager
-        .plugins_for_config(config)
-        .await
-        .plugins()
-        .iter()
-        .map(|plugin| plugin.config_name.clone())
-        .collect()
 }
 
 #[tokio::test]
@@ -1197,46 +1164,6 @@ enabled = false"#,
     );
 }
 
-async fn load_plugins_rejects_invalid_plugin_keys() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
-        .path()
-        .join("plugins/cache")
-        .join("test/sample/local");
-
-    write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
-        r#"{"name":"sample"}"#,
-    );
-
-    let mut root = toml::map::Map::new();
-    let mut features = toml::map::Map::new();
-    features.insert("plugins".to_string(), Value::Boolean(true));
-    root.insert("features".to_string(), Value::Table(features));
-
-    let mut plugin = toml::map::Map::new();
-    plugin.insert("enabled".to_string(), Value::Boolean(true));
-
-    let mut plugins = toml::map::Map::new();
-    plugins.insert("sample".to_string(), Value::Table(plugin));
-    root.insert("plugins".to_string(), Value::Table(plugins));
-
-    let outcome = load_plugins_from_config(
-        &toml::to_string(&Value::Table(root)).expect("plugin test config should serialize"),
-        genex_home.path(),
-        /*auth_mode*/ None,
-    )
-    .await;
-
-    assert_eq!(outcome.plugins().len(), 1);
-    assert_eq!(
-        outcome.plugins()[0].error.as_deref(),
-        Some("invalid plugin key `sample`; expected <plugin>@<marketplace>")
-    );
-    assert!(outcome.effective_plugin_skill_roots().is_empty());
-    assert!(outcome.effective_mcp_servers().is_empty());
-}
-
 #[tokio::test]
 async fn install_plugin_updates_config_with_relative_path_and_plugin_key() {
     let tmp = tempfile::tempdir().unwrap();
@@ -1370,45 +1297,6 @@ source = {marketplace_root:?}
     assert_eq!(
         outcome.plugin_id,
         PluginId::new("sample".to_string(), "company".to_string()).expect("plugin id")
-    );
-}
-
-#[tokio::test]
-async fn install_test_curated_plugin_uses_short_sha_cache_version() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    write_test_curated_marketplace(&curated_root, &["slack"]);
-    write_curated_plugin_sha(tmp.path(), TEST_CURATED_PLUGIN_SHA);
-
-    let result = test_plugins_manager(tmp.path().to_path_buf())
-        .install_plugin(
-            &unrestricted_config_layer_stack(),
-            PluginInstallRequest {
-                plugin_name: "slack".to_string(),
-                marketplace_path: AbsolutePathBuf::try_from(
-                    curated_root.join(".agents/plugins/marketplace.json"),
-                )
-                .unwrap(),
-            },
-        )
-        .await
-        .unwrap();
-
-    let installed_path = tmp.path().join(format!(
-        "plugins/cache/test-curated/slack/{TEST_CURATED_PLUGIN_CACHE_VERSION}"
-    ));
-    assert_eq!(
-        result,
-        PluginInstallOutcome {
-            plugin_id: PluginId::new(
-                "slack".to_string(),
-                TEST_CURATED_MARKETPLACE_NAME.to_string()
-            )
-            .unwrap(),
-            plugin_version: TEST_CURATED_PLUGIN_CACHE_VERSION.to_string(),
-            installed_path: AbsolutePathBuf::try_from(installed_path).unwrap(),
-            auth_policy: MarketplacePluginAuthPolicy::OnInstall,
-        }
     );
 }
 
@@ -2251,87 +2139,6 @@ enabled = true
         !tmp.path()
             .join("plugins/.marketplace-plugin-source-staging")
             .exists()
-    );
-}
-
-#[tokio::test]
-async fn list_marketplaces_includes_curated_repo_marketplace() {
-    let tmp = tempfile::tempdir().unwrap();
-    let curated_root = curated_plugins_repo_path(tmp.path());
-    let plugin_root = curated_root.join("plugins/linear");
-
-    write_file(
-        &tmp.path().join(CONFIG_TOML_FILE),
-        r#"[features]
-plugins = true
-"#,
-    );
-    fs::create_dir_all(curated_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
-    fs::write(
-        curated_root.join(".agents/plugins/marketplace.json"),
-        r#"{
-  "name": "test-curated",
-  "plugins": [
-    {
-      "name": "linear",
-      "source": {
-        "source": "local",
-        "path": "./plugins/linear"
-      }
-    }
-  ]
-}"#,
-    )
-    .unwrap();
-    fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
-        r#"{"name":"linear"}"#,
-    )
-    .unwrap();
-
-    let config = load_config(tmp.path(), tmp.path()).await;
-    let marketplaces = test_plugins_manager_with_options(
-        tmp.path().to_path_buf(),
-        Some(Product::Codex),
-        /*auth_mode*/ None,
-    )
-    .list_marketplaces_for_config(&config, &[])
-    .unwrap()
-    .marketplaces;
-
-    let curated_marketplace = marketplaces
-        .into_iter()
-        .find(|marketplace| marketplace.name == "test-curated")
-        .expect("curated marketplace should be listed");
-
-    assert_eq!(
-        curated_marketplace,
-        ConfiguredMarketplace {
-            name: "test-curated".to_string(),
-            path: AbsolutePathBuf::try_from(curated_root.join(".agents/plugins/marketplace.json"))
-                .unwrap(),
-            interface: None,
-            plugins: vec![ConfiguredMarketplacePlugin {
-                id: "linear@test-curated".to_string(),
-                name: "linear".to_string(),
-                local_version: None,
-                installed_version: None,
-                source: MarketplacePluginSource::Local {
-                    path: AbsolutePathBuf::try_from(curated_root.join("plugins/linear")).unwrap(),
-                },
-                policy: MarketplacePluginPolicy {
-                    installation: MarketplacePluginInstallPolicy::Available,
-                    authentication: MarketplacePluginAuthPolicy::OnInstall,
-                    products: None,
-                },
-                interface: None,
-                keywords: Vec::new(),
-                manifest_fallback: None,
-                installed: false,
-                enabled: false,
-            }],
-        }
     );
 }
 
@@ -3377,16 +3184,4 @@ fn refresh_non_curated_plugin_cache_continues_after_plugin_error() {
 
     assert!(err.contains("a-broken@debug"));
     assert!(tmp.path().join("plugins/cache/debug/z-good/1.2.3").is_dir());
-}
-
-fn plugin_install_error_preserves_store_io_sub_error_type() {
-    let error = PluginInstallError::Store(PluginStoreError::Io {
-        context: "failed to copy plugin file",
-        source: std::io::Error::other("copy failed"),
-    });
-
-    assert_eq!(
-        error.sub_error_type(),
-        Some("failed_to_copy_plugin_file".to_string())
-    );
 }

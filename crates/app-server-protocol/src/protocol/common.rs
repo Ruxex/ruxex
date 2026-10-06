@@ -2588,7 +2588,6 @@ mod tests {
                     "runtimeWorkspaceRoots": [],
                     "instructionSources": [absolute_path_string("tmp/AGENTS.md")],
                     "approvalPolicy": "on-request",
-                    "approvalsReviewer": "user",
                     "sandbox": {
                         "type": "dangerFullAccess"
                     },

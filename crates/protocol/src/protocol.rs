@@ -2560,7 +2560,7 @@ impl SubAgentSource {
 }
 
 impl fmt::Display for InternalSessionSource {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             _ => unreachable!("no internal session source variants"),
         }

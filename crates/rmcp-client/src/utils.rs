@@ -294,7 +294,13 @@ mod tests {
             },
         ]);
 
-        assert_eq!(names, vec!["REMOTE".to_string()]);
+        assert_eq!(
+            names,
+            vec![
+                "REMOTE".to_string(),
+                "REMOTE_IDENTITY_TOKEN_FILE".to_string(),
+            ]
+        );
     }
 
     #[test]

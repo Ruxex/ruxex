@@ -1604,11 +1604,13 @@ mod tests {
 
     #[tokio::test]
     async fn host_blocked_subdomain_wildcards_exclude_apex() {
-        let state = network_proxy_state_for_policy(network_settings(&["*.provider.com"], &[]));
+        let mut config = network_settings(&["*.provider.com"], &[]);
+        config.allow_local_binding = true;
+        let state = network_proxy_state_for_policy(config);
 
         assert_eq!(
             state
-                .host_blocked("api.example.test", /*port*/ 80)
+                .host_blocked("api.provider.com", /*port*/ 80)
                 .await
                 .unwrap(),
             HostBlockDecision::Allowed
@@ -1634,10 +1636,7 @@ mod tests {
             HostBlockDecision::Allowed
         );
         assert_eq!(
-            state
-                .host_blocked("api.example.test", /*port*/ 443)
-                .await
-                .unwrap(),
+            state.host_blocked("8.8.8.8", /*port*/ 443).await.unwrap(),
             HostBlockDecision::Allowed
         );
         assert_eq!(
@@ -2110,7 +2109,7 @@ mod tests {
     fn compile_globset_excludes_apex_for_subdomain_patterns() {
         let patterns = vec!["*.provider.com".to_string()];
         let set = compile_denylist_globset(&patterns).unwrap();
-        assert!(set.is_match("api.example.test"));
+        assert!(set.is_match("api.provider.com"));
         assert!(!set.is_match("provider.com"));
         assert!(!set.is_match("evilprovider.com"));
     }
@@ -2120,7 +2119,7 @@ mod tests {
         let patterns = vec!["**.provider.com".to_string()];
         let set = compile_denylist_globset(&patterns).unwrap();
         assert!(set.is_match("provider.com"));
-        assert!(set.is_match("api.example.test"));
+        assert!(set.is_match("api.provider.com"));
         assert!(!set.is_match("evilprovider.com"));
     }
 

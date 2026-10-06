@@ -1436,8 +1436,8 @@ mod tests {
         assert_eq!(
             (proxy.http_addr, proxy.socks_addr),
             (
-                "0.0.0.0:3128".parse::<SocketAddr>()?,
-                "0.0.0.0:8081".parse::<SocketAddr>()?,
+                "127.0.0.1:3128".parse::<SocketAddr>()?,
+                "127.0.0.1:8081".parse::<SocketAddr>()?,
             )
         );
         let replacement = crate::state::build_config_state(config.clone(), Default::default())?;

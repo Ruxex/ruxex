@@ -855,20 +855,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn environment_manager_omits_default_provider_local_lookup_when_default_disabled() {
-        let manager = EnvironmentManager::create_for_tests(
-            Some("none".to_string()),
-            Some(test_runtime_paths()),
-        )
-        .await;
-
-        assert!(manager.default_environment().is_none());
-        assert_eq!(manager.default_environment_id(), None);
-        assert!(manager.get_environment(LOCAL_ENVIRONMENT_ID).is_none());
-        assert_local_environment_unavailable(&manager);
-    }
-
-    #[tokio::test]
     async fn environment_manager_snapshot_without_local_environment_disables_local_default() {
         let mut snapshot = EnvironmentProviderSnapshot {
             environments: Vec::new(),

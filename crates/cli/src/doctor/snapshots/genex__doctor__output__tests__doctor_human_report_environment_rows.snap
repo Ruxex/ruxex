@@ -1,5 +1,6 @@
 ---
-source: cli/src/doctor/output.rs
+source: crates/cli/src/doctor/output.rs
+assertion_line: 1403
 expression: "render_human_report(&report, detailed_no_color_unicode_options())"
 ---
 Genex Doctor v0.0.0
@@ -8,7 +9,6 @@ Notes
    ↑ desktop      build 123 available (ready to install)
    ⚠ terminal     narrow terminal
    ✗ auth         token expired - Update the configured provider credentials.
-   ⚠ git          this worktree is not on a Windows Dev Drive - create a trusted Windows Dev Drive: https://learn.microsoft.com/en-us/windows/dev-drive/
    ⚠ security     Microsoft Defender can interfere with Genex. Verify Genex exclusions.
 ─────────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ Environment
       endpoint products        Microsoft Defender
       exclusion targets        verified Genex app and required helpers
     ▸ Genex exclusions         not verified (expected Genex application and helper exclusions)
-    → Microsoft Defender: Add a certificate or executable-path exclusion for Genex and its helpers. If Attack Surface Reduction blocks Genex, add a rule exclusion. If Controlled Folder Access blocks Genex, allow the app.
+    → Microsoft Defender: Add a certificate or executable-path exclusion for Genex and its helpers.
   ✓ runtime      running local build on darwin-arm64
   ✓ install      consistent
       managed by               npm: no · bun: no · pnpm: no · Vite+: no · package root —
@@ -36,7 +36,6 @@ Environment
       selected git             /usr/bin/git
       version                  git version 2.54.0
       repo detected            true
-  ⚠ git          this worktree is not on a Windows Dev Drive — create a trusted Windows Dev Drive: https://learn.microsoft.com/en-us/windows/dev-drive/
   ⚠ terminal     narrow terminal
   ✓ title        default · project genex
       title source             default
@@ -46,7 +45,7 @@ Environment
 
 Configuration
   ✗ auth         token expired — Update the configured provider credentials.
-      PROVIDER_API_KEY           present
+      PROVIDER_API_KEY         present
 
 Desktop App
   ✓ desktop      the desktop application is installed
@@ -69,7 +68,7 @@ Background Server
   ✓ app-server   background server is not running
 
 ─────────────────────────────────────────────────────────────
-15 ok · 5 notes · 3 warn · 1 fail failed
+15 ok · 4 notes · 2 warn · 1 fail failed
 
 --summary compact output           --all expand truncated lists
 --json redacted report

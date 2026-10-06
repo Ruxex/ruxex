@@ -19,7 +19,6 @@ slow-timeout = { period = "1m", terminate-after = 2 }
 path = "junit.xml"
 
 [profile.local]
-inherits = "default"
 
 [test-groups.app_server_protocol_codegen]
 max-threads = 1
@@ -33,9 +32,6 @@ max-threads = 1
 max-threads = 4
 
 [test-groups.core_apply_patch_cli_integration]
-max-threads = 1
-
-[test-groups.windows_sandbox_legacy_sessions]
 max-threads = 1
 
 [test-groups.windows_process_heavy]
@@ -60,6 +56,13 @@ filter = 'package(genex-app-server-protocol) & (test(typescript_schema_fixtures_
 test-group = 'app_server_protocol_codegen'
 
 [[profile.default.overrides]]
+# Experimental exports include the full schema and take longer than the regular
+# code-generation tests on developer machines.
+filter = 'package(genex-app-server-protocol) & test(experimental_precomputed_exports_match_generated)'
+slow-timeout = { period = "2m", terminate-after = 2 }
+test-group = 'app_server_protocol_codegen'
+
+[[profile.default.overrides]]
 # These integration tests spawn a fresh app-server subprocess per case.
 # Keep the library unit tests parallel.
 filter = 'package(genex-app-server) & kind(test)'
@@ -76,12 +79,6 @@ test-group = 'app_server_integration_local'
 # sensitive to Windows runner process-startup stalls when many cases launch at once.
 filter = 'package(genex-core) & kind(test) & test(apply_patch_cli)'
 test-group = 'core_apply_patch_cli_integration'
-
-[[profile.default.overrides]]
-# These tests create restricted-token Windows child processes and private desktops.
-# Serialize them to avoid exhausting Windows session/global desktop resources in CI.
-filter = 'package(genex-windows-sandbox) & test(legacy_)'
-test-group = 'windows_sandbox_legacy_sessions'
 
 [[profile.default.overrides]]
 # This Codex-home startup path still exceeded the broader Windows-heavy ceiling

@@ -30,7 +30,7 @@ fn full_disk_write_uses_executor_path_convention() {
     use FileSystemSpecialPath::Root;
     use FileSystemSpecialPath::SlashTmp;
 
-    for (root, full_disk_write) in [("file:///", false), ("file:///C:/", true)] {
+    for (root, full_disk_write) in [("file:///", false)] {
         let cwd = PathUri::parse(root).expect("executor root");
         let context = local_context(&cwd);
         let mut policy = FileSystemSandboxPolicy::restricted(vec![

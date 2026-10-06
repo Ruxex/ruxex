@@ -37,8 +37,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
         format!(
             "model = \"provider-model-d\"\nfeatures.daemon_auto_start = true\n\
          cli_auth_credentials_store = \"file\"\n\
-         suppress_unstable_features_warning = true\nanalytics.enabled = false\n\
-         windows.sandbox = \"unelevated\"\n\
+         suppress_unstable_features_warning = true\n\
          tui.disable_paste_burst = true\n\
          [projects.{}]\ntrust_level = \"trusted\"\n",
             serde_json::to_string(&workspace_path)?,

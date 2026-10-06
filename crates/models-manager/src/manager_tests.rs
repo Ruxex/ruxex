@@ -111,22 +111,6 @@ impl TestModelsCache {
             stored_entries: Mutex::new(Vec::new()),
         })
     }
-
-    fn failing(load_error: bool, store_error: bool) -> Arc<Self> {
-        Arc::new(Self {
-            entry: Mutex::new(None),
-            load_error,
-            store_error,
-            stored_entries: Mutex::new(Vec::new()),
-        })
-    }
-
-    fn stored_entries(&self) -> Vec<ModelsCacheEntry> {
-        self.stored_entries
-            .lock()
-            .expect("stored entries lock should not be poisoned")
-            .clone()
-    }
 }
 
 impl ModelsCache for TestModelsCache {
@@ -286,7 +270,9 @@ fn provider_manager_for_tests_with_auth(
     endpoint_client: Arc<dyn ModelsEndpointClient>,
     auth_manager: Option<Arc<AuthManager>>,
 ) -> RemoteModelsManager {
-    RemoteModelsManager::new(genex_home, endpoint_client, auth_manager)
+    let manager = RemoteModelsManager::new(genex_home, endpoint_client, auth_manager);
+    manager.set_api_key_model_discovery_enabled(true);
+    manager
 }
 
 async fn mutate_file_cache_for_test<F>(genex_home: &std::path::Path, f: F)
@@ -414,11 +400,9 @@ async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
 
 #[tokio::test]
 async fn get_model_info_tracks_fallback_usage() {
-    let genex_home = tempdir().expect("temp dir");
     let config = ModelsManagerConfig::default();
-    let manager = provider_manager_for_tests(
-        genex_home.path().to_path_buf(),
-        TestModelsEndpoint::new(Vec::new()),
+    let manager = static_manager_for_tests(
+        crate::test_support::test_models_response().expect("test model catalog should parse"),
     );
     let known_slug = manager
         .get_remote_models()
@@ -441,10 +425,8 @@ async fn get_model_info_tracks_fallback_usage() {
 
 #[tokio::test]
 async fn get_model_info_applies_long_context_override_to_bundled_model_5_6_models() {
-    let genex_home = tempdir().expect("temp dir");
-    let manager = provider_manager_for_tests(
-        genex_home.path().to_path_buf(),
-        TestModelsEndpoint::new(Vec::new()),
+    let manager = static_manager_for_tests(
+        crate::test_support::test_models_response().expect("test model catalog should parse"),
     );
     let config = ModelsManagerConfig {
         model_context_window: Some(1_000_000),
@@ -517,11 +499,9 @@ async fn get_model_info_matches_hyphenated_provider_namespace_suffix() {
 
 #[tokio::test]
 async fn get_model_info_rejects_multi_segment_namespace_suffix_matching() {
-    let genex_home = tempdir().expect("temp dir");
     let config = ModelsManagerConfig::default();
-    let manager = provider_manager_for_tests(
-        genex_home.path().to_path_buf(),
-        TestModelsEndpoint::new(Vec::new()),
+    let manager = static_manager_for_tests(
+        crate::test_support::test_models_response().expect("test model catalog should parse"),
     );
     let known_slug = manager
         .get_remote_models()
@@ -804,6 +784,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
             "test-api-key",
         ))),
     );
+    manager.set_api_key_model_discovery_enabled(true);
 
     manager
         .refresh_available_models(
@@ -870,82 +851,6 @@ async fn refresh_available_models_skips_network_without_auth() {
         0,
         "endpoint that cannot refresh should avoid model fetches"
     );
-}
-
-#[derive(Debug)]
-struct TestAuthAwareModelsEndpoint {
-    auth_manager: Option<Arc<AuthManager>>,
-    responses: Mutex<VecDeque<Vec<ModelInfo>>>,
-    fetch_count: AtomicUsize,
-}
-
-impl TestAuthAwareModelsEndpoint {
-    fn new(auth_manager: Option<Arc<AuthManager>>, responses: Vec<Vec<ModelInfo>>) -> Arc<Self> {
-        Arc::new(Self {
-            auth_manager,
-            responses: Mutex::new(responses.into()),
-            fetch_count: AtomicUsize::new(0),
-        })
-    }
-
-    fn fetch_count(&self) -> usize {
-        self.fetch_count.load(Ordering::SeqCst)
-    }
-
-    async fn uses_managed_auth(&self) -> bool {
-        match self.auth_manager.as_ref() {
-            Some(auth_manager) => auth_manager
-                .auth()
-                .await
-                .as_ref()
-                .is_some_and(GenexAuth::uses_managed_auth),
-            None => false,
-        }
-    }
-
-    async fn list_models(&self) -> CoreResult<ModelsEndpointResponse> {
-        self.fetch_count.fetch_add(1, Ordering::SeqCst);
-        let models = self
-            .responses
-            .lock()
-            .expect("responses lock should not be poisoned")
-            .pop_front()
-            .unwrap_or_default();
-        Ok(ModelsEndpointResponse {
-            models,
-            etag: None,
-            identity: self.identity().expect("test endpoint identity"),
-        })
-    }
-}
-
-impl ModelsEndpointClient for TestAuthAwareModelsEndpoint {
-    fn supports_api_key_models(&self) -> bool {
-        true
-    }
-
-    fn identity(&self) -> Option<String> {
-        self.auth_manager
-            .as_ref()
-            .and_then(|manager| manager.auth_mode())
-            .map(|mode| format!("{mode:?}"))
-    }
-
-    fn has_command_auth(&self) -> bool {
-        false
-    }
-
-    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
-        Box::pin(TestAuthAwareModelsEndpoint::uses_managed_auth(self))
-    }
-
-    fn list_models<'a>(
-        &'a self,
-        _client_version: &'a str,
-        _http_client_factory: HttpClientFactory,
-    ) -> ModelsEndpointFuture<'a, CoreResult<ModelsEndpointResponse>> {
-        Box::pin(TestAuthAwareModelsEndpoint::list_models(self))
-    }
 }
 
 #[test]

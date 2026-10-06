@@ -210,7 +210,7 @@ fn external_agent_config_migration_status_lines_use_semantic_colors() {
             Line::from(vec![
                 "• ".dim(),
                 "Import finished: ".into(),
-                "4 imported".green(),
+                "2 imported".green(),
                 ", ".into(),
                 "1 failed".red(),
                 ".".into(),

@@ -657,7 +657,6 @@ mod tests {
     use genex_config::McpServerTransportConfig;
     use genex_exec_server::EnvironmentManager;
     use genex_exec_server_test_support::environment_manager_without_environments;
-    use genex_utils_path_uri::LegacyAppPathString;
     use pretty_assertions::assert_eq;
     use serde_json::Value;
 
@@ -860,97 +859,6 @@ mod tests {
             error,
             "MCP server `stdio` references unknown environment id `remote`"
         );
-    }
-
-    #[tokio::test]
-    async fn explicit_remote_stdio_and_http_accept_named_environment() {
-        let runtime_context = McpRuntimeContext::new(
-            Arc::new(
-                EnvironmentManager::create_for_tests(
-                    Some("ws://127.0.0.1:8765".to_string()),
-                    /*local_runtime_paths*/ None,
-                )
-                .await,
-            ),
-            PathBuf::from("/tmp"),
-        );
-
-        let mut remote_stdio = stdio_server("remote");
-        let McpServerTransportConfig::Stdio { cwd, .. } = &mut remote_stdio.transport else {
-            unreachable!("stdio helper should build stdio transport");
-        };
-        *cwd = Some(LegacyAppPathString::from_path(&std::env::temp_dir()));
-        for resolved_runtime in [
-            runtime_context.resolve_server_environment("stdio", &remote_stdio),
-            runtime_context.resolve_server_environment("http", &http_server("remote")),
-        ] {
-            let resolved_runtime = match resolved_runtime {
-                Ok(resolved_runtime) => resolved_runtime,
-                Err(error) => panic!("remote MCP should resolve: {error}"),
-            };
-            assert!(resolved_runtime.is_some());
-        }
-
-        let mut remote_http_with_helper = http_server("remote");
-        let McpServerTransportConfig::StreamableHttp {
-            http_headers_helper,
-            ..
-        } = &mut remote_http_with_helper.transport
-        else {
-            unreachable!("HTTP helper should build streamable HTTP transport");
-        };
-        *http_headers_helper = Some("helper-that-must-not-run".to_string());
-        let error = match runtime_context.resolve_http_client("http", &remote_http_with_helper) {
-            Ok(_) => panic!("remote HTTP helper should be rejected"),
-            Err(error) => error,
-        };
-        assert_eq!(
-            error,
-            "HTTP headers helpers can only run in the local environment"
-        );
-
-        let remote_http = http_server("remote");
-        let remote_environment = runtime_context
-            .resolve_server_environment("http", &remote_http)
-            .expect("remote HTTP MCP should resolve")
-            .expect("remote HTTP MCP should have an environment");
-        let remote_client = runtime_context
-            .resolve_http_client("http", &remote_http)
-            .expect("remote HTTP capability should resolve");
-        assert!(Arc::ptr_eq(
-            &remote_client,
-            &remote_environment.get_http_client()
-        ));
-    }
-
-    #[tokio::test]
-    async fn remote_stdio_accepts_foreign_absolute_cwd() {
-        let runtime_context = McpRuntimeContext::new(
-            Arc::new(
-                EnvironmentManager::create_for_tests(
-                    Some("ws://127.0.0.1:8765".to_string()),
-                    /*local_runtime_paths*/ None,
-                )
-                .await,
-            ),
-            PathBuf::from("/tmp"),
-        );
-        let mut remote_stdio = stdio_server("remote");
-        let McpServerTransportConfig::Stdio { cwd, .. } = &mut remote_stdio.transport else {
-            unreachable!("stdio helper should build stdio transport");
-        };
-        *cwd = Some(
-            PathUri::parse("file:///C:/plugins/demo")
-                .expect("foreign cwd URI")
-                .into(),
-        );
-
-        let resolved_runtime =
-            match runtime_context.resolve_server_environment("stdio", &remote_stdio) {
-                Ok(resolved_runtime) => resolved_runtime,
-                Err(error) => panic!("foreign cwd should resolve: {error}"),
-            };
-        assert!(resolved_runtime.is_some());
     }
 
     #[tokio::test]

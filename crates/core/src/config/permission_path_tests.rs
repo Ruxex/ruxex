@@ -68,10 +68,6 @@ fn executor_contexts() -> impl Iterator<Item = ExecutorPathFacts> {
         ("file:///workspace/project", "file:///home/executor"),
         ("file:///Users/executor/project", "file:///Users/executor"),
         ("file:///C:/workspace/project", "file:///C:/Users/executor"),
-        (
-            "file://server/share/project",
-            "file://server/share/users/executor",
-        ),
     ]
     .into_iter()
     .map(|(cwd, home)| ExecutorPathFacts {

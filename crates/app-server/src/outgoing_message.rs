@@ -36,9 +36,6 @@ pub(crate) use genex_app_server_transport::OutgoingMessage;
 pub(crate) use genex_app_server_transport::OutgoingResponse;
 pub(crate) use genex_app_server_transport::QueuedOutgoingMessage;
 
-#[cfg(test)]
-use genex_protocol::account::PlanType;
-
 pub(crate) type ClientRequestResult = std::result::Result<Result, JSONRPCErrorError>;
 
 static IN_FLIGHT_REQUESTS: Gauge = Gauge::new("app.requests.in_flight");

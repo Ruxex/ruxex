@@ -2045,6 +2045,12 @@ mod tests {
 
     #[cfg(unix)]
     fn process_exists(pid: u32) -> bool {
+        #[cfg(target_os = "linux")]
+        if let Ok(stat) = std::fs::read_to_string(format!("/proc/{pid}/stat"))
+            && stat.split_whitespace().nth(2) == Some("Z")
+        {
+            return false;
+        }
         Command::new("kill")
             .arg("-0")
             .arg(pid.to_string())

@@ -23,6 +23,7 @@ async fn mismatched_and_legacy_cache_entries_fetch_the_current_catalog() {
                 "test-api-key",
             ))),
         );
+        manager.set_api_key_model_discovery_enabled(true);
         assert_eq!(
             manager
                 .raw_model_catalog(

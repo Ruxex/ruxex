@@ -347,14 +347,13 @@ impl CommandExecManager {
         };
 
         for control in controls {
-            if let CommandExecSession::Active { control_tx } = control {
-                let _ = control_tx
-                    .send(CommandControlRequest {
-                        control: CommandControl::Terminate,
-                        response_tx: None,
-                    })
-                    .await;
-            }
+            let CommandExecSession::Active { control_tx } = control;
+            let _ = control_tx
+                .send(CommandControlRequest {
+                    control: CommandControl::Terminate,
+                    response_tx: None,
+                })
+                .await;
         }
     }
 

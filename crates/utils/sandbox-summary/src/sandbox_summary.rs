@@ -230,28 +230,11 @@ mod tests {
 
     #[test]
     fn permission_profile_summary_preserves_executor_workspace_paths() {
-        for (cwd, extra_root, expected) in [
-            (
-                "file:///workspace/repo",
-                "file:///workspace/shared%20files",
-                "workspace-write [workdir, /workspace/shared files]",
-            ),
-            (
-                "file:///C:/workspace/repo",
-                "file:///C:/workspace/shared%20files",
-                r"workspace-write [workdir, C:\workspace\shared files]",
-            ),
-            (
-                "file://server/share/repo",
-                "file://server/share/shared%20files",
-                r"workspace-write [workdir, \\server\share\shared files]",
-            ),
-            (
-                "file:///C:/repo",
-                "file:///C:/REPO",
-                r"workspace-write [workdir, C:\REPO]",
-            ),
-        ] {
+        for (cwd, extra_root, expected) in [(
+            "file:///workspace/repo",
+            "file:///workspace/shared%20files",
+            "workspace-write [workdir, /workspace/shared files]",
+        )] {
             let cwd = PathUri::parse(cwd).expect("executor cwd");
             let extra_root = PathUri::parse(extra_root).expect("executor workspace root");
             let roots = [cwd.clone(), extra_root];

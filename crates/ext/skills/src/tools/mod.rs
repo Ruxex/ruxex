@@ -244,9 +244,8 @@ impl SkillToolAuthority {
             SkillSourceKind::Executor => Some(Self::Executor {
                 id: authority.id.clone(),
             }),
-            SkillSourceKind::Host | SkillSourceKind::Orchestrator | SkillSourceKind::Custom(_) => {
-                None
-            }
+            SkillSourceKind::Orchestrator => Some(Self::Orchestrator),
+            SkillSourceKind::Host | SkillSourceKind::Custom(_) => None,
         }
     }
 }

@@ -12,8 +12,8 @@ async fn foreground_update_respects_consent_and_reports_unconfirmed() -> anyhow:
     for (analytics_config, metrics_default_enabled, expected_requests) in [
         ("", false, 0),
         ("", true, 1),
-        ("analytics.enabled = true\n", false, 1),
-        ("analytics.enabled = false\n", true, 0),
+        ("metrics.enabled = true\n", false, 1),
+        ("metrics.enabled = false\n", true, 0),
     ] {
         let genex = genex_utils_cargo_bin::cargo_bin("genex")?;
         let server = MockServer::start().await;

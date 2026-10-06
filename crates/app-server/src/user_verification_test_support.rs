@@ -21,7 +21,10 @@ use genex_config::LoaderOverrides;
 use genex_config::types::AuthCredentialsStoreMode;
 use genex_core::config::ConfigBuilder;
 use genex_exec_server::EnvironmentManager;
+use genex_login::AuthHeaders;
+use genex_login::GenexAuth;
 use genex_protocol::protocol::SessionSource;
+use http::HeaderMap;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::sync::Mutex;
@@ -114,15 +117,16 @@ pub(super) struct Harness {
 impl Harness {
     pub(super) async fn new(origin: ConnectionOrigin, supported: fn() -> bool) -> Result<Self> {
         let home = tempfile::tempdir()?;
-        write_auth(home.path(), "first")?;
         let config = Arc::new(
             ConfigBuilder::default()
                 .genex_home(home.path().into())
                 .build()
                 .await?,
         );
-        let auth =
-            AuthManager::shared_from_config(config.as_ref(), /*enable_api_key_env*/ false).await?;
+        let auth = AuthManager::from_auth_for_testing_with_home(
+            GenexAuth::Headers(AuthHeaders::new(HeaderMap::new()).with_account_id("account-1")),
+            home.path().into(),
+        );
         let provider = Arc::new(BlockingProvider::default());
         let factory_provider = Arc::clone(&provider);
         let service = Arc::new(Service {

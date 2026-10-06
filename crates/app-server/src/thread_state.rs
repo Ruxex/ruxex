@@ -11,8 +11,6 @@ use genex_core::GenexThread;
 use genex_core::ThreadConfigSnapshot;
 use genex_file_watcher::WatchRegistration;
 use genex_protocol::ThreadId;
-#[cfg(test)]
-use genex_protocol::config_types::MultiAgentMode;
 use genex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
 use genex_protocol::items::TurnItem as CoreTurnItem;
 use genex_protocol::models::MessagePhase;

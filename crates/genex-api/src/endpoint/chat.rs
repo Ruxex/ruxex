@@ -102,7 +102,6 @@ impl<T: HttpTransport> ChatClient<T> {
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum AggregateMode {
     AggregatedOnly,
-    Streaming,
 }
 
 /// Stream adapter that merges token deltas into a single assistant message per turn.
@@ -148,15 +147,6 @@ impl Stream for AggregatedStream {
                                     this.cumulative.push_str(text);
                                 }
                                 continue;
-                            }
-                            AggregateMode::Streaming => {
-                                if this.cumulative.is_empty() {
-                                    return Poll::Ready(Some(Ok(ResponseEvent::OutputItemDone(
-                                        item,
-                                    ))));
-                                } else {
-                                    continue;
-                                }
                             }
                         }
                     }
@@ -234,25 +224,14 @@ impl Stream for AggregatedStream {
                 }
                 Poll::Ready(Some(Ok(ResponseEvent::OutputTextDelta(delta)))) => {
                     this.cumulative.push_str(&delta);
-                    if matches!(this.mode, AggregateMode::Streaming) {
-                        return Poll::Ready(Some(Ok(ResponseEvent::OutputTextDelta(delta))));
-                    } else {
-                        continue;
-                    }
+                    continue;
                 }
                 Poll::Ready(Some(Ok(ResponseEvent::ReasoningContentDelta {
                     delta,
-                    content_index,
+                    content_index: _,
                 }))) => {
                     this.cumulative_reasoning.push_str(&delta);
-                    if matches!(this.mode, AggregateMode::Streaming) {
-                        return Poll::Ready(Some(Ok(ResponseEvent::ReasoningContentDelta {
-                            delta,
-                            content_index,
-                        })));
-                    } else {
-                        continue;
-                    }
+                    continue;
                 }
                 Poll::Ready(Some(Ok(ResponseEvent::ReasoningSummaryDelta { .. }))) => continue,
                 Poll::Ready(Some(Ok(ResponseEvent::ReasoningSummaryPartAdded { .. }))) => {

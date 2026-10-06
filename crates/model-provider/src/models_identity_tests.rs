@@ -1,9 +1,6 @@
 //! Provider and authentication dimensions that partition model catalogs.
 
 use super::*;
-use base64::Engine;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use pretty_assertions::assert_eq;
 
 #[test]
 fn cache_identity_tracks_provider_routing_and_effective_api_credentials() {

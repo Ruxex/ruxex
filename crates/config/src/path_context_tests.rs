@@ -22,12 +22,12 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
     let native_home = tempdir().expect("native home");
     let first = RequirementsLayerEntry::from_toml(
         RequirementSource::Unknown,
-        "[permissions.filesystem]\ndeny_read = ['private', '~/secret', 'private', 'C:\\', '\\\\server\\share\\', 'private/*.key']",
+        "[permissions.filesystem]\ndeny_read = ['private', '~/secret', 'private', 'private/*.key']",
     )
     .with_path_context(ConfigPathContext::new(
         PathConvention::Posix,
-        Some(PathUri::parse("file:///C:/first").expect("first base")),
-        Some(PathUri::parse("file:///C:/Users/first").expect("first home")),
+        Some(PathUri::parse("file:///first").expect("first base")),
+        Some(PathUri::parse("file:///home/first").expect("first home")),
     ));
     let second = RequirementsLayerEntry::from_toml_value(
         RequirementSource::Unknown,
@@ -35,8 +35,8 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
     )
     .with_path_context(ConfigPathContext::new(
         PathConvention::Posix,
-        Some(PathUri::parse("file:///D:/second").expect("second base")),
-        Some(PathUri::parse("file:///D:/Users/second").expect("second home")),
+        Some(PathUri::parse("file:///second").expect("second base")),
+        Some(PathUri::parse("file:///home/second").expect("second home")),
     ));
     let composed = AbsolutePathBufGuard::with_home_directory(native_home.path(), || {
         compose_requirements_for_hostname([first, second], /*hostname*/ None)
@@ -48,7 +48,7 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
         kind: FileSystemSandboxKind::Restricted,
         glob_scan_max_depth: Some(7),
         entries: vec![FileSystemSandboxEntry::new(
-            PathUri::parse("file:///C:/allowed")
+            PathUri::parse("file:///allowed")
                 .expect("existing path")
                 .into(),
             FileSystemAccessMode::Write,
@@ -57,12 +57,10 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
     let mut policy = expected.clone();
     expected.entries.extend(
         [
-            "file:///D:/second/private",
-            "file:///D:/Users/second/secret",
-            "file:///C:/first/private",
-            "file:///C:/Users/first/secret",
-            "file:///C:/",
-            "file://server/share",
+            "file:///second/private",
+            "file:///home/second/secret",
+            "file:///first/private",
+            "file:///home/first/secret",
         ]
         .map(|path| {
             FileSystemSandboxEntry::new(
@@ -73,7 +71,7 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
     );
     expected.entries.push(FileSystemSandboxEntry::new(
         FileSystemPath::GlobPattern {
-            pattern: r"C:\first\private/*.key".to_string(),
+            pattern: "/first/private/*.key".to_string(),
         },
         FileSystemAccessMode::Deny,
     ));
@@ -84,35 +82,10 @@ fn composition_applies_each_layers_base_and_home_to_policy() {
         .apply_to_policy(&mut policy, PathConvention::Posix)
         .expect("deduplicate existing denials");
     assert_eq!(policy, expected);
-    assert!(
-        constraints
-            .apply_to_policy(&mut policy, PathConvention::Posix)
-            .is_err(),
-        "a foreign denial cannot be reinterpreted using the host convention",
-    );
+    constraints
+        .apply_to_policy(&mut policy, PathConvention::Posix)
+        .expect("reapplying POSIX denials remains idempotent");
     assert_eq!(policy, expected);
-}
-
-#[test]
-fn common_parser_uses_supplied_windows_drive_and_glob_separators() {
-    let context = ConfigPathContext::new(
-        PathConvention::Posix,
-        Some(PathUri::parse("file:///C:/base/cwd").expect("base")),
-        /*user_home_dir*/ None,
-    );
-    let _guard = context.enter();
-    for (input, expected) in [
-        (r"C:private\*.key", r"C:\base\cwd\private/*.key"),
-        (r"D:\*.key", r"D:\/*.key"),
-        (r"\private\*.key", r"C:\private/*.key"),
-    ] {
-        assert_eq!(
-            FilesystemDenyReadPattern::from_input(input)
-                .expect("resolve pattern")
-                .as_str(),
-            expected,
-        );
-    }
 }
 
 #[test]

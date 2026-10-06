@@ -43,6 +43,11 @@ pub fn implicit_skill_accesses_for_command(
 ) -> Vec<ImplicitSkillAccess> {
     let tokens = tokenize_command(command);
     let mut accesses = Vec::new();
+    if let Some(path) = powershell_doc_path(&tokens)
+        && let Some(path) = powershell_path_to_uri(path, workdir)
+    {
+        accesses.push(ImplicitSkillAccess::Document(path));
+    }
     if let Some(script) = script_run_token(&tokens)
         && let Ok(path) = workdir.join(script)
     {
@@ -62,8 +67,46 @@ pub fn implicit_skill_accesses_for_command(
 }
 
 fn tokenize_command(command: &str) -> Vec<String> {
+    if command
+        .split_whitespace()
+        .next()
+        .map(command_basename)
+        .is_some_and(|command| {
+            matches!(
+                command.to_ascii_lowercase().as_str(),
+                "get-content" | "gc" | "type"
+            )
+        })
+    {
+        return tokenize_powershell(command);
+    }
+
     shlex::split(command)
         .unwrap_or_else(|| command.split_whitespace().map(str::to_string).collect())
+}
+
+fn tokenize_powershell(command: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut token = String::new();
+    let mut quote = None;
+
+    for character in command.chars() {
+        match quote {
+            Some(delimiter) if character == delimiter => quote = None,
+            Some(_) => token.push(character),
+            None if character == '\'' || character == '"' => quote = Some(character),
+            None if character.is_whitespace() => {
+                if !token.is_empty() {
+                    tokens.push(std::mem::take(&mut token));
+                }
+            }
+            None => token.push(character),
+        }
+    }
+    if !token.is_empty() {
+        tokens.push(token);
+    }
+    tokens
 }
 
 fn script_run_token(tokens: &[String]) -> Option<&str> {
@@ -121,6 +164,13 @@ fn detect_skill_doc_read(
     tokens: &[String],
     workdir: &AbsolutePathBuf,
 ) -> Option<SkillMetadata> {
+    if let Some(path) = powershell_doc_path(tokens) {
+        let candidate_path = canonicalize_if_exists(&workdir.join(Path::new(path)));
+        if let Some(candidate) = outcome.implicit_skill_for_doc_path(&candidate_path) {
+            return Some(candidate.clone());
+        }
+    }
+
     for command in parse_command_impl(tokens) {
         if let ParsedCommand::Read { path, .. } = command {
             let candidate_path = canonicalize_if_exists(&workdir.join(path.as_path()));
@@ -131,6 +181,40 @@ fn detect_skill_doc_read(
     }
 
     None
+}
+
+fn powershell_doc_path(tokens: &[String]) -> Option<&str> {
+    let command = command_basename(tokens.first()?).to_ascii_lowercase();
+    if !matches!(command.as_str(), "get-content" | "gc" | "type") {
+        return None;
+    }
+
+    let mut expects_path = false;
+    for token in tokens.iter().skip(1) {
+        if expects_path {
+            return Some(token);
+        }
+        if matches!(
+            token.to_ascii_lowercase().as_str(),
+            "-path" | "-literalpath"
+        ) {
+            expects_path = true;
+        } else if !token.starts_with('-') {
+            return Some(token);
+        }
+    }
+    None
+}
+
+fn powershell_path_to_uri(path: &str, workdir: &PathUri) -> Option<PathUri> {
+    let path = path.replace('\\', "/");
+    if path.starts_with("//") {
+        PathUri::parse(&format!("file:{path}")).ok()
+    } else if path.as_bytes().get(1) == Some(&b':') && path.as_bytes().get(2) == Some(&b'/') {
+        PathUri::parse(&format!("file:///{path}")).ok()
+    } else {
+        workdir.join(&path).ok()
+    }
 }
 
 fn command_basename(command: &str) -> String {

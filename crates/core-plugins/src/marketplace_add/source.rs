@@ -312,14 +312,6 @@ mod tests {
     }
 
     #[test]
-    fn windows_absolute_paths_look_like_local_paths_on_every_host() {
-        assert!(looks_like_local_path(r"C:\Users\alice\marketplace"));
-        assert!(looks_like_local_path("C:/Users/alice/marketplace"));
-        assert!(looks_like_local_path(r"\\server\share\marketplace"));
-        assert!(!looks_like_local_path(r"C:relative\path"));
-    }
-
-    #[test]
     fn local_file_source_is_rejected() {
         let tempdir = TempDir::new().unwrap();
         let file = tempdir.path().join("marketplace.json");

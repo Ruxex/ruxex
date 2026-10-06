@@ -512,10 +512,6 @@ use self::thread_summary::*;
 
 pub(crate) use self::thread_lifecycle::populate_thread_turns_from_history;
 pub(crate) use self::thread_processor::thread_from_stored_thread;
-#[cfg(test)]
-pub(crate) use self::thread_summary::read_summary_from_rollout;
-#[cfg(test)]
-pub(crate) use self::thread_summary::summary_to_thread;
 pub(crate) use self::thread_summary::thread_settings_from_config_snapshot;
 
 pub(crate) fn build_legacy_api_turns_from_rollout_items(items: &[RolloutItem]) -> Vec<Turn> {

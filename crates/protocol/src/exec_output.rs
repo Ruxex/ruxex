@@ -5,6 +5,7 @@
 
 use chardetng::EncodingDetector;
 use encoding_rs::Encoding;
+use encoding_rs::WINDOWS_1252;
 use std::time::Duration;
 
 #[derive(Debug, Clone)]
@@ -73,7 +74,18 @@ fn detect_encoding(bytes: &[u8]) -> &'static Encoding {
     detector.feed(bytes, true);
     let (encoding, _is_confident) = detector.guess_assess(None, true);
 
-    encoding
+    // chardetng classifies short C1 punctuation sequences such as curly
+    // quotes and an en dash as Windows-1251. Prefer Windows-1252 when those
+    // bytes are present; otherwise retain its broader language detection.
+    let windows_1252_punctuation = bytes
+        .iter()
+        .filter(|byte| matches!(byte, 0x91 | 0x92 | 0x93 | 0x94 | 0x96 | 0x97))
+        .count();
+    if windows_1252_punctuation >= 2 {
+        WINDOWS_1252
+    } else {
+        encoding
+    }
 }
 
 fn decode_bytes(bytes: &[u8], encoding: &'static Encoding) -> String {

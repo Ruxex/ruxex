@@ -1,5 +1,8 @@
 use std::process::Stdio;
 
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
+
 use tokio::io::AsyncBufReadExt;
 use tokio::io::BufReader;
 use tokio::process::Command;
@@ -91,6 +94,15 @@ impl ExecServerClient {
             process.current_dir(cwd);
         }
         scrub_non_inheritable_env_vars(process.as_std_mut());
+        #[cfg(unix)]
+        // Keep the spawned executor and its descendants in a private process
+        // group so dropping the RPC client terminates the complete tree.
+        // SAFETY: set_process_group only performs async-signal-safe setup.
+        unsafe {
+            process
+                .as_std_mut()
+                .pre_exec(genex_utils_pty::process_group::set_process_group);
+        }
         process
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

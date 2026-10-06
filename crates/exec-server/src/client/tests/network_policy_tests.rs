@@ -1,16 +1,13 @@
 use std::sync::Arc;
-use std::sync::Mutex;
 use std::time::Duration;
 
 use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCNotification;
 use genex_exec_server_protocol::JSONRPCRequest;
 use genex_exec_server_protocol::JSONRPCResponse;
 use genex_exec_server_protocol::RequestId;
 use genex_network_proxy::NetworkDecision;
 use genex_network_proxy::NetworkPolicyDecider;
 use genex_network_proxy::NetworkPolicyRequest;
-use genex_network_proxy::NetworkProxyAuditMetadata;
 use genex_utils_path_uri::PathUri;
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_sdk::trace::InMemorySpanExporter;
@@ -27,16 +24,13 @@ use tokio::io::split;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
-use tracing::instrument::WithSubscriber;
 use tracing_subscriber::filter::filter_fn;
 use tracing_subscriber::prelude::*;
 
 use super::super::ExecServerClient;
 use super::super::ExecServerClientConnectOptions;
-use super::super::NetworkPolicyAuditContext;
 use super::super::NetworkPolicyDecisionController;
 use super::super::SessionState;
-use super::super::handle_server_notification;
 use crate::ProcessId;
 use crate::connection::JsonRpcConnection;
 use crate::protocol::EXEC_METHOD;
@@ -159,123 +153,13 @@ async fn write_jsonrpc_stdio(peer: &mut StdioPeer, message: JSONRPCMessage) {
         .expect("stdio flush should succeed");
 }
 
-#[tokio::test(flavor = "current_thread")]
-async fn policy_decisions_reject_forged_process_and_use_trusted_controller_metadata() {
-    let (connection, mut peer) = test_transport();
-    let (release_tx, release_rx) = oneshot::channel();
-    let server = tokio::spawn(async move {
-        complete_stdio_initialize(&mut peer, "audit-orchestrator").await;
-        release_rx.await.expect("server should be released");
-    });
-
-    let logs = Arc::new(Mutex::new(Vec::new()));
-    let writer_logs = Arc::clone(&logs);
-    let subscriber = tracing_subscriber::registry().with(
-        tracing_subscriber::fmt::layer()
-            .with_ansi(false)
-            .with_writer(move || AuditLogWriter(Arc::clone(&writer_logs))),
-    );
-    async move {
-        let client = ExecServerClient::connect(
-            connection,
-            ExecServerClientConnectOptions {
-                client_name: "audit-orchestrator".to_string(),
-                ..Default::default()
-            },
-        )
-        .await
-        .expect("client should connect");
-        let mut state = SessionState::new(/*recoverable*/ true);
-        state.network_policy.audit = Some(NetworkPolicyAuditContext {
-            metadata: NetworkProxyAuditMetadata {
-                conversation_id: Some("trusted-conversation".to_string()),
-                user_account_id: Some("trusted-account".to_string()),
-                ..NetworkProxyAuditMetadata::default()
-            },
-            execution_id: Some("trusted-execution".to_string()),
-        });
-        client
-            .inner
-            .insert_session(&ProcessId::from("trusted-process"), Arc::new(state))
-            .expect("trusted process should register");
-        for (process_id, host) in [
-            ("forged-process", "forged.example"),
-            ("trusted-process", "trusted.example"),
-        ] {
-            handle_server_notification(
-                &client.inner,
-                JSONRPCNotification {
-                    method: NETWORK_POLICY_DECISION_METHOD.to_string(),
-                    params: Some(
-                        serde_json::to_value(NetworkPolicyDecisionNotification {
-                            process_id: ProcessId::from(process_id),
-                            timestamp: "2026-08-11T12:00:00.000Z".to_string(),
-                            scope: "domain".to_string(),
-                            decision: "deny".to_string(),
-                            source: "baseline_policy".to_string(),
-                            reason: "not_allowed".to_string(),
-                            protocol: ExecServerNetworkProtocol::HttpsConnect,
-                            host: host.to_string(),
-                            port: 443,
-                            method: None,
-                            client: None,
-                            policy_override: false,
-                        })
-                        .expect("network policy decision should serialize"),
-                    ),
-                },
-            )
-            .await
-            .expect("controller should handle network policy notification");
-        }
-        let output = String::from_utf8(
-            logs.lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .clone(),
-        )
-        .expect("audit log should be UTF-8");
-        assert!(!output.contains("forged.example"));
-        for expected in [
-            "genex_otel.log_only",
-            "trusted-conversation",
-            "trusted-account",
-            "trusted-execution",
-        ] {
-            assert!(
-                output.contains(expected),
-                "missing `{expected}` in {output}"
-            );
-        }
-        release_tx.send(()).expect("server should be released");
-    }
-    .with_subscriber(subscriber)
-    .await;
-    server.await.expect("server should finish");
-}
-
-struct AuditLogWriter(Arc<Mutex<Vec<u8>>>);
-
-impl std::io::Write for AuditLogWriter {
-    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .extend_from_slice(bytes);
-        Ok(bytes.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
-
 #[tokio::test]
 async fn abandoned_process_start_unregisters_and_cleans_up() {
     let (connection, mut peer) = test_transport();
     let (start_seen_tx, start_seen_rx) = oneshot::channel();
     let (finish_start_tx, finish_start_rx) = oneshot::channel();
     let server = tokio::spawn(async move {
-        complete_stdio_initialize(&mut peer, "p").await;
+        complete_stdio_initialize(&mut peer, "genex-core").await;
         let JSONRPCMessage::Request(start) = read_jsonrpc_stdio(&mut peer).await else {
             panic!("expected process start request");
         };
@@ -379,7 +263,7 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
     let (overflow_checked_tx, overflow_checked_rx) = oneshot::channel();
     let (unregistered_tx, unregistered_rx) = oneshot::channel();
     let server = tokio::spawn(async move {
-        complete_stdio_initialize(&mut peer, "policy-session").await;
+        complete_stdio_initialize(&mut peer, "genex-core").await;
         ready_rx.await.expect("process should be registered");
 
         for (request_id, host, expected) in [

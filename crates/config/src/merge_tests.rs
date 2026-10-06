@@ -1,6 +1,4 @@
 use super::*;
-use crate::config_toml::AgentsToml;
-use crate::config_toml::ConfigToml;
 use pretty_assertions::assert_eq;
 
 fn parse_toml(value: &str) -> TomlValue {

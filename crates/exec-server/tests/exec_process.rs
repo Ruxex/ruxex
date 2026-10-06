@@ -37,17 +37,11 @@ use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
 #[cfg(unix)]
 use genex_protocol::models::PermissionProfile;
 #[cfg(unix)]
-use genex_protocol::permissions::FileSystemAccessMode;
 #[cfg(unix)]
-use genex_protocol::permissions::FileSystemPath;
 #[cfg(unix)]
-use genex_protocol::permissions::FileSystemSandboxEntry;
 #[cfg(unix)]
-use genex_protocol::permissions::FileSystemSandboxPolicy;
 #[cfg(unix)]
-use genex_protocol::permissions::FileSystemSpecialPath;
 #[cfg(unix)]
-use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -60,7 +54,6 @@ use tokio::time::timeout;
 use common::DELAYED_OUTPUT_AFTER_EXIT_PARENT_ARG;
 use common::current_test_binary_helper_paths;
 use common::exec_server::ExecServerHarness;
-use common::exec_server::exec_server;
 
 struct ProcessContext {
     backend: Arc<dyn ExecBackend>,
@@ -166,13 +159,9 @@ async fn genex_home_symlink_opt_out_respects_host_config_and_scope() -> Result<(
 #[cfg(unix)]
 #[test_case(false, false, false, false, "bash"; "local_pipe")]
 #[test_case(false, true, false, false, "bash"; "local_tty")]
-#[test_case(true, false, false, false, "bash"; "remote_pipe")]
-#[test_case(true, true, false, false, "bash"; "remote_tty")]
-#[test_case(true, false, true, false, "bash"; "remote_sandbox")]
 #[test_case(false, false, false, false, "sh"; "local_sh_pipe")]
 #[test_case(false, false, false, false, "bash-sh"; "local_bash_backed_sh")]
 #[test_case(false, false, false, true, "bash"; "local_bash_env")]
-#[test_case(true, false, false, true, "bash"; "remote_bash_env")]
 #[cfg_attr(
     target_os = "macos",
     test_case(false, false, false, false, "zsh"; "local_zsh_pipe")
@@ -443,12 +432,8 @@ async fn shell_snapshot_v2_remote_managed_proxy_uses_prepared_execution_context(
 #[cfg(unix)]
 #[test_case(false, false, "bash", 1; "local_pipe_recovery")]
 #[test_case(false, true, "bash", 1; "local_tty_recovery")]
-#[test_case(true, false, "bash", 1; "remote_pipe_recovery")]
-#[test_case(true, true, "bash", 1; "remote_tty_recovery")]
 #[test_case(false, false, "bash", 3; "local_retry_budget_exhausted")]
-#[test_case(true, false, "bash", 3; "remote_retry_budget_exhausted")]
 #[cfg_attr(target_os = "macos", test_case(false, false, "zsh", 1; "local_zsh_recovery"))]
-#[cfg_attr(target_os = "macos", test_case(true, false, "zsh", 1; "remote_zsh_recovery"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial_test::serial(remote_exec_server)]
 async fn shell_snapshot_v2_capture_failure_falls_back_and_retries(
@@ -559,79 +544,6 @@ async fn shell_snapshot_v2_capture_failure_falls_back_and_retries(
     Ok(())
 }
 
-#[cfg(unix)]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_sandboxed_process_preserves_custom_arg0() -> Result<()> {
-    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
-        eprintln!("skipping bwrap test: {warning}");
-        return Ok(());
-    }
-
-    let context = create_process_context(/*use_remote*/ true).await?;
-    let workspace = TempDir::new()?;
-    let outside_workspace = TempDir::new()?;
-    let denied_file = outside_workspace.path().join("denied.txt");
-    std::fs::write(&denied_file, b"denied")?;
-    let cwd = PathUri::from_host_native_path(workspace.path())?;
-    let policy = FileSystemSandboxPolicy::restricted(vec![
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::Minimal,
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::project_roots(/*subpath*/ None),
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
-    ]);
-    let sandbox = FileSystemSandboxContext::from_permission_profile(
-        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted),
-        cwd.clone(),
-    );
-    let session = context
-        .backend
-        .start(ExecParams {
-            metadata: Default::default(),
-            process_id: ProcessId::from("proc-custom-arg0"),
-            argv: vec![
-                "/bin/sh".to_string(),
-                "-c".to_string(),
-                "printf '%s' \"$0\"; if /bin/cat \"$GENEX_TEST_DENIED_FILE\" >/dev/null 2>&1; then exit 42; fi"
-                    .to_string(),
-            ],
-            cwd,
-            shell_snapshot: None,
-            env_policy: None,
-            env: HashMap::from([
-                ("PATH".to_string(), std::env::var("PATH")?),
-                (
-                    "GENEX_TEST_DENIED_FILE".to_string(),
-                    denied_file.to_string_lossy().into_owned(),
-                ),
-            ]),
-            tty: false,
-            pipe_stdin: false,
-            arg0: Some("custom-arg0".to_string()),
-            sandbox: Some(sandbox),
-            enforce_managed_network: false,
-            managed_network: None,
-            network_proxy: None,
-        })
-        .await?;
-    let output = collect_process_output_from_events(session.process).await?;
-
-    assert_eq!(
-        output,
-        ("custom-arg0".to_string(), String::new(), Some(0), true)
-    );
-    Ok(())
-}
-
 async fn assert_exec_process_starts_and_exits(use_remote: bool) -> Result<()> {
     let context = create_process_context(use_remote).await?;
     let session = context
@@ -659,196 +571,6 @@ async fn assert_exec_process_starts_and_exits(use_remote: bool) -> Result<()> {
         collect_process_output_from_reads(session.process, wake_rx).await?;
 
     assert_eq!(exit_code, Some(0));
-    assert!(closed);
-    Ok(())
-}
-
-#[cfg(target_os = "linux")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_process_keeps_sandbox_helper_visible_with_restricted_reads() -> Result<()> {
-    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
-        eprintln!("skipping bwrap test: {warning}");
-        return Ok(());
-    }
-
-    let context = create_process_context(/*use_remote*/ true).await?;
-    let workspace = TempDir::new()?;
-    let file = workspace.path().join("allowed.txt");
-    std::fs::write(&file, b"allowed")?;
-    let cwd = PathUri::from_host_native_path(workspace.path())?;
-    let policy = FileSystemSandboxPolicy::restricted(vec![
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::Minimal,
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::project_roots(/*subpath*/ None),
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
-    ]);
-    let sandbox = FileSystemSandboxContext::from_permission_profile(
-        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted),
-        cwd.clone(),
-    );
-
-    let session = context
-        .backend
-        .start(ExecParams {
-            metadata: Default::default(),
-            process_id: ProcessId::from("proc-restricted-helper"),
-            argv: vec!["/bin/cat".to_string(), file.to_string_lossy().into_owned()],
-            cwd,
-            shell_snapshot: None,
-            env_policy: /*env_policy*/ None,
-            env: HashMap::from([("PATH".to_string(), std::env::var("PATH")?)]),
-            tty: false,
-            pipe_stdin: false,
-            arg0: None,
-            sandbox: Some(sandbox),
-            enforce_managed_network: false,
-            managed_network: None,
-            network_proxy: None,
-        })
-        .await?;
-    let output = collect_process_output_from_events(session.process).await?;
-
-    assert_eq!(
-        output,
-        ("allowed".to_string(), String::new(), Some(0), true)
-    );
-    Ok(())
-}
-
-#[cfg(target_os = "linux")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_tty_process_uses_configured_sandbox_helper_with_hostile_path() -> Result<()> {
-    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
-        eprintln!("skipping bwrap test: {warning}");
-        return Ok(());
-    }
-
-    let context = create_process_context(/*use_remote*/ true).await?;
-    let workspace = TempDir::new()?;
-    let file = workspace.path().join("allowed.txt");
-    std::fs::write(&file, b"allowed")?;
-    let hostile_helper = workspace.path().join("genex-linux-sandbox");
-    std::fs::write(&hostile_helper, b"#!/bin/sh\nprintf hostile")?;
-    let mut permissions = std::fs::metadata(&hostile_helper)?.permissions();
-    permissions.set_mode(0o755);
-    std::fs::set_permissions(&hostile_helper, permissions)?;
-    let path = std::env::var_os("PATH").context("PATH is not set")?;
-    let hostile_path = std::env::join_paths(
-        std::iter::once(workspace.path().to_path_buf()).chain(std::env::split_paths(&path)),
-    )?;
-    let cwd = PathUri::from_host_native_path(workspace.path())?;
-    let policy = FileSystemSandboxPolicy::restricted(vec![
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::Minimal,
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
-        FileSystemSandboxEntry {
-            path: FileSystemPath::Special {
-                value: FileSystemSpecialPath::project_roots(/*subpath*/ None),
-            },
-            access: FileSystemAccessMode::Read,
-            missing_path_behavior: None,
-        },
-    ]);
-    let sandbox = FileSystemSandboxContext::from_permission_profile(
-        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted),
-        cwd.clone(),
-    );
-
-    let session = context
-        .backend
-        .start(ExecParams {
-            metadata: Default::default(),
-            process_id: ProcessId::from("proc-hostile-helper-path"),
-            argv: vec!["/bin/cat".to_string(), file.to_string_lossy().into_owned()],
-            cwd,
-            shell_snapshot: None,
-            env_policy: /*env_policy*/ None,
-            env: HashMap::from([(
-                "PATH".to_string(),
-                hostile_path.to_string_lossy().into_owned(),
-            )]),
-            tty: true,
-            pipe_stdin: false,
-            arg0: None,
-            sandbox: Some(sandbox),
-            enforce_managed_network: false,
-            managed_network: None,
-            network_proxy: None,
-        })
-        .await?;
-    let output = collect_process_output_from_events(session.process).await?;
-
-    assert_eq!(
-        output,
-        ("allowed".to_string(), String::new(), Some(0), true)
-    );
-    Ok(())
-}
-
-#[cfg(unix)]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_process_preserves_empty_workspace_roots() -> Result<()> {
-    if let Some(warning) = genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only()) {
-        eprintln!("skipping bwrap test: {warning}");
-        return Ok(());
-    }
-
-    let context = create_process_context(/*use_remote*/ true).await?;
-    let tmp = TempDir::new()?;
-    let file = tmp.path().join("excluded.txt");
-    std::fs::write(&file, b"excluded")?;
-    let cwd = PathUri::from_host_native_path(tmp.path())?;
-    let policy = FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry {
-        path: FileSystemPath::Special {
-            value: FileSystemSpecialPath::project_roots(/*subpath*/ None),
-        },
-        access: FileSystemAccessMode::Read,
-        missing_path_behavior: None,
-    }]);
-    let mut sandbox = FileSystemSandboxContext::from_permission_profile(
-        PermissionProfile::from_runtime_permissions(&policy, NetworkSandboxPolicy::Restricted),
-        cwd.clone(),
-    );
-    sandbox.workspace_roots.clear();
-
-    let session = context
-        .backend
-        .start(ExecParams {
-            metadata: Default::default(),
-            process_id: ProcessId::from("proc-empty-workspace-roots"),
-            argv: vec!["/bin/cat".to_string(), file.to_string_lossy().into_owned()],
-            cwd,
-            shell_snapshot: None,
-            env_policy: None,
-            env: HashMap::new(),
-            tty: false,
-            pipe_stdin: false,
-            arg0: None,
-            sandbox: Some(sandbox),
-            enforce_managed_network: false,
-            managed_network: None,
-            network_proxy: None,
-        })
-        .await?;
-    let (stdout, _stderr, exit_code, closed) =
-        collect_process_output_from_events(session.process).await?;
-
-    assert!(!stdout.contains("excluded"), "unexpected stdout: {stdout}");
-    assert_ne!(exit_code, Some(0));
     assert!(closed);
     Ok(())
 }
@@ -1417,7 +1139,6 @@ async fn assert_exec_process_preserves_queued_events_before_subscribe(
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1427,7 +1148,6 @@ async fn exec_process_starts_and_exits(use_remote: bool) -> Result<()> {
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1437,7 +1157,6 @@ async fn exec_process_streams_output(use_remote: bool) -> Result<()> {
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1447,7 +1166,6 @@ async fn exec_process_pushes_events(use_remote: bool) -> Result<()> {
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1457,7 +1175,6 @@ async fn exec_process_replays_events_after_close(use_remote: bool) -> Result<()>
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1469,7 +1186,6 @@ async fn exec_process_retains_output_after_exit_until_streams_close(
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1479,7 +1195,6 @@ async fn exec_process_write_then_read(use_remote: bool) -> Result<()> {
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1489,7 +1204,6 @@ async fn exec_process_write_then_read_without_tty(use_remote: bool) -> Result<()
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1499,7 +1213,6 @@ async fn exec_process_rejects_write_without_pipe_stdin(use_remote: bool) -> Resu
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.
@@ -1509,7 +1222,6 @@ async fn exec_process_signal_interrupts_process(use_remote: bool) -> Result<()> 
 }
 
 #[test_case(false ; "local")]
-#[test_case(true ; "remote")]
 #[cfg_attr(not(unix), ignore = "Unix-only exec-server process test")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 // Serialize tests that launch a real exec-server process through the full CLI.

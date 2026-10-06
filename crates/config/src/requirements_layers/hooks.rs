@@ -130,26 +130,6 @@ impl HookMergeState {
             }
         }
     }
-
-    fn fill_singleton(
-        &mut self,
-        field: HookDirectoryField,
-        existing: &mut Option<PathBuf>,
-        incoming: Option<PathBuf>,
-        incoming_source: &RequirementSource,
-    ) -> bool {
-        if existing.is_none()
-            && let Some(incoming) = incoming
-        {
-            *existing = Some(incoming);
-            self.dir_sources
-                .entry(field)
-                .or_insert_with(|| incoming_source.clone());
-            true
-        } else {
-            false
-        }
-    }
 }
 
 fn take_hook_dir(

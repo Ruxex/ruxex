@@ -855,13 +855,10 @@ mod tests {
 
     #[test]
     fn uri_manifest_uses_the_root_path_convention() {
-        let windows_root =
-            PathUri::parse("file:///C:/plugins/demo-plugin").expect("Windows plugin root URI");
         let posix_root =
             PathUri::parse("file:///plugins/demo-plugin").expect("POSIX plugin root URI");
         let composer_icon = r"./assets\..\icon.svg";
 
-        assert_eq!(parse_uri_composer_icon(&windows_root, composer_icon), None);
         assert_eq!(
             parse_uri_composer_icon(&posix_root, composer_icon),
             Some(

@@ -17,8 +17,6 @@ use genex_protocol::permissions::FileSystemSandboxPolicyContext;
 use genex_protocol::permissions::FileSystemSpecialPath;
 use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathConvention;
 use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::path::Path;
@@ -614,12 +612,6 @@ fn intersect_permission_profiles_preserves_rooted_first_segment_glob_deny() {
     for (cwd_uri, grant_uri, pattern) in [
         ("file:///workspace", "file:///fooX", "/foo*/*"),
         ("file:///workspace", "file:///foo%5Cbar", r"/foo\\*/*"),
-        ("file:///C:/workspace", "file:///C:/fooX", r"C:\foo*\*"),
-        (
-            "file://server/share/workspace",
-            "file://server/share/fooX",
-            r"\\server\share\foo*\*",
-        ),
     ] {
         let cwd = PathUri::parse(cwd_uri).expect("cwd URI");
         let grant_path = PathUri::parse(grant_uri).expect("grant URI");

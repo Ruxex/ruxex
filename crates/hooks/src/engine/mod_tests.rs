@@ -911,17 +911,17 @@ fn user_disablement_does_not_filter_managed_layer_hooks() {
     let config_layer_stack = ConfigLayerStack::new(
         vec![
             ConfigLayerEntry::new(
+                ConfigLayerSource::System {
+                    file: managed_config_path,
+                },
+                config_with_pre_tool_use_hook("python3 /tmp/managed-layer.py"),
+            ),
+            ConfigLayerEntry::new(
                 ConfigLayerSource::User {
                     file: user_config_path,
                     profile: None,
                 },
                 config_with_hook_state(&managed_key, /*enabled*/ false),
-            ),
-            ConfigLayerEntry::new(
-                ConfigLayerSource::System {
-                    file: managed_config_path,
-                },
-                config_with_pre_tool_use_hook("python3 /tmp/managed-layer.py"),
             ),
         ],
         ConfigRequirements::default(),
@@ -1371,13 +1371,6 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
     let config_layer_stack = ConfigLayerStack::new(
         vec![
             ConfigLayerEntry::new(
-                ConfigLayerSource::Mdm {
-                    domain: "com.genex.genex".to_string(),
-                    key: "config".to_string(),
-                },
-                config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
-            ),
-            ConfigLayerEntry::new(
                 ConfigLayerSource::System {
                     file: system_config_path,
                 },
@@ -1388,6 +1381,13 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
                     file: legacy_config_path,
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/legacy-file-hook.py"),
+            ),
+            ConfigLayerEntry::new(
+                ConfigLayerSource::Mdm {
+                    domain: "com.genex.genex".to_string(),
+                    key: "config".to_string(),
+                },
+                config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
             ),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Mdm {
@@ -1427,10 +1427,10 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
             .collect::<Vec<_>>(),
         vec![
             Some("python3 /tmp/requirements-hook.py"),
-            Some("python3 /tmp/mdm-hook.py"),
             Some("python3 /tmp/system-hook.py"),
             Some("python3 /tmp/legacy-file-hook.py"),
-            Some("python3 /tmp/legacy-mdm-hook.py"),
+            Some("python3 /tmp/mdm-hook.py"),
+            Some("python3 /tmp/mdm-hook.py"),
         ]
     );
     let discovered = super::discovery::discover_handlers(

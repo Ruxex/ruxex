@@ -17,9 +17,6 @@ use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthHeaders;
 use genex_login::AuthManager;
-use genex_login::ExternalAuth;
-use genex_login::ExternalAuthFuture;
-use genex_login::ExternalAuthRefreshContext;
 use genex_login::GenexAuth;
 use genex_login::test_support::auth_manager_from_optional_auth;
 use genex_protocol::auth::AuthMode;
@@ -67,36 +64,8 @@ pub(crate) fn test_plugins_manager_with_options(
     )
 }
 
-pub(crate) fn test_plugins_manager_with_auth_manager(
-    genex_home: PathBuf,
-    restriction_product: Option<Product>,
-    auth_manager: Arc<AuthManager>,
-) -> PluginsManager {
-    PluginsManager::new_with_options(
-        genex_home,
-        restriction_product,
-        auth_manager,
-        test_skill_root_loader(),
-    )
-}
-
 pub(crate) fn test_auth_manager(auth_mode: Option<AuthMode>) -> Arc<AuthManager> {
     auth_manager_from_optional_auth(test_genex_auth(auth_mode))
-}
-
-pub(crate) async fn set_test_auth_mode(auth_manager: &AuthManager, auth_mode: Option<AuthMode>) {
-    set_test_auth(auth_manager, test_genex_auth(auth_mode)).await;
-}
-
-pub(crate) async fn set_test_auth(auth_manager: &AuthManager, auth: Option<GenexAuth>) {
-    let Some(auth) = auth else {
-        auth_manager.clear_external_auth();
-        return;
-    };
-    auth_manager
-        .set_external_auth(Arc::new(StaticExternalAuth(auth)))
-        .await
-        .expect("test auth should update");
 }
 
 fn test_genex_auth(auth_mode: Option<AuthMode>) -> Option<GenexAuth> {
@@ -104,18 +73,6 @@ fn test_genex_auth(auth_mode: Option<AuthMode>) -> Option<GenexAuth> {
         AuthMode::ApiKey => GenexAuth::from_api_key("test-api-key"),
         AuthMode::Headers => GenexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
     })
-}
-
-struct StaticExternalAuth(GenexAuth);
-
-impl ExternalAuth for StaticExternalAuth {
-    fn resolve(&self) -> ExternalAuthFuture<'_, GenexAuth> {
-        Box::pin(async { Ok(self.0.clone()) })
-    }
-
-    fn refresh(&self, _context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, GenexAuth> {
-        Box::pin(async { Ok(self.0.clone()) })
-    }
 }
 
 pub(crate) fn test_skill_root_loader() -> Arc<dyn SkillRootLoader<PluginSkillRoot>> {
