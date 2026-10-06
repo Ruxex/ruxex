@@ -1837,7 +1837,7 @@ impl FileSystemSandboxPolicy {
                 paths
                     .into_iter()
                     .filter(move |path| path.infer_path_convention() == convention)
-                    .map(move |path| (path, entry.access))
+                    .map(move |path| (normalize_policy_path_alias(path), entry.access))
             })
             .collect()
     }
@@ -2189,6 +2189,16 @@ fn normalize_trusted_top_level_alias(path: AbsolutePathBuf) -> AbsolutePathBuf {
         return path;
     };
     AbsolutePathBuf::from_absolute_path(canonical_top_level.join(suffix)).unwrap_or(path)
+}
+
+fn normalize_policy_path_alias(path: PathUri) -> PathUri {
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(native) = path.to_abs_path() {
+            return PathUri::from_abs_path(&normalize_trusted_top_level_alias(native));
+        }
+    }
+    path
 }
 
 pub(crate) fn default_read_only_subpaths_for_writable_root(
@@ -3045,6 +3055,28 @@ mod tests {
         assert_eq!(roots.len(), 1);
         assert_eq!(roots[0].root, canonical_root);
         assert!(roots[0].read_only_subpaths.contains(&protected));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn permission_matching_normalizes_top_level_aliases_for_missing_targets() {
+        let root = TempDir::new_in("/tmp").expect("tempdir under /tmp");
+        let policy = FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry::new(
+            PathUri::from_host_native_path(root.path()).expect("logical root"),
+            FileSystemAccessMode::Write,
+        )]);
+        let cwd = PathUri::from_host_native_path(root.path()).expect("cwd");
+        let context = FileSystemSandboxPolicyContext {
+            cwd: &cwd,
+            workspace_roots: std::slice::from_ref(&cwd),
+            user_home_dir: None,
+            temporary_directories: None,
+        };
+        let canonical_root = root.path().canonicalize().expect("canonical root");
+        let target = PathUri::from_host_native_path(canonical_root.join("missing/file"))
+            .expect("canonical target");
+
+        assert!(policy.can_write_path(&target, &context));
     }
 
     #[cfg(unix)]
