@@ -1,0 +1,1003 @@
+# フォーク点以後の公式 upstream 追加コミット一覧
+
+> 対象: `e269f2164cbb9f499e4f22301c393500e2a831f3..73178e7ca60fe8655c49727e60a467d7c03f896c`（公式 `openai/codex` の `main`）
+> 件数: 997。件名・作者は Git の原文。区分は件名だけによる機械的な一次トリアージで、採否の最終判断ではない。
+> 詳細な採否判断は [`upstream-commit-audit-2026-10-07.md`](upstream-commit-audit-2026-10-07.md) を参照。
+
+- `7abf2a3b5cbe` — 2026-09-17 — Steve Coffey — Preserve configured Flex tiers without catalog or fast-mode support (#46230) — 区分: 要移植監査
+- `c11fdc944f11` — 2026-09-17 — chess — Improve Windows sandbox error details and registry cleanup (#46237) — 区分: 除外候補（削除済み・外部固有領域）
+- `32b54cffdd3b` — 2026-09-17 — zm-oai — Prefer the provisioning service for automatic Windows sandbox setup (#46239) — 区分: 除外候補（削除済み・外部固有領域）
+- `2833985d8838` — 2026-09-17 — chess — Repair Windows sandbox access to existing runtime children (#46241) — 区分: 除外候補（削除済み・外部固有領域）
+- `fcf05456bb27` — 2026-09-17 — felixxia-oai — Publish Guardian cached scores and coverage atomically (#46245) — 区分: 要確認
+- `96aca987f72e` — 2026-09-17 — Krish Chainani — Preserve uploaded image file IDs in user message display history (#46258) — 区分: 要移植監査
+- `16f49ccd7f72` — 2026-09-17 — surajs-oai — Relax delegation guidance in the v2 \`spawn_agent\` description (#46264) — 区分: 要確認
+- `608825d51179` — 2026-09-17 — Eric Traut — Expand Unicode math rendering with accents, symbols, and delimiters (#46266) — 区分: 要確認
+- `3d3ae4965ab3` — 2026-09-17 — Adam Perry @ OpenAI — Add filesystem accessors bound to environment permissions (#46268) — 区分: 要移植監査
+- `8b78600dc85c` — 2026-09-17 — iceweasel-oai — Enable MXC selection through Windows sandbox configuration (#46271) — 区分: 除外候補（削除済み・外部固有領域）
+- `3ed49879c8b1` — 2026-09-17 — Adam Perry @ OpenAI — Reduce R2 release upload concurrency and enable standard retries (#46278) — 区分: 要確認
+- `d7f8e48d7d92` — 2026-09-17 — jif — Preserve Guardian's reusable history prefix across approval requests (#46279) — 区分: 要移植監査
+- `0a5b9991698e` — 2026-09-17 — acrognale-oai — Connect app-server workspace discovery to model request routing (#46281) — 区分: 要確認
+- `0fd1cd8d99b6` — 2026-09-17 — cassirer-openai — Add opt-in overhead timing to code-mode responses (#46288) — 区分: 要移植監査
+- `47915cee7af1` — 2026-09-17 — felixxia-oai — Filter saved reasoning overrides from requests when disabled (#46291) — 区分: 要確認
+- `93321c88d8e4` — 2026-09-17 — felixxia-oai — Preserve selected reasoning effort for synchronous Guardian reviews (#46292) — 区分: 要確認
+- `47fc8d661e42` — 2026-09-17 — Adam Perry @ OpenAI — Route skill discovery and loading through \`EnvironmentAccess\` (#46293) — 区分: 要移植監査
+- `17baabd01b31` — 2026-09-17 — Charlie Marsh — Separate thread startup metadata from replay history (#46294) — 区分: 要移植監査
+- `3e581ebca854` — 2026-09-17 — rhan-oai — Support catalog descriptions for all multi-agent V2 tools (#46297) — 区分: 要確認
+- `8f73cdee456b` — 2026-09-17 — alexsong-oai — Centralize OAuth login and refresh handling with safer diagnostics (#46300) — 区分: 要移植監査
+- `ea218f5cd8a5` — 2026-09-17 — Sean Huang — Validate network socket policies using the executor OS (#46302) — 区分: 要移植監査
+- `7a3c5a83e472` — 2026-09-17 — Ian MacLeod — Serialize release asset uploads to avoid secondary rate limits (#46303) — 区分: 要確認
+- `55db7e8c8870` — 2026-09-17 — Charlie Marsh — Avoid cloning turn items for app-server active turn lookups (#46305) — 区分: 要確認
+- `fa8cf449858c` — 2026-09-17 — Rennie — Preserve bio policy errors as a distinct non-retryable error (#46306) — 区分: 要確認
+- `0c9be8a836a6` — 2026-09-17 — vkg-oai — Preserve plugin caches across display metadata refreshes (#46309) — 区分: 要確認
+- `c775dd3c332d` — 2026-09-17 — sayan-oai — Defer environment selection changes until the next turn (#46310) — 区分: 要移植監査
+- `a129392ebb87` — 2026-09-17 — alexsong-oai — Add OAuth credential management for model provider gateways (#46318) — 区分: 要移植監査
+- `f8c6026c3868` — 2026-09-17 — Eric Traut — Preserve web search actions and results in exec JSON output (#46319) — 区分: 要確認
+- `1f631def3f5f` — 2026-09-17 — sayan-oai — Set the Windows sandbox type in the pending environment test (#46322) — 区分: 除外候補（削除済み・外部固有領域）
+- `a1efb59c4a17` — 2026-09-17 — marksteinbrick-oai — Record active plugin inventory in turn analytics (#46323) — 区分: 要確認
+- `5492c2b06e9d` — 2026-09-17 — Ahmed Ibrahim — Broaden compaction fallback to the current model (#46324) — 区分: 要確認
+- `608e4cc9a132` — 2026-09-18 — viyatb-oai — Avoid persisting project trust for projectless directories (#46328) — 区分: 要確認
+- `ff73d63e64e2` — 2026-09-18 — Michael Bolin — Move retry backoff into \`codex-async-utils\` (#46330) — 区分: 要確認
+- `ad70cbdd966b` — 2026-09-18 — Sean Huang — Defer environment network policy validation until after composition (#46331) — 区分: 要移植監査
+- `3cd255a4ee8e` — 2026-09-18 — Eric Traut — Dim conversation recaps in the TUI (#46332) — 区分: 要確認
+- `fd875b188bde` — 2026-09-18 — chess — Handle disabled Windows sandbox accounts during cleanup (#46333) — 区分: 除外候補（削除済み・外部固有領域）
+- `3724dc836155` — 2026-09-18 — Sean Huang — Share platform identity across path, network, and sandbox configuration (#46334) — 区分: 要移植監査
+- `7498521d288b` — 2026-09-18 — sayan-oai — Keep MCP policy evaluation consistent with turn environments (#46335) — 区分: 要移植監査
+- `3d5b66c655c1` — 2026-09-18 — Eric Traut — Handle unknown error classifications and configure gateway OAuth (#46482) — 区分: 要移植監査
+- `dbf478850fb8` — 2026-09-18 — Eric Traut — Make TUI async question replies compatible with desktop (#46486) — 区分: 除外候補（削除済み・外部固有領域）
+- `71406edbd58e` — 2026-09-18 — Eric Traut — Keep TUI exploration grouped across reasoning and nonzero exits (#46487) — 区分: 要確認
+- `2f522c5dc0a0` — 2026-09-18 — rhan-oai — Split analytics tests into focused suites (#46488) — 区分: 要確認
+- `4d23af09755e` — 2026-09-18 — alexsong-oai — Compose gateway OAuth with primary provider authentication (#46490) — 区分: 要移植監査
+- `4f3867123f4a` — 2026-09-18 — Eric Traut — Unify TUI tool output previews with a three-row limit (#46492) — 区分: 要確認
+- `35b746a3e3fb` — 2026-09-18 — Eric Traut — Allow \`/review\` during MCP startup (#46493) — 区分: 要移植監査
+- `6d29cc6bac4c` — 2026-09-18 — Eric Traut — Keep remote workspace roots under server control (#46494) — 区分: 要確認
+- `c0e1b782532d` — 2026-09-18 — riley-oai — Preserve the provisioned macOS CLI's code-signing identity (#46495) — 区分: 要確認
+- `e49739355235` — 2026-09-18 — Eric Traut — Allow worktree sessions to use an existing local daemon (#46498) — 区分: 要確認
+- `e0f05de6e02f` — 2026-09-18 — sayan-oai — Allow approved escalation with environment-owned network policies (#46499) — 区分: 要移植監査
+- `04e4d2b40ffd` — 2026-09-18 — Jeremy Rose — Block mutating fcntls in restricted macOS Seatbelt policies (#46500) — 区分: 要移植監査
+- `f5b941c9107a` — 2026-09-18 — pakrym-oai — Add configuration and feature diagnostics to report metadata (#46501) — 区分: 要移植監査
+- `547c9a1aad9f` — 2026-09-18 — Eric Traut — Use catalog model display names throughout the TUI (#46503) — 区分: 要確認
+- `907b751eabc0` — 2026-09-18 — Eric Traut — Add six bundled TUI themes and theme-aware accents (#46504) — 区分: 要確認
+- `cc7591646ef1` — 2026-09-18 — rhan-oai — Support catalog parameter schemas for Multi-Agent V2 tools (#46505) — 区分: 要確認
+- `12acac2a66b6` — 2026-09-18 — jif — Share ChatGPT cookies between HTTP and WebSocket transports (#46506) — 区分: 除外候補（削除済み・外部固有領域）
+- `8003609cc703` — 2026-09-18 — jif — Run Windows sandbox tests exclusively when local (#46507) — 区分: 除外候補（削除済み・外部固有領域）
+- `2b842962883f` — 2026-09-18 — jif — Refresh the model catalog before turns after auth changes (#46508) — 区分: 要移植監査
+- `36430b36881c` — 2026-09-18 — jif — Flush completed Guardian reviews before delivering decisions (#46509) — 区分: 要確認
+- `dfb265764d39` — 2026-09-18 — Charlie Marsh — Avoid cloning active turn items for metadata-only thread resumes (#46510) — 区分: 要移植監査
+- `05a93a8a1d73` — 2026-09-18 — Charlie Marsh — Avoid cloning excluded turn items during thread resume (#46511) — 区分: 要移植監査
+- `0f7c8608bdce` — 2026-09-18 — jif — Capture Guardian review checkpoints from live context (#46512) — 区分: 要確認
+- `7fb599de8c21` — 2026-09-18 — jif — Rename \`AgentControl\` to \`LocalAgentControl\` (#46513) — 区分: 要確認
+- `8933a816eb5a` — 2026-09-18 — jif — Replay guardian checkpoints into a fresh session in tests (#46514) — 区分: 要移植監査
+- `d374a93b4142` — 2026-09-18 — jif — Handle completion timing in the multi-agent resume test (#46516) — 区分: 要確認
+- `e811c2832ad2` — 2026-09-18 — jif — Stabilize the TUI exit interruption test (#46517) — 区分: 要確認
+- `cdfda82386f9` — 2026-09-18 — jif — Handle delayed process startup in the Guardian network approval test (#46518) — 区分: 要移植監査
+- `4b9e7f6473f5` — 2026-09-18 — jif — Use paused time in sampler and model catalog timeout tests (#46519) — 区分: 要確認
+- `d6fb836f3190` — 2026-09-18 — jif — Use macOS member fallback in shared process-group termination helpers (#46521) — 区分: 要確認
+- `3fd9e7e30e4a` — 2026-09-18 — felixxia-oai — Enable Guardian parent-compaction reuse by default (#46522) — 区分: 要確認
+- `74af2496c9c2` — 2026-09-18 — iceweasel-oai — Default local binding to true for MXC managed networking (#46523) — 区分: 除外候補（削除済み・外部固有領域）
+- `5701a576ccc3` — 2026-09-18 — felixxia-oai — Retry busy executable launches in packaged daemon tests (#46524) — 区分: 要確認
+- `6adaf3cac4db` — 2026-09-18 — Ian MacLeod — Pin WinGet publishing dependencies in the release workflow (#46527) — 区分: 要確認
+- `6cf2ff11b391` — 2026-09-18 — papayo-oai — Bind executor plugin measurements to the trusted plugin version (#46528) — 区分: 要確認
+- `1537497e52f3` — 2026-09-18 — Eric Traut — Allow compatible feature overrides when starting the shared daemon (#46529) — 区分: 要確認
+- `78d4d983d338` — 2026-09-18 — felixxia-oai — Gate reasoning effort updates on explicit model support (#46530) — 区分: 要確認
+- `f5b7ca724950` — 2026-09-18 — felixxia-oai — Preserve request-level reasoning effort for memory and title workers (#46531) — 区分: 要確認
+- `01f92c57802a` — 2026-09-18 — Jeremy Rose — Remove \`com.apple.runningboard\` from Seatbelt platform defaults (#46532) — 区分: 要確認
+- `61b08f101142` — 2026-09-18 — Celia Chen — Disable reasoning summaries by default for new TUI threads (#46533) — 区分: 要移植監査
+- `ab59b78287ff` — 2026-09-18 — Michael Bolin — Support \`env_inherit\` in \`workspace_root_test\` (#46534) — 区分: 要確認
+- `22dea110204c` — 2026-09-18 — pash-openai — Allow unrelated namespace mounts in Linux sandbox socket checks (#46535) — 区分: 要移植監査
+- `b244e9bafeca` — 2026-09-18 — papayo-oai — Add a command-start callback for tool lifecycle extensions (#46539) — 区分: 要確認
+- `d5b29951aca5` — 2026-09-18 — Adam Perry @ OpenAI — Centralize retry decisions and delays in \`CodexErr\` (#46540) — 区分: 要確認
+- `49e248d4c3ad` — 2026-09-18 — Henry Levy — Add opt-in compaction after final responses (#46541) — 区分: 要確認
+- `184ea8452638` — 2026-09-18 — papayo-oai — Add authenticated remote plugin measurement references (#46542) — 区分: 要移植監査
+- `b33199b1fbcf` — 2026-09-18 — Eric Traut — Add bounded filesystem path diagnostics to \`codex doctor\` (#46543) — 区分: 要移植監査
+- `05de93520542` — 2026-09-18 — victor-openai — Expose declared onboarding skills in plugin details (#46544) — 区分: 要確認
+- `7e0463b568f8` — 2026-09-18 — Henry Levy — Skip skill discovery when injecting items into initialized threads (#46546) — 区分: 要移植監査
+- `c026e7a622ec` — 2026-09-18 — jif — Expose a backend-independent agent control contract (#46547) — 区分: 要確認
+- `98a8d4ea9cab` — 2026-09-18 — konsti-openai — Advertise the control socket's WebSocket message size limit (#46548) — 区分: 要移植監査
+- `bfb8daa3c952` — 2026-09-18 — Adam Perry @ OpenAI — Add a composite action to build and smoke-test Codex packages (#46551) — 区分: 要確認
+- `7a15548c6a5a` — 2026-09-18 — jif — Move child completion routing into the agent controller (#46552) — 区分: 要確認
+- `c6f5d9e9b5d9` — 2026-09-18 — jif — Return \`LiveAgent\` records from agent listing (#46553) — 区分: 要確認
+- `a633ebc1245f` — 2026-09-18 — iceweasel-oai — Always use private desktops for legacy Windows sandboxes (#46554) — 区分: 除外候補（削除済み・外部固有領域）
+- `328feb0c298f` — 2026-09-18 — viyatb-oai — Track executor registrations across connection refresh and recovery (#46555) — 区分: 要確認
+- `c7828dd0109c` — 2026-09-18 — sayan-oai — Keep step settings and approval environments consistent (#46556) — 区分: 要移植監査
+- `cd2f9ca69239` — 2026-09-18 — sayan-oai — Fix active-turn environment selection lookup (#46557) — 区分: 要移植監査
+- `46d87f3b1c34` — 2026-09-18 — Anthony Tafoya — Add shared plugin catalog discovery APIs (#46558) — 区分: 要確認
+- `e416eadf7f99` — 2026-09-18 — jif — Encapsulate rollout budget accounting in \`LocalAgentControl\` (#46559) — 区分: 要移植監査
+- `c2a924fc4a39` — 2026-09-18 — sayan-oai — Fix stale environment config in the network approval test (#46560) — 区分: 要移植監査
+- `888be42a20c5` — 2026-09-18 — andrewgu-oai — Support explicit provider model catalog URLs (#46561) — 区分: 要確認
+- `3bb0a530d1cd` — 2026-09-18 — Abhinav — Add system proxy fallback for login and startup requests (#46562) — 区分: 要移植監査
+- `b948cfa88da3` — 2026-09-18 — Anthony Tafoya — Rename plugin MCP and app extension APIs (#46564) — 区分: 要移植監査
+- `de33f2d22a4a` — 2026-09-18 — Eric Traut — Preserve reasoning order in TUI activity groups (#46565) — 区分: 要確認
+- `ef9f3d022aff` — 2026-09-18 — Eric Traut — Allow recovery commands when the current thread is unavailable (#46566) — 区分: 要移植監査
+- `a7e069dc3a88` — 2026-09-18 — Anthony Tafoya — Separate plugin catalog listing from package resolution (#46567) — 区分: 要確認
+- `568518357023` — 2026-09-18 — sayan-oai — Use captured environment state for permissions and daemon recovery (#46568) — 区分: 要移植監査
+- `f81a6331b4fc` — 2026-09-18 — Eddie Chen — Set explicit turn triggers for exec and TUI requests (#46569) — 区分: 要確認
+- `c223ff3170ad` — 2026-09-18 — andrewgu-oai — Tag remote model fetch duration by authentication mode (#46570) — 区分: 要移植監査
+- `d84ebff59295` — 2026-09-18 — Jeremy Rose — Preserve macOS Seatbelt exclusions in scratch directories (#46571) — 区分: 要確認
+- `394dadb93db6` — 2026-09-19 — Anthony Tafoya — Add turn-start cloud plugin discovery to the MCP extension (#46572) — 区分: 除外候補（削除済み・外部固有領域）
+- `94e3c2090631` — 2026-09-19 — viyatb-oai — Add a standalone network proxy binary with JSON configuration (#46573) — 区分: 要移植監査
+- `d5afb62bb3d8` — 2026-09-19 — Eric Traut — Notify users when asynchronous questions arrive in the TUI (#46574) — 区分: 要確認
+- `fd59b42a09df` — 2026-09-19 — zm-oai — Preserve Windows package identity for sandboxed descendants (#46575) — 区分: 除外候補（削除済み・外部固有領域）
+- `e24ac448b37b` — 2026-09-19 — vinh-gpt — Allow thread instruction providers to share updates with subagents (#46577) — 区分: 要移植監査
+- `29a57861e31a` — 2026-09-19 — Eric Traut — Fix standalone network proxy policy initialization (#46578) — 区分: 要移植監査
+- `6b78e825aeac` — 2026-09-19 — Eric Traut — Limit the agent command center to 10 recent sessions on startup (#46579) — 区分: 要確認
+- `ed12cc75d34f` — 2026-09-19 — jif — Keep Guardian reviews on the applied instruction snapshot (#46580) — 区分: 要確認
+- `78245b47af2a` — 2026-09-19 — Jeremy Rose — Deny XPC service lookups in macOS Seatbelt profiles (#46583) — 区分: 要確認
+- `d086e2752dad` — 2026-09-19 — Charlie Marsh — Move local child-process spawning into \`codex-utils-pty\` (#46659) — 区分: 要確認
+- `3801fc8deaaf` — 2026-09-19 — Charlie Marsh — Make local child process launch settings explicit (#46660) — 区分: 要確認
+- `595cc91e8cbb` — 2026-09-19 — Charlie Marsh — Avoid fork when spawning macOS filesystem helpers (#46661) — 区分: 要確認
+- `a5290028a293` — 2026-09-19 — Eric Traut — Extend server version notices to prerelease and local clients (#46673) — 区分: 要確認
+- `132c2be239ec` — 2026-09-19 — Eric Traut — Improve TUI contrast, keyboard hints, and picker layouts (#46680) — 区分: 要確認
+- `79d2144ec698` — 2026-09-19 — Eric Traut — Standardize TUI picker presentation and fix wrapping boundaries (#46691) — 区分: 要確認
+- `018687bd8cf8` — 2026-09-19 — Eric Traut — Unify TUI picker styling and improve compact layouts (#46692) — 区分: 要確認
+- `e28fa3e7a448` — 2026-09-19 — Eric Traut — Unify TUI completion popup styling and preserve result identity (#46694) — 区分: 要確認
+- `c9d13e8c757c` — 2026-09-19 — Eric Traut — Unify TUI prompts with shared picker styling and layouts (#46695) — 区分: 要確認
+- `5ee2bdf1e0e0` — 2026-09-19 — Eric Traut — Unify TUI picker styling and improve compact session layouts (#46697) — 区分: 要確認
+- `fcaa035438e4` — 2026-09-19 — Eric Traut — Preserve logical source text and styles across TUI wrapping (#46708) — 区分: 要確認
+- `321c50fc2c53` — 2026-09-19 — Eric Traut — Add compact activity rendering and preserve transcript source text (#46709) — 区分: 要確認
+- `4abcb8d1dacc` — 2026-09-19 — Eric Traut — Restore rich tool details in persisted TUI transcripts (#46710) — 区分: 要確認
+- `f43faf132dd2` — 2026-09-19 — Eric Traut — Align persisted TUI activity groups and reasoning with live output (#46711) — 区分: 要確認
+- `ed0ee704b440` — 2026-09-19 — ningyi-oai — Recover executed tool call metadata under recorder capacity pressure (#46712) — 区分: 要確認
+- `50a90f340887` — 2026-09-19 — Charlie Marsh — Skip polling delays in the external queue lifecycle test (#46714) — 区分: 要確認
+- `daed4b9755a4` — 2026-09-19 — Charlie Marsh — Split shell snapshot credential tests into focused cases (#46715) — 区分: 要移植監査
+- `1ac4b6973bca` — 2026-09-19 — Eric Traut — Extract the TUI transcript overlay into its own module (#46719) — 区分: 要確認
+- `30ab0ee65b5d` — 2026-09-19 — Eric Traut — Cache transcript layouts across measurement and rendering (#46720) — 区分: 要確認
+- `a63ae005d464` — 2026-09-19 — Eric Traut — Anchor transcript scrolling to entries and bound viewport rendering (#46721) — 区分: 要確認
+- `392f56a611c4` — 2026-09-19 — Eric Traut — Cancel pending transcript Home jumps on subsequent navigation (#46722) — 区分: 要確認
+- `6ba6b73657d0` — 2026-09-19 — Eric Traut — Render dynamic tool activity and preserve TUI history ordering (#46731) — 区分: 要移植監査
+- `d7d9f2b9b53b` — 2026-09-19 — Eric Traut — Add selection and copying to the transcript viewer (#46732) — 区分: 要確認
+- `f1feda229999` — 2026-09-19 — Eric Traut — Integrate the interactive transcript into the alternate-screen TUI (#46733) — 区分: 要確認
+- `df7f717c856e` — 2026-09-19 — Eric Traut — Add transcript search and per-activity detail controls (#46734) — 区分: 要確認
+- `551844b3efc4` — 2026-09-20 — Eric Traut — Add compact transcript browsing and prompt navigation to the TUI (#46739) — 区分: 要確認
+- `de6ae71ad431` — 2026-09-20 — Eric Traut — Stabilize transcript and composer interactions in the TUI (#46749) — 区分: 要確認
+- `9ed1b7469921` — 2026-09-20 — Eric Traut — Preserve startup drafts and submit them when the session is ready (#46750) — 区分: 要確認
+- `6b0a1a832564` — 2026-09-20 — Eric Traut — Add a warning footer and dedicated warnings viewer to the TUI (#46751) — 区分: 要確認
+- `5c5308fc9a9e` — 2026-09-20 — Eric Traut — Add an animated Codex logo to fresh conversations and onboarding (#46752) — 区分: 要確認
+- `bba48e5ce8bb` — 2026-09-20 — Eric Traut — Add independent controls for TUI visual effects (#46832) — 区分: 要確認
+- `b05b3e180b85` — 2026-09-20 — Eric Traut — Respect reduced motion in the voice UI (#46835) — 区分: 除外候補（削除済み・外部固有領域）
+- `d4cb75357fd7` — 2026-09-20 — Eric Traut — Improve agent command center rows and page navigation (#46837) — 区分: 要確認
+- `569888ac65e1` — 2026-09-20 — Eric Traut — Refine the agent command center layout and metadata editing (#46838) — 区分: 要確認
+- `eef77aa21144` — 2026-09-20 — Eric Traut — Add status filter tabs to the agent command center (#46839) — 区分: 要確認
+- `724cdfbd32d3` — 2026-09-20 — Eric Traut — Simplify agent command center hints and back navigation (#46840) — 区分: 要確認
+- `15312c326c9b` — 2026-09-20 — Eric Traut — Select read-only permissions for temporary structured threads (#46844) — 区分: 要移植監査
+- `79ef00ded170` — 2026-09-20 — Eric Traut — Honor the system clock preference in TUI completion timestamps (#46845) — 区分: 要確認
+- `a2de8fedcc3a` — 2026-09-20 — Eric Traut — Move fullscreen transcript control to TUI configuration (#46849) — 区分: 要移植監査
+- `7c1e485c871d` — 2026-09-20 — Eric Traut — Increase the default terminal probe timeout from 100 ms to 250 ms (#46855) — 区分: 要確認
+- `2426ed7684c8` — 2026-09-20 — Eric Traut — Support stadium nodes in Mermaid terminal diagrams (#46856) — 区分: 要確認
+- `f3f07753ca3d` — 2026-09-20 — Eric Traut — Extract shared text selection helpers for the TUI (#46857) — 区分: 要確認
+- `e39839509a2e` — 2026-09-20 — Eric Traut — Add mouse selection and editing to the fullscreen composer (#46858) — 区分: 要確認
+- `ad538e1c2dc5` — 2026-09-20 — Eric Traut — Limit the welcome logo animation to onboarding (#46859) — 区分: 要確認
+- `d2d196bd6ab9` — 2026-09-20 — Eric Traut — Remove analytics TUI snapshots (#46861) — 区分: 要確認
+- `5e5cadad6b90` — 2026-09-20 — Eric Traut — Refresh analytics on identity changes and compact usage menus (#46862) — 区分: 要確認
+- `46f7d99d0e99` — 2026-09-20 — Eric Traut — Stabilize usage dashboard navigation and add keyboard help (#46863) — 区分: 要確認
+- `d6d43270bd79` — 2026-09-20 — Eric Traut — Improve usage report layouts and preserve reading positions (#46864) — 区分: 要確認
+- `b48232f975dd` — 2026-09-20 — Eric Traut — Enable mouse navigation in the TUI usage view (#46866) — 区分: 要確認
+- `e29eceb75131` — 2026-09-20 — Felipe Coury — Preserve streamed answers when subagents finish (#46867) — 区分: 要確認
+- `c45ea25ffb72` — 2026-09-20 — Rennie — Allow subagents to request MCP elicitation input (#46877) — 区分: 要移植監査
+- `8b79d8a5f537` — 2026-09-20 — Eric Traut — Count TUI launches by fullscreen transcript configuration (#46879) — 区分: 要移植監査
+- `282d655defa0` — 2026-09-20 — Eric Traut — Preserve voice playback across pauses and packet bursts (#46880) — 区分: 除外候補（削除済み・外部固有領域）
+- `93b44c3a73ad` — 2026-09-20 — Eric Traut — Streamline agent command-center shortcuts and layout (#46882) — 区分: 要確認
+- `2f34d236f533` — 2026-09-20 — Felipe Coury — Add \`/tui\` to choose the terminal UI mode for the next launch (#46883) — 区分: 要確認
+- `9fdff739ea0e` — 2026-09-20 — Eric Traut — Enable plain clicks on transcript links and style bare URLs (#46884) — 区分: 要確認
+- `2db0ab7af1d9` — 2026-09-20 — Felipe Coury — Add right-click copying for transcript and composer selections (#46895) — 区分: 要確認
+- `d99213289f9a` — 2026-09-20 — Eric Traut — Honor the effective terminal color level in activity charts (#46897) — 区分: 要確認
+- `4ca8e7afff48` — 2026-09-20 — Felipe Coury — Make transcript list spacing uniform after streaming (#46899) — 区分: 要確認
+- `eaff9a5f1461` — 2026-09-20 — Felipe Coury — Hide Back to bottom when the current transcript tail is visible (#46902) — 区分: 要確認
+- `88ef37c64974` — 2026-09-20 — Eric Traut — Identify local background servers in \`/status\` (#46905) — 区分: 要確認
+- `ee2149a9b42f` — 2026-09-21 — Eric Traut — Preserve transcript position when opening settings pickers (#46910) — 区分: 要確認
+- `bb054a2b03f1` — 2026-09-21 — Felipe Coury — Keep quota warnings visible in the TUI (#46912) — 区分: 要確認
+- `75db67bbc6a1` — 2026-09-21 — alexsong-oai — Enforce current provider requirements for the model catalog (#46917) — 区分: 要確認
+- `d1e3f9dfe3d5` — 2026-09-21 — Eric Traut — Fix realtime V3 transcript reconciliation for handoffs (#46922) — 区分: 除外候補（削除済み・外部固有領域）
+- `05f39d7346e6` — 2026-09-21 — Eric Traut — Remove the \`Error\` prefix from TUI \`config.toml\` load errors (#46929) — 区分: 要移植監査
+- `57567b8d9e5a` — 2026-09-21 — Eric Traut — Use shared, keymap-aware tips in the fullscreen composer (#46931) — 区分: 要確認
+- `a86631502d49` — 2026-09-21 — Eric Traut — Add independent TUI rendering toggles for Mermaid, math, and tables (#46938) — 区分: 要確認
+- `774d64258260` — 2026-09-21 — Eric Traut — Populate the agents overview from background tool responses (#46946) — 区分: 要確認
+- `a6fdb11eda99` — 2026-09-21 — teddywyly-oai — Preserve metadata in native user verification requests (#46952) — 区分: 要確認
+- `abbdde95b593` — 2026-09-21 — jif — Add shared agent message-board extension interfaces (#46959) — 区分: 要確認
+- `0ad18769ad8d` — 2026-09-21 — jif — Avoid exposing config values in \`codex doctor\` errors (#46962) — 区分: 要移植監査
+- `293de27177a6` — 2026-09-21 — jif — Add SQLite storage for local agent message boards (#46966) — 区分: 要確認
+- `8f2c15c39871` — 2026-09-21 — jif — Implement paginated queries for the local agent message board (#46978) — 区分: 要確認
+- `4d160ea71ddd` — 2026-09-21 — jif — Index channel posts by timestamp for latest-message lookups (#46979) — 区分: 要確認
+- `ffbd30aeb71a` — 2026-09-21 — jif — Canonicalize the workspace trust key in the doctor config test (#46981) — 区分: 要移植監査
+- `695ab0a0b427` — 2026-09-21 — jif — Add collaboration tools for the agent message board (#46985) — 区分: 要確認
+- `48f897e4ce94` — 2026-09-21 — jif — Expand agent message board tool integration coverage (#46989) — 区分: 要確認
+- `f747d23d4bc8` — 2026-09-21 — jif — Clarify Bazel lockfile verification failures (#46993) — 区分: 要確認
+- `3938a27c1dd6` — 2026-09-21 — jif — Route agent delivery through captured send requests (#46994) — 区分: 要確認
+- `ebc05da3bdb7` — 2026-09-21 — felixxia-oai — Decouple tool restrictions from session identity with \`ToolPolicy\` (#46999) — 区分: 要確認
+- `7d99ee82d743` — 2026-09-21 — jif — Add agent inspection without restoring unloaded runtimes (#47010) — 区分: 要確認
+- `6149914a0e59` — 2026-09-21 — jif — Wire agent message boards into persistent multi-agent runtimes (#47017) — 区分: 要確認
+- `23a6b705bac7` — 2026-09-21 — jif — Add diagnostics for rollout compression metadata failures (#47026) — 区分: 要移植監査
+- `8a62cc4dc1a4` — 2026-09-21 — jif — Align message-board tools with the multi-agent namespace (#47028) — 区分: 要確認
+- `73129716c28b` — 2026-09-21 — jif — Delete persisted message boards with their root threads (#47029) — 区分: 要移植監査
+- `f585f13a120b` — 2026-09-21 — felixxia-oai — Preserve ordered assistant context in Guardian reviews (#47030) — 区分: 要確認
+- `3ead67394691` — 2026-09-21 — Charlie Marsh — Defer extension tool history materialization until first access (#47035) — 区分: 要移植監査
+- `dd6eff395494` — 2026-09-21 — Charlie Marsh — Share stored JSON payloads across code mode cells with \`Arc\` (#47036) — 区分: 要移植監査
+- `87bc50f9d423` — 2026-09-21 — Charlie Marsh — Cache OS discovery for user agents and telemetry (#47038) — 区分: 要確認
+- `3483294596ea` — 2026-09-21 — felixxia-oai — Preserve delivered messages through post-tool hook failures (#47039) — 区分: 要確認
+- `40eeb6e8a89e` — 2026-09-21 — jif — Recover corrupt message-board storage during thread deletion (#47042) — 区分: 要移植監査
+- `f484f7228d0f` — 2026-09-21 — jif — Share SQLite pools across local agent message-board handles (#47049) — 区分: 要確認
+- `0e69d3bd9b12` — 2026-09-21 — jif — Batch message-board subscriber reads into one SQLite result (#47050) — 区分: 要確認
+- `d583e73c4d12` — 2026-09-21 — jif — Fetch local message board thread summaries in one query (#47055) — 区分: 要移植監査
+- `fe6455a4384d` — 2026-09-21 — jif — Add a partial index for agent message board root posts (#47063) — 区分: 要確認
+- `51d221a9b77a` — 2026-09-21 — jif — Stop redundant message-board reads when limits reach one (#47064) — 区分: 要確認
+- `a4c8fc7a6b01` — 2026-09-21 — Eric Traut — Deduplicate deprecation notices in the TUI transcript (#47065) — 区分: 要確認
+- `f07aaf920b14` — 2026-09-21 — Eric Traut — Highlight selected newlines in the transcript view (#47068) — 区分: 要確認
+- `20cdcb015625` — 2026-09-21 — jif — Wait for thread idle in Guardian context budget tests (#47073) — 区分: 要移植監査
+- `f3037cafd32b` — 2026-09-21 — Anthony Tafoya — Refresh host-supplied cloud skills at turn startup (#47074) — 区分: 除外候補（削除済み・外部固有領域）
+- `e51aacad602d` — 2026-09-21 — jif — Include attributed previews in agent message board notifications (#47075) — 区分: 要確認
+- `62ea6d41e85d` — 2026-09-21 — sayan-oai — Serialize environment updates and cancel removed pending attachments (#47077) — 区分: 要移植監査
+- `7cec3e110ce6` — 2026-09-21 — Nick Steele — Mask daemon socket paths exposed through ancestor bind mounts (#47079) — 区分: 要移植監査
+- `ac985376787f` — 2026-09-21 — peilin-openai — Track cumulative MCP attribution across requests and thread history (#47081) — 区分: 要移植監査
+- `2fe4a2b4d8ba` — 2026-09-21 — Eric Traut — Show the voice toggle in the TUI shortcut overlay (#47082) — 区分: 除外候補（削除済み・外部固有領域）
+- `429afbcaa97a` — 2026-09-21 — Ahmed Ibrahim — Extract per-thread enrichment into a dedicated async helper (#47083) — 区分: 要移植監査
+- `3627bb91b2f1` — 2026-09-21 — Ahmed Ibrahim — Avoid building a host SQLite driver for SQLx macros (#47084) — 区分: 要確認
+- `deb0a08f240f` — 2026-09-21 — andrewgu-oai — Update model catalog descriptions and GPT-5.6-Sol priority (#47085) — 区分: 要確認
+- `c37b7307db57` — 2026-09-21 — Felipe Coury — Format analytics credit usage with consistent decimal precision (#47086) — 区分: 要確認
+- `09bb3d694223` — 2026-09-21 — Ahmed Ibrahim — Disable unused default dependency features (#47088) — 区分: 要確認
+- `b4b30dd5eb99` — 2026-09-21 — Ahmed Ibrahim — Centralize JSON-RPC response serialization through payloads (#47089) — 区分: 要確認
+- `afe4249cfe6b` — 2026-09-21 — Yuzhu Shen — Restrict Unix local MCP servers to stdio descriptors (#47094) — 区分: 要移植監査
+- `9c77996cd1c2` — 2026-09-21 — andrewgu-oai — Remove the \`rust-release-prepare\` workflow (#47095) — 区分: 要確認
+- `e8cd975a55a1` — 2026-09-21 — Felipe Coury — Keep TUI hints immediately above the composer (#47096) — 区分: 要確認
+- `8e7f50cba9de` — 2026-09-21 — Eric Traut — Preserve assistant answers in bounded TUI task responses (#47100) — 区分: 要確認
+- `142360dac8ea` — 2026-09-21 — Celia Chen — Honor configured proxies for realtime WebSocket connections (#47101) — 区分: 除外候補（削除済み・外部固有領域）
+- `6a601c00da85` — 2026-09-21 — Eddie Chen — Preserve originating turn metadata for yielded skill calls (#47106) — 区分: 要確認
+- `023d81b057de` — 2026-09-21 — iceweasel-oai — Preserve required Windows runtime variables for filesystem helpers (#47108) — 区分: 除外候補（削除済み・外部固有領域）
+- `bf91058b81c5` — 2026-09-21 — Felipe Coury — Lowercase the retry hint for conversations open in another app (#47112) — 区分: 要確認
+- `23ae65bb064f` — 2026-09-21 — Jeremy Rose — Persist thread creator identity in rollouts and SQLite (#47113) — 区分: 要移植監査
+- `772abc9425d4` — 2026-09-21 — chiam-oai — Preserve and expose thread item lifecycle timestamps (#47114) — 区分: 要移植監査
+- `3fd5160cd6c7` — 2026-09-21 — Jesse Du — Honor the configured product SKU in remote plugin requests (#47116) — 区分: 要移植監査
+- `5aa4939be4ed` — 2026-09-21 — rhan-oai — Support model-catalog overrides for Code Mode tool messages (#47118) — 区分: 要移植監査
+- `4a8cfe6bb7a4` — 2026-09-21 — Krish Chainani — Pass thread IDs to attachment uploads (#47121) — 区分: 要移植監査
+- `171dd0d39c4b` — 2026-09-21 — Andrew Wilkes — Increase OpenAI file blob upload timeout from 60 seconds to 5 minutes (#47122) — 区分: 要確認
+- `26cb4d73e2ce` — 2026-09-21 — Won Park — Add extra policy configuration for Guardian reviews (#47125) — 区分: 要移植監査
+- `69759baefd3b` — 2026-09-21 — Adam Perry @ OpenAI — Preserve foreign working directories in extension tool environments (#47129) — 区分: 要移植監査
+- `cf6754e6828d` — 2026-09-21 — andrewgu-oai — Remove the \`ultrafast\` service tier from \`gpt-5.6-sol\` (#47130) — 区分: 要確認
+- `e4dba902abb7` — 2026-09-21 — viyatb-oai — Support caller-provided MITM CAs in the network proxy (#47132) — 区分: 要移植監査
+- `720a21ae6697` — 2026-09-22 — Ian MacLeod — Prevent horizontal transcript selection from triggering autoscroll (#47137) — 区分: 要確認
+- `b04575705206` — 2026-09-22 — Celia Chen — Honor system proxy settings for standalone web search (#47142) — 区分: 要移植監査
+- `517f51a6f710` — 2026-09-22 — Adam Perry @ OpenAI — Extract exec-server CLI startup into a dedicated module (#47143) — 区分: 要確認
+- `c11ed24c2a14` — 2026-09-22 — andrewgu-oai — Update code mode catalog snapshot hashes (#47149) — 区分: 要移植監査
+- `bf7c87a7b7bd` — 2026-09-22 — Eric Traut — Ignore stale thread-close notifications after resuming a thread (#47155) — 区分: 要移植監査
+- `9f22ba803994` — 2026-09-22 — alexsong-oai — Harden gateway OAuth credential persistence and error redaction (#47158) — 区分: 要移植監査
+- `b23324986d03` — 2026-09-22 — Alex Kotliarskyi — Expose HTTP origins in MCP server status (#47159) — 区分: 要移植監査
+- `30daed37ad80` — 2026-09-22 — acrognale-oai — Apply workspace routing to Guardian v2 classifier requests (#47162) — 区分: 要確認
+- `f4389de2790a` — 2026-09-22 — alexsong-oai — Add explicit gateway login control and authentication status (#47170) — 区分: 要移植監査
+- `a37f260dc653` — 2026-09-22 — ningyi-oai — Preserve empty cell metadata under pending tool-call pressure (#47174) — 区分: 要確認
+- `5106a5234ff1` — 2026-09-22 — Eric Traut — Enable the fullscreen transcript by default (#47178) — 区分: 要確認
+- `75ec81c8623c` — 2026-09-22 — Eric Traut — Enable automatic daemon startup by default (#47179) — 区分: 要確認
+- `d1092865f8ec` — 2026-09-22 — Felipe Coury — Allow forking conversations locked by another app in the TUI (#47185) — 区分: 要確認
+- `639d2478cc2e` — 2026-09-22 — Eric Traut — Render aligned equations and optimization notation in TUI math (#47191) — 区分: 要確認
+- `b781733f958e` — 2026-09-22 — dermanyang-oai — Separate thread preparation from execution persistence (#47199) — 区分: 要移植監査
+- `6ea62c4396a1` — 2026-09-22 — Celia Chen — Resolve proxy routes for standalone web search redirects (#47204) — 区分: 要移植監査
+- `064e701b0fa4` — 2026-09-22 — alexsong-oai — Add explicit gateway OAuth sign-in to app-server (#47207) — 区分: 要移植監査
+- `94174e44cbc5` — 2026-09-22 — Ben Romano — Preserve MCP request trace context across transport workers (#47212) — 区分: 要移植監査
+- `f908e5a968ce` — 2026-09-22 — jif — Route multi-agent spawning through \`SpawnRequest\` (#47235) — 区分: 要確認
+- `b58b05e062b8` — 2026-09-22 — jif — Suppress agent message board notifications to the post author (#47236) — 区分: 要移植監査
+- `acc20df49f8c` — 2026-09-22 — jif — Prevent V2 agent eviction from racing with queued messages (#47240) — 区分: 要確認
+- `c46aa58a7baa` — 2026-09-22 — jif — Centralize agent resume handling in \`LocalAgentControl\` (#47244) — 区分: 要確認
+- `3b50349e1a80` — 2026-09-22 — victor-openai — Add explicit app and account targets to MCP resource reads (#47248) — 区分: 要移植監査
+- `c117207a6f1f` — 2026-09-22 — jif — Drop descendant channel posts from retained remote compaction v2 history (#47249) — 区分: 要移植監査
+- `fdd89e78ac33` — 2026-09-22 — jif — Return agent snapshots from \`close_agent\` (#47252) — 区分: 要確認
+- `0160eb3497bc` — 2026-09-22 — jif — Preserve explicit message-board unsubscribes when posting (#47257) — 区分: 要確認
+- `3d5cdc51d00c` — 2026-09-22 — jif — Test spawn settings reporting after child removal (#47258) — 区分: 要確認
+- `d3e584093222` — 2026-09-22 — jif — Subscribe authors to message-board channels created by posting (#47259) — 区分: 要移植監査
+- `a1f40f3f1326` — 2026-09-22 — victor-openai — Expose hosted plugin extensions in app-server summaries (#47263) — 区分: 要確認
+- `ac7634b9f73e` — 2026-09-22 — jif — Stream agent snapshots from local status subscriptions (#47267) — 区分: 要確認
+- `16bb1b9d7e21` — 2026-09-22 — jif — Implement \`AgentControl\` for \`LocalAgentControl\` (#47271) — 区分: 要確認
+- `99784bd09b23` — 2026-09-22 — felixxia-oai — Allow Guardian sync review across compaction hash differences (#47272) — 区分: 要確認
+- `279ba894152b` — 2026-09-22 — felixxia-oai — Enable Guardian thread context by default (#47275) — 区分: 要移植監査
+- `89a7298aff55` — 2026-09-22 — jif — Add regression coverage for message board unsubscribe persistence (#47281) — 区分: 要確認
+- `d9ac1f02edd2` — 2026-09-22 — felixxia-oai — Update the Guardian extra-policy snapshot for retained instructions (#47287) — 区分: 要確認
+- `c6c09fe29fb0` — 2026-09-22 — jif — Consolidate agent operations in the \`AgentControl\` implementation (#47292) — 区分: 要確認
+- `5c07856e25b5` — 2026-09-22 — jif — Separate local agent runtime state from controller handles (#47301) — 区分: 要確認
+- `4f6c106cddb6` — 2026-09-22 — Charlie Marsh — Use compact display metadata for Guardian review threads (#47302) — 区分: 要移植監査
+- `44b857c00e58` — 2026-09-22 — Charlie Marsh — Clean up legacy Guardian thread metadata in SQLite (#47303) — 区分: 要移植監査
+- `7e6c4c20fded` — 2026-09-22 — Eric Traut — Enable \`/import\` in remote and local daemon sessions (#47317) — 区分: 要確認
+- `d6093d32287b` — 2026-09-22 — Eric Traut — Offer explicit recovery for incompatible background servers (#47318) — 区分: 要確認
+- `a3275210bd25` — 2026-09-22 — Eric Traut — Match agent status symbols to the selected row style (#47319) — 区分: 要確認
+- `2c087a0cc2ef` — 2026-09-22 — Eric Traut — Fix Escape navigation in read-only agent sessions (#47320) — 区分: 要確認
+- `13a966fc652d` — 2026-09-22 — Eric Traut — Honor the system clock preference across more TUI timestamps (#47321) — 区分: 要確認
+- `5a11c456060c` — 2026-09-22 — Eric Traut — Render TUI Markdown lists with Unicode bullets and checkboxes (#47322) — 区分: 要確認
+- `286d4ecf44b4` — 2026-09-22 — Owen Lin — Persist resume metadata in compaction checkpoints (#47323) — 区分: 要確認
+- `8a577399c774` — 2026-09-22 — ningyi-oai — Keep report reason tags within Sentry limits (#47325) — 区分: 要確認
+- `2c2a42e65de0` — 2026-09-22 — viyatb-oai — Restrict MCP OAuth authorization endpoints to HTTP(S) (#47326) — 区分: 要移植監査
+- `6cfe29984965` — 2026-09-22 — Chris Dong — Preserve image generation request IDs on failure (#47327) — 区分: 除外候補（削除済み・外部固有領域）
+- `00d92ad3ee7f` — 2026-09-22 — Eric Traut — Standardize TUI menu description wording and punctuation (#47329) — 区分: 要確認
+- `3b7a8520efde` — 2026-09-22 — dkovalenko-oai — Identify failed SQLite databases in \`codex doctor\` output (#47330) — 区分: 要確認
+- `0a73d55b80af` — 2026-09-22 — Felipe Coury — Avoid redundant spacing above the transcript composer (#47331) — 区分: 要確認
+- `49e95cc73f4e` — 2026-09-22 — andrewgu-oai — Add GPT-6 Sol and Luna to the model catalog (#47332) — 区分: 要確認
+- `1b1b58f5a532` — 2026-09-22 — Felipe Coury — Move the activity inspection hint into keyboard shortcut help (#47338) — 区分: 要確認
+- `04fc75adbe67` — 2026-09-22 — pmccrary-oai — Add conditional turn interruption that preserves pending input (#47340) — 区分: 要確認
+- `d93909a939e4` — 2026-09-22 — Keyan Zhang — Skip stored title lookups for ephemeral forks (#47342) — 区分: 要確認
+- `df3094107210` — 2026-09-22 — Celia Chen — Add GPT-6 Sol and Luna to Amazon Bedrock catalogs (#47347) — 区分: 除外候補（削除済み・外部固有領域）
+- `5121aeff13aa` — 2026-09-22 — Owen Lin — Overlap subagent spawn persistence and clean up cancelled children (#47348) — 区分: 要確認
+- `9124e23e2cd5` — 2026-09-22 — Alex Daley — Move plugin recommendations into developer context (#47349) — 区分: 要確認
+- `8edfca892d46` — 2026-09-22 — Henry Levy — Reuse cloud skill catalogs across turns until invalidated (#47350) — 区分: 除外候補（削除済み・外部固有領域）
+- `559264d92e44` — 2026-09-22 — Rennie — Preserve \`invalid_prompt\` as a distinct error classification (#47353) — 区分: 要確認
+- `3ebfe7b30098` — 2026-09-22 — Felipe Coury — Reserve spacing after recaps at the transcript tail (#47355) — 区分: 要確認
+- `722dae7afd75` — 2026-09-22 — Dmitriy Kovalenko — Color paths and URLs in \`codex doctor\` by check status (#47358) — 区分: 要移植監査
+- `7db578fca663` — 2026-09-22 — Felipe Coury — Preserve user prompt URL destinations across terminal widths (#47360) — 区分: 要確認
+- `c6ad6f33eb1f` — 2026-09-22 — viyatb-oai — Restrict Windows sandbox default object access to the logon session (#47361) — 区分: 除外候補（削除済み・外部固有領域）
+- `54487a5b614b` — 2026-09-22 — viyatb-oai — Bound inbound exec-server requests across client transports (#47362) — 区分: 要確認
+- `e7bbc79f482a` — 2026-09-22 — Owen Lin — Resume model context from the latest compaction boundary (#47365) — 区分: 要確認
+- `78fdcd2311bf` — 2026-09-22 — vkg-oai — Overlap agent metadata reads when resuming a V2 root (#47369) — 区分: 要確認
+- `418199f6ade4` — 2026-09-22 — iceweasel-oai — Add an opt-in preference for the local MXC sandbox (#47375) — 区分: 除外候補（削除済み・外部固有領域）
+- `90e653014ab5` — 2026-09-22 — guinness-oai — Add opt-in reasoning status for realtime V3 delegations (#47377) — 区分: 除外候補（削除済み・外部固有領域）
+- `72ec34ee9ace` — 2026-09-22 — Eric Traut — Route TUI voice controls through the app (#47380) — 区分: 除外候補（削除済み・外部固有領域）
+- `a837a656ff15` — 2026-09-22 — Eric Traut — Keep voice conversations running across TUI thread navigation (#47381) — 区分: 除外候補（削除済み・外部固有領域）
+- `58d722cb5d2a` — 2026-09-22 — Eric Traut — Show a voice badge in the agents overview (#47382) — 区分: 除外候補（削除済み・外部固有領域）
+- `506a328dab11` — 2026-09-22 — Felipe Coury — Restore composer hints after clearing selection at the transcript bottom (#47384) — 区分: 要確認
+- `888e02db34bc` — 2026-09-22 — acrognale-oai — Enforce network policy throughout HTTP and WebSocket requests (#47389) — 区分: 要移植監査
+- `2c3295306f9f` — 2026-09-22 — mtsui-oai — Retry transient OpenAI file blob upload failures (#47393) — 区分: 要確認
+- `24462234b2ae` — 2026-09-22 — andrewgu-oai — Refresh bundled model metadata and instructions (#47397) — 区分: 要確認
+- `4b664e0ef039` — 2026-09-23 — Felipe Coury — Respect tmux mouse settings in fullscreen and overlays (#47399) — 区分: 要確認
+- `22a3f6d5d89c` — 2026-09-23 — acrognale-oai — Enforce application network policy across app-server requests (#47407) — 区分: 要移植監査
+- `8f8ace78cbac` — 2026-09-23 — acrognale-oai — Enforce application network policy for AWS auth and telemetry (#47408) — 区分: 要移植監査
+- `db3cb33ecafa` — 2026-09-23 — acrognale-oai — Honor network policy in remote control and recover remote execution (#47410) — 区分: 除外候補（削除済み・外部固有領域）
+- `9d4d34d436b4` — 2026-09-23 — acrognale-oai — Apply shared network policy throughout embedded Codex startup (#47411) — 区分: 要移植監査
+- `53486e5bdc50` — 2026-09-23 — Charlie Marsh — Cache decrypted gateway OAuth secrets per backend (#47413) — 区分: 要移植監査
+- `39598ed17885` — 2026-09-23 — Eric Traut — Support Shift-click to extend transcript selections (#47414) — 区分: 要確認
+- `2925d06f5a91` — 2026-09-23 — Felipe Coury — Use native scrollback for Terminal.app over SSH in auto mode (#47417) — 区分: 要確認
+- `811fe5fa4311` — 2026-09-23 — Ian MacLeod — Recover unsent question drafts when TUI turns end (#47422) — 区分: 要確認
+- `3032b387fa20` — 2026-09-23 — Ian MacLeod — Preserve history search during background draft recovery (#47423) — 区分: 要移植監査
+- `408a77dc1a1c` — 2026-09-23 — Ian MacLeod — Clear pending async question notifications when turns end (#47424) — 区分: 要確認
+- `8a3c4ea3b5a7` — 2026-09-23 — sayan-oai — Apply inherited environment settings at turn boundaries (#47428) — 区分: 要移植監査
+- `370cd7cba87a` — 2026-09-23 — sayan-oai — Allow environment selection updates during an active turn (#47435) — 区分: 要移植監査
+- `b7add4df3d95` — 2026-09-23 — Adam Perry @ OpenAI — Stabilize retry timing and WebSocket tests (#47437) — 区分: 要移植監査
+- `4981037e99a3` — 2026-09-23 — Eric Traut — Use secondary text styling for the transcript footer shortcut hint (#47441) — 区分: 要確認
+- `c44deff7b108` — 2026-09-23 — Ruslan Nigmatullin — Extract WebSocket authentication into \`codex-websocket-auth\` (#47447) — 区分: 要移植監査
+- `0a2eb4696c26` — 2026-09-23 — Henry Levy — Parallelize instruction refresh and tool preparation (#47458) — 区分: 要確認
+- `40eac3ce8a0c` — 2026-09-23 — alicec-oai — Add explicit background control to image generation (#47484) — 区分: 除外候補（削除済み・外部固有領域）
+- `27969c0ae9c1` — 2026-09-23 — jif — Route session agent operations through \`AgentControl\` (#47520) — 区分: 要確認
+- `a69d757cd8ef` — 2026-09-23 — Peter Steinberger — Emit command lifecycle events for unified exec launch failures (#47529) — 区分: 要確認
+- `0b23f365f8dc` — 2026-09-23 — jif — Route agent lookups and V2 context through \`AgentControl\` (#47536) — 区分: 要確認
+- `ec4d27ae8088` — 2026-09-23 — jif — Test interrupted one-shot command launch failure persistence (#47539) — 区分: 要確認
+- `30fc6864cc13` — 2026-09-23 — jif — Add an option to disable multi-agent v2 direct messaging (#47540) — 区分: 要確認
+- `d6c4c6aea404` — 2026-09-23 — jif — Classify rollout read failures by reason and progress (#47565) — 区分: 要移植監査
+- `6f6af0fce438` — 2026-09-23 — iceweasel-oai — Record sandbox backends in command execution analytics (#47568) — 区分: 要移植監査
+- `acd5ed9207cd` — 2026-09-23 — felixxia-oai — Wait for idle before injecting remote compaction test history (#47571) — 区分: 要移植監査
+- `cb1eea3e98eb` — 2026-09-23 — Eric Traut — Explain Mermaid rendering fallbacks in the TUI (#47572) — 区分: 要確認
+- `29aa1df62ea1` — 2026-09-23 — felixxia-oai — Retain assistant context for Guardian authorization reviews (#47582) — 区分: 要移植監査
+- `876ce590e179` — 2026-09-23 — felixxia-oai — Preserve streamed assistant message order in retained context (#47584) — 区分: 要確認
+- `7342991f0c10` — 2026-09-23 — felixxia-oai — Preserve delivered assistant messages in Guardian retained context (#47585) — 区分: 要確認
+- `e0a64cf2bc45` — 2026-09-23 — Eric Traut — Keep unfinished link destinations out of rich streaming previews (#47589) — 区分: 要確認
+- `ae132dc50ab5` — 2026-09-23 — Dylan Hurd — Serialize numeric custom reasoning effort as JSON numbers (#47590) — 区分: 要確認
+- `8f1490eabe3e` — 2026-09-23 — Eric Traut — Stream daemon executable hashing off the async runtime (#47591) — 区分: 要確認
+- `c114f232f9bf` — 2026-09-23 — reia-oai — Refresh realtime context for each model request (#47596) — 区分: 除外候補（削除済み・外部固有領域）
+- `6824dabe0393` — 2026-09-23 — Ian MacLeod — Guard prerelease channel and canary updates against older versions (#47597) — 区分: 要確認
+- `2210190435fe` — 2026-09-23 — Ruslan Nigmatullin — Add opt-in WebSocket authentication to exec-server (#47601) — 区分: 要移植監査
+- `897b7ae285b2` — 2026-09-23 — Charlie Marsh — Add a reap-only drop policy for child processes (#47603) — 区分: 要確認
+- `b8d365b18ec2` — 2026-09-23 — Charlie Marsh — Extend child commands with session and descriptor controls (#47604) — 区分: 要確認
+- `50fc133d05bc` — 2026-09-23 — Charlie Marsh — Route pipe processes through the shared child launcher (#47605) — 区分: 要確認
+- `7aa65199098d` — 2026-09-23 — Charlie Marsh — Use native POSIX spawning for command hooks (#47610) — 区分: 要確認
+- `60f0ab6cbfe4` — 2026-09-23 — Charlie Marsh — Use the shared process launcher for Unix shell snapshots (#47611) — 区分: 要確認
+- `df3ecee6f0a7` — 2026-09-23 — Free Wortley — Launch Linux pipe processes through a fresh setup helper (#47612) — 区分: 要確認
+- `15922a50aa5f` — 2026-09-23 — Charlie Marsh — Expand Linux spawn-helper lifecycle test coverage (#47613) — 区分: 要確認
+- `88b498ded45c` — 2026-09-23 — Charlie Marsh — Route Linux PTY launches through the process setup helper (#47617) — 区分: 要確認
+- `591ffb1aaef4` — 2026-09-23 — Ian MacLeod — Prefer Shift-arrow hints for queued messages and questions (#47618) — 区分: 要確認
+- `0ed77c274b4f` — 2026-09-23 — Celia Chen — Add bounded buffering for global operation metrics (#47619) — 区分: 要確認
+- `13869ca39e7a` — 2026-09-23 — Sean Huang — Add portable project trust lookup APIs (#47620) — 区分: 要確認
+- `8bbe8f870247` — 2026-09-23 — jif — Fix read-only metadata mount ordering for nested writable roots (#47623) — 区分: 要確認
+- `f07b26c9c9d1` — 2026-09-23 — Ankush Gupta — Recognize \`user_message\` tools in Guardian authorization context (#47624) — 区分: 要移植監査
+- `fdeaa6c1ecad` — 2026-09-23 — pmccrary-oai — Allow history and notes without experimental context capability (#47625) — 区分: 要移植監査
+- `e1f3fafad8cc` — 2026-09-23 — jif — Route V2 child loading through \`AgentControl\` (#47629) — 区分: 要確認
+- `851d9e95f153` — 2026-09-23 — jif — Bind Guardian reviews to the action's target environment (#47630) — 区分: 要移植監査
+- `dce62a50a23c` — 2026-09-23 — jif — Route message board agent resolution through the selected controller (#47633) — 区分: 要確認
+- `ce7df3623757` — 2026-09-23 — Ben Romano — Overlap startup WebSocket preconnect with tool discovery (#47635) — 区分: 要移植監査
+- `c847294c60c7` — 2026-09-23 — mtsui-oai — Classify retryable exec-server preparation errors by type (#47638) — 区分: 要確認
+- `ab021e9f137c` — 2026-09-23 — Felipe Coury — Add configurable copy-on-select for transcript selections (#47639) — 区分: 要移植監査
+- `9d8de196748b` — 2026-09-23 — Adam Perry @ OpenAI — Honor Retry-After and preserve server retry deadlines (#47641) — 区分: 要確認
+- `8c66a5a243d1` — 2026-09-23 — rhan-oai — Add model-specific prefixes to indirect tool descriptions (#47642) — 区分: 要確認
+- `e9b4c6967ee3` — 2026-09-23 — johnl-oai — Apply Guardian computer-use review to the Browser connector (#47647) — 区分: 要確認
+- `ad26b2520ab9` — 2026-09-23 — Ruslan Nigmatullin — Support bearer tokens for app-server executor connections (#47648) — 区分: 要確認
+- `e6da6fd7c7fd` — 2026-09-23 — xli-oai — Add opt-in OTLP logging for final agent responses (#47649) — 区分: 要確認
+- `5bfb04b24767` — 2026-09-23 — Dmitriy Kovalenko — Attach inherited rollout history to diagnostic reports (#47653) — 区分: 要移植監査
+- `b086ad5493f0` — 2026-09-23 — Yuzhu Shen — Make Linux descriptor cleanup fork-safe (#47654) — 区分: 要確認
+- `7e5054d32f1d` — 2026-09-23 — Ian MacLeod — Bump the exec-server stable compatibility test to Codex 0.156.1 (#47655) — 区分: 要確認
+- `5bae5b563e1b` — 2026-09-23 — jackz — Restrict the default Bedrock GovCloud model catalog (#47657) — 区分: 除外候補（削除済み・外部固有領域）
+- `a79a18cd0eb8` — 2026-09-23 — Ruslan Nigmatullin — Expose tool dispatch and timing observations to extensions (#47662) — 区分: 要確認
+- `8e17909b2787` — 2026-09-23 — jackz — Preserve managed network policy in route-aware transports (#47663) — 区分: 要移植監査
+- `d47b9a8c002f` — 2026-09-23 — Steve Coffey — Preserve early unified exec output in completion events (#47665) — 区分: 要確認
+- `f2654ea6c9a3` — 2026-09-23 — eknight-oai — Support model-specific descriptions for agent message board tools (#47670) — 区分: 要確認
+- `5f371ba30ae4` — 2026-09-23 — zm-oai — Fix no-reparse directory opens on Windows 10 (#47672) — 区分: 除外候補（削除済み・外部固有領域）
+- `c530382cf38a` — 2026-09-23 — zm-oai — Clarify registered Windows sandbox setup errors (#47673) — 区分: 除外候補（削除済み・外部固有領域）
+- `b2aa42e6f103` — 2026-09-23 — rhan-oai — Support model catalog overrides for MCP resource tool specs (#47677) — 区分: 要移植監査
+- `9477081ccd33` — 2026-09-23 — Eric Traut — Support quoted labels and ampersands in Mermaid flowcharts (#47678) — 区分: 要確認
+- `8de2d336b880` — 2026-09-23 — Ruslan Nigmatullin — Add extension hooks for model requests and response streams (#47679) — 区分: 要確認
+- `6fa3bcaae8aa` — 2026-09-23 — Adam Perry @ OpenAI — Add exec-server RPC timing and process startup tracing (#47680) — 区分: 要確認
+- `ab7439231c46` — 2026-09-23 — Anthony Tafoya — Add executor capability discovery V2 infrastructure (#47683) — 区分: 要確認
+- `a6df7385e60c` — 2026-09-23 — felixxia-oai — Make thread-owned Guardian context always enabled (#47686) — 区分: 要移植監査
+- `1d516d8b3d3b` — 2026-09-23 — felixxia-oai — Remove legacy Guardian authorization evidence paths (#47688) — 区分: 要移植監査
+- `920e1a34dc67` — 2026-09-23 — felixxia-oai — Make Guardian thread context capture unconditional (#47689) — 区分: 要移植監査
+- `7b66c21f580e` — 2026-09-23 — felixxia-oai — Remove obsolete Guardian context capture mode branches (#47690) — 区分: 要確認
+- `b4b055cfc8fc` — 2026-09-23 — dermanyang-oai — Materialize rollout persistence for pending inter-agent messages (#47691) — 区分: 要移植監査
+- `80a0c1da88df` — 2026-09-23 — Adam Perry @ OpenAI — Configure curl retries for DotSlash installation in CI (#47693) — 区分: 要移植監査
+- `17cd2834e3d3` — 2026-09-23 — zm-oai — Repair rejected Windows sandbox credentials during provisioning (#47695) — 区分: 除外候補（削除済み・外部固有領域）
+- `8215b81920d3` — 2026-09-23 — jgershen-oai — Avoid the shutdown timeout in the lagged-event test (#47696) — 区分: 要確認
+- `4b3b569f3975` — 2026-09-23 — jgershen-oai — Allow WebSocket test server shutdown while waiting for requests (#47698) — 区分: 要移植監査
+- `d838c2346d05` — 2026-09-24 — vkg-oai — Allow idle threads to prewarm and repair WebSocket connections (#47701) — 区分: 要移植監査
+- `d04b0561d354` — 2026-09-24 — jackz — Preserve account network policy for ChatGPT backend requests (#47703) — 区分: 除外候補（削除済み・外部固有領域）
+- `6989c6548b37` — 2026-09-24 — Sean Huang — Fix spawn flag typing and isolate project configuration tests (#47704) — 区分: 要移植監査
+- `f5f08c54cb7a` — 2026-09-24 — vkg-oai — Route resume prewarm through the cached WebSocket session (#47709) — 区分: 要移植監査
+- `4891c4e35fe8` — 2026-09-24 — Steve Coffey — Update unified exec output buffers atomically (#47712) — 区分: 要確認
+- `f5960fcc22b9` — 2026-09-24 — Ahmed Ibrahim — Reduce dependency coupling in shared configuration crates (#47713) — 区分: 要移植監査
+- `e7165c2dbb14` — 2026-09-24 — ningyi-oai — Preserve tool result metadata more selectively under size limits (#47714) — 区分: 要確認
+- `7dae8c53d97e` — 2026-09-24 — Eric Traut — Avoid recursive TUI event dispatch for model picker selections (#47717) — 区分: 要確認
+- `5f2ce5e02c56` — 2026-09-24 — Rennie — Attribute tool telemetry to the invoking turn's product SKU (#47741) — 区分: 要確認
+- `1d87af5faa75` — 2026-09-24 — jackz — Honor network policy in history notes and image generation extensions (#47742) — 区分: 除外候補（削除済み・外部固有領域）
+- `a98a07759a3f` — 2026-09-24 — vkg-oai — Skip startup prewarm preparation when the WebSocket is ready (#47745) — 区分: 要移植監査
+- `a16381c4457e` — 2026-09-24 — Ahmed Ibrahim — Align Cargo and Bazel Rust debug information defaults (#47748) — 区分: 要確認
+- `e0ef5a1a0f64` — 2026-09-24 — Ahmed Ibrahim — Reduce generic code duplication in RPC and Markdown rendering (#47751) — 区分: 要確認
+- `a83ba6124944` — 2026-09-24 — Ahmed Ibrahim — Centralize typed app-server response decoding (#47755) — 区分: 要確認
+- `b0a9dcb843f6` — 2026-09-24 — Rennie — Refactor tool telemetry product SKU matching to use an allowlist (#47757) — 区分: 要確認
+- `53446f90a566` — 2026-09-24 — ningyi-oai — Preserve more tool metadata within outgoing message budgets (#47758) — 区分: 要確認
+- `29f056c26c09` — 2026-09-24 — rhan-oai — Honor catalog schemas for asynchronous user input (#47773) — 区分: 要確認
+- `51d45620702c` — 2026-09-24 — jif — Support close-on-exec attachments without changing PTY semantics (#47797) — 区分: 要確認
+- `c098f97e5305` — 2026-09-24 — jif — Enable terminal input approval by default (#47799) — 区分: 要移植監査
+- `fdbe23da4556` — 2026-09-24 — jif — Allow hosts to provide agent controllers through ThreadManager (#47808) — 区分: 要移植監査
+- `1cd253c98750` — 2026-09-24 — felixxia-oai — Preserve explicit user goal updates in Guardian authorization (#47811) — 区分: 要移植監査
+- `8ac495b79988` — 2026-09-24 — felixxia-oai — Fix sleep interruption test event handling and fixture lifetime (#47813) — 区分: 要確認
+- `869b5527cd8c` — 2026-09-24 — felixxia-oai — Fix a lost wakeup in the unified exec termination test (#47814) — 区分: 要確認
+- `16b20547f6b1` — 2026-09-24 — jif — Stabilize thread resume and memory dual-write tests (#47817) — 区分: 要移植監査
+- `49862b62be3a` — 2026-09-24 — teddywyly-oai — Retry Guardian reviews when authorization changes (#47819) — 区分: 要移植監査
+- `b19cebecc016` — 2026-09-24 — jif — Add integration coverage for host agent controllers (#47820) — 区分: 要確認
+- `4083a68f8837` — 2026-09-24 — felixxia-oai — Allow four concurrent threads in the multi-agent resume test (#47824) — 区分: 要移植監査
+- `b15718acfc5e` — 2026-09-24 — felixxia-oai — Wait for login completion in recommended plugin tests (#47828) — 区分: 要確認
+- `61e23bc6a1e9` — 2026-09-24 — jif — Bind Guardian async scores to target environment permissions (#47830) — 区分: 要移植監査
+- `282cd7b01937` — 2026-09-24 — jif — Stabilize Rosetta test timing and retry delay telemetry (#47832) — 区分: 要確認
+- `12fd929f7243` — 2026-09-24 — Felipe Coury — Keep the TUI responsive during clipboard copies (#47847) — 区分: 要確認
+- `e7f119819ab2` — 2026-09-24 — felixxia-oai — Preserve human overrides across repeated heartbeat instructions (#47851) — 区分: 要確認
+- `421082e79d31` — 2026-09-24 — jif — Avoid blocking async proxy resolution on the system proxy cache (#47852) — 区分: 要移植監査
+- `df06bb054cc1` — 2026-09-24 — jif — Initialize media estimates outside the global cache lock (#47856) — 区分: 要確認
+- `58838dfa5ba1` — 2026-09-24 — jif — Validate loaded plugins outside the cache lock (#47858) — 区分: 要確認
+- `3e9d1d29370e` — 2026-09-24 — jif — Avoid nested read locking when rendering browser sign-in (#47861) — 区分: 要確認
+- `2deb542491ab` — 2026-09-24 — iceweasel-oai — Render remote permission paths using executor context (#47867) — 区分: 要移植監査
+- `30758e5c77c1` — 2026-09-24 — jif — Add opt-in OTLP logging for Guardian assessments (#47870) — 区分: 要確認
+- `42266240fde6` — 2026-09-24 — jif — Fix PID reservation test race and update guardian heartbeat snapshot (#47871) — 区分: 要確認
+- `4021746a1568` — 2026-09-24 — Matthew Zeng — Measure deferred tool namespace fragments before and after truncation (#47873) — 区分: 要確認
+- `6f51c65958eb` — 2026-09-24 — felixxia-oai — Fix macOS system-alias matching in patch permission checks (#47879) — 区分: 要移植監査
+- `90b67c96ca0e` — 2026-09-24 — Charlie Marsh — Use Tokio's clock for TUI paste timing (#47881) — 区分: 要確認
+- `a285066737c2` — 2026-09-24 — Dmitriy Kovalenko — Preserve diagnostic logs when SQLite logging fails (#47886) — 区分: 要確認
+- `3d6428510fee` — 2026-09-24 — Dmitriy Kovalenko — Warn users when SQLite diagnostic log writes fail (#47887) — 区分: 要確認
+- `b3ea9fa63279` — 2026-09-24 — Eric Traut — Include TUI client logs in diagnostic uploads (#47889) — 区分: 要確認
+- `83b56bc5ad94` — 2026-09-24 — willwang-openai — Support client secrets for pre-registered MCP OAuth clients (#47891) — 区分: 要移植監査
+- `f6fd7f17ed2e` — 2026-09-24 — Felipe Coury — Clean up temporary Codex homes after TUI tests (#47894) — 区分: 要確認
+- `a33fb9751c1e` — 2026-09-24 — Felipe Coury — Preserve Markdown formatting when copying transcript selections (#47896) — 区分: 要確認
+- `2457571e4cd1` — 2026-09-24 — Sean Huang — Preserve local-binding inheritance in environment network policies (#47898) — 区分: 要移植監査
+- `62197a65e52f` — 2026-09-24 — peilin-openai — Add diagnostic reasons to MCP attribution errors (#47899) — 区分: 要移植監査
+- `12cb14f7b70f` — 2026-09-24 — Owen Lin — Default local threads to paginated history (#47900) — 区分: 要移植監査
+- `2347a61d0d0e` — 2026-09-24 — Celia Chen — Add bounded credential-storage telemetry helpers (#47901) — 区分: 要移植監査
+- `975d30c043cd` — 2026-09-24 — Ian MacLeod — Avoid repeated table clones during config merging (#47902) — 区分: 要移植監査
+- `0b78ddb03588` — 2026-09-24 — Ian MacLeod — Move config key alias normalization ahead of merging (#47903) — 区分: 要移植監査
+- `f0f38b68f728` — 2026-09-24 — Ian MacLeod — Support nested canonical paths in config key aliases (#47904) — 区分: 要移植監査
+- `5c8fc15cc992` — 2026-09-24 — Ian MacLeod — Alias \`tui.whimsy\` to \`tui.effects.starfield\` (#47908) — 区分: 要確認
+- `6743672ad7be` — 2026-09-24 — Eric Traut — Add TUI composer support for prompt suggestions (#47911) — 区分: 要確認
+- `a8a4f14087fd` — 2026-09-24 — Charlie Marsh — Fix attestation routing during thread startup (#47912) — 区分: 要移植監査
+- `766d2377a8c0` — 2026-09-24 — jif — Add an opt-in flag to defer mailbox preemption (#47913) — 区分: 要確認
+- `edd0df9084eb` — 2026-09-24 — Ahmed Ibrahim — Reuse verified V8 checksum manifests from the artifact cache (#47915) — 区分: 要確認
+- `3e27195f2de0` — 2026-09-24 — Ahmed Ibrahim — Parameterize the turn-start originator header test (#47918) — 区分: 要確認
+- `c8c1ee5da8af` — 2026-09-24 — malsamiri-oai — Transport large Windows sandbox launch payloads through the environment (#47919) — 区分: 除外候補（削除済み・外部固有領域）
+- `c19dcd975d8c` — 2026-09-24 — chess — Allow directory moves under global Seatbelt basename denies (#47920) — 区分: 要確認
+- `731d4a5ca842` — 2026-09-24 — zm-oai — Allow full-access Windows setup to provision through registered Core (#47922) — 区分: 除外候補（削除済み・外部固有領域）
+- `1866e5167790` — 2026-09-24 — Sean Huang — Make project trust lookup paths explicit and defer root resolution (#47924) — 区分: 要移植監査
+- `0037b39cc1d5` — 2026-09-24 — mtsui-oai — Retry file blob uploads on HTTP 502 and 504 (#47926) — 区分: 要確認
+- `4b97832cfb6c` — 2026-09-24 — willwang-openai — Use \`127.0.0.1\` for local login redirects (#47927) — 区分: 要確認
+- `e154f7b80789` — 2026-09-24 — Eric Traut — Generate TUI prompt suggestions after successful turns (#47929) — 区分: 要確認
+- `694d8d45bd3d` — 2026-09-24 — andrewgu-oai — Remove GPT-5.4 from bundled catalogs and preserve migration prompts (#47932) — 区分: 要確認
+- `af09e926d693` — 2026-09-24 — Henry Levy — Apply the unchanged-model compaction shortcut to all session sources (#47934) — 区分: 要確認
+- `b62fcd3c4b41` — 2026-09-24 — Henry Levy — Allow cached catalogs to satisfy MCP startup readiness (#47935) — 区分: 要移植監査
+- `339e981ba71b` — 2026-09-24 — Vivian Fang — Make MCP and Code Mode input schema budgets configurable (#47936) — 区分: 要移植監査
+- `fbd0c0d96ca0` — 2026-09-24 — sayan-oai — Add direct replies for thread settings updates (#47937) — 区分: 要移植監査
+- `e8098eb40617` — 2026-09-24 — sayan-oai — Separate selected plugin identities from MCP contributions (#47939) — 区分: 要移植監査
+- `549455f3ec5a` — 2026-09-24 — iceweasel-oai — Remove unused Windows world-writable audit code (#47943) — 区分: 除外候補（削除済み・外部固有領域）
+- `5d80031172f5` — 2026-09-24 — Eddie Chen — Parameterize the thread initialization analytics test by originator (#47945) — 区分: 要移植監査
+- `dda227891d27` — 2026-09-24 — jif — Add an in-memory agent message board for ephemeral sessions (#47946) — 区分: 要確認
+- `cf792c3a257b` — 2026-09-24 — felixxia-oai — Expand root authorization context to 16 messages (#47947) — 区分: 要移植監査
+- `4a358b1ae9ea` — 2026-09-24 — Ahmed Ibrahim — Use prebuilt V8 archives for Bazel on macOS and GNU Linux (#47951) — 区分: 要確認
+- `9442a175ba52` — 2026-09-24 — jif — Prune expired in-memory message board registry entries (#47952) — 区分: 要確認
+- `40e13e6281e4` — 2026-09-24 — Eric Traut — Move fullscreen startup tips into the transcript (#47954) — 区分: 要確認
+- `51d66fdd3b75` — 2026-09-24 — Krish Chainani — Support file references in image edit requests (#47956) — 区分: 要確認
+- `dbb875d23cfd` — 2026-09-24 — ningyi-oai — Bound tool-call observations to the outgoing Responses message budget (#47957) — 区分: 要確認
+- `8dd0a0816064` — 2026-09-24 — Ahmed Ibrahim — Request transparent huge pages for Cargo and eligible Bazel rustc jobs (#47962) — 区分: 要確認
+- `8f103417ef3e` — 2026-09-24 — Celia Chen — Preserve the client-agent header for Amazon Bedrock Runtime (#47964) — 区分: 除外候補（削除済み・外部固有領域）
+- `dafb133c5b7f` — 2026-09-24 — Steve Coffey — Surface Flex capacity failures as a distinct terminal error (#47967) — 区分: 要確認
+- `a708fc683934` — 2026-09-24 — Eric Traut — Handle Btrfs device mismatches when masking daemon sockets (#47968) — 区分: 要移植監査
+- `97da50c1aa41` — 2026-09-24 — sayan-oai — Expose current environment selections for a running turn (#47970) — 区分: 要移植監査
+- `b725da3b6d52` — 2026-09-25 — Eric Traut — Add Pro Max plan support and update Pro display names (#47971) — 区分: 要確認
+- `a92ccbde5328` — 2026-09-25 — aionescu-oai — Preserve Git directory protections across writable roots (#47974) — 区分: 要確認
+- `1f17a0a04b5c` — 2026-09-25 — Eric Traut — Prevent stale voice answers from reappearing during speech recovery (#47975) — 区分: 除外候補（削除済み・外部固有領域）
+- `75e0e0aad97a` — 2026-09-25 — Henry Levy — Prepare MCP calls directly from advertised tool identities (#47981) — 区分: 要移植監査
+- `9ef08dcf2bda` — 2026-09-25 — Owen Lin — Add multi-agent spawn latency and failure metrics (#47984) — 区分: 要確認
+- `0f0efab8d3cb` — 2026-09-25 — Henry Levy — Reuse MCP handlers across equivalent bindings (#47988) — 区分: 要移植監査
+- `aa380897f67b` — 2026-09-25 — open-matt — Add startup-only PID namespace inheritance to exec-server (#47989) — 区分: 要確認
+- `8ae55c863db2` — 2026-09-25 — Celia Chen — Respect configured authentication in the thread manager sample (#48004) — 区分: 要移植監査
+- `d0a64e91ae6b` — 2026-09-25 — aionescu-oai — Validate tool suggestion install URLs before showing the app link (#48015) — 区分: 要確認
+- `d7b07d45517a` — 2026-09-25 — Adam Perry @ OpenAI — Test same-cell permission grants and strict review in code mode (#48017) — 区分: 要移植監査
+- `4b1c0c30dabd` — 2026-09-25 — victor-openai — Remove plugin extension metadata from discovery and summaries (#48035) — 区分: 要確認
+- `86be5320b068` — 2026-09-25 — felixxia-oai — Deduplicate retained instructions across Guardian reviews (#48060) — 区分: 要確認
+- `69fa3881cb40` — 2026-09-25 — jif — Handle early command yields in the Guardian network approval test (#48069) — 区分: 要移植監査
+- `ca60d6fa72aa` — 2026-09-25 — jif — Skip message-board notification previews when there are no recipients (#48072) — 区分: 要確認
+- `60713126ee0d` — 2026-09-25 — jif — Avoid stdin approval for runtime-only permission grants (#48073) — 区分: 要移植監査
+- `466d5f583e04` — 2026-09-25 — jif — Add Serde support to agent message board request types (#48077) — 区分: 要確認
+- `c98e263fb536` — 2026-09-25 — jif — Replay exec-server shell snapshots through unnamed files (#48078) — 区分: 要移植監査
+- `b35a7afbe83d` — 2026-09-25 — felixxia-oai — Preserve recent authorization context for Guardian reviews (#48098) — 区分: 要移植監査
+- `b63a296775ec` — 2026-09-25 — jif — Honor shell environment policy in legacy snapshots (#48099) — 区分: 要移植監査
+- `6d083e3bc4ca` — 2026-09-25 — jif — Add an HTTP client for remote agent message boards (#48100) — 区分: 要確認
+- `e75b36efdec6` — 2026-09-25 — Eric Traut — Show multiline command previews in \`/ps\` (#48101) — 区分: 要確認
+- `d5cbfe1455a3` — 2026-09-25 — felixxia-oai — Deduplicate retained instructions against Guardian transcripts (#48109) — 区分: 要確認
+- `85928697a46f` — 2026-09-25 — felixxia-oai — Deduplicate retained instructions in async Guardian context (#48110) — 区分: 要確認
+- `bd3d4d1436bb` — 2026-09-25 — felixxia-oai — Preserve user text parts during local compaction (#48115) — 区分: 要確認
+- `bf832f4678e1` — 2026-09-25 — Eric Traut — Allow reasoning shortcuts to reach Max (#48116) — 区分: 要確認
+- `b8a1fe4afc97` — 2026-09-25 — Felipe Coury — Add configurable right-click paste to the fullscreen TUI (#48118) — 区分: 要移植監査
+- `68e0c9f5d8fd` — 2026-09-25 — felixxia-oai — Prevent worker completion races in the guardian authorization test (#48119) — 区分: 要移植監査
+- `66c4e5a20d21` — 2026-09-25 — Eric Traut — Keep startup drafts visible during command center session handoff (#48121) — 区分: 要確認
+- `55543d87724b` — 2026-09-25 — pakrym-oai — Add early yielding for code-mode observations (#48123) — 区分: 要移植監査
+- `0b430baeb43d` — 2026-09-25 — felixxia-oai — Use request notifications in the cloud config loader lifetime test (#48130) — 区分: 除外候補（削除済み・外部固有領域）
+- `d9275a63ed1c` — 2026-09-25 — Eric Traut — Allow Left to open the command center from read-only conversations (#48132) — 区分: 要確認
+- `1bf73324cadc` — 2026-09-25 — pakrym-oai — Add opt-in code-mode yielding on new user input (#48135) — 区分: 要移植監査
+- `17f37f56be7e` — 2026-09-25 — zm-oai — Suppress console windows when spawning the code-mode host on Windows (#48138) — 区分: 除外候補（削除済み・外部固有領域）
+- `f92655d07f40` — 2026-09-25 — pakrym-oai — Preempt model responses when new user input arrives (#48141) — 区分: 要確認
+- `c7e80f873f67` — 2026-09-25 — rreichel3-oai — Preserve executor MCP credential boundaries across reconnects (#48143) — 区分: 要移植監査
+- `de9e78e3e7ca` — 2026-09-25 — Brent Traut — Add item anchors to \`thread/items/list\` pagination (#48151) — 区分: 要移植監査
+- `645b683a9e71` — 2026-09-25 — viyatb-oai — Preserve filesystem denials when preparing approved commands (#48155) — 区分: 要確認
+- `8b78f4796605` — 2026-09-25 — Eric Traut — Allow Windows daemon launches with residual job membership (#48157) — 区分: 除外候補（削除済み・外部固有領域）
+- `a0b85c7a6645` — 2026-09-25 — olliem-oai — Fix Guardian retained context spacing and empty assistant handling (#48158) — 区分: 要確認
+- `f6a4bd81e310` — 2026-09-25 — Steve Coffey — Generate unique exec-server process IDs for every request (#48168) — 区分: 要確認
+- `44a9bfa1456e` — 2026-09-25 — rhan-oai — Preserve usage limit windows in turn and compaction analytics (#48174) — 区分: 除外候補（削除済み・外部固有領域）
+- `1d804e91b754` — 2026-09-25 — jackz — Protect \`.aws\` directories under sandbox writable roots (#48176) — 区分: 要移植監査
+- `8f0b05910efb` — 2026-09-25 — jif — Fix zsh alias quoting in sourced shell snapshots (#48187) — 区分: 要確認
+- `782826663df3` — 2026-09-25 — jif — Bound agent message board SSE frames before parsing (#48190) — 区分: 要確認
+- `888948e5229d` — 2026-09-25 — jif — Optimize \`blake3\` in Bazel fastbuilds (#48197) — 区分: 要確認
+- `8f5387d10453` — 2026-09-25 — Sean Huang — Honor execution environment proxy requirements (#48198) — 区分: 要移植監査
+- `7596ab19a661` — 2026-09-25 — acrognale-oai — Keep archived threads with empty previews visible in listings (#48199) — 区分: 要移植監査
+- `dd9a7101d9dd` — 2026-09-25 — Adam Perry @ OpenAI — Extract Responses header conversion into a shared module (#48200) — 区分: 要確認
+- `7703f8b35460` — 2026-09-25 — Felipe Coury — Dismiss viewed TUI warnings when closing the viewer (#48205) — 区分: 要確認
+- `4193f1acfb1b` — 2026-09-25 — Felipe Coury — Add a keep-and-next action to the warnings viewer (#48206) — 区分: 要確認
+- `f5ffa4695995` — 2026-09-25 — pakrym-oai — Preserve queued output for observers during code-mode termination (#48207) — 区分: 要移植監査
+- `d5355e95ef24` — 2026-09-25 — Eric Traut — Keep Codex visible during external editor handoff (#48211) — 区分: 要確認
+- `58670eeac4b0` — 2026-09-25 — jif — Isolate executable fixture copies in CLI tests on Linux (#48213) — 区分: 要確認
+- `63eb71c9da95` — 2026-09-25 — ningyi-oai — Preserve late result metadata for truncated code-mode calls (#48222) — 区分: 要移植監査
+- `5f3180c79374` — 2026-09-25 — jamy-OAI — Preserve model and access program pairs during compaction (#48224) — 区分: 要確認
+- `10fd75bba78c` — 2026-09-25 — Adam Perry @ OpenAI — Extract Responses failure parsing into a dedicated module (#48229) — 区分: 要確認
+- `4b9e0cc77f26` — 2026-09-25 — malsamiri-oai — Suppress console windows for local Windows MCP servers (#48238) — 区分: 除外候補（削除済み・外部固有領域）
+- `dfdb40cd0b72` — 2026-09-25 — zm-oai — Prevent Windows daemon launches from retaining launcher stdio (#48272) — 区分: 除外候補（削除済み・外部固有領域）
+- `25270df2615e` — 2026-09-26 — Eric Traut — Keep TUI reconnect attempts running until the shared deadline (#48318) — 区分: 要確認
+- `c9e25207073a` — 2026-09-26 — peilin-openai — Preserve tool metadata for OpenAI provider endpoint overrides (#48344) — 区分: 要確認
+- `09a3d2108f23` — 2026-09-26 — Eric Traut — Display reconnect commands on a separate line (#48350) — 区分: 要確認
+- `ca41ed337fde` — 2026-09-26 — Felipe Coury — Show turn tips while working and after completion in the TUI (#48352) — 区分: 要確認
+- `e72da2b53805` — 2026-09-26 — vkg-oai — Stabilize skill catalogs across executor availability changes (#48353) — 区分: 要確認
+- `b334d5b3f2d9` — 2026-09-26 — Felipe Coury — Default to copying transcript selections in more terminals (#48469) — 区分: 要確認
+- `1a89aec960cd` — 2026-09-26 — Felipe Coury — Prevent console windows for piped Windows child processes (#48483) — 区分: 除外候補（削除済み・外部固有領域）
+- `6e1ab4d294cd` — 2026-09-26 — Eric Traut — Fix Mermaid shape, relationship, and state description parsing (#48489) — 区分: 要確認
+- `a6bd19261c30` — 2026-09-26 — Felipe Coury — Fall back to embedded mode under restrictive Windows launchers (#48491) — 区分: 除外候補（削除済み・外部固有領域）
+- `0fbf0bedc25d` — 2026-09-26 — Eric Traut — Fix ChatGPT browser sign-in for local app servers (#48502) — 区分: 除外候補（削除済み・外部固有領域）
+- `12de0e395d33` — 2026-09-26 — pakrym-oai — Preserve WebSocket continuations when steering a turn (#48508) — 区分: 要移植監査
+- `7f6c0f9387a0` — 2026-09-26 — Felipe Coury — Refresh the TUI welcome screen for new sessions (#48513) — 区分: 要確認
+- `06f97622f852` — 2026-09-26 — zm-oai — Add context to Windows sandbox runtime registration errors (#48531) — 区分: 除外候補（削除済み・外部固有領域）
+- `7ed14a27db9e` — 2026-09-26 — Eric Traut — Make onboarding login links easier to copy (#48544) — 区分: 要確認
+- `d6f25a54bab1` — 2026-09-26 — Felipe Coury — Fade blossom replays back to the idle state (#48547) — 区分: 要移植監査
+- `16c21e3f36e3` — 2026-09-26 — Felipe Coury — Preserve table cell source metadata through TUI rendering (#48548) — 区分: 要確認
+- `75a714843b7f` — 2026-09-26 — Felipe Coury — Preserve Markdown tables and whitespace when copying TUI responses (#48549) — 区分: 要確認
+- `7b7d934408e6` — 2026-09-26 — Eric Traut — Fix TUI math rendering for zero and big wedge expressions (#48551) — 区分: 要確認
+- `6a39914e379e` — 2026-09-26 — Felipe Coury — Keep working tips stable during transcript interaction (#48560) — 区分: 要確認
+- `e8fdbf1f7c87` — 2026-09-26 — Felipe Coury — Use a consistent borderless session header in the TUI (#48562) — 区分: 要確認
+- `228ae3da8dda` — 2026-09-26 — Winston Howes — Allow macOS TLS trust evaluation in network-enabled Seatbelt profiles (#48565) — 区分: 要移植監査
+- `b8d5e3f12e58` — 2026-09-26 — open-matt — Allow exec-server to proxy permitted private IPs upstream (#48568) — 区分: 要移植監査
+- `0f9a731adeb4` — 2026-09-26 — Alex Daley — Preserve deferred tool namespace names before descriptions (#48574) — 区分: 要確認
+- `985cf47a4eb6` — 2026-09-26 — richardopenai — Allow provisioned executors more time to come online (#48575) — 区分: 要確認
+- `9db8162d6581` — 2026-09-27 — Martin Au-Yeung — Remove the bundled \`plugin-creator\` skill (#48604) — 区分: 要確認
+- `814de47b69dd` — 2026-09-27 — alishobeiri-oai — Centralize persistent mode enablement checks (#48611) — 区分: 要確認
+- `334b6e7321d5` — 2026-09-27 — Eric Traut — Remove follow-up prompt suggestions from the TUI (#48621) — 区分: 要確認
+- `98072cf5f68a` — 2026-09-27 — Eric Traut — Preserve empty Markdown list markers in the TUI (#48623) — 区分: 要確認
+- `449d42ced99c` — 2026-09-27 — Eric Traut — Stop showing previous-session summaries when switching TUI sessions (#48626) — 区分: 要確認
+- `8f195c93d7e7` — 2026-09-27 — Eric Traut — Preserve blank TUI sessions when switching tasks (#48628) — 区分: 要確認
+- `d8ec479c3489` — 2026-09-27 — riley-oai — Set the provisioned macOS CLI bundle name to ChatGPT (#48643) — 区分: 除外候補（削除済み・外部固有領域）
+- `67a709665ac7` — 2026-09-27 — Eric Traut — Fix the session-start helper call in the command center test (#48646) — 区分: 要確認
+- `41f9084b3081` — 2026-09-27 — chess — Remove WebSocket headers and tool payloads from info logs (#48686) — 区分: 要移植監査
+- `274d41a39850` — 2026-09-27 — jif — Prevent Linux ETXTBSY races in MCP stdio tests (#48724) — 区分: 要移植監査
+- `88235f881d4e` — 2026-09-27 — Ankush Gupta — Retain confirmed Code Mode messages for Guardian reviews (#48725) — 区分: 要移植監査
+- `18344a972ddf` — 2026-09-27 — jif — Centralize executable fixture creation to avoid Linux ETXTBSY races (#48727) — 区分: 要確認
+- `819cdb726dab` — 2026-09-27 — Felipe Coury — Render \`/status\` without borders and wrap long values (#48754) — 区分: 要確認
+- `71b38795d83f` — 2026-09-27 — Felipe Coury — Match TUI status shimmer timing to desktop headers (#48757) — 区分: 除外候補（削除済み・外部固有領域）
+- `e75b6b1e0c87` — 2026-09-27 — Felipe Coury — Show hidden output line counts in compact terminal activity (#48761) — 区分: 要確認
+- `32f578485143` — 2026-09-27 — victor-openai — Preserve MCP app resource URIs without defaulting display mode (#48764) — 区分: 要移植監査
+- `fdbce2080c66` — 2026-09-27 — Eric Traut — Fix Unix socket connections through long symlink paths (#48772) — 区分: 要移植監査
+- `596f8c5c3c85` — 2026-09-27 — Eric Traut — Match pinned transcript headers to the original prompt style (#48775) — 区分: 要確認
+- `89bf86d0bd8f` — 2026-09-27 — Eric Traut — Remove the \`current\` badge from TUI task rows (#48776) — 区分: 要確認
+- `21eb35513df4` — 2026-09-27 — felixxia-oai — Preserve independent Guardian history across parent compaction (#48779) — 区分: 要移植監査
+- `ea647275560f` — 2026-09-27 — victor-openai — Add single-server MCP status discovery with thread connection reuse (#48783) — 区分: 要移植監査
+- `d7748e11854c` — 2026-09-27 — Won Park — Add opt-in structured errors for Guardian circuit-breaker interruptions (#48796) — 区分: 要確認
+- `4c8cf3964dc0` — 2026-09-27 — Eric Traut — Fix SGR mouse reporting for Windows terminal capture (#48799) — 区分: 除外候補（削除済み・外部固有領域）
+- `abc8f0c9a1ba` — 2026-09-27 — Eric Traut — Use the terminal palette for ordered Markdown list markers (#48800) — 区分: 要確認
+- `d9487a29308c` — 2026-09-27 — Felipe Coury — Allow transcript wheel scrolling while a modal is open (#48805) — 区分: 要確認
+- `99f7758a5777` — 2026-09-27 — Felipe Coury — Show short turn durations in TUI completion footers (#48807) — 区分: 要確認
+- `3f4668da20a5` — 2026-09-27 — vkg-oai — Add history-aware prewarming for idle threads (#48812) — 区分: 要移植監査
+- `659b35f1316e` — 2026-09-27 — Eric Traut — Preserve punctuation and semicolons in Mermaid labels (#48814) — 区分: 要確認
+- `456212ca2155` — 2026-09-27 — Matthew Zeng — Use explicit histogram buckets for tool and skill context metrics (#48819) — 区分: 要確認
+- `84cc4b3fb524` — 2026-09-28 — Benjamin Carlsson — Keep voice RTP timestamps aligned to 20 ms packets (#48824) — 区分: 除外候補（削除済み・外部固有領域）
+- `6af89155d040` — 2026-09-28 — Benjamin Carlsson — Show a hand pointer over transcript links in Ghostty and Kitty (#48827) — 区分: 要確認
+- `81d5405882d5` — 2026-09-28 — Benjamin Carlsson — Allow archiving threads before their first turn (#48828) — 区分: 要移植監査
+- `e6f4af1d92bb` — 2026-09-28 — zm-oai — Wait briefly for the Windows sandbox provisioning service to start (#48829) — 区分: 除外候補（削除済み・外部固有領域）
+- `1cc7e2361237` — 2026-09-28 — Felipe Coury — Show a short, neutral TUI interruption notice (#48830) — 区分: 要確認
+- `44fe510ce3ee` — 2026-09-28 — Eric Traut — Expand native Mermaid flowchart syntax support (#48895) — 区分: 要確認
+- `1b1835f751eb` — 2026-09-28 — jif — Isolate realtime auth fallback test from startup prewarm (#48973) — 区分: 除外候補（削除済み・外部固有領域）
+- `06971ec9aad0` — 2026-09-28 — eknight-oai — Prevent message-board notifications from reopening final answers (#48982) — 区分: 要確認
+- `c0d26949be41` — 2026-09-28 — jif — Avoid full metadata rewrites for thread timestamp updates (#48983) — 区分: 要移植監査
+- `69f714055918` — 2026-09-28 — jif — Isolate the memory startup metadata test from Git enrichment (#49000) — 区分: 要確認
+- `4fd5745e8486` — 2026-09-28 — iceweasel-oai — Use a compatible PowerShell fallback for the Windows MXC sandbox (#49019) — 区分: 除外候補（削除済み・外部固有領域）
+- `f817e1690570` — 2026-09-28 — aionescu-oai — Use the numeric ioctl value in the macOS sandbox policy (#49028) — 区分: 要移植監査
+- `d8fc718809a4` — 2026-09-28 — Benjamin Carlsson — Clarify ChatGPT sign-in success copy (#49031) — 区分: 除外候補（削除済み・外部固有領域）
+- `46fdd5ef3973` — 2026-09-28 — jif — Avoid SQLite stalls from connection setup and stderr span logging (#49032) — 区分: 要確認
+- `41ed72c32b49` — 2026-09-28 — felixxia-oai — Add opt-in conversation history retrieval to Guardian reviews (#49036) — 区分: 要移植監査
+- `64bf4e7e629b` — 2026-09-28 — Felipe Coury — Show the Plan mode cycling hint in the fullscreen status line (#49037) — 区分: 要確認
+- `368e5eae2f00` — 2026-09-28 — felixxia-oai — Preserve encrypted agent messages in Guardian reviews (#49038) — 区分: 要確認
+- `3074be908ac7` — 2026-09-28 — Felipe Coury — Copy selections within inline code as plain text (#49041) — 区分: 要確認
+- `4f63088cce14` — 2026-09-28 — Eric Traut — Update Pro plan display names in the TUI (#49043) — 区分: 要確認
+- `6288753b4696` — 2026-09-28 — jif — Add handoff-aware root context for Guardian reviews (#49057) — 区分: 要確認
+- `df3e439c02ef` — 2026-09-28 — Darius Karel — Fix Windows sandbox ACL repair for long runtime paths (#49058) — 区分: 除外候補（削除済み・外部固有領域）
+- `e07e58c84290` — 2026-09-28 — Dmitriy Kovalenko — Update Guardian messaging snapshots for native agent messages (#49060) — 区分: 要確認
+- `a1f05faddbe8` — 2026-09-28 — cassirer-openai — Update Guardian handoff snapshot for separate agent messages (#49065) — 区分: 要確認
+- `5a5a4aa79696` — 2026-09-28 — zm-oai — Keep configuration values out of Windows sandbox policy events (#49067) — 区分: 除外候補（削除済み・外部固有領域）
+- `33a0f766a647` — 2026-09-28 — Dmitriy Kovalenko — Reclaim unused SQLite log database pages in the background (#49069) — 区分: 要確認
+- `15c08beee2d9` — 2026-09-28 — Eric Traut — Surface realtime voice catalog failures in the TUI (#49073) — 区分: 除外候補（削除済み・外部固有領域）
+- `22d1d9336f75` — 2026-09-28 — Tamir Duberstein — Propagate Cargo package versions to Bazel Rust targets (#49074) — 区分: 要確認
+- `3749d1eff7df` — 2026-09-28 — sayan-oai — Preserve pending environments when spawning subagents (#49075) — 区分: 要移植監査
+- `011f803f3cd4` — 2026-09-28 — Tamir Duberstein — Avoid collecting unused Git metadata in skill analytics (#49076) — 区分: 要確認
+- `fe50d010e203` — 2026-09-28 — Eric Traut — Update and centralize TUI subscription labels (#49079) — 区分: 要確認
+- `46d2585ea434` — 2026-09-28 — jif — Skip remote Git discovery for Guardian diff paths (#49082) — 区分: 要移植監査
+- `88e9a8329d17` — 2026-09-28 — Tamir Duberstein — Track app-server running turns incrementally (#49084) — 区分: 要確認
+- `222e24b737e3` — 2026-09-28 — Eric Traut — Render follow-up directive labels in the TUI and copied responses (#49089) — 区分: 要確認
+- `19892aee0c80` — 2026-09-28 — Eric Traut — Simplify startup promotions to platform-specific desktop app tips (#49093) — 区分: 除外候補（削除済み・外部固有領域）
+- `2ce64843be07` — 2026-09-28 — cassirer-openai — Update \`h2\` from 0.4.16 to 0.4.19 in Cargo and Bazel lockfiles (#49096) — 区分: 要確認
+- `9563713df2f7` — 2026-09-28 — xli-oai — Notify lifecycle extensions of compaction usage limits (#49097) — 区分: 除外候補（削除済み・外部固有領域）
+- `f5430515a8ac` — 2026-09-28 — zm-oai — Resolve Windows sandbox PowerShell fallbacks on the exec server (#49098) — 区分: 除外候補（削除済み・外部固有領域）
+- `126071639380` — 2026-09-28 — Dmitriy Kovalenko — Cache parsed plugin manifests across plugin workflows (#49099) — 区分: 要確認
+- `bfdb1571780b` — 2026-09-28 — Dmitriy Kovalenko — Reuse the HTTP connection pool for remote plugin requests (#49100) — 区分: 要確認
+- `c2d2f422e63e` — 2026-09-28 — Benjamin Carlsson — Preserve SQLite vacuum modes and surface pool initialization errors (#49102) — 区分: 要確認
+- `7e049b3eaa17` — 2026-09-28 — jgershen-oai — Balance Windows Bazel test shards using duration estimates (#49103) — 区分: 除外候補（削除済み・外部固有領域）
+- `136391a23ec4` — 2026-09-28 — Eric Traut — Resume unsent TUI input after reconnecting (#49105) — 区分: 要確認
+- `8f6517772bc2` — 2026-09-28 — Benjamin Carlsson — Add history pagination to the agent command center (#49106) — 区分: 要移植監査
+- `01964952881a` — 2026-09-29 — Felipe Coury — Add X11 primary selection and middle-click paste support (#49112) — 区分: 要確認
+- `69043f05c4c5` — 2026-09-29 — oli-oai — Point remote compaction tests at the mock ChatGPT server (#49114) — 区分: 除外候補（削除済み・外部固有領域）
+- `2e6cc4ed8d54` — 2026-09-29 — papayo-oai — Attribute analytics requests to each thread's product SKU (#49117) — 区分: 要移植監査
+- `6c4924056590` — 2026-09-29 — Celia Chen — Correct provider authentication storage documentation (#49118) — 区分: 要移植監査
+- `8bd5a136ffab` — 2026-09-29 — Won Park — Add recovery guidance to content-filter retries (#49119) — 区分: 要確認
+- `13f580ef0908` — 2026-09-29 — Anthony Tafoya — Deduplicate cloud and executor skill listings before budgeting (#49127) — 区分: 除外候補（削除済み・外部固有領域）
+- `a9118edae8b7` — 2026-09-29 — Won Park — Move content-filter guidance into the shared Responses retry handler (#49130) — 区分: 要確認
+- `458f7046a522` — 2026-09-29 — andrewgu-oai — Treat explicit provider model catalogs as authoritative (#49135) — 区分: 要移植監査
+- `d7f7fa410698` — 2026-09-29 — Benjamin Carlsson — Remove the plus separator after Option symbols in TUI key hints (#49136) — 区分: 要確認
+- `f53f5a6fed66` — 2026-09-29 — Bryan Ashley — Expose original error details to turn lifecycle contributors (#49138) — 区分: 要確認
+- `ff3c82c8a9d0` — 2026-09-29 — Eric Traut — Preserve server reasoning summary and verbosity settings in the TUI (#49144) — 区分: 要確認
+- `8d48f71922dc` — 2026-09-29 — Eric Traut — Hide reasoning summary settings in \`/status\` for server connections (#49145) — 区分: 要確認
+- `3a16c0b70769` — 2026-09-29 — akira-oai — Simplify cloud task base URL normalization (#49147) — 区分: 除外候補（削除済み・外部固有領域）
+- `c6c7c8d27069` — 2026-09-29 — Benjamin Carlsson — Omit blockquote markers when copying quoted selections in the TUI (#49153) — 区分: 要確認
+- `0d7b8117d3cc` — 2026-09-29 — Eric Traut — Support projectless TUI sessions with workspace defaults (#49160) — 区分: 要確認
+- `3226512d470d` — 2026-09-29 — Eric Traut — Honor app-server provider defaults in the TUI (#49161) — 区分: 要確認
+- `fbc169827e97` — 2026-09-29 — Eric Traut — Suppress Windows console windows for background subprocesses (#49164) — 区分: 除外候補（削除済み・外部固有領域）
+- `c248f6d48b97` — 2026-09-29 — Eric Traut — Fix model provider lookup for TUI history (#49171) — 区分: 要移植監査
+- `0462dcc062b8` — 2026-09-29 — felixxia-oai — Use executable fixture copying in the bundled bwrap test (#49246) — 区分: 要確認
+- `4f16bdc26515` — 2026-09-29 — felixxia-oai — Allow Guardian cached approvals with incomplete root context (#49257) — 区分: 要移植監査
+- `af0d68a23681` — 2026-09-29 — Nick Steele — Restrict enterprise MCP auth and fail closed on config refresh (#49260) — 区分: 要移植監査
+- `f35a0fdc5d5f` — 2026-09-29 — zm-oai — Preserve Windows sandbox runner launch errors (#49261) — 区分: 除外候補（削除済み・外部固有領域）
+- `a7660cd15490` — 2026-09-29 — jif — Trace turn phases and correlate accepted input with turns (#49262) — 区分: 要確認
+- `5f7d5add2a51` — 2026-09-29 — jif — Remove the remote agent message board client README (#49266) — 区分: 要確認
+- `68e1a421f55e` — 2026-09-29 — jif — Support remote agent message boards in multi-agent sessions (#49267) — 区分: 要確認
+- `0b1b78a4f169` — 2026-09-29 — Nick Steele — Preserve thread overrides and cloud policy validity during config reloads (#49269) — 区分: 除外候補（削除済み・外部固有領域）
+- `677b07eca037` — 2026-09-29 — felixxia-oai — Isolate realtime conversation tests from Responses prewarm connections (#49275) — 区分: 除外候補（削除済み・外部固有領域）
+- `4994306e9f80` — 2026-09-29 — Nick Steele — Enable enterprise MCP sign-in and account-scoped grant cleanup (#49276) — 区分: 要移植監査
+- `d515b2f85ec1` — 2026-09-29 — felixxia-oai — Avoid a turn teardown race in the Guardian agent message test (#49277) — 区分: 要確認
+- `18194bfd3534` — 2026-09-29 — Michael Zeng — Restrict capability roots to captured turn environments (#49280) — 区分: 要移植監査
+- `65c3f40befaa` — 2026-09-29 — jif — Model exec-server session attachment state as an enum (#49286) — 区分: 要確認
+- `4773a132c351` — 2026-09-29 — Nick Steele — Add \`/mcp login <name>\` to the TUI (#49290) — 区分: 要移植監査
+- `d79a95bdf873` — 2026-09-29 — felixxia-oai — Record Guardian context mode in review and classification telemetry (#49294) — 区分: 要確認
+- `cf12c86dc569` — 2026-09-29 — jif — Simplify configuration fingerprint canonicalization (#49295) — 区分: 要移植監査
+- `d5e6526362f6` — 2026-09-29 — jif — Scan the session index backwards for batch thread name lookups (#49297) — 区分: 要移植監査
+- `a6f09397aa59` — 2026-09-29 — jif — Compact the inline hidden tag buffer once per chunk (#49300) — 区分: 要確認
+- `c2837d8ecefa` — 2026-09-29 — jif — Batch metadata reads when resolving thread names (#49305) — 区分: 要移植監査
+- `50d9c5deac4a` — 2026-09-29 — Eric Traut — Run piped legacy Windows sandbox processes without a console (#49308) — 区分: 除外候補（削除済み・外部固有領域）
+- `63475131ce5f` — 2026-09-29 — jif — Notify parent agents when Guardian stops a subagent (#49312) — 区分: 要確認
+- `193632d2448f` — 2026-09-29 — jgershen-oai — Bump taiki-e/install-action to v2.87.21 in CI setup (#49316) — 区分: 要確認
+- `b1e72963c3b7` — 2026-09-29 — andrewgu-oai — Add GPT-6.1 Sol as the default catalog model (#49318) — 区分: 要確認
+- `26dd19ef478c` — 2026-09-29 — zm-oai — Retry Windows sandbox runner logon once on error 1056 (#49325) — 区分: 除外候補（削除済み・外部固有領域）
+- `5937592c07e7` — 2026-09-29 — yansenzhou-oai — Keep remote control reconnect backoff capped during sustained failures (#49330) — 区分: 除外候補（削除済み・外部固有領域）
+- `ed9e5a26a88b` — 2026-09-29 — jif — Clean up canceled exec-server RPC requests immediately (#49332) — 区分: 要確認
+- `a6e9eaa9bd11` — 2026-09-29 — Celia Chen — Add GPT-6.1 Sol to Bedrock catalogs and make it the default (#49339) — 区分: 除外候補（削除済み・外部固有領域）
+- `8ffd91e42aa0` — 2026-09-29 — Celia Chen — Enable multi-agent V2 and Ultra reasoning on Amazon Bedrock (#49345) — 区分: 除外候補（削除済み・外部固有領域）
+- `804d6306e84f` — 2026-09-29 — viyatb-oai — Allow approved filesystem escalation while preserving denied reads (#49353) — 区分: 要確認
+- `1983c48fd186` — 2026-09-29 — Benjamin Carlsson — Continue Markdown blockquotes when pasting multiline text (#49357) — 区分: 要確認
+- `995138d71ac0` — 2026-09-29 — Adam Perry @ OpenAI — Carry shell invocation metadata and report executor PATH directories (#49360) — 区分: 要移植監査
+- `94d642d8b40e` — 2026-09-29 — Celia Chen — Clarify credential storage wording across authentication UI and docs (#49361) — 区分: 要移植監査
+- `2a34aef79484` — 2026-09-29 — Celia Chen — Update Bedrock GPT-6 Sol catalog tests to expect multi-agent V2 (#49369) — 区分: 除外候補（削除済み・外部固有領域）
+- `bd4204efc24a` — 2026-09-29 — jif — Compile hook matchers during discovery (#49379) — 区分: 要確認
+- `a44afa527cf1` — 2026-09-29 — Celia Chen — Track credential storage outcomes and redact sensitive errors (#49384) — 区分: 要移植監査
+- `d6571322d270` — 2026-09-29 — Dmitriy Kovalenko — Fix Windows path inference for opaque URIs with slash prefixes (#49388) — 区分: 除外候補（削除済み・外部固有領域）
+- `9212b3eca86e` — 2026-09-29 — jgershen-oai — Serialize tests that share Windows sandbox accounts (#49389) — 区分: 除外候補（削除済み・外部固有領域）
+- `05ea5f757e2d` — 2026-09-29 — Celia Chen — Add attributed MCP OAuth credential storage telemetry (#49392) — 区分: 要移植監査
+- `ceea67163f93` — 2026-09-29 — Eric Traut — Remove randomized greetings from TUI session headers (#49395) — 区分: 要確認
+- `87d3e068478c` — 2026-09-29 — ningyi-oai — Preserve live tool-call metadata across request windows (#49401) — 区分: 除外候補（削除済み・外部固有領域）
+- `17a9df60e420` — 2026-09-29 — Adam Perry @ OpenAI — Add an experimental flag for bundled tools in login shells (#49403) — 区分: 要確認
+- `7c35e1551f72` — 2026-09-29 — Brian Lee — Support explicit cyber access programs with OpenAI API keys (#49406) — 区分: 要確認
+- `67352b5b4adc` — 2026-09-30 — Vivian Fang — Recover exec-server sessions after environment info timeouts (#49407) — 区分: 要移植監査
+- `bd5185820df8` — 2026-09-30 — Ruslan Nigmatullin — Compare tool call metadata in the recorder refresh test (#49408) — 区分: 要確認
+- `eefe0ce1a8e3` — 2026-09-30 — Ruslan Nigmatullin — Bind the app-server time provider to a local variable (#49411) — 区分: 要確認
+- `16a7c0f0ebc6` — 2026-09-30 — Dmitriy Kovalenko — Filter graceful shutdown guard and trigger traces from SQLite logs (#49414) — 区分: 要確認
+- `d940fb21f35e` — 2026-09-30 — Dmitriy Kovalenko — Truncate input text in protocol debug output (#49415) — 区分: 要確認
+- `ab84d71f5767` — 2026-09-30 — Dmitriy Kovalenko — Omit payloads from multiline ANSI warnings (#49416) — 区分: 要確認
+- `d1d0e8955857` — 2026-09-30 — Dmitriy Kovalenko — Infer Windows UNC paths with forward and mixed slashes (#49424) — 区分: 除外候補（削除済み・外部固有領域）
+- `8ea2c0e0d4bc` — 2026-09-30 — Dmitriy Kovalenko — Prune diagnostic logs periodically by age and database size (#49425) — 区分: 要確認
+- `2cc65cdd4c7c` — 2026-09-30 — Benjamin Carlsson — Enable analytics by default for daemon-launched app servers (#49426) — 区分: 要確認
+- `d8f69ea8bc99` — 2026-09-30 — cooper-oai — Preserve bootstrap discovery across authentication changes (#49432) — 区分: 要移植監査
+- `fc81a7154bc6` — 2026-09-30 — Benjamin Carlsson — Add local audio device selection to TUI voice settings (#49437) — 区分: 除外候補（削除済み・外部固有領域）
+- `6ba4bf9e647c` — 2026-09-30 — Adam Perry @ OpenAI — Honor server retry advice across Responses retries and fallback (#49441) — 区分: 要確認
+- `8c3612fb638d` — 2026-09-30 — Brent Traut — Use \`memrchr\` to find newlines in reverse JSONL scans (#49444) — 区分: 要確認
+- `76a6e55d5ac6` — 2026-09-30 — Adam Perry @ OpenAI — Restore executor tool paths after login shell startup (#49467) — 区分: 要移植監査
+- `b588812e8cc8` — 2026-09-30 — Eric Traut — Use server-authoritative permissions in the TUI (#49472) — 区分: 要移植監査
+- `c9b3924a623f` — 2026-09-30 — Nick Steele — Use the rmcp SDK for enterprise-managed token exchanges (#49473) — 区分: 要移植監査
+- `9ef9cb1d9fc6` — 2026-09-30 — Ruslan Nigmatullin — Complete turn abort callbacks before emitting terminal events (#49475) — 区分: 要確認
+- `15fd656ddb55` — 2026-09-30 — Nick Steele — Discover and validate MCP authorization servers before ID-JAG exchange (#49478) — 区分: 要移植監査
+- `90abcfac0266` — 2026-09-30 — Keyan Zhang — Add experimental thread prediction protocol types (#49480) — 区分: 要移植監査
+- `bcd6d9ab6b9f` — 2026-09-30 — Adam Perry @ OpenAI — Add regression coverage for account switches between analytics batches (#49489) — 区分: 要確認
+- `d42056091ade` — 2026-09-30 — Eric Traut — Add a fork shortcut to the TUI command center (#49517) — 区分: 要確認
+- `2e5fea64eefc` — 2026-09-30 — jif — Add an opt-in model catalog to multi-agent context (#49560) — 区分: 要確認
+- `0b43721d8d1f` — 2026-09-30 — Felipe Coury — Copy selected file paths as plain text in the TUI (#49564) — 区分: 要移植監査
+- `a5cce8895a14` — 2026-09-30 — jif — Skip host skill discovery for Guardian reviews (#49584) — 区分: 要確認
+- `1fc8d548077f` — 2026-09-30 — jif — Make the strict network approval test independent of request order (#49595) — 区分: 要移植監査
+- `de020167989f` — 2026-09-30 — felixxia-oai — Persist explicit user goal edits in model history (#49598) — 区分: 要移植監査
+- `d7b0d4aa6631` — 2026-09-30 — felixxia-oai — Return authoritative replay history when resuming a thread (#49599) — 区分: 要移植監査
+- `92bc601ad605` — 2026-09-30 — felixxia-oai — Reuse unchanged history snapshots when resuming threads (#49600) — 区分: 要移植監査
+- `7219fd735bef` — 2026-09-30 — cooper-oai — Use server authentication for explicit remote session commands (#49624) — 区分: 要移植監査
+- `67727e7cf114` — 2026-09-30 — iceweasel-oai — Allow managed requirements to disable the Windows MXC sandbox (#49642) — 区分: 除外候補（削除済み・外部固有領域）
+- `ed0cc1a4ab30` — 2026-09-30 — Justin Beckwith — Serialize Responses routing fields before large inputs (#49675) — 区分: 要確認
+- `fcbed044c8c6` — 2026-09-30 — Ian MacLeod — Escape command drafts when recovering question answers (#49678) — 区分: 要確認
+- `6996cde697b2` — 2026-09-30 — vishnu-oai — Add a managed feature gate for in-app voice (#49683) — 区分: 除外候補（削除済み・外部固有領域）
+- `49be2c7ab029` — 2026-09-30 — jif — Deliver remote message board notifications to active turns (#49686) — 区分: 要確認
+- `0a76a2520f45` — 2026-09-30 — jif — Export skill invocation events through OpenTelemetry (#49689) — 区分: 要確認
+- `7e8878f60560` — 2026-09-30 — johnl-oai — Preserve PowerShell relative paths in the elevated Windows sandbox (#49690) — 区分: 除外候補（削除済み・外部固有領域）
+- `d1c4e3c3e695` — 2026-09-30 — npancha-openai — Keep compressed rollout snippet searches on one blocking worker (#49692) — 区分: 要移植監査
+- `ecc205edacf5` — 2026-09-30 — Charlie Marsh — Move thread history projection into one blocking task (#49693) — 区分: 要移植監査
+- `5aa92804d255` — 2026-09-30 — Charlie Marsh — Batch rollout listing scans on cancellable blocking workers (#49694) — 区分: 要移植監査
+- `f2b2e5b2a96d` — 2026-09-30 — Charlie Marsh — Make exec-server file reads cancellable between chunks (#49696) — 区分: 要確認
+- `3620b2caf8af` — 2026-09-30 — Dmitriy Kovalenko — Detect SQLite corruption during startup and preserve recovery backups (#49701) — 区分: 要確認
+- `3b16b5a5b03a` — 2026-09-30 — Adam Perry @ OpenAI — Rename exec-server file handle management identifiers (#49702) — 区分: 要確認
+- `5602705c9622` — 2026-09-30 — Ian MacLeod — Prevent npm alpha dist-tags from moving backward (#49704) — 区分: 要確認
+- `17e5a4dbcb41` — 2026-09-30 — Tamir Duberstein — Upgrade the argument comment lint toolchain and Dylint (#49706) — 区分: 要確認
+- `4f699cd64227` — 2026-09-30 — Charlie Marsh — Move session index I/O off async runtime threads (#49708) — 区分: 要移植監査
+- `596ae94fb00f` — 2026-09-30 — Dmitriy Kovalenko — Classify SQLite corruption using typed error codes (#49710) — 区分: 要確認
+- `5e96aabd68dc` — 2026-09-30 — jif — Avoid full-string scans in token-budget truncation (#49712) — 区分: 要確認
+- `18131270fe82` — 2026-09-30 — Adam Perry @ OpenAI — Remove repository-local Codex guidance, skills, and environment config (#49713) — 区分: 要移植監査
+- `f151a0f5c20e` — 2026-09-30 — Brian Lee — Decouple API-key cyber access programs from model discovery (#49714) — 区分: 要確認
+- `60947e234156` — 2026-09-30 — dennyku — Add account security setup reminders to the TUI (#49715) — 区分: 要移植監査
+- `875bf9209bd9` — 2026-09-30 — Adam Perry @ OpenAI — Define exec-server protocol types for streamed file writes (#49778) — 区分: 要確認
+- `8953de1f1ac7` — 2026-09-30 — zm-oai — Include the environment's MXC backend in MCP sandbox metadata (#49781) — 区分: 除外候補（削除済み・外部固有領域）
+- `1a913493dcc4` — 2026-09-30 — jif — Clean up process groups for failed shell snapshot captures (#49782) — 区分: 要確認
+- `106772e3c68b` — 2026-09-30 — Eric Traut — Preserve background thread requests when forking in the TUI (#49783) — 区分: 要移植監査
+- `3bbf8ec3a1e1` — 2026-09-30 — Oliver Tepman — Add a requirements feature gate for the browser annotation API (#49784) — 区分: 要確認
+- `1f77c0cfa634` — 2026-09-30 — Raunak Daga — Persist empty paginated threads when naming them (#49785) — 区分: 要移植監査
+- `f542ba68e502` — 2026-09-30 — jif — Clarify V2 spawn model override guidance for context catalogs (#49786) — 区分: 要確認
+- `83cf88306e80` — 2026-09-30 — andrewgu-oai — Remove \`AGENTS.md\` from Bazel core test data (#49787) — 区分: 要確認
+- `5f300d3f74eb` — 2026-09-30 — felixxia-oai — Add retained conversation support to Guardian async sampling (#49792) — 区分: 要確認
+- `726f1492db90` — 2026-09-30 — felixxia-oai — Add conversation mode to Guardian v2 async classification (#49793) — 区分: 要確認
+- `47a8bd73219b` — 2026-09-30 — felixxia-oai — Avoid duplicate sync reviews in Guardian classifier continuations (#49795) — 区分: 要確認
+- `5ca55db09cc9` — 2026-09-30 — felixxia-oai — Deduplicate Guardian retained-context omission notices (#49796) — 区分: 要確認
+- `c538fbabe5cb` — 2026-09-30 — Adam Perry @ OpenAI — Share cached exec-server environment info with Arc (#49798) — 区分: 要移植監査
+- `606b1395654e` — 2026-09-30 — Eric Traut — Preserve server web-search settings in the TUI (#49799) — 区分: 要確認
+- `ec0cfa5da8e9` — 2026-09-30 — Benjamin Carlsson — Allow cleanup of replay-only side conversations with missing threads (#49800) — 区分: 要移植監査
+- `33aea33b39a5` — 2026-09-30 — andrewgu-oai — Update the Rust toolchain action for argument-comment linting (#49801) — 区分: 要確認
+- `d2f2c4009583` — 2026-09-30 — Benjamin Carlsson — Use platform-specific modifier labels in TUI shortcut hints (#49804) — 区分: 要確認
+- `e7798c99444c` — 2026-09-30 — Adam Perry @ OpenAI — Add capability-gated writable file streams to the exec-server client (#49805) — 区分: 要確認
+- `a5d56d8120ab` — 2026-09-30 — Adam Perry @ OpenAI — Accept unknown Codex error variants in the app-server protocol (#49806) — 区分: 要確認
+- `7d4c7a0767cd` — 2026-09-30 — andrewgu-oai — Enable API-key model discovery by default (#49807) — 区分: 要確認
+- `2fde968de8bc` — 2026-09-30 — Eric Traut — Preserve local launch permissions across TUI sessions and reconnects (#49809) — 区分: 要移植監査
+- `cca440697f2e` — 2026-09-30 — Benjamin Carlsson — Flush expired paste bursts before handling Enter (#49810) — 区分: 要確認
+- `c51f5bfb821f` — 2026-09-30 — Adam Perry @ OpenAI — Handle unsupported \`fs/writeBlock\` requests in exec-server (#49811) — 区分: 要確認
+- `0f8df3d2140a` — 2026-09-30 — vkg-oai — Move shadow skill ranking off the turn preparation path (#49812) — 区分: 要移植監査
+- `d4a475adda85` — 2026-09-30 — alexsong-oai — Support AWS GovCloud regions for Amazon Bedrock Mantle (#49813) — 区分: 除外候補（削除済み・外部固有領域）
+- `8e44ad94b051` — 2026-10-01 — Owen Lin — Add coordinated shutdown for local agent trees (#49814) — 区分: 要確認
+- `1182834d1325` — 2026-10-01 — Benjamin Carlsson — Remove browser-open success messages from the TUI (#49816) — 区分: 要確認
+- `a5eac80150fb` — 2026-10-01 — alexsong-oai — Add an advisory Bedrock GovCloud requirements check (#49817) — 区分: 除外候補（削除済み・外部固有領域）
+- `a73898c249b3` — 2026-10-01 — Adam Perry @ OpenAI — Use dedicated parameters for sandboxed file opens (#49818) — 区分: 要移植監査
+- `cda82a2c6853` — 2026-10-01 — Eric Traut — Recover daemon startup and updater re-exec after cwd deletion (#49819) — 区分: 要確認
+- `799324821d36` — 2026-10-01 — sayan-oai — Box the resume future in the agents overview permissions test (#49822) — 区分: 要移植監査
+- `08e2b58b07b8` — 2026-10-01 — Eric Traut — Clarify service tier default save errors in the TUI (#49835) — 区分: 要確認
+- `e53e932dc855` — 2026-10-01 — Benjamin Carlsson — Allow microphone channel selection for voice conversations (#49836) — 区分: 除外候補（削除済み・外部固有領域）
+- `08b07eef1261` — 2026-10-01 — Eric Traut — Preserve daemon diagnostics and include updater logs in reports (#49843) — 区分: 要確認
+- `408f48ce0c87` — 2026-10-01 — sayan-oai — Capture host-supplied extension data for each turn (#49846) — 区分: 要確認
+- `b44ca872b105` — 2026-10-01 — pakrym-oai — Persist world-state snapshots alongside rendered context (#49847) — 区分: 要確認
+- `e2a7d53c9cd4` — 2026-10-01 — Eric Traut — Launch Windows daemon children in a dedicated working directory (#49850) — 区分: 除外候補（削除済み・外部固有領域）
+- `236be1ad9f61` — 2026-10-01 — Dmitriy Kovalenko — Improve diagnostics for report attachment failures (#49852) — 区分: 要確認
+- `bc197b77bc57` — 2026-10-01 — Eric Traut — Use embedded mode for elevated Windows TUI sessions (#49855) — 区分: 除外候補（削除済み・外部固有領域）
+- `c41a72cd3f58` — 2026-10-01 — Eric Traut — Support Daybreak selection in \`codex exec\` (#49856) — 区分: 要確認
+- `f58ed54a9d7a` — 2026-10-01 — Eric Traut — Use the model catalog to select TUI cyber refusal guidance (#49857) — 区分: 要確認
+- `e1522188e908` — 2026-10-01 — Eric Traut — Add a persistent \`/daybreak\` toggle to the TUI (#49858) — 区分: 要確認
+- `cd4a9cbd254a` — 2026-10-01 — Eric Traut — Honor Daybreak settings in TUI continuations and background tasks (#49859) — 区分: 要確認
+- `8ea2428c38f8` — 2026-10-01 — Eric Traut — Add Daybreak state to the status line and terminal title (#49861) — 区分: 要確認
+- `90d7f2715a44` — 2026-10-01 — Eric Traut — Update elevated-launch warning snapshot to use \`⌃o\` for copy (#49867) — 区分: 要確認
+- `bdfbab9f4fbd` — 2026-10-01 — Eric Traut — Point usage and credit links to ChatGPT settings (#49874) — 区分: 除外候補（削除済み・外部固有領域）
+- `7b88d09d61b8` — 2026-10-01 — Eric Traut — Decouple TUI startup presentation from execution configuration (#49875) — 区分: 要移植監査
+- `d2b254fd17ce` — 2026-10-01 — Eric Traut — Remove personality plumbing from the TUI (#49876) — 区分: 要確認
+- `1f52d407041d` — 2026-10-01 — Adam Perry @ OpenAI — Bind permission grants to the originating turn (#49880) — 区分: 要移植監査
+- `08a7031b6acb` — 2026-10-01 — pakrym-oai — Return world-state snapshots and context updates together (#49894) — 区分: 要確認
+- `da2e174a66a6` — 2026-10-01 — Adam Perry @ OpenAI — Scope extension filesystem access to callback permissions (#49898) — 区分: 要移植監査
+- `819efd72732a` — 2026-10-01 — Eric Traut — Preserve validation errors for invalid TUI keybindings (#49910) — 区分: 要確認
+- `444da310e108` — 2026-10-01 — Eric Traut — Respect approval policies in temporary structured threads (#49912) — 区分: 要移植監査
+- `6b4daafdb445` — 2026-10-01 — mldangelo-oai — Add per-turn Cyber access program selection to exec and the SDK (#49939) — 区分: 要確認
+- `dd90f160ed9b` — 2026-10-01 — jif — Prevent stale file search results from being labeled with a new query (#49946) — 区分: 要確認
+- `f70810bcd210` — 2026-10-01 — jif — Include preceding assistant context in Guardian sender reviews (#49951) — 区分: 要確認
+- `8a400e7812b0` — 2026-10-01 — jif — Cache the placeholder regex for MCP hook argument expansion (#49956) — 区分: 要移植監査
+- `d6c3b448a413` — 2026-10-01 — jif — Test session index thread-name append and removal (#49959) — 区分: 要移植監査
+- `a933dd77dbe1` — 2026-10-01 — jif — Share byte buffers across exec-server output chunks (#49972) — 区分: 要確認
+- `ecc78e4cf560` — 2026-10-01 — Nick Steele — Add renewable EMA HTTP authentication and credential versioning (#49987) — 区分: 要移植監査
+- `57ac6f51639f` — 2026-10-01 — felixxia-oai — Preserve the async Guardian history prefix as retained context changes (#49993) — 区分: 要移植監査
+- `b527ce47348e` — 2026-10-01 — Eric Traut — Honor server model defaults when starting fresh TUI threads (#50013) — 区分: 要移植監査
+- `595534314f76` — 2026-10-01 — jif — Use descriptor-safe helpers for executable test fixtures (#50018) — 区分: 要確認
+- `9552906b2b83` — 2026-10-01 — swastik-oai — Protect the guardian decisions API key from environment forwarding (#50019) — 区分: 要移植監査
+- `2685e3a4cec1` — 2026-10-01 — jif — Preserve user restrictions in Guardian handoff context (#50026) — 区分: 要確認
+- `cc31e374fc15` — 2026-10-01 — jif — Follow MCP tool pagination in legacy protocol mode (#50035) — 区分: 要移植監査
+- `a97fb78085f1` — 2026-10-01 — Felipe Coury — Keep transcript Find results readable after closing the query (#50039) — 区分: 要確認
+- `1cc9917508ab` — 2026-10-01 — Felipe Coury — Keep transcript Find expansion scoped to the current match (#50045) — 区分: 要確認
+- `5fa5aaf0fffd` — 2026-10-01 — Adam Perry @ OpenAI — Stabilize Windows voice build cache keys across tool reinstalls (#50046) — 区分: 除外候補（削除済み・外部固有領域）
+- `9561a345310f` — 2026-10-01 — sayan-oai — Keep plugin and skill snapshots scoped to each step (#50050) — 区分: 要確認
+- `57a38c1bebc7` — 2026-10-01 — Ian MacLeod — Preserve question context in recovered TUI answer drafts (#50052) — 区分: 要確認
+- `d9cf20389066` — 2026-10-01 — Tamir Duberstein — Check token estimate filtering directly on the tracing subscriber (#50054) — 区分: 要確認
+- `b06b7d2f7773` — 2026-10-01 — Tamir Duberstein — Upgrade Windows bindings to \`windows-sys\` 0.61.2 (#50058) — 区分: 除外候補（削除済み・外部固有領域）
+- `ae7aad586ea0` — 2026-10-01 — Yuzhu Shen — Fix Linux sandbox startup with multiple denied files (#50059) — 区分: 要移植監査
+- `d91294c39edb` — 2026-10-01 — swastik-oai — Add a bounded Decisions transport for Guardian comparison classification (#50066) — 区分: 要確認
+- `e4e33a56b073` — 2026-10-01 — ke-oai — Enable dynamic tool inheritance for fresh V2 subagents (#50082) — 区分: 要確認
+- `26a49b38824a` — 2026-10-01 — joeytrasatti-openai — Add paginated reverse lookup for thread attachments (#50083) — 区分: 要移植監査
+- `960e878df4bf` — 2026-10-01 — jif — Preserve queued agent mail across session eviction (#50087) — 区分: 要確認
+- `9d53dd91b5b5` — 2026-10-01 — Bryan Ashley — Prevent shared instruction providers from delegating to themselves (#50093) — 区分: 要確認
+- `2635431edbd4` — 2026-10-01 — joeytrasatti-openai — Add attachment owner lookup to the app-server (#50094) — 区分: 要確認
+- `59f18e8133f2` — 2026-10-01 — swastik-oai — Add opt-in Decisions comparison for Guardian V2 (#50099) — 区分: 要確認
+- `e58b49332915` — 2026-10-01 — Ian MacLeod — Consolidate chat composer footer logic in \`footer_state\` (#50105) — 区分: 要確認
+- `6ece7bfc21bc` — 2026-10-01 — Ian MacLeod — Keep fullscreen prompts bounded and scrollable (#50109) — 区分: 要確認
+- `a0a7a6300278` — 2026-10-01 — Ian MacLeod — Centralize TUI loading glyphs and frame scheduling (#50112) — 区分: 要確認
+- `b707714ae420` — 2026-10-01 — Benjamin Carlsson — Add a native gRPC client for cloud thread resume and attach (#50113) — 区分: 除外候補（削除済み・外部固有領域）
+- `4f99920b8cbb` — 2026-10-01 — sayan-oai — Expose the model selected for a running turn's next step (#50128) — 区分: 要確認
+- `7d3e696c4c12` — 2026-10-01 — aidan — Preserve Windows environment variables for remote MCP servers (#50129) — 区分: 除外候補（削除済み・外部固有領域）
+- `8d44977aa2fb` — 2026-10-02 — richardopenai — Add opt-in JSON diagnostics for TCP tunnels (#50131) — 区分: 要確認
+- `cb6da58876af` — 2026-10-02 — Eric Traut — Use the server permission catalog for TUI permission shortcuts (#50140) — 区分: 要移植監査
+- `e7ea5f4a8658` — 2026-10-02 — Benjamin Carlsson — Add managed worktree tools to the TUI (#50148) — 区分: 要確認
+- `d25c114d494d` — 2026-10-02 — Adam Perry @ OpenAI — Bound in-flight file opens in exec-server (#50162) — 区分: 要確認
+- `7135b303d918` — 2026-10-02 — michaelm-openai — Upgrade \`age\` to 0.12.1 and remove the obsolete advisory exception (#50166) — 区分: 要確認
+- `c39bfa4c8ff9` — 2026-10-02 — Adam Perry @ OpenAI — Enable writable file streaming in exec-server (#50177) — 区分: 要確認
+- `b997c72a99cd` — 2026-10-02 — Eric Traut — Add \`dots\` to issue labeler guidance (#50183) — 区分: 要確認
+- `a20fe6335f96` — 2026-10-02 — Matthew Zeng — Replace the Figma OAuth exception with Mercado Pago (#50189) — 区分: 要移植監査
+- `3f97f2b3bd89` — 2026-10-02 — Eric Traut — Restore the account email in \`/status\` after account updates (#50199) — 区分: 要確認
+- `a75987455a28` — 2026-10-02 — Eric Traut — Report the configured TUI mode in \`codex doctor\` (#50200) — 区分: 要移植監査
+- `e3c2a8393725` — 2026-10-02 — Eric Traut — Release stable Markdown tables into scrollback during streaming (#50207) — 区分: 要確認
+- `4dd51f4a5f20` — 2026-10-02 — Eric Traut — Make transcript mouse scroll speed configurable (#50209) — 区分: 要移植監査
+- `d64360f6281d` — 2026-10-02 — Eric Traut — Support Ctrl+Insert for copying TUI selections (#50215) — 区分: 要確認
+- `37f53199a6b2` — 2026-10-02 — Benjamin Carlsson — Use the shared text editor for command-center task renaming (#50216) — 区分: 要確認
+- `14a477ea8971` — 2026-10-02 — Eric Traut — Bound tmux option probes to one second (#50219) — 区分: 要確認
+- `ca466061d64f` — 2026-10-02 — swastik-oai — Record Guardian V2 Decisions agreement and latency metrics (#50273) — 区分: 要確認
+- `4cedd0caac89` — 2026-10-02 — Michael Bolin — Add end-to-end coverage for MCP sandbox state enforcement (#50339) — 区分: 要移植監査
+- `84d5437b6e55` — 2026-10-02 — Eric Traut — Keep the subagent picker consistent with thread archive state (#50345) — 区分: 要移植監査
+- `9d2b60303e83` — 2026-10-02 — cooper-oai — Back off automatic remote control reconnects with jitter (#50348) — 区分: 除外候補（削除済み・外部固有領域）
+- `f4e18a95bb04` — 2026-10-02 — Brent Traut — Skip unrelated subtrees during config alias normalization (#50354) — 区分: 要移植監査
+- `91168365a579` — 2026-10-02 — Eric Traut — Render ANSI styles in TUI hook system messages (#50359) — 区分: 要確認
+- `c73775f19ef0` — 2026-10-02 — Owen Lin — Remove initial messages from session configuration events (#50360) — 区分: 要移植監査
+- `50b4c5e58c1b` — 2026-10-02 — Ian MacLeod — Use printable ASCII terminal titles under GNU Screen (#50375) — 区分: 要確認
+- `1ab8c6ef28a8` — 2026-10-02 — Yuzhu Shen — Fix thread unloading after disconnect during MCP startup (#50380) — 区分: 要移植監査
+- `2739e828581c` — 2026-10-02 — chess — Allow opting into 16 KiB ARM64 code pages for macOS signing (#50384) — 区分: 要確認
+- `f88a6efe437e` — 2026-10-02 — Eric Traut — Honor configured keybindings before transcript navigation (#50389) — 区分: 要移植監査
+- `d61c7a824f95` — 2026-10-02 — Benjamin Carlsson — Honor pager bindings for transcript page keys (#50396) — 区分: 要確認
+- `c5d242fa7907` — 2026-10-02 — Owen Lin — Consolidate command execution output into \`aggregated_output\` (#50402) — 区分: 要確認
+- `dff5270b298b` — 2026-10-02 — Benjamin Carlsson — Clarify Git worktree choices for new and forked conversations (#50416) — 区分: 要確認
+- `44dd77b71e88` — 2026-10-02 — Adam Perry @ OpenAI — Honor Retry-After headers in failed Responses events (#50418) — 区分: 要確認
+- `bee28e8a061c` — 2026-10-02 — Owen Lin — Cap persisted command output in paginated history at 64 KiB (#50427) — 区分: 要移植監査
+- `b6903c0669df` — 2026-10-02 — Benjamin Carlsson — Preserve terminal hyperlinks in agents overview previews (#50431) — 区分: 要確認
+- `66561d03012e` — 2026-10-02 — Eric Traut — Allow API-key accounts to use Daybreak in the TUI (#50433) — 区分: 要確認
+- `c536ffcb1827` — 2026-10-02 — Benjamin Carlsson — Add keyboard copy selection to the owned transcript (#50434) — 区分: 要確認
+- `602d2add6e6d` — 2026-10-02 — pakrym-oai — Persist additional tool definitions in rollout history (#50435) — 区分: 要移植監査
+- `12a30d4e6dbd` — 2026-10-02 — chess — Add a CLI command to uninstall the legacy Windows sandbox (#50437) — 区分: 除外候補（削除済み・外部固有領域）
+- `0df76892b132` — 2026-10-02 — pakrym-oai — Support ordered response items in world-state context updates (#50441) — 区分: 要確認
+- `3629508849fe` — 2026-10-02 — asohrabi-oai — Preserve native USD amounts in thread usage responses (#50442) — 区分: 要移植監査
+- `a4bfd07d51fa` — 2026-10-02 — Sean Huang — Stabilize paused-time code-mode service tests (#50443) — 区分: 要移植監査
+- `d4eed6dca57f` — 2026-10-02 — Sean Huang — Assert that only direct tool calls emit timing events (#50445) — 区分: 要確認
+- `9b0a676d5dca` — 2026-10-02 — Dmitriy Kovalenko — Bundle rollout attachments into a gzip tar archive (#50446) — 区分: 要移植監査
+- `fd75aa116c4a` — 2026-10-02 — pakrym-oai — Remove the provider capability gate for tool namespaces (#50447) — 区分: 要確認
+- `3c3a990da04e` — 2026-10-02 — Owen Lin — Measure rollout persistence size reductions (#50454) — 区分: 要移植監査
+- `820f85cf597b` — 2026-10-02 — Owen Lin — Truncate oversized MCP results in paginated thread history (#50458) — 区分: 要移植監査
+- `c6049ebd9694` — 2026-10-02 — Celia Chen — Add capability overrides for custom model providers (#50459) — 区分: 要確認
+- `09bced5ad950` — 2026-10-02 — Benjamin Carlsson — Populate thread previews from delegated task inputs (#50462) — 区分: 要移植監査
+- `a0bfaac70ccd` — 2026-10-02 — pakrym-oai — Add the \`incremental_tools\` feature flag (#50464) — 区分: 要確認
+- `ef8cfe5e96f7` — 2026-10-02 — Anton Panasenko — Retry registry authentication outages and jitter executor reconnects (#50465) — 区分: 要移植監査
+- `f5a2272c6cb6` — 2026-10-02 — Felipe Coury — Copy transcript selections as literal text while preserving rich HTML (#50467) — 区分: 要確認
+- `be48ae396e57` — 2026-10-03 — Owen Lin — Account for JSON overhead when truncating MCP tool results (#50470) — 区分: 要移植監査
+- `604061ce51d1` — 2026-10-03 — Celia Chen — Enable Ultrafast service tiers for Amazon Bedrock Astra models (#50472) — 区分: 除外候補（削除済み・外部固有領域）
+- `6c15cc4aaf42` — 2026-10-03 — Eric Traut — Use the app-server default output cap for TUI workspace commands (#50477) — 区分: 要確認
+- `8f7a0f7a8781` — 2026-10-03 — zm-oai — Skip managed config loading for registered Windows sandbox refreshes (#50480) — 区分: 除外候補（削除済み・外部固有領域）
+- `55922b79845b` — 2026-10-03 — Eric Traut — Include installer stderr in daemon update failures (#50499) — 区分: 要確認
+- `9ce35d337aac` — 2026-10-03 — Felipe Coury — Use Enter to accept transcript Find results and Escape to cancel (#50503) — 区分: 要確認
+- `d42aecc56be3` — 2026-10-03 — Benjamin Carlsson — Center TUI confirmations over their retained backdrop (#50504) — 区分: 要確認
+- `47379efd5289` — 2026-10-03 — Benjamin Carlsson — Keep Command Center selection adjacent after task removal (#50505) — 区分: 要確認
+- `c542fb93ef4b` — 2026-10-03 — zm-oai — Record Windows sandbox service stop diagnostics (#50507) — 区分: 除外候補（削除済み・外部固有領域）
+- `af5d95f25552` — 2026-10-03 — jackz — Require GovCloud guidance acknowledgment after Bedrock setup (#50510) — 区分: 除外候補（削除済み・外部固有領域）
+- `86a54b051c08` — 2026-10-03 — pakrym-oai — Add scenario coverage for remote \`/compact\` context preservation (#50516) — 区分: 要確認
+- `b65ab465cefa` — 2026-10-03 — Eric Traut — Reject unknown TUI keys in strict config validation (#50525) — 区分: 要移植監査
+- `7d5f55bdad2d` — 2026-10-03 — guinness-oai — Persist realtime transcript tails before closure without inference (#50531) — 区分: 除外候補（削除済み・外部固有領域）
+- `e1b5b56a4fe6` — 2026-10-03 — Ahmed Ibrahim — Keep shared MCP types stable in Code Mode exec descriptions (#50536) — 区分: 要移植監査
+- `6326163b9abd` — 2026-10-03 — pakrym-oai — Send incremental tool catalog updates in Responses Lite (#50540) — 区分: 要確認
+- `55b6f282a810` — 2026-10-03 — Ahmed Ibrahim — Keep MCP resource helpers available in code mode (#50546) — 区分: 要移植監査
+- `6b43e6fe1fca` — 2026-10-03 — Eric Traut — Skip daemon auto-start for Windows-mounted WSL homes (#50555) — 区分: 除外候補（削除済み・外部固有領域）
+- `19e554bb7010` — 2026-10-03 — Eric Traut — Avoid reading the current directory when resolving absolute paths (#50558) — 区分: 要移植監査
+- `1a169eda1105` — 2026-10-03 — Eric Traut — Distinguish daemon release identity from executable contents (#50559) — 区分: 要確認
+- `58ca099b0302` — 2026-10-03 — Ahmed Ibrahim — Keep Code Mode tool discovery guidance stable across catalog changes (#50562) — 区分: 要移植監査
+- `b741e480e203` — 2026-10-03 — Eric Traut — Allow transcript selection and copying while bottom modals are open (#50564) — 区分: 要確認
+- `58ae3ba61186` — 2026-10-03 — Ahmed Ibrahim — Keep third-party tools deferred in strict Code Mode Only (#50687) — 区分: 要移植監査
+- `3a69ec3ef8fb` — 2026-10-03 — Benjamin Carlsson — Preserve local Markdown link labels in the TUI (#50695) — 区分: 要確認
+- `b172810921f8` — 2026-10-03 — Eric Traut — Let the transport create the Windows remote-control socket directory (#50700) — 区分: 除外候補（削除済み・外部固有領域）
+- `447eac3b8118` — 2026-10-03 — Benjamin Carlsson — Decode Windows Terminal's mapped Shift+Enter sequence (#50720) — 区分: 除外候補（削除済み・外部固有領域）
+- `3e238776e857` — 2026-10-03 — Eric Traut — Show model and reasoning effort near the top of task details (#50727) — 区分: 要確認
+- `550eb50545a7` — 2026-10-03 — Won Park — Keep environment-backed tools exposed across readiness changes (#50741) — 区分: 要移植監査
+- `cd7d9e128cc5` — 2026-10-04 — Benjamin Carlsson — Show unavailable slash commands when searched in side conversations (#50756) — 区分: 要確認
+- `dde5f8c5ae9b` — 2026-10-04 — Benjamin Carlsson — Allow \`/archive\` while a turn is running (#50764) — 区分: 要確認
+- `f365d5754bb6` — 2026-10-04 — Eric Traut — Restrict TUI MCP startup notifications to owned threads (#50781) — 区分: 要移植監査
+- `d0759639f20a` — 2026-10-04 — Eric Traut — Retry Windows daemon release publication on transient file locks (#50782) — 区分: 除外候補（削除済み・外部固有領域）
+- `acf9818faef9` — 2026-10-04 — Benjamin Carlsson — Remember Command Center grouping across launches (#50786) — 区分: 要確認
+- `b8dceb0d4f29` — 2026-10-04 — Benjamin Carlsson — Open slash commands from empty drafts in Vim Normal mode (#50788) — 区分: 要確認
+- `b989f795b11a` — 2026-10-04 — Eric Traut — Fall back to mklink when Windows daemon junction updates are denied (#50802) — 区分: 除外候補（削除済み・外部固有領域）
+- `8f82b8a31cfd` — 2026-10-04 — Eric Traut — Use the managed daemon for eligible remote-control launches (#50803) — 区分: 要確認
+- `ab45264919aa` — 2026-10-04 — Eric Traut — Preserve review lifecycle ordering on failure (#50804) — 区分: 要確認
+- `e57fc9ea5a7c` — 2026-10-04 — Eric Traut — Prune TUI snapshots and consolidate behavior tests (#50808) — 区分: 要確認
+- `afb436df8b70` — 2026-10-04 — Eric Traut — Honor server reasoning summary defaults in new TUI threads (#50811) — 区分: 要移植監査
+- `c2f7fe89d87c` — 2026-10-04 — Eric Traut — Use server model defaults for connected TUI fresh starts (#50913) — 区分: 要確認
+- `de3721a7be07` — 2026-10-04 — zm-oai — Recover malformed Windows deny-read ACL state safely (#50940) — 区分: 除外候補（削除済み・外部固有領域）
+- `335c7f8ecab2` — 2026-10-04 — Ahmed Ibrahim — Gate stable environment tool exposure behind a feature flag (#50962) — 区分: 要移植監査
+- `4ad985e2caaf` — 2026-10-04 — Ahmed Ibrahim — Track inference tool changes in turn analytics (#50964) — 区分: 要確認
+- `7f892275e310` — 2026-10-04 — alishobeiri-oai — Isolate tracing in the strict third-party tool deferral test (#50977) — 区分: 要確認
+- `435d1b3f19e2` — 2026-10-05 — jif — Gate Guardian continuation tests on classifier request capture (#51061) — 区分: 要確認
+- `cacdc4661934` — 2026-10-05 — jif — Honor prior cancellation before starting Codex delegates (#51063) — 区分: 要確認
+- `c8949e55c28a` — 2026-10-05 — jif — Ignore stale refresh responses in agents overview tests (#51064) — 区分: 要確認
+- `315f0efb3488` — 2026-10-05 — swastik-oai — Scope Guardian V2 response timing to snapshot sampling (#51065) — 区分: 要確認
+- `39e013c8b7cb` — 2026-10-05 — jif — Use issuing-step context for Guardian MCP elicitation reviews (#51067) — 区分: 要移植監査
+- `823ea830c0fd` — 2026-10-05 — swastik-oai — Preserve trusted-tool context in Guardian Decisions requests (#51070) — 区分: 要確認
+- `8571b9eaa46e` — 2026-10-05 — pakrym-oai — Install full context in compaction replacement history (#51117) — 区分: 要移植監査
+- `402f5b6fdf28` — 2026-10-05 — Alex Kira — Clarify incremental tool namespace updates in Responses Lite (#51119) — 区分: 要確認
+- `28a264fbc766` — 2026-10-05 — Channing Conger — Add promise settlement streaming helpers to code mode (#51126) — 区分: 要移植監査
+- `4c9f42f4f849` — 2026-10-05 — swastik-oai — Allow Guardian Decisions to fall back to \`OPENAI_API_KEY\` (#51133) — 区分: 要確認
+- `5f8b37cc6596` — 2026-10-05 — felixxia-oai — Recover Guardian reviews from parent checkpoints (#51137) — 区分: 要確認
+- `16cb72218cb5` — 2026-10-05 — felixxia-oai — Force fresh Guardian sessions for parent-checkpoint recovery (#51139) — 区分: 要確認
+- `3f1ccb7ceb81` — 2026-10-05 — felixxia-oai — Isolate Guardian checkpoint recovery flags per review attempt (#51140) — 区分: 要確認
+- `c9253c4977e4` — 2026-10-05 — pakrym-oai — Send base instructions as Responses input messages (#51156) — 区分: 要確認
+- `42312d4ff4e2` — 2026-10-05 — Adam Perry @ OpenAI — Enforce required environment skills before model inference (#51157) — 区分: 要移植監査
+- `7c2ce9071633` — 2026-10-05 — chess — Sign the PowerShell installer in Windows releases (#51158) — 区分: 除外候補（削除済み・外部固有領域）
+- `7f21b5ee9c69` — 2026-10-05 — felixxia-oai — Remove obsolete Guardian thread-context enables from tests (#51184) — 区分: 要移植監査
+- `aa6635ece5ac` — 2026-10-05 — cassirer-openai — Retry transient gRPC code-mode session admission failures (#51185) — 区分: 要移植監査
+- `5cbcf810e5f4` — 2026-10-05 — andrewgu-oai — Prevent stable release pointers from moving backward (#51186) — 区分: 要確認
+- `062439b2f855` — 2026-10-05 — pakrym-oai — Record base instructions in incremental tool history (#51188) — 区分: 要移植監査
+- `36df9544a3a7` — 2026-10-05 — Eric Traut — Clean up Unix app-server control-socket startup lock files (#51191) — 区分: 要移植監査
+- `0d3868a30c37` — 2026-10-05 — Eric Traut — Wait for SIGCONT when resuming the TUI (#51192) — 区分: 要確認
+- `b4e3726d73a3` — 2026-10-05 — Brent Traut — Test thread archiving before the first turn (#51193) — 区分: 要移植監査
+- `a6c5f3a9fa8e` — 2026-10-05 — John Nastos — Add browser extension request headers to config requirements (#51194) — 区分: 要移植監査
+- `54dd21741d52` — 2026-10-05 — andrewgu-oai — Allow concurrent release builds while serializing publication (#51198) — 区分: 要確認
+- `ade17c62b0ca` — 2026-10-05 — Adam Perry @ OpenAI — Upgrade Bazel to 9.2.0 and refresh the module lockfile (#51200) — 区分: 要確認
+- `93f8e79fd21e` — 2026-10-05 — Alex Kira — Distinguish namespace removals in incremental tool updates (#51202) — 区分: 要確認
+- `685270a56a96` — 2026-10-05 — Charlie Marsh — Make apply_patch preserve line endings unconditionally (#51203) — 区分: 要移植監査
+- `c19525e55e19` — 2026-10-05 — peilin-openai — Record initialization analytics for resumed subagents (#51206) — 区分: 要確認
+- `5ad689169645` — 2026-10-05 — Brian Lee — Gate CLI Daybreak controls and selection behind an opt-in feature (#51207) — 区分: 要確認
+- `4d1579433666` — 2026-10-06 — Alex Zamoshchin — Add ranked tool discovery to JavaScript code mode (#51209) — 区分: 要移植監査
+- `7aa8f5104963` — 2026-10-06 — viyatb-oai — Reject sandbox-writable bubblewrap executables from PATH (#51211) — 区分: 要移植監査
+- `a811c72969cc` — 2026-10-06 — Owen Lin — Measure raw MCP tool catalog sizes in telemetry (#51215) — 区分: 要移植監査
+- `4171362e4447` — 2026-10-06 — yunhan-wei — Preserve review targets and scope misalignment continuation metadata (#51217) — 区分: 要確認
+- `28b91c7c3116` — 2026-10-06 — daniel-oai — Honor the OTLP metrics temporality preference (#51220) — 区分: 要確認
+- `2dbcab90e24b` — 2026-10-06 — Adam Perry @ OpenAI — Separate environment requests from runtime selections (#51221) — 区分: 要移植監査
+- `d63a9b8344cf` — 2026-10-06 — rhan-oai — Remove legacy personality template metadata (#51223) — 区分: 要確認
+- `80e0b51c9e44` — 2026-10-06 — Eric Traut — Make session lookup pagination stable and report listing failures (#51230) — 区分: 要確認
+- `2f412e60d735` — 2026-10-06 — Eric Traut — Remove default model labels from TUI model pickers (#51235) — 区分: 要確認
+- `8b6bb1c77de0` — 2026-10-06 — rb-oai — Add a partial answer message phase (#51241) — 区分: 要確認
+- `989c01a41a5b` — 2026-10-06 — rb-oai — Handle partial answers consistently across agent workflows (#51249) — 区分: 要確認
+- `7ac954ea2411` — 2026-10-06 — dpatel-oai — Enforce Fast and Ultra Fast policies independently (#51253) — 区分: 要確認
+- `580b18cb7488` — 2026-10-06 — zm-oai — Start the Windows sandbox service during registered Core setup (#51256) — 区分: 除外候補（削除済み・外部固有領域）
+- `162fcb3976e2` — 2026-10-06 — zm-oai — Fix installer checksum verification under Windows PowerShell (#51257) — 区分: 除外候補（削除済み・外部固有領域）
+- `822e58cc3d66` — 2026-10-06 — rb-oai — Handle partial answers in realtime routing and thread search (#51260) — 区分: 除外候補（削除済み・外部固有領域）
+- `6221a217e2b2` — 2026-10-06 — jif — Remove partial-history subagent forks (#51329) — 区分: 要移植監査
+- `f5fa209bb02c` — 2026-10-06 — jif — Measure total Guardian approval decision duration (#51330) — 区分: 要移植監査
+- `41acdad24666` — 2026-10-06 — jif — Track sub-agent result delivery outcomes (#51331) — 区分: 要確認
+- `c2ae67d76931` — 2026-10-06 — jif — Record multi-agent wait duration by outcome (#51332) — 区分: 要確認
+- `5ddd19e8a905` — 2026-10-06 — jif — Record the multi-agent version in turn analytics (#51333) — 区分: 要確認
+- `79cae5f7fb4b` — 2026-10-06 — jif — Count Guardian denial-limit interruptions in telemetry (#51334) — 区分: 要確認
+- `dab2cd60568d` — 2026-10-06 — jif — Update collaboration snapshots for full-history fork instructions (#51335) — 区分: 要移植監査
+- `588f616e8b6a` — 2026-10-06 — jif — Measure shell snapshot use and wait time per command (#51347) — 区分: 要確認
+- `e32365a2c61a` — 2026-10-06 — jif — Allow larger shell snapshots when replaying from a file (#51350) — 区分: 要移植監査
+- `c0c230e6730b` — 2026-10-06 — jif — Add bounded diagnostics for agent spawn failures (#51355) — 区分: 要確認
+- `73178e7ca60f` — 2026-10-06 — jif — Keep Guardian v2 WebSocket pools warm with concurrent replenishment (#51378) — 区分: 要移植監査
