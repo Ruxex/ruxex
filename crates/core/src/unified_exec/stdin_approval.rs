@@ -1,6 +1,7 @@
 //! Reviews terminal input against retained launch permissions and current policy.
 //! Permission snapshots stay host-owned; neither an earlier approval nor a policy
 //! change alters the sandbox of an already-running process.
+//! Runtime-internal grants alone do not require review; agent grants and policy drift do.
 
 use super::ProcessEntry;
 use super::UnifiedExecContext;
@@ -120,11 +121,12 @@ impl TerminalPermissions {
                 "this terminal cannot enforce the current denied-read restrictions; start a new terminal",
             );
         }
-        // Once the retained settings match, only the baseline permissions can differ.
+        // Runtime-internal grants are part of an ordinary launch, so only permissions
+        // beyond the baseline plus those grants need a fresh stdin approval.
         Ok(if bypassed || &self.policy != current {
             SandboxPermissions::RequireEscalated
         } else if self.policy.sandbox.permissions
-            == effective_permission_profile(baseline, /*additional_permissions*/ None)
+            == effective_permission_profile(baseline, self.internal_permissions.as_ref())
         {
             SandboxPermissions::UseDefault
         } else {
