@@ -32,12 +32,14 @@ pub use deny_read_validator::DenyReadViolation;
 const PROTECTED_METADATA_GIT_PATH_NAME: &str = ".git";
 const PROTECTED_METADATA_AGENTS_PATH_NAME: &str = ".agents";
 const PROTECTED_METADATA_GENEX_PATH_NAME: &str = ".genex";
+const PROTECTED_METADATA_AWS_PATH_NAME: &str = ".aws";
 
 /// Top-level workspace metadata paths that stay protected under writable roots.
 pub const PROTECTED_METADATA_PATH_NAMES: &[&str] = &[
     PROTECTED_METADATA_GIT_PATH_NAME,
     PROTECTED_METADATA_AGENTS_PATH_NAME,
     PROTECTED_METADATA_GENEX_PATH_NAME,
+    PROTECTED_METADATA_AWS_PATH_NAME,
 ];
 
 /// Returns true when a path basename is one of the protected workspace metadata names.
@@ -833,6 +835,7 @@ impl FileSystemSandboxPolicy {
         append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".git");
         append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".agents");
         append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".genex");
+        append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".aws");
         for writable_root in writable_roots {
             for protected_path in default_read_only_subpaths_for_writable_root(
                 writable_root,
@@ -2224,6 +2227,12 @@ pub(crate) fn default_read_only_subpaths_for_writable_root(
         subpaths.push(top_level_genex);
     }
 
+    // AWS profiles can select credential helpers that the application executes.
+    let top_level_aws = writable_root.join(PROTECTED_METADATA_AWS_PATH_NAME);
+    if top_level_aws.as_path().is_dir() {
+        subpaths.push(top_level_aws);
+    }
+
     dedup_absolute_paths(subpaths, /*normalize_effective_paths*/ false)
 }
 
@@ -3146,6 +3155,12 @@ mod tests {
                     },
                     FileSystemAccessMode::Read,
                 ),
+                FileSystemSandboxEntry::skip_missing_path(
+                    FileSystemPath::Special {
+                        value: FileSystemSpecialPath::project_roots(Some(".aws".into())),
+                    },
+                    FileSystemAccessMode::Read,
+                ),
             ])
         );
     }
@@ -3227,6 +3242,7 @@ mod tests {
         let dot_git_config = cwd.path().join(".git").join("config");
         let dot_agents_config = cwd.path().join(".agents").join("config");
         let dot_genex_config = cwd.path().join(".genex").join("config.toml");
+        let dot_aws_config = cwd.path().join(".aws").join("config");
         let root = AbsolutePathBuf::from_absolute_path(cwd.path()).expect("absolute cwd");
         let file_system_policy =
             FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry {
@@ -3238,6 +3254,7 @@ mod tests {
         assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_git_config, cwd.path()));
         assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_agents_config, cwd.path()));
         assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_genex_config, cwd.path()));
+        assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_aws_config, cwd.path()));
 
         let writable_roots = file_system_policy.get_writable_roots_with_cwd(cwd.path());
         assert_eq!(writable_roots.len(), 1);
@@ -3247,11 +3264,13 @@ mod tests {
                 ".git".to_string(),
                 ".agents".to_string(),
                 ".genex".to_string(),
+                ".aws".to_string(),
             ]
         );
         assert!(!writable_roots[0].is_path_writable(&dot_git_config));
         assert!(!writable_roots[0].is_path_writable(&dot_agents_config));
         assert!(!writable_roots[0].is_path_writable(&dot_genex_config));
+        assert!(!writable_roots[0].is_path_writable(&dot_aws_config));
     }
 
     #[test]

@@ -3,7 +3,7 @@
 //! This module mirrors the semantics used by the macOS Seatbelt sandbox:
 //! - the filesystem is read-only by default,
 //! - explicit writable roots are layered on top, and
-//! - sensitive subpaths such as `.git`, `.agents`, and `.genex` remain
+//! - sensitive subpaths such as `.git`, `.agents`, `.genex`, and `.aws` remain
 //!   read-only even when their parent root is writable.
 //!
 //! Restricted execution also hides WSLg's duplicate distro root so it cannot
@@ -465,7 +465,7 @@ fn create_filesystem_args(
                 };
                 // Automatic repo-metadata read masks are skipped here so the
                 // metadata handling below can apply the root-scoped
-                // protection consistently for `.git`, `.agents`, and `.genex`.
+                // protection consistently for `.git`, `.agents`, `.genex`, and `.aws`.
                 // User-authored `read` rules for other subpaths and `none`
                 // rules should keep their normal bwrap behavior, which can mask
                 // the first missing component to prevent creation under writable
@@ -474,6 +474,7 @@ fn create_filesystem_args(
                 if project_subpath != Path::new(".git")
                     && project_subpath != Path::new(".agents")
                     && project_subpath != Path::new(".genex")
+                    && project_subpath != Path::new(".aws")
                 {
                     return None;
                 }
@@ -1839,6 +1840,7 @@ mod tests {
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".git"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(args.preserved_files.len(), 1);
         assert_eq!(
             synthetic_mount_target_paths(&args),
@@ -1847,6 +1849,7 @@ mod tests {
                 workspace.join(".git"),
                 workspace.join(".agents"),
                 workspace.join(".genex"),
+                workspace.join(".aws"),
             ]
         );
         assert!(
@@ -1878,12 +1881,14 @@ mod tests {
         assert_empty_file_bound_without_perms(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
             vec![
                 dot_git.clone(),
                 workspace.join(".agents"),
                 workspace.join(".genex"),
+                workspace.join(".aws"),
             ]
         );
         assert!(
@@ -1923,9 +1928,15 @@ mod tests {
         assert_empty_directory_mounted_read_only(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
-            vec![workspace.join(".genex"), dot_git, workspace.join(".agents")],
+            vec![
+                workspace.join(".genex"),
+                dot_git,
+                workspace.join(".agents"),
+                workspace.join(".aws"),
+            ],
         );
         assert!(
             protected_create_target_paths(&args).is_empty(),
@@ -1960,9 +1971,15 @@ mod tests {
         assert_empty_directory_mounted_read_only(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
-            vec![workspace.join(".genex"), dot_git, workspace.join(".agents")],
+            vec![
+                workspace.join(".genex"),
+                dot_git,
+                workspace.join(".agents"),
+                workspace.join(".aws"),
+            ],
         );
         assert!(
             protected_create_target_paths(&args).is_empty(),

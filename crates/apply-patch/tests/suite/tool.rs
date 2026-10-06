@@ -108,7 +108,6 @@ fn test_apply_patch_cli_rejects_overlapping_end_of_file_chunks() -> anyhow::Resu
 }
 
 #[test]
-#[test]
 fn test_apply_patch_cli_preserves_crlf_from_target_file() -> anyhow::Result<()> {
     let patch = "*** Begin Patch\n*** Update File: crlf.txt\n@@\n-one\n+uno\n@@\n two\n+\n+between\n three\n*** End Patch";
 

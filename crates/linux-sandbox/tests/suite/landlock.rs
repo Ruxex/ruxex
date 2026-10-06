@@ -580,7 +580,7 @@ async fn sandbox_blocks_nc() {
 }
 
 #[tokio::test]
-async fn sandbox_blocks_git_and_genex_writes_inside_writable_root() {
+async fn sandbox_blocks_protected_metadata_writes_inside_writable_root() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -589,11 +589,14 @@ async fn sandbox_blocks_git_and_genex_writes_inside_writable_root() {
     let tmpdir = tempfile::tempdir().expect("tempdir");
     let dot_git = tmpdir.path().join(".git");
     let dot_genex = tmpdir.path().join(".genex");
+    let dot_aws = tmpdir.path().join(".aws");
     std::fs::create_dir_all(&dot_git).expect("create .git");
     std::fs::create_dir_all(&dot_genex).expect("create .genex");
+    std::fs::create_dir_all(&dot_aws).expect("create .aws");
 
     let git_target = dot_git.join("config");
     let genex_target = dot_genex.join("config.toml");
+    let aws_target = dot_aws.join("config");
 
     let git_output = expect_denied(
         run_cmd_result_with_writable_roots(
@@ -628,6 +631,23 @@ async fn sandbox_blocks_git_and_genex_writes_inside_writable_root() {
     );
     assert_ne!(git_output.exit_code, 0);
     assert_ne!(genex_output.exit_code, 0);
+
+    let aws_output = expect_denied(
+        run_cmd_result_with_writable_roots(
+            &[
+                "bash",
+                "-lc",
+                &format!("echo denied > {}", aws_target.to_string_lossy()),
+            ],
+            &[tmpdir.path().to_path_buf()],
+            LONG_TIMEOUT_MS,
+            /*use_legacy_landlock*/ false,
+            /*network_access*/ true,
+        )
+        .await,
+        ".aws write should be denied under bubblewrap",
+    );
+    assert_ne!(aws_output.exit_code, 0);
 }
 
 #[tokio::test]
@@ -838,7 +858,7 @@ for marker_dir in "$registry"/*; do
 done
 ln -sfn '{redirected_tmp}' "$TMPDIR"
 git status --short > status.before
-if grep -E '(^|[[:space:]])\.(git|genex|agents)(/|$)' status.before; then
+if grep -E '(^|[[:space:]])\.(git|genex|agents|aws)(/|$)' status.before; then
   cat status.before
   exit 21
 fi
@@ -901,6 +921,22 @@ fi
     );
     assert_ne!(mkdir_genex_output.exit_code, 0);
     assert!(!subdir.join(".genex").exists());
+    assert!(!subdir.join(".aws").exists());
+
+    let mkdir_aws_output = expect_denied(
+        run_cmd_result_with_cwd_and_writable_roots(
+            &["mkdir", ".aws"],
+            &subdir,
+            std::slice::from_ref(&subdir),
+            LONG_TIMEOUT_MS,
+            /*use_legacy_landlock*/ false,
+            /*network_access*/ true,
+        )
+        .await,
+        "child .aws directory creation should be denied",
+    );
+    assert_ne!(mkdir_aws_output.exit_code, 0);
+    assert!(!subdir.join(".aws").exists());
 
     let script = format!(
         r#"set -e
@@ -929,6 +965,7 @@ printf '%s\n' '{{"message":"ok"}}' | python3 jsonl_viewer.py | grep -q ok
     assert!(!subdir.join(".git").exists());
     assert!(!subdir.join(".genex").exists());
     assert!(!subdir.join(".agents").exists());
+    assert!(!subdir.join(".aws").exists());
 }
 
 #[tokio::test]
