@@ -186,7 +186,10 @@ async fn shell_snapshot_v2_filters_profile_exports_and_stays_in_memory(
 ) -> Result<()> {
     if use_sandbox
         && let Some(warning) =
-            genex_sandboxing::system_bwrap_warning(&PermissionProfile::read_only())
+            genex_sandboxing::system_bwrap_warning(
+                &PermissionProfile::read_only(),
+                &std::env::current_dir()?,
+            )
     {
         eprintln!("skipping sandbox test: {warning}");
         return Ok(());
@@ -444,7 +447,10 @@ async fn shell_snapshot_v2_capture_failure_falls_back_and_retries(
 ) -> Result<()> {
     if use_remote
         && let Some(warning) =
-            genex_sandboxing::system_bwrap_warning(&PermissionProfile::workspace_write())
+            genex_sandboxing::system_bwrap_warning(
+                &PermissionProfile::workspace_write(),
+                &std::env::current_dir()?,
+            )
     {
         eprintln!("skipping sandbox test: {warning}");
         return Ok(());

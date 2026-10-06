@@ -127,7 +127,7 @@ fn finds_first_executable_bwrap_in_joined_search_path() {
     let search_path = std::env::join_paths([first_dir, second_dir]).expect("join search path");
 
     assert_eq!(
-        find_system_bwrap_in_search_paths(std::env::split_paths(&search_path), &cwd),
+        find_bwrap_in_search_paths(std::env::split_paths(&search_path), &cwd),
         Some(expected_bwrap)
     );
 }
@@ -144,7 +144,7 @@ fn skips_workspace_local_bwrap_in_joined_search_path() {
     let search_path = std::env::join_paths([cwd.clone(), trusted_dir]).expect("join search path");
 
     assert_eq!(
-        find_system_bwrap_in_search_paths(std::env::split_paths(&search_path), &cwd),
+        find_bwrap_in_search_paths(std::env::split_paths(&search_path), &cwd),
         Some(expected_bwrap)
     );
 }
@@ -158,9 +158,52 @@ fn root_cwd_does_not_hide_system_bwrap_candidates() {
     let search_path = std::env::join_paths([bin_dir]).expect("join search path");
 
     assert_eq!(
-        find_system_bwrap_in_search_paths(std::env::split_paths(&search_path), Path::new("/")),
+        find_bwrap_in_search_paths(std::env::split_paths(&search_path), Path::new("/")),
         Some(expected_bwrap)
     );
+}
+
+#[test]
+fn rejects_executable_under_a_policy_writable_root() {
+    let temp_dir = tempdir().expect("temp dir");
+    let cwd = temp_dir.path().join("cwd");
+    let bin_dir = temp_dir.path().join("bin");
+    std::fs::create_dir_all(&cwd).expect("create cwd");
+    std::fs::create_dir_all(&bin_dir).expect("create bin dir");
+    let candidate = write_named_fake_bwrap_in(&bin_dir);
+    let writable_root = AbsolutePathBuf::from_absolute_path(&bin_dir).expect("absolute root");
+    let policy = FileSystemSandboxPolicy::workspace_write(
+        &[writable_root],
+        /*exclude_tmpdir_env_var*/ true,
+        /*exclude_slash_tmp*/ true,
+    );
+    let search_path = std::env::join_paths([bin_dir]).expect("join search path");
+
+    assert_eq!(
+        find_executable_in_search_paths(
+            "bwrap",
+            std::env::split_paths(&search_path),
+            &cwd,
+            &policy,
+            &cwd,
+        ),
+        None,
+        "writable bwrap candidate must not be selected: {}",
+        candidate.display(),
+    );
+}
+
+fn find_bwrap_in_search_paths(
+    search_paths: impl IntoIterator<Item = PathBuf>,
+    cwd: &Path,
+) -> Option<PathBuf> {
+    find_executable_in_search_paths(
+        "bwrap",
+        search_paths,
+        cwd,
+        &FileSystemSandboxPolicy::read_only(),
+        cwd,
+    )
 }
 
 fn write_fake_bwrap(contents: &str) -> tempfile::TempPath {

@@ -322,7 +322,10 @@ async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
         return;
     }
 
-    let Some(system_bwrap) = genex_sandboxing::find_system_bwrap_in_path() else {
+    let Some(system_bwrap) = genex_sandboxing::find_system_bwrap_in_path(
+        &PermissionProfile::read_only().file_system_sandbox_policy(),
+        &std::env::current_dir().expect("current directory"),
+    ) else {
         eprintln!("skipping system bwrap fallback test: no system bubblewrap is available");
         return;
     };

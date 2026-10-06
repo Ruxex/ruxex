@@ -99,9 +99,10 @@ pub(super) fn project_config_warning(config: &Config) -> Option<String> {
 }
 
 pub(super) fn emit_system_bwrap_warning(app_event_tx: &AppEventSender, config: &Config) {
-    let Some(message) =
-        genex_sandboxing::system_bwrap_warning(config.permissions.permission_profile())
-    else {
+    let Some(message) = genex_sandboxing::system_bwrap_warning(
+        &config.permissions.effective_permission_profile(),
+        &config.cwd,
+    ) else {
         return;
     };
 
