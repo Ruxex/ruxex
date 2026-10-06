@@ -216,8 +216,9 @@ impl ToolOrchestrator {
             SandboxOverride::NoOverride
         };
         let network_approval_spec = tool.network_approval_spec(req, tool_ctx);
-        // Offline owner attachments stay offline unless approved command permissions grant
-        // networking. Existing enabled controller proxies remain independently authoritative.
+        // An explicit owner proxy requirement permits filtered egress, like an enabled
+        // controller proxy. Traffic-only owner policies stay offline unless command
+        // permissions grant networking.
         let managed_network_active = if owner_network_policy {
             turn_ctx
                 .config
@@ -225,6 +226,10 @@ impl ToolOrchestrator {
                 .network
                 .as_ref()
                 .is_some_and(NetworkProxySpec::enabled)
+                || sandbox_config
+                    .network_policy
+                    .as_ref()
+                    .is_some_and(|policy| policy.requires_proxy)
                 || network_approval_spec.as_ref().is_some_and(|spec| {
                     effective_network_sandbox_policy(
                         permission_profile.network_sandbox_policy(),
