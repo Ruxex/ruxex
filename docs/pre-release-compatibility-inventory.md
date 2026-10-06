@@ -941,3 +941,9 @@ only; Windows users are directed to use the Linux build through WSL.
 | PowerShell and native Windows tooling | PowerShell parser/dependency, Windows Just recipes, `scripts/setup-windows.ps1`, Windows CI/issue/package paths, and Windows voice build helpers have no Linux/macOS production consumer. | `remove` | active CI/package/docs search; `git diff --check` |
 | Transitive third-party Windows targets | Upstream crates may retain Windows target packages in `Cargo.lock` while serving Linux/macOS code. No repository-owned Windows feature is implied by those entries. | `retain` only with supported consumer evidence | `cargo metadata --no-deps`; lockfile dependency audit |
 | History/legal/upstream/external identifiers | Historical records, legal notices, upstream fixtures, third-party protocol/package names, and non-Windows external contracts are not native Windows support. | `retain` with exact path and reason | retain-only residual audit |
+
+### Upstream security and bug-fix imports (2026-10-07)
+
+| Upstream commit | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| `41f9084b30812db321a0b592def4f500d1e79cf4` — Remove WebSocket headers and tool payloads from info logs | `crates/genex-api/src/endpoint/responses_websocket.rs` produced a successful-connection info log containing response headers. `crates/core/src/stream_events_utils.rs` produced a ToolCall info log containing the model-supplied payload preview. These are internal observability producers; no consumer requires headers or payloads in the info message, while logs may be persisted or exported. | `migrate-in-place`: retain connection/tool event names but remove sensitive header and payload values. | `just check --tests`; `just check`; standalone tests not run per repository cleanup policy. |
