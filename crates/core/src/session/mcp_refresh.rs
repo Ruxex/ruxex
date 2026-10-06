@@ -54,3 +54,49 @@ impl Drop for McpRefreshInvalidationGuard<'_> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn invalidation_is_claimed_once_and_guard_restores_it() {
+        let refresh = McpRefresh::new();
+        assert!(!refresh.is_pending());
+        assert!(!refresh.claim());
+
+        refresh.invalidate();
+        assert!(refresh.is_pending());
+        assert!(refresh.claim());
+        assert!(!refresh.is_pending());
+        assert!(!refresh.claim());
+
+        {
+            let _permit = refresh.acquire().await.expect("gate should be open");
+        }
+
+        {
+            let _guard = McpRefreshInvalidationGuard {
+                refresh: &refresh,
+                published: false,
+            };
+        }
+        assert!(refresh.is_pending());
+        assert!(refresh.claim());
+
+        {
+            let _guard = McpRefreshInvalidationGuard {
+                refresh: &refresh,
+                published: true,
+            };
+        }
+        assert!(!refresh.is_pending());
+    }
+
+    #[tokio::test]
+    async fn closed_gate_rejects_new_acquisitions() {
+        let refresh = McpRefresh::new();
+        refresh.close();
+        assert!(refresh.acquire().await.is_err());
+    }
+}

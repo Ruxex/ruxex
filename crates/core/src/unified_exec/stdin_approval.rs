@@ -47,10 +47,10 @@ impl TerminalPolicy {
     fn capture(
         environment: &TurnEnvironment,
         turn: &TurnContext,
-        sandbox_source: TerminalSandboxSource,
+        _sandbox_source: TerminalSandboxSource,
         additional_permissions: Option<AdditionalPermissionProfile>,
     ) -> Self {
-        let mut sandbox = environment.sandbox_context(additional_permissions);
+        let sandbox = environment.sandbox_context(additional_permissions);
         Self {
             sandbox,
             environment_network: environment.config().network_policy.clone(),

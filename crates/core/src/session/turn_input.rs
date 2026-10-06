@@ -686,3 +686,20 @@ async fn pending_turn_input(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn automatic_starts_are_blocked_in_plan_mode() {
+        let user = TurnStartKind::User;
+        let automatic = TurnStartKind::Automatic;
+        let recovery = TurnStartKind::Recovery;
+
+        assert!(user.permits_mode(ModeKind::Plan));
+        assert!(recovery.permits_mode(ModeKind::Plan));
+        assert!(!automatic.permits_mode(ModeKind::Plan));
+        assert!(automatic.permits_mode(ModeKind::Default));
+    }
+}

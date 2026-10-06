@@ -35,3 +35,21 @@ impl ContextualUserFragment for DeveloperInstructions {
         self.instructions.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preserves_developer_instructions() {
+        let fragment = DeveloperInstructions::new("Use the stable API.");
+
+        assert_eq!(
+            fragment.content_kind(),
+            ContentItemKind("generic.developer_instructions".into())
+        );
+        assert_eq!(fragment.role(), "developer");
+        assert_eq!(fragment.markers(), ("", ""));
+        assert_eq!(fragment.body(), "Use the stable API.");
+    }
+}

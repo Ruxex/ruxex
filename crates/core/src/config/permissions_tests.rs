@@ -12,6 +12,7 @@ use genex_config::permissions_toml::NetworkUnixSocketPermissionsToml;
 use genex_config::permissions_toml::PermissionProfileToml;
 use genex_config::permissions_toml::PermissionsToml;
 use genex_config::permissions_toml::WorkspaceRootsToml;
+use genex_protocol::config_types::TrustLevel;
 use genex_protocol::permissions::FileSystemAccessMode;
 use genex_protocol::permissions::FileSystemPath;
 use genex_protocol::permissions::FileSystemSandboxEntry;
@@ -610,6 +611,92 @@ fn glob_scan_max_depth_must_be_positive() {
         validate_glob_scan_max_depth(Some(2)).expect("depth should be valid"),
         Some(2)
     );
+}
+
+#[test]
+fn builtin_profiles_and_reserved_names_are_classified_consistently() {
+    assert!(is_builtin_permission_profile_name(
+        BUILT_IN_READ_ONLY_PROFILE
+    ));
+    assert!(is_builtin_permission_profile_name(
+        BUILT_IN_WORKSPACE_PROFILE
+    ));
+    assert!(is_builtin_permission_profile_name(
+        BUILT_IN_DANGER_FULL_ACCESS_PROFILE
+    ));
+    assert!(!is_builtin_permission_profile_name("custom"));
+
+    assert_eq!(
+        default_builtin_permission_profile_name(&ProjectConfig { trust_level: None }),
+        BUILT_IN_READ_ONLY_PROFILE
+    );
+    assert_eq!(
+        default_builtin_permission_profile_name(&ProjectConfig {
+            trust_level: Some(TrustLevel::Trusted),
+        }),
+        BUILT_IN_WORKSPACE_PROFILE
+    );
+    assert_eq!(
+        default_builtin_permission_profile_name(&ProjectConfig {
+            trust_level: Some(TrustLevel::Untrusted),
+        }),
+        BUILT_IN_WORKSPACE_PROFILE
+    );
+    assert!(reject_unknown_builtin_permission_profile(":missing").is_err());
+    assert!(reject_unknown_builtin_permission_profile("custom").is_ok());
+}
+
+#[test]
+fn user_profiles_cannot_use_reserved_builtin_prefix() {
+    let permissions = PermissionsToml {
+        entries: BTreeMap::from([(":custom".to_string(), PermissionProfileToml::default())]),
+    };
+    let error = validate_user_permission_profile_names(Some(&permissions))
+        .expect_err("reserved names must not be user-defined");
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+    assert!(validate_user_permission_profile_names(None).is_ok());
+}
+
+#[test]
+fn readable_runtime_roots_include_helper_paths_without_overgranting() {
+    let home = PathBuf::from("/tmp/genex-home");
+    let zsh = PathBuf::from("/usr/bin/zsh");
+    let wrapper = home.join("tmp/arg0/session/genex-execve-wrapper");
+    let roots = get_readable_roots_required_for_genex_runtime(&home, Some(&zsh), Some(&wrapper));
+    assert!(roots.iter().any(|root| root.as_path() == zsh));
+    assert!(
+        roots
+            .iter()
+            .any(|root| root.as_path() == home.join("tmp/arg0/session"))
+    );
+}
+
+#[test]
+fn special_path_parser_preserves_aliases_and_unknown_values() {
+    assert!(matches!(
+        parse_special_path(":root"),
+        Some(FileSystemSpecialPath::Root)
+    ));
+    assert!(matches!(
+        parse_special_path(":workspace_roots"),
+        Some(FileSystemSpecialPath::ProjectRoots { .. })
+    ));
+    assert!(matches!(
+        parse_special_path(":future"),
+        Some(FileSystemSpecialPath::Unknown { .. })
+    ));
+    assert!(parse_special_path("relative/path").is_none());
+
+    let mut warnings = Vec::new();
+    maybe_push_unknown_special_path_warning(
+        &FileSystemSpecialPath::unknown(":future", Some("nested".to_string())),
+        &mut warnings,
+    );
+    maybe_push_unknown_special_path_warning(
+        &FileSystemSpecialPath::unknown(":future", None),
+        &mut warnings,
+    );
+    assert_eq!(warnings.len(), 2);
 }
 
 #[test]

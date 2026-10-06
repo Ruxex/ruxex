@@ -200,3 +200,80 @@ pub(super) async fn maybe_record_current_time_reminder(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    fn time(seconds: i64) -> DateTime<Utc> {
+        Utc.timestamp_opt(seconds, 0)
+            .single()
+            .expect("valid timestamp")
+    }
+
+    fn user_message() -> ResponseItem {
+        ResponseItem::Message {
+            id: None,
+            role: "user".to_string(),
+            content: vec![genex_protocol::models::ContentItem::InputText {
+                text: "hello".to_string(),
+            }],
+            phase: None,
+            internal_chat_message_metadata_passthrough: None,
+        }
+    }
+
+    #[test]
+    fn delivers_on_new_window_and_after_interval() {
+        let mut state = CurrentTimeReminderState::default();
+
+        assert!(state.take_reminder_due(
+            "window-1",
+            time(0),
+            60,
+            CurrentTimeReminderDeliveryMode::AnyInference
+        ));
+        assert!(!state.take_reminder_due(
+            "window-1",
+            time(30),
+            60,
+            CurrentTimeReminderDeliveryMode::AnyInference
+        ));
+        assert!(state.take_reminder_due(
+            "window-1",
+            time(60),
+            60,
+            CurrentTimeReminderDeliveryMode::AnyInference
+        ));
+        assert!(state.take_reminder_due(
+            "window-2",
+            time(61),
+            60,
+            CurrentTimeReminderDeliveryMode::AnyInference
+        ));
+    }
+
+    #[test]
+    fn after_user_or_tool_output_consumes_recorded_boundary() {
+        let mut state = CurrentTimeReminderState::default();
+        let mode = CurrentTimeReminderDeliveryMode::AfterUserOrToolOutput;
+
+        assert!(state.take_reminder_due("window-1", time(0), 0, mode));
+        assert!(!state.take_reminder_due("window-1", time(1), 0, mode));
+
+        state.note_recorded_items(&[user_message()]);
+        assert!(state.take_reminder_due("window-1", time(2), 0, mode));
+        assert!(!state.take_reminder_due("window-1", time(3), 0, mode));
+
+        state.note_recorded_items(&[ResponseItem::FunctionCallOutput {
+            id: None,
+            call_id: Some("call-1".to_string()),
+            name: None,
+            namespace: None,
+            output: genex_protocol::models::FunctionCallOutputPayload::from_text("done".into()),
+            internal_chat_message_metadata_passthrough: None,
+        }]);
+        assert!(state.take_reminder_due("window-1", time(4), 0, mode));
+    }
+}

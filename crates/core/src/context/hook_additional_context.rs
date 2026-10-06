@@ -33,3 +33,21 @@ impl ContextualUserFragment for HookAdditionalContext {
         self.text.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn renders_hook_context_as_developer_content() {
+        let fragment = HookAdditionalContext::new("A hook supplied this context.");
+
+        assert_eq!(
+            fragment.content_kind(),
+            ContentItemKind("hooks.additional_context".into())
+        );
+        assert_eq!(fragment.role(), "developer");
+        assert_eq!(fragment.markers(), ("", ""));
+        assert_eq!(fragment.body(), "A hook supplied this context.");
+    }
+}

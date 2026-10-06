@@ -294,7 +294,7 @@ pub fn build_exec_request(
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
     genex_linux_sandbox_exe: &Option<PathBuf>,
-    genex_self_exe: &Option<PathBuf>,
+    _genex_self_exe: &Option<PathBuf>,
     use_legacy_landlock: bool,
 ) -> Result<ExecRequest> {
     let ExecParams {

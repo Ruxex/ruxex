@@ -531,7 +531,6 @@ async fn write_shell_snapshot(
     credential_broker: Option<&SnapshotCredentialBroker>,
     sandbox: Option<&ShellSnapshotSandbox>,
 ) -> Result<Option<SnapshotCredentials>> {
-    let shell_type = shell.shell_type;
     let (snapshot, credentials) = capture_snapshot(shell, cwd, credential_broker, sandbox).await?;
 
     if let Some(parent) = output_path.parent() {

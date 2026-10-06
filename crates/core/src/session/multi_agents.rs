@@ -124,3 +124,46 @@ pub(crate) fn effective_multi_agent_mode(step_context: &StepContext) -> Option<M
         SessionSource::Internal(_) | SessionSource::SubAgent(_) => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_configured_and_bundled_usage_hints() {
+        let mut config = MultiAgentV2Config::default();
+        config.root_agent_usage_hint_text = Some("root override".to_string());
+        config.subagent_usage_hint_text = Some(String::new());
+        let hints = resolve_usage_hints(
+            &config,
+            ResolvedModelMessages::bundled().multi_agent(),
+            true,
+        );
+
+        assert!(matches!(
+            hints.root,
+            Some(MultiAgentRoleInstructions::Configured(ref text)) if text == "root override"
+        ));
+        assert!(hints.subagent.is_none());
+
+        let defaults = resolve_usage_hints(
+            &MultiAgentV2Config::default(),
+            ResolvedModelMessages::bundled().multi_agent(),
+            false,
+        );
+        let Some(MultiAgentRoleInstructions::Composed {
+            omit_update_plan_instructions,
+            max_concurrency,
+            wait_agent_enabled,
+            expose_model_overrides,
+            ..
+        }) = defaults.root
+        else {
+            panic!("expected bundled root instructions");
+        };
+        assert!(!omit_update_plan_instructions);
+        assert_eq!(max_concurrency, config.max_concurrent_threads_per_session);
+        assert!(wait_agent_enabled);
+        assert!(expose_model_overrides);
+    }
+}

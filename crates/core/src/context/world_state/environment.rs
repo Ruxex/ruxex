@@ -7,13 +7,11 @@ use crate::context::environment_context::push_xml_escaped_text;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::environment_selection::TurnEnvironmentState;
 use crate::session::turn_context::TurnContext;
-use crate::shell::ShellType;
 use genex_protocol::models::ContentItemKind;
 use genex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::BTreeMap;
-use std::path::PathBuf;
 
 /// Environment values visible to the model.
 #[derive(Clone, Debug, Default)]

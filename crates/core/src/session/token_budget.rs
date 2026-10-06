@@ -217,6 +217,9 @@ pub(super) async fn maybe_record(
 #[cfg(test)]
 mod tests {
     use super::experimental_context_is_eligible;
+    use super::resolve_token_budget;
+    use crate::config::TokenBudgetConfig;
+    use genex_models_manager::model_info::model_info_from_slug;
     use genex_protocol::auth::AuthMode;
 
     #[test]
@@ -224,5 +227,23 @@ mod tests {
         for (auth_mode, expected) in [(AuthMode::Headers, false), (AuthMode::ApiKey, false)] {
             assert_eq!(experimental_context_is_eligible(auth_mode), expected);
         }
+    }
+
+    #[test]
+    fn preserves_configured_budget_when_model_defaults_are_unavailable() {
+        let configured = TokenBudgetConfig {
+            reminder_threshold_tokens: Some(10),
+            ..TokenBudgetConfig::default()
+        };
+        let model_info = model_info_from_slug("test-model");
+        assert_eq!(
+            resolve_token_budget(Some(&configured), false, &model_info),
+            Some(configured.clone())
+        );
+        assert_eq!(
+            resolve_token_budget(Some(&configured), true, &model_info),
+            Some(configured)
+        );
+        assert_eq!(resolve_token_budget(None, true, &model_info), None);
     }
 }

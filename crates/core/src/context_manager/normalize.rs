@@ -418,3 +418,148 @@ pub(crate) fn strip_audio_when_unsupported(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_protocol::models::FunctionCallOutputBody;
+    use genex_protocol::models::ImageReference;
+
+    fn function_call(call_id: &str, id: Option<&str>) -> ResponseItem {
+        ResponseItem::FunctionCall {
+            id: id.map(|id| ResponseItemId::from_server(id.to_string())),
+            name: "shell".to_string(),
+            namespace: None,
+            arguments: "{}".to_string(),
+            call_id: call_id.to_string(),
+            encrypted_function_args: None,
+            internal_chat_message_metadata_passthrough: None,
+        }
+    }
+
+    fn function_output(call_id: &str, body: FunctionCallOutputBody) -> ResponseItem {
+        ResponseItem::FunctionCallOutput {
+            id: None,
+            call_id: Some(call_id.to_string()),
+            name: None,
+            namespace: None,
+            output: FunctionCallOutputPayload {
+                body,
+                success: None,
+            },
+            internal_chat_message_metadata_passthrough: None,
+        }
+    }
+
+    #[test]
+    fn inserts_stable_synthetic_output_with_a_stable_id() {
+        let mut items = vec![ResponseItemEnvelope::new(function_call(
+            "call-1",
+            Some("item-1"),
+        ))];
+
+        ensure_call_outputs_present(&mut items);
+        assert_eq!(items.len(), 2);
+        let first_output = &items[1].item;
+        let ResponseItem::FunctionCallOutput { id, call_id, .. } = first_output else {
+            panic!("expected synthetic function output");
+        };
+        assert_eq!(call_id.as_deref(), Some("call-1"));
+        assert!(
+            id.as_ref()
+                .is_some_and(|id| id.as_str().starts_with("fco_"))
+        );
+
+        remove_orphan_outputs(&mut items);
+        assert_eq!(items.len(), 2);
+        ensure_call_outputs_present(&mut items);
+        assert_eq!(items.len(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "Orphan function call output for call id: orphan")]
+    fn rejects_orphan_function_outputs_in_debug_builds() {
+        let mut items = vec![ResponseItemEnvelope::new(function_output(
+            "orphan",
+            FunctionCallOutputBody::Text("stale".to_string()),
+        ))];
+
+        remove_orphan_outputs(&mut items);
+    }
+
+    #[test]
+    fn removes_matching_call_and_output_pairs() {
+        let call = function_call("call-1", None);
+        let output = function_output("call-1", FunctionCallOutputBody::Text("done".to_string()));
+        let mut items = vec![
+            ResponseItemEnvelope::new(call.clone()),
+            ResponseItemEnvelope::new(output.clone()),
+        ];
+
+        remove_corresponding_for(&mut items, &call);
+        assert_eq!(items.len(), 1);
+        remove_corresponding_for(&mut items, &output);
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn replaces_unsupported_images_and_audio_in_messages_and_outputs() {
+        let mut items = vec![
+            ResponseItemEnvelope::new(ResponseItem::Message {
+                id: None,
+                role: "user".to_string(),
+                content: vec![
+                    ContentItem::InputImage {
+                        image: ImageReference::Inline {
+                            image_url: "data:image/png;base64,abc".to_string(),
+                        },
+                        detail: None,
+                    },
+                    ContentItem::InputAudio {
+                        audio_url: "data:audio/wav;base64,abc".to_string(),
+                    },
+                ],
+                phase: None,
+                internal_chat_message_metadata_passthrough: None,
+            }),
+            ResponseItemEnvelope::new(function_output(
+                "call-1",
+                FunctionCallOutputBody::ContentItems(vec![
+                    FunctionCallOutputContentItem::InputImage {
+                        image: ImageReference::Inline {
+                            image_url: "data:image/png;base64,abc".to_string(),
+                        },
+                        detail: None,
+                    },
+                    FunctionCallOutputContentItem::InputAudio {
+                        audio_url: "data:audio/wav;base64,abc".to_string(),
+                    },
+                ]),
+            )),
+        ];
+
+        strip_images_when_unsupported(&[], &mut items);
+        strip_audio_when_unsupported(&[], &mut items);
+
+        let ResponseItem::Message { content, .. } = &items[0].item else {
+            panic!("expected message");
+        };
+        assert!(
+            content
+                .iter()
+                .all(|item| matches!(item, ContentItem::InputText { .. }))
+        );
+
+        let ResponseItem::FunctionCallOutput { output, .. } = &items[1].item else {
+            panic!("expected function output");
+        };
+        let Some(content) = output.content_items() else {
+            panic!("expected content items");
+        };
+        assert!(
+            content
+                .iter()
+                .all(|item| matches!(item, FunctionCallOutputContentItem::InputText { .. }))
+        );
+    }
+}

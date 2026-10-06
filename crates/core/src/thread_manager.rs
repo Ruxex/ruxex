@@ -2449,3 +2449,77 @@ fn append_interrupted_boundary(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recognizes_known_service_originators_case_insensitively() {
+        assert_eq!(
+            originator_from_service_name(Some("  GENEX_WORK_WEB ")),
+            Some("genex_work_web".to_string())
+        );
+        assert_eq!(originator_from_service_name(Some("unknown")), None);
+        assert_eq!(originator_from_service_name(None), None);
+    }
+
+    #[test]
+    fn effective_originator_prefers_service_then_persisted_values() {
+        assert_eq!(
+            effective_originator_value(
+                Some("genex_work_mobile"),
+                Some("env".to_string()),
+                Some("persisted".to_string()),
+                Some("inherited".to_string()),
+                "default".to_string(),
+            ),
+            "genex_work_mobile"
+        );
+        assert_eq!(
+            effective_originator_value(
+                Some("unknown"),
+                Some("env".to_string()),
+                Some("persisted".to_string()),
+                Some("inherited".to_string()),
+                "default".to_string(),
+            ),
+            "persisted"
+        );
+        assert_eq!(
+            effective_originator_value(None, None, None, None, "default".to_string()),
+            "default"
+        );
+    }
+
+    #[test]
+    fn interrupted_snapshot_adds_optional_marker_and_abort_event() {
+        let InitialHistory::Forked(history) = append_interrupted_boundary(
+            InitialHistory::New,
+            Some("turn-1".to_string()),
+            Some(42),
+            InterruptedTurnHistoryMarker::Disabled,
+        ) else {
+            panic!("expected forked history");
+        };
+        assert_eq!(history.len(), 1);
+        assert!(matches!(
+            history[0],
+            RolloutItem::EventMsg(EventMsg::TurnAborted(_))
+        ));
+
+        let InitialHistory::Forked(history) = append_interrupted_boundary(
+            InitialHistory::Forked(Vec::new()),
+            None,
+            None,
+            InterruptedTurnHistoryMarker::Developer,
+        ) else {
+            panic!("expected forked history");
+        };
+        assert_eq!(history.len(), 2);
+        assert!(matches!(
+            history[1],
+            RolloutItem::EventMsg(EventMsg::TurnAborted(_))
+        ));
+    }
+}

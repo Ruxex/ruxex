@@ -91,3 +91,52 @@ impl PermissionProfileState {
         self.permission_profile.set(snapshot)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_config::Constrained;
+    use genex_protocol::models::ActivePermissionProfile;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+
+    fn constrained(profile: PermissionProfile) -> Constrained<PermissionProfile> {
+        Constrained::allow_any(profile)
+    }
+
+    #[test]
+    fn tracks_legacy_profile_and_allows_compatible_updates() {
+        let profile = PermissionProfile::read_only();
+        let mut state =
+            PermissionProfileState::from_constrained_legacy(constrained(profile.clone()))
+                .expect("legacy profile should construct");
+
+        assert_eq!(state.permission_profile(), &profile);
+        assert!(state.active_permission_profile().is_none());
+        assert!(state.profile_workspace_roots().is_empty());
+        assert!(
+            state
+                .can_set_legacy_permission_profile(&PermissionProfile::Disabled)
+                .is_ok()
+        );
+        state
+            .set_legacy_permission_profile(PermissionProfile::Disabled)
+            .expect("unconstrained state should accept update");
+        assert_eq!(state.permission_profile(), &PermissionProfile::Disabled);
+    }
+
+    #[test]
+    fn preserves_active_profile_identity_and_workspace_roots() {
+        let path = AbsolutePathBuf::try_from("/workspace/project").expect("absolute path");
+        let active = ActivePermissionProfile::new("project");
+        let state = PermissionProfileState::from_constrained_active_profile(
+            constrained(PermissionProfile::workspace_write()),
+            Some(active.clone()),
+            vec![PathUri::from_abs_path(&path)],
+        )
+        .expect("active profile should construct");
+
+        assert_eq!(state.active_permission_profile(), Some(active));
+        assert_eq!(state.profile_workspace_roots().len(), 1);
+        assert_eq!(state.snapshot().profile_workspace_roots().len(), 1);
+    }
+}

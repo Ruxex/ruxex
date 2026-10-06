@@ -104,3 +104,16 @@ async fn context_window_token_status_with_config(
         token_limit_reached,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::tokens_remaining;
+
+    #[test]
+    fn remaining_tokens_are_saturated_at_zero() {
+        assert_eq!(tokens_remaining(None, 10), None);
+        assert_eq!(tokens_remaining(Some(100), 40), Some(60));
+        assert_eq!(tokens_remaining(Some(100), 100), Some(0));
+        assert_eq!(tokens_remaining(Some(100), 120), Some(0));
+    }
+}

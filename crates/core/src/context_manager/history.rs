@@ -981,3 +981,153 @@ fn user_message_positions(items: &[ResponseItemEnvelope]) -> Vec<usize> {
     }
     positions
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn message(role: &str, text: &str) -> ResponseItem {
+        ResponseItem::Message {
+            id: None,
+            role: role.to_string(),
+            content: vec![ContentItem::InputText {
+                text: text.to_string(),
+            }],
+            phase: None,
+            internal_chat_message_metadata_passthrough: None,
+        }
+    }
+
+    #[test]
+    fn estimates_text_image_audio_and_function_output_content() {
+        let text = message("user", "hello");
+        let image = ResponseItem::Message {
+            id: None,
+            role: "user".to_string(),
+            content: vec![ContentItem::InputImage {
+                image: ImageReference::Inline {
+                    image_url: "data:image/png;base64,abc".to_string(),
+                },
+                detail: Some(ImageDetail::Low),
+            }],
+            phase: None,
+            internal_chat_message_metadata_passthrough: None,
+        };
+        let audio = ResponseItem::Message {
+            id: None,
+            role: "user".to_string(),
+            content: vec![ContentItem::InputAudio {
+                audio_url: "data:audio/wav;base64,abc".to_string(),
+            }],
+            phase: None,
+            internal_chat_message_metadata_passthrough: None,
+        };
+        let output = ResponseItem::FunctionCallOutput {
+            id: None,
+            call_id: Some("call-1".to_string()),
+            name: None,
+            namespace: None,
+            output: genex_protocol::models::FunctionCallOutputPayload {
+                body: FunctionCallOutputBody::ContentItems(vec![
+                    FunctionCallOutputContentItem::InputText {
+                        text: "result".to_string(),
+                    },
+                    FunctionCallOutputContentItem::InputImage {
+                        image: ImageReference::File {
+                            file_id: "file-1".to_string(),
+                        },
+                        detail: Some(ImageDetail::Original),
+                    },
+                    FunctionCallOutputContentItem::InputAudio {
+                        audio_url: "data:audio/wav;base64,abc".to_string(),
+                    },
+                ]),
+                success: None,
+            },
+            internal_chat_message_metadata_passthrough: None,
+        };
+
+        assert!(estimate_item_token_count(&text) > 0);
+        assert!(estimate_item_token_count(&image) > estimate_item_token_count(&text));
+        assert!(estimate_item_token_count(&audio) > 0);
+        assert!(estimate_item_token_count(&output) > estimate_item_token_count(&text));
+        assert_eq!(
+            estimate_image_reference_bytes(
+                &ImageReference::File {
+                    file_id: "file-1".to_string(),
+                },
+                Some(ImageDetail::Original),
+            ),
+            approx_bytes_for_tokens(ORIGINAL_IMAGE_MAX_PATCHES) as i64
+        );
+        assert_eq!(
+            estimate_image_reference_bytes(
+                &ImageReference::Inline {
+                    image_url: "not-an-image".to_string(),
+                },
+                Some(ImageDetail::Original),
+            ),
+            RESIZED_IMAGE_BYTES_ESTIMATE
+        );
+    }
+
+    #[test]
+    fn recognizes_only_real_user_turn_boundaries() {
+        assert!(is_user_turn_boundary(&message("user", "hello")));
+        assert!(!is_user_turn_boundary(&message(
+            "user",
+            "<environment_context>\nbody\n</environment_context>"
+        )));
+        assert!(!is_user_turn_boundary(&message("assistant", "answer")));
+        assert!(!is_user_turn_boundary(&ResponseItem::Other));
+    }
+
+    #[test]
+    fn records_api_items_and_normalizes_history_for_prompt() {
+        let mut history = ContextManager::new();
+        let items = vec![
+            message("system", "ignored"),
+            message("user", "kept"),
+            ResponseItem::CompactionTrigger {},
+        ];
+        history.record_items(items.iter(), TruncationPolicy::Tokens(32));
+        assert_eq!(history.raw_items().len(), 1);
+        assert_eq!(history.history_version(), 0);
+
+        let prompt = history.for_prompt(&[]);
+        let [ResponseItem::Message { role, content, .. }] = prompt.as_slice() else {
+            panic!("expected one normalized user message");
+        };
+        assert_eq!(role, "user");
+        assert_eq!(
+            content,
+            &[ContentItem::InputText {
+                text: "kept".to_string(),
+            }]
+        );
+    }
+
+    #[test]
+    fn replacing_and_dropping_turns_updates_versions_and_pairs() {
+        let mut history = ContextManager::new();
+        history.replace(vec![
+            message("developer", "prefix"),
+            message("user", "first"),
+            message("assistant", "answer"),
+            message("user", "second"),
+        ]);
+        assert_eq!(history.history_version(), 1);
+        assert_eq!(history.reset_version, 1);
+
+        history.drop_last_n_user_turns(1);
+        assert_eq!(history.raw_items().len(), 3);
+        history.drop_last_n_user_turns(0);
+        assert_eq!(history.raw_items().len(), 3);
+
+        history.remove_first_item();
+        assert_eq!(history.raw_items().len(), 2);
+        history.replace_annotated(Vec::new());
+        assert_eq!(history.history_version(), 3);
+        assert_eq!(history.reset_version, 3);
+    }
+}

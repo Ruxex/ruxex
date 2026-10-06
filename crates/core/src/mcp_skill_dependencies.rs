@@ -529,3 +529,111 @@ fn collect_missing_mcp_dependencies(
 
     missing
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_protocol::protocol::SkillScope;
+    use genex_skills::SkillDependencies;
+    use genex_skills::SkillToolDependency;
+    use std::collections::HashMap;
+
+    fn dependency(transport: Option<&str>, value: &str) -> SkillToolDependency {
+        SkillToolDependency {
+            r#type: "mcp".to_string(),
+            value: value.to_string(),
+            description: None,
+            transport: transport.map(str::to_string),
+            command: None,
+            url: None,
+            oauth_callback_port: None,
+        }
+    }
+
+    fn skill(tools: Vec<SkillToolDependency>) -> SkillMetadata {
+        SkillMetadata {
+            name: "demo".to_string(),
+            description: "demo skill".to_string(),
+            short_description: None,
+            interface: None,
+            dependencies: Some(SkillDependencies { tools }),
+            policy: None,
+            path_to_skills_md: genex_utils_absolute_path::AbsolutePathBuf::try_from(
+                "/tmp/skill/SKILL.md",
+            )
+            .expect("absolute skill path"),
+            scope: SkillScope::User,
+            plugin_id: None,
+            remote_plugin_id: None,
+        }
+    }
+
+    #[test]
+    fn canonical_keys_use_transport_identifiers_and_fallbacks() {
+        assert_eq!(
+            canonical_mcp_key("stdio", " node ", "fallback"),
+            "mcp__stdio__node"
+        );
+        assert_eq!(canonical_mcp_key("stdio", "  ", "fallback"), "fallback");
+
+        let mut stdio_dependency = dependency(Some("stdio"), "server");
+        stdio_dependency.command = Some("node".to_string());
+        let stdio = mcp_dependency_to_server_config(&stdio_dependency)
+            .expect("stdio dependency should become a server");
+        assert_eq!(
+            canonical_mcp_server_key("server", &stdio),
+            "mcp__stdio__node"
+        );
+    }
+
+    #[test]
+    fn dependency_config_supports_http_and_stdio_and_rejects_invalid_inputs() {
+        let mut http = dependency(None, "remote");
+        http.url = Some("https://example.test/mcp".to_string());
+        http.oauth_callback_port = Some(4567);
+        let config = mcp_dependency_to_server_config(&http).expect("http dependency");
+        assert!(
+            matches!(config.transport, McpServerTransportConfig::StreamableHttp { ref url, .. } if url == "https://example.test/mcp")
+        );
+        assert_eq!(
+            config.oauth.as_ref().and_then(|oauth| oauth.callback_port),
+            Some(4567)
+        );
+        assert_eq!(
+            canonical_mcp_dependency_key(&http).unwrap(),
+            "mcp__streamable_http__https://example.test/mcp"
+        );
+
+        let mut stdio = dependency(Some("STDIO"), "worker");
+        stdio.command = Some("worker-cli".to_string());
+        let config = mcp_dependency_to_server_config(&stdio).expect("stdio dependency");
+        assert!(
+            matches!(config.transport, McpServerTransportConfig::Stdio { ref command, .. } if command == "worker-cli")
+        );
+
+        let missing_url = dependency(Some("streamable_http"), "remote");
+        assert!(canonical_mcp_dependency_key(&missing_url).is_err());
+        assert!(mcp_dependency_to_server_config(&missing_url).is_err());
+        let unsupported = dependency(Some("other"), "x");
+        assert!(canonical_mcp_dependency_key(&unsupported).is_err());
+    }
+
+    #[test]
+    fn collects_unique_missing_mcp_dependencies_and_ignores_non_mcp_tools() {
+        let mut remote = dependency(None, "remote");
+        remote.url = Some("https://example.test/mcp".to_string());
+        let duplicate = remote.clone();
+        let ignored = SkillToolDependency {
+            r#type: "shell".to_string(),
+            ..dependency(None, "ignored")
+        };
+        let skills = vec![skill(vec![remote, duplicate, ignored])];
+        let missing = collect_missing_mcp_dependencies(&skills, &HashMap::new());
+        assert_eq!(missing.len(), 1);
+        assert!(missing.contains_key("remote"));
+
+        let installed = missing.clone();
+        assert!(collect_missing_mcp_dependencies(&skills, &installed).is_empty());
+        assert_eq!(format_missing_mcp_dependencies(&missing), "remote");
+    }
+}

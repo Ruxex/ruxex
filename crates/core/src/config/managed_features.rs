@@ -322,3 +322,103 @@ pub(crate) fn validate_feature_requirements_in_config_toml(
     );
     ManagedFeatures::from_configured(configured_features, feature_requirements.cloned()).map(|_| ())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_config::RequirementSource;
+    use genex_config::Sourced;
+    use genex_features::FeaturesToml;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn normalizes_unified_exec_and_feature_dependencies() {
+        let mut configured = Features::default();
+        configured.set_enabled(Feature::UnifiedExec, false);
+        configured.set_enabled(Feature::CodeModeOnly, true);
+
+        let managed = ManagedFeatures::from_configured(configured, None)
+            .expect("unconstrained features should be accepted");
+
+        assert!(managed.enabled(Feature::UnifiedExec));
+        assert!(managed.enabled(Feature::CodeModeOnly));
+        assert!(managed.enabled(Feature::CodeMode));
+    }
+
+    #[test]
+    fn pinned_features_override_user_values_and_reject_conflicts() {
+        let requirements = Sourced::new(
+            FeatureRequirementsToml {
+                entries: BTreeMap::from([
+                    ("code_mode".to_string(), false),
+                    ("unified_exec".to_string(), true),
+                ]),
+            },
+            RequirementSource::Unknown,
+        );
+        let mut configured = Features::default();
+        configured.set_enabled(Feature::CodeMode, true);
+        configured.set_enabled(Feature::UnifiedExec, false);
+
+        let mut managed = ManagedFeatures::from_configured(configured, Some(requirements))
+            .expect("managed values should be normalized");
+        assert!(!managed.enabled(Feature::CodeMode));
+        assert!(managed.enabled(Feature::UnifiedExec));
+
+        managed
+            .enable(Feature::CodeMode)
+            .expect("managed requirements normalize user changes");
+        assert!(!managed.enabled(Feature::CodeMode));
+    }
+
+    #[test]
+    fn legacy_and_unknown_requirement_keys_are_reported() {
+        let mut warnings = Vec::new();
+        let requirements = Sourced::new(
+            FeatureRequirementsToml {
+                entries: BTreeMap::from([
+                    ("web_search".to_string(), false),
+                    ("not_a_feature".to_string(), true),
+                ]),
+            },
+            RequirementSource::Unknown,
+        );
+
+        let _ = ManagedFeatures::from_configured_with_warnings(
+            Features::default(),
+            Some(requirements),
+            &mut warnings,
+        )
+        .expect("legacy requirements should remain supported");
+
+        assert_eq!(warnings.len(), 2);
+        assert!(warnings.iter().any(|warning| warning.contains("legacy")));
+        assert!(
+            warnings
+                .iter()
+                .any(|warning| warning.contains("Ignoring unknown"))
+        );
+    }
+
+    #[test]
+    fn validates_explicit_feature_settings_against_requirements() {
+        let cfg = ConfigToml {
+            features: Some(FeaturesToml::from(BTreeMap::from([(
+                "code_mode".to_string(),
+                true,
+            )]))),
+            ..Default::default()
+        };
+        let requirements = Sourced::new(
+            FeatureRequirementsToml {
+                entries: BTreeMap::from([("code_mode".to_string(), false)]),
+            },
+            RequirementSource::Unknown,
+        );
+
+        let error = validate_explicit_feature_settings_in_config_toml(&cfg, Some(&requirements))
+            .expect_err("explicit conflicting feature should be rejected");
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("features.code_mode"));
+    }
+}

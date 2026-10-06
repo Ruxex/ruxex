@@ -671,3 +671,136 @@ async fn drain_to_completed(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_protocol::models::ImageReference;
+
+    fn user(text: &str) -> ResponseItem {
+        ResponseItem::Message {
+            id: None,
+            role: "user".to_string(),
+            content: vec![ContentItem::InputText {
+                text: text.to_string(),
+            }],
+            phase: None,
+            internal_chat_message_metadata_passthrough: None,
+        }
+    }
+
+    fn text(envelope: &ResponseItemEnvelope) -> Option<&str> {
+        let ResponseItem::Message { content, .. } = &envelope.item else {
+            return None;
+        };
+        let [ContentItem::InputText { text }] = content.as_slice() else {
+            return None;
+        };
+        Some(text)
+    }
+
+    #[test]
+    fn extracts_text_content_and_ignores_media() {
+        let content = vec![
+            ContentItem::InputText {
+                text: "input".to_string(),
+            },
+            ContentItem::InputImage {
+                image: ImageReference::Inline {
+                    image_url: "data:image/png;base64,abc".to_string(),
+                },
+                detail: None,
+            },
+            ContentItem::OutputText {
+                text: "output".to_string(),
+            },
+            ContentItem::InputAudio {
+                audio_url: "data:audio/wav;base64,abc".to_string(),
+            },
+        ];
+        assert_eq!(
+            content_items_to_text(&content).as_deref(),
+            Some("input\noutput")
+        );
+        assert_eq!(content_items_to_text(&[]), None);
+        assert_eq!(
+            content_items_to_text(&[ContentItem::InputText {
+                text: String::new()
+            }]),
+            None
+        );
+    }
+
+    #[test]
+    fn collects_real_user_messages_but_skips_summaries_and_other_items() {
+        let items = vec![
+            user("first"),
+            ResponseItem::FunctionCall {
+                id: None,
+                name: "tool".to_string(),
+                namespace: None,
+                arguments: "{}".to_string(),
+                encrypted_function_args: None,
+                call_id: "call".to_string(),
+                internal_chat_message_metadata_passthrough: None,
+            },
+            user(&format!("{SUMMARY_PREFIX}\nold summary")),
+        ];
+        let messages = collect_user_messages(&items);
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].message, "first");
+        assert!(is_summary_message(&format!("{SUMMARY_PREFIX}\nsummary")));
+        assert!(!is_summary_message("ordinary"));
+    }
+
+    #[test]
+    fn inserts_context_at_the_expected_history_boundary() {
+        let context = vec![ResponseItemEnvelope::new(user("context"))];
+        let summary = ResponseItemEnvelope::new(user(&format!("{SUMMARY_PREFIX}\nsummary")));
+        let history = vec![user("old").into(), summary.clone()];
+        let inserted =
+            insert_initial_context_before_last_real_user_or_summary(history, context.clone());
+        assert_eq!(
+            inserted.iter().filter_map(text).collect::<Vec<_>>(),
+            ["context", "old", &format!("{SUMMARY_PREFIX}\nsummary")]
+        );
+
+        let history = vec![
+            ResponseItem::Compaction {
+                id: None,
+                encrypted_content: "remote".to_string(),
+                internal_chat_message_metadata_passthrough: None,
+            }
+            .into(),
+        ];
+        let inserted =
+            insert_initial_context_before_last_real_user_or_summary(history, context.clone());
+        assert!(matches!(inserted[0].item, ResponseItem::Message { .. }));
+
+        let inserted = insert_initial_context_before_last_real_user_or_summary(Vec::new(), context);
+        assert_eq!(text(&inserted[0]), Some("context"));
+    }
+
+    #[test]
+    fn builds_compacted_history_with_budget_and_empty_summary_fallback() {
+        let messages = vec![
+            CompactedUserMessage {
+                id: None,
+                message: "old message".to_string(),
+                internal_chat_message_metadata_passthrough: None,
+                harness_metadata: None,
+            },
+            CompactedUserMessage {
+                id: None,
+                message: "new message ".repeat(100),
+                internal_chat_message_metadata_passthrough: None,
+                harness_metadata: None,
+            },
+        ];
+        let history = build_compacted_history_with_limit(Vec::new(), &messages, "", 1);
+        assert_eq!(history.len(), 2);
+        assert!(text(&history[0]).is_some_and(|value| value.len() < messages[1].message.len()));
+        assert!(matches!(history[1].item, ResponseItem::Message { .. }));
+        assert_eq!(build_compacted_history(Vec::new(), &[], "summary").len(), 1);
+    }
+}

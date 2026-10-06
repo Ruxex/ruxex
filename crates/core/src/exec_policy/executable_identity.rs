@@ -1,6 +1,4 @@
 use super::ExecApprovalRequest;
-use super::ExecPolicyCommandOrigin;
-use super::ExecPolicyCommands;
 use super::ExecPolicyManager;
 use super::commands_for_exec_policy_for_platform;
 use crate::shell::Shell;

@@ -718,3 +718,155 @@ fn truncate_message_text_to_token_budget(
 #[cfg(test)]
 #[path = "compact_remote_v2_image_budget_tests.rs"]
 mod image_budget_tests;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn message(role: &str, content: Vec<ContentItem>) -> ResponseItem {
+        ResponseItem::Message {
+            id: None,
+            role: role.to_string(),
+            content,
+            phase: None,
+            internal_chat_message_metadata_passthrough: None,
+        }
+    }
+
+    fn text(text: &str) -> ContentItem {
+        ContentItem::InputText {
+            text: text.to_string(),
+        }
+    }
+
+    fn client_developer(value: &str) -> ResponseItemEnvelope {
+        ResponseItemEnvelope {
+            item: message("developer", vec![text(value)]),
+            metadata: Some(GenexHarnessMetadata {
+                client_authored: true,
+                ..Default::default()
+            }),
+        }
+    }
+
+    #[test]
+    fn identifies_client_authored_developer_messages() {
+        assert!(is_client_authored_developer_message(&client_developer(
+            "instructions"
+        )));
+        assert!(!is_client_authored_developer_message(
+            &ResponseItemEnvelope::new(message("developer", vec![text("instructions")],))
+        ));
+        assert!(!is_client_authored_developer_message(
+            &ResponseItemEnvelope {
+                item: message("user", vec![text("input")]),
+                metadata: Some(GenexHarnessMetadata {
+                    client_authored: true,
+                    ..Default::default()
+                }),
+            }
+        ));
+    }
+
+    #[test]
+    fn retains_safe_agent_messages_but_filters_progress_and_completion() {
+        let normal = ResponseItemEnvelope::new(ResponseItem::AgentMessage {
+            id: None,
+            author: "agent-a".to_string(),
+            recipient: "agent-b".to_string(),
+            content: vec![AgentMessageInputContent::InputText {
+                text: "Message Type: STATUS\nworking".to_string(),
+            }],
+            internal_chat_message_metadata_passthrough: None,
+        });
+        let progress = ResponseItemEnvelope::new(ResponseItem::AgentMessage {
+            id: None,
+            author: "agent-a/child".to_string(),
+            recipient: "agent-a".to_string(),
+            content: vec![AgentMessageInputContent::InputText {
+                text: "Message Type: MESSAGE\nprogress".to_string(),
+            }],
+            internal_chat_message_metadata_passthrough: None,
+        });
+        let completion = ResponseItemEnvelope::new(ResponseItem::AgentMessage {
+            id: None,
+            author: "agent-a".to_string(),
+            recipient: "agent-b".to_string(),
+            content: vec![AgentMessageInputContent::InputText {
+                text: "Message Type: FINAL_ANSWER\ncomplete".to_string(),
+            }],
+            internal_chat_message_metadata_passthrough: None,
+        });
+
+        assert!(is_retained_for_remote_compaction_v2(&normal, false));
+        assert!(!is_retained_for_remote_compaction_v2(&progress, false));
+        assert!(!is_retained_for_remote_compaction_v2(&completion, false));
+        assert!(!is_retained_for_remote_compaction_v2(
+            &ResponseItemEnvelope::new(message("assistant", vec![text("answer")])),
+            false
+        ));
+    }
+
+    #[test]
+    fn truncates_text_without_dropping_non_text_content() {
+        let source = ResponseItemEnvelope::new(message(
+            "user",
+            vec![
+                text(&"a ".repeat(20)),
+                ContentItem::InputImage {
+                    image: ImageReference::Inline {
+                        image_url: "https://example.com/image.png".to_string(),
+                    },
+                    detail: None,
+                },
+            ],
+        ));
+
+        assert!(truncate_message_text_to_token_budget(source.clone(), 0).is_some());
+        let truncated = truncate_message_text_to_token_budget(source.clone(), 2)
+            .expect("image should keep the message non-empty");
+        let ResponseItem::Message { content, .. } = truncated.item else {
+            panic!("expected message");
+        };
+        assert!(
+            content
+                .iter()
+                .any(|item| matches!(item, ContentItem::InputImage { .. }))
+        );
+        assert!(message_text_token_count(&message("user", vec![text("hello")])) > 0);
+        assert_eq!(message_content_token_count(&ResponseItem::Other), 0);
+    }
+
+    #[test]
+    fn counts_retained_images_and_preserves_client_developer_messages() {
+        let source = message(
+            "user",
+            vec![
+                ContentItem::InputImage {
+                    image: ImageReference::Inline {
+                        image_url: "https://example.com/one.png".to_string(),
+                    },
+                    detail: None,
+                },
+                ContentItem::InputImage {
+                    image: ImageReference::Inline {
+                        image_url: "https://example.com/two.png".to_string(),
+                    },
+                    detail: None,
+                },
+            ],
+        );
+        assert_eq!(retained_input_image_count(&source), 2);
+        assert_eq!(retained_input_image_count(&ResponseItem::Other), 0);
+
+        let retained = truncate_retained_messages(
+            vec![
+                client_developer("keep this"),
+                ResponseItemEnvelope::new(source),
+            ],
+            10,
+            RetainedImageBudget::Disabled,
+        );
+        assert!(!retained.is_empty());
+    }
+}

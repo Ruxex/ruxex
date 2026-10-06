@@ -30,3 +30,29 @@ impl ContextualUserFragment for RolloutBudgetContext {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn renders_remaining_tokens_in_the_developer_fragment() {
+        let fragment = RolloutBudgetContext {
+            remaining_tokens: 1_024,
+        };
+
+        assert_eq!(
+            fragment.content_kind(),
+            ContentItemKind("rollout_budget.remaining_tokens".into())
+        );
+        assert_eq!(fragment.role(), "developer");
+        assert_eq!(
+            fragment.markers(),
+            ("<rollout_budget>\n", "\n</rollout_budget>")
+        );
+        assert_eq!(
+            fragment.body(),
+            "You have 1024 weighted tokens left in the shared session token budget."
+        );
+    }
+}

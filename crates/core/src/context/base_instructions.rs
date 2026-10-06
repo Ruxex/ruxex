@@ -29,3 +29,22 @@ impl ContextualUserFragment for BaseInstructionsFragment {
         self.0.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn renders_as_a_separate_developer_message() {
+        let fragment = BaseInstructionsFragment("Follow the repository instructions.".into());
+
+        assert_eq!(
+            fragment.content_kind(),
+            ContentItemKind("model.base_instructions".into())
+        );
+        assert_eq!(fragment.role(), "developer");
+        assert!(fragment.requires_separate_message());
+        assert_eq!(fragment.markers(), ("", ""));
+        assert_eq!(fragment.body(), "Follow the repository instructions.");
+    }
+}

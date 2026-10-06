@@ -798,3 +798,48 @@ fn unsupported_tool_call_message(payload: &ToolPayload, tool_name: &ToolName) ->
         _ => format!("unsupported call: {tool_name}"),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tools::handlers::PlanHandler;
+
+    #[test]
+    fn registers_looks_up_and_removes_tools() {
+        let mut registry = ToolRegistry::empty_for_test();
+        let handler = Arc::new(PlanHandler);
+        let name = handler.tool_name().with_default_namespace();
+
+        registry.register_trusted(handler);
+        assert_eq!(registry.tool_names_for_test(), vec![name.clone()]);
+        assert!(registry.tool(&name).is_some());
+        assert_eq!(registry.entries().count(), 1);
+        assert!(registry.tool_exposure(&name).is_some());
+        assert!(registry.create_diff_consumer(&name).is_none());
+
+        assert!(registry.remove(&name).is_some());
+        assert!(registry.tool(&name).is_none());
+        assert!(registry.entries().next().is_none());
+    }
+
+    #[test]
+    fn records_the_first_collision_and_exposes_builtin_runtime_defaults() {
+        let handler = PlanHandler;
+        let name = handler.tool_name().with_default_namespace();
+        assert!(handler.is_builtin_control_tool());
+        assert!(handler.immutable_spec().is_none());
+        assert!(handler.cached_code_mode_definitions().is_none());
+        assert!(handler.mcp_server_name().is_none());
+        assert!(handler.matches_kind(&ToolPayload::Function {
+            arguments: "{}".to_string(),
+        }));
+        assert!(!handler.matches_kind(&ToolPayload::Custom {
+            input: "{}".to_string(),
+        }));
+
+        let mut registry = ToolRegistry::empty_for_test();
+        registry.record_collision(name.clone());
+        registry.record_collision(ToolName::plain("other"));
+        assert_eq!(registry.first_collision(), Some(&name));
+    }
+}

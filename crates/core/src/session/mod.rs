@@ -4508,3 +4508,49 @@ async fn build_hooks_config(
         shell_args: hook_shell_argv,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_history::ResumedHistory;
+    use std::path::PathBuf;
+
+    #[test]
+    fn resolves_multi_agent_version_from_history_and_inheritance() {
+        assert_eq!(
+            resolve_multi_agent_version(&InitialHistory::New, Some(MultiAgentVersion::V2)),
+            Some(MultiAgentVersion::V2)
+        );
+        assert_eq!(
+            resolve_multi_agent_version(&InitialHistory::New, Some(MultiAgentVersion::Disabled)),
+            Some(MultiAgentVersion::Disabled)
+        );
+        assert_eq!(
+            resolve_multi_agent_version(&InitialHistory::Forked(Vec::new()), None),
+            Some(MultiAgentVersion::V1)
+        );
+        assert_eq!(
+            resolve_multi_agent_version(
+                &InitialHistory::Resumed(ResumedHistory {
+                    conversation_id: ThreadId::new(),
+                    history: Arc::new(Vec::new()),
+                    rollout_path: Some(PathBuf::from("rollout.jsonl")),
+                }),
+                None,
+            ),
+            Some(MultiAgentVersion::V1)
+        );
+    }
+
+    #[test]
+    fn submission_ids_are_uuid_v7_values() {
+        let id = new_submission_id();
+        let parsed = uuid::Uuid::parse_str(&id).expect("submission ID should be a UUID");
+        assert_eq!(parsed.get_version(), Some(uuid::Version::SortRand));
+    }
+
+    #[tokio::test]
+    async fn completed_session_termination_can_be_awaited() {
+        completed_session_loop_termination().await;
+    }
+}

@@ -63,6 +63,8 @@ use genex_features::Features;
 use genex_features::FeaturesToml;
 use genex_features::MultiAgentV2ConfigToml;
 use genex_features::NetworkProxyConfigToml;
+#[cfg(test)]
+use genex_features::RolloutBudgetConfigToml;
 use genex_features::SleepToolMode;
 use genex_features::TokenBudgetConfigToml;
 use genex_git_utils::resolve_root_git_project_for_trust;
@@ -4378,4 +4380,334 @@ pub fn find_genex_home() -> std::io::Result<AbsolutePathBuf> {
 /// that the directory exists.
 pub fn log_dir(cfg: &Config) -> std::io::Result<PathBuf> {
     Ok(cfg.log_dir.clone())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn local_development_build_uses_file_auth_storage() {
+        assert_eq!(
+            resolve_cli_auth_credentials_store_mode(
+                AuthCredentialsStoreMode::Keyring,
+                LOCAL_DEV_BUILD_VERSION,
+            ),
+            AuthCredentialsStoreMode::File
+        );
+        assert_eq!(
+            resolve_cli_auth_credentials_store_mode(
+                AuthCredentialsStoreMode::Auto,
+                LOCAL_DEV_BUILD_VERSION,
+            ),
+            AuthCredentialsStoreMode::File
+        );
+        assert_eq!(
+            resolve_cli_auth_credentials_store_mode(AuthCredentialsStoreMode::Keyring, "1.0.0",),
+            AuthCredentialsStoreMode::Keyring
+        );
+    }
+
+    #[test]
+    fn local_development_build_uses_file_oauth_storage() {
+        assert_eq!(
+            resolve_mcp_oauth_credentials_store_mode(
+                OAuthCredentialsStoreMode::Keyring,
+                LOCAL_DEV_BUILD_VERSION,
+            ),
+            OAuthCredentialsStoreMode::File
+        );
+        assert_eq!(
+            resolve_mcp_oauth_credentials_store_mode(
+                OAuthCredentialsStoreMode::Auto,
+                LOCAL_DEV_BUILD_VERSION,
+            ),
+            OAuthCredentialsStoreMode::File
+        );
+    }
+
+    #[test]
+    fn permission_requirements_choose_a_valid_fallback() {
+        let mut requirements = ConfigRequirementsToml {
+            allowed_permission_profiles: Some(BTreeMap::from([
+                (BUILT_IN_READ_ONLY_PROFILE.to_string(), true),
+                (BUILT_IN_WORKSPACE_PROFILE.to_string(), true),
+            ])),
+            ..Default::default()
+        };
+        let mut warnings = Vec::new();
+
+        assert_eq!(
+            resolve_default_permissions(None, None, &requirements, &mut warnings).unwrap(),
+            Some(BUILT_IN_WORKSPACE_PROFILE)
+        );
+        assert!(warnings.is_empty());
+
+        assert_eq!(
+            resolve_default_permissions(Some("disallowed"), None, &requirements, &mut warnings,)
+                .unwrap(),
+            Some(BUILT_IN_WORKSPACE_PROFILE)
+        );
+        assert_eq!(warnings.len(), 1);
+
+        requirements.default_permissions = Some(BUILT_IN_READ_ONLY_PROFILE.to_string());
+        assert!(validate_required_permission_profile_catalog(&requirements, None).is_ok());
+    }
+
+    #[test]
+    fn permission_requirements_reject_invalid_catalogs_and_timeouts() {
+        let mut requirements = ConfigRequirementsToml {
+            default_permissions: Some(BUILT_IN_WORKSPACE_PROFILE.to_string()),
+            ..Default::default()
+        };
+        assert!(validate_required_permission_profile_catalog(&requirements, None).is_err());
+
+        requirements.allowed_permission_profiles =
+            Some(BTreeMap::from([("missing".to_string(), true)]));
+        assert!(validate_required_permission_profile_catalog(&requirements, None).is_err());
+
+        assert!(
+            validate_multi_agent_v2_wait_timeout("timeout", HARD_MIN_MULTI_AGENT_V2_TIMEOUT_MS)
+                .is_ok()
+        );
+        assert!(
+            validate_multi_agent_v2_wait_timeout("timeout", HARD_MAX_MULTI_AGENT_V2_TIMEOUT_MS)
+                .is_ok()
+        );
+        assert!(validate_multi_agent_v2_wait_timeout("timeout", -1).is_err());
+        assert!(
+            validate_multi_agent_v2_wait_timeout("timeout", HARD_MAX_MULTI_AGENT_V2_TIMEOUT_MS + 1)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn resolves_web_search_mode_from_explicit_config_then_features() {
+        let mut features = Features::default();
+        features.enable(Feature::WebSearchCached);
+        let mut config = ConfigToml::default();
+
+        assert_eq!(
+            resolve_web_search_mode(&config, &features),
+            Some(WebSearchMode::Cached)
+        );
+
+        config.web_search = Some(WebSearchMode::Disabled);
+        assert_eq!(
+            resolve_web_search_mode(&config, &features),
+            Some(WebSearchMode::Disabled)
+        );
+
+        config.web_search = None;
+        let mut live_features = Features::default();
+        live_features.enable(Feature::WebSearchRequest);
+        assert_eq!(
+            resolve_web_search_mode(&config, &live_features),
+            Some(WebSearchMode::Live)
+        );
+        assert_eq!(resolve_web_search_mode(&config, &Features::default()), None);
+    }
+
+    #[test]
+    fn resolves_structured_feature_configs_and_terminal_resize_modes() {
+        let mut config = ConfigToml::default();
+        let mut feature_configs = FeaturesToml::default();
+        feature_configs.code_mode = Some(FeatureToml::Config(CodeModeConfigToml {
+            default_exec_yield_time_ms: Some(123),
+            excluded_tool_namespaces: Some(vec!["alpha".to_string()]),
+            direct_only_tool_namespaces: Some(vec!["beta".to_string()]),
+            ..Default::default()
+        }));
+        feature_configs.multi_agent_v2 = Some(FeatureToml::Config(MultiAgentV2ConfigToml {
+            max_concurrent_threads_per_session: Some(9),
+            subagent_developer_instructions: Some("  instructions  ".to_string()),
+            tool_namespace: Some("collab".to_string()),
+            ..Default::default()
+        }));
+        config.features = Some(feature_configs);
+
+        let code_mode = resolve_code_mode_config(&config);
+        assert_eq!(code_mode.default_exec_yield_time_ms, 123);
+        assert_eq!(code_mode.excluded_tool_namespaces, ["alpha"]);
+        assert_eq!(code_mode.direct_only_tool_namespaces, ["beta"]);
+
+        let multi_agent = resolve_multi_agent_v2_config(&config);
+        assert_eq!(multi_agent.max_concurrent_threads_per_session, 9);
+        assert_eq!(
+            multi_agent.subagent_developer_instructions.as_deref(),
+            Some("instructions")
+        );
+        assert_eq!(multi_agent.tool_namespace.as_deref(), Some("collab"));
+
+        config.tui =
+            Some(toml::from_str("terminal_resize_reflow_max_rows = 0").expect("valid tui config"));
+        assert_eq!(
+            resolve_terminal_resize_reflow_config(&config).max_rows,
+            TerminalResizeReflowMaxRows::Disabled
+        );
+        config.tui =
+            Some(toml::from_str("terminal_resize_reflow_max_rows = 17").expect("valid tui config"));
+        assert_eq!(
+            resolve_terminal_resize_reflow_config(&config).max_rows,
+            TerminalResizeReflowMaxRows::Limit(17)
+        );
+        config.tui = None;
+        assert_eq!(
+            resolve_terminal_resize_reflow_config(&config).max_rows,
+            TerminalResizeReflowMaxRows::Auto
+        );
+    }
+
+    #[test]
+    fn resolves_token_budget_and_rejects_invalid_values() {
+        let mut feature_set = Features::default();
+        feature_set.enable(Feature::TokenBudget);
+        let managed_features = ManagedFeatures::from(feature_set);
+        let mut config = ConfigToml::default();
+        let mut feature_configs = FeaturesToml::default();
+        feature_configs.token_budget = Some(FeatureToml::Config(TokenBudgetConfigToml {
+            use_history_notes_extension: Some(true),
+            reminder_threshold_tokens: Some(20),
+            guidance_message: Some("guidance".to_string()),
+            auto_compact_fallback_prompt: Some("  fallback  ".to_string()),
+            auto_compact_fallback_buffer_tokens: Some(50),
+            ..Default::default()
+        }));
+        config.features = Some(feature_configs);
+
+        let resolved = resolve_token_budget_config(&config, &managed_features)
+            .expect("valid token budget")
+            .expect("feature enabled");
+        assert!(resolved.use_history_notes_extension);
+        assert_eq!(resolved.reminder_threshold_tokens, Some(20));
+        assert_eq!(resolved.guidance_message.as_deref(), Some("guidance"));
+        assert_eq!(
+            resolved.auto_compact_fallback_prompt.as_deref(),
+            Some("fallback")
+        );
+        assert_eq!(resolved.fallback_buffer_tokens(), 50);
+
+        let mut disabled = ManagedFeatures::default();
+        assert!(
+            resolve_token_budget_config(&config, &disabled)
+                .expect("disabled feature is valid")
+                .is_none()
+        );
+
+        let mut invalid_features = FeaturesToml::default();
+        invalid_features.token_budget = Some(FeatureToml::Config(TokenBudgetConfigToml {
+            enabled: Some(true),
+            reminder_threshold_tokens: Some(0),
+            ..Default::default()
+        }));
+        config.features = Some(invalid_features);
+        disabled
+            .enable(Feature::TokenBudget)
+            .expect("enable feature");
+        assert!(resolve_token_budget_config(&config, &disabled).is_err());
+    }
+
+    #[test]
+    fn resolves_rollout_and_current_time_configs_with_validation() {
+        let mut feature_set = Features::default();
+        feature_set.enable(Feature::RolloutBudget);
+        feature_set.enable(Feature::CurrentTimeReminder);
+        let managed_features = ManagedFeatures::from(feature_set);
+        let mut config = ConfigToml::default();
+        let mut feature_configs = FeaturesToml::default();
+        feature_configs.rollout_budget = Some(FeatureToml::Config(RolloutBudgetConfigToml {
+            enabled: Some(true),
+            limit_tokens: Some(100),
+            reminder_at_remaining_tokens: Some(vec![10, 50]),
+            sampling_token_weight: Some(0.5),
+            prefill_token_weight: Some(2.0),
+        }));
+        feature_configs.current_time_reminder =
+            Some(FeatureToml::Config(CurrentTimeReminderConfigToml {
+                enabled: Some(true),
+                reminder_interval_seconds: Some(30),
+                clock_source: Some(CurrentTimeSource::External),
+                delivery_mode: Some(CurrentTimeReminderDeliveryMode::AfterUserOrToolOutput),
+                sleep_tool: Some(true),
+            }));
+        config.features = Some(feature_configs);
+
+        let rollout = resolve_rollout_budget_config(&config, &managed_features)
+            .expect("valid rollout budget")
+            .expect("feature enabled");
+        assert_eq!(rollout.limit_tokens, 100);
+        assert_eq!(rollout.reminder_at_remaining_tokens, [10, 50]);
+        assert_eq!(rollout.sampling_token_weight, 0.5);
+        assert_eq!(rollout.prefill_token_weight, 2.0);
+
+        let current_time = resolve_current_time_reminder_config(&config, &managed_features)
+            .expect("valid current time config")
+            .expect("feature enabled");
+        assert_eq!(current_time.reminder_interval_seconds, 30);
+        assert_eq!(current_time.clock_source, CurrentTimeSource::External);
+        assert_eq!(
+            current_time.delivery_mode,
+            CurrentTimeReminderDeliveryMode::AfterUserOrToolOutput
+        );
+        assert!(current_time.sleep_tool);
+
+        let mut invalid_features = FeaturesToml::default();
+        invalid_features.rollout_budget = Some(FeatureToml::Config(RolloutBudgetConfigToml {
+            enabled: Some(true),
+            limit_tokens: Some(100),
+            reminder_at_remaining_tokens: Some(vec![100]),
+            ..Default::default()
+        }));
+        config.features = Some(invalid_features);
+        assert!(resolve_rollout_budget_config(&config, &managed_features).is_err());
+    }
+
+    #[test]
+    fn validates_multi_agent_namespaces_and_resolves_turn_web_search() {
+        for valid in [None, Some("collab"), Some("agent_tools-2")] {
+            assert!(validate_multi_agent_v2_tool_namespace(valid).is_ok());
+        }
+        for invalid in [
+            Some(""),
+            Some(" collab"),
+            Some("collab "),
+            Some("bad.namespace"),
+            Some("mcp"),
+            Some("mcp__server"),
+            Some("web"),
+        ] {
+            assert!(
+                validate_multi_agent_v2_tool_namespace(invalid).is_err(),
+                "{invalid:?}"
+            );
+        }
+        let too_long = "a".repeat(65);
+        assert!(validate_multi_agent_v2_tool_namespace(Some(&too_long)).is_err());
+
+        let unconstrained = Constrained::allow_any(WebSearchMode::Live);
+        let capabilities = ProviderCapabilities::default();
+        assert_eq!(
+            resolve_web_search_mode_for_turn(
+                &unconstrained,
+                &PermissionProfile::Disabled,
+                capabilities,
+            ),
+            WebSearchMode::Live
+        );
+
+        let no_external_access = ProviderCapabilities {
+            external_web_access: false,
+            ..capabilities
+        };
+        assert_eq!(
+            resolve_web_search_mode_for_turn(
+                &unconstrained,
+                &PermissionProfile::External {
+                    network: NetworkSandboxPolicy::Restricted,
+                },
+                no_external_access,
+            ),
+            WebSearchMode::Cached
+        );
+    }
 }

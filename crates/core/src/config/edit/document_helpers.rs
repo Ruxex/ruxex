@@ -331,3 +331,78 @@ where
     }
     TomlItem::Table(table)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use toml_edit::DocumentMut;
+
+    #[test]
+    fn ensures_tables_for_writes_and_reads() {
+        let mut none = TomlItem::None;
+        assert!(ensure_table_for_write(&mut none).is_some());
+        assert!(none.as_table().is_some_and(TomlTable::is_implicit));
+
+        let mut inline: TomlItem = "{ enabled = true }".parse().expect("inline table");
+        assert!(ensure_table_for_write(&mut inline).is_some());
+        assert_eq!(inline["enabled"].as_bool(), Some(true));
+
+        let mut scalar = value("text");
+        assert!(ensure_table_for_read(&mut scalar).is_none());
+        let mut inline_for_read: TomlItem = "{ name = \"value\" }".parse().expect("inline table");
+        assert!(ensure_table_for_read(&mut inline_for_read).is_some());
+        assert_eq!(inline_for_read["name"].as_str(), Some("value"));
+    }
+
+    #[test]
+    fn parses_and_serializes_disabled_plugin_suggestions() {
+        let parse_inline = |source: &str| {
+            let document: DocumentMut = format!("entry = {source}").parse().expect("inline table");
+            document["entry"].as_value().expect("inline value").clone()
+        };
+        let plugin_value: TomlValue = parse_inline("{ type = \"plugin\", id = \"demo\" }");
+        assert_eq!(
+            parse_tool_suggest_disabled_tool(&plugin_value)
+                .expect("plugin")
+                .id,
+            "demo"
+        );
+        let non_plugin_value: TomlValue = parse_inline("{ type = \"skill\", id = \"x\" }");
+        assert!(parse_tool_suggest_disabled_tool(&non_plugin_value).is_none());
+
+        let mut table = TomlTable::new();
+        table["type"] = value("plugin");
+        table["id"] = value("table-demo");
+        assert_eq!(
+            parse_tool_suggest_disabled_tool_table(&table)
+                .expect("plugin table")
+                .id,
+            "table-demo"
+        );
+
+        let tools = vec![ToolSuggestDisabledTool {
+            kind: ToolSuggestDiscoverableType::Plugin,
+            id: "one".to_string(),
+        }];
+        let rendered = tool_suggest_disabled_tools_value(&tools);
+        assert_eq!(rendered.as_array().expect("array").len(), 1);
+    }
+
+    #[test]
+    fn merges_inline_tables_while_preserving_existing_decoration() {
+        let mut existing = InlineTable::new();
+        existing.insert("old", value("kept").as_value().expect("value").clone());
+        existing.insert("shared", value("before").as_value().expect("value").clone());
+        let mut replacement = InlineTable::new();
+        replacement.insert("shared", value("after").as_value().expect("value").clone());
+        replacement.insert("new", value(true).as_value().expect("value").clone());
+
+        merge_inline_table(&mut existing, replacement);
+        assert!(existing.get("old").is_none());
+        assert_eq!(
+            existing.get("shared").and_then(TomlValue::as_str),
+            Some("after")
+        );
+        assert_eq!(existing.get("new").and_then(TomlValue::as_bool), Some(true));
+    }
+}

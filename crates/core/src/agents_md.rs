@@ -268,7 +268,7 @@ async fn agents_md_paths(
     Ok(found)
 }
 
-fn candidate_filenames<'a>(config: &'a Config, cwd: &PathUri) -> Vec<&'a str> {
+fn candidate_filenames<'a>(config: &'a Config, _cwd: &PathUri) -> Vec<&'a str> {
     let mut names: Vec<&str> = Vec::with_capacity(2 + config.project_doc_fallback_filenames.len());
     names.push(LOCAL_AGENTS_MD_FILENAME);
     names.push(DEFAULT_AGENTS_MD_FILENAME);

@@ -823,7 +823,7 @@ fn commands_for_exec_policy(command: &[String]) -> ExecPolicyCommands {
 
 fn commands_for_exec_policy_for_platform(
     command: &[String],
-    command_platform: DangerousCommandPlatform,
+    _command_platform: DangerousCommandPlatform,
 ) -> ExecPolicyCommands {
     if let Some(commands) = parse_shell_lc_plain_commands(command)
         && !commands.is_empty()

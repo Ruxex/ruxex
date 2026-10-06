@@ -935,3 +935,165 @@ impl ConfigEditsBuilder {
         .context("config persistence task panicked")?
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_config::types::ToolSuggestDiscoverableType;
+    use std::fs;
+
+    #[test]
+    fn edit_builders_encode_expected_paths_and_values() {
+        assert!(matches!(
+            syntax_theme_edit("dark"),
+            ConfigEdit::SetPath { segments, .. } if segments == ["tui", "theme"]
+        ));
+        assert!(matches!(
+            tui_pet_edit("cat"),
+            ConfigEdit::SetPath { segments, .. } if segments == ["tui", "pet"]
+        ));
+        assert!(matches!(
+            keymap_binding_edit("global", "quit", "ctrl-c"),
+            ConfigEdit::SetPath { segments, value }
+                if segments == ["tui", "keymap", "global", "quit"]
+                    && value.as_str() == Some("ctrl-c")
+        ));
+        assert!(matches!(
+            keymap_bindings_edit("global", "quit", &["ctrl-c".into(), "ctrl-d".into()]),
+            ConfigEdit::SetPath { value, .. } if value.as_array().is_some_and(|array| array.len() == 2)
+        ));
+        assert!(matches!(
+            keymap_binding_clear_edit("global", "quit"),
+            ConfigEdit::ClearPath { segments } if segments == ["tui", "keymap", "global", "quit"]
+        ));
+        assert!(matches!(
+            status_line_items_edit(&[]),
+            ConfigEdit::SetPath { value, .. } if value.as_array().is_some_and(|array| array.is_empty())
+        ));
+        assert!(matches!(
+            terminal_title_items_edit(&["model".to_string()]),
+            ConfigEdit::SetPath { value, .. } if value.as_array().is_some_and(|array| array.len() == 1)
+        ));
+    }
+
+    #[test]
+    fn applies_model_notice_feature_and_path_edits_atomically() {
+        let mut document = ConfigDocument::new(
+            "model = \"old\"\n[features]\ncode_mode = { enabled = true }\n"
+                .parse::<DocumentMut>()
+                .expect("valid TOML"),
+        );
+        assert!(
+            document
+                .apply(&ConfigEdit::SetModel {
+                    model: Some("new".to_string()),
+                    effort: Some(ReasoningEffort::High),
+                })
+                .expect("model edit")
+        );
+        assert!(
+            document
+                .apply(&ConfigEdit::SetServiceTier {
+                    service_tier: Some("fast".to_string()),
+                })
+                .expect("tier edit")
+        );
+        assert!(
+            document
+                .apply(&ConfigEdit::SetNoticeHideFullAccessWarning(true))
+                .expect("notice edit")
+        );
+        assert!(
+            document
+                .apply(&ConfigEdit::SetPath {
+                    segments: vec!["features".into(), "code_mode".into()],
+                    value: value(false),
+                })
+                .expect("structured feature edit")
+        );
+        assert!(
+            document
+                .apply(&ConfigEdit::ClearPath {
+                    segments: vec!["model_reasoning_effort".into()],
+                })
+                .expect("clear edit")
+        );
+
+        let rendered = document.doc.to_string();
+        assert!(rendered.contains("model = \"new\""));
+        assert!(rendered.contains("service_tier = \"fast\""));
+        assert!(rendered.contains("hide_full_access_warning = true"));
+        let rendered_document: DocumentMut = rendered.parse().expect("rendered TOML");
+        let code_mode = &rendered_document["features"]["code_mode"];
+        assert!(
+            code_mode.as_bool() == Some(false)
+                || code_mode
+                    .as_table_like()
+                    .and_then(|table| table.get("enabled"))
+                    .and_then(TomlItem::as_bool)
+                    == Some(false)
+        );
+        assert!(!rendered.contains("model_reasoning_effort"));
+    }
+
+    #[test]
+    fn deduplicates_nux_edits_and_normalizes_disabled_tool_entries() {
+        let edits = model_availability_nux_count_edits(&HashMap::from([
+            ("zeta".to_string(), 2),
+            ("alpha".to_string(), 1),
+        ]));
+        assert!(matches!(edits.first(), Some(ConfigEdit::ClearPath { .. })));
+        assert!(matches!(
+            edits.get(1),
+            Some(ConfigEdit::SetPath { segments, value })
+                if segments.last().is_some_and(|segment| segment == "alpha")
+                    && value.as_integer() == Some(1)
+        ));
+
+        let disabled = ToolSuggestDisabledTool {
+            kind: ToolSuggestDiscoverableType::Plugin,
+            id: "plugin-id".to_string(),
+        };
+        let mut document = ConfigDocument::new(
+            "[tool_suggest]\ndisabled_tools = [{ type = \"plugin\", id = \"old\" }]\n"
+                .parse::<DocumentMut>()
+                .expect("valid TOML"),
+        );
+        assert!(
+            document
+                .apply(&ConfigEdit::AddToolSuggestDisabledTool(disabled))
+                .expect("disabled tool edit")
+        );
+        let rendered = document.doc.to_string();
+        assert!(rendered.contains("plugin-id"));
+        assert!(rendered.contains("old"));
+    }
+
+    #[test]
+    fn builder_persists_edits_and_removes_empty_file() {
+        let temp = tempfile::tempdir().expect("temp dir");
+        let path = temp.path().join(CONFIG_TOML_FILE);
+        fs::write(&path, "model = \"old\"\n").expect("write config");
+        ConfigEditsBuilder::for_config_path(&path)
+            .set_model(Some("new"), None)
+            .apply_blocking()
+            .expect("apply edits");
+        assert!(
+            fs::read_to_string(&path)
+                .expect("read config")
+                .contains("model = \"new\"")
+        );
+
+        ConfigEditsBuilder::for_config_path(&path)
+            .with_edits([ConfigEdit::ClearPath {
+                segments: vec!["model".into()],
+            }])
+            .apply_blocking()
+            .expect("clear edit");
+        assert!(
+            !fs::read_to_string(&path)
+                .expect("read cleared config")
+                .contains("model")
+        );
+    }
+}

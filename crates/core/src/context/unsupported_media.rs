@@ -40,3 +40,33 @@ impl ContextualUserFragment for UnsupportedMedia {
         self.text.to_string()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn distinguishes_unsupported_image_and_audio_input() {
+        assert_eq!(UnsupportedMedia::IMAGE.role(), "user");
+        assert_eq!(UnsupportedMedia::IMAGE.markers(), ("", ""));
+        assert_eq!(
+            UnsupportedMedia::IMAGE.content_kind(),
+            ContentItemKind("images.unsupported".into())
+        );
+        assert_eq!(
+            UnsupportedMedia::IMAGE.body(),
+            "image content omitted because you do not support image input"
+        );
+
+        assert_eq!(UnsupportedMedia::AUDIO.role(), "user");
+        assert_eq!(UnsupportedMedia::AUDIO.markers(), ("", ""));
+        assert_eq!(
+            UnsupportedMedia::AUDIO.content_kind(),
+            ContentItemKind("audio.unsupported".into())
+        );
+        assert_eq!(
+            UnsupportedMedia::AUDIO.body(),
+            "audio content omitted because you do not support audio input"
+        );
+    }
+}

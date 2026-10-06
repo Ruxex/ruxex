@@ -35,3 +35,21 @@ impl ContextualUserFragment for CompactionSummary {
         self.summary.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preserves_the_summary_text() {
+        let fragment = CompactionSummary::new("Earlier context was compacted.");
+
+        assert_eq!(
+            fragment.content_kind(),
+            ContentItemKind("compaction.summary".into())
+        );
+        assert_eq!(fragment.role(), "user");
+        assert_eq!(fragment.markers(), ("", ""));
+        assert_eq!(fragment.body(), "Earlier context was compacted.");
+    }
+}

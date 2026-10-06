@@ -139,3 +139,31 @@ pub(super) async fn applied_event(session: &Session) -> EventMsg {
         thread_settings: session.thread_settings_snapshot().await,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_protocol::protocol::ThreadSettingsOverrides;
+
+    #[test]
+    fn prepares_protocol_overrides_without_losing_sparse_fields() {
+        let updates = prepare_update(ThreadSettingsOverrides {
+            model: Some("model-b".to_string()),
+            service_tier: Some(Some("priority".to_string())),
+            disabled_plugin_ids: Some(vec!["plugin-a".to_string()]),
+            ..Default::default()
+        });
+
+        assert_eq!(updates.step_settings.model.as_deref(), Some("model-b"));
+        assert_eq!(
+            updates.step_settings.service_tier,
+            Some(Some("priority".to_string()))
+        );
+        assert_eq!(
+            updates.disabled_plugin_ids,
+            Some(vec!["plugin-a".to_string()])
+        );
+        assert!(updates.environments.is_none());
+        assert!(updates.permission_profile.is_none());
+    }
+}

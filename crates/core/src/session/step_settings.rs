@@ -255,3 +255,89 @@ impl StepSettings {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_models_manager::model_info::model_info_from_slug;
+    use genex_protocol::config_types::ModeKind;
+
+    fn selected_settings() -> StepSettings {
+        StepSettings {
+            collaboration_mode: CollaborationMode {
+                mode: ModeKind::Default,
+                settings: genex_protocol::config_types::Settings {
+                    model: "initial-model".to_string(),
+                    reasoning_effort: None,
+                    developer_instructions: Some("developer".to_string()),
+                },
+            },
+            reasoning_summary: None,
+            service_tier: None,
+            approval_policy: Constrained::allow_any(AskForApproval::OnRequest),
+        }
+    }
+
+    #[test]
+    fn applies_sparse_settings_and_resolves_effective_values() {
+        let selected = selected_settings();
+        let requirements = ConfigRequirements::default();
+        let constraints = StepSettingsConstraints {
+            requirements: &requirements,
+            has_full_disk_write_access: false,
+        };
+        let update = StepSettingsUpdate {
+            effort: Some(Some(ReasoningEffort::High)),
+            reasoning_summary: Some(ReasoningSummary::Detailed),
+            service_tier: Some(Some("priority".to_string())),
+            approval_policy: Some(AskForApproval::Never),
+            ..Default::default()
+        };
+        let updated = selected.apply(&update, &constraints).expect("valid update");
+        assert_eq!(updated.collaboration_mode.model(), "initial-model");
+        assert_eq!(
+            updated.collaboration_mode.reasoning_effort(),
+            Some(ReasoningEffort::High)
+        );
+        assert_eq!(updated.service_tier.as_deref(), Some("priority"));
+        assert_eq!(updated.approval_policy.value(), AskForApproval::Never);
+
+        let resolved = ResolvedStepSettings::new(
+            Arc::new(updated),
+            Arc::new(model_info_from_slug("resolved-model")),
+        );
+        assert_eq!(
+            resolved.effective_collaboration_mode().model(),
+            "resolved-model"
+        );
+        assert_eq!(
+            resolved.effective_reasoning_effort(),
+            Some(ReasoningEffort::High)
+        );
+        assert_eq!(resolved.approval_policy(), AskForApproval::Never);
+        assert!(
+            resolved
+                .selected_collaboration_mode()
+                .settings
+                .developer_instructions
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn model_info_overrides_round_trip_through_manager_config() {
+        let overrides = ModelInfoOverrides {
+            context_window: Some(1000),
+            auto_compact_token_limit: Some(800),
+            tool_output_token_limit: Some(256),
+            base_instructions: Some("base".to_string()),
+        };
+        let config = overrides.models_manager_config();
+        assert_eq!(config.model_context_window, Some(1000));
+        assert_eq!(config.model_auto_compact_token_limit, Some(800));
+        assert_eq!(config.tool_output_token_limit, Some(256));
+        assert_eq!(config.base_instructions.as_deref(), Some("base"));
+        assert!(config.model_catalog.is_none());
+        assert_eq!(ModelInfoOverrides::from(config), overrides);
+    }
+}

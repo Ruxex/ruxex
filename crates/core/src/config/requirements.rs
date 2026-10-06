@@ -112,3 +112,73 @@ pub(super) fn push_sqlite_home_env_override_warning(
         "Environment value for `$GENEX_SQLITE_HOME` is overridden by the required `sqlite_home` value {value:?} from {source}."
     ));
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use genex_config::ConfigRequirements;
+    use genex_config::RequirementSource;
+    use genex_config::Sourced;
+    use genex_config::config_toml::ConfigToml;
+    use genex_utils_absolute_path::AbsolutePathBuf;
+
+    #[test]
+    fn applies_exact_requirements_and_reports_conflicts() {
+        let mut config = ConfigToml {
+            model_provider: Some("configured".to_string()),
+            allow_login_shell: Some(false),
+            ..Default::default()
+        };
+        let requirements = ConfigRequirements {
+            model_provider: Some(Sourced::new(
+                "managed".to_string(),
+                RequirementSource::Unknown,
+            )),
+            allow_login_shell: Some(Sourced::new(true, RequirementSource::Unknown)),
+            ..Default::default()
+        };
+        let mut warnings = Vec::new();
+
+        apply_to_config(&mut config, &requirements, &mut warnings);
+
+        assert_eq!(config.model_provider.as_deref(), Some("managed"));
+        assert_eq!(config.allow_login_shell, Some(true));
+        assert_eq!(warnings.len(), 2);
+        assert!(
+            warnings
+                .iter()
+                .all(|warning| warning.contains("overridden"))
+        );
+    }
+
+    #[test]
+    fn sqlite_home_environment_warning_only_applies_to_conflicting_values() {
+        let required = AbsolutePathBuf::try_from("/managed/sqlite").expect("absolute path");
+        let env_path = AbsolutePathBuf::try_from("/environment/sqlite").expect("absolute path");
+        let requirement = Sourced::new(required.clone(), RequirementSource::Unknown);
+        let mut warnings = Vec::new();
+
+        push_sqlite_home_env_override_warning(
+            None,
+            Some(env_path.as_path()),
+            Some(&requirement),
+            &mut warnings,
+        );
+        assert_eq!(warnings.len(), 1);
+
+        push_sqlite_home_env_override_warning(
+            Some(&required),
+            Some(env_path.as_path()),
+            Some(&requirement),
+            &mut warnings,
+        );
+        push_sqlite_home_env_override_warning(
+            None,
+            Some(required.as_path()),
+            Some(&requirement),
+            &mut warnings,
+        );
+        push_sqlite_home_env_override_warning(None, None, Some(&requirement), &mut warnings);
+        assert_eq!(warnings.len(), 1);
+    }
+}
