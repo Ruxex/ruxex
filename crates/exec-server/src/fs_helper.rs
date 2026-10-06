@@ -1,6 +1,7 @@
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
 use genex_exec_server_protocol::JSONRPCErrorError;
+use genex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::io;
@@ -57,7 +58,7 @@ pub(crate) enum FsHelperRequest {
     #[serde(rename = "capabilityRoots/discoverV1")]
     DiscoverCapabilityRoots(CapabilityRootsDiscoverParams),
     #[serde(rename = "fs/open")]
-    Open(FsReadFileParams),
+    Open(FsHelperOpenParams),
     #[serde(rename = "fs/readFile")]
     ReadFile(FsReadFileParams),
     #[serde(rename = "fs/writeFile")]
@@ -76,6 +77,12 @@ pub(crate) enum FsHelperRequest {
     Remove(FsRemoveParams),
     #[serde(rename = "fs/copy")]
     Copy(FsCopyParams),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct FsHelperOpenParams {
+    pub(crate) path: PathUri,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -455,6 +462,23 @@ mod tests {
             assert!(response_path.starts_with("file:"));
         }
 
+        Ok(())
+    }
+
+    #[test]
+    fn open_helper_request_contains_only_the_path() -> serde_json::Result<()> {
+        let path = PathUri::parse("file:///tmp/example.txt").expect("path URI");
+        let request = serde_json::to_value(FsHelperRequest::Open(FsHelperOpenParams {
+            path: path.clone(),
+        }))?;
+
+        assert_eq!(
+            request,
+            json!({
+                "operation": FS_OPEN_METHOD,
+                "params": {"path": path.to_string()},
+            }),
+        );
         Ok(())
     }
 }
