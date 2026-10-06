@@ -291,6 +291,20 @@ fn legacy_provider_exceptions_require_exact_issuer_and_endpoint_origins() -> Res
     Ok(())
 }
 
+#[test]
+fn authorization_endpoint_rejects_non_http_schemes() -> Result<()> {
+    let metadata: AuthorizationMetadata = serde_json::from_value(json!({
+        "authorization_endpoint": "file:///tmp/authorize",
+        "token_endpoint": "file:///tmp/token",
+    }))?;
+
+    let error = validate_authorization_server_endpoints(&metadata)
+        .expect_err("non-web authorization endpoints must be rejected");
+    assert!(error.to_string().contains("HTTP or HTTPS"));
+
+    Ok(())
+}
+
 #[tokio::test]
 async fn verified_issuer_can_delegate_authorization_and_token_to_one_origin() -> Result<()> {
     let issuer_server = MockServer::start().await;
