@@ -55,8 +55,8 @@ impl RemoteNetworkProxyLaunchConfig {
 /// Effective network proxy settings that are safe to send to a remote executor.
 ///
 /// Listener addresses are deliberately omitted because the executor chooses its own loopback
-/// ports. MITM, credential injection, and hooks are not represented so their configuration cannot
-/// cross the exec-server boundary accidentally.
+/// ports. MITM, external CAs, credential injection, and hooks are not represented so their
+/// configuration cannot cross the exec-server boundary accidentally.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
@@ -75,12 +75,13 @@ pub struct RemoteNetworkProxyConfig {
 impl RemoteNetworkProxyConfig {
     pub fn from_effective_config(config: &NetworkProxyConfig) -> Result<Self> {
         ensure!(
-            !config.enabled
-                || (!config.mitm
-                    && !config.credential_broker
-                    && !config.dangerously_allow_plaintext_credential_injection
-                    && config.mitm_hooks.is_empty()),
-            "remote exec-server network proxy does not support MITM, credential injection, or MITM hooks"
+            config.mitm_ca.is_none()
+                && (!config.enabled
+                    || (!config.mitm
+                        && !config.credential_broker
+                        && !config.dangerously_allow_plaintext_credential_injection
+                        && config.mitm_hooks.is_empty())),
+            "remote exec-server network proxy does not support MITM, external CAs, credential injection, or MITM hooks"
         );
         Ok(Self {
             enabled: config.enabled,

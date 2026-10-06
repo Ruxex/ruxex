@@ -4657,6 +4657,7 @@ dependencies = [
  "genex-utils-home-dir",
  "genex-utils-rustls-provider",
  "globset",
+ "libc",
  "opentelemetry",
  "pretty_assertions",
  "rama-core",

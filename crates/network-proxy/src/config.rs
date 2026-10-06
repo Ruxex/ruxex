@@ -111,8 +111,17 @@ pub struct NetworkUnixSocketPermissions {
     pub entries: BTreeMap<String, NetworkUnixSocketPermission>,
 }
 
+/// A caller-provided MITM CA for trusted proxy configuration, not sandbox `config.toml`.
+/// The private key file is readable only by the proxy process.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(default)]
+#[serde(deny_unknown_fields)]
+pub struct NetworkMitmCaConfig {
+    pub certificate_file: String,
+    pub private_key_file: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(default, deny_unknown_fields)]
 pub struct NetworkProxyConfig {
     #[serde(default)]
     pub enabled: bool,
@@ -137,6 +146,8 @@ pub struct NetworkProxyConfig {
     pub allow_local_binding: bool,
     #[serde(default)]
     pub mitm: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mitm_ca: Option<NetworkMitmCaConfig>,
     #[serde(default)]
     pub credential_broker: bool,
     /// Whether brokerage enabled MITM rather than inheriting an explicit setting.
@@ -169,6 +180,7 @@ impl Default for NetworkProxyConfig {
             unix_sockets: None,
             allow_local_binding: false,
             mitm: false,
+            mitm_ca: None,
             credential_broker: false,
             credential_broker_enabled_mitm: false,
             credential_providers: BTreeMap::new(),
@@ -186,7 +198,7 @@ impl NetworkProxyConfig {
             self.credential_broker_enabled_mitm |= !self.mitm;
             self.mitm = true;
         } else if self.credential_broker_enabled_mitm {
-            self.mitm = !self.mitm_hooks.is_empty();
+            self.mitm = !self.mitm_hooks.is_empty() || self.mitm_ca.is_some();
             self.credential_broker_enabled_mitm = false;
         }
     }
@@ -651,6 +663,7 @@ mod tests {
                 unix_sockets: None,
                 allow_local_binding: false,
                 mitm: false,
+                mitm_ca: None,
                 credential_broker: false,
                 credential_broker_enabled_mitm: false,
                 credential_providers: BTreeMap::new(),
@@ -802,6 +815,28 @@ mod tests {
                 "credential_broker": false,
                 "dangerously_allow_plaintext_credential_injection": false,
                 "mitm_hooks": [],
+            })
+        );
+    }
+
+    #[test]
+    fn network_proxy_config_supports_external_mitm_ca() {
+        let config: NetworkProxyConfig = serde_json::from_str(
+            r#"{
+                "mitm": true,
+                "mitm_ca": {
+                    "certificate_file": "/run/proxy/ca.pem",
+                    "private_key_file": "/run/proxy/key.pem"
+                }
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            config.mitm_ca,
+            Some(NetworkMitmCaConfig {
+                certificate_file: "/run/proxy/ca.pem".to_string(),
+                private_key_file: "/run/proxy/key.pem".to_string(),
             })
         );
     }

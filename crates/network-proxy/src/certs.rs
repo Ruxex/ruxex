@@ -1,3 +1,4 @@
+use crate::config::NetworkMitmCaConfig;
 use anyhow::Context as _;
 use anyhow::Result;
 use anyhow::anyhow;
@@ -27,6 +28,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
+use std::io::Read as _;
 use std::io::Write;
 use std::net::IpAddr;
 use std::path::Path;
@@ -42,11 +44,12 @@ use tracing::warn;
 pub(super) struct ManagedMitmCa {
     issuer: Issuer<'static, KeyPair>,
     certificate_path: PathBuf,
-    _artifact_lease: File,
+    _artifact_lease: Option<File>,
 }
 
 static MANAGED_MITM_CAS: LazyLock<Mutex<HashMap<PathBuf, Arc<ManagedMitmCa>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
+const MAX_EXTERNAL_CA_FILE_BYTES: u64 = 1024 * 1024;
 
 impl ManagedMitmCa {
     pub(super) fn load_or_create() -> Result<Arc<Self>> {
@@ -89,11 +92,62 @@ impl ManagedMitmCa {
         Ok(Self {
             issuer,
             certificate_path,
-            _artifact_lease: artifact_lease,
+            _artifact_lease: Some(artifact_lease),
         })
     }
 
-    fn certificate_path(&self) -> &Path {
+    pub(super) fn load_from_files(config: &NetworkMitmCaConfig) -> Result<Arc<Self>> {
+        let certificate_path = Path::new(&config.certificate_file);
+        let private_key_path = Path::new(&config.private_key_file);
+        anyhow::ensure!(
+            certificate_path.is_absolute(),
+            "network.mitm_ca.certificate_file must be an absolute path"
+        );
+        anyhow::ensure!(
+            private_key_path.is_absolute(),
+            "network.mitm_ca.private_key_file must be an absolute path"
+        );
+        let certificate_pem = read_external_ca_file(
+            certificate_path,
+            "network.mitm_ca.certificate_file",
+            false,
+        )?;
+        anyhow::ensure!(
+            !certificate_pem
+                .lines()
+                .any(|line| line.trim().starts_with("-----BEGIN ")
+                    && line.contains("PRIVATE KEY-----")),
+            "network.mitm_ca.certificate_file must not contain a private key"
+        );
+        let private_key_pem = read_external_ca_file(
+            private_key_path,
+            "network.mitm_ca.private_key_file",
+            true,
+        )?;
+        let certificate = CertificateDer::from_pem_slice(certificate_pem.as_bytes())
+            .context("failed to parse network.mitm_ca.certificate_file")?;
+        let private_key_der = PrivateKeyDer::from_pem_slice(private_key_pem.as_bytes())
+            .context("failed to parse network.mitm_ca.private_key_file")?;
+        let provider = rustls::crypto::CryptoProvider::get_default()
+            .context("rustls crypto provider is not installed")?;
+        let certified_key =
+            rustls::sign::CertifiedKey::from_der(vec![certificate], private_key_der, provider)
+                .context("network.mitm_ca certificate and private key do not match")?;
+        certified_key
+            .keys_match()
+            .context("network.mitm_ca certificate and private key do not match")?;
+        let private_key = KeyPair::from_pem(&private_key_pem)
+            .context("failed to parse network.mitm_ca.private_key_file")?;
+        let issuer = Issuer::from_ca_cert_pem(&certificate_pem, private_key)
+            .context("failed to parse network.mitm_ca certificate and private key")?;
+        Ok(Arc::new(Self {
+            issuer,
+            certificate_path: certificate_path.to_path_buf(),
+            _artifact_lease: None,
+        }))
+    }
+
+    pub(super) fn certificate_path(&self) -> &Path {
         &self.certificate_path
     }
 
@@ -115,6 +169,50 @@ impl ManagedMitmCa {
 
         Ok(TlsAcceptorData::from(server_config))
     }
+}
+
+fn read_external_ca_file(path: &Path, field: &str, private: bool) -> Result<String> {
+    #[cfg(not(unix))]
+    anyhow::ensure!(
+        !private,
+        "{field} is not supported on this platform because private-file permissions cannot be verified"
+    );
+
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    let file = options
+        .open(path)
+        .with_context(|| format!("failed to open {field}"))?;
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("failed to inspect {field}"))?;
+    anyhow::ensure!(metadata.file_type().is_file(), "{field} must be a regular file");
+    anyhow::ensure!(
+        metadata.len() <= MAX_EXTERNAL_CA_FILE_BYTES,
+        "{field} exceeds {MAX_EXTERNAL_CA_FILE_BYTES} bytes"
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        anyhow::ensure!(
+            !private || metadata.permissions().mode() & 0o077 == 0,
+            "{field} must not be accessible by group or other users"
+        );
+    }
+    let mut pem = String::new();
+    file.take(MAX_EXTERNAL_CA_FILE_BYTES + 1)
+        .read_to_string(&mut pem)
+        .with_context(|| format!("failed to read {field}"))?;
+    anyhow::ensure!(
+        pem.len() <= MAX_EXTERNAL_CA_FILE_BYTES as usize,
+        "{field} exceeds {MAX_EXTERNAL_CA_FILE_BYTES} bytes"
+    );
+    Ok(pem)
 }
 
 fn issue_host_certificate_pem(
@@ -150,6 +248,7 @@ const MANAGED_MITM_CA_DIR: &str = "proxy";
 const MANAGED_MITM_CA_ARTIFACT_LOCK: &str = ".artifacts.lock";
 const MANAGED_MITM_CA_CERT_PREFIX: &str = "ca";
 const MANAGED_MITM_CA_TRUST_BUNDLE_PREFIX: &str = "ca-bundle";
+const MANAGED_MITM_EXTERNAL_CA_DIR: &str = "external";
 pub(crate) const SSL_CERT_DIR_ENV_KEY: &str = "SSL_CERT_DIR";
 
 // Best-effort compatibility set for common child toolchains that accept a CA bundle path.
@@ -196,8 +295,27 @@ pub(crate) fn managed_ca_trust_bundle(
     managed_ca_trust_bundle_for_cert_path(ca.certificate_path(), env)
 }
 
-fn managed_ca_trust_bundle_for_cert_path(
+pub(crate) fn managed_ca_trust_bundle_for_cert_path(
     cert_path: &Path,
+    env: &HashMap<&'static str, String>,
+) -> Result<ManagedMitmCaTrustBundle> {
+    let proxy_dir = cert_path
+        .parent()
+        .ok_or_else(|| anyhow!("managed MITM CA cert path is missing a parent"))?;
+    managed_ca_trust_bundle_for_cert_path_in_dir(cert_path, proxy_dir, env)
+}
+
+pub(crate) fn managed_ca_trust_bundle_for_external_cert_path(
+    cert_path: &Path,
+    env: &HashMap<&'static str, String>,
+) -> Result<ManagedMitmCaTrustBundle> {
+    let proxy_dir = managed_ca_dir()?.join(MANAGED_MITM_EXTERNAL_CA_DIR);
+    managed_ca_trust_bundle_for_cert_path_in_dir(cert_path, &proxy_dir, env)
+}
+
+fn managed_ca_trust_bundle_for_cert_path_in_dir(
+    cert_path: &Path,
+    proxy_dir: &Path,
     env: &HashMap<&'static str, String>,
 ) -> Result<ManagedMitmCaTrustBundle> {
     let startup_env_values = startup_ca_file_env_values(env);
@@ -206,20 +324,13 @@ fn managed_ca_trust_bundle_for_cert_path(
         .filter(|value| !value.is_empty())
         .map(String::as_str);
     let trust_bundle =
-        build_managed_ca_trust_bundle(cert_path, &startup_env_values, startup_cert_dir)?;
-    let path = persist_managed_ca_trust_bundle(cert_path, &trust_bundle)?;
+        build_managed_ca_trust_bundle(cert_path, proxy_dir, &startup_env_values, startup_cert_dir)?;
+    let path = persist_managed_ca_trust_bundle(proxy_dir, &trust_bundle)?;
 
     Ok(ManagedMitmCaTrustBundle {
         path,
         startup_env_values,
     })
-}
-
-pub(crate) fn upstream_tls_root_store(
-    env: &HashMap<&'static str, String>,
-) -> Result<Arc<rustls::RootCertStore>> {
-    let ca = ManagedMitmCa::load_or_create()?;
-    upstream_tls_root_store_for_cert_path(ca.certificate_path(), env)
 }
 
 pub(crate) fn upstream_tls_root_store_for_cert_path(
@@ -231,8 +342,10 @@ pub(crate) fn upstream_tls_root_store_for_cert_path(
         .get(SSL_CERT_DIR_ENV_KEY)
         .filter(|value| !value.is_empty())
         .map(String::as_str);
+    let external_trust_bundle_dir = managed_ca_dir()?.join(MANAGED_MITM_EXTERNAL_CA_DIR);
     let certificates = load_platform_and_startup_root_certificates(
         managed_ca_cert_path,
+        &external_trust_bundle_dir,
         &startup_env_values,
         startup_cert_dir,
     )?;
@@ -262,23 +375,28 @@ fn startup_ca_file_env_values(
 
 fn build_managed_ca_trust_bundle(
     managed_ca_cert_path: &Path,
+    trust_bundle_dir: &Path,
     startup_env_values: &HashMap<&'static str, String>,
     startup_cert_dir: Option<&str>,
 ) -> Result<String> {
     let mut trust_bundle = String::new();
     for cert in load_platform_and_startup_root_certificates(
         managed_ca_cert_path,
+        trust_bundle_dir,
         startup_env_values,
         startup_cert_dir,
     )? {
         push_certificate_pem(&mut trust_bundle, cert.as_ref());
     }
-    append_pem_file(&mut trust_bundle, managed_ca_cert_path)?;
+    for cert in read_ca_certificates(managed_ca_cert_path)? {
+        push_certificate_pem(&mut trust_bundle, cert.as_ref());
+    }
     Ok(trust_bundle)
 }
 
 fn load_platform_and_startup_root_certificates(
     managed_ca_cert_path: &Path,
+    trust_bundle_dir: &Path,
     startup_env_values: &HashMap<&'static str, String>,
     startup_cert_dir: Option<&str>,
 ) -> Result<Vec<CertificateDer<'static>>> {
@@ -306,7 +424,11 @@ fn load_platform_and_startup_root_certificates(
         .map(PathBuf::from)
     {
         if path != managed_ca_cert_path
-            && !is_current_generated_trust_bundle_path(&path, managed_ca_cert_path)
+            && !is_current_generated_trust_bundle_path(
+                &path,
+                managed_ca_cert_path,
+                trust_bundle_dir,
+            )
             && appended_startup_paths.insert(path.clone())
         {
             certificates.extend(read_ca_certificates(&path)?);
@@ -399,7 +521,14 @@ fn der_item_length(der: &[u8]) -> Option<usize> {
         .filter(|length| *length <= der.len())
 }
 
-fn is_current_generated_trust_bundle_path(path: &Path, managed_ca_cert_path: &Path) -> bool {
+fn is_current_generated_trust_bundle_path(
+    path: &Path,
+    managed_ca_cert_path: &Path,
+    trust_bundle_dir: &Path,
+) -> bool {
+    if is_generated_trust_bundle_path(path, trust_bundle_dir) {
+        return true;
+    }
     let Some(proxy_dir) = managed_ca_cert_path.parent() else {
         return false;
     };
@@ -459,16 +588,12 @@ pub fn is_managed_mitm_ca_trust_bundle_path(path: &str) -> bool {
     let Ok(proxy_dir) = managed_ca_dir() else {
         return false;
     };
-    is_generated_trust_bundle_path(Path::new(path), &proxy_dir)
+    let path = Path::new(path);
+    is_generated_trust_bundle_path(path, &proxy_dir)
+        || is_generated_trust_bundle_path(path, &proxy_dir.join(MANAGED_MITM_EXTERNAL_CA_DIR))
 }
 
-fn persist_managed_ca_trust_bundle(
-    managed_ca_cert_path: &Path,
-    trust_bundle: &str,
-) -> Result<PathBuf> {
-    let proxy_dir = managed_ca_cert_path
-        .parent()
-        .ok_or_else(|| anyhow!("managed MITM CA cert path is missing a parent"))?;
+fn persist_managed_ca_trust_bundle(proxy_dir: &Path, trust_bundle: &str) -> Result<PathBuf> {
     fs::create_dir_all(proxy_dir)
         .with_context(|| format!("failed to create {}", proxy_dir.display()))?;
     let hash = Sha256::digest(trust_bundle.as_bytes());
@@ -487,19 +612,6 @@ fn persist_managed_ca_trust_bundle(
         )
     })?;
     Ok(trust_bundle_path)
-}
-
-fn append_pem_file(bundle: &mut String, path: &Path) -> Result<()> {
-    if !bundle.ends_with('\n') {
-        bundle.push('\n');
-    }
-    let pem = fs::read_to_string(path)
-        .with_context(|| format!("failed to read CA bundle {}", path.display()))?;
-    bundle.push_str(&pem);
-    if !bundle.ends_with('\n') {
-        bundle.push('\n');
-    }
-    Ok(())
 }
 
 fn push_certificate_pem(bundle: &mut String, der: &[u8]) {
@@ -835,7 +947,7 @@ mod tests {
                 drop(lease);
             }
             let bundle_path = persist_managed_ca_trust_bundle(
-                &certificate_path,
+                dir.path(),
                 &format!("roots\n{certificate}"),
             )
             .unwrap();
@@ -870,22 +982,20 @@ mod tests {
     #[test]
     fn current_generated_trust_bundle_path_rejects_stale_bundle() {
         let dir = tempdir().unwrap();
-        let managed_ca_cert_path = dir.path().join("ca.pem");
         let trust_bundle_path = dir.path().join("ca-bundle-123.pem");
-        fs::write(&managed_ca_cert_path, "managed ca\n").unwrap();
         fs::write(&trust_bundle_path, "stale managed bundle\n").unwrap();
         assert!(!is_current_generated_trust_bundle_path(
             &trust_bundle_path,
-            &managed_ca_cert_path,
+            &dir.path().join("ca.pem"),
+            dir.path(),
         ));
     }
 
     #[test]
     fn generated_trust_bundle_path_requires_matching_content_hash() {
         let dir = tempdir().unwrap();
-        let managed_ca_cert_path = dir.path().join("ca.pem");
         let trust_bundle_path =
-            persist_managed_ca_trust_bundle(&managed_ca_cert_path, "trusted roots").unwrap();
+            persist_managed_ca_trust_bundle(dir.path(), "trusted roots").unwrap();
 
         assert!(is_generated_trust_bundle_path(
             &trust_bundle_path,

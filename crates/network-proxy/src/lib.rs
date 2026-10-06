@@ -36,6 +36,7 @@ pub use certs::is_managed_mitm_ca_trust_bundle_path;
 pub use config::NetworkDomainPermission;
 pub use config::NetworkDomainPermissionEntry;
 pub use config::NetworkDomainPermissions;
+pub use config::NetworkMitmCaConfig;
 pub use config::NetworkMode;
 pub use config::NetworkProxyConfig;
 pub use config::NetworkUnixSocketPermission;
