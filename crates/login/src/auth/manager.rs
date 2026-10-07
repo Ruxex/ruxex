@@ -20,6 +20,7 @@ use super::external_bearer::BearerTokenRefresher;
 use crate::auth::AuthHeaders;
 pub use crate::auth::storage::AuthDotJson;
 pub use crate::auth::storage::AuthKeyringBackendKind;
+pub use crate::auth::storage::ProviderAuth;
 use crate::auth::storage::create_auth_storage;
 use crate::outbound_proxy::AuthRouteConfig;
 use genex_config::ManagedAuthPolicy;
@@ -142,9 +143,12 @@ impl GenexAuth {
         _keyring_backend_kind: AuthKeyringBackendKind,
         _auth_route_config: &AuthRouteConfig,
     ) -> std::io::Result<Self> {
-        let auth_mode = auth_dot_json.resolved_mode();
+        let Some(credentials) = auth_dot_json.active_auth() else {
+            return Err(std::io::Error::other("stored auth has no active provider"));
+        };
+        let auth_mode = credentials.resolved_mode();
         if auth_mode == AuthMode::ApiKey {
-            let Some(api_key) = auth_dot_json.api_key.as_deref() else {
+            let Some(api_key) = credentials.api_key.as_deref() else {
                 return Err(std::io::Error::other("API key auth is missing a key."));
             };
             return Ok(Self::from_api_key(api_key));
@@ -283,10 +287,7 @@ pub fn login_with_api_key(
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<()> {
-    let auth_dot_json = AuthDotJson {
-        auth_mode: Some(AuthMode::ApiKey),
-        api_key: Some(api_key.to_string()),
-    };
+    let auth_dot_json = AuthDotJson::legacy(Some(AuthMode::ApiKey), Some(api_key.to_string()));
     save_auth(
         genex_home,
         &auth_dot_json,
@@ -326,6 +327,108 @@ pub fn load_auth_dot_json(
         keyring_backend_kind,
     );
     storage.load()
+}
+
+/// Load credentials for one model provider without exposing other providers' payloads.
+pub fn load_provider_auth(
+    genex_home: &Path,
+    provider_id: &str,
+    auth_credentials_store_mode: AuthCredentialsStoreMode,
+    keyring_backend_kind: AuthKeyringBackendKind,
+) -> std::io::Result<Option<ProviderAuth>> {
+    validate_provider_id(provider_id)?;
+    let storage = create_auth_storage(
+        genex_home.to_path_buf(),
+        auth_credentials_store_mode,
+        keyring_backend_kind,
+    );
+    Ok(storage
+        .load()?
+        .and_then(|auth| auth.provider_auth(provider_id).cloned()))
+}
+
+/// Persist credentials for one model provider while retaining every other provider record.
+pub fn save_provider_auth(
+    genex_home: &Path,
+    provider_id: &str,
+    provider_auth: &ProviderAuth,
+    auth_credentials_store_mode: AuthCredentialsStoreMode,
+    keyring_backend_kind: AuthKeyringBackendKind,
+) -> std::io::Result<()> {
+    validate_provider_id(provider_id)?;
+    let storage = create_auth_storage(
+        genex_home.to_path_buf(),
+        auth_credentials_store_mode,
+        keyring_backend_kind,
+    );
+    let current = storage.load()?.unwrap_or_default();
+    let mut auth = current.into_provider_storage();
+    auth.providers
+        .insert(provider_id.to_string(), provider_auth.clone());
+    storage.save(&auth)
+}
+
+/// Delete credentials for one model provider without deleting other providers.
+pub fn delete_provider_auth(
+    genex_home: &Path,
+    provider_id: &str,
+    auth_credentials_store_mode: AuthCredentialsStoreMode,
+    keyring_backend_kind: AuthKeyringBackendKind,
+) -> std::io::Result<bool> {
+    validate_provider_id(provider_id)?;
+    let storage = create_auth_storage(
+        genex_home.to_path_buf(),
+        auth_credentials_store_mode,
+        keyring_backend_kind,
+    );
+    let Some(current) = storage.load()? else {
+        return Ok(false);
+    };
+    if current.providers.contains_key(provider_id) {
+        let mut auth = current.into_provider_storage();
+        let removed = auth.providers.remove(provider_id).is_some();
+        if auth.active_provider.as_deref() == Some(provider_id) {
+            auth.active_provider = None;
+        }
+        if auth.providers.is_empty() && auth.active_provider.is_none() {
+            storage.delete()?;
+        } else {
+            storage.save(&auth)?;
+        }
+        return Ok(removed);
+    }
+    if current.has_legacy_auth() {
+        storage.delete()?;
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+/// List provider IDs with persisted provider-scoped credentials.
+pub fn list_provider_ids(
+    genex_home: &Path,
+    auth_credentials_store_mode: AuthCredentialsStoreMode,
+    keyring_backend_kind: AuthKeyringBackendKind,
+) -> std::io::Result<Vec<String>> {
+    let storage = create_auth_storage(
+        genex_home.to_path_buf(),
+        auth_credentials_store_mode,
+        keyring_backend_kind,
+    );
+    Ok(storage
+        .load()?
+        .map(|auth| auth.providers.into_keys().collect())
+        .unwrap_or_default())
+}
+
+fn validate_provider_id(provider_id: &str) -> std::io::Result<()> {
+    if provider_id.trim().is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "provider ID must not be empty",
+        ));
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -651,17 +754,14 @@ async fn load_auth(
 
 impl AuthDotJson {
     fn has_supported_credentials(&self) -> bool {
-        self.api_key.is_some()
+        self.active_auth()
+            .is_some_and(ProviderAuth::has_supported_credentials)
     }
 
     pub(super) fn resolved_mode(&self) -> AuthMode {
-        if let Some(mode) = self.auth_mode {
-            return mode;
-        }
-        if self.api_key.is_some() {
-            return AuthMode::ApiKey;
-        }
-        AuthMode::ApiKey
+        self.active_auth()
+            .map(ProviderAuth::resolved_mode)
+            .unwrap_or(AuthMode::ApiKey)
     }
 }
 
@@ -1650,6 +1750,127 @@ fn auth_config_from(config: &impl AuthManagerConfig) -> AuthConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn file_store() -> (
+        tempfile::TempDir,
+        AuthCredentialsStoreMode,
+        AuthKeyringBackendKind,
+    ) {
+        (
+            tempfile::tempdir().expect("temporary auth home"),
+            AuthCredentialsStoreMode::File,
+            AuthKeyringBackendKind::default(),
+        )
+    }
+
+    #[test]
+    fn provider_credentials_are_isolated_and_deletable() {
+        let (home, mode, keyring) = file_store();
+        save_provider_auth(
+            home.path(),
+            "provider-a",
+            &ProviderAuth::api_key("a-secret"),
+            mode,
+            keyring,
+        )
+        .expect("save provider A");
+        save_provider_auth(
+            home.path(),
+            "provider-b",
+            &ProviderAuth::api_key("b-secret"),
+            mode,
+            keyring,
+        )
+        .expect("save provider B");
+
+        assert_eq!(
+            load_provider_auth(home.path(), "provider-a", mode, keyring)
+                .expect("load provider A")
+                .and_then(|auth| auth.api_key),
+            Some("a-secret".to_string())
+        );
+        let provider_a = load_provider_auth(home.path(), "provider-a", mode, keyring)
+            .expect("load provider A")
+            .expect("provider A exists");
+        assert!(
+            !serde_json::to_string(&provider_a)
+                .expect("serialize provider A")
+                .contains("b-secret")
+        );
+        assert_eq!(
+            list_provider_ids(home.path(), mode, keyring).expect("list providers"),
+            vec!["provider-a".to_string(), "provider-b".to_string()]
+        );
+
+        assert!(
+            delete_provider_auth(home.path(), "provider-a", mode, keyring)
+                .expect("delete provider A")
+        );
+        assert!(
+            load_provider_auth(home.path(), "provider-a", mode, keyring)
+                .expect("load deleted provider A")
+                .is_none()
+        );
+        assert_eq!(
+            load_provider_auth(home.path(), "provider-b", mode, keyring)
+                .expect("load provider B")
+                .and_then(|auth| auth.api_key),
+            Some("b-secret".to_string())
+        );
+    }
+
+    #[test]
+    fn legacy_single_provider_auth_loads_and_migrates_on_provider_write() {
+        let (home, mode, keyring) = file_store();
+        let legacy = serde_json::json!({
+            "auth_mode": "apiKey",
+            "api_key": "legacy-secret"
+        });
+        std::fs::write(home.path().join("auth.json"), legacy.to_string())
+            .expect("write legacy auth");
+
+        let auth = load_provider_auth(home.path(), "provider-a", mode, keyring)
+            .expect("load legacy provider auth")
+            .expect("legacy auth exists");
+        assert_eq!(auth.api_key.as_deref(), Some("legacy-secret"));
+
+        save_provider_auth(home.path(), "provider-a", &auth, mode, keyring)
+            .expect("migrate legacy auth");
+        let serialized =
+            std::fs::read_to_string(home.path().join("auth.json")).expect("read migrated auth");
+        assert!(serialized.contains("providers"));
+        assert!(!serialized.contains("\"auth_mode\""));
+        assert_eq!(
+            load_auth_dot_json(home.path(), mode, keyring)
+                .expect("load migrated auth")
+                .expect("migrated auth")
+                .providers
+                .keys()
+                .cloned()
+                .collect::<Vec<_>>(),
+            vec!["provider-a".to_string()]
+        );
+    }
+
+    #[test]
+    fn unknown_auth_mode_is_not_usable_credentials() {
+        let auth: AuthDotJson = serde_json::from_value(serde_json::json!({
+            "providers": {
+                "provider-a": {
+                    "auth_mode": "removedMode",
+                    "api_key": "secret"
+                }
+            }
+        }))
+        .expect("unknown auth mode should remain parseable");
+
+        assert!(!auth.has_supported_credentials());
+        let serialized = serde_json::to_string(&auth).expect("serialize unknown auth mode");
+        assert!(serialized.contains("removedMode"));
+        let round_trip: AuthDotJson =
+            serde_json::from_str(&serialized).expect("deserialize unknown auth mode");
+        assert!(!round_trip.has_supported_credentials());
+    }
 
     #[tokio::test]
     async fn token_only_auth_is_not_loaded_as_genex_auth() {

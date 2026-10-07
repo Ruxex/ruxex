@@ -2,12 +2,12 @@
 
 use anyhow::Context;
 use assert_cmd::prelude::*;
-use genex_apply_patch::GENEX_CORE_APPLY_PATCH_ARG1;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
+use genex_apply_patch::GENEX_CORE_APPLY_PATCH_ARG1;
 use std::fs;
 use std::process::Command;
 use tempfile::tempdir;
@@ -149,12 +149,11 @@ async fn test_apply_patch_freeform_tool() -> anyhow::Result<()> {
 #[cfg(not(target_os = "windows"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
-    use genex_login::AuthDotJson;
-    use genex_login::AuthKeyringBackendKind;
-    use genex_login::save_auth;
-    use genex_protocol::auth::AuthMode;
     use core_test_support::skip_if_no_network;
     use core_test_support::test_genex_exec::test_genex_exec;
+    use genex_login::AuthKeyringBackendKind;
+    use genex_login::ProviderAuth;
+    use genex_login::save_provider_auth;
     use std::sync::Arc;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering;
@@ -188,12 +187,10 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
             .context("add test git remote")?
             .success()
     );
-    save_auth(
+    save_provider_auth(
         test.home_path(),
-        &AuthDotJson {
-            auth_mode: Some(AuthMode::ApiKey),
-            api_key: Some("test-api-key".to_string()),
-        },
+        "default",
+        &ProviderAuth::api_key("test-api-key"),
         genex_login::AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;

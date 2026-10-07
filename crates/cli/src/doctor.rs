@@ -1174,7 +1174,11 @@ fn auth_check(config: &Config) -> DoctorCheck {
     ) {
         Ok(Some(auth)) => {
             details.push(format!("stored auth mode: {}", stored_auth_mode(&auth)));
-            details.push(format!("stored API key: {}", auth.api_key.is_some()));
+            details.push(format!(
+                "stored API key: {}",
+                auth.active_provider_auth()
+                    .is_some_and(|provider_auth| provider_auth.api_key.is_some())
+            ));
             let auth_issues = stored_auth_issues(&auth, env_var_present);
             details.extend(
                 auth_issues
@@ -1300,14 +1304,9 @@ fn stored_auth_mode(auth: &genex_login::AuthDotJson) -> &'static str {
 }
 
 fn stored_auth_mode_value(auth: &AuthDotJson) -> AuthMode {
-    if let Some(mode) = auth.auth_mode {
-        return mode;
-    }
-    if auth.api_key.is_some() {
-        AuthMode::ApiKey
-    } else {
-        AuthMode::ApiKey
-    }
+    auth.active_provider_auth()
+        .map(|provider_auth| provider_auth.resolved_mode())
+        .unwrap_or(AuthMode::ApiKey)
 }
 
 fn stored_auth_issues(
@@ -1318,8 +1317,8 @@ fn stored_auth_issues(
     match stored_auth_mode_value(auth) {
         AuthMode::ApiKey => {
             let stored_key_present = auth
-                .api_key
-                .as_deref()
+                .active_provider_auth()
+                .and_then(|provider_auth| provider_auth.api_key.as_deref())
                 .is_some_and(|key| !key.trim().is_empty());
             let env_key_present = env_var_present(GENEX_API_KEY_ENV_VAR);
             if !stored_key_present && !env_key_present {

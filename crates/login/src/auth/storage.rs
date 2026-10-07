@@ -1,8 +1,11 @@
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
+use serde::Serializer;
+use serde::ser::SerializeStruct;
 use sha2::Digest;
 use sha2::Sha256;
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fs::File;
@@ -29,31 +32,268 @@ use genex_secrets::SecretsBackendKind;
 use genex_secrets::SecretsManager;
 use once_cell::sync::Lazy;
 
-/// Expected structure for $GENEX_HOME/auth.json.
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
-pub struct AuthDotJson {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_auth_mode",
-        skip_serializing_if = "Option::is_none"
-    )]
+/// A provider-scoped credential payload persisted in `auth.json`.
+#[derive(Clone, PartialEq, Eq)]
+pub struct ProviderAuth {
     pub auth_mode: Option<AuthMode>,
 
     pub api_key: Option<String>,
+
+    invalid_auth_mode: bool,
+    raw_auth_mode: Option<String>,
+}
+
+impl Serialize for ProviderAuth {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize)]
+        struct Wire<'a> {
+            #[serde(skip_serializing_if = "Option::is_none")]
+            auth_mode: Option<&'a str>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            api_key: Option<&'a str>,
+        }
+
+        let auth_mode = if self.invalid_auth_mode {
+            self.raw_auth_mode.as_deref()
+        } else {
+            self.auth_mode.map(|mode| match mode {
+                AuthMode::ApiKey => "apiKey",
+                AuthMode::Headers => "headers",
+            })
+        };
+        Wire {
+            auth_mode,
+            api_key: self.api_key.as_deref(),
+        }
+        .serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for ProviderAuth {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Wire {
+            #[serde(default)]
+            auth_mode: Option<String>,
+            #[serde(default)]
+            api_key: Option<String>,
+        }
+
+        let wire = Wire::deserialize(deserializer)?;
+        let (auth_mode, invalid_auth_mode, raw_auth_mode) = parse_auth_mode(wire.auth_mode);
+        Ok(Self {
+            auth_mode,
+            api_key: wire.api_key,
+            invalid_auth_mode,
+            raw_auth_mode,
+        })
+    }
+}
+
+impl std::fmt::Debug for ProviderAuth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ProviderAuth")
+            .field("auth_mode", &self.auth_mode)
+            .field("has_api_key", &self.api_key.is_some())
+            .finish()
+    }
+}
+
+impl ProviderAuth {
+    pub fn api_key(api_key: impl Into<String>) -> Self {
+        Self {
+            auth_mode: Some(AuthMode::ApiKey),
+            api_key: Some(api_key.into()),
+            invalid_auth_mode: false,
+            raw_auth_mode: None,
+        }
+    }
+
+    pub fn has_supported_credentials(&self) -> bool {
+        !self.invalid_auth_mode
+            && self.resolved_mode() == AuthMode::ApiKey
+            && self.api_key.is_some()
+    }
+
+    pub fn resolved_mode(&self) -> AuthMode {
+        if let Some(mode) = self.auth_mode {
+            return mode;
+        }
+        AuthMode::ApiKey
+    }
+
+    fn serialized_auth_mode(&self) -> Option<&str> {
+        if self.invalid_auth_mode {
+            return self.raw_auth_mode.as_deref();
+        }
+        self.auth_mode.map(|mode| match mode {
+            AuthMode::ApiKey => "apiKey",
+            AuthMode::Headers => "headers",
+        })
+    }
+}
+
+/// Expected structure for $GENEX_HOME/auth.json.
+///
+/// The canonical representation contains provider-keyed records. The private
+/// legacy field is populated only when reading the former single-provider
+/// shape, allowing existing installations to be read until a provider-scoped
+/// write migrates them.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AuthDotJson {
+    pub providers: BTreeMap<String, ProviderAuth>,
+    pub active_provider: Option<String>,
+    legacy: Option<ProviderAuth>,
+}
+
+impl AuthDotJson {
+    pub fn for_provider(provider_id: impl Into<String>, auth: ProviderAuth) -> Self {
+        Self {
+            providers: BTreeMap::from([(provider_id.into(), auth)]),
+            active_provider: None,
+            legacy: None,
+        }
+    }
+
+    pub fn legacy(auth_mode: Option<AuthMode>, api_key: Option<String>) -> Self {
+        Self {
+            providers: BTreeMap::new(),
+            active_provider: None,
+            legacy: Some(ProviderAuth {
+                auth_mode,
+                api_key,
+                invalid_auth_mode: false,
+                raw_auth_mode: None,
+            }),
+        }
+    }
+
+    pub fn active_provider_auth(&self) -> Option<&ProviderAuth> {
+        if let Some(provider_id) = self.active_provider.as_deref() {
+            return self.providers.get(provider_id);
+        }
+        if self.providers.len() == 1 {
+            return self.providers.values().next();
+        }
+        self.legacy.as_ref()
+    }
+
+    pub fn active_provider_id(&self) -> Option<&str> {
+        self.active_provider.as_deref()
+    }
+
+    pub(crate) fn active_auth(&self) -> Option<&ProviderAuth> {
+        self.active_provider_auth()
+    }
+
+    pub(crate) fn provider_auth(&self, provider_id: &str) -> Option<&ProviderAuth> {
+        self.providers.get(provider_id).or(self.legacy.as_ref())
+    }
+
+    pub(crate) fn has_legacy_auth(&self) -> bool {
+        self.legacy.is_some()
+    }
+
+    pub(crate) fn into_provider_storage(self) -> Self {
+        Self {
+            providers: self.providers,
+            active_provider: self.active_provider,
+            legacy: None,
+        }
+    }
+}
+
+impl Default for AuthDotJson {
+    fn default() -> Self {
+        Self {
+            providers: BTreeMap::new(),
+            active_provider: None,
+            legacy: None,
+        }
+    }
+}
+
+impl Serialize for AuthDotJson {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if self.providers.is_empty()
+            && self.active_provider.is_none()
+            && let Some(legacy) = &self.legacy
+        {
+            let mut state = serializer.serialize_struct("AuthDotJson", 2)?;
+            state.serialize_field("auth_mode", &legacy.serialized_auth_mode())?;
+            state.serialize_field("api_key", &legacy.api_key)?;
+            return state.end();
+        }
+
+        let mut state = serializer.serialize_struct("AuthDotJson", 2)?;
+        state.serialize_field("providers", &self.providers)?;
+        if let Some(active_provider) = &self.active_provider {
+            state.serialize_field("active_provider", active_provider)?;
+        }
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for AuthDotJson {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Wire {
+            #[serde(default)]
+            providers: BTreeMap<String, ProviderAuth>,
+            #[serde(default)]
+            active_provider: Option<String>,
+            #[serde(default)]
+            auth_mode: Option<String>,
+            #[serde(default)]
+            api_key: Option<String>,
+        }
+
+        let wire = Wire::deserialize(deserializer)?;
+        let (auth_mode, invalid_auth_mode, raw_auth_mode) = parse_auth_mode(wire.auth_mode);
+        let legacy = if wire.providers.is_empty() && wire.active_provider.is_none() {
+            (auth_mode.is_some() || wire.api_key.is_some() || invalid_auth_mode).then_some(
+                ProviderAuth {
+                    auth_mode,
+                    api_key: wire.api_key,
+                    invalid_auth_mode,
+                    raw_auth_mode,
+                },
+            )
+        } else {
+            None
+        };
+        Ok(Self {
+            providers: wire.providers,
+            active_provider: wire.active_provider,
+            legacy,
+        })
+    }
 }
 
 /// Ignore authentication modes removed from the persisted format so old
-/// token-only auth.json files are treated as unauthenticated state.
-fn deserialize_auth_mode<'de, D>(deserializer: D) -> Result<Option<AuthMode>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let value = Option::<String>::deserialize(deserializer)?;
-    Ok(value.and_then(|value| match value.as_str() {
-        "apiKey" | "apikey" => Some(AuthMode::ApiKey),
-        "headers" => Some(AuthMode::Headers),
-        _ => None,
-    }))
+/// token-only auth.json files are treated as unauthenticated state, while
+/// remembering that an unrecognized mode must not become valid API-key auth.
+fn parse_auth_mode(value: Option<String>) -> (Option<AuthMode>, bool, Option<String>) {
+    match value {
+        Some(value) => match value.as_str() {
+            "apiKey" | "apikey" => (Some(AuthMode::ApiKey), false, None),
+            "headers" => (Some(AuthMode::Headers), false, None),
+            _ => (None, true, Some(value)),
+        },
+        None => (None, false, None),
+    }
 }
 
 pub(super) fn get_auth_file(genex_home: &Path) -> PathBuf {

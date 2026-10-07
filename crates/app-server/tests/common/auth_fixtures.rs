@@ -3,10 +3,9 @@ use std::path::Path;
 use anyhow::Context;
 use anyhow::Result;
 use genex_config::types::AuthCredentialsStoreMode;
-use genex_login::AuthDotJson;
 use genex_login::AuthKeyringBackendKind;
-use genex_login::save_auth;
-use genex_protocol::auth::AuthMode;
+use genex_login::ProviderAuth;
+use genex_login::save_provider_auth;
 use serde_json::json;
 
 /// Builder for writing API-key credentials in tests.
@@ -92,14 +91,10 @@ pub fn write_api_key_auth(
     fixture: ApiKeyAuthFixture,
     cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> Result<()> {
-    let auth = AuthDotJson {
-        auth_mode: Some(AuthMode::ApiKey),
-        api_key: Some(fixture.api_key),
-    };
-
-    save_auth(
+    save_provider_auth(
         genex_home,
-        &auth,
+        "default",
+        &ProviderAuth::api_key(fixture.api_key),
         cli_auth_credentials_store_mode,
         AuthKeyringBackendKind::default(),
     )
