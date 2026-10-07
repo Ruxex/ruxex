@@ -525,7 +525,7 @@ async fn run_login(config: &Config, login_args: LoginArgs) -> Result<()> {
 
     if matches!(server.auth, genex_config::types::McpServerAuth::EmaAuth) {
         bail!(
-            "Enterprise MCP authorization is managed by Genex account sign-in. Open Genex to sign in."
+            "Enterprise MCP authorization is managed by the trusted enterprise IdP configuration; `mcp login` cannot change it."
         );
     }
 

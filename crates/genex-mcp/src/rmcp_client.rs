@@ -738,7 +738,7 @@ pub(crate) async fn make_rmcp_client(
     let config = server.config().clone();
     if matches!(config.auth, McpServerAuth::EmaAuth) {
         return Err(StartupOutcomeError::from(anyhow!(
-            "EMA MCP connections are not enabled in this version"
+            "Enterprise MCP authorization requires an explicit trusted enterprise IdP configuration; Model Provider credentials are not used"
         )));
     }
     let resolved_environment =

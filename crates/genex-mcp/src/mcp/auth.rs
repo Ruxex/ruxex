@@ -250,7 +250,7 @@ async fn compute_auth_status(
         return Ok(McpAuthState::Unsupported);
     }
     if matches!(config.auth, McpServerAuth::EmaAuth) {
-        // EMA connections are not enabled until the runtime stage of the stack.
+        // EMA status remains unsupported until the runtime has a trusted enterprise registration.
         return Ok(McpAuthState::Unsupported);
     }
     match &config.transport {

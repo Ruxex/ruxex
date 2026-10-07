@@ -173,7 +173,7 @@ impl McpRequestProcessor {
         let server = server.config();
         if matches!(server.auth, genex_config::McpServerAuth::EmaAuth) {
             return Err(invalid_request(
-                "EMA MCP connections are not enabled in this version",
+                "Enterprise MCP authorization requires the trusted enterprise IdP configuration; ordinary MCP OAuth login is not available for this server",
             ));
         }
 
