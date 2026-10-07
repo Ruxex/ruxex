@@ -20,6 +20,8 @@ export default defineConfig({
     },
   },
   server: {
+    port: 1420,
+    strictPort: true,
     fs: {
       allow: [repositoryRoot],
     },
