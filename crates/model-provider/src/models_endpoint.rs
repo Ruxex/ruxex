@@ -18,12 +18,13 @@ use genex_login::GenexAuth;
 use genex_login::collect_auth_env_telemetry;
 use genex_login::default_client::create_client_for_route_async;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_models_manager::manager::ModelsEndpointClient;
-use genex_models_manager::manager::ModelsEndpointFuture;
-use genex_models_manager::manager::ModelsEndpointResponse;
+use genex_models_manager::manager::ModelCatalogFuture;
+use genex_models_manager::manager::ModelCatalogSnapshot;
+use genex_models_manager::manager::ModelCatalogSource;
 use genex_otel::TelemetryAuthMode;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
+use genex_protocol::model_types::ModelCatalog;
 use genex_response_debug_context::extract_response_debug_context;
 use genex_response_debug_context::telemetry_transport_error_message;
 use http::HeaderMap;
@@ -81,11 +82,11 @@ impl ModelsEndpoint {
         }
     }
 
-    async fn list_models(
+    pub(crate) async fn list_models(
         &self,
         client_version: &str,
         http_client_factory: HttpClientFactory,
-    ) -> CoreResult<ModelsEndpointResponse> {
+    ) -> CoreResult<ModelCatalogSnapshot> {
         let _timer =
             genex_otel::start_global_timer("genex.remote_models.fetch_update.duration_ms", &[]);
         let auth = self.auth().await;
@@ -123,10 +124,10 @@ impl ModelsEndpoint {
         })
         .await
         .map_err(|_| GenexErr::RequestTimeout)??;
-        Ok(ModelsEndpointResponse {
-            models,
-            etag,
+        Ok(ModelCatalogSnapshot {
+            catalog: ModelCatalog { models },
             identity,
+            etag,
         })
     }
 
@@ -139,7 +140,7 @@ impl ModelsEndpoint {
     }
 }
 
-impl ModelsEndpointClient for ModelsEndpoint {
+impl ModelCatalogSource for ModelsEndpoint {
     fn supports_api_key_models(&self) -> bool {
         self.provider_info.env_key.is_some()
             || matches!(self.auth_mode, ModelsEndpointAuthMode::MyProvider)
@@ -157,7 +158,7 @@ impl ModelsEndpointClient for ModelsEndpoint {
         self.provider_info.has_command_auth()
     }
 
-    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
+    fn uses_managed_auth(&self) -> ModelCatalogFuture<'_, bool> {
         Box::pin(async { false })
     }
 
@@ -169,7 +170,7 @@ impl ModelsEndpointClient for ModelsEndpoint {
         &'a self,
         client_version: &'a str,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsEndpointFuture<'a, CoreResult<ModelsEndpointResponse>> {
+    ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(ModelsEndpoint::list_models(
             self,
             client_version,
@@ -290,7 +291,7 @@ mod tests {
     use genex_login::default_client::create_client;
     use genex_login::default_client::set_default_client_residency_requirement;
     use genex_protocol::config_types::ModelProviderAuthInfo;
-    use genex_protocol::model_types::ModelsResponse;
+    use genex_protocol::model_types::ModelCatalog;
     use pretty_assertions::assert_eq;
     use wiremock::Mock;
     use wiremock::MockServer;
@@ -366,7 +367,7 @@ mod tests {
             .and(path("/models"))
             .and(query_param("client_version", "0.0.0"))
             .respond_with(
-                ResponseTemplate::new(200).set_body_json(ModelsResponse { models: Vec::new() }),
+                ResponseTemplate::new(200).set_body_json(ModelCatalog { models: Vec::new() }),
             )
             .expect(1)
             .mount(&server)
@@ -408,7 +409,7 @@ mod tests {
             .and(path("/models"))
             .and(header(RESIDENCY_HEADER_NAME, "us"))
             .respond_with(
-                ResponseTemplate::new(200).set_body_json(ModelsResponse { models: Vec::new() }),
+                ResponseTemplate::new(200).set_body_json(ModelCatalog { models: Vec::new() }),
             )
             .expect(1)
             .mount(&server)
@@ -486,7 +487,7 @@ mod tests {
         };
         Mock::given(method("GET"))
             .and(path("/models"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(ModelsResponse {
+            .respond_with(ResponseTemplate::new(200).set_body_json(ModelCatalog {
                 models: vec![model.clone()],
             }))
             .expect(2)
@@ -526,7 +527,7 @@ mod tests {
                     HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
                 )
                 .await,
-            ModelsResponse { models: Vec::new() }
+            ModelCatalog { models: Vec::new() }
         );
         assert_eq!(
             manager

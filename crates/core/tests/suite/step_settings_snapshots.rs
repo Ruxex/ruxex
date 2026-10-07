@@ -1,10 +1,16 @@
 use anyhow::Result;
+use core_test_support::responses;
+use core_test_support::skip_if_no_network;
+use core_test_support::submit_thread_settings;
+use core_test_support::test_genex::test_genex;
+use core_test_support::wait_for_event;
+use core_test_support::wait_for_event_match;
 use genex_core::TurnInputRequest;
 use genex_features::Feature;
 use genex_models_manager::test_support::test_models_response;
 use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::ServiceTier;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;
@@ -12,12 +18,6 @@ use genex_protocol::protocol::ThreadSettingsOverrides;
 use genex_protocol::request_user_input::RequestUserInputAnswer;
 use genex_protocol::request_user_input::RequestUserInputResponse;
 use genex_protocol::user_input::UserInput;
-use core_test_support::responses;
-use core_test_support::skip_if_no_network;
-use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
-use core_test_support::wait_for_event;
-use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::HashMap;
@@ -67,7 +67,7 @@ async fn ordinary_settings_updates_keep_the_running_turn_snapshot() -> Result<()
                 .into_iter()
                 .find(|model| model.slug == "example-model")
                 .unwrap();
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: ["snapshot-model-a", "snapshot-model-b"]
                     .into_iter()
                     .map(|slug| {

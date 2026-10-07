@@ -11,7 +11,7 @@ use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
 use genex_protocol::model_types::ModelAccessPrograms;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::turn_input::CyberAccessProgram;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -85,7 +85,7 @@ fn assert_models_contain(actual: &[ModelInfo], expected: &[ModelInfo]) {
 }
 
 #[derive(Debug)]
-struct TestModelsEndpoint {
+struct TestModelCatalogSource {
     has_command_auth: bool,
     uses_managed_auth: bool,
     responses: Mutex<VecDeque<Vec<ModelInfo>>>,
@@ -169,7 +169,7 @@ impl ModelsCache for TestModelsCache {
     }
 }
 
-impl TestModelsEndpoint {
+impl TestModelCatalogSource {
     fn new(responses: Vec<Vec<ModelInfo>>) -> Arc<Self> {
         Arc::new(Self {
             has_command_auth: false,
@@ -203,7 +203,7 @@ impl TestModelsEndpoint {
             .expect("observed proxy policy lock should not be poisoned")
     }
 
-    async fn list_models(&self) -> CoreResult<ModelsEndpointResponse> {
+    async fn list_models(&self) -> CoreResult<ModelCatalogSnapshot> {
         self.fetch_count.fetch_add(1, Ordering::SeqCst);
         let models = self
             .responses
@@ -211,15 +211,15 @@ impl TestModelsEndpoint {
             .expect("responses lock should not be poisoned")
             .pop_front()
             .unwrap_or_default();
-        Ok(ModelsEndpointResponse {
-            models,
+        Ok(ModelCatalogSnapshot {
+            catalog: ModelCatalog { models },
             etag: self.etag.clone(),
             identity: self.identity().expect("test endpoint identity"),
         })
     }
 }
 
-impl ModelsEndpointClient for TestModelsEndpoint {
+impl ModelCatalogSource for TestModelCatalogSource {
     fn supports_api_key_models(&self) -> bool {
         true
     }
@@ -232,7 +232,7 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         self.has_command_auth
     }
 
-    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
+    fn uses_managed_auth(&self) -> ModelCatalogFuture<'_, bool> {
         Box::pin(async { self.uses_managed_auth })
     }
 
@@ -240,25 +240,25 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         &'a self,
         _client_version: &'a str,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsEndpointFuture<'a, CoreResult<ModelsEndpointResponse>> {
+    ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(async move {
             *self
                 .observed_proxy_policy
                 .lock()
                 .expect("observed proxy policy lock should not be poisoned") =
                 Some(http_client_factory.outbound_proxy_policy());
-            TestModelsEndpoint::list_models(self).await
+            TestModelCatalogSource::list_models(self).await
         })
     }
 }
 
 fn provider_manager_for_tests(
     genex_home: std::path::PathBuf,
-    endpoint_client: Arc<dyn ModelsEndpointClient>,
+    catalog_source: Arc<dyn ModelCatalogSource>,
 ) -> RemoteModelsManager {
     provider_manager_for_tests_with_auth(
         genex_home,
-        endpoint_client,
+        catalog_source,
         Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
@@ -267,10 +267,10 @@ fn provider_manager_for_tests(
 
 fn provider_manager_for_tests_with_auth(
     genex_home: std::path::PathBuf,
-    endpoint_client: Arc<dyn ModelsEndpointClient>,
+    catalog_source: Arc<dyn ModelCatalogSource>,
     auth_manager: Option<Arc<AuthManager>>,
 ) -> RemoteModelsManager {
-    let manager = RemoteModelsManager::new(genex_home, endpoint_client, auth_manager);
+    let manager = RemoteModelsManager::new(genex_home, catalog_source, auth_manager);
     manager.set_api_key_model_discovery_enabled(true);
     manager
 }
@@ -290,13 +290,51 @@ where
     cache.store(&entry).await.expect("cache store succeeds");
 }
 
-fn static_manager_for_tests(model_catalog: ModelsResponse) -> StaticModelsManager {
+fn static_manager_for_tests(model_catalog: ModelCatalog) -> StaticModelsManager {
     StaticModelsManager::new(/*auth_manager*/ None, model_catalog)
 }
 
 #[tokio::test]
+async fn shared_factory_uses_static_catalog_without_remote_fetch() {
+    let source = TestModelCatalogSource::new(Vec::new());
+    let catalog = ModelCatalog {
+        models: vec![remote_model("configured-model", "Configured", 0)],
+    };
+    let manager = build_models_manager_without_cache(
+        source.clone(),
+        /*auth_manager*/ None,
+        Some(catalog.clone()),
+    );
+
+    let actual = manager
+        .raw_model_catalog(RefreshStrategy::Online, DEFAULT_HTTP_CLIENT_FACTORY)
+        .await;
+
+    assert_eq!(actual, catalog);
+    assert_eq!(source.fetch_count(), 0);
+}
+
+#[tokio::test]
+async fn shared_factory_uses_remote_catalog_source_without_static_catalog() {
+    let model = remote_model("remote-model", "Remote", 0);
+    let source = TestModelCatalogSource::new(vec![vec![model.clone()]]);
+    let manager = build_models_manager_without_cache(
+        source.clone(),
+        /*auth_manager*/ None,
+        /*config_model_catalog*/ None,
+    );
+
+    let actual = manager
+        .raw_model_catalog(RefreshStrategy::Online, DEFAULT_HTTP_CLIENT_FACTORY)
+        .await;
+
+    assert_eq!(actual.models, vec![model]);
+    assert_eq!(source.fetch_count(), 1);
+}
+
+#[tokio::test]
 async fn static_manager_preserves_supported_requested_model_when_fallback_is_allowed() {
-    let manager = static_manager_for_tests(ModelsResponse {
+    let manager = static_manager_for_tests(ModelCatalog {
         models: vec![
             remote_model("provider-default", "Default", /*priority*/ 0),
             remote_model("provider-supported", "Supported", /*priority*/ 1),
@@ -318,7 +356,7 @@ async fn static_manager_preserves_supported_requested_model_when_fallback_is_all
 
 #[tokio::test]
 async fn static_manager_falls_back_from_unsupported_requested_model_when_allowed() {
-    let manager = static_manager_for_tests(ModelsResponse {
+    let manager = static_manager_for_tests(ModelCatalog {
         models: vec![
             remote_model("provider-default", "Default", /*priority*/ 0),
             remote_model("provider-supported", "Supported", /*priority*/ 1),
@@ -340,7 +378,7 @@ async fn static_manager_falls_back_from_unsupported_requested_model_when_allowed
 
 #[tokio::test]
 async fn static_manager_preserves_unsupported_requested_model_when_fallback_is_disabled() {
-    let manager = static_manager_for_tests(ModelsResponse {
+    let manager = static_manager_for_tests(ModelCatalog {
         models: vec![remote_model(
             "provider-default",
             "Default",
@@ -363,7 +401,7 @@ async fn static_manager_preserves_unsupported_requested_model_when_fallback_is_d
 
 #[tokio::test]
 async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_is_empty() {
-    let manager = static_manager_for_tests(ModelsResponse { models: Vec::new() });
+    let manager = static_manager_for_tests(ModelCatalog { models: Vec::new() });
     let requested_model = Some("unsupported".to_string());
 
     let model = manager
@@ -381,7 +419,7 @@ async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_
 #[tokio::test]
 async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
     let genex_home = tempdir().expect("temp dir");
-    let endpoint = TestModelsEndpoint::new(Vec::new());
+    let endpoint = TestModelCatalogSource::new(Vec::new());
     let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
     let requested_model = Some("unsupported".to_string());
 
@@ -450,7 +488,7 @@ async fn get_model_info_uses_custom_catalog() {
     let mut overlay = remote_model("model-overlay", "Overlay", /*priority*/ 0);
     overlay.supports_image_detail_original = true;
 
-    let manager = static_manager_for_tests(ModelsResponse {
+    let manager = static_manager_for_tests(ModelCatalog {
         models: vec![overlay],
     });
 
@@ -470,7 +508,7 @@ async fn get_model_info_matches_namespaced_suffix() {
     let config = ModelsManagerConfig::default();
     let mut remote = remote_model("model-image", "Image", /*priority*/ 0);
     remote.supports_image_detail_original = true;
-    let manager = static_manager_for_tests(ModelsResponse {
+    let manager = static_manager_for_tests(ModelCatalog {
         models: vec![remote],
     });
     let namespaced_model = "custom/model-image".to_string();
@@ -486,7 +524,7 @@ async fn get_model_info_matches_namespaced_suffix() {
 async fn get_model_info_matches_hyphenated_provider_namespace_suffix() {
     let config = ModelsManagerConfig::default();
     let remote = remote_model("model-image", "Image", /*priority*/ 0);
-    let manager = static_manager_for_tests(ModelsResponse {
+    let manager = static_manager_for_tests(ModelCatalog {
         models: vec![remote],
     });
     let namespaced_model = "provider-codex/model-image".to_string();
@@ -525,7 +563,7 @@ async fn refresh_available_models_sorts_by_priority() {
         remote_model("priority-high", "High", /*priority*/ 0),
     ];
     let genex_home = tempdir().expect("temp dir");
-    let endpoint = TestModelsEndpoint::new(vec![remote_models.clone()]);
+    let endpoint = TestModelCatalogSource::new(vec![remote_models.clone()]);
     let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     let available = manager
@@ -562,7 +600,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
         /*priority*/ 0,
     )];
     let genex_home = tempdir().expect("temp dir");
-    let endpoint = Arc::new(TestModelsEndpoint {
+    let endpoint = Arc::new(TestModelCatalogSource {
         has_command_auth: true,
         uses_managed_auth: false,
         responses: Mutex::new(vec![remote_models.clone()].into()),
@@ -593,7 +631,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
 async fn refresh_available_models_uses_cache_when_fresh() {
     let remote_models = vec![remote_model("cached", "Cached", /*priority*/ 5)];
     let genex_home = tempdir().expect("temp dir");
-    let endpoint = TestModelsEndpoint::new(vec![remote_models.clone()]);
+    let endpoint = TestModelCatalogSource::new(vec![remote_models.clone()]);
     let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     manager
@@ -638,7 +676,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         ..granted_model.clone()
     };
     let responses = vec![vec![granted_model.clone()], vec![revoked_model.clone()]];
-    let endpoint = Arc::new(TestModelsEndpoint {
+    let endpoint = Arc::new(TestModelCatalogSource {
         has_command_auth: false,
         uses_managed_auth: true,
         responses: Mutex::new(responses.into()),
@@ -665,7 +703,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         );
 
         // A new manager must read the latest access metadata from the disk cache.
-        let cache_endpoint = TestModelsEndpoint::new(Vec::new());
+        let cache_endpoint = TestModelCatalogSource::new(Vec::new());
         let cache_manager =
             provider_manager_for_tests(genex_home.path().to_path_buf(), cache_endpoint.clone());
         assert_eq!(
@@ -691,7 +729,8 @@ async fn refresh_available_models_refetches_when_cache_stale() {
     let initial_models = vec![remote_model("stale", "Stale", /*priority*/ 1)];
     let genex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("fresh", "Fresh", /*priority*/ 9)];
-    let endpoint = TestModelsEndpoint::new(vec![initial_models.clone(), updated_models.clone()]);
+    let endpoint =
+        TestModelCatalogSource::new(vec![initial_models.clone(), updated_models.clone()]);
     let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     manager
@@ -728,7 +767,8 @@ async fn refresh_available_models_refetches_when_version_mismatch() {
     let initial_models = vec![remote_model("old", "Old", /*priority*/ 1)];
     let genex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("new", "New", /*priority*/ 2)];
-    let endpoint = TestModelsEndpoint::new(vec![initial_models.clone(), updated_models.clone()]);
+    let endpoint =
+        TestModelCatalogSource::new(vec![initial_models.clone(), updated_models.clone()]);
     let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
 
     manager
@@ -773,7 +813,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
         "Remote New",
         /*priority*/ 1,
     )];
-    let endpoint = TestModelsEndpoint::new(vec![initial_models, refreshed_models]);
+    let endpoint = TestModelCatalogSource::new(vec![initial_models, refreshed_models]);
     let manager = RemoteModelsManager::new_with_cache(
         Arc::new(FileModelsCache::new(
             genex_home.path().join(MODEL_CACHE_FILE),
@@ -824,7 +864,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
 async fn refresh_available_models_skips_network_without_auth() {
     let dynamic_slug = "dynamic-model-only-for-test-noauth";
     let genex_home = tempdir().expect("temp dir");
-    let endpoint = TestModelsEndpoint::without_refresh(vec![vec![remote_model(
+    let endpoint = TestModelCatalogSource::without_refresh(vec![vec![remote_model(
         dynamic_slug,
         "No Auth",
         /*priority*/ 1,
@@ -855,7 +895,7 @@ async fn refresh_available_models_skips_network_without_auth() {
 
 #[test]
 fn build_available_models_picks_default_after_hiding_hidden_models() {
-    let manager = static_manager_for_tests(ModelsResponse { models: Vec::new() });
+    let manager = static_manager_for_tests(ModelCatalog { models: Vec::new() });
 
     let hidden_model =
         remote_model_with_visibility("hidden", "Hidden", /*priority*/ 0, "hide");
@@ -877,7 +917,7 @@ fn bundled_models_json_roundtrips() {
         .unwrap_or_else(|err| panic!("test model catalog should parse: {err}"));
 
     let serialized = serde_json::to_string(&response).expect("test model catalog should serialize");
-    let roundtripped: ModelsResponse = serde_json::from_str(&serialized)
+    let roundtripped: ModelCatalog = serde_json::from_str(&serialized)
         .expect("serialized test model catalog should deserialize");
 
     assert_eq!(

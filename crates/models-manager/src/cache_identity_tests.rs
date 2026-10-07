@@ -15,7 +15,7 @@ async fn mismatched_and_legacy_cache_entries_fetch_the_current_catalog() {
             identity,
             models: vec![stale],
         });
-        let endpoint = TestModelsEndpoint::new(vec![vec![current.clone()]]);
+        let endpoint = TestModelCatalogSource::new(vec![vec![current.clone()]]);
         let manager = RemoteModelsManager::new_with_cache(
             cache.clone(),
             endpoint.clone(),

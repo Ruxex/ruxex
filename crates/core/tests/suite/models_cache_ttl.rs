@@ -1,5 +1,5 @@
-use genex_core::TurnInputRequest;
 use core_test_support::test_genex::local_selections;
+use genex_core::TurnInputRequest;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -7,29 +7,6 @@ use anyhow::Result;
 use chrono::DateTime;
 use chrono::TimeZone;
 use chrono::Utc;
-use genex_core::config::Constrained;
-use genex_login::GenexAuth;
-use genex_models_manager::client_version_to_whole;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::default_input_modalities;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -42,6 +19,29 @@ use core_test_support::skip_if_no_network;
 use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
+use genex_core::config::Constrained;
+use genex_login::GenexAuth;
+use genex_models_manager::client_version_to_whole;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 use serde::Serialize;
@@ -61,7 +61,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
 
     let server = MockServer::start().await;
     let bundled = genex_models_manager::test_support::test_models_response()?;
-    let catalog = ModelsResponse {
+    let catalog = ModelCatalog {
         models: bundled
             .models
             .into_iter()
@@ -137,10 +137,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
         .collect::<Vec<_>>();
     assert_eq!(guardian_requests.len(), 2);
     for request in &guardian_requests {
-        assert_eq!(
-            request.body_json()["model"].as_str(),
-            Some("review-model")
-        );
+        assert_eq!(request.body_json()["model"].as_str(), Some("review-model"));
     }
     let guardian_thread = guardian_requests[0].body_json()["client_metadata"]["thread_id"]
         .as_str()
@@ -162,7 +159,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     let remote_model = test_remote_model(REMOTE_MODEL, /*priority*/ 1);
     let models_mock = responses::mount_models_once_with_etag(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model.clone()],
         },
         ETAG,
@@ -267,7 +264,7 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
     let server = MockServer::start().await;
     let models_mock = responses::mount_models_once_with_etag(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![test_remote_model(REMOTE_MODEL, /*priority*/ 1)],
         },
         ETAG,
@@ -327,7 +324,7 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
     let server = MockServer::start().await;
     let models_mock = responses::mount_models_once_with_etag(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![test_remote_model(REMOTE_MODEL, /*priority*/ 1)],
         },
         ETAG,
@@ -388,7 +385,7 @@ async fn uses_cache_when_version_matches() -> Result<()> {
     .await;
     let models_mock = responses::mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![test_remote_model("remote", /*priority*/ 2)],
         },
     )
@@ -463,7 +460,7 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
     let cached_model = test_remote_model(MISSING_VERSION_MODEL, /*priority*/ 1);
     let models_mock = responses::mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![test_remote_model("remote-missing", /*priority*/ 2)],
         },
     )
@@ -521,7 +518,7 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
 async fn refreshes_when_cache_version_differs() -> Result<()> {
     let server = MockServer::start().await;
     let cached_model = test_remote_model(DIFFERENT_VERSION_MODEL, /*priority*/ 1);
-    let models_response = ModelsResponse {
+    let models_response = ModelCatalog {
         models: vec![test_remote_model("remote-different", /*priority*/ 2)],
     };
     let mut models_mocks = Vec::new();

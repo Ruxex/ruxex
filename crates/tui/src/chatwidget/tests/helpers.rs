@@ -307,10 +307,12 @@ pub(crate) fn set_service_tier_test_catalog_for_models(
     tiered_model: &str,
     standard_model: &str,
 ) {
-    let models: Vec<ModelPreset> = ModelsResponse {
+    let models: Vec<ModelPreset> = ModelCatalog {
         models: vec![
             test_model_info(
-                tiered_model, /*priority*/ 0, /*supports_service_tier*/ true,
+                tiered_model,
+                /*priority*/ 0,
+                /*supports_service_tier*/ true,
             ),
             test_model_info(
                 standard_model,
@@ -1712,7 +1714,6 @@ pub(super) fn hook_run(
         entries,
     }
 }
-
 
 /// Normalize timestamps only in structurally identified completion footer cells.
 pub(crate) fn normalize_completion_timestamps(

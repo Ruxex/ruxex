@@ -65,6 +65,10 @@ const MAX_REQUEST_MAX_RETRIES: u64 = 100;
 pub const MY_PROVIDER_ID: &str = "my-provider";
 pub const MY_PROVIDER_NAME: &str = "My Provider";
 pub const MY_PROVIDER_DEFAULT_BASE_URL: &str = "https://example.com";
+pub const CLOUDFLARE_PROVIDER_ID: &str = "cloudflare";
+pub const CLOUDFLARE_PROVIDER_NAME: &str = "Cloudflare Workers AI";
+pub const CLOUDFLARE_API_TOKEN_ENV_VAR: &str = "CLOUDFLARE_API_TOKEN";
+pub const CLOUDFLARE_ACCOUNT_ID_ENV_VAR: &str = "CLOUDFLARE_ACCOUNT_ID";
 /// Wire protocol that the provider speaks.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
@@ -341,6 +345,19 @@ impl ModelProviderInfo {
         }
     }
 
+    pub fn create_cloudflare_provider() -> ModelProviderInfo {
+        ModelProviderInfo {
+            name: CLOUDFLARE_PROVIDER_NAME.to_string(),
+            env_key: Some(CLOUDFLARE_API_TOKEN_ENV_VAR.to_string()),
+            env_key_instructions: Some(
+                "Set CLOUDFLARE_API_TOKEN to a Cloudflare API token with Workers AI access."
+                    .to_string(),
+            ),
+            wire_api: WireApi::Chat,
+            ..ModelProviderInfo::default()
+        }
+    }
+
     /// Returns whether this provider uses the Responses wire protocol.
     pub fn is_responses_provider(&self) -> bool {
         self.wire_api == WireApi::Responses
@@ -353,10 +370,16 @@ impl ModelProviderInfo {
 
 /// Built-in default provider list.
 pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
-    [(MY_PROVIDER_ID, ModelProviderInfo::create_my_provider())]
-        .into_iter()
-        .map(|(k, v)| (k.to_string(), v))
-        .collect()
+    [
+        (MY_PROVIDER_ID, ModelProviderInfo::create_my_provider()),
+        (
+            CLOUDFLARE_PROVIDER_ID,
+            ModelProviderInfo::create_cloudflare_provider(),
+        ),
+    ]
+    .into_iter()
+    .map(|(k, v)| (k.to_string(), v))
+    .collect()
 }
 
 /// Merge configured providers into the built-in provider catalog.

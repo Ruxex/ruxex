@@ -1,51 +1,5 @@
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::types::ApprovalsReviewer;
-use genex_core::EnvironmentConfig;
-use genex_core::EnvironmentNetworkPolicy;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_core::config::NetworkProxySpec;
-use genex_core::shell::ShellType;
-use genex_core::shell::get_shell;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_exec_server::REMOTE_ENVIRONMENT_ID;
-use genex_exec_server::RemoveOptions;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_protocol::approvals::NetworkApprovalContext;
-use genex_protocol::approvals::NetworkApprovalProtocol;
-use genex_protocol::approvals::NetworkPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::NetworkPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::model_types::AutoReviewMessages;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecApprovalRequestEvent;
-use genex_protocol::protocol::GuardianAssessmentStatus;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::LoadThreadHistoryParams;
-use genex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
 use core_test_support::managed_network_requirements_loader;
@@ -73,6 +27,52 @@ use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_with_timeout;
+use genex_config::types::ApprovalsReviewer;
+use genex_core::EnvironmentConfig;
+use genex_core::EnvironmentNetworkPolicy;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_core::config::NetworkProxySpec;
+use genex_core::shell::ShellType;
+use genex_core::shell::get_shell;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_exec_server::REMOTE_ENVIRONMENT_ID;
+use genex_exec_server::RemoveOptions;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_network_proxy::NetworkProxyConfig;
+use genex_protocol::approvals::NetworkApprovalContext;
+use genex_protocol::approvals::NetworkApprovalProtocol;
+use genex_protocol::approvals::NetworkPolicyAmendment;
+use genex_protocol::approvals::NetworkPolicyRuleAction;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::Settings;
+use genex_protocol::model_types::AutoReviewMessages;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::models::NetworkPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::PermissionProfileSnapshot;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecApprovalRequestEvent;
+use genex_protocol::protocol::GuardianAssessmentStatus;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ReviewDecision;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::protocol::TurnEnvironmentSelections;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::LoadThreadHistoryParams;
+use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -2644,7 +2644,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
     Ok(())
 }
 
-pub(super) fn guardian_parent_catalog() -> ModelsResponse {
+pub(super) fn guardian_parent_catalog() -> ModelCatalog {
     let template = genex_models_manager::test_support::test_models_response()
         .expect("bundled model catalog")
         .models
@@ -2652,7 +2652,7 @@ pub(super) fn guardian_parent_catalog() -> ModelsResponse {
         .find(|model| model.slug == "legacy-model")
         .expect("legacy-model in bundled catalog");
     // Keep safety settings compatible so active publication can switch A to B.
-    ModelsResponse {
+    ModelCatalog {
         models: ["guardian-parent-a", "guardian-parent-b"]
             .into_iter()
             .map(|slug| {

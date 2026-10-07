@@ -1,20 +1,4 @@
 use anyhow::Result;
-use genex_config::ConfigLayerStack;
-use genex_core::ForkSnapshot;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ApprovalMessages;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::PermissionMessages;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -24,6 +8,22 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
+use genex_config::ConfigLayerStack;
+use genex_core::ForkSnapshot;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::model_types::ApprovalMessages;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::PermissionMessages;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashSet;
 use tempfile::TempDir;
@@ -102,7 +102,7 @@ async fn catalog_approval_message_is_sent_in_initial_permissions() -> Result<()>
         .with_config(move |config| {
             config.base_instructions = Some(override_instructions.to_string());
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![model],
             });
         });
@@ -143,7 +143,7 @@ async fn model_change_appends_new_catalog_approval_message() -> Result<()> {
         .with_model(first_slug)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![first, second],
             });
         });
@@ -214,7 +214,7 @@ async fn catalog_non_on_request_approval_messages_are_sent_in_initial_permission
             .with_model(model_slug)
             .with_config(move |config| {
                 config.permissions.approval_policy = Constrained::allow_any(approval_policy);
-                config.model_catalog = Some(ModelsResponse {
+                config.model_catalog = Some(ModelCatalog {
                     models: vec![model],
                 });
             });
@@ -271,7 +271,7 @@ async fn catalog_permission_message_is_sent_initially_and_after_model_change() -
                 .permissions
                 .set_permission_profile(PermissionProfile::read_only())
                 .expect("read-only permission profile should be allowed");
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![first, second],
             });
         });
@@ -336,7 +336,7 @@ async fn empty_catalog_permission_message_preserves_approval_instructions() -> R
                 .permissions
                 .set_permission_profile(PermissionProfile::read_only())
                 .expect("read-only permission profile should be allowed");
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![model],
             });
         });

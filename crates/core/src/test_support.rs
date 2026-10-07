@@ -14,10 +14,12 @@ use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
+use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::collaboration_mode_presets;
 use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::manager::build_models_manager;
 use genex_models_manager::test_support::construct_model_info_offline_for_tests;
 use genex_models_manager::test_support::test_models_response;
 use genex_protocol::ThreadId;
@@ -126,7 +128,12 @@ pub fn models_manager_with_provider(
     provider: ModelProviderInfo,
 ) -> SharedModelsManager {
     let provider = create_model_provider(provider, Some(auth_manager));
-    provider.models_manager(genex_home, /*config_model_catalog*/ None)
+    build_models_manager(
+        genex_home,
+        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+        provider.auth_manager(),
+        /*config_model_catalog*/ None,
+    )
 }
 
 pub fn default_http_client_factory() -> HttpClientFactory {

@@ -10,9 +10,9 @@ use genex_login::AuthManager;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::CollaborationModeMask;
 use genex_protocol::error::Result as CoreResult;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelsResponse;
 use std::fmt;
 use std::future::Future;
 use std::path::PathBuf;
@@ -30,12 +30,12 @@ use tracing::info;
 const MODEL_CACHE_FILE: &str = "models_cache.json";
 const DEFAULT_MODEL_CACHE_TTL: Duration = Duration::from_secs(300);
 
-/// Remote endpoint used by the provider-compatible model manager.
+/// Provider-neutral source used by the model manager to obtain a remote catalog.
 ///
 /// Implementations own provider-specific auth and transport details. The model
 /// manager owns refresh policy, cache behavior, and catalog merging; it calls
-/// this endpoint only when it decides a remote refresh should happen.
-pub trait ModelsEndpointClient: fmt::Debug + Send + Sync {
+/// this source only when it decides a remote refresh should happen.
+pub trait ModelCatalogSource: fmt::Debug + Send + Sync {
     /// Opaque identity of the current provider and credentials, without resolving auth.
     ///
     /// Must change when account, email, plan, provider, or API credentials change.
@@ -46,14 +46,14 @@ pub trait ModelsEndpointClient: fmt::Debug + Send + Sync {
     fn has_command_auth(&self) -> bool;
 
     /// Returns whether the currently resolved auth uses host-managed authentication.
-    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool>;
+    fn uses_managed_auth(&self) -> ModelCatalogFuture<'_, bool>;
 
     /// Returns whether this provider supports an authoritative catalog with provider API keys.
     fn supports_api_key_models(&self) -> bool {
         false
     }
 
-    /// Returns whether this endpoint owns a provider catalog that should be refreshed remotely.
+    /// Returns whether this source owns a provider catalog that should be refreshed remotely.
     fn supports_remote_models(&self) -> bool {
         false
     }
@@ -63,20 +63,20 @@ pub trait ModelsEndpointClient: fmt::Debug + Send + Sync {
         &'a self,
         client_version: &'a str,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsEndpointFuture<'a, CoreResult<ModelsEndpointResponse>>;
+    ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>>;
 }
 
-/// Catalog and validation metadata captured using the credentials for one request.
+/// A fetched model catalog and the metadata needed to validate its cache entry.
 #[derive(Debug)]
-pub struct ModelsEndpointResponse {
-    pub models: Vec<ModelInfo>,
-    pub etag: Option<String>,
+pub struct ModelCatalogSnapshot {
+    pub catalog: ModelCatalog,
     /// Identity of the credentials actually used to fetch this catalog.
     /// Successful responses must always identify their provider and authentication scope.
     pub identity: String,
+    pub etag: Option<String>,
 }
 
-pub type ModelsEndpointFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
+pub type ModelCatalogFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// Strategy for refreshing available models.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,7 +105,7 @@ impl fmt::Display for RefreshStrategy {
     }
 }
 
-type SharedModelsEndpointClient = Arc<dyn ModelsEndpointClient>;
+type SharedModelCatalogSource = Arc<dyn ModelCatalogSource>;
 
 /// Coordinates model discovery plus cached metadata on disk.
 pub trait ModelsManager: fmt::Debug + Send + Sync {
@@ -140,7 +140,7 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
         &self,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsManagerFuture<'_, ModelsResponse>;
+    ) -> ModelsManagerFuture<'_, ModelCatalog>;
 
     /// Return the current in-memory remote model catalog without refreshing or loading cache state.
     fn get_remote_models(&self) -> ModelsManagerFuture<'_, Vec<ModelInfo>>;
@@ -244,12 +244,61 @@ pub type ModelsManagerFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a
 /// Shared model manager handle used across runtime services.
 pub type SharedModelsManager = Arc<dyn ModelsManager>;
 
-/// Provider-compatible model manager backed by the provider `/models` endpoint and cache.
+/// Builds a cache-backed or static model manager for a catalog source.
+pub fn build_models_manager(
+    genex_home: PathBuf,
+    catalog_source: Arc<dyn ModelCatalogSource>,
+    auth_manager: Option<Arc<AuthManager>>,
+    config_model_catalog: Option<ModelCatalog>,
+) -> SharedModelsManager {
+    match config_model_catalog {
+        Some(model_catalog) => Arc::new(StaticModelsManager::new(auth_manager, model_catalog)),
+        None => Arc::new(RemoteModelsManager::new(
+            genex_home,
+            catalog_source,
+            auth_manager,
+        )),
+    }
+}
+
+/// Builds a model manager without persistent caching.
+pub fn build_models_manager_without_cache(
+    catalog_source: Arc<dyn ModelCatalogSource>,
+    auth_manager: Option<Arc<AuthManager>>,
+    config_model_catalog: Option<ModelCatalog>,
+) -> SharedModelsManager {
+    match config_model_catalog {
+        Some(model_catalog) => Arc::new(StaticModelsManager::new(auth_manager, model_catalog)),
+        None => Arc::new(RemoteModelsManager::new_without_cache(
+            catalog_source,
+            auth_manager,
+        )),
+    }
+}
+
+/// Builds a model manager using a caller-provided cache.
+pub fn build_models_manager_with_cache(
+    cache: Arc<dyn ModelsCache>,
+    catalog_source: Arc<dyn ModelCatalogSource>,
+    auth_manager: Option<Arc<AuthManager>>,
+    config_model_catalog: Option<ModelCatalog>,
+) -> SharedModelsManager {
+    match config_model_catalog {
+        Some(model_catalog) => Arc::new(StaticModelsManager::new(auth_manager, model_catalog)),
+        None => Arc::new(RemoteModelsManager::new_with_cache(
+            cache,
+            catalog_source,
+            auth_manager,
+        )),
+    }
+}
+
+/// Model manager backed by a remote catalog source and cache.
 #[derive(Debug)]
 pub struct RemoteModelsManager {
     remote_models: RwLock<ModelsCacheEntry>,
     cache: Option<Arc<dyn ModelsCache>>,
-    endpoint_client: SharedModelsEndpointClient,
+    catalog_source: SharedModelCatalogSource,
     api_key_model_discovery_enabled: AtomicBool,
     auth_manager: Option<Arc<AuthManager>>,
 }
@@ -262,10 +311,10 @@ pub struct StaticModelsManager {
 }
 
 impl RemoteModelsManager {
-    /// Construct an provider-compatible remote model manager.
+    /// Construct a remote model manager backed by a persistent cache.
     pub fn new(
         genex_home: PathBuf,
-        endpoint_client: Arc<dyn ModelsEndpointClient>,
+        catalog_source: Arc<dyn ModelCatalogSource>,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
         let cache_path = genex_home.join(MODEL_CACHE_FILE);
@@ -274,34 +323,34 @@ impl RemoteModelsManager {
                 cache_path,
                 DEFAULT_MODEL_CACHE_TTL,
             ))),
-            endpoint_client,
+            catalog_source,
             auth_manager,
         )
     }
 
-    /// Construct an provider-compatible model manager with caching disabled.
+    /// Construct a remote model manager with caching disabled.
     pub fn new_without_cache(
-        endpoint_client: Arc<dyn ModelsEndpointClient>,
+        catalog_source: Arc<dyn ModelCatalogSource>,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
-        Self::new_with_optional_cache(/*cache*/ None, endpoint_client, auth_manager)
+        Self::new_with_optional_cache(/*cache*/ None, catalog_source, auth_manager)
     }
 
-    /// Constructs an provider-compatible model manager with a caller-provided cache.
+    /// Constructs a remote model manager with a caller-provided cache.
     ///
     /// The cache is consulted by cache-aware refresh strategies. Cache misses and backend errors
-    /// fall back to the models endpoint, and cache write failures do not fail model discovery.
+    /// fall back to the catalog source, and cache write failures do not fail model discovery.
     pub fn new_with_cache(
         cache: Arc<dyn ModelsCache>,
-        endpoint_client: Arc<dyn ModelsEndpointClient>,
+        catalog_source: Arc<dyn ModelCatalogSource>,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
-        Self::new_with_optional_cache(Some(cache), endpoint_client, auth_manager)
+        Self::new_with_optional_cache(Some(cache), catalog_source, auth_manager)
     }
 
     fn new_with_optional_cache(
         cache: Option<Arc<dyn ModelsCache>>,
-        endpoint_client: Arc<dyn ModelsEndpointClient>,
+        catalog_source: Arc<dyn ModelCatalogSource>,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
         Self {
@@ -309,12 +358,12 @@ impl RemoteModelsManager {
                 fetched_at: Utc::now(),
                 etag: None,
                 client_version: Some(crate::client_version_to_whole()),
-                identity: endpoint_client.identity(),
+                identity: catalog_source.identity(),
                 models: Vec::new(),
             }),
             cache,
             api_key_model_discovery_enabled: AtomicBool::new(false),
-            endpoint_client,
+            catalog_source,
             auth_manager,
         }
     }
@@ -322,7 +371,7 @@ impl RemoteModelsManager {
 
 impl StaticModelsManager {
     /// Construct a static model manager from an authoritative catalog.
-    pub fn new(auth_manager: Option<Arc<AuthManager>>, model_catalog: ModelsResponse) -> Self {
+    pub fn new(auth_manager: Option<Arc<AuthManager>>, model_catalog: ModelCatalog) -> Self {
         Self {
             remote_models: model_catalog.models,
             auth_manager,
@@ -340,7 +389,7 @@ impl ModelsManager for RemoteModelsManager {
         &self,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsManagerFuture<'_, ModelsResponse> {
+    ) -> ModelsManagerFuture<'_, ModelCatalog> {
         Box::pin(RemoteModelsManager::raw_model_catalog(
             self,
             refresh_strategy,
@@ -351,7 +400,7 @@ impl ModelsManager for RemoteModelsManager {
     fn get_remote_models(&self) -> ModelsManagerFuture<'_, Vec<ModelInfo>> {
         Box::pin(async move {
             let entry = self.remote_models.read().await;
-            if entry.identity.is_some() && entry.identity == self.endpoint_client.identity() {
+            if entry.identity.is_some() && entry.identity == self.catalog_source.identity() {
                 entry.models.clone()
             } else {
                 Vec::new()
@@ -362,7 +411,7 @@ impl ModelsManager for RemoteModelsManager {
     fn try_get_remote_models(&self) -> Result<Vec<ModelInfo>, TryLockError> {
         let entry = self.remote_models.try_read()?;
         Ok(
-            if entry.identity.is_some() && entry.identity == self.endpoint_client.identity() {
+            if entry.identity.is_some() && entry.identity == self.catalog_source.identity() {
                 entry.models.clone()
             } else {
                 Vec::new()
@@ -396,14 +445,14 @@ impl RemoteModelsManager {
         &self,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsResponse {
+    ) -> ModelCatalog {
         if let Err(err) = self
             .refresh_available_models(refresh_strategy, &http_client_factory)
             .await
         {
             error!("failed to refresh available models: {err}");
         }
-        ModelsResponse {
+        ModelCatalog {
             models: self.get_remote_models().await,
         }
     }
@@ -414,7 +463,7 @@ impl RemoteModelsManager {
             (entry.identity.clone(), entry.etag.clone())
         };
         if let Some(identity) = identity
-            && Some(&identity) == self.endpoint_client.identity().as_ref()
+            && Some(&identity) == self.catalog_source.identity().as_ref()
             && current_etag.as_deref() == Some(etag.as_str())
         {
             if let Some(cache) = self.cache.as_ref()
@@ -475,15 +524,15 @@ impl RemoteModelsManager {
         http_client_factory: &HttpClientFactory,
     ) -> CoreResult<()> {
         let client_version = crate::client_version_to_whole();
-        let ModelsEndpointResponse {
-            models,
-            etag,
+        let ModelCatalogSnapshot {
+            catalog,
             identity,
+            etag,
         } = self
-            .endpoint_client
+            .catalog_source
             .list_models(&client_version, http_client_factory.clone())
             .await?;
-        if Some(&identity) != self.endpoint_client.identity().as_ref() {
+        if Some(&identity) != self.catalog_source.identity().as_ref() {
             return Ok(());
         }
         let entry = ModelsCacheEntry {
@@ -491,7 +540,7 @@ impl RemoteModelsManager {
             etag,
             client_version: Some(client_version),
             identity: Some(identity),
-            models,
+            models: catalog.models,
         };
         if let Some(cache) = self.cache.as_ref()
             && let Err(err) = cache.store(&entry).await
@@ -503,8 +552,8 @@ impl RemoteModelsManager {
     }
 
     fn supports_api_key_discovery(&self) -> bool {
-        self.endpoint_client.supports_api_key_models()
-            && !self.endpoint_client.has_command_auth()
+        self.catalog_source.supports_api_key_models()
+            && !self.catalog_source.has_command_auth()
             && self
                 .auth_manager
                 .as_ref()
@@ -512,16 +561,16 @@ impl RemoteModelsManager {
     }
 
     async fn should_refresh_models(&self) -> bool {
-        self.endpoint_client.supports_remote_models()
-            || self.endpoint_client.uses_managed_auth().await
-            || self.endpoint_client.has_command_auth()
+        self.catalog_source.supports_remote_models()
+            || self.catalog_source.uses_managed_auth().await
+            || self.catalog_source.has_command_auth()
             || self.supports_api_key_discovery()
     }
 
     /// Publish only while the request identity still matches, including after async storage.
     async fn apply_remote_models(&self, entry: ModelsCacheEntry) -> bool {
         let mut current = self.remote_models.write().await;
-        if entry.identity != self.endpoint_client.identity() {
+        if entry.identity != self.catalog_source.identity() {
             return false;
         }
         *current = entry;
@@ -537,7 +586,7 @@ impl RemoteModelsManager {
             genex_otel::start_global_timer("genex.remote_models.load_cache.duration_ms", &[]);
         let client_version = crate::client_version_to_whole();
         info!(client_version, "models cache: evaluating cache eligibility");
-        let Some(identity) = self.endpoint_client.identity() else {
+        let Some(identity) = self.catalog_source.identity() else {
             return false;
         };
         let cache_entry = match cache.load(&client_version).await {
@@ -560,7 +609,7 @@ impl RemoteModelsManager {
             return false;
         }
         if cache_entry.identity.as_ref() != Some(&identity)
-            || self.endpoint_client.identity().as_ref() != Some(&identity)
+            || self.catalog_source.identity().as_ref() != Some(&identity)
         {
             info!("models cache: provider or auth identity mismatch");
             return false;
@@ -610,9 +659,9 @@ impl ModelsManager for StaticModelsManager {
         &self,
         _refresh_strategy: RefreshStrategy,
         _http_client_factory: HttpClientFactory,
-    ) -> ModelsManagerFuture<'_, ModelsResponse> {
+    ) -> ModelsManagerFuture<'_, ModelCatalog> {
         Box::pin(async move {
-            ModelsResponse {
+            ModelCatalog {
                 models: self.get_remote_models().await,
             }
         })

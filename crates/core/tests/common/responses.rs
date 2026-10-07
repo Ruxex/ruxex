@@ -9,7 +9,7 @@ use anyhow::Result;
 use base64::Engine;
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ContentItem;
 use genex_protocol::models::ResponseItem;
 use serde_json::Value;
@@ -1112,7 +1112,7 @@ pub async fn mount_sse_once(server: &MockServer, body: String) -> ResponseMock {
     response_mock
 }
 
-pub async fn mount_models_once(server: &MockServer, body: ModelsResponse) -> ModelsMock {
+pub async fn mount_models_once(server: &MockServer, body: ModelCatalog) -> ModelsMock {
     let (mock, models_mock) = models_mock();
     mock.respond_with(
         ResponseTemplate::new(200)
@@ -1127,7 +1127,7 @@ pub async fn mount_models_once(server: &MockServer, body: ModelsResponse) -> Mod
 
 pub async fn mount_models_once_with_delay(
     server: &MockServer,
-    body: ModelsResponse,
+    body: ModelCatalog,
     delay: Duration,
 ) -> ModelsMock {
     let (mock, models_mock) = models_mock();
@@ -1145,7 +1145,7 @@ pub async fn mount_models_once_with_delay(
 
 pub async fn mount_models_once_with_etag(
     server: &MockServer,
-    body: ModelsResponse,
+    body: ModelCatalog,
     etag: &str,
 ) -> ModelsMock {
     let (mock, models_mock) = models_mock();
@@ -1169,7 +1169,7 @@ pub async fn start_mock_server() -> MockServer {
         .await;
 
     // Provide a default `/models` response so tests remain hermetic when the client queries it.
-    let _ = mount_models_once(&server, ModelsResponse { models: Vec::new() }).await;
+    let _ = mount_models_once(&server, ModelCatalog { models: Vec::new() }).await;
 
     server
 }

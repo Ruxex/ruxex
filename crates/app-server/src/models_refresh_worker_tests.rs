@@ -5,13 +5,14 @@ use std::time::Duration;
 
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_models_manager::manager::ModelsEndpointClient;
-use genex_models_manager::manager::ModelsEndpointFuture;
-use genex_models_manager::manager::ModelsEndpointResponse;
+use genex_models_manager::manager::ModelCatalogFuture;
+use genex_models_manager::manager::ModelCatalogSnapshot;
+use genex_models_manager::manager::ModelCatalogSource;
 use genex_models_manager::manager::RemoteModelsManager;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
+use genex_protocol::model_types::ModelCatalog;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 use tokio::sync::Notify;
@@ -45,7 +46,7 @@ impl TestModelsEndpoint {
     }
 }
 
-impl ModelsEndpointClient for TestModelsEndpoint {
+impl ModelCatalogSource for TestModelsEndpoint {
     fn identity(&self) -> Option<String> {
         Some("test-provider".to_string())
     }
@@ -54,7 +55,7 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         true
     }
 
-    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
+    fn uses_managed_auth(&self) -> ModelCatalogFuture<'_, bool> {
         Box::pin(async { false })
     }
 
@@ -62,7 +63,7 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         &'a self,
         _client_version: &'a str,
         _http_client_factory: HttpClientFactory,
-    ) -> ModelsEndpointFuture<'a, CoreResult<ModelsEndpointResponse>> {
+    ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(async move {
             let fetch_index = self.fetch_count.fetch_add(1, Ordering::SeqCst);
             self.fetched.notify_one();
@@ -72,8 +73,8 @@ impl ModelsEndpointClient for TestModelsEndpoint {
             if fetch_index == 1 {
                 self.release_second_fetch.notified().await;
             }
-            Ok(ModelsEndpointResponse {
-                models: Vec::new(),
+            Ok(ModelCatalogSnapshot {
+                catalog: ModelCatalog { models: Vec::new() },
                 etag: None,
                 identity: self.identity().expect("test endpoint identity"),
             })

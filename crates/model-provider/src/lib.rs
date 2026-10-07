@@ -1,5 +1,7 @@
 mod auth;
 mod bearer_auth_provider;
+mod cloudflare_provider;
+mod model_catalog_source;
 mod models_endpoint;
 mod models_identity;
 mod my_provider;
@@ -30,6 +32,7 @@ pub use auth::unauthenticated_auth_provider;
 pub use bearer_auth_provider::BearerAuthProvider;
 pub use bearer_auth_provider::BearerAuthProvider as CoreAuthProvider;
 pub use genex_protocol::account::ProviderAccount;
+pub use model_catalog_source::ProviderModelCatalogSource;
 pub use provider::ModelProvider;
 pub use provider::ModelProviderFuture;
 pub use provider::ProviderAccountError;

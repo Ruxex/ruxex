@@ -98,7 +98,7 @@ use genex_protocol::config_types::TrustLevel;
 use genex_protocol::config_types::Verbosity;
 use genex_protocol::config_types::WebSearchConfig;
 use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::models::ActivePermissionProfile;
 use genex_protocol::models::BaseInstructionsProvenance;
@@ -901,7 +901,7 @@ pub struct Config {
 
     /// Optional full model catalog loaded from `model_catalog_json`.
     /// When set, this replaces the bundled catalog for the current process.
-    pub model_catalog: Option<ModelsResponse>,
+    pub model_catalog: Option<ModelCatalog>,
 
     /// Optional verbosity control for models supporting Responses API `text.verbosity`.
     pub model_verbosity: Option<Verbosity>,
@@ -1915,9 +1915,9 @@ pub fn validate_feature_requirements_for_config_toml(
     managed_features::validate_feature_requirements_in_config_toml(cfg, feature_requirements)
 }
 
-fn load_catalog_json(path: &AbsolutePathBuf) -> std::io::Result<ModelsResponse> {
+fn load_catalog_json(path: &AbsolutePathBuf) -> std::io::Result<ModelCatalog> {
     let file_contents = std::fs::read_to_string(path)?;
-    let catalog = serde_json::from_str::<ModelsResponse>(&file_contents).map_err(|err| {
+    let catalog = serde_json::from_str::<ModelCatalog>(&file_contents).map_err(|err| {
         std::io::Error::new(
             ErrorKind::InvalidData,
             format!(
@@ -1940,7 +1940,7 @@ fn load_catalog_json(path: &AbsolutePathBuf) -> std::io::Result<ModelsResponse> 
 
 fn load_model_catalog(
     model_catalog_json: Option<AbsolutePathBuf>,
-) -> std::io::Result<Option<ModelsResponse>> {
+) -> std::io::Result<Option<ModelCatalog>> {
     model_catalog_json
         .map(|path| load_catalog_json(&path))
         .transpose()

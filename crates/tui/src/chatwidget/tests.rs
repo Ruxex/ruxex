@@ -148,7 +148,7 @@ pub(super) use genex_protocol::models::NetworkPermissions;
 pub(super) use genex_protocol::models::PermissionProfile;
 pub(super) use genex_protocol::model_types::ModelInfo;
 pub(super) use genex_protocol::model_types::ModelPreset;
-pub(super) use genex_protocol::model_types::ModelsResponse;
+pub(super) use genex_protocol::model_types::ModelCatalog;
 pub(super) use genex_protocol::model_types::ReasoningEffortPreset;
 pub(super) use genex_protocol::model_types::default_input_modalities;
 pub(super) use genex_protocol::parse_command::ParsedCommand;

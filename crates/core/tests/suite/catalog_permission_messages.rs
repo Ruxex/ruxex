@@ -1,17 +1,4 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_login::GenexAuth;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::PermissionMessages;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_models_once;
@@ -20,6 +7,19 @@ use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_login::GenexAuth;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::PermissionMessages;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use wiremock::MockServer;
 
@@ -48,7 +48,7 @@ async fn catalog_permission_message_loaded_from_remote_models_is_sent() -> Resul
     });
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![model],
         },
     )

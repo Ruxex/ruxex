@@ -9,30 +9,6 @@ use std::sync::atomic::Ordering;
 use anyhow::Result;
 use base64::Engine;
 use chrono::Utc;
-use genex_http_client::HttpClientFactory;
-use genex_login::AuthManager;
-use genex_login::GenexAuth;
-use genex_model_provider::create_model_provider;
-use genex_model_provider_info::built_in_model_providers;
-use genex_models_manager::cache::ModelsCache;
-use genex_models_manager::cache::ModelsCacheEntry;
-use genex_models_manager::cache::ModelsCacheError;
-use genex_models_manager::cache::ModelsCacheFuture;
-use genex_models_manager::manager::ModelsEndpointClient;
-use genex_models_manager::manager::ModelsEndpointFuture;
-use genex_models_manager::manager::ModelsEndpointResponse;
-use genex_models_manager::manager::RemoteModelsManager;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::error::Result as CoreResult;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -42,6 +18,33 @@ use core_test_support::responses::sse;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
+use genex_http_client::HttpClientFactory;
+use genex_login::AuthManager;
+use genex_login::GenexAuth;
+use genex_model_provider::ModelProvider;
+use genex_model_provider::ProviderModelCatalogSource;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::built_in_model_providers;
+use genex_models_manager::cache::ModelsCache;
+use genex_models_manager::cache::ModelsCacheEntry;
+use genex_models_manager::cache::ModelsCacheError;
+use genex_models_manager::cache::ModelsCacheFuture;
+use genex_models_manager::manager::ModelCatalogFuture;
+use genex_models_manager::manager::ModelCatalogSnapshot;
+use genex_models_manager::manager::ModelCatalogSource;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::RemoteModelsManager;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::manager::build_models_manager_with_cache;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::error::Result as CoreResult;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::sync::oneshot;
@@ -140,7 +143,7 @@ impl TestModelsEndpoint {
     }
 }
 
-impl ModelsEndpointClient for TestModelsEndpoint {
+impl ModelCatalogSource for TestModelsEndpoint {
     fn identity(&self) -> Option<String> {
         Some("test-provider".to_string())
     }
@@ -149,7 +152,7 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         false
     }
 
-    fn uses_managed_auth(&self) -> ModelsEndpointFuture<'_, bool> {
+    fn uses_managed_auth(&self) -> ModelCatalogFuture<'_, bool> {
         Box::pin(async { true })
     }
 
@@ -157,11 +160,13 @@ impl ModelsEndpointClient for TestModelsEndpoint {
         &'a self,
         _client_version: &'a str,
         _http_client_factory: HttpClientFactory,
-    ) -> ModelsEndpointFuture<'a, CoreResult<ModelsEndpointResponse>> {
+    ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(async move {
             self.fetch_count.fetch_add(1, Ordering::SeqCst);
-            Ok(ModelsEndpointResponse {
-                models: self.models.clone(),
+            Ok(ModelCatalogSnapshot {
+                catalog: ModelCatalog {
+                    models: self.models.clone(),
+                },
                 etag: None,
                 identity: self.identity().expect("test endpoint identity"),
             })
@@ -184,9 +189,9 @@ fn models_manager(
     Arc::new(RemoteModelsManager::new_with_cache(
         cache,
         endpoint,
-        Some(AuthManager::from_auth_for_testing(
-            GenexAuth::from_api_key("test-api-key"),
-        )),
+        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+            "test-api-key",
+        ))),
     ))
 }
 
@@ -314,13 +319,18 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         stored_entries: Mutex::new(Vec::new()),
         store_gate: Mutex::new(None),
     });
-    let manager = create_model_provider(provider_info.clone(), Some(auth.clone()))
-        .models_manager_with_cache(/*config_model_catalog*/ None, cache.clone());
+    let provider = create_model_provider(provider_info.clone(), Some(auth.clone()));
+    let manager = build_models_manager_with_cache(
+        cache.clone(),
+        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+        provider.auth_manager(),
+        /*config_model_catalog*/ None,
+    );
     let mut old_model = remote_model("legacy-model");
     old_model.default_reasoning_summary = ReasoningSummary::Concise;
     let initial = responses::mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![old_model.clone()],
         },
     )
@@ -347,7 +357,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     });
     let old_request = responses::mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![old_model],
         },
     )
@@ -378,7 +388,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     new_model.default_reasoning_summary = ReasoningSummary::Detailed;
     let new_request = responses::mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![new_model.clone()],
         },
     )
@@ -393,7 +403,10 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     release_store.send(()).unwrap();
     timeout(Duration::from_secs(10), old_refresh).await??;
     assert_eq!(manager.get_remote_models().await, vec![new_model]);
-    for (mock, token) in [(old_request, "test-api-key"), (new_request, "second-account-token")] {
+    for (mock, token) in [
+        (old_request, "test-api-key"),
+        (new_request, "second-account-token"),
+    ] {
         let requests = mock.requests();
         assert_eq!(requests.len(), 1);
         assert_eq!(

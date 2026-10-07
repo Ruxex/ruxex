@@ -1,42 +1,4 @@
 use anyhow::Result;
-use genex_core::GenexThread;
-use genex_core::ForkSnapshot;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_login::GenexAuth;
-use genex_models_manager::test_support::test_models_response;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_prompts::render_model_instructions;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::config_types::Settings;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::models::BaseInstructionsProvenance;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::default_input_modalities;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::request_user_input::RequestUserInputAnswer;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_completed_with_tokens;
@@ -56,6 +18,44 @@ use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
+use genex_core::ForkSnapshot;
+use genex_core::GenexThread;
+use genex_core::TurnInputRequest;
+use genex_core::config::Constrained;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::GenexAuth;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::test_support::test_models_response;
+use genex_prompts::render_model_instructions;
+use genex_protocol::config_types::ApprovalsReviewer;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::config_types::Settings;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::models::BaseInstructionsProvenance;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::HashMap;
@@ -176,17 +176,12 @@ async fn first_turn_model_change_appends_model_instructions_developer_message() 
     let server = MockServer::start().await;
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
-    let mut builder =
-        test_genex().with_model_info_override("provider-model-d", configure_model_switching_fixture);
+    let mut builder = test_genex()
+        .with_model_info_override("provider-model-d", configure_model_switching_fixture);
     let test = builder.build_with_auto_env(&server).await?;
     let next_model = "example-model";
 
-    submit_model_turn(
-        &test.genex,
-        next_model,
-        ThreadSettingsOverrides::default(),
-    )
-    .await?;
+    submit_model_turn(&test.genex, next_model, ThreadSettingsOverrides::default()).await?;
 
     let request = resp_mock.single_request();
     assert_eq!(request.body_json()["model"], next_model);
@@ -288,8 +283,8 @@ async fn model_change_appends_model_instructions_developer_message() -> Result<(
     )
     .await;
 
-    let mut builder =
-        test_genex().with_model_info_override("provider-model-d", configure_model_switching_fixture);
+    let mut builder = test_genex()
+        .with_model_info_override("provider-model-d", configure_model_switching_fixture);
     let test = builder.build(&server).await?;
     let next_model = "example-model";
 
@@ -567,7 +562,7 @@ async fn flex_service_tier_is_applied_to_http_turn() -> Result<()> {
     let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![flex_model],
             });
         });
@@ -600,7 +595,7 @@ async fn unsupported_service_tier_is_omitted_from_http_turn() -> Result<()> {
     let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![model],
             });
         });
@@ -632,7 +627,7 @@ async fn unsupported_configured_service_tier_warns_at_session_start() -> Result<
         .with_model(model_slug)
         .with_config(move |config| {
             config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![model],
             });
         });
@@ -679,7 +674,7 @@ async fn default_service_tier_override_is_omitted_from_http_turn() -> Result<()>
     let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![model],
             });
         });
@@ -718,7 +713,7 @@ async fn null_service_tier_override_is_omitted_from_http_turn_with_catalog_defau
     let mut builder = test_genex()
         .with_model(model_slug)
         .with_config(move |config| {
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![model],
             });
         });
@@ -772,7 +767,7 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
     );
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![multimodal_model, text_model],
         },
     )
@@ -953,7 +948,7 @@ async fn generated_image_is_replayed_for_image_capable_models() -> Result<()> {
     );
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![image_model],
         },
     )
@@ -1050,7 +1045,7 @@ async fn model_change_from_generated_image_to_text_preserves_prior_generated_ima
     );
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![image_model, text_model],
         },
     )
@@ -1208,7 +1203,7 @@ async fn model_switch_to_smaller_model_updates_token_context_window() -> Result<
 
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![base_model, smaller_model],
         },
     )

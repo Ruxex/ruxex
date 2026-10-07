@@ -3,38 +3,6 @@
 use anyhow::Context;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_core::TurnInputRequest;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_exec_server::REMOTE_ENVIRONMENT_ID;
-use genex_exec_server::RemoveOptions;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::user_input::UserInput;
-use genex_utils_path_uri::PathUri;
 use core_test_support::PathExt;
 use core_test_support::is_remote_test_environment;
 use core_test_support::responses;
@@ -54,6 +22,38 @@ use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::test_target_os;
 use core_test_support::wait_for_event_with_timeout;
+use genex_core::TurnInputRequest;
+use genex_exec_server::CreateDirectoryOptions;
+use genex_exec_server::LOCAL_ENVIRONMENT_ID;
+use genex_exec_server::REMOTE_ENVIRONMENT_ID;
+use genex_exec_server::RemoveOptions;
+use genex_features::Feature;
+use genex_login::GenexAuth;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::FileSystemAccessMode;
+use genex_protocol::permissions::FileSystemPath;
+use genex_protocol::permissions::FileSystemSandboxEntry;
+use genex_protocol::permissions::FileSystemSandboxPolicy;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EnvironmentConfigState;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnEnvironmentSelection;
+use genex_protocol::user_input::UserInput;
+use genex_utils_path_uri::PathUri;
 use image::DynamicImage;
 use image::GenericImageView;
 use image::ImageBuffer;
@@ -935,9 +935,11 @@ async fn view_image_unified_budget_hides_detail_but_accepts_legacy_hints() -> an
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
-        let _ = config.features.enable(Feature::UnifiedImageBudget);
-    });
+    let mut builder = test_genex()
+        .with_model("legacy-model")
+        .with_config(|config| {
+            let _ = config.features.enable(Feature::UnifiedImageBudget);
+        });
     let test = builder.build_with_auto_env(&server).await?;
     let rel_path = "assets/unified-example.png";
     write_workspace_png(
@@ -1659,7 +1661,7 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
     };
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![text_only_model],
         },
     )

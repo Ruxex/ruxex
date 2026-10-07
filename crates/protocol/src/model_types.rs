@@ -659,9 +659,9 @@ impl From<&ModelUpgrade> for ModelInfoUpgrade {
     }
 }
 
-/// Response wrapper for `/models`.
+/// Serializable catalog of models exposed by a provider.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, TS, JsonSchema, Default)]
-pub struct ModelsResponse {
+pub struct ModelCatalog {
     #[serde(
         serialize_with = "serialize_model_infos_with_legacy_base",
         deserialize_with = "deserialize_model_infos_with_legacy_base"
@@ -1177,13 +1177,13 @@ mod tests {
 
     #[test]
     fn models_response_promotes_legacy_base_instructions() {
-        let mut value = serde_json::to_value(ModelsResponse {
+        let mut value = serde_json::to_value(ModelCatalog {
             models: vec![test_model(/*spec*/ None)],
         })
         .expect("serialize models response");
         value["models"][0]["base_instructions"] = serde_json::json!("legacy instructions");
 
-        let response: ModelsResponse =
+        let response: ModelCatalog =
             serde_json::from_value(value).expect("deserialize legacy models response");
         let model = &response.models[0];
 
@@ -1203,7 +1203,7 @@ mod tests {
 
     #[test]
     fn models_response_rejects_model_without_instruction_source() {
-        let mut value = serde_json::to_value(ModelsResponse {
+        let mut value = serde_json::to_value(ModelCatalog {
             models: vec![test_model(/*spec*/ None)],
         })
         .expect("serialize models response");
@@ -1213,7 +1213,7 @@ mod tests {
             .remove("base_instructions")
             .expect("serialized model should include legacy base instructions");
 
-        let error = serde_json::from_value::<ModelsResponse>(value)
+        let error = serde_json::from_value::<ModelCatalog>(value)
             .expect_err("model without instructions should be rejected");
 
         assert_eq!(
@@ -1263,7 +1263,7 @@ mod tests {
                 ),
             }),
         };
-        let mut value = serde_json::to_value(ModelsResponse {
+        let mut value = serde_json::to_value(ModelCatalog {
             models: vec![test_model(Some(messages.clone()))],
         })
         .expect("serialize models response");
@@ -1276,7 +1276,7 @@ mod tests {
         );
         value["models"][0]["base_instructions"] = serde_json::json!("legacy instructions");
 
-        let response: ModelsResponse =
+        let response: ModelCatalog =
             serde_json::from_value(value).expect("deserialize legacy models response");
         let mut expected_messages = messages;
         expected_messages.instructions_template = Some("legacy instructions".to_string());
@@ -1293,13 +1293,13 @@ mod tests {
             instructions_template: Some("canonical instructions".to_string()),
             ..Default::default()
         };
-        let mut value = serde_json::to_value(ModelsResponse {
+        let mut value = serde_json::to_value(ModelCatalog {
             models: vec![test_model(Some(canonical_messages.clone()))],
         })
         .expect("serialize models response");
         value["models"][0]["base_instructions"] = serde_json::json!("legacy instructions");
 
-        let response: ModelsResponse =
+        let response: ModelCatalog =
             serde_json::from_value(value).expect("deserialize mixed models response");
         assert_eq!(response.models[0].model_messages, Some(canonical_messages));
     }

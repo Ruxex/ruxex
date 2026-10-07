@@ -10,7 +10,7 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
         "Command Auth",
         /*priority*/ 0,
     )];
-    let endpoint = Arc::new(TestModelsEndpoint {
+    let endpoint = Arc::new(TestModelCatalogSource {
         has_command_auth: true,
         uses_managed_auth: false,
         responses: Mutex::new(vec![models.clone()].into()),
@@ -38,7 +38,7 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
 async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     let home = tempdir().unwrap();
     let models = vec![remote_model("dynamic", "Dynamic", /*priority*/ 0)];
-    let endpoint = TestModelsEndpoint::without_refresh(vec![models.clone()]);
+    let endpoint = TestModelCatalogSource::without_refresh(vec![models.clone()]);
     let auth = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-key"));
     let manager =
         RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));

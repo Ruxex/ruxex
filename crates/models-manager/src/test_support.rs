@@ -4,12 +4,12 @@
 
 use crate::ModelsManagerConfig;
 use crate::manager::construct_model_info_from_candidates;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelsResponse;
 
 /// Load the static catalog used by tests without making it a production fallback.
-pub fn test_models_response() -> Result<ModelsResponse, serde_json::Error> {
+pub fn test_models_response() -> Result<ModelCatalog, serde_json::Error> {
     serde_json::from_str(include_str!("../test-data/models.json"))
 }
 

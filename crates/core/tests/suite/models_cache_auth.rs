@@ -3,19 +3,19 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use genex_login::AuthCredentialsStoreMode;
-use genex_login::AuthKeyringBackendKind;
-use genex_login::GenexAuth;
-use genex_login::login_with_api_key;
-use genex_models_manager::test_support::test_models_response;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
 use core_test_support::responses;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::test_genex::test_genex;
+use genex_login::AuthCredentialsStoreMode;
+use genex_login::AuthKeyringBackendKind;
+use genex_login::GenexAuth;
+use genex_login::login_with_api_key;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::test_support::test_models_response;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelVisibility;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -32,7 +32,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     model.default_service_tier = Some("flex".into());
     let models_mock = responses::mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![model.clone()],
         },
     )
@@ -80,7 +80,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     api_model.default_service_tier = None;
     let api_models_mock = responses::mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![api_model],
         },
     )
@@ -133,7 +133,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
     model.display_name = "Second provider model".into();
     let other_models = responses::mount_models_once(
         &other_server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![model.clone()],
         },
     )

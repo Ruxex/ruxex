@@ -1,4 +1,8 @@
 use anyhow::Result;
+use core_test_support::responses;
+use core_test_support::skip_if_no_network;
+use core_test_support::test_genex::test_genex;
+use core_test_support::wait_for_event;
 use genex_config::test_support::CloudConfigBundleFixture;
 use genex_core::GenexThread;
 use genex_core::TurnInputRequest;
@@ -7,21 +11,17 @@ use genex_core::config::Constrained;
 use genex_features::Feature;
 use genex_models_manager::model_info::model_info_from_slug;
 use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::models::PermissionProfile;
 use genex_protocol::model_types::ApprovalMessages;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::PermissionMessages;
+use genex_protocol::models::PermissionProfile;
 use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::Op;
 use genex_protocol::protocol::ThreadSettingsOverrides;
 use genex_protocol::protocol::ThreadSettingsSnapshot;
 use genex_protocol::user_input::UserInput;
-use core_test_support::responses;
-use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
-use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use test_case::test_case;
@@ -120,7 +120,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
             ),
         )
         .with_config(move |config| {
-            config.model_catalog = Some(ModelsResponse {
+            config.model_catalog = Some(ModelCatalog {
                 models: vec![model_info_from_slug(INITIAL_MODEL), protected],
             });
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);

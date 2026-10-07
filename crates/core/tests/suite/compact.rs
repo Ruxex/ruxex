@@ -1,5 +1,20 @@
 use anyhow::Result;
 use anyhow::anyhow;
+use core_test_support::PathBufExt;
+use core_test_support::context_snapshot;
+use core_test_support::context_snapshot::ContextSnapshotOptions;
+use core_test_support::hooks::trust_discovered_hooks;
+use core_test_support::responses;
+use core_test_support::responses::ev_reasoning_item;
+use core_test_support::responses::mount_models_once;
+use core_test_support::responses::strip_response_item_ids_from_json;
+use core_test_support::skip_if_no_network;
+use core_test_support::test_genex::local_selections;
+use core_test_support::test_genex::test_genex;
+use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_path_buf;
+use core_test_support::wait_for_event;
+use core_test_support::wait_for_event_match;
 use genex_core::TurnInputRequest;
 use genex_core::compact::SUMMARIZATION_PROMPT;
 use genex_core::compact::SUMMARY_PREFIX;
@@ -17,11 +32,11 @@ use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::ServiceTier;
 use genex_protocol::config_types::Settings;
 use genex_protocol::items::TurnItem;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::PermissionProfile;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::models::ImageReference;
+use genex_protocol::models::PermissionProfile;
 use genex_protocol::protocol::AskForApproval;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::HookEventName;
@@ -34,21 +49,6 @@ use genex_protocol::protocol::WarningEvent;
 use genex_protocol::user_input::UserInput;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
-use core_test_support::PathBufExt;
-use core_test_support::context_snapshot;
-use core_test_support::context_snapshot::ContextSnapshotOptions;
-use core_test_support::hooks::trust_discovered_hooks;
-use core_test_support::responses;
-use core_test_support::responses::ev_reasoning_item;
-use core_test_support::responses::mount_models_once;
-use core_test_support::responses::strip_response_item_ids_from_json;
-use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
-use core_test_support::test_path_buf;
-use core_test_support::wait_for_event;
-use core_test_support::wait_for_event_match;
 use std::path::PathBuf;
 
 use core_test_support::responses::ev_assistant_message;
@@ -282,8 +282,7 @@ with Path(r"{manual_post_log_path}").open("a", encoding="utf-8") as handle:
 }
 
 fn non_provider_model_provider(server: &MockServer) -> ModelProviderInfo {
-    let mut provider =
-        ModelProviderInfo::create_responses_provider(None);
+    let mut provider = ModelProviderInfo::create_responses_provider(None);
     provider.name = "provider (test)".into();
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
@@ -291,8 +290,7 @@ fn non_provider_model_provider(server: &MockServer) -> ModelProviderInfo {
 }
 
 fn provider_model_provider(server: &MockServer) -> ModelProviderInfo {
-    let mut provider =
-        ModelProviderInfo::create_responses_provider(None);
+    let mut provider = ModelProviderInfo::create_responses_provider(None);
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
     provider
@@ -2290,7 +2288,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 model_info_with_context_window(previous_model, /*context_window*/ 273_000),
                 model_info_with_context_window(next_model, /*context_window*/ 125_000),
@@ -2393,7 +2391,7 @@ async fn pre_sampling_compact_runs_when_comp_hash_changes() {
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 model_info_with_optional_comp_hash(previous_model, Some("hash-a")),
                 model_info_with_optional_comp_hash(next_model, Some("hash-b")),
@@ -2565,14 +2563,15 @@ async fn pre_sampling_compact_falls_back_from_retired_previous_model_after_renam
     let retired_model = "example-model";
     let previous_model_family = "example-model";
     let renamed_model = "provider-model";
-    let mut previous_model_info = model_info_with_optional_comp_hash("legacy-model", Some("hash-a"));
+    let mut previous_model_info =
+        model_info_with_optional_comp_hash("legacy-model", Some("hash-a"));
     previous_model_info.slug = previous_model_family.to_string();
     let mut renamed_model_info = model_info_with_optional_comp_hash("legacy-model", Some("hash-b"));
     renamed_model_info.slug = renamed_model.to_string();
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![previous_model_info, renamed_model_info],
         },
     )
@@ -2706,14 +2705,15 @@ async fn pre_sampling_compact_falls_back_when_previous_model_is_not_found() {
     let retired_model = "example-model";
     let previous_model_family = "example-model";
     let renamed_model = "provider-model";
-    let mut previous_model_info = model_info_with_optional_comp_hash("legacy-model", Some("hash-a"));
+    let mut previous_model_info =
+        model_info_with_optional_comp_hash("legacy-model", Some("hash-a"));
     previous_model_info.slug = previous_model_family.to_string();
     let mut renamed_model_info = model_info_with_optional_comp_hash("legacy-model", Some("hash-b"));
     renamed_model_info.slug = renamed_model.to_string();
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![previous_model_info, renamed_model_info],
         },
     )
@@ -2857,7 +2857,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![previous_model_info, next_model_info],
         },
     )
@@ -2969,12 +2969,13 @@ async fn pre_sampling_compact_keeps_unknown_previous_model_for_api_key_auth_and_
     let previous_model = "custom/example-model";
     let previous_model_family = "example-model";
     let next_model = "provider-model";
-    let mut previous_model_info = model_info_with_optional_comp_hash("legacy-model", Some("hash-a"));
+    let mut previous_model_info =
+        model_info_with_optional_comp_hash("legacy-model", Some("hash-a"));
     previous_model_info.slug = previous_model_family.to_string();
     let mut next_model_info = model_info_with_optional_comp_hash("legacy-model", Some("hash-b"));
     next_model_info.slug = next_model.to_string();
 
-    let model_catalog = ModelsResponse {
+    let model_catalog = ModelCatalog {
         models: vec![previous_model_info, next_model_info],
     };
 
@@ -3056,7 +3057,7 @@ async fn pre_sampling_compact_skips_when_either_comp_hash_is_missing() {
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 model_info_with_optional_comp_hash(model_without_hash, /*comp_hash*/ None),
                 model_info_with_optional_comp_hash(model_with_hash, Some("hash-a")),
@@ -3165,7 +3166,7 @@ async fn body_after_prefix_model_switch_budget_compacts_with_next_model() {
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 model_info_with_context_window(previous_model, /*context_window*/ 273_000),
                 model_info_with_context_window(next_model, /*context_window*/ 125_000),
@@ -3259,7 +3260,7 @@ async fn pre_sampling_compact_runs_after_resume_and_switch_to_smaller_model() {
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 model_info_with_context_window(previous_model, /*context_window*/ 273_000),
                 model_info_with_context_window(next_model, /*context_window*/ 125_000),
@@ -3380,7 +3381,7 @@ async fn pre_sampling_compact_recovers_comp_hash_after_resume() {
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 model_info_with_optional_comp_hash(previous_model, Some("hash-a")),
                 model_info_with_optional_comp_hash(next_model, Some("hash-b")),
@@ -3511,7 +3512,7 @@ async fn pre_sampling_compact_skips_missing_comp_hash_after_resume() {
 
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 model_info_with_optional_comp_hash(previous_model, /*comp_hash*/ None),
                 model_info_with_optional_comp_hash(next_model, Some("hash-b")),

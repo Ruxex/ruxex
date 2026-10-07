@@ -21,13 +21,13 @@ use tracing::info;
 /// identity against the current endpoint before using it.
 ///
 /// Cache failures are non-fatal. The models manager logs them and falls back to the configured
-/// models endpoint.
+/// remote catalog source.
 pub trait ModelsCache: fmt::Debug + Send + Sync {
     /// Loads a fresh entry for `client_version`.
     ///
     /// Returns `Ok(None)` for a normal miss, including an absent, stale, or version-mismatched
     /// entry. Returns `Err` when the backend could not complete the lookup; the models manager
-    /// treats that error as a miss and fetches the catalog from the models endpoint.
+    /// treats that error as a miss and fetches the catalog from the remote source.
     fn load<'a>(
         &'a self,
         client_version: &'a str,
@@ -63,7 +63,7 @@ pub type ModelsCacheFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>
 /// Serialized model catalog and validation metadata stored in a [`ModelsCache`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ModelsCacheEntry {
-    /// Time when the catalog was fetched or last revalidated with the models endpoint.
+    /// Time when the catalog was fetched or last revalidated with the remote source.
     pub fetched_at: DateTime<Utc>,
     /// Endpoint ETag used to revalidate the catalog without downloading an unchanged payload.
     #[serde(default, skip_serializing_if = "Option::is_none")]

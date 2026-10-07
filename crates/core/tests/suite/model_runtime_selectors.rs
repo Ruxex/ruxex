@@ -1,21 +1,4 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -28,6 +11,23 @@ use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
+use genex_core::TurnInputRequest;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_login::GenexAuth;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::model_info::model_info_from_slug;
+use genex_protocol::model_types::InputModality;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ToolMode;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::MultiAgentVersion;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use tokio::time::Duration;
@@ -100,7 +100,7 @@ async fn response_for_remote_model(
     let model_slug = remote_model.slug.clone();
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -275,7 +275,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
     let model_slug = "test-tool-mode-warning-each-turn";
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model(model_slug)],
         },
     )
@@ -419,7 +419,7 @@ async fn remote_multi_agent_selector_uses_model_selected_before_first_turn() -> 
     selected_model.multi_agent_version = Some(MultiAgentVersion::V2);
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![initial_model, selected_model],
         },
     )

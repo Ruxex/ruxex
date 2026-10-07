@@ -47,11 +47,12 @@ use genex_login::AuthManager;
 use genex_login::GenexAuth;
 use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
+use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
-use genex_model_provider_info::MY_PROVIDER_NAME;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::manager::build_models_manager as build_catalog_models_manager;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::CollaborationModeMask;
 use genex_protocol::error::GenexErr;
@@ -417,14 +418,16 @@ pub fn build_models_manager(
     auth_manager: Arc<AuthManager>,
 ) -> SharedModelsManager {
     let provider = create_model_provider(config.model_provider.clone(), Some(auth_manager));
-    let manager = provider.models_manager(
+    let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
+        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+        provider.auth_manager(),
         config.model_catalog.clone(),
     );
     // MyProvider's API is the source of truth for the user's model catalog; keep discovery
     // enabled even while the generic provider feature remains opt-in.
     if config.features.enabled(Feature::ApiKeyModelDiscovery)
-        || config.model_provider.name == MY_PROVIDER_NAME
+        || provider.api_key_model_discovery_enabled_by_default()
     {
         manager.set_api_key_model_discovery_enabled(true);
     }
@@ -667,8 +670,15 @@ impl ThreadManager {
                 threads: Arc::new(RwLock::new(HashMap::new())),
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
-                models_manager: create_model_provider(provider, Some(auth_manager.clone()))
-                    .models_manager(genex_home, /*config_model_catalog*/ None),
+                models_manager: {
+                    let provider = create_model_provider(provider, Some(auth_manager.clone()));
+                    build_catalog_models_manager(
+                        genex_home,
+                        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+                        provider.auth_manager(),
+                        /*config_model_catalog*/ None,
+                    )
+                },
                 git_root_discovery: Arc::default(),
                 environment_manager,
                 starting_mcp_runtimes: std::sync::Mutex::new(Vec::new()),

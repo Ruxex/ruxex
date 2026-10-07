@@ -6,9 +6,9 @@ use genex_client::ReqwestTransport;
 use genex_http_client::HttpClientBuilder;
 use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::model_types::ReasoningEffortPreset;
 use genex_protocol::model_types::TruncationPolicyConfig;
@@ -102,7 +102,7 @@ async fn models_client_hits_models_endpoint() {
     let server = MockServer::start().await;
     let base_url = format!("{}/api/genex", server.uri());
 
-    let response = ModelsResponse {
+    let response = ModelCatalog {
         models: vec![ModelInfo {
             slug: "model-test".to_string(),
             display_name: "model-test".to_string(),

@@ -1,32 +1,5 @@
 #![cfg(not(target_os = "windows"))]
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::built_in_model_providers;
-use genex_models_manager::test_support::test_models_response;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::model_info::BASE_INSTRUCTIONS;
-use genex_prompts::render_model_instructions;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::default_input_modalities;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandSource;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
 use core_test_support::TempDirExt;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::ev_assistant_message;
@@ -47,6 +20,33 @@ use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
+use genex_core::TurnInputRequest;
+use genex_features::Feature;
+use genex_login::GenexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::built_in_model_providers;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_models_manager::model_info::BASE_INSTRUCTIONS;
+use genex_models_manager::test_support::test_models_response;
+use genex_prompts::render_model_instructions;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelMessages;
+use genex_protocol::model_types::ModelPreset;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ExecCommandSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -170,7 +170,7 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
     };
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![generic.clone(), specific.clone()],
         },
     )
@@ -220,14 +220,17 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
 
     let server = MockServer::start().await;
     let requested_model = "legacy-model";
-    let mut remote_model =
-        test_remote_model("legacy-model", ModelVisibility::List, /*priority*/ 1_000);
+    let mut remote_model = test_remote_model(
+        "legacy-model",
+        ModelVisibility::List,
+        /*priority*/ 1_000,
+    );
     remote_model.context_window = Some(273_000);
     remote_model.max_context_window = Some(400_000);
     remote_model.effective_context_window_percent = 100;
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -281,14 +284,17 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
 
     let server = MockServer::start().await;
     let requested_model = "legacy-model";
-    let mut remote_model =
-        test_remote_model("legacy-model", ModelVisibility::List, /*priority*/ 1_000);
+    let mut remote_model = test_remote_model(
+        "legacy-model",
+        ModelVisibility::List,
+        /*priority*/ 1_000,
+    );
     remote_model.context_window = Some(273_000);
     remote_model.max_context_window = Some(400_000);
     remote_model.effective_context_window_percent = 100;
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -342,14 +348,17 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
 
     let server = MockServer::start().await;
     let requested_model = "legacy-model";
-    let mut remote_model =
-        test_remote_model("legacy-model", ModelVisibility::List, /*priority*/ 1_000);
+    let mut remote_model = test_remote_model(
+        "legacy-model",
+        ModelVisibility::List,
+        /*priority*/ 1_000,
+    );
     remote_model.context_window = Some(273_000);
     remote_model.max_context_window = Some(400_000);
     remote_model.effective_context_window_percent = 100;
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -435,7 +444,7 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
     });
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -617,7 +626,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
         experimental_supported_tools: Vec::new(),
     };
 
-    let mut models_response = serde_json::to_value(ModelsResponse {
+    let mut models_response = serde_json::to_value(ModelCatalog {
         models: vec![remote_model],
     })?;
     models_response["models"][0]["shell_type"] = json!("shell_command");
@@ -750,7 +759,7 @@ async fn remote_models_truncation_policy_without_override_preserves_remote() -> 
     );
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -796,7 +805,7 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
     );
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -892,7 +901,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         effective_context_window_percent: 95,
         experimental_supported_tools: Vec::new(),
     };
-    let mut models_response = serde_json::to_value(ModelsResponse {
+    let mut models_response = serde_json::to_value(ModelCatalog {
         models: vec![remote_model],
     })?;
     models_response["models"][0]
@@ -1025,7 +1034,7 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
         test_remote_model("remote-alpha", ModelVisibility::List, /*priority*/ 0);
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model.clone()],
         },
     )
@@ -1091,7 +1100,7 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
     );
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )
@@ -1143,7 +1152,7 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
     remote_model.description = Some("Overridden description".to_string());
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model.clone()],
         },
     )
@@ -1196,7 +1205,7 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let _models_mock = mount_models_once(&server, ModelsResponse { models: Vec::new() }).await;
+    let _models_mock = mount_models_once(&server, ModelCatalog { models: Vec::new() }).await;
 
     let genex_home = TempDir::new()?;
 
@@ -1238,7 +1247,7 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
         test_remote_model("remote-timeout", ModelVisibility::List, /*priority*/ 0);
     let models_mock = mount_models_once_with_delay(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
         Duration::from_secs(6),
@@ -1307,14 +1316,11 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     skip_if_sandbox!(Ok(()));
 
     let server = MockServer::start().await;
-    let remote_model = test_remote_model(
-        "review-model",
-        ModelVisibility::Hide,
-        /*priority*/ 0,
-    );
+    let remote_model =
+        test_remote_model("review-model", ModelVisibility::Hide, /*priority*/ 0);
     let models_mock = mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![remote_model],
         },
     )

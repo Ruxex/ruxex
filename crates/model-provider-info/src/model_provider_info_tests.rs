@@ -225,6 +225,23 @@ fn test_built_in_model_providers_include_my_provider() {
 }
 
 #[test]
+fn test_built_in_model_providers_include_cloudflare_provider() {
+    let providers = built_in_model_providers();
+    let provider = providers
+        .get(CLOUDFLARE_PROVIDER_ID)
+        .expect("Cloudflare provider should be built in");
+
+    assert_eq!(provider.name, CLOUDFLARE_PROVIDER_NAME);
+    assert_eq!(provider.base_url, None);
+    assert_eq!(
+        provider.env_key.as_deref(),
+        Some(CLOUDFLARE_API_TOKEN_ENV_VAR)
+    );
+    assert_eq!(provider.wire_api, WireApi::Chat);
+    assert!(!provider.requires_auth);
+}
+
+#[test]
 fn test_merge_configured_model_providers_adds_custom_provider() {
     let custom_provider = ModelProviderInfo {
         name: "Custom".to_string(),

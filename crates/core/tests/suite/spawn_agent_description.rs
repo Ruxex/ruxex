@@ -2,24 +2,6 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Result;
-use genex_core::config::AgentRoleConfig;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_login::GenexAuth;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::default_input_modalities;
-use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -30,6 +12,24 @@ use core_test_support::responses::namespace_child_tool;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::test_genex::test_genex;
+use genex_core::config::AgentRoleConfig;
+use genex_core::config::Config;
+use genex_features::Feature;
+use genex_history::RolloutItem;
+use genex_login::GenexAuth;
+use genex_models_manager::manager::RefreshStrategy;
+use genex_models_manager::manager::SharedModelsManager;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::model_types::ConfigShellToolType;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ModelVisibility;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::model_types::ReasoningEffortPreset;
+use genex_protocol::model_types::TruncationPolicyConfig;
+use genex_protocol::model_types::default_input_modalities;
+use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
 use serde_json::Value;
 use std::time::Duration;
 use std::time::Instant;
@@ -151,7 +151,7 @@ async fn spawn_agent_description_lists_visible_models_and_reasoning_efforts() ->
     let server = start_mock_server().await;
     mount_models_once(
         &server,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![
                 test_model_info(
                     "visible-model",

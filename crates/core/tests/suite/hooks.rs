@@ -3,51 +3,6 @@ use std::path::Path;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::HookStateToml;
-use genex_config::McpServerConfig;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::ForkSnapshot;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnStartOptions;
-use genex_core::config::Config;
-use genex_core::config::Constrained;
-use genex_core::config::ThreadStoreConfig;
-use genex_features::Feature;
-use genex_history::InitialHistory;
-use genex_history::RolloutItem;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::built_in_model_providers;
-use genex_models_manager::test_support::test_models_response;
-use genex_plugin::PluginHookSource;
-use genex_plugin::PluginId;
-use genex_protocol::items::parse_hook_prompt_fragment;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::NetworkPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnSettingsUpdate;
-use genex_protocol::protocol::TurnSettingsUpdateOutcome;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::request_user_input::RequestUserInputAnswer;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::InMemoryThreadStore;
-use genex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::TestTargetOs;
 use core_test_support::fs_wait;
 use core_test_support::hooks::trust_discovered_hooks;
@@ -78,6 +33,51 @@ use core_test_support::test_target_os;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
+use genex_config::HookStateToml;
+use genex_config::McpServerConfig;
+use genex_config::test_support::CloudConfigBundleFixture;
+use genex_core::ForkSnapshot;
+use genex_core::StartThreadOptions;
+use genex_core::TurnInput;
+use genex_core::TurnInputRequest;
+use genex_core::TurnStartOptions;
+use genex_core::config::Config;
+use genex_core::config::Constrained;
+use genex_core::config::ThreadStoreConfig;
+use genex_features::Feature;
+use genex_history::InitialHistory;
+use genex_history::RolloutItem;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::built_in_model_providers;
+use genex_models_manager::test_support::test_models_response;
+use genex_plugin::PluginHookSource;
+use genex_plugin::PluginId;
+use genex_protocol::items::parse_hook_prompt_fragment;
+use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::NetworkPermissions;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::HookEventName;
+use genex_protocol::protocol::Op;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::SubAgentSource;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::protocol::TurnSettingsUpdate;
+use genex_protocol::protocol::TurnSettingsUpdateOutcome;
+use genex_protocol::request_permissions::PermissionGrantScope;
+use genex_protocol::request_permissions::RequestPermissionProfile;
+use genex_protocol::request_permissions::RequestPermissionsResponse;
+use genex_protocol::request_user_input::RequestUserInputAnswer;
+use genex_protocol::request_user_input::RequestUserInputResponse;
+use genex_protocol::user_input::UserInput;
+use genex_thread_store::InMemoryThreadStore;
+use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -162,8 +162,7 @@ fn code_mode_custom_tool_output_text(output_item: &Value) -> String {
 }
 
 fn non_provider_model_provider(server: &wiremock::MockServer) -> ModelProviderInfo {
-    let mut provider =
-        ModelProviderInfo::create_responses_provider(None);
+    let mut provider = ModelProviderInfo::create_responses_provider(None);
     provider.name = "provider (test)".into();
     provider.base_url = Some(format!("{}/v1", server.uri()));
     provider.supports_websockets = false;
@@ -3494,8 +3493,7 @@ allow_local_binding = true
         requests
             .iter()
             .filter(|request| {
-                request.body_json()["client_metadata"]["subagent_kind"].as_str()
-                    == Some("guardian")
+                request.body_json()["client_metadata"]["subagent_kind"].as_str() == Some("guardian")
             })
             .count(),
         0
@@ -3680,7 +3678,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
                     .enable(feature)
                     .expect("test config should allow feature update");
             }
-            config.model_catalog = Some(ModelsResponse { models });
+            config.model_catalog = Some(ModelCatalog { models });
         });
     let test = builder.build(&server).await?;
 

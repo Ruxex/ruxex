@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use genex_api::ApiError;
@@ -11,14 +10,13 @@ use genex_api::SharedAuthProvider;
 use genex_api::SseTelemetry;
 use genex_api::StandardChatCompletionApi;
 use genex_api::StreamResponse;
+use genex_http_client::HttpClientFactory;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_models_manager::manager::RemoteModelsManager;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::manager::StaticModelsManager;
+use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_protocol::account::ProviderAccount;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::error::Result as CoreResult;
 use http::HeaderMap;
 use http::HeaderValue;
 
@@ -94,6 +92,28 @@ impl ModelProvider for MyModelProvider {
         ProviderApi::Chat(Arc::new(MyProviderChatCompletionApi))
     }
 
+    fn api_key_model_discovery_enabled_by_default(&self) -> bool {
+        true
+    }
+
+    fn list_models(
+        &self,
+        client_version: &str,
+        http_client_factory: HttpClientFactory,
+    ) -> ModelProviderFuture<'_, CoreResult<ModelCatalogSnapshot>> {
+        let client_version = client_version.to_string();
+        let endpoint = ModelsEndpoint::new_with_auth_mode(
+            self.info.clone(),
+            self.auth_manager.clone(),
+            ModelsEndpointAuthMode::MyProvider,
+        );
+        Box::pin(async move {
+            endpoint
+                .list_models(&client_version, http_client_factory)
+                .await
+        })
+    }
+
     fn auth_manager(&self) -> Option<Arc<AuthManager>> {
         self.auth_manager.clone()
     }
@@ -141,68 +161,17 @@ impl ModelProvider for MyModelProvider {
     ) -> ModelProviderFuture<'_, genex_protocol::error::Result<SharedAuthProvider>> {
         Box::pin(async move { Ok(my_provider_auth_provider(self.auth().await.as_ref())) })
     }
-
-    fn models_manager(
-        &self,
-        genex_home: PathBuf,
-        config_model_catalog: Option<ModelsResponse>,
-    ) -> SharedModelsManager {
-        let manager: SharedModelsManager = match config_model_catalog {
-            Some(model_catalog) => Arc::new(StaticModelsManager::new(
-                self.auth_manager.clone(),
-                model_catalog,
-            )),
-            None => {
-                let endpoint = Arc::new(ModelsEndpoint::new_with_auth_mode(
-                    self.info.clone(),
-                    self.auth_manager.clone(),
-                    ModelsEndpointAuthMode::MyProvider,
-                ));
-                Arc::new(RemoteModelsManager::new(
-                    genex_home,
-                    endpoint,
-                    self.auth_manager.clone(),
-                ))
-            }
-        };
-        manager.set_api_key_model_discovery_enabled(true);
-        manager
-    }
-
-    fn models_manager_without_cache(
-        &self,
-        config_model_catalog: Option<ModelsResponse>,
-    ) -> SharedModelsManager {
-        let manager: SharedModelsManager = match config_model_catalog {
-            Some(model_catalog) => Arc::new(StaticModelsManager::new(
-                self.auth_manager.clone(),
-                model_catalog,
-            )),
-            None => {
-                let endpoint = Arc::new(ModelsEndpoint::new_with_auth_mode(
-                    self.info.clone(),
-                    self.auth_manager.clone(),
-                    ModelsEndpointAuthMode::MyProvider,
-                ));
-                Arc::new(RemoteModelsManager::new_without_cache(
-                    endpoint,
-                    self.auth_manager.clone(),
-                ))
-            }
-        };
-        manager.set_api_key_model_discovery_enabled(true);
-        manager
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model_catalog_source::ProviderModelCatalogSource;
     use genex_http_client::HttpClientFactory;
     use genex_http_client::OutboundProxyPolicy;
     use genex_login::GenexAuth;
     use genex_models_manager::manager::RefreshStrategy;
-    use genex_protocol::model_types::ModelsResponse;
+    use genex_protocol::model_types::ModelCatalog;
     use serde_json::json;
     use wiremock::Mock;
     use wiremock::MockServer;
@@ -239,7 +208,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/models"))
             .and(header("APIKEY", "apikey test-api-key"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(ModelsResponse {
+            .respond_with(ResponseTemplate::new(200).set_body_json(ModelCatalog {
                 models: vec![model.clone()],
             }))
             .expect(1)
@@ -250,8 +219,13 @@ mod tests {
         provider_info.base_url = Some(server.uri());
         let auth_manager =
             AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
-        let provider = MyModelProvider::new(provider_info, Some(auth_manager));
-        let manager = provider.models_manager_without_cache(None);
+        let provider = Arc::new(MyModelProvider::new(provider_info, Some(auth_manager)));
+        let manager = genex_models_manager::manager::build_models_manager_without_cache(
+            Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+            provider.auth_manager(),
+            /*config_model_catalog*/ None,
+        );
+        manager.set_api_key_model_discovery_enabled(true);
 
         let catalog = manager
             .raw_model_catalog(

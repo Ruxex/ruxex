@@ -4,27 +4,6 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 
-use genex_core::TurnInputRequest;
-use genex_core::shell::default_user_shell;
-use genex_features::Feature;
-use genex_models_manager::test_support::test_models_response;
-use genex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets;
-use genex_models_manager::manager::StaticModelsManager;
-use genex_prompts::render_model_instructions;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Settings;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ModelsResponse;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
 use core_test_support::TempDirExt;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -39,6 +18,27 @@ use core_test_support::test_genex::local_selections;
 use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
+use genex_core::TurnInputRequest;
+use genex_core::shell::default_user_shell;
+use genex_features::Feature;
+use genex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets;
+use genex_models_manager::manager::StaticModelsManager;
+use genex_models_manager::test_support::test_models_response;
+use genex_prompts::render_model_instructions;
+use genex_protocol::config_types::CollaborationMode;
+use genex_protocol::config_types::ModeKind;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Settings;
+use genex_protocol::config_types::WebSearchMode;
+use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ReasoningEffort;
+use genex_protocol::models::PermissionProfile;
+use genex_protocol::permissions::NetworkSandboxPolicy;
+use genex_protocol::protocol::AskForApproval;
+use genex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::ThreadSettingsOverrides;
+use genex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use test_case::test_case;
@@ -155,7 +155,7 @@ async fn prompt_tools_are_consistent_across_requests(
     // Supply model instructions without making them an explicit config catalog override.
     let models_manager = Arc::new(StaticModelsManager::new(
         /*auth_manager*/ None,
-        ModelsResponse {
+        ModelCatalog {
             models: vec![model],
         },
     ));

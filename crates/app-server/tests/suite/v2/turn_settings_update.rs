@@ -2,6 +2,8 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
+use core_test_support::responses;
+use core_test_support::skip_if_wine_exec;
 use genex_app_server_protocol::ApprovalsReviewer;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::ClientRequest;
@@ -24,10 +26,8 @@ use genex_app_server_protocol::UserInput;
 use genex_features::Feature;
 use genex_models_manager::test_support::test_models_response;
 use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ReasoningEffort;
-use core_test_support::responses;
-use core_test_support::skip_if_wine_exec;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -101,7 +101,7 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
         .write(genex_home.path())?;
     if matches!(scenario, UpdateScenario::Rejected) {
         let path = genex_home.path().join("step-models.json");
-        let mut catalog: ModelsResponse = serde_json::from_slice(&std::fs::read(&path)?)?;
+        let mut catalog: ModelCatalog = serde_json::from_slice(&std::fs::read(&path)?)?;
         for model in &mut catalog.models {
             model.node_repl_disabled = model.slug == MODEL_B;
         }
@@ -185,12 +185,7 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
             assert_eq!(outcome, json!({ "status": "applied" }));
         }
         UpdateScenario::Rejected => {
-            for field in [
-                "permissions",
-                "cwd",
-                "collaborationMode",
-                "scope",
-            ] {
+            for field in ["permissions", "cwd", "collaborationMode", "scope"] {
                 let mut params = serde_json::to_value(&patch)?;
                 params[field] = json!("unsupported");
                 let id = app
@@ -567,10 +562,7 @@ fn mock_config(genex_home: &Path, server_uri: &str) -> Result<MockResponsesConfi
         })
         .collect();
     let catalog_path = genex_home.join("step-models.json");
-    std::fs::write(
-        &catalog_path,
-        serde_json::to_vec(&ModelsResponse { models })?,
-    )?;
+    std::fs::write(&catalog_path, serde_json::to_vec(&ModelCatalog { models })?)?;
     let catalog_path = serde_json::to_string(&catalog_path)?;
     Ok(MockResponsesConfig::new(server_uri)
         .with_model(MODEL_A)

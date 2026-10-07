@@ -1,4 +1,4 @@
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::model_types::ModelCatalog;
 
 #[derive(Debug, Clone, Default)]
 pub struct ModelsManagerConfig {
@@ -6,5 +6,5 @@ pub struct ModelsManagerConfig {
     pub model_auto_compact_token_limit: Option<i64>,
     pub tool_output_token_limit: Option<usize>,
     pub base_instructions: Option<String>,
-    pub model_catalog: Option<ModelsResponse>,
+    pub model_catalog: Option<ModelCatalog>,
 }

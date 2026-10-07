@@ -43,8 +43,8 @@ use genex_protocol::config_types::ModeKind;
 use genex_protocol::config_types::ReasoningSummary;
 use genex_protocol::config_types::Settings;
 use genex_protocol::mcp::ClientMcpExtensions;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelsResponse;
 use genex_protocol::model_types::TruncationPolicyConfig;
 use genex_protocol::model_types::WebSearchToolType;
 use genex_protocol::models::PermissionProfile;
@@ -809,7 +809,7 @@ fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
     model.additional_speed_tiers.clear();
     model.web_search_tool_type = WebSearchToolType::Text;
     model.supports_image_detail_original = false;
-    config.model_catalog = Some(ModelsResponse {
+    config.model_catalog = Some(ModelCatalog {
         models: vec![model],
     });
     Ok(())

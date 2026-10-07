@@ -19,9 +19,9 @@ use genex_config::types::AuthCredentialsStoreMode;
 use genex_login::AuthKeyringBackendKind;
 use genex_login::login_with_api_key;
 use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelsResponse;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -56,7 +56,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     Mock::given(method("GET"))
         .and(path("/v1/models"))
         .respond_with(
-            ResponseTemplate::new(/*s*/ 200).set_body_json(ModelsResponse {
+            ResponseTemplate::new(/*s*/ 200).set_body_json(ModelCatalog {
                 models: vec![remote_model.clone()],
             }),
         )
@@ -70,9 +70,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     );
     std::fs::write(
         genex_home.path().join("config.toml"),
-        format!(
-            "[model_providers.provider]\nbase_url = \"{server_uri}/v1\"\n{feature_config}"
-        ),
+        format!("[model_providers.provider]\nbase_url = \"{server_uri}/v1\"\n{feature_config}"),
     )?;
     login_with_api_key(
         genex_home.path(),
@@ -311,7 +309,7 @@ async fn list_models_uses_remote_catalog_as_source_of_truth(
         .and(path("/v1/models"))
         .and(header("authorization", format!("Bearer {bearer_token}")))
         .respond_with(
-            ResponseTemplate::new(/*s*/ 200).set_body_json(ModelsResponse {
+            ResponseTemplate::new(/*s*/ 200).set_body_json(ModelCatalog {
                 models: remote_models.clone(),
             }),
         )

@@ -5,8 +5,8 @@ use crate::provider::Provider;
 use bytes::Bytes;
 use genex_client::HttpTransport;
 use genex_client::RequestTelemetry;
+use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelsResponse;
 use http::HeaderMap;
 use http::Method;
 use http::header::ETAG;
@@ -56,8 +56,8 @@ impl<T: HttpTransport> ModelsClient<T> {
                 /*response_body_limit_bytes*/ None,
             )
             .await?;
-        let ModelsResponse { models } =
-            serde_json::from_slice::<ModelsResponse>(&body).map_err(|e| {
+        let ModelCatalog { models } =
+            serde_json::from_slice::<ModelCatalog>(&body).map_err(|e| {
                 ApiError::Stream(format!(
                     "failed to decode models response: {:?} at line {} column {} (body: {} bytes)",
                     e.classify(),
@@ -126,7 +126,7 @@ mod tests {
     #[derive(Clone)]
     struct CapturingTransport {
         last_request: Arc<Mutex<Option<Request>>>,
-        body: Arc<ModelsResponse>,
+        body: Arc<ModelCatalog>,
         etag: Option<String>,
     }
 
@@ -134,7 +134,7 @@ mod tests {
         fn default() -> Self {
             Self {
                 last_request: Arc::new(Mutex::new(None)),
-                body: Arc::new(ModelsResponse { models: Vec::new() }),
+                body: Arc::new(ModelCatalog { models: Vec::new() }),
                 etag: None,
             }
         }
@@ -255,7 +255,7 @@ mod tests {
 
     #[tokio::test]
     async fn appends_client_version_query() {
-        let response = ModelsResponse { models: Vec::new() };
+        let response = ModelCatalog { models: Vec::new() };
 
         let transport = CapturingTransport {
             last_request: Arc::new(Mutex::new(None)),
@@ -290,7 +290,7 @@ mod tests {
 
     #[tokio::test]
     async fn parses_models_response() {
-        let response = ModelsResponse {
+        let response = ModelCatalog {
             models: vec![
                 serde_json::from_value(json!({
                     "slug": "model-test",
@@ -339,7 +339,7 @@ mod tests {
 
     #[tokio::test]
     async fn list_models_includes_etag() {
-        let response = ModelsResponse { models: Vec::new() };
+        let response = ModelCatalog { models: Vec::new() };
 
         let transport = CapturingTransport {
             last_request: Arc::new(Mutex::new(None)),

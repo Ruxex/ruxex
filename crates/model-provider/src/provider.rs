@@ -1,6 +1,5 @@
 use std::fmt;
 use std::future::Future;
-use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -11,23 +10,22 @@ use genex_api::SharedAuthProvider;
 use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
 use genex_api::is_azure_responses_provider;
+use genex_http_client::HttpClientFactory;
 use genex_login::AuthManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::WireApi;
-use genex_models_manager::cache::ModelsCache;
-use genex_models_manager::manager::RemoteModelsManager;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::manager::StaticModelsManager;
+use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_protocol::account::ProviderAccount;
 use genex_protocol::error::GenexErr;
-use genex_protocol::model_types::ModelsResponse;
+use genex_protocol::error::Result as CoreResult;
 
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
 use crate::auth::auth_manager_for_provider;
 use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
+use crate::cloudflare_provider::CloudflareModelProvider;
 use crate::models_endpoint::ModelsEndpoint;
 use crate::my_provider::MyModelProvider;
 
@@ -127,6 +125,30 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         }
     }
 
+    /// Fetches the provider's current model catalog.
+    ///
+    /// The default delegates to the provider-compatible `/models` endpoint.
+    /// Providers with a different catalog API should override this method and
+    /// return their normalized model metadata here.
+    fn list_models(
+        &self,
+        client_version: &str,
+        http_client_factory: HttpClientFactory,
+    ) -> ModelProviderFuture<'_, CoreResult<ModelCatalogSnapshot>> {
+        let client_version = client_version.to_string();
+        let endpoint = ModelsEndpoint::new(self.info().clone(), self.auth_manager());
+        Box::pin(async move {
+            endpoint
+                .list_models(&client_version, http_client_factory)
+                .await
+        })
+    }
+
+    /// Returns whether API-key model discovery should be enabled by default.
+    fn api_key_model_discovery_enabled_by_default(&self) -> bool {
+        false
+    }
+
     /// Returns the provider-owned capability upper bounds.
     fn capabilities(&self) -> ProviderCapabilities {
         ProviderCapabilities::default()
@@ -219,40 +241,6 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
                 .await
         })
     }
-
-    /// Creates the model manager implementation appropriate for this provider.
-    fn models_manager(
-        &self,
-        genex_home: PathBuf,
-        config_model_catalog: Option<ModelsResponse>,
-    ) -> SharedModelsManager;
-
-    /// Creates a model manager with caching disabled.
-    ///
-    /// Providers that fetch model catalogs should override this method. The default uses an
-    /// authoritative in-memory catalog so hosted callers cannot accidentally write to disk.
-    fn models_manager_without_cache(
-        &self,
-        config_model_catalog: Option<ModelsResponse>,
-    ) -> SharedModelsManager {
-        let model_catalog = config_model_catalog.unwrap_or_default();
-        Arc::new(StaticModelsManager::new(self.auth_manager(), model_catalog))
-    }
-
-    /// Creates a model manager that can use a caller-provided cache for remote catalogs.
-    ///
-    /// Providers with remote catalogs should override this method. The default preserves the
-    /// authoritative catalog returned by [`ModelProvider::models_manager_without_cache`] and does
-    /// not consult `cache`. Implementations should likewise ignore the cache when
-    /// `config_model_catalog` supplies an authoritative static catalog.
-    fn models_manager_with_cache(
-        &self,
-        config_model_catalog: Option<ModelsResponse>,
-        cache: Arc<dyn ModelsCache>,
-    ) -> SharedModelsManager {
-        drop(cache);
-        self.models_manager_without_cache(config_model_catalog)
-    }
 }
 
 pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
@@ -272,10 +260,14 @@ pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
 ) -> SharedModelProvider {
-    if provider_info.name == genex_model_provider_info::MY_PROVIDER_NAME {
-        Arc::new(MyModelProvider::new(provider_info, auth_manager))
-    } else {
-        Arc::new(ConfiguredModelProvider::new(provider_info, auth_manager))
+    match provider_info.name.as_str() {
+        genex_model_provider_info::MY_PROVIDER_NAME => {
+            Arc::new(MyModelProvider::new(provider_info, auth_manager))
+        }
+        genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => {
+            Arc::new(CloudflareModelProvider::new(provider_info, auth_manager))
+        }
+        _ => Arc::new(ConfiguredModelProvider::new(provider_info, auth_manager)),
     }
 }
 
@@ -361,76 +353,6 @@ impl ModelProvider for ConfiguredModelProvider {
             requires_auth: self.info.requires_auth,
         })
     }
-
-    fn models_manager(
-        &self,
-        genex_home: PathBuf,
-        config_model_catalog: Option<ModelsResponse>,
-    ) -> SharedModelsManager {
-        match config_model_catalog {
-            Some(model_catalog) => Arc::new(StaticModelsManager::new(
-                self.auth_manager.clone(),
-                model_catalog,
-            )),
-            None => {
-                let endpoint = Arc::new(ModelsEndpoint::new(
-                    self.info.clone(),
-                    self.auth_manager.clone(),
-                ));
-                Arc::new(RemoteModelsManager::new(
-                    genex_home,
-                    endpoint,
-                    self.auth_manager.clone(),
-                ))
-            }
-        }
-    }
-
-    fn models_manager_without_cache(
-        &self,
-        config_model_catalog: Option<ModelsResponse>,
-    ) -> SharedModelsManager {
-        match config_model_catalog {
-            Some(model_catalog) => Arc::new(StaticModelsManager::new(
-                self.auth_manager.clone(),
-                model_catalog,
-            )),
-            None => {
-                let endpoint = Arc::new(ModelsEndpoint::new(
-                    self.info.clone(),
-                    self.auth_manager.clone(),
-                ));
-                Arc::new(RemoteModelsManager::new_without_cache(
-                    endpoint,
-                    self.auth_manager.clone(),
-                ))
-            }
-        }
-    }
-
-    fn models_manager_with_cache(
-        &self,
-        config_model_catalog: Option<ModelsResponse>,
-        cache: Arc<dyn ModelsCache>,
-    ) -> SharedModelsManager {
-        match config_model_catalog {
-            Some(model_catalog) => Arc::new(StaticModelsManager::new(
-                self.auth_manager.clone(),
-                model_catalog,
-            )),
-            None => {
-                let endpoint = Arc::new(ModelsEndpoint::new(
-                    self.info.clone(),
-                    self.auth_manager.clone(),
-                ));
-                Arc::new(RemoteModelsManager::new_with_cache(
-                    cache,
-                    endpoint,
-                    self.auth_manager.clone(),
-                ))
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -441,10 +363,12 @@ mod tests {
     use genex_http_client::OutboundProxyPolicy;
     use genex_model_provider_info::WireApi;
     use genex_model_provider_info::create_responses_provider_with_base_url;
+    use genex_models_manager::manager::ModelCatalogSource;
     use genex_models_manager::manager::RefreshStrategy;
+    use genex_models_manager::manager::build_models_manager;
     use genex_protocol::config_types::ModelProviderAuthInfo;
+    use genex_protocol::model_types::ModelCatalog;
     use genex_protocol::model_types::ModelInfo;
-    use genex_protocol::model_types::ModelsResponse;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use wiremock::Mock;
@@ -455,6 +379,7 @@ mod tests {
     use wiremock::matchers::path;
 
     use super::*;
+    use crate::model_catalog_source::ProviderModelCatalogSource;
 
     #[test]
     fn my_provider_selects_chat_runtime_api() {
@@ -479,6 +404,73 @@ mod tests {
                 account: None,
                 requires_auth: true,
             })
+        );
+    }
+
+    #[test]
+    fn cloudflare_provider_selects_chat_runtime_api() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_cloudflare_provider(),
+            /*auth_manager*/ None,
+        );
+
+        assert!(matches!(provider.api(), ProviderApi::Chat(_)));
+    }
+
+    #[test]
+    fn provider_model_catalog_source_preserves_provider_capabilities() {
+        let mut info = ModelProviderInfo::create_cloudflare_provider();
+        info.base_url = Some("https://example.test".to_string());
+        info.env_key = None;
+        let provider = create_model_provider(info, /*auth_manager*/ None);
+        let source = ProviderModelCatalogSource::new(provider);
+
+        assert!(!source.supports_api_key_models());
+        assert!(source.supports_remote_models());
+        assert!(!source.has_command_auth());
+        assert!(source.identity().is_some());
+    }
+
+    #[tokio::test]
+    async fn cloudflare_provider_lists_models_from_cloudflare_search_endpoint() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/models/search"))
+            .and(wiremock::matchers::query_param("task", "text-generation"))
+            .and(wiremock::matchers::query_param("hide_experimental", "true"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "success": true,
+                "errors": [],
+                "messages": [],
+                "result": [{
+                    "name": "@cf/meta/llama-3.1-8b-instruct",
+                    "description": "Llama 3.1 8B instruct"
+                }]
+            })))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let mut info = ModelProviderInfo::create_cloudflare_provider();
+        info.base_url = Some(server.uri());
+        info.env_key = None;
+        let provider = create_model_provider(info, /*auth_manager*/ None);
+        let catalog = provider
+            .list_models(
+                "test-client",
+                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+            )
+            .await
+            .expect("Cloudflare provider should list models");
+
+        assert_eq!(catalog.catalog.models.len(), 1);
+        assert_eq!(
+            catalog.catalog.models[0].slug,
+            "@cf/meta/llama-3.1-8b-instruct"
+        );
+        assert_eq!(
+            catalog.catalog.models[0].description.as_deref(),
+            Some("Llama 3.1 8B instruct")
         );
     }
 
@@ -748,7 +740,7 @@ mod tests {
             .respond_with(
                 ResponseTemplate::new(200)
                     .insert_header("content-type", "application/json")
-                    .set_body_json(ModelsResponse {
+                    .set_body_json(ModelCatalog {
                         models: remote_models.clone(),
                     }),
             )
@@ -765,8 +757,12 @@ mod tests {
             ))),
         );
 
-        let manager =
-            provider.models_manager(test_genex_home(), /*config_model_catalog*/ None);
+        let manager = build_models_manager(
+            test_genex_home(),
+            Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+            provider.auth_manager(),
+            /*config_model_catalog*/ None,
+        );
         let catalog = manager
             .raw_model_catalog(
                 RefreshStrategy::Online,
