@@ -921,6 +921,9 @@ pub(crate) enum AppEvent {
         request_id: uuid::Uuid,
         result: Result<Vec<ModelPreset>, String>,
     },
+    ModelsRefreshed {
+        result: Result<Vec<ModelPreset>, String>,
+    },
 
     FetchPermissionProfiles {
         request_id: uuid::Uuid,

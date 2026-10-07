@@ -228,6 +228,9 @@ impl App {
                 }
                 return;
             }
+            ServerNotification::AccountLoginCompleted(notification) if notification.success => {
+                app_server_client.refresh_models(self.app_event_tx.clone());
+            }
             ServerNotification::ExternalAgentConfigImportCompleted(notification) => {
                 let should_report_completion =
                     app_server_client.consume_external_agent_config_import_completion();

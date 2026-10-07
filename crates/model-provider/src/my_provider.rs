@@ -147,7 +147,7 @@ impl ModelProvider for MyModelProvider {
         genex_home: PathBuf,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager {
-        match config_model_catalog {
+        let manager: SharedModelsManager = match config_model_catalog {
             Some(model_catalog) => Arc::new(StaticModelsManager::new(
                 self.auth_manager.clone(),
                 model_catalog,
@@ -164,14 +164,16 @@ impl ModelProvider for MyModelProvider {
                     self.auth_manager.clone(),
                 ))
             }
-        }
+        };
+        manager.set_api_key_model_discovery_enabled(true);
+        manager
     }
 
     fn models_manager_without_cache(
         &self,
         config_model_catalog: Option<ModelsResponse>,
     ) -> SharedModelsManager {
-        match config_model_catalog {
+        let manager: SharedModelsManager = match config_model_catalog {
             Some(model_catalog) => Arc::new(StaticModelsManager::new(
                 self.auth_manager.clone(),
                 model_catalog,
@@ -187,7 +189,9 @@ impl ModelProvider for MyModelProvider {
                     self.auth_manager.clone(),
                 ))
             }
-        }
+        };
+        manager.set_api_key_model_discovery_enabled(true);
+        manager
     }
 }
 
@@ -208,7 +212,7 @@ mod tests {
     use wiremock::matchers::path;
 
     #[tokio::test]
-    async fn model_list_is_fetched_dynamically_with_my_provider_auth() {
+    async fn my_provider_enables_api_key_model_discovery_by_default() {
         let server = MockServer::start().await;
         let model: genex_protocol::model_types::ModelInfo = serde_json::from_value(json!({
             "slug": "my-dynamic-model",
@@ -248,7 +252,6 @@ mod tests {
             AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
         let provider = MyModelProvider::new(provider_info, Some(auth_manager));
         let manager = provider.models_manager_without_cache(None);
-        manager.set_api_key_model_discovery_enabled(true);
 
         let catalog = manager
             .raw_model_catalog(

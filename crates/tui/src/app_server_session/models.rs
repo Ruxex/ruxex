@@ -47,4 +47,29 @@ impl AppServerSession {
             app_event_tx.send(AppEvent::ModelsLoaded { request_id, result });
         });
     }
+
+    pub(crate) fn refresh_models(&self, app_event_tx: AppEventSender) {
+        let request_handle = self.request_handle();
+        tokio::spawn(async move {
+            let result = request_handle
+                .request_typed::<ModelListResponse>(ClientRequest::ModelList {
+                    request_id: RequestId::String(format!("model-refresh-{}", Uuid::new_v4())),
+                    params: ModelListParams {
+                        cursor: None,
+                        limit: None,
+                        include_hidden: Some(true),
+                    },
+                })
+                .await
+                .map(|response| {
+                    response
+                        .data
+                        .into_iter()
+                        .map(model_preset_from_api_model)
+                        .collect()
+                })
+                .map_err(|err| err.to_string());
+            app_event_tx.send(AppEvent::ModelsRefreshed { result });
+        });
+    }
 }

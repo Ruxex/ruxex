@@ -48,6 +48,7 @@ use genex_login::GenexAuth;
 use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::create_model_provider;
+use genex_model_provider_info::MY_PROVIDER_NAME;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
@@ -420,9 +421,13 @@ pub fn build_models_manager(
         config.genex_home.to_path_buf(),
         config.model_catalog.clone(),
     );
-    manager.set_api_key_model_discovery_enabled(
-        config.features.enabled(Feature::ApiKeyModelDiscovery),
-    );
+    // MyProvider's API is the source of truth for the user's model catalog; keep discovery
+    // enabled even while the generic provider feature remains opt-in.
+    if config.features.enabled(Feature::ApiKeyModelDiscovery)
+        || config.model_provider.name == MY_PROVIDER_NAME
+    {
+        manager.set_api_key_model_discovery_enabled(true);
+    }
     manager
 }
 

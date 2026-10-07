@@ -28,6 +28,14 @@ impl ChatWidget {
             return false;
         }
         self.model_popup_request_id = None;
+        self.apply_models(result)
+    }
+
+    pub(crate) fn on_models_refreshed(&mut self, result: Result<Vec<ModelPreset>, String>) -> bool {
+        self.apply_models(result)
+    }
+
+    fn apply_models(&mut self, result: Result<Vec<ModelPreset>, String>) -> bool {
         let Ok(presets) = result else {
             return false;
         };

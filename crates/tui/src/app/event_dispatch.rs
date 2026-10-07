@@ -1409,6 +1409,13 @@ impl App {
                     self.sync_active_thread_service_tier_to_cached_session().await;
                 }
             }
+            AppEvent::ModelsRefreshed { result } => {
+                if self.chat_widget.on_models_refreshed(result) {
+                    self.model_catalog = self.chat_widget.model_catalog();
+                    app_server.set_available_models(self.model_catalog.try_list_models()?);
+                    self.sync_active_thread_service_tier_to_cached_session().await;
+                }
+            }
             AppEvent::OpenReasoningPopup { model } => {
                 self.chat_widget.open_reasoning_popup(model);
             }
