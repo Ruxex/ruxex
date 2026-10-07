@@ -565,3 +565,27 @@ is tracked separately from the ModelProvider credential redesign:
 | Provider-aware `AuthChangeState` | `genex-login` produces provider ID and active-selection metadata for app-server/auth watchers without exposing credential payloads; existing generation and owner-generation consumers remain valid. | `migrate-in-place`; retain generic invalidation semantics | Change-state producer/consumer audit; `just check --tests`; `just check` |
 | Implicit global ModelProvider auth lookup and cache identity | ModelProvider, models endpoint/catalog, core Chat, Web Search, and History/Notes previously received provider metadata without a stable provider ID and could resolve the shared manager snapshot implicitly. Runtime construction now carries `Config.model_provider_id`; provider-local stored auth and cache identity are resolved from that ID, while explicit provider credentials remain higher priority. | `migrate-in-place`; retain provider-neutral request and cache behavior | ModelProvider producer/consumer audit; cross-provider isolation/identity checks compiled by `just check --tests`; `just check` |
 | `McpServerAuth::EmaAuth` | `genex-config` validates a trusted enterprise IdP registration and prevents project/plugin credential substitution; `genex-mcp` catalog resolution and `genex-rmcp-client` retain EMA identity/token-exchange primitives. CLI/app-server login paths reject ordinary OAuth login for this mode, and runtime startup rejects unconfigured/unsupported EMA connections. No path reads ModelProvider credentials. | `retain` as an explicitly configured MCP enterprise-IdP mode; keep its separate credential and provenance boundary | Config/catalog/RMCP producer-consumer audit; no schema change; `just check --tests`; `just check` |
+### Global authentication consumer audit (2026-10-08)
+
+The remaining `AuthManager` references were classified before editing. Model-provider,
+models-manager, core Chat, Web Search, History/Notes, account/usage, and catalog paths
+need provider-scoped credentials and remain active. `ConnectionAuth`, user verification,
+and the app-server verification watcher use auth revisions/account identity for security
+and request invalidation; they do not represent an application login gate and are retained.
+The exec/TUI login-restriction calls enforce explicit managed-auth policy and remain a
+separate security/configuration capability pending its own hosted-auth decision. Plugin
+skill metadata still consumes the effective provider auth mode, so its auth capability is
+retained while its cache no longer touches an auth snapshot solely to invalidate a cache.
+
+The external-agent migration service passes its provider-aware manager to
+`PluginsManager` while detecting/importing configured marketplace plugins, so that
+dependency is retained. The now-unused `effective_plugins_changed_callback` auth
+parameter was removed instead.
+
+| Consumer | Producer/consumer audit | Decision |
+|---|---|---|
+| Model request, model catalog, account/usage, Web Search, History/Notes | Provider instances and request builders resolve credentials through configured provider IDs; account/usage is provider-scoped. | `retain` provider credential capability |
+| Transport connection ownership and user verification | Auth revision/owner generation and provider account identity invalidate stale work and bind device verification. | `retain` generic security invalidation |
+| Exec/TUI login restrictions | Explicit forced login method/workspace policy is still read from configuration; no generic “logged in” UI gate is introduced. | `retain` explicit policy; audit hosted policy separately |
+| Core plugin skill metadata | Skill projection uses effective auth mode to render capability metadata; cache loading did not consume auth data. | `retain` auth-mode capability; remove dead snapshot read |
+| External-agent migration auth field | Plugin detection and import construct `PluginsManager` with the manager to project configured marketplace plugins; construction, cloning, and test setup are all reachable consumers. | `retain` plugin capability dependency |

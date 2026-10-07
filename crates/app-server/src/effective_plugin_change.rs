@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use genex_core::ThreadManager;
 use genex_core_plugins::EffectivePluginsChange;
-use genex_login::AuthManager;
 
 use crate::config_manager::ConfigManager;
 use crate::request_processors::ConfigRequestProcessor;
@@ -10,7 +9,6 @@ use crate::request_serialization::RequestSerializationQueues;
 
 /// Refresh plugin consumers and trust hooks from newly materialized Workspace + Listed bundles.
 pub(crate) fn effective_plugins_changed_callback(
-    _auth_manager: Arc<AuthManager>,
     thread_manager: Arc<ThreadManager>,
     _config_manager: ConfigManager,
     _config_processor: ConfigRequestProcessor,

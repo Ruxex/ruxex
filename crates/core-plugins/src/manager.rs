@@ -400,7 +400,6 @@ impl PluginsManager {
         if !config.plugins_enabled {
             return None;
         }
-        let _auth = self.auth_manager.auth_cached();
         let key = PluginLoadCacheKey::from_config(config, self.genex_home.as_path());
         self.loaded_plugins_cache
             .lock()
