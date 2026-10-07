@@ -7,6 +7,13 @@ export function AppLayout() {
   const appServer = useAppServerStatus();
   const models = useModelList();
   const events = useAppServerEventStore();
+  const connectionLabel = appServer.isError
+    ? "Error"
+    : !appServer.isSuccess
+      ? "Local"
+      : events.connected
+        ? "Connected"
+        : "Disconnected";
 
   return (
     <main className="min-h-screen bg-base-200 text-base-content">
@@ -18,10 +25,10 @@ export function AppLayout() {
         </div>
         <div className="badge badge-outline gap-2">
           <span
-            className={`status ${appServer.isSuccess ? "status-success" : "status-warning"}`}
+            className={`status ${connectionLabel === "Connected" ? "status-success" : "status-warning"}`}
             aria-hidden="true"
           />
-          {appServer.isSuccess ? "Connected" : "Local"}
+          {connectionLabel}
         </div>
       </div>
       <section className="mx-auto max-w-5xl p-6">
