@@ -6,10 +6,11 @@ import { isDesktopRuntime } from "./runtime";
 type EventSnapshot = {
   events: AppServerEvent[];
   connected: boolean;
+  serverRequests: Extract<AppServerEvent, { type: "serverRequest" }>["data"][];
 };
 
 const listeners = new Set<() => void>();
-let snapshot: EventSnapshot = { events: [], connected: false };
+let snapshot: EventSnapshot = { events: [], connected: false, serverRequests: [] };
 let unlisten: (() => void) | undefined;
 
 function notify() {
@@ -26,6 +27,10 @@ export async function startAppServerEventStore(): Promise<void> {
     snapshot = {
       connected: event.type !== "disconnected",
       events: [...snapshot.events, event].slice(-100),
+      serverRequests:
+        event.type === "serverRequest"
+          ? [...snapshot.serverRequests, event.data]
+          : snapshot.serverRequests,
     };
     notify();
   });
@@ -47,6 +52,6 @@ export function useAppServerEventStore(): EventSnapshot {
       return () => listeners.delete(listener);
     },
     () => snapshot,
-    () => ({ events: [], connected: false }),
+    () => ({ events: [], connected: false, serverRequests: [] }),
   );
 }

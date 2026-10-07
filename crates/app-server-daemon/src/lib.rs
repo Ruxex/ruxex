@@ -165,12 +165,9 @@ pub async fn bootstrap(options: BootstrapOptions) -> Result<BootstrapOutput> {
 /// Bootstraps the managed app-server using an explicitly supplied complete
 /// Genex package. Desktop hosts use this entry point because their executable
 /// lives inside an application bundle rather than directly under `bin/`.
-pub async fn bootstrap_from_package(
-    package_source: &Path,
-    options: BootstrapOptions,
-) -> Result<BootstrapOutput> {
+pub async fn bootstrap_from_package(package_source: &Path) -> Result<BootstrapOutput> {
     ensure_supported_platform()?;
-    Box::pin(Daemon::from_environment()?.bootstrap(options, Some(package_source))).await
+    Box::pin(Daemon::from_environment()?.bootstrap(BootstrapOptions {}, Some(package_source))).await
 }
 
 pub async fn run_pid_update_loop(

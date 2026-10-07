@@ -32,9 +32,9 @@ pub(super) async fn prepare(
 ) -> Result<()> {
     let source = package_source.map(Path::to_path_buf).or_else(|| {
         InstallContext::current()
-                .package_layout
-                .as_ref()
-                .map(|layout| layout.package_dir.clone().into_path_buf())
+            .package_layout
+            .as_ref()
+            .map(|layout| layout.package_dir.clone().into_path_buf())
     });
     // Keep package replacement state out of the CLI dispatcher's async stack frame.
     Box::pin(prepare_from_package(

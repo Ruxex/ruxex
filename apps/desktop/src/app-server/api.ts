@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { ClientRequest, ClientResponse } from "../protocol";
+import type { ClientRequest, ClientResponse, RequestId } from "../protocol";
 
 export type AppServerStatus = {
   socketPath: string;
@@ -22,4 +22,21 @@ export function requestAppServer<Request extends ClientRequest>(
   return invoke<ClientResponse>("app_server_request", { request }) as Promise<
     ResponseFor<Request>
   >;
+}
+
+export function resolveServerRequest(requestId: RequestId, result: unknown): Promise<void> {
+  return invoke("app_server_resolve_server_request", { requestId, result });
+}
+
+export type AppServerRequestError = {
+  code: number;
+  data?: unknown;
+  message: string;
+};
+
+export function rejectServerRequest(
+  requestId: RequestId,
+  error: AppServerRequestError,
+): Promise<void> {
+  return invoke("app_server_reject_server_request", { requestId, error });
 }

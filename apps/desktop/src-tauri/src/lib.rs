@@ -5,9 +5,11 @@ use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_client::RemoteAppServerClient;
 use genex_app_server_client::RemoteAppServerConnectArgs;
 use genex_app_server_client::RemoteAppServerEndpoint;
-use genex_app_server_daemon::BootstrapOptions;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::ClientResponse;
+use genex_app_server_protocol::JSONRPCErrorError;
+use genex_app_server_protocol::RequestId;
+use genex_app_server_protocol::Result as JsonRpcResult;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::Serialize;
 use serde_json::Value;
@@ -28,6 +30,22 @@ struct AppServerStatus {
     app_server_version: String,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DesktopAppServerError {
+    kind: &'static str,
+    message: String,
+}
+
+type CommandResult<T> = Result<T, DesktopAppServerError>;
+
+fn command_error(kind: &'static str, message: impl Into<String>) -> DesktopAppServerError {
+    DesktopAppServerError {
+        kind,
+        message: message.into(),
+    }
+}
+
 #[derive(Serialize)]
 #[serde(tag = "type", content = "data", rename_all = "camelCase")]
 enum DesktopAppServerEvent {
@@ -42,7 +60,9 @@ pub fn run() {
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             ensure_app_server,
-            app_server_request
+            app_server_request,
+            app_server_resolve_server_request,
+            app_server_reject_server_request
         ])
         .run(tauri::generate_context!())
         .expect("error while running Genex Desktop");
@@ -52,18 +72,18 @@ pub fn run() {
 async fn ensure_app_server(
     app: AppHandle,
     state: State<'_, AppState>,
-) -> Result<AppServerStatus, String> {
+) -> CommandResult<AppServerStatus> {
     if let Some(status) = state.status.lock().await.clone() {
         return Ok(status);
     }
 
-    let package_source = runtime_package_source(&app)?;
-    let bootstrap =
-        genex_app_server_daemon::bootstrap_from_package(&package_source, BootstrapOptions {})
-            .await
-            .map_err(|error| format!("failed to bootstrap app-server daemon: {error:#}"))?;
+    let package_source =
+        runtime_package_source(&app).map_err(|error| command_error("lifecycle", error))?;
+    let bootstrap = genex_app_server_daemon::bootstrap_from_package(&package_source)
+        .await
+        .map_err(|error| command_error("lifecycle", format!("{error:#}")))?;
     let socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
-        .map_err(|error| format!("invalid app-server socket path: {error}"))?;
+        .map_err(|error| command_error("initialization", error.to_string()))?;
     let client = RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
         endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
         client_name: "genex-desktop".to_string(),
@@ -73,7 +93,7 @@ async fn ensure_app_server(
         channel_capacity: 128,
     })
     .await
-    .map_err(|error| format!("failed to connect to app-server: {error}"))?;
+    .map_err(|error| command_error("initialization", error.to_string()))?;
 
     let status = AppServerStatus {
         socket_path: bootstrap.socket_path.display().to_string(),
@@ -120,28 +140,66 @@ async fn ensure_app_server(
 async fn app_server_request(
     state: State<'_, AppState>,
     request: ClientRequest,
-) -> Result<ClientResponse, String> {
-    let request_handle = state
-        .request_handle
-        .lock()
-        .await
-        .clone()
-        .ok_or_else(|| "app-server is not connected".to_string())?;
+) -> CommandResult<ClientResponse> {
+    let request_handle = request_handle(&state).await?;
     let method = request.method_name();
     let request_id = request.id().clone();
     let result = request_handle
         .request(request)
         .await
-        .map_err(|error| format!("{method} transport error: {error}"))?
-        .map_err(|error| format!("{method} failed: {} (code {})", error.message, error.code))?;
+        .map_err(|error| command_error("transport", format!("{method} transport error: {error}")))?
+        .map_err(|error| {
+            command_error(
+                "server",
+                format!("{method} failed: {} (code {})", error.message, error.code),
+            )
+        })?;
 
     let response = serde_json::json!({
         "method": method,
         "id": request_id,
         "response": result,
     });
-    serde_json::from_value(response)
-        .map_err(|error| format!("{method} response decode error: {error}"))
+    serde_json::from_value(response).map_err(|error| {
+        command_error("decode", format!("{method} response decode error: {error}"))
+    })
+}
+
+#[tauri::command]
+async fn app_server_resolve_server_request(
+    state: State<'_, AppState>,
+    request_id: RequestId,
+    result: JsonRpcResult,
+) -> CommandResult<()> {
+    request_handle(&state)
+        .await?
+        .resolve_server_request(request_id, result)
+        .await
+        .map_err(|error| command_error("transport", error.to_string()))?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn app_server_reject_server_request(
+    state: State<'_, AppState>,
+    request_id: RequestId,
+    error: JSONRPCErrorError,
+) -> CommandResult<()> {
+    request_handle(&state)
+        .await?
+        .reject_server_request(request_id, error)
+        .await
+        .map_err(|error| command_error("transport", error.to_string()))?;
+    Ok(())
+}
+
+async fn request_handle(state: &State<'_, AppState>) -> CommandResult<AppServerRequestHandle> {
+    state
+        .request_handle
+        .lock()
+        .await
+        .clone()
+        .ok_or_else(|| command_error("connection", "app-server is not connected"))
 }
 
 fn runtime_package_source(app: &AppHandle) -> Result<PathBuf, String> {
