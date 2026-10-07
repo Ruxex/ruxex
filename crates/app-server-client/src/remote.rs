@@ -642,6 +642,44 @@ impl RemoteAppServerRequestHandle {
         })?
     }
 
+    pub async fn resolve_server_request(
+        &self,
+        request_id: RequestId,
+        result: JsonRpcResult,
+    ) -> IoResult<()> {
+        let (response_tx, response_rx) = oneshot::channel();
+        self.command_tx
+            .send(RemoteClientCommand::ResolveServerRequest {
+                request_id,
+                result,
+                response_tx,
+            })
+            .await
+            .map_err(|_| IoError::new(ErrorKind::BrokenPipe, "remote worker is closed"))?;
+        response_rx
+            .await
+            .map_err(|_| IoError::new(ErrorKind::BrokenPipe, "remote resolve channel is closed"))?
+    }
+
+    pub async fn reject_server_request(
+        &self,
+        request_id: RequestId,
+        error: JSONRPCErrorError,
+    ) -> IoResult<()> {
+        let (response_tx, response_rx) = oneshot::channel();
+        self.command_tx
+            .send(RemoteClientCommand::RejectServerRequest {
+                request_id,
+                error,
+                response_tx,
+            })
+            .await
+            .map_err(|_| IoError::new(ErrorKind::BrokenPipe, "remote worker is closed"))?;
+        response_rx
+            .await
+            .map_err(|_| IoError::new(ErrorKind::BrokenPipe, "remote reject channel is closed"))?
+    }
+
     pub async fn request_typed<T>(&self, request: ClientRequest) -> Result<T, TypedRequestError>
     where
         T: DeserializeOwned,

@@ -14,6 +14,7 @@ use genex_utils_absolute_path::AbsolutePathBuf;
 use serde::Serialize;
 use serde_json::Value;
 use tauri::AppHandle;
+use tauri::Emitter;
 use tauri::Manager;
 use tauri::State;
 
@@ -46,7 +47,7 @@ fn command_error(kind: &'static str, message: impl Into<String>) -> DesktopAppSe
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(tag = "type", content = "data", rename_all = "camelCase")]
 enum DesktopAppServerEvent {
     Lagged { skipped: usize },
@@ -100,7 +101,7 @@ async fn ensure_app_server(
         app_server_version: bootstrap.app_server_version,
     };
     let request_handle = client.request_handle();
-    *state.request_handle.lock().await = Some(request_handle);
+    *state.request_handle.lock().await = Some(AppServerRequestHandle::Remote(request_handle));
     *state.status.lock().await = Some(status.clone());
 
     let event_app = app.clone();

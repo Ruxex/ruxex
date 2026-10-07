@@ -89,3 +89,4 @@ __pycache__/
 
 /target/
 /target-*/
+apps/desktop/src-tauri/gen/

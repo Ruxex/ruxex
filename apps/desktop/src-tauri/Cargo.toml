@@ -24,6 +24,11 @@ genex-utils-absolute-path = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tauri = { version = "2.8.0" }
+# Keep the proc-macro API aligned with the selected Tauri release.
+tauri-macros = "=2.5.5"
+# Keep the runtime trait version aligned with tauri-runtime-wry, whose
+# dependency is pinned by the selected Tauri release.
+tauri-runtime = "=2.10.1"
 
 [lints]
 workspace = true
