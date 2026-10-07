@@ -38,13 +38,6 @@ use genex_exec_server::WalkEntryKind;
 use genex_exec_server::WalkOptions;
 use genex_exec_server::WalkOutcome;
 use genex_exec_server::WriteFileOptions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -508,6 +501,9 @@ async fn file_system_sandboxed_canonicalize_resolves_directory_symlink(
     )
     .await
 }
+
+#[test_case(FileSystemImplementation::Local ; "local")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_system_metadata_and_directory_listing_follow_symlinks(
     implementation: FileSystemImplementation,
 ) -> Result<()> {

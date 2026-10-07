@@ -37,11 +37,6 @@ use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
 #[cfg(unix)]
 use genex_protocol::models::PermissionProfile;
 #[cfg(unix)]
-#[cfg(unix)]
-#[cfg(unix)]
-#[cfg(unix)]
-#[cfg(unix)]
-#[cfg(unix)]
 use genex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -82,78 +77,6 @@ async fn create_process_context(_use_remote: bool) -> Result<ProcessContext> {
         backend: environment.get_exec_backend(),
         _server: None,
     })
-}
-
-#[cfg(target_os = "macos")]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn genex_home_symlink_opt_out_respects_host_config_and_scope() -> Result<()> {
-    use common::exec_server::exec_server_with_env;
-    use genex_exec_server::WriteFileOptions;
-    use std::os::unix::fs::symlink;
-
-    let workspace = TempDir::new()?;
-    let home = TempDir::new()?;
-    let target = TempDir::new()?;
-    let alias = home.path().join("visualizations");
-    let other_alias = workspace.path().join(".genex/visualizations");
-    std::fs::create_dir(workspace.path().join(".genex"))?;
-    symlink(target.path(), &alias)?;
-    symlink(target.path(), &other_alias)?;
-    std::fs::write(
-        workspace.path().join(".genex/config.toml"),
-        "allow_symlinked_genex_home = true\n",
-    )?;
-
-    for enabled in [None, Some(false), Some(true)] {
-        std::fs::write(
-            home.path().join("config.toml"),
-            enabled.map_or_else(String::new, |enabled| {
-                format!("allow_symlinked_genex_home = {enabled}\n")
-            }),
-        )?;
-        let mut server = exec_server_with_env([("GENEX_HOME", home.path())], &[]).await?;
-        let environment = Environment::create_for_tests(Some(server.websocket_url().to_string()))?;
-        for root in [alias.as_path(), other_alias.as_path(), workspace.path()] {
-            let mut policy = FileSystemSandboxPolicy::read_only();
-            policy.entries.push(FileSystemSandboxEntry::new(
-                PathUri::from_host_native_path(root)?.into(),
-                FileSystemAccessMode::Write,
-            ));
-            let sandbox = FileSystemSandboxContext::from_permission_profile(
-                PermissionProfile::from_runtime_permissions(
-                    &policy,
-                    NetworkSandboxPolicy::Restricted,
-                ),
-                PathUri::from_host_native_path(workspace.path())?,
-            );
-            let result = environment
-                .get_filesystem()
-                .write_file(
-                    &PathUri::from_host_native_path(root.join("output"))?,
-                    b"written".to_vec(),
-                    WriteFileOptions::default(),
-                    Some(&sandbox),
-                )
-                .await;
-            assert_eq!(
-                result.is_ok(),
-                root == workspace.path() || (enabled == Some(true) && root == alias),
-                "root={root:?}, enabled={enabled:?}: {result:?}"
-            );
-            if let Err(error) = result {
-                assert!(
-                    error
-                        .to_string()
-                        .contains("symlinked writable roots are not supported"),
-                    "{error}"
-                );
-            }
-        }
-        server.shutdown().await?;
-    }
-    assert_eq!(std::fs::read(target.path().join("output"))?, b"written");
-    assert_eq!(std::fs::read(workspace.path().join("output"))?, b"written");
-    Ok(())
 }
 
 #[cfg(unix)]

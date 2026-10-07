@@ -3062,7 +3062,9 @@ mod tests {
     fn permission_matching_normalizes_top_level_aliases_for_missing_targets() {
         let root = TempDir::new_in("/tmp").expect("tempdir under /tmp");
         let policy = FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry::new(
-            PathUri::from_host_native_path(root.path()).expect("logical root"),
+            PathUri::from_host_native_path(root.path())
+                .expect("logical root")
+                .into(),
             FileSystemAccessMode::Write,
         )]);
         let cwd = PathUri::from_host_native_path(root.path()).expect("cwd");
