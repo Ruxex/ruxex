@@ -25,11 +25,16 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (params: v2.LoginAccountParams) => {
       await ensureAppServer();
-      const response = await requestAppServerMethod("account/login/start", params);
+      const response = await requestAppServerMethod(
+        "account/login/start",
+        params,
+      );
       return response.response;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.account });
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.account,
+      });
     },
   });
 }
@@ -37,7 +42,10 @@ export function useLogin() {
 export function useCancelLogin() {
   return useMutation({
     mutationFn: async (params: v2.CancelLoginAccountParams) => {
-      const response = await requestAppServerMethod("account/login/cancel", params);
+      const response = await requestAppServerMethod(
+        "account/login/cancel",
+        params,
+      );
       return response.response;
     },
   });
@@ -48,11 +56,16 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await requestAppServerMethod("account/logout", undefined);
+      const response = await requestAppServerMethod(
+        "account/logout",
+        undefined,
+      );
       return response.response;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.account });
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.account,
+      });
     },
   });
 }

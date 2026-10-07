@@ -14,16 +14,17 @@ name = "genex-desktop"
 path = "src/main.rs"
 
 [build-dependencies]
-tauri-build = { version = "2.4.1" }
+tauri-build = { version = "2.4.1", features = [] }
 
 [dependencies]
 genex-app-server-client = { workspace = true }
 genex-app-server-daemon = { workspace = true }
 genex-app-server-protocol = { workspace = true }
 genex-utils-absolute-path = { workspace = true }
+dirs = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-tauri = { version = "2.8.0" }
+tauri = { version = "2.8.0", features = [] }
 # Keep the proc-macro API aligned with the selected Tauri release.
 tauri-macros = "=2.5.5"
 # Keep the runtime trait version aligned with tauri-runtime-wry, whose

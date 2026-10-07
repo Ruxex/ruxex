@@ -61,24 +61,38 @@ def validate_package(root: Path, version: str, target: str) -> None:
         raise SystemExit(f"unexpected staged Genex package manifest: {manifest!r}")
 
 
+def discover_tool(name: str) -> Path | None:
+    path = shutil.which(name)
+    return Path(path) if path is not None else None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--genex-bin", type=Path, required=True)
     parser.add_argument("--code-mode-host", type=Path, required=True)
-    parser.add_argument("--rg", type=Path, required=True)
-    parser.add_argument("--bwrap", type=Path)
+    parser.add_argument("--rg", type=Path, default=discover_tool("rg"))
+    parser.add_argument("--bwrap", type=Path, default=discover_tool("bwrap"))
     parser.add_argument("--version", default="0.1.0")
     parser.add_argument("--target", default=target_triple())
     args = parser.parse_args()
 
+    if args.rg is None:
+        raise SystemExit("missing rg: install ripgrep or pass --rg")
     if sys.platform == "linux" and args.bwrap is None:
-        raise SystemExit("--bwrap is required on Linux")
+        raise SystemExit("missing bwrap: install bubblewrap or pass --bwrap")
     output = args.output.resolve()
     if output == Path(output.anchor):
         raise SystemExit("refusing to stage into the filesystem root")
+    ignore_contents = None
+    ignore_file = output / ".gitignore"
+    if ignore_file.is_file():
+        ignore_contents = ignore_file.read_text(encoding="utf-8")
     if output.exists():
         shutil.rmtree(output)
+    if ignore_contents is not None:
+        output.mkdir(parents=True)
+        ignore_file.write_text(ignore_contents, encoding="utf-8")
     (output / "genex-path").mkdir(parents=True)
     (output / "genex-resources").mkdir(parents=True)
 

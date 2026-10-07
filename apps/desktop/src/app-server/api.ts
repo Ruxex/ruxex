@@ -53,7 +53,10 @@ export function requestAppServerMethod<Method extends ClientRequest["method"]>(
   return requestAppServer(request) as Promise<ResponseForMethod<Method>>;
 }
 
-export function resolveServerRequest(requestId: RequestId, result: unknown): Promise<void> {
+export function resolveServerRequest(
+  requestId: RequestId,
+  result: unknown,
+): Promise<void> {
   return invoke("app_server_resolve_server_request", { requestId, result });
 }
 

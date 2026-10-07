@@ -118,7 +118,9 @@ export function useCreateThread() {
       return response.response;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.threads });
+      void queryClient.invalidateQueries({
+        queryKey: appServerQueryKeys.threads,
+      });
     },
   });
 }

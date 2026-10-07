@@ -53,7 +53,10 @@ export function AppLayout() {
             type="button"
             disabled={logout.isPending}
             onClick={() => {
-              void logout.mutateAsync().then(() => navigate("/login")).catch(() => undefined);
+              void logout
+                .mutateAsync()
+                .then(() => navigate("/login"))
+                .catch(() => undefined);
             }}
           >
             {logout.isPending ? "Logging out…" : "Log out"}

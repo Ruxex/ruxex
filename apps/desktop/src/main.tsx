@@ -5,7 +5,12 @@ import { AppProviders } from "./app/providers";
 import { router } from "./app/router";
 import "./styles/index.css";
 
-createRoot(document.getElementById("root")!).render(
+const root = document.getElementById("root");
+if (!root) {
+  throw new Error("The application root element is missing");
+}
+
+createRoot(root).render(
   <StrictMode>
     <AppProviders router={router} />
   </StrictMode>,

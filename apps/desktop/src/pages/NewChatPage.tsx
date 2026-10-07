@@ -1,7 +1,11 @@
-import { FormEvent, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useCreateThread, useModelList, useSendMessage } from "../app-server/hooks";
+import {
+  useCreateThread,
+  useModelList,
+  useSendMessage,
+} from "../app-server/hooks";
 
 export function NewChatPage() {
   const navigate = useNavigate();
@@ -31,15 +35,26 @@ export function NewChatPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="card border border-base-300 bg-base-100 shadow-sm">
-        <form className="card-body gap-5" onSubmit={(event) => void handleSubmit(event)}>
+        <form
+          className="card-body gap-5"
+          onSubmit={(event) => void handleSubmit(event)}
+        >
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-primary">Chat</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-primary">
+              Chat
+            </p>
             <h1 className="card-title text-3xl">New chat</h1>
-            <p className="mt-2 text-base-content/70">Create a local thread and send its first message.</p>
+            <p className="mt-2 text-base-content/70">
+              Create a local thread and send its first message.
+            </p>
           </div>
           <label className="form-control">
             <span className="label-text">Model</span>
-            <select className="select select-bordered mt-2" value={model} onChange={(event) => setModel(event.target.value)}>
+            <select
+              className="select select-bordered mt-2"
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+            >
               <option value="">Use the default model</option>
               {models.data?.data.map((item) => (
                 <option key={item.id} value={item.model}>
@@ -60,7 +75,11 @@ export function NewChatPage() {
           </label>
           {error && <p className="text-error">{String(error)}</p>}
           <div className="card-actions justify-end">
-            <button className="btn btn-primary" type="submit" disabled={isPending}>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={isPending}
+            >
               {isPending ? "Starting…" : "Start chat"}
             </button>
           </div>

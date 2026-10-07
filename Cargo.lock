@@ -4470,6 +4470,7 @@ dependencies = [
 name = "genex-desktop"
 version = "0.1.0"
 dependencies = [
+ "dirs 6.0.0",
  "genex-app-server-client",
  "genex-app-server-daemon",
  "genex-app-server-protocol",

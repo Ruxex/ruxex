@@ -2,7 +2,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { useEffect } from "react";
 
-import { startAppServerEventStore, stopAppServerEventStore } from "../app-server/event-store";
+import {
+  startAppServerEventStore,
+  stopAppServerEventStore,
+} from "../app-server/event-store";
 import { queryClient } from "./query-client";
 
 type AppProvidersProps = {

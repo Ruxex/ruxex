@@ -1,4 +1,8 @@
-import { useAppServerEvents, useAppServerStatus, useModelList } from "../app-server/hooks";
+import {
+  useAppServerEvents,
+  useAppServerStatus,
+  useModelList,
+} from "../app-server/hooks";
 
 export function HomePage() {
   const appServer = useAppServerStatus();
@@ -10,7 +14,9 @@ export function HomePage() {
       <div className="card border border-base-300 bg-base-100 shadow-sm">
         <div className="card-body gap-4">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-primary">App server</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-primary">
+              App server
+            </p>
             <h1 className="card-title text-3xl">Ready for local agents</h1>
             <p className="mt-2 text-base-content/70">
               {appServer.isError
@@ -19,7 +25,11 @@ export function HomePage() {
             </p>
           </div>
           <div className="card-actions justify-end">
-            <button className="btn btn-primary" type="button" onClick={() => void appServer.refetch()}>
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={() => void appServer.refetch()}
+            >
               {appServer.isFetching ? "Connecting…" : "Check connection"}
             </button>
           </div>
@@ -35,7 +45,9 @@ export function HomePage() {
               {models.data?.data.slice(0, 8).map((model) => (
                 <li className="flex justify-between" key={model.id}>
                   <span>{model.displayName}</span>
-                  <span className="text-sm text-base-content/60">{model.model}</span>
+                  <span className="text-sm text-base-content/60">
+                    {model.model}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -45,7 +57,9 @@ export function HomePage() {
           <div className="card-body">
             <h2 className="card-title">Events</h2>
             <p className="text-sm text-base-content/70">
-              {events.connected ? `${events.events.length} events received` : "Waiting for the app-server"}
+              {events.connected
+                ? `${events.events.length} events received`
+                : "Waiting for the app-server"}
             </p>
           </div>
         </div>

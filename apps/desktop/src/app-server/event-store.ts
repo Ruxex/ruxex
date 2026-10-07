@@ -10,7 +10,11 @@ type EventSnapshot = {
 };
 
 const listeners = new Set<() => void>();
-let snapshot: EventSnapshot = { events: [], connected: false, serverRequests: [] };
+let snapshot: EventSnapshot = {
+  events: [],
+  connected: false,
+  serverRequests: [],
+};
 let unlisten: (() => void) | undefined;
 
 function notify() {

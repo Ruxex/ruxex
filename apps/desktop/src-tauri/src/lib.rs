@@ -1,3 +1,5 @@
+use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 
 use genex_app_server_client::AppServerEvent;
@@ -20,6 +22,7 @@ use tauri::State;
 
 #[derive(Default)]
 struct AppState {
+    initialization: tauri::async_runtime::Mutex<()>,
     request_handle: tauri::async_runtime::Mutex<Option<AppServerRequestHandle>>,
     status: tauri::async_runtime::Mutex<Option<AppServerStatus>>,
 }
@@ -59,6 +62,18 @@ enum DesktopAppServerEvent {
 pub fn run() {
     tauri::Builder::default()
         .manage(AppState::default())
+        .setup(|_app| {
+            let home = desktop_genex_home().map_err(std::io::Error::other)?;
+
+            // The setup hook runs before Tauri exposes commands or starts the
+            // app-server child, so these process-wide values are safe to set
+            // once here and are inherited by the managed daemon.
+            unsafe {
+                std::env::set_var("GENEX_HOME", &home);
+                std::env::set_var("GENEX_SQLITE_HOME", &home);
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             ensure_app_server,
             app_server_request,
@@ -69,23 +84,39 @@ pub fn run() {
         .expect("error while running Genex Desktop");
 }
 
-#[tauri::command]
-async fn ensure_app_server(
-    app: AppHandle,
-    state: State<'_, AppState>,
-) -> CommandResult<AppServerStatus> {
-    if let Some(status) = state.status.lock().await.clone() {
-        return Ok(status);
-    }
+#[cfg(test)]
+mod tests {
+    use super::desktop_genex_home_from_user_home;
+    use std::path::Path;
 
-    let package_source =
-        runtime_package_source(&app).map_err(|error| command_error("lifecycle", error))?;
-    let bootstrap = genex_app_server_daemon::bootstrap_from_package(&package_source)
-        .await
-        .map_err(|error| command_error("lifecycle", format!("{error:#}")))?;
-    let socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
-        .map_err(|error| command_error("initialization", error.to_string()))?;
-    let client = RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
+    #[test]
+    fn desktop_home_is_isolated_under_user_home() {
+        assert_eq!(
+            desktop_genex_home_from_user_home(Path::new("/home/user")),
+            Path::new("/home/user/.genex_desktop"),
+        );
+    }
+}
+
+const DESKTOP_GENEX_HOME_DIR: &str = ".genex_desktop";
+
+fn desktop_genex_home_from_user_home(user_home: &Path) -> PathBuf {
+    user_home.join(DESKTOP_GENEX_HOME_DIR)
+}
+
+fn desktop_genex_home() -> Result<PathBuf, String> {
+    let user_home =
+        dirs::home_dir().ok_or_else(|| "failed to resolve user home directory".to_string())?;
+    let home = desktop_genex_home_from_user_home(&user_home);
+    fs::create_dir_all(&home)
+        .map_err(|error| format!("failed to create Desktop Genex home: {error}"))?;
+    Ok(home)
+}
+
+async fn connect_app_server(
+    socket_path: AbsolutePathBuf,
+) -> Result<RemoteAppServerClient, std::io::Error> {
+    RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
         endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
         client_name: "genex-desktop".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
@@ -94,11 +125,45 @@ async fn ensure_app_server(
         channel_capacity: 128,
     })
     .await
-    .map_err(|error| command_error("initialization", error.to_string()))?;
+}
+
+#[tauri::command]
+async fn ensure_app_server(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<AppServerStatus> {
+    let _initialization = state.initialization.lock().await;
+    if let Some(status) = state.status.lock().await.clone() {
+        return Ok(status);
+    }
+
+    let home = desktop_genex_home().map_err(|error| command_error("lifecycle", error))?;
+    let socket_path = genex_app_server_client::app_server_control_socket_path(&home)
+        .map_err(|error| command_error("initialization", error.to_string()))?;
+    let (client, bootstrapped_version) = match connect_app_server(socket_path.clone()).await {
+        Ok(client) => (client, None),
+        Err(_) => {
+            let package_source =
+                runtime_package_source(&app).map_err(|error| command_error("lifecycle", error))?;
+            let bootstrap = genex_app_server_daemon::bootstrap_from_package(&package_source)
+                .await
+                .map_err(|error| command_error("lifecycle", format!("{error:#}")))?;
+            let socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
+                .map_err(|error| command_error("initialization", error.to_string()))?;
+            let client = connect_app_server(socket_path)
+                .await
+                .map_err(|error| command_error("initialization", error.to_string()))?;
+            (client, Some(bootstrap.app_server_version))
+        }
+    };
 
     let status = AppServerStatus {
-        socket_path: bootstrap.socket_path.display().to_string(),
-        app_server_version: bootstrap.app_server_version,
+        socket_path: socket_path.display().to_string(),
+        app_server_version: client
+            .server_version()
+            .map(str::to_owned)
+            .or(bootstrapped_version)
+            .unwrap_or_else(|| "unknown".to_string()),
     };
     let request_handle = client.request_handle();
     *state.request_handle.lock().await = Some(AppServerRequestHandle::Remote(request_handle));

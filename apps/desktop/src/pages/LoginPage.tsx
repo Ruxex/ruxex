@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAccount, useLogin } from "../app-server/hooks";
@@ -23,11 +23,18 @@ export function LoginPage() {
   return (
     <div className="mx-auto max-w-lg">
       <div className="card border border-base-300 bg-base-100 shadow-sm">
-        <form className="card-body gap-5" onSubmit={(event) => void handleSubmit(event)}>
+        <form
+          className="card-body gap-5"
+          onSubmit={(event) => void handleSubmit(event)}
+        >
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-primary">Account</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-primary">
+              Account
+            </p>
             <h1 className="card-title text-3xl">Log in</h1>
-            <p className="mt-2 text-base-content/70">Connect this local desktop app with an API key.</p>
+            <p className="mt-2 text-base-content/70">
+              Connect this local desktop app with an API key.
+            </p>
           </div>
           <label className="form-control">
             <span className="label-text">API key</span>
@@ -45,7 +52,11 @@ export function LoginPage() {
             <Link className="link link-hover" to="/">
               Back home
             </Link>
-            <button className="btn btn-primary" type="submit" disabled={login.isPending}>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={login.isPending}
+            >
               {login.isPending ? "Logging in…" : "Log in"}
             </button>
           </div>
