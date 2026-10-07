@@ -467,6 +467,22 @@ mod tests {
     }
 
     #[test]
+    fn my_provider_factory_reports_unauthenticated_requires_auth() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_my_provider(),
+            /*auth_manager*/ None,
+        );
+
+        assert_eq!(
+            provider.account_state(),
+            Ok(ProviderAccountState {
+                account: None,
+                requires_auth: true,
+            })
+        );
+    }
+
+    #[test]
     fn responses_provider_keeps_concrete_runtime_api() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(None),
