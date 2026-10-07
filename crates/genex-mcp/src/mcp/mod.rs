@@ -272,9 +272,7 @@ pub fn configured_mcp_servers(config: &McpConfig) -> HashMap<String, McpServerCo
     config.mcp_server_catalog.configured_servers()
 }
 
-pub fn effective_mcp_servers(
-    config: &McpConfig,
-) -> HashMap<String, EffectiveMcpServer> {
+pub fn effective_mcp_servers(config: &McpConfig) -> HashMap<String, EffectiveMcpServer> {
     effective_mcp_servers_from_configured(configured_mcp_servers(config), config)
 }
 
@@ -332,8 +330,6 @@ pub async fn read_mcp_resource(
             runtime_context,
             tool_catalog_cache,
             client_mcp_extensions: ClientMcpExtensions::default(),
-            auth: None,
-            auth_manager: None,
             allow_user_interaction: true,
             elicitation_reviewer: None,
             elicitation_lifecycle: None,
@@ -407,8 +403,6 @@ pub async fn collect_mcp_server_status_snapshot_with_detail(
             runtime_context,
             tool_catalog_cache,
             client_mcp_extensions: ClientMcpExtensions::default(),
-            auth: None,
-            auth_manager: None,
             allow_user_interaction: true,
             elicitation_reviewer: None,
             elicitation_lifecycle: None,

@@ -200,7 +200,6 @@ async fn transport_provided_bearer_token_avoids_placeholder_headers_and_redirect
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::Direct,
         Arc::new(http_client.clone()),
-        /*auth_provider*/ None,
         McpProtocolMode::Legacy,
         StreamableHttpRedirectMode::AgentPluginV1,
         genex_rmcp_client::McpOAuthRefreshMode::Legacy,
@@ -312,7 +311,6 @@ async fn auto_store_remains_pinned_across_session_recovery_child() -> anyhow::Re
         OAuthCredentialsStoreMode::Auto,
         AuthKeyringBackendKind::Direct,
         Arc::new(http_client.clone()),
-        /*auth_provider*/ None,
     )
     .await?;
     initialize_client(&client).await?;

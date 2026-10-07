@@ -204,8 +204,6 @@ impl McpConnectionSet {
             runtime_context,
             tool_catalog_cache,
             client_mcp_extensions,
-            auth,
-            auth_manager,
             allow_user_interaction,
             elicitation_reviewer,
             elicitation_lifecycle,
@@ -218,7 +216,6 @@ impl McpConnectionSet {
         let default_protocol_mode = config.protocol_mode;
         let client_elicitation_capability = config.client_elicitation_capability.clone();
         let tool_plugin_context = crate::mcp::tool_plugin_context(&config);
-        let auth = auth.as_ref();
         let mut servers = HashMap::new();
         let disabled_servers = mcp_servers
             .iter()
@@ -300,7 +297,6 @@ impl McpConnectionSet {
             );
             let resolved_environment =
                 runtime_context.resolve_server_environment(&server_name, &configured_config);
-            let runtime_auth_provider = None;
             let connection_identity = McpServerConnectionIdentity::new(
                 &server_name,
                 &server,
@@ -310,8 +306,6 @@ impl McpConnectionSet {
                 oauth_refresh_mode,
                 &resolved_environment,
                 &runtime_context,
-                runtime_auth_provider.as_ref(),
-                auth,
                 client_elicitation_capability.clone(),
                 client_mcp_extensions.clone(),
                 previous
@@ -460,7 +454,6 @@ impl McpConnectionSet {
             } else {
                 None
             };
-            let has_runtime_auth = runtime_auth_provider.is_some();
             let async_managed_client = AsyncManagedClient::new(
                 server_name.clone(),
                 server,
@@ -473,18 +466,9 @@ impl McpConnectionSet {
                 tool_catalog_cache_context,
                 runtime_context.clone(),
                 resolved_environment,
-                runtime_auth_provider,
                 client_elicitation_capability.clone(),
                 client_mcp_extensions.clone(),
-                auth_manager
-                    .as_ref()
-                    .filter(|_| {
-                        matches!(
-                            &configured_config.transport,
-                            McpServerTransportConfig::Stdio { .. }
-                        )
-                    })
-                    .map(|manager| manager.auth_change_state_receiver()),
+                None,
                 protocol_mode,
                 catalog_item_limit,
             );
@@ -555,7 +539,7 @@ impl McpConnectionSet {
                 }
                 if let Some(tx_event) = tx_event.as_ref() {
                     let auth_state = match &outcome {
-                        Err(error) if error.is_authentication_required() && !has_runtime_auth => {
+                        Err(error) if error.is_authentication_required() => {
                             match &configured_config.transport {
                                 McpServerTransportConfig::StreamableHttp {
                                     url,

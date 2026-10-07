@@ -170,15 +170,6 @@ impl Session {
             {
                 self.mark_mcp_runtime_dirty();
             }
-            let auth = self.services.auth_manager.auth_cached();
-            if !self
-                .services
-                .mcp_runtime
-                .current_auth_matches(auth.as_ref())
-            {
-                self.mark_mcp_runtime_dirty();
-            }
-
             if !self.mcp_refresh.claim() {
                 return;
             }
@@ -186,8 +177,7 @@ impl Session {
                 refresh: &self.mcp_refresh,
                 published: false,
             };
-            let auth = self.services.auth_manager.auth().await;
-            let desired = self.latest_mcp_desired_state(auth).await;
+            let desired = self.latest_mcp_desired_state().await;
             let selected_capability_roots = self
                 .resolve_selected_capability_roots_for_step(&desired.environments)
                 .await;
@@ -565,7 +555,6 @@ impl Session {
             error!("MCP runtime refresh semaphore closed");
             return;
         };
-        let auth = self.services.auth_manager.auth().await;
         let disabled_plugin_ids = {
             let mut state = self.state.lock().await;
             let mut config = (*state.session_configuration.original_config_do_not_use).clone();
@@ -602,7 +591,7 @@ impl Session {
                 executor_capability_discovery.as_deref(),
             )
             .await;
-        let mut desired = self.latest_mcp_desired_state(auth).await;
+        let mut desired = self.latest_mcp_desired_state().await;
         desired.config = Arc::new(refresh_config.clone());
         self.publish_mcp_runtime(
             &desired,

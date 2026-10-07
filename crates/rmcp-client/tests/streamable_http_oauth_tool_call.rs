@@ -191,7 +191,6 @@ async fn runtime_oauth_child() -> anyhow::Result<()> {
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
     )
     .await?;
     let initialization = initialize_client(&client).await;

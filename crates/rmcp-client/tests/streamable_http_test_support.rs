@@ -88,7 +88,6 @@ pub(crate) async fn create_client_with_http_client(
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         http_client,
-        /*auth_provider*/ None,
     )
     .await?;
 

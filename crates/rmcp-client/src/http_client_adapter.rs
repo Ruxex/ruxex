@@ -19,7 +19,6 @@ use bytes::Bytes;
 use futures::StreamExt;
 use futures::stream;
 use futures::stream::BoxStream;
-use genex_api::SharedAuthProvider;
 use genex_exec_server::ExecServerError;
 use genex_exec_server::HttpClient;
 use genex_exec_server::HttpHeader;
@@ -78,7 +77,6 @@ pub enum StreamableHttpRedirectMode {
 pub(crate) struct StreamableHttpClientAdapter {
     http_client: Arc<dyn HttpClient>,
     default_headers: HeaderMap,
-    auth_provider: Option<SharedAuthProvider>,
     event_stream_cancellations: Arc<Mutex<HashMap<RequestId, oneshot::Sender<()>>>>,
     has_configured_headers: bool,
     redirect_mode: StreamableHttpRedirectMode,
@@ -115,7 +113,6 @@ impl StreamableHttpClientAdapter {
     pub(crate) fn new(
         http_client: Arc<dyn HttpClient>,
         default_headers: HeaderMap,
-        auth_provider: Option<SharedAuthProvider>,
         has_configured_headers: bool,
         redirect_mode: StreamableHttpRedirectMode,
         initialize_deadline: Arc<Mutex<Option<Instant>>>,
@@ -123,7 +120,6 @@ impl StreamableHttpClientAdapter {
         Self {
             http_client: Arc::new(SameOriginRedirectHttpClient::new(http_client)),
             default_headers,
-            auth_provider,
             event_stream_cancellations: Arc::default(),
             has_configured_headers,
             redirect_mode,
@@ -151,7 +147,6 @@ impl StreamableHttpClient for StreamableHttpClientAdapter {
         let has_session_id = session_id.is_some();
         let mut headers = self.default_headers.clone();
         headers.extend(custom_headers);
-        self.add_auth_headers(&mut headers);
         insert_header(
             &mut headers,
             ACCEPT,
@@ -455,7 +450,6 @@ impl StreamableHttpClient for StreamableHttpClientAdapter {
     ) -> std::result::Result<(), StreamableHttpError<Self::Error>> {
         let mut headers = self.default_headers.clone();
         headers.extend(custom_headers);
-        self.add_auth_headers(&mut headers);
         if let Some(auth_token) = auth_token {
             insert_header(
                 &mut headers,
@@ -512,7 +506,6 @@ impl StreamableHttpClient for StreamableHttpClientAdapter {
     > {
         let mut headers = self.default_headers.clone();
         headers.extend(custom_headers);
-        self.add_auth_headers(&mut headers);
         insert_header(
             &mut headers,
             ACCEPT,
@@ -593,14 +586,6 @@ impl StreamableHttpClient for StreamableHttpClientAdapter {
             .is_some_and(|version| version == ProtocolVersion::V_2026_07_28.as_str());
         let maximum_response_bytes = uses_modern_protocol.then_some(MAX_MCP_STDIO_LINE_BYTES);
         Ok(sse_stream_from_body(body_stream, maximum_response_bytes))
-    }
-}
-
-impl StreamableHttpClientAdapter {
-    fn add_auth_headers(&self, headers: &mut HeaderMap) {
-        if let Some(auth_provider) = &self.auth_provider {
-            headers.extend(auth_provider.to_auth_headers());
-        }
     }
 }
 

@@ -1673,7 +1673,6 @@ impl Session {
             if startup_auth_changed {
                 mcp_auth_changes.mark_unchanged();
             }
-            let latest_auth = sess.services.auth_manager.auth().await;
             let mcp_projection = if startup_auth_changed
                 || mcp_auth_changes.has_changed().unwrap_or(false)
             {
@@ -1700,7 +1699,6 @@ impl Session {
             };
             sess.install_initial_mcp_runtime(
                 &session_configuration,
-                latest_auth,
                 mcp_projection,
                 &resolved_environments,
                 mcp_runtime_cwd,

@@ -21,7 +21,6 @@ use std::collections::HashSet;
 
 pub(super) struct McpDesiredState {
     pub(super) config: Arc<Config>,
-    pub(super) auth: Option<GenexAuth>,
     pub(super) submit_id: String,
     pub(super) originator: String,
     pub(super) session_source: SessionSource,
@@ -69,10 +68,7 @@ impl Session {
             .prepare_call(server, tool)
     }
 
-    pub(super) async fn latest_mcp_desired_state(
-        &self,
-        auth: Option<GenexAuth>,
-    ) -> McpDesiredState {
+    pub(super) async fn latest_mcp_desired_state(&self) -> McpDesiredState {
         let (session_configuration, disabled_plugin_ids) = {
             let state = self.state.lock().await;
             (
@@ -93,7 +89,6 @@ impl Session {
 
         McpDesiredState {
             config: Arc::new(config),
-            auth,
             submit_id: self.next_internal_sub_id(),
             originator: session_configuration.originator.clone(),
             session_source: session_configuration.session_source.clone(),
@@ -106,7 +101,6 @@ impl Session {
     pub(super) async fn install_initial_mcp_runtime(
         self: &Arc<Self>,
         session_configuration: &SessionConfiguration,
-        auth: Option<GenexAuth>,
         mcp_projection: McpRuntimeProjection,
         resolved_environments: &TurnEnvironmentSnapshot,
         mcp_runtime_cwd: PathBuf,
@@ -120,7 +114,6 @@ impl Session {
             .to_path_buf();
         let desired = McpDesiredState {
             config: Arc::new(config),
-            auth,
             submit_id: INITIAL_SUBMIT_ID.to_owned(),
             originator: session_configuration.originator.clone(),
             session_source: session_configuration.session_source.clone(),
@@ -330,7 +323,6 @@ impl Session {
         ready_selected_capability_roots: &[SelectedCapabilityRoot],
         elicitation_reviewer: Option<ElicitationReviewerHandle>,
     ) -> McpRuntimeInput {
-        let auth = desired.auth.clone();
         let McpRuntimeProjection {
             mut config,
             plugins_available,
@@ -395,8 +387,6 @@ impl Session {
             runtime_context,
             tool_catalog_cache: self.services.mcp_manager.tool_catalog_cache(),
             client_mcp_extensions: self.services.client_mcp_extensions.for_mcp_servers(),
-            auth,
-            auth_manager: Some(Arc::clone(&self.services.auth_manager)),
             allow_user_interaction: !desired.session_source.is_non_root_agent(),
             elicitation_reviewer,
             elicitation_lifecycle: Some(self.mcp_elicitation_lifecycle()),

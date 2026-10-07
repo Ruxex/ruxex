@@ -188,7 +188,6 @@ async fn coordinated_401_refresh_rereads_and_persists_before_retry() -> Result<(
                 OutboundProxyPolicy::ReqwestDefault,
             ))),
             HeaderMap::new(),
-            /*auth_provider*/ None,
             /*has_configured_headers*/ false,
             StreamableHttpRedirectMode::Legacy,
             Arc::default(),

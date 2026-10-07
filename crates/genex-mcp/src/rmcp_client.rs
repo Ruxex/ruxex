@@ -39,7 +39,6 @@ use async_channel::Sender;
 use futures::future::BoxFuture;
 use futures::future::FutureExt;
 use futures::future::Shared;
-use genex_api::SharedAuthProvider;
 use genex_async_utils::CancelErr;
 use genex_async_utils::OrCancelExt;
 use genex_config::McpServerAuth;
@@ -130,7 +129,6 @@ struct ManagedClientStartup {
     tool_catalog_cache_context: Option<McpToolCatalogCacheContext>,
     runtime_context: McpRuntimeContext,
     resolved_environment: std::result::Result<Option<Arc<Environment>>, String>,
-    runtime_auth_provider: Option<SharedAuthProvider>,
     client_elicitation_capability: ElicitationCapability,
     client_mcp_extensions: ClientMcpExtensions,
     auth_changes: Option<watch::Receiver<AuthChangeState>>,
@@ -159,7 +157,6 @@ impl ManagedClientStartup {
             tool_catalog_cache_context,
             runtime_context,
             resolved_environment,
-            runtime_auth_provider,
             client_elicitation_capability,
             client_mcp_extensions,
             auth_changes,
@@ -193,7 +190,6 @@ impl ManagedClientStartup {
                         oauth_refresh_mode,
                         runtime_context,
                         resolved_environment,
-                        runtime_auth_provider,
                         protocol_mode,
                     ),
                 )
@@ -273,7 +269,6 @@ impl AsyncManagedClient {
         tool_catalog_cache_context: Option<McpToolCatalogCacheContext>,
         runtime_context: McpRuntimeContext,
         resolved_environment: std::result::Result<Option<Arc<Environment>>, String>,
-        runtime_auth_provider: Option<SharedAuthProvider>,
         client_elicitation_capability: ElicitationCapability,
         client_mcp_extensions: ClientMcpExtensions,
         auth_changes: Option<watch::Receiver<AuthChangeState>>,
@@ -294,7 +289,6 @@ impl AsyncManagedClient {
             tool_catalog_cache_context: tool_catalog_cache_context.clone(),
             runtime_context,
             resolved_environment,
-            runtime_auth_provider,
             client_elicitation_capability,
             client_mcp_extensions,
             auth_changes,
@@ -770,7 +764,6 @@ pub(crate) async fn make_rmcp_client(
     oauth_refresh_mode: McpOAuthRefreshMode,
     runtime_context: McpRuntimeContext,
     resolved_environment: std::result::Result<Option<Arc<Environment>>, String>,
-    runtime_auth_provider: Option<SharedAuthProvider>,
     protocol_mode: McpProtocolMode,
 ) -> Result<RmcpClient, StartupOutcomeError> {
     let config = server.config().clone();
@@ -888,7 +881,6 @@ pub(crate) async fn make_rmcp_client(
                 store_mode,
                 keyring_backend_kind,
                 http_client,
-                runtime_auth_provider,
                 protocol_mode,
                 redirect_mode,
                 oauth_refresh_mode,

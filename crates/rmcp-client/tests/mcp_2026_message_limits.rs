@@ -111,7 +111,6 @@ async fn http_client(server: &MockServer, mode: McpProtocolMode) -> anyhow::Resu
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
         mode,
     )
     .await

@@ -114,7 +114,6 @@ async fn create_client(
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
         McpProtocolMode::V20260728,
     )
     .await?;

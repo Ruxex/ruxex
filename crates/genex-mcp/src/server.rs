@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::runtime::McpRuntimeContext;
-use genex_api::SharedAuthProvider;
 use genex_config::AppToolApproval;
 use genex_config::McpServerAuth;
 use genex_config::McpServerConfig;
@@ -12,7 +11,6 @@ use genex_config::McpServerTransportConfig;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
 use genex_exec_server::Environment;
-use genex_login::GenexAuth;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_rmcp_client::McpOAuthRefreshMode;
 use genex_rmcp_client::StoredOAuthCredentialSnapshot;
@@ -116,8 +114,6 @@ pub(crate) struct McpServerConnectionIdentity {
     resolved_environment: Result<Option<Arc<Environment>>, String>,
     local_stdio_fallback_cwd: Option<PathBuf>,
     referenced_environment_variables: Vec<(String, Option<OsString>)>,
-    runtime_auth: Option<GenexAuth>,
-    runtime_auth_token: Option<String>,
     client_elicitation_capability: ElicitationCapability,
     client_mcp_extensions: ClientMcpExtensions,
     agent_plugin: bool,
@@ -135,8 +131,6 @@ impl McpServerConnectionIdentity {
         oauth_refresh_mode: McpOAuthRefreshMode,
         resolved_environment: &Result<Option<Arc<Environment>>, String>,
         runtime_context: &McpRuntimeContext,
-        runtime_auth_provider: Option<&SharedAuthProvider>,
-        auth: Option<&GenexAuth>,
         client_elicitation_capability: ElicitationCapability,
         client_mcp_extensions: ClientMcpExtensions,
         previous_identity: Option<&Self>,
@@ -147,10 +141,7 @@ impl McpServerConnectionIdentity {
                 .bytes()
                 .all(|byte| byte == b'\t' || (byte >= b' ' && byte != 0x7f))
         };
-        let stored_oauth_url = if runtime_auth_provider.is_none()
-            && !matches!(config.auth, McpServerAuth::EmaAuth)
-            && !matches!(config.auth, McpServerAuth::EmaAuth)
-        {
+        let stored_oauth_url = if !matches!(config.auth, McpServerAuth::EmaAuth) {
             match &config.transport {
                 McpServerTransportConfig::StreamableHttp {
                     url,
@@ -214,8 +205,6 @@ impl McpServerConnectionIdentity {
             ))
         .then(|| runtime_context.local_process_cwd());
         let referenced_environment_variables = referenced_environment_variables(config);
-        let runtime_auth = runtime_auth_provider.and(auth).cloned();
-        let runtime_auth_token = runtime_auth.as_ref().and_then(|auth| auth.get_token().ok());
         let oauth_store_was_contended = oauth_credentials
             .as_ref()
             .ok()
@@ -236,8 +225,6 @@ impl McpServerConnectionIdentity {
             resolved_environment: resolved_environment.clone(),
             local_stdio_fallback_cwd,
             referenced_environment_variables,
-            runtime_auth,
-            runtime_auth_token,
             client_elicitation_capability,
             client_mcp_extensions,
             agent_plugin: server.is_agent_plugin(),
@@ -246,13 +233,6 @@ impl McpServerConnectionIdentity {
     }
 
     pub(crate) fn has_same_connection_config(&self, other: &Self) -> bool {
-        let same_runtime_auth = match (&self.runtime_auth, &other.runtime_auth) {
-            (Some(left), Some(right)) => {
-                left == right && left.get_account_id() == right.get_account_id()
-            }
-            (None, None) => true,
-            (Some(_), None) | (None, Some(_)) => false,
-        };
         self.auth == other.auth
             && self.transport == other.transport
             && self.environment_id == other.environment_id
@@ -262,8 +242,6 @@ impl McpServerConnectionIdentity {
             && same_resolved_environment(&self.resolved_environment, &other.resolved_environment)
             && self.local_stdio_fallback_cwd == other.local_stdio_fallback_cwd
             && self.referenced_environment_variables == other.referenced_environment_variables
-            && same_runtime_auth
-            && self.runtime_auth_token == other.runtime_auth_token
             && self.client_elicitation_capability == other.client_elicitation_capability
             && self.client_mcp_extensions == other.client_mcp_extensions
             && self.agent_plugin == other.agent_plugin

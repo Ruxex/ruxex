@@ -23,8 +23,6 @@ use genex_exec_server::Environment;
 use genex_exec_server::EnvironmentManager;
 use genex_exec_server::HttpClient;
 use genex_exec_server::RouteAwareHttpClient;
-use genex_login::AuthManager;
-use genex_login::GenexAuth;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
 use genex_protocol::mcp::CallToolResult;
 use genex_protocol::mcp::ClientMcpExtensions;
@@ -75,8 +73,6 @@ pub struct McpRuntimeInput {
     pub runtime_context: McpRuntimeContext,
     pub tool_catalog_cache: McpToolCatalogCache,
     pub client_mcp_extensions: ClientMcpExtensions,
-    pub auth: Option<GenexAuth>,
-    pub auth_manager: Option<Arc<AuthManager>>,
     /// Whether the owning thread may prompt the user; automatic decisions remain available.
     pub allow_user_interaction: bool,
     pub elicitation_reviewer: Option<ElicitationReviewerHandle>,
@@ -97,8 +93,6 @@ pub struct McpRuntime {
 struct PublishedMcpRuntime {
     connections: Arc<McpConnectionSet>,
     config: Option<Arc<McpConfig>>,
-    auth: Option<GenexAuth>,
-    auth_token: Option<String>,
     plugins_available: bool,
     ready_selected_capability_roots: Vec<SelectedCapabilityRoot>,
     selected_environments: HashMap<String, Arc<Environment>>,
@@ -169,8 +163,6 @@ impl McpRuntime {
             current: ArcSwap::from_pointee(PublishedMcpRuntime {
                 connections: Arc::new(McpConnectionSet::empty(prefix_mcp_tool_names)),
                 config: None,
-                auth: None,
-                auth_token: None,
                 plugins_available: false,
                 ready_selected_capability_roots: Vec::new(),
                 selected_environments: HashMap::new(),
@@ -200,8 +192,6 @@ impl McpRuntime {
     async fn publish(&self, input: McpRuntimeInput, previous: Option<&McpConnectionSet>) {
         let (publish, publication_gate) = McpPublicationGate::pending();
         let config = Arc::clone(&input.config);
-        let auth = input.auth.clone();
-        let auth_token = auth.as_ref().and_then(|auth| auth.get_token().ok());
         let plugins_available = input.plugins_available;
         let ready_selected_capability_roots = input.ready_selected_capability_roots.clone();
         let selected_environments = input.runtime_context.selected_environments.clone();
@@ -217,8 +207,6 @@ impl McpRuntime {
         self.current.store(Arc::new(PublishedMcpRuntime {
             connections,
             config: Some(config),
-            auth,
-            auth_token,
             plugins_available,
             ready_selected_capability_roots,
             selected_environments,
@@ -318,20 +306,6 @@ impl McpRuntime {
             });
         }
         Some(binding)
-    }
-
-    /// Returns whether the published snapshot still belongs to the current credentials.
-    pub fn current_auth_matches(&self, auth: Option<&GenexAuth>) -> bool {
-        let current = self.current.load();
-        match (current.auth.as_ref(), auth) {
-            (Some(previous), Some(latest)) => {
-                previous == latest
-                    && previous.get_account_id() == latest.get_account_id()
-                    && current.auth_token == latest.get_token().ok()
-            }
-            (None, None) => true,
-            (Some(_), None) | (None, Some(_)) => false,
-        }
     }
 
     /// Detects newly saved credentials for servers whose startup failed authentication.

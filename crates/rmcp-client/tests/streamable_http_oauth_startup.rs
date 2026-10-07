@@ -216,7 +216,6 @@ async fn oauth_tool_call_child() -> anyhow::Result<()> {
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
     )
     .await?;
     initialize_client(&client).await?;
@@ -1006,7 +1005,6 @@ async fn oauth_startup_child() -> anyhow::Result<()> {
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         http_client,
-        /*auth_provider*/ None,
         McpProtocolMode::Legacy,
         StreamableHttpRedirectMode::Legacy,
         refresh_mode,
@@ -1055,7 +1053,6 @@ async fn expired_unrefreshable_startup_child() -> anyhow::Result<()> {
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
     )
     .await?;
 
@@ -1113,7 +1110,6 @@ async fn issuer_startup_child() -> anyhow::Result<()> {
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
     )
     .await;
 

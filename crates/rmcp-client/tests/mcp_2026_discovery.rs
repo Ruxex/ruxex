@@ -52,7 +52,6 @@ async fn create_client(server: &MockServer, mode: McpProtocolMode) -> anyhow::Re
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
         mode,
     )
     .await
@@ -286,7 +285,6 @@ async fn modern_discovery_does_not_follow_redirects_with_sensitive_headers() -> 
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
         McpProtocolMode::V20260728,
     )
     .await?;
@@ -341,7 +339,6 @@ async fn legacy_mcp_requests_follow_same_origin_redirects_with_configured_header
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
         McpProtocolMode::Legacy,
     )
     .await?;

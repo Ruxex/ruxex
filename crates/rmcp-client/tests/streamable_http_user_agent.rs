@@ -60,7 +60,6 @@ async fn streamable_http_requests_preserve_configured_user_agent() -> anyhow::Re
         OAuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
         Environment::default_for_tests().get_http_client(),
-        /*auth_provider*/ None,
     )
     .await?;
     initialize_client(&custom_client).await?;

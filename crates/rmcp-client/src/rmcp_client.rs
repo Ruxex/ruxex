@@ -17,7 +17,6 @@ use anyhow::Result;
 use anyhow::anyhow;
 use futures::FutureExt;
 use futures::future::BoxFuture;
-use genex_api::SharedAuthProvider;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::McpServerEnvVar;
 use genex_exec_server::HttpClient;
@@ -166,7 +165,6 @@ enum TransportRecipe {
         keyring_backend_kind: AuthKeyringBackendKind,
         pinned_credential_store: Arc<OnceLock<ResolvedOAuthCredentialStore>>,
         http_client: Arc<dyn HttpClient>,
-        auth_provider: Option<SharedAuthProvider>,
         redirect_mode: StreamableHttpRedirectMode,
         oauth_refresh_mode: McpOAuthRefreshMode,
         initialize_deadline: Arc<StdMutex<Option<Instant>>>,
@@ -503,7 +501,6 @@ impl RmcpClient {
         store_mode: OAuthCredentialsStoreMode,
         keyring_backend_kind: AuthKeyringBackendKind,
         http_client: Arc<dyn HttpClient>,
-        auth_provider: Option<SharedAuthProvider>,
     ) -> Result<Self> {
         Self::new_streamable_http_client_with_protocol_mode(
             server_name,
@@ -514,7 +511,6 @@ impl RmcpClient {
             store_mode,
             keyring_backend_kind,
             http_client,
-            auth_provider,
             McpProtocolMode::Legacy,
         )
         .await
@@ -531,7 +527,6 @@ impl RmcpClient {
         store_mode: OAuthCredentialsStoreMode,
         keyring_backend_kind: AuthKeyringBackendKind,
         http_client: Arc<dyn HttpClient>,
-        auth_provider: Option<SharedAuthProvider>,
         protocol_mode: McpProtocolMode,
     ) -> Result<Self> {
         Self::new_streamable_http_client_with_protocol_mode_and_redirect_mode(
@@ -543,7 +538,6 @@ impl RmcpClient {
             store_mode,
             keyring_backend_kind,
             http_client,
-            auth_provider,
             protocol_mode,
             StreamableHttpRedirectMode::Legacy,
             McpOAuthRefreshMode::Legacy,
@@ -561,7 +555,6 @@ impl RmcpClient {
         store_mode: OAuthCredentialsStoreMode,
         keyring_backend_kind: AuthKeyringBackendKind,
         http_client: Arc<dyn HttpClient>,
-        auth_provider: Option<SharedAuthProvider>,
         protocol_mode: McpProtocolMode,
         redirect_mode: StreamableHttpRedirectMode,
         oauth_refresh_mode: McpOAuthRefreshMode,
@@ -576,7 +569,6 @@ impl RmcpClient {
             keyring_backend_kind,
             pinned_credential_store: Arc::new(OnceLock::new()),
             http_client,
-            auth_provider,
             redirect_mode,
             oauth_refresh_mode,
             initialize_deadline: Arc::new(StdMutex::new(None)),
@@ -1036,7 +1028,6 @@ impl RmcpClient {
                 keyring_backend_kind,
                 pinned_credential_store,
                 http_client,
-                auth_provider,
                 redirect_mode,
                 oauth_refresh_mode,
                 initialize_deadline,
@@ -1052,15 +1043,7 @@ impl RmcpClient {
                         .is_some_and(|headers| !headers.is_empty());
                 let default_headers =
                     build_default_headers(http_headers.clone(), env_http_headers.clone())?;
-                let auth_provider =
-                    if bearer_token.is_some() || default_headers.contains_key(AUTHORIZATION) {
-                        None
-                    } else {
-                        auth_provider.clone()
-                    };
-
                 let resolved_oauth_tokens = if bearer_token.is_none()
-                    && auth_provider.is_none()
                     && !default_headers.contains_key(AUTHORIZATION)
                 {
                     let oauth_server_name = server_name.clone();
@@ -1152,7 +1135,6 @@ impl RmcpClient {
                                 StreamableHttpClientAdapter::new(
                                     Arc::clone(http_client),
                                     default_headers,
-                                    /*auth_provider*/ None,
                                     has_configured_headers,
                                     *redirect_mode,
                                     Arc::clone(initialize_deadline),
@@ -1174,7 +1156,6 @@ impl RmcpClient {
                         StreamableHttpClientAdapter::new(
                             Arc::clone(http_client),
                             default_headers,
-                            auth_provider,
                             has_configured_headers,
                             *redirect_mode,
                             Arc::clone(initialize_deadline),
@@ -1572,7 +1553,6 @@ async fn create_oauth_transport_and_runtime(
         StreamableHttpClientAdapter::new(
             http_client,
             default_headers,
-            /*auth_provider*/ None,
             has_configured_headers,
             redirect_mode,
             initialize_deadline,
