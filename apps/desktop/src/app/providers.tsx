@@ -1,0 +1,16 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "react-router-dom";
+
+import { queryClient } from "./query-client";
+
+type AppProvidersProps = {
+  router: Parameters<typeof RouterProvider>[0]["router"];
+};
+
+export function AppProviders({ router }: AppProvidersProps) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
+}
