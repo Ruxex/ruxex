@@ -73,6 +73,7 @@ use genex_http_client::OutboundProxyPolicy;
 use genex_install_context::InstallContext;
 use genex_login::AuthManagerConfig;
 use genex_login::AuthRouteConfig;
+use genex_login::CredentialManager;
 use genex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
 use genex_mcp::McpConfig;
 use genex_mcp::McpPluginAttribution;
@@ -1235,6 +1236,10 @@ impl AuthManagerConfig for Config {
         self.genex_home.to_path_buf()
     }
 
+    fn model_provider_id(&self) -> Option<String> {
+        Some(self.model_provider_id.clone())
+    }
+
     fn cli_auth_credentials_store_mode(&self) -> AuthCredentialsStoreMode {
         self.cli_auth_credentials_store_mode
     }
@@ -1397,6 +1402,46 @@ impl ConfigBuilder {
 }
 
 impl Config {
+    /// Select a configured model provider and coordinate its credential state.
+    ///
+    /// Providers that require stored authentication must have a usable
+    /// provider-scoped credential. Providers whose authentication is supplied
+    /// by configuration (or which are unauthenticated) only update selection;
+    /// existing stored credentials remain untouched.
+    pub async fn switch_model_provider(
+        &self,
+        credential_manager: &CredentialManager,
+        provider_id: &str,
+    ) -> std::io::Result<Self> {
+        let provider = self.model_providers.get(provider_id).ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("model provider `{provider_id}` is not configured"),
+            )
+        })?;
+
+        if provider.requires_auth {
+            credential_manager.switch(provider_id).await?;
+        } else {
+            if provider.env_key.is_some() {
+                provider.api_key().map_err(|error| {
+                    std::io::Error::new(
+                        std::io::ErrorKind::InvalidInput,
+                        format!(
+                            "model provider `{provider_id}` has unusable configured auth: {error}"
+                        ),
+                    )
+                })?;
+            }
+            credential_manager.select_provider(provider_id).await?;
+        }
+
+        let mut switched = self.clone();
+        switched.model_provider_id = provider_id.to_string();
+        switched.model_provider = provider.clone();
+        Ok(switched)
+    }
+
     pub fn sqlite_config(&self) -> &genex_state::SqliteConfig {
         &self.sqlite
     }

@@ -20,6 +20,7 @@ impl Config {
     pub fn auth_config(&self) -> AuthConfig {
         AuthConfig {
             genex_home: self.genex_home.to_path_buf(),
+            model_provider_id: Some(self.model_provider_id.clone()),
             auth_credentials_store_mode: self.cli_auth_credentials_store_mode,
             keyring_backend_kind: self.auth_keyring_backend_kind(),
             forced_login_method: self.forced_login_method,
@@ -58,6 +59,7 @@ pub fn bootstrap_auth_config(
         .filter(|workspaces| !workspaces.is_empty());
     let mut auth_config = AuthConfig {
         genex_home: genex_home.to_path_buf(),
+        model_provider_id: config.model_provider.clone(),
         auth_credentials_store_mode: config.cli_auth_credentials_store.unwrap_or_default(),
         keyring_backend_kind: resolve_bootstrap_auth_keyring_backend_kind(bootstrap_config)?,
         forced_login_method: config.forced_login_method,

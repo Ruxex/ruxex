@@ -14,6 +14,7 @@ pub use auth::AuthKeyringBackendKind;
 pub use auth::AuthManager;
 pub use auth::AuthManagerConfig;
 pub use auth::AuthManagerInitializationError;
+pub use auth::CredentialManager;
 pub use auth::ExternalAuth;
 pub use auth::ExternalAuthFuture;
 pub use auth::ExternalAuthRefreshContext;

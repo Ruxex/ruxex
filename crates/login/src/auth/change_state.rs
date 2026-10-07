@@ -3,13 +3,17 @@
 use super::GenexAuth;
 
 /// Opaque revisions local to one auth manager. Consumers must reset on reconnect.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct AuthChangeState {
     /// Advances whenever cached credentials change.
     pub generation: u64,
     /// Advances on login, logout, or changes of user, workspace, or auth mode.
     /// Credential changes with incomplete owner identity also advance this revision.
     pub owner_generation: u64,
+    /// Provider ID associated with the latest provider-scoped change.
+    pub provider_id: Option<String>,
+    /// Whether the active provider selection changed in the latest update.
+    pub active_provider_changed: bool,
 }
 
 pub(super) fn same_owner(previous: Option<&GenexAuth>, current: Option<&GenexAuth>) -> bool {

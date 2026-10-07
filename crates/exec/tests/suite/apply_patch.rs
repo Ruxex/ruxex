@@ -151,9 +151,10 @@ async fn test_apply_patch_freeform_tool() -> anyhow::Result<()> {
 async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     use core_test_support::skip_if_no_network;
     use core_test_support::test_genex_exec::test_genex_exec;
+    use genex_login::AuthDotJson;
     use genex_login::AuthKeyringBackendKind;
-    use genex_login::ProviderAuth;
-    use genex_login::save_provider_auth;
+    use genex_login::save_auth;
+    use genex_protocol::auth::AuthMode;
     use std::sync::Arc;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering;
@@ -187,10 +188,9 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
             .context("add test git remote")?
             .success()
     );
-    save_provider_auth(
+    save_auth(
         test.home_path(),
-        "default",
-        &ProviderAuth::api_key("test-api-key"),
+        &AuthDotJson::legacy(Some(AuthMode::ApiKey), Some("test-api-key".to_string())),
         genex_login::AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
