@@ -21,6 +21,7 @@ use crate::protocol::common::EXPERIMENTAL_CLIENT_METHODS;
 use crate::protocol::common::EXPERIMENTAL_SERVER_METHOD_PARAM_TYPES;
 use crate::protocol::common::EXPERIMENTAL_SERVER_METHOD_RESPONSE_TYPES;
 use crate::protocol::common::EXPERIMENTAL_SERVER_METHODS;
+use crate::protocol::v2::McpServerRefreshParams;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
@@ -117,6 +118,7 @@ pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> R
     ensure_dir(&v2_out_dir)?;
 
     ClientRequest::export_all_to(out_dir)?;
+    McpServerRefreshParams::export_all_to(out_dir)?;
     ClientResponse::export_all_to(out_dir)?;
     export_client_responses(out_dir)?;
     ClientNotification::export_all_to(out_dir)?;
@@ -242,6 +244,7 @@ fn filter_experimental_ts(out_dir: &Path) -> Result<()> {
     // Request unions and types with `#[experimental(...)]` fields need direct
     // post-processing because they encode method/field information locally.
     filter_request_ts(out_dir, "ClientRequest.ts", EXPERIMENTAL_CLIENT_METHODS)?;
+    filter_request_ts(out_dir, "ClientResponse.ts", EXPERIMENTAL_CLIENT_METHODS)?;
     filter_request_ts(out_dir, "ServerRequest.ts", EXPERIMENTAL_SERVER_METHODS)?;
     filter_experimental_type_fields_ts(out_dir, &registered_fields)?;
     remove_generated_type_files(out_dir, &experimental_method_types, "ts")?;
@@ -258,6 +261,7 @@ pub(crate) fn filter_experimental_ts_tree(tree: &mut BTreeMap<PathBuf, String>) 
     let experimental_method_types = experimental_method_types();
     for (file_name, experimental_methods) in [
         ("ClientRequest.ts", EXPERIMENTAL_CLIENT_METHODS),
+        ("ClientResponse.ts", EXPERIMENTAL_CLIENT_METHODS),
         ("ServerRequest.ts", EXPERIMENTAL_SERVER_METHODS),
     ] {
         if let Some(content) = tree.get_mut(Path::new(file_name)) {
@@ -332,7 +336,11 @@ fn filter_request_ts_contents(mut content: String, experimental_methods: &[&str]
     let import_usage_scope = split_type_alias(&content)
         .map(|(_, filtered_body, _)| filtered_body)
         .unwrap_or_else(|| new_body.clone());
-    prune_unused_type_imports(content, &import_usage_scope)
+    let mut content = prune_unused_type_imports(content, &import_usage_scope);
+    if import_usage_scope.contains("v2.") && !content.contains("from \"./v2\";") {
+        content = format!("import type * as v2 from \"./v2\";\n\n{content}");
+    }
+    content
 }
 
 /// Removes experimental properties from generated TypeScript type files.

@@ -35,6 +35,10 @@ fn typescript_schema_fixtures_match_generated() -> Result<()> {
         client_response.contains("method: \"turn/start\""),
         "ClientResponse.ts should contain the turn/start response variant"
     );
+    anyhow::ensure!(
+        !client_response.contains("method: \"environment/info\""),
+        "stable ClientResponse.ts should omit experimental response variants"
+    );
     let generated_index = String::from_utf8_lossy(
         generated_tree
             .get(Path::new("index.ts"))
@@ -43,6 +47,10 @@ fn typescript_schema_fixtures_match_generated() -> Result<()> {
     anyhow::ensure!(
         generated_index.contains("export type { ClientResponse } from \"./ClientResponse\";"),
         "generated index.ts should export ClientResponse"
+    );
+    anyhow::ensure!(
+        generated_tree.contains_key(Path::new("v2/McpServerRefreshParams.ts")),
+        "generated tree should contain the manually referenced McpServerRefreshParams type"
     );
 
     assert_schema_trees_match("typescript", &fixture_tree, &generated_tree)?;
