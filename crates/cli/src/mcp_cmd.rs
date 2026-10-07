@@ -21,7 +21,6 @@ use genex_core::plugins_manager_for_config;
 use genex_exec_server::EnvironmentManager;
 use genex_exec_server::HttpClient;
 use genex_exec_server::RouteAwareHttpClient;
-use genex_login::AuthManager;
 use genex_mcp::McpOAuthLoginSupport;
 use genex_mcp::McpRuntimeContext;
 use genex_mcp::apply_http_headers_helper;
@@ -625,10 +624,8 @@ async fn run_logout(config: &Config, logout_args: LogoutArgs) -> Result<()> {
 
 async fn run_list(config: &Config, list_args: ListArgs) -> Result<()> {
     let mcp_manager = load_mcp_manager(config).await?;
-    let auth_manager = AuthManager::shared_from_config(config, /*enable_api_key_env*/ true).await?;
-    let auth = auth_manager.auth().await;
     let mcp_servers = mcp_manager.configured_servers(config).await;
-    let effective_mcp_servers = mcp_manager.effective_servers(config, auth.as_ref()).await;
+    let effective_mcp_servers = mcp_manager.effective_servers(config).await;
 
     let mut entries: Vec<_> = mcp_servers.iter().collect();
     entries.sort_by_key(|(name, _)| *name);
@@ -644,7 +641,6 @@ async fn run_list(config: &Config, list_args: ListArgs) -> Result<()> {
         effective_mcp_servers.iter(),
         config.mcp_oauth_credentials_store_mode,
         config.auth_keyring_backend_kind(),
-        auth.as_ref(),
         &runtime_context,
     )
     .await;

@@ -11,7 +11,6 @@ const MCP_TOOL_THREAD_ID_META_KEY: &str = "threadId";
 
 #[derive(Clone)]
 pub(crate) struct McpRequestProcessor {
-    pub(super) auth_manager: Arc<AuthManager>,
     thread_manager: Arc<ThreadManager>,
     pub(super) outgoing: Arc<OutgoingMessageSender>,
     config_manager: ConfigManager,
@@ -20,14 +19,12 @@ pub(crate) struct McpRequestProcessor {
 
 impl McpRequestProcessor {
     pub(crate) fn new(
-        auth_manager: Arc<AuthManager>,
         thread_manager: Arc<ThreadManager>,
         thread_state_manager: ThreadStateManager,
         outgoing: Arc<OutgoingMessageSender>,
         config_manager: ConfigManager,
     ) -> Self {
         Self {
-            auth_manager,
             thread_manager,
             outgoing,
             config_manager,
@@ -141,7 +138,6 @@ impl McpRequestProcessor {
             McpServerOauthClientRegistration::Dcr => McpOAuthClientRegistration::Dcr,
         };
 
-        let auth = self.auth_manager.auth().await;
         let (mcp_config, runtime_context) = match thread_id.as_deref() {
             Some(thread_id) => {
                 let (_, thread) = self.load_thread(thread_id).await?;
@@ -163,7 +159,7 @@ impl McpRequestProcessor {
                 (mcp_config, runtime_context)
             }
         };
-        let effective_servers = genex_mcp::effective_mcp_servers(&mcp_config, auth.as_ref());
+        let effective_servers = genex_mcp::effective_mcp_servers(&mcp_config);
         let Some(server) = effective_servers.get(&name) else {
             return Err(invalid_request(format!(
                 "No MCP server named '{name}' found."
@@ -295,7 +291,6 @@ impl McpRequestProcessor {
             None => (self.load_latest_config(/*fallback_cwd*/ None).await?, None),
         };
         let mcp_manager = self.thread_manager.mcp_manager();
-        let auth = self.auth_manager.auth().await;
         let environment_manager = self.thread_manager.environment_manager();
 
         tokio::spawn(async move {
@@ -313,7 +308,6 @@ impl McpRequestProcessor {
                 request.request_id.to_string(),
                 params,
                 mcp_config,
-                auth,
                 runtime_context,
                 mcp_manager,
                 thread,
@@ -328,7 +322,6 @@ impl McpRequestProcessor {
         request_id: String,
         params: ListMcpServerStatusParams,
         mcp_config: genex_mcp::McpConfig,
-        auth: Option<GenexAuth>,
         runtime_context: McpRuntimeContext,
         mcp_manager: Arc<McpManager>,
         thread: Option<Arc<genex_core::GenexThread>>,
@@ -340,7 +333,6 @@ impl McpRequestProcessor {
 
         let snapshot = collect_mcp_server_status_snapshot_with_detail(
             &mcp_config,
-            auth.as_ref(),
             request_id,
             runtime_context,
             mcp_manager.tool_catalog_cache(),
@@ -458,7 +450,6 @@ impl McpRequestProcessor {
         let mcp_manager = self.thread_manager.mcp_manager();
         let mcp_config = mcp_manager.runtime_config(&config).await;
         let tool_catalog_cache = mcp_manager.tool_catalog_cache();
-        let auth = self.auth_manager.auth().await;
         let environment_manager = self.thread_manager.environment_manager();
         // This threadless resource-read path has no turn cwd or turn-selected
         // environment. Use config cwd only as the local stdio fallback; named
@@ -470,7 +461,6 @@ impl McpRequestProcessor {
         tokio::spawn(async move {
             let result = read_mcp_resource_without_thread(
                 &mcp_config,
-                auth.as_ref(),
                 runtime_context,
                 tool_catalog_cache,
                 &server,

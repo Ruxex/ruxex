@@ -545,3 +545,18 @@ artifacts form one reachable feature and are selected for `remove`. `genex-aws-a
 unrelated production consumer and is selected for `remove` with the feature. OpenAI endpoint
 wire/auth/model contracts, custom providers, generic model discovery, platform fallbacks, and
 security behavior are explicitly `retain` and must not be changed by this slice.
+
+### MCP/model-provider credential boundary (2026-10-08)
+
+The current MCP discovery and runtime paths receive `GenexAuth`/`AuthManager`
+values even where the effective MCP server projection ignores them. The active
+MCP credential consumers are the server's configured headers, environment
+variables, bearer-token variables, and MCP OAuth stores. The following cleanup
+is tracked separately from the ModelProvider credential redesign:
+
+| Area | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| Unused model-auth parameters in MCP discovery/status/resource helpers | `genex-mcp::effective_mcp_servers`, `compute_auth_statuses`, and threadless resource/status paths accept model auth, but MCP projection/status behavior consumes MCP config and MCP OAuth state instead. | `remove` | Cross-crate signature/caller audit; `just check --tests`; `just check` |
+| MCP-owned headers, bearer-token environment variables, OAuth credentials, and reconnect identity | `genex-config`, `genex-mcp`, `genex-rmcp-client`, CLI MCP login/logout, and app-server MCP processors produce/consume these active credentials and connection states. | `retain` | MCP OAuth/status/transport audit; `just check --tests`; `just check` |
+| Host `genex/auth-change` notification and `AuthChangeState` watcher | `genex-login` currently produces the watcher and `genex-mcp` forwards it to opt-in MCP servers. This is a host/model-auth propagation path, not an MCP credential store. | `remove` unless a current MCP-owned consumer is identified during implementation | Capability producer/consumer audit; `just check --tests`; `just check` |
+| `McpServerAuth::EmaAuth` | Config, CLI, app-server, and MCP startup/status paths recognize a host-account mode that is currently rejected at connection time. It must not silently reuse ModelProvider credentials. | `remove` or `migrate-in-place` after the explicit Task 4 audit | Config/protocol/runtime producer/consumer audit; `just generate` if schemas change; `just check --tests`; `just check` |

@@ -403,7 +403,6 @@ impl MessageProcessor {
             Arc::clone(&thread_manager),
         );
         let mcp_processor = McpRequestProcessor::new(
-            auth_manager.clone(),
             Arc::clone(&thread_manager),
             thread_state_manager.clone(),
             outgoing.clone(),

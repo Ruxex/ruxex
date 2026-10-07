@@ -1212,10 +1212,7 @@ impl Session {
             );
 
             let mcp_server_names =
-                genex_mcp::effective_mcp_servers(
-                    &mcp_projection.config,
-                    auth.as_ref(),
-                )
+                genex_mcp::effective_mcp_servers(&mcp_projection.config)
                     .into_iter()
                     .filter_map(|(name, server)| server.enabled().then_some(name))
                     .collect::<Vec<_>>();

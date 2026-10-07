@@ -24,7 +24,6 @@ use genex_config::McpServerConfig;
 use genex_config::types::AppToolApproval;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
-use genex_login::GenexAuth;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::mcp::McpServerInfo;
 use genex_protocol::mcp::Resource;
@@ -104,8 +103,8 @@ pub struct McpPermissionPromptAutoApproveContext {
 ///
 /// Each published runtime and prepared call owns one immutable copy of these
 /// settings, so its connection, approval policy, and sandbox authority cannot
-/// change independently. Auth remains separate and is supplied explicitly to
-/// runtime entry points such as [`effective_mcp_servers`].
+/// change independently. MCP credentials are resolved from this configuration
+/// and MCP-owned credential stores.
 #[derive(Debug, Clone)]
 pub struct McpConfig {
     /// Requests server-side read-only filtering and invocation checks for MCP tools.
@@ -275,9 +274,8 @@ pub fn configured_mcp_servers(config: &McpConfig) -> HashMap<String, McpServerCo
 
 pub fn effective_mcp_servers(
     config: &McpConfig,
-    auth: Option<&GenexAuth>,
 ) -> HashMap<String, EffectiveMcpServer> {
-    effective_mcp_servers_from_configured(configured_mcp_servers(config), config, auth)
+    effective_mcp_servers_from_configured(configured_mcp_servers(config), config)
 }
 
 /// Converts a materialized server map to its auth-gated runtime view.
@@ -287,7 +285,6 @@ pub fn effective_mcp_servers(
 pub fn effective_mcp_servers_from_configured(
     configured_servers: HashMap<String, McpServerConfig>,
     config: &McpConfig,
-    _auth: Option<&GenexAuth>,
 ) -> HashMap<String, EffectiveMcpServer> {
     let servers = configured_servers
         .into_iter()
@@ -311,13 +308,12 @@ pub fn tool_plugin_context(config: &McpConfig) -> ToolPluginContext {
 
 pub async fn read_mcp_resource(
     config: &McpConfig,
-    auth: Option<&GenexAuth>,
     runtime_context: McpRuntimeContext,
     tool_catalog_cache: crate::McpToolCatalogCache,
     server: &str,
     params: ReadResourceRequestParams,
 ) -> anyhow::Result<ReadResourceResult> {
-    let mut mcp_servers = effective_mcp_servers(config, auth);
+    let mut mcp_servers = effective_mcp_servers(config);
     mcp_servers.retain(|name, _| name == server);
     let cancel_token = CancellationToken::new();
     let runtime_config = config.for_threadless_operations(&mcp_servers);
@@ -336,7 +332,7 @@ pub async fn read_mcp_resource(
             runtime_context,
             tool_catalog_cache,
             client_mcp_extensions: ClientMcpExtensions::default(),
-            auth: auth.cloned(),
+            auth: None,
             auth_manager: None,
             allow_user_interaction: true,
             elicitation_reviewer: None,
@@ -365,13 +361,12 @@ pub struct McpServerStatusSnapshot {
 
 pub async fn collect_mcp_server_status_snapshot_with_detail(
     config: &McpConfig,
-    auth: Option<&GenexAuth>,
     submit_id: String,
     runtime_context: McpRuntimeContext,
     tool_catalog_cache: crate::McpToolCatalogCache,
     detail: McpSnapshotDetail,
 ) -> McpServerStatusSnapshot {
-    let mcp_servers = effective_mcp_servers(config, auth);
+    let mcp_servers = effective_mcp_servers(config);
     if mcp_servers.is_empty() {
         return McpServerStatusSnapshot {
             server_infos: HashMap::new(),
@@ -389,7 +384,6 @@ pub async fn collect_mcp_server_status_snapshot_with_detail(
         mcp_servers.iter(),
         config.mcp_oauth_credentials_store_mode,
         config.auth_keyring_backend_kind,
-        auth,
         &runtime_context,
     )
     .await;
@@ -413,7 +407,7 @@ pub async fn collect_mcp_server_status_snapshot_with_detail(
             runtime_context,
             tool_catalog_cache,
             client_mcp_extensions: ClientMcpExtensions::default(),
-            auth: auth.cloned(),
+            auth: None,
             auth_manager: None,
             allow_user_interaction: true,
             elicitation_reviewer: None,
@@ -558,6 +552,21 @@ fn convert_mcp_resource_templates(
             (name, templates)
         })
         .collect::<HashMap<_, _>>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::McpConfig;
+    use super::effective_mcp_servers;
+
+    #[test]
+    fn effective_servers_are_independent_of_model_auth() {
+        fn invoke(config: &McpConfig) {
+            let _ = effective_mcp_servers(config);
+        }
+
+        let _ = invoke as fn(&McpConfig);
+    }
 }
 
 async fn collect_mcp_server_status_snapshot_from_manager(
