@@ -1,12 +1,11 @@
 import { Link, Outlet } from "react-router-dom";
 
-import { useAppServerEventStore } from "../../app-server/event-store";
-import { useAppServerStatus, useModelList } from "../../app-server/queries";
+import { useAppServerEvents, useAppServerStatus, useModelList } from "../../app-server/hooks";
 
 export function AppLayout() {
   const appServer = useAppServerStatus();
   const models = useModelList();
-  const events = useAppServerEventStore();
+  const events = useAppServerEvents();
   const connectionLabel = appServer.isError
     ? "Error"
     : !appServer.isSuccess

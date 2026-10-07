@@ -7,13 +7,14 @@
     "dev": "vite",
     "check": "tsc --noEmit",
     "build": "vite build",
+    "test": "vitest run",
     "preview": "vite preview",
     "tauri": "tauri",
     "stage:runtime": "python3 scripts/stage-genex-package.py"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.8.0",
     "@tanstack/react-query": "^5.90.0",
+    "@tauri-apps/api": "^2.8.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.9.0"
@@ -28,6 +29,7 @@
     "daisyui": "^5.1.7",
     "tailwindcss": "^4.1.14",
     "typescript": "^5.9.3",
-    "vite": "^7.1.7"
+    "vite": "^7.1.7",
+    "vitest": "^5.0.3"
   }
 }
