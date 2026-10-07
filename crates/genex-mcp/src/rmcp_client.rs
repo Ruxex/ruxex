@@ -47,7 +47,6 @@ use genex_config::McpServerTransportConfig;
 use genex_config::types::AuthKeyringBackendKind;
 use genex_config::types::OAuthCredentialsStoreMode;
 use genex_exec_server::Environment;
-use genex_login::AuthChangeState;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::mcp::McpServerInfo;
 use genex_protocol::protocol::Event;
@@ -67,9 +66,7 @@ use rmcp::model::InitializeRequestParams;
 use rmcp::model::ProtocolVersion;
 use rmcp::model::ServerPeerInfo;
 use rmcp::model::Tool as RmcpTool;
-use tokio::sync::watch;
 use tokio_util::sync::CancellationToken;
-use tokio_util::task::AbortOnDropHandle;
 use tracing::Instrument;
 use tracing::instrument;
 use tracing::warn;
@@ -97,7 +94,6 @@ const UNTRUSTED_CONNECTOR_META_KEYS: &[&str] = &[
 
 #[derive(Clone)]
 pub(crate) struct ManagedClient {
-    pub(crate) _auth_change_notifications: Option<Arc<AbortOnDropHandle<()>>>,
     pub(crate) client: Arc<RmcpClient>,
     pub(crate) server_info: McpServerInfo,
     pub(crate) server_instructions: Option<String>,
@@ -131,7 +127,6 @@ struct ManagedClientStartup {
     resolved_environment: std::result::Result<Option<Arc<Environment>>, String>,
     client_elicitation_capability: ElicitationCapability,
     client_mcp_extensions: ClientMcpExtensions,
-    auth_changes: Option<watch::Receiver<AuthChangeState>>,
     protocol_mode: McpProtocolMode,
     catalog_item_limit: usize,
     cancel_token: CancellationToken,
@@ -159,7 +154,6 @@ impl ManagedClientStartup {
             resolved_environment,
             client_elicitation_capability,
             client_mcp_extensions,
-            auth_changes,
             protocol_mode,
             catalog_item_limit,
             cancel_token,
@@ -215,7 +209,6 @@ impl ManagedClientStartup {
                         tool_catalog_fetch_ticket,
                         client_elicitation_capability,
                         client_mcp_extensions,
-                        auth_changes,
                         catalog_item_limit,
                         server_capabilities,
                     },
@@ -271,7 +264,6 @@ impl AsyncManagedClient {
         resolved_environment: std::result::Result<Option<Arc<Environment>>, String>,
         client_elicitation_capability: ElicitationCapability,
         client_mcp_extensions: ClientMcpExtensions,
-        auth_changes: Option<watch::Receiver<AuthChangeState>>,
         protocol_mode: McpProtocolMode,
         catalog_item_limit: usize,
     ) -> Self {
@@ -291,7 +283,6 @@ impl AsyncManagedClient {
             resolved_environment,
             client_elicitation_capability,
             client_mcp_extensions,
-            auth_changes,
             protocol_mode,
             catalog_item_limit,
             cancel_token: cancel_token.clone(),
@@ -572,25 +563,13 @@ async fn start_server_task(
         tool_catalog_fetch_ticket,
         client_elicitation_capability,
         client_mcp_extensions,
-        auth_changes,
         catalog_item_limit,
         server_capabilities,
     } = params;
     let send_elicitation =
         elicitation_requests.make_sender(server_name.clone(), tx_event, &client_mcp_extensions);
-    let mut params =
+    let params =
         mcp_initialize_request_params(client_elicitation_capability, client_mcp_extensions);
-    if auth_changes.is_some() {
-        params
-            .capabilities
-            .experimental
-            .get_or_insert_default()
-            .insert(
-                crate::auth_changes::CAPABILITY.to_string(),
-                Default::default(),
-            );
-    }
-
     let started_at = Instant::now();
     let initialize_result = client
         .initialize(params, startup_timeout, send_elicitation)
@@ -601,14 +580,6 @@ async fn start_server_task(
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner) =
         Some(serde_json::json!(initialize_result.capabilities));
-
-    let auth_change_notifications = crate::auth_changes::start(
-        Arc::clone(&client),
-        &initialize_result.capabilities,
-        auth_changes,
-    )
-    .await
-    .map_err(StartupOutcomeError::from)?;
 
     let server_disables_tool_catalog_cache = initialize_result
         .capabilities
@@ -657,7 +628,6 @@ async fn start_server_task(
         );
     }
     let managed = ManagedClient {
-        _auth_change_notifications: auth_change_notifications,
         client: Arc::clone(&client),
         server_info,
         server_instructions,
@@ -750,7 +720,6 @@ struct StartServerTaskParams {
     tool_catalog_fetch_ticket: Option<McpToolCatalogFetchTicket>,
     client_elicitation_capability: ElicitationCapability,
     client_mcp_extensions: ClientMcpExtensions,
-    auth_changes: Option<watch::Receiver<AuthChangeState>>,
     catalog_item_limit: usize,
 }
 

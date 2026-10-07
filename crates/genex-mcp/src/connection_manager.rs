@@ -468,7 +468,6 @@ impl McpConnectionSet {
                 resolved_environment,
                 client_elicitation_capability.clone(),
                 client_mcp_extensions.clone(),
-                None,
                 protocol_mode,
                 catalog_item_limit,
             );

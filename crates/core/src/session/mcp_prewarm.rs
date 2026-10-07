@@ -16,13 +16,12 @@ impl Session {
     pub(super) fn start_mcp_prewarm_worker(
         self: &Arc<Self>,
         requests: async_channel::Receiver<()>,
-        mut auth_changes: tokio::sync::watch::Receiver<u64>,
     ) {
         let session = Arc::downgrade(self);
         let shutdown = self.mcp_prewarm_shutdown.clone();
         let worker = self.services.runtime_handle.spawn(async move {
             loop {
-                let auth_changed = tokio::select! {
+                tokio::select! {
                     biased;
                     _ = shutdown.cancelled() => break,
                     request = requests.recv() => {
@@ -31,19 +30,10 @@ impl Session {
                         }
                         false
                     },
-                    auth_change = auth_changes.changed() => {
-                        if auth_change.is_err() {
-                            break;
-                        }
-                        true
-                    },
                 };
                 let Some(session) = session.upgrade() else {
                     break;
                 };
-                if auth_changed {
-                    session.mark_mcp_runtime_dirty();
-                }
                 tokio::select! {
                     biased;
                     _ = shutdown.cancelled() => break,
@@ -73,5 +63,16 @@ impl Session {
         {
             warn!(%error, "MCP prewarm worker stopped unexpectedly");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn prewarm_worker_accepts_only_refresh_requests() {
+        let _worker: fn(&Arc<Session>, async_channel::Receiver<()>) =
+            Session::start_mcp_prewarm_worker;
     }
 }

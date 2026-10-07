@@ -1029,7 +1029,6 @@ impl Session {
             session_init.ephemeral = config.ephemeral,
         ));
 
-        let mut mcp_auth_changes = auth_manager.auth_change_receiver();
         let auth_manager_clone = Arc::clone(&auth_manager);
         let config_for_mcp = Arc::clone(&config);
         let mcp_manager_for_mcp = Arc::clone(&mcp_manager);
@@ -1669,34 +1668,6 @@ impl Session {
             }
             turn_environments.start_connection_event_forwarding(tx_event.clone());
 
-            let startup_auth_changed = mcp_auth_changes.has_changed().unwrap_or(false);
-            if startup_auth_changed {
-                mcp_auth_changes.mark_unchanged();
-            }
-            let mcp_projection = if startup_auth_changed
-                || mcp_auth_changes.has_changed().unwrap_or(false)
-            {
-                sess.services
-                    .mcp_manager
-                    .runtime_config_for_step(
-                        config.as_ref(),
-                        &sess.services.mcp_thread_init,
-                        &sess.services.thread_extension_data,
-                        McpThreadIdentity {
-                            session_source: &session_configuration.session_source,
-                            originator: &session_configuration.originator,
-                            disabled_plugin_ids: &session_configuration.disabled_plugin_ids,
-                            environments: McpEnvironmentScope::Live(
-                                &sess.services.turn_environments,
-                            ),
-                        },
-                        /*ready_selected_capability_roots*/ &[],
-                        /*executor_capability_discovery*/ None,
-                    )
-                    .await
-            } else {
-                mcp_projection
-            };
             sess.install_initial_mcp_runtime(
                 &session_configuration,
                 mcp_projection,
@@ -1704,7 +1675,7 @@ impl Session {
                 mcp_runtime_cwd,
             )
             .await?;
-            sess.start_mcp_prewarm_worker(mcp_prewarm_rx, mcp_auth_changes);
+            sess.start_mcp_prewarm_worker(mcp_prewarm_rx);
             sess.schedule_startup_prewarm(sess.get_prompt_base_instructions().await.text)
                 .await;
             let session_start_source = match &initial_history {

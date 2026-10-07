@@ -70,7 +70,6 @@ pub use mcp::McpPermissionPromptAutoApproveContext;
 pub use mcp::mcp_permission_prompt_is_auto_approved;
 pub use mcp::qualified_mcp_tool_name_prefix;
 
-mod auth_changes;
 mod binding;
 pub(crate) mod binding_clients;
 mod catalog;
