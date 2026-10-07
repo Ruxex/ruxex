@@ -11,6 +11,7 @@ use app_test_support::write_api_key_auth;
 use app_test_support::write_models_cache;
 use chrono::Duration as ChronoDuration;
 use chrono::Utc;
+use core_test_support::responses;
 use genex_app_server_protocol::Account;
 use genex_app_server_protocol::AccountLoginCompletedNotification;
 use genex_app_server_protocol::AccountUpdatedNotification;
@@ -30,6 +31,7 @@ use genex_app_server_protocol::JSONRPCNotification;
 use genex_app_server_protocol::JSONRPCResponse;
 use genex_app_server_protocol::LoginAccountResponse;
 use genex_app_server_protocol::LogoutAccountResponse;
+use genex_app_server_protocol::ProviderAuthStatus;
 use genex_app_server_protocol::RequestId;
 use genex_app_server_protocol::ServerNotification;
 use genex_app_server_protocol::ServerRequest;
@@ -44,7 +46,6 @@ use genex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
 use genex_login::load_auth_dot_json;
 use genex_login::login_with_api_key;
 use genex_protocol::account::PlanType as AccountPlanType;
-use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -395,20 +396,12 @@ async fn mount_disabled_attribution_settings(mock_server: &MockServer) {
 
 #[tokio::test]
 // 401 response triggers account/managedAuthTokens/refresh and retries with new tokens.
-
-
 #[tokio::test]
 // Client returns JSON-RPC error to refresh; turn fails.
-
-
 #[tokio::test]
 // Refresh returns tokens for the wrong workspace; turn fails.
-
-
 #[tokio::test]
 // Refresh returns a malformed access token; turn fails.
-
-
 #[tokio::test]
 async fn login_account_api_key_succeeds_and_notifies() -> Result<()> {
     let genex_home = TempDir::new()?;
@@ -525,7 +518,12 @@ async fn get_account_with_api_key() -> Result<()> {
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
     let expected = GetAccountResponse {
+        provider_id: "mock_provider".to_string(),
         account: Some(Account::ApiKey {}),
+        account_id: None,
+        display_name: None,
+        auth_status: ProviderAuthStatus::Authenticated,
+        usage: None,
         requires_auth: true,
     };
     assert_eq!(received, expected);
@@ -558,7 +556,12 @@ async fn get_account_when_auth_not_required() -> Result<()> {
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
     let expected = GetAccountResponse {
+        provider_id: "mock_provider".to_string(),
         account: None,
+        account_id: None,
+        display_name: None,
+        auth_status: ProviderAuthStatus::NotRequired,
+        usage: None,
         requires_auth: false,
     };
     assert_eq!(received, expected);
@@ -581,7 +584,12 @@ async fn account_reads_use_startup_config_when_config_reload_fails() -> Result<(
     assert_eq!(
         read_account(&mut mcp).await?,
         GetAccountResponse {
+            provider_id: "mock_provider".to_string(),
             account: None,
+            account_id: None,
+            display_name: None,
+            auth_status: ProviderAuthStatus::NotRequired,
+            usage: None,
             requires_auth: false,
         }
     );

@@ -811,6 +811,7 @@ mod tests {
     use genex_app_server_protocol::JSONRPCMessage;
     use genex_app_server_protocol::JSONRPCRequest;
     use genex_app_server_protocol::JSONRPCResponse;
+    use genex_app_server_protocol::ProviderAuthStatus;
     use genex_app_server_protocol::ServerNotification;
     use genex_app_server_protocol::SessionSource as ApiSessionSource;
     use genex_app_server_protocol::ThreadStartParams;
@@ -1262,7 +1263,12 @@ mod tests {
                 JSONRPCMessage::Response(JSONRPCResponse {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
+                        provider_id: "mock_provider".to_string(),
                         account: None,
+                        account_id: None,
+                        display_name: None,
+                        auth_status: ProviderAuthStatus::NotRequired,
+                        usage: None,
                         requires_auth: false,
                     })
                     .expect("response should serialize"),
@@ -1316,7 +1322,12 @@ mod tests {
                 JSONRPCMessage::Response(JSONRPCResponse {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
+                        provider_id: "mock_provider".to_string(),
                         account: None,
+                        account_id: None,
+                        display_name: None,
+                        auth_status: ProviderAuthStatus::NotRequired,
+                        usage: None,
                         requires_auth: false,
                     })
                     .expect("response should serialize"),
@@ -1391,7 +1402,12 @@ mod tests {
         assert_eq!(
             response,
             GetAccountResponse {
+                provider_id: "mock_provider".to_string(),
                 account: None,
+                account_id: None,
+                display_name: None,
+                auth_status: ProviderAuthStatus::NotRequired,
+                usage: None,
                 requires_auth: false,
             }
         );
@@ -1492,7 +1508,12 @@ mod tests {
                 JSONRPCMessage::Response(JSONRPCResponse {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
+                        provider_id: "mock_provider".to_string(),
                         account: None,
+                        account_id: None,
+                        display_name: None,
+                        auth_status: ProviderAuthStatus::NotRequired,
+                        usage: None,
                         requires_auth: false,
                     })
                     .expect("response should serialize"),
@@ -1545,7 +1566,12 @@ mod tests {
         assert_eq!(
             first_response,
             GetAccountResponse {
+                provider_id: "mock_provider".to_string(),
                 account: None,
+                account_id: None,
+                display_name: None,
+                auth_status: ProviderAuthStatus::NotRequired,
+                usage: None,
                 requires_auth: false,
             }
         );

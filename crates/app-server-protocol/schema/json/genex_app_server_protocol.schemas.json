@@ -9448,11 +9448,41 @@
               }
             ]
           },
+          "accountId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "authStatus": {
+            "$ref": "#/definitions/v2/ProviderAuthStatus"
+          },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "providerId": {
+            "type": "string"
+          },
           "requiresAuth": {
             "type": "boolean"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/v2/RateLimitSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
+          "authStatus",
+          "providerId",
           "requiresAuth"
         ],
         "title": "GetAccountResponse",
@@ -12990,6 +13020,39 @@
           "recencyAt"
         ],
         "type": "string"
+      },
+      "ProviderAuthStatus": {
+        "description": "Authentication state for the currently selected model provider.",
+        "oneOf": [
+          {
+            "description": "The provider has usable credentials.",
+            "enum": [
+              "authenticated"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "The provider requires credentials, but none are currently available.",
+            "enum": [
+              "unauthenticated"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "The provider does not require authentication.",
+            "enum": [
+              "notRequired"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "Provider configuration or credentials are invalid.",
+            "enum": [
+              "invalid"
+            ],
+            "type": "string"
+          }
+        ]
       },
       "QueuedSubmission": {
         "properties": {

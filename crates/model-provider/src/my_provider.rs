@@ -16,6 +16,7 @@ use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_protocol::account::ProviderAccount;
+use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::error::Result as CoreResult;
 use http::HeaderMap;
 use http::HeaderValue;
@@ -147,19 +148,18 @@ impl ModelProvider for MyModelProvider {
     }
 
     fn account_state(&self) -> ProviderAccountResult {
-        let account = if self.info.requires_auth {
+        let auth = self
+            .auth_manager
+            .as_ref()
+            .and_then(|auth_manager| cached_provider_auth(auth_manager, self.provider_id()));
+        let auth_invalid = auth.as_ref().is_some_and(|auth| {
             self.auth_manager
                 .as_ref()
-                .and_then(|auth_manager| {
-                    let auth = cached_provider_auth(auth_manager, self.provider_id())?;
-                    if auth_manager.refresh_failure_for_auth(&auth).is_some() {
-                        return None;
-                    }
-                    if matches!(auth, GenexAuth::Headers(_)) {
-                        return None;
-                    }
-                    Some(auth)
-                })
+                .is_some_and(|auth_manager| auth_manager.refresh_failure_for_auth(auth).is_some())
+        });
+        let account = if self.info.requires_auth {
+            auth.filter(|_| !auth_invalid)
+                .filter(|auth| !matches!(auth, GenexAuth::Headers(_)))
                 .map(|auth| match &auth {
                     GenexAuth::ApiKey(_) => Ok(ProviderAccount::ApiKey),
                     GenexAuth::Headers(_) => Ok(ProviderAccount::ApiKey),
@@ -169,8 +169,31 @@ impl ModelProvider for MyModelProvider {
             None
         };
 
+        let auth_status = if self.info.requires_auth {
+            if auth_invalid {
+                ProviderAuthStatus::Invalid
+            } else if account.is_some() {
+                ProviderAuthStatus::Authenticated
+            } else {
+                ProviderAuthStatus::Unauthenticated
+            }
+        } else {
+            ProviderAuthStatus::NotRequired
+        };
+
         Ok(ProviderAccountState {
+            provider_id: self
+                .provider_id()
+                .unwrap_or(self.info.name.as_str())
+                .to_string(),
             account,
+            account_id: self.auth_manager.as_ref().and_then(|auth_manager| {
+                cached_provider_auth(auth_manager, self.provider_id())
+                    .and_then(|auth| auth.get_account_id())
+            }),
+            display_name: None,
+            auth_status,
+            usage: None,
             requires_auth: self.info.requires_auth,
         })
     }
@@ -272,7 +295,12 @@ mod tests {
         assert_eq!(
             provider.account_state(),
             Ok(ProviderAccountState {
+                provider_id: "My Provider".to_string(),
                 account: None,
+                account_id: None,
+                display_name: None,
+                auth_status: ProviderAuthStatus::Unauthenticated,
+                usage: None,
                 requires_auth: true,
             })
         );
@@ -290,7 +318,12 @@ mod tests {
         assert_eq!(
             provider.account_state(),
             Ok(ProviderAccountState {
+                provider_id: "My Provider".to_string(),
                 account: Some(ProviderAccount::ApiKey),
+                account_id: None,
+                display_name: None,
+                auth_status: ProviderAuthStatus::Authenticated,
+                usage: None,
                 requires_auth: true,
             })
         );
@@ -307,7 +340,12 @@ mod tests {
         assert_eq!(
             provider.account_state(),
             Ok(ProviderAccountState {
+                provider_id: "My Provider".to_string(),
                 account: None,
+                account_id: None,
+                display_name: None,
+                auth_status: ProviderAuthStatus::NotRequired,
+                usage: None,
                 requires_auth: false,
             })
         );

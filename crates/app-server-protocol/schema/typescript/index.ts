@@ -39,6 +39,7 @@ export type { ModeKind } from "./ModeKind";
 export type { MultiAgentMode } from "./MultiAgentMode";
 export type { PathUri } from "./PathUri";
 export type { PlanType } from "./PlanType";
+export type { ProviderAuthStatus } from "./ProviderAuthStatus";
 export type { ReasoningEffort } from "./ReasoningEffort";
 export type { ReasoningItemContent } from "./ReasoningItemContent";
 export type { ReasoningItemReasoningSummary } from "./ReasoningItemReasoningSummary";

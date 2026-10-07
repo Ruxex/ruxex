@@ -16,6 +16,7 @@ use genex_model_provider_info::CLOUDFLARE_ACCOUNT_ID_ENV_VAR;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_models_manager::model_info::model_info_template_from_slug;
+use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::error::EnvVarError;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
@@ -194,7 +195,15 @@ impl ModelProvider for CloudflareModelProvider {
 
     fn account_state(&self) -> ProviderAccountResult {
         Ok(ProviderAccountState {
+            provider_id: self
+                .provider_id()
+                .unwrap_or(self.info.name.as_str())
+                .to_string(),
             account: None,
+            account_id: None,
+            display_name: None,
+            auth_status: ProviderAuthStatus::NotRequired,
+            usage: None,
             requires_auth: false,
         })
     }

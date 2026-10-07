@@ -97,8 +97,23 @@ impl AccountRequestProcessor {
         let account_state = provider
             .account_state()
             .map_err(|err| invalid_request(err.to_string()))?;
+        let usage = provider
+            .usage()
+            .await
+            .map_err(|err| invalid_request(err.to_string()))?;
+        let usage = match usage {
+            genex_model_provider::ProviderUsage::Unsupported => None,
+            genex_model_provider::ProviderUsage::Available(snapshot) => {
+                Some(genex_app_server_protocol::RateLimitSnapshot::from(snapshot))
+            }
+        };
         Ok(GetAccountResponse {
+            provider_id: account_state.provider_id,
             account: account_state.account.map(Account::from),
+            account_id: account_state.account_id,
+            display_name: account_state.display_name,
+            auth_status: account_state.auth_status,
+            usage,
             requires_auth: account_state.requires_auth,
         })
     }

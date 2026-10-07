@@ -4,6 +4,7 @@ use crate::protocol::common::AuthMode;
 use genex_experimental_api_macros::ExperimentalApi;
 use genex_protocol::account::PlanType;
 use genex_protocol::account::ProviderAccount;
+pub use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::protocol::CreditsSnapshot as CoreCreditsSnapshot;
 use genex_protocol::protocol::RateLimitReachedType as CoreRateLimitReachedType;
 use genex_protocol::protocol::RateLimitSnapshot as CoreRateLimitSnapshot;
@@ -170,7 +171,12 @@ pub struct GetAccountParams {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct GetAccountResponse {
+    pub provider_id: String,
     pub account: Option<Account>,
+    pub account_id: Option<String>,
+    pub display_name: Option<String>,
+    pub auth_status: ProviderAuthStatus,
+    pub usage: Option<RateLimitSnapshot>,
     pub requires_auth: bool,
 }
 

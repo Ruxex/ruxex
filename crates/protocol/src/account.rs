@@ -49,6 +49,21 @@ pub enum ProviderAccount {
     ApiKey,
 }
 
+/// Authentication state for the currently selected model provider.
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum ProviderAuthStatus {
+    /// The provider has usable credentials.
+    Authenticated,
+    /// The provider requires credentials, but none are currently available.
+    Unauthenticated,
+    /// The provider does not require authentication.
+    NotRequired,
+    /// Provider configuration or credentials are invalid.
+    Invalid,
+}
+
 impl PlanType {
     pub fn is_team_like(self) -> bool {
         matches!(
@@ -115,9 +130,26 @@ impl From<KnownPlan> for PlanType {
 #[cfg(test)]
 mod tests {
     use super::PlanType;
+    use super::ProviderAuthStatus;
     use crate::auth::KnownPlan;
     use crate::auth::PlanType as AuthPlanType;
     use pretty_assertions::assert_eq;
+
+    #[test]
+    fn provider_auth_status_uses_provider_neutral_wire_values() {
+        assert_eq!(
+            serde_json::to_string(&ProviderAuthStatus::Authenticated).unwrap(),
+            "\"authenticated\""
+        );
+        assert_eq!(
+            serde_json::to_string(&ProviderAuthStatus::NotRequired).unwrap(),
+            "\"notRequired\""
+        );
+        assert_eq!(
+            serde_json::to_string(&ProviderAuthStatus::Invalid).unwrap(),
+            "\"invalid\""
+        );
+    }
 
     #[test]
     fn business_plan_types_use_expected_wire_names() {

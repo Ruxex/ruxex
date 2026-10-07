@@ -42,6 +42,8 @@ pub use provider::ProviderApi;
 pub use provider::ProviderAuthRecoveryMessages;
 pub use provider::ProviderCapabilities;
 pub use provider::ProviderUnauthorizedRecovery;
+pub use provider::ProviderUsage;
+pub use provider::ProviderUsageResult;
 pub use provider::RemoteCompactionSupport;
 pub use provider::SharedModelProvider;
 pub use provider::create_model_provider;
