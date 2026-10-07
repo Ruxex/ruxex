@@ -360,7 +360,6 @@ impl MessageProcessor {
         );
         let on_effective_plugins_changed =
             crate::effective_plugin_change::effective_plugins_changed_callback(
-                auth_manager.clone(),
                 Arc::clone(&thread_manager),
                 config_manager.clone(),
                 config_processor.clone(),
