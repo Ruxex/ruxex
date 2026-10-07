@@ -5,6 +5,28 @@
       "description": "A path that is guaranteed to be absolute and normalized (though it is not guaranteed to be canonicalized or exist on the filesystem).\n\nIMPORTANT: When deserializing an `AbsolutePathBuf`, a base path must be set using [AbsolutePathBufGuard::new]. If no base path is set, the deserialization will fail unless the path being deserialized is already absolute.",
       "type": "string"
     },
+    "AccountDeleteParams": {
+      "properties": {
+        "providerId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "providerId"
+      ],
+      "type": "object"
+    },
+    "AccountSwitchParams": {
+      "properties": {
+        "providerId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "providerId"
+      ],
+      "type": "object"
+    },
     "AdditionalContextEntry": {
       "properties": {
         "kind": {
@@ -1562,6 +1584,13 @@
           "properties": {
             "apiKey": {
               "type": "string"
+            },
+            "providerId": {
+              "description": "Optional configured model provider ID. When omitted, the active configured provider is used.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "type": {
               "enum": [
@@ -6608,6 +6637,54 @@
         "method"
       ],
       "title": "Account/logoutRequest",
+      "type": "object"
+    },
+    {
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/RequestId"
+        },
+        "method": {
+          "enum": [
+            "account/switch"
+          ],
+          "title": "Account/switchRequestMethod",
+          "type": "string"
+        },
+        "params": {
+          "$ref": "#/definitions/AccountSwitchParams"
+        }
+      },
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "title": "Account/switchRequest",
+      "type": "object"
+    },
+    {
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/RequestId"
+        },
+        "method": {
+          "enum": [
+            "account/delete"
+          ],
+          "title": "Account/deleteRequestMethod",
+          "type": "string"
+        },
+        "params": {
+          "$ref": "#/definitions/AccountDeleteParams"
+        }
+      },
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "title": "Account/deleteRequest",
       "type": "object"
     },
     {

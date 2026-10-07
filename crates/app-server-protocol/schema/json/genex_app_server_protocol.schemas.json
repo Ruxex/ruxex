@@ -1766,6 +1766,54 @@
           "type": "object"
         },
         {
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/v2/RequestId"
+            },
+            "method": {
+              "enum": [
+                "account/switch"
+              ],
+              "title": "Account/switchRequestMethod",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/definitions/v2/AccountSwitchParams"
+            }
+          },
+          "required": [
+            "id",
+            "method",
+            "params"
+          ],
+          "title": "Account/switchRequest",
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/v2/RequestId"
+            },
+            "method": {
+              "enum": [
+                "account/delete"
+              ],
+              "title": "Account/deleteRequestMethod",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/definitions/v2/AccountDeleteParams"
+            }
+          },
+          "required": [
+            "id",
+            "method",
+            "params"
+          ],
+          "title": "Account/deleteRequest",
+          "type": "object"
+        },
+        {
           "description": "Execute a standalone command (argv vector) under the server's sandbox.",
           "properties": {
             "id": {
@@ -5436,6 +5484,32 @@
           }
         ]
       },
+      "AccountDeleteParams": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "providerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "providerId"
+        ],
+        "title": "AccountDeleteParams",
+        "type": "object"
+      },
+      "AccountDeleteResponse": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "title": "AccountDeleteResponse",
+        "type": "object"
+      },
       "AccountLoginCompletedNotification": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
@@ -5483,6 +5557,24 @@
           "rateLimits"
         ],
         "title": "AccountRateLimitsUpdatedNotification",
+        "type": "object"
+      },
+      "AccountSwitchParams": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "providerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "providerId"
+        ],
+        "title": "AccountSwitchParams",
+        "type": "object"
+      },
+      "AccountSwitchResponse": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "AccountSwitchResponse",
         "type": "object"
       },
       "AccountUpdatedNotification": {
@@ -10271,6 +10363,13 @@
             "properties": {
               "apiKey": {
                 "type": "string"
+              },
+              "providerId": {
+                "description": "Optional configured model provider ID. When omitted, the active configured provider is used.",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "type": {
                 "enum": [

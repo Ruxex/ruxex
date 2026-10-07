@@ -1466,6 +1466,16 @@ impl MessageProcessor {
                     .logout_account(request_id.clone())
                     .await
             }
+            ClientRequest::AccountSwitch { params, .. } => {
+                self.account_processor
+                    .switch_account(request_id.clone(), params)
+                    .await
+            }
+            ClientRequest::AccountDelete { params, .. } => {
+                self.account_processor
+                    .delete_account(request_id.clone(), params)
+                    .await
+            }
             ClientRequest::CancelLoginAccount { params, .. } => {
                 self.account_processor.cancel_login_account(params).await
             }

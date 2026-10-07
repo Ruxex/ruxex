@@ -205,8 +205,7 @@ impl AuthDotJson {
         }
     }
 
-    #[cfg(test)]
-    pub(crate) fn selection_configured(&self) -> bool {
+    pub fn selection_configured(&self) -> bool {
         self.selection_configured
     }
 

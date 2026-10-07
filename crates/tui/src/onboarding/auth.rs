@@ -522,6 +522,7 @@ impl AuthModeWidget {
                     request_id: onboarding_request_id(),
                     params: LoginAccountParams::ApiKey {
                         api_key: api_key.clone(),
+                        provider_id: None,
                     },
                 })
                 .await

@@ -1014,6 +1014,18 @@ client_request_definitions! {
         response: v2::LogoutAccountResponse,
     },
 
+    AccountSwitch => "account/switch" {
+        params: v2::AccountSwitchParams,
+        serialization: global("account-auth"),
+        response: v2::AccountSwitchResponse,
+    },
+
+    AccountDelete => "account/delete" {
+        params: v2::AccountDeleteParams,
+        serialization: global("account-auth"),
+        response: v2::AccountDeleteResponse,
+    },
+
     /// Execute a standalone command (argv vector) under the server's sandbox.
     OneOffCommandExec => "command/exec" {
         params: v2::CommandExecParams,
@@ -2625,6 +2637,7 @@ mod tests {
             request_id: RequestId::Integer(2),
             params: v2::LoginAccountParams::ApiKey {
                 api_key: "secret".to_string(),
+                provider_id: None,
             },
         };
         assert_eq!(

@@ -6,6 +6,13 @@
         "apiKey": {
           "type": "string"
         },
+        "providerId": {
+          "description": "Optional configured model provider ID. When omitted, the active configured provider is used.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "type": {
           "enum": [
             "apiKey"

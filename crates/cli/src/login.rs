@@ -1,48 +1,67 @@
 //! CLI authentication status and logout commands.
 
 use genex_core::config::Config;
-use genex_login::logout;
-use genex_protocol::auth::AuthMode;
+use genex_login::AuthManager;
+use genex_login::list_provider_ids;
 use genex_utils_cli::CliConfigOverrides;
+use std::sync::Arc;
+
+async fn load_cli_auth_manager(config: &Config) -> anyhow::Result<Arc<AuthManager>> {
+    Ok(AuthManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
+}
 
 pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-
-    let auth_config = config.auth_config();
-    match auth_config.load_auth(/*enable_api_key_env*/ false).await {
-        Ok(Some(auth)) => match auth.auth_mode() {
-            AuthMode::ApiKey => match auth.get_token() {
-                Ok(api_key) => {
-                    eprintln!("Logged in using an API key - {}", safe_format_key(&api_key));
-                    std::process::exit(0);
-                }
-                Err(e) => {
-                    eprintln!("Unexpected error retrieving API key: {e}");
-                    std::process::exit(1);
-                }
-            },
-            AuthMode::Headers => {
-                unreachable!("header auth cannot be loaded from auth storage")
-            }
-        },
-        Ok(None) => {
-            eprintln!("Not logged in");
-            std::process::exit(1);
-        }
+    let manager = match load_cli_auth_manager(&config).await {
+        Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error checking login status: {err}");
             std::process::exit(1);
         }
+    };
+    let auth_config = config.auth_config();
+    let stored_provider_ids = match list_provider_ids(
+        &auth_config.genex_home,
+        auth_config.auth_credentials_store_mode,
+        auth_config.keyring_backend_kind,
+    ) {
+        Ok(provider_ids) => provider_ids,
+        Err(err) => {
+            eprintln!("Error checking stored provider credentials: {err}");
+            std::process::exit(1);
+        }
+    };
+    let active_provider_id = manager.active_provider_id();
+    let mut has_active_provider = false;
+    for (provider_id, provider) in &config.model_providers {
+        let state = if active_provider_id.as_deref() == Some(provider_id) {
+            has_active_provider = true;
+            "active"
+        } else if !provider.requires_auth {
+            "available"
+        } else if stored_provider_ids.iter().any(|id| id == provider_id) {
+            "authenticated"
+        } else {
+            "not authenticated"
+        };
+        eprintln!("{provider_id}: {state}");
     }
+    if !has_active_provider {
+        eprintln!("No active model provider");
+    }
+    std::process::exit(if has_active_provider { 0 } else { 1 });
 }
 
 pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let logged_out = match logout(
-        &config.genex_home,
-        config.cli_auth_credentials_store_mode,
-        config.auth_keyring_backend_kind(),
-    ) {
+    let manager = match load_cli_auth_manager(&config).await {
+        Ok(manager) => manager,
+        Err(err) => {
+            eprintln!("Error logging out: {err}");
+            std::process::exit(1);
+        }
+    };
+    let logged_out = match manager.logout().await {
         Ok(logged_out) => logged_out,
         Err(err) => {
             eprintln!("Error logging out: {err}");
@@ -54,6 +73,45 @@ pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
         eprintln!("Successfully logged out");
     } else {
         eprintln!("Not logged in");
+    }
+    std::process::exit(0);
+}
+
+pub async fn run_login_switch(cli_config_overrides: CliConfigOverrides, provider_id: String) -> ! {
+    let config = load_config_or_exit(cli_config_overrides).await;
+    let manager = match load_cli_auth_manager(&config).await {
+        Ok(manager) => manager,
+        Err(err) => {
+            eprintln!("Error loading credentials: {err}");
+            std::process::exit(1);
+        }
+    };
+    match config.switch_model_provider(&manager, &provider_id).await {
+        Ok(_) => eprintln!("Switched to model provider `{provider_id}`"),
+        Err(err) => {
+            eprintln!("Error switching model provider: {err}");
+            std::process::exit(1);
+        }
+    }
+    std::process::exit(0);
+}
+
+pub async fn run_login_delete(cli_config_overrides: CliConfigOverrides, provider_id: String) -> ! {
+    let config = load_config_or_exit(cli_config_overrides).await;
+    let manager = match load_cli_auth_manager(&config).await {
+        Ok(manager) => manager,
+        Err(err) => {
+            eprintln!("Error loading credentials: {err}");
+            std::process::exit(1);
+        }
+    };
+    match manager.delete(&provider_id).await {
+        Ok(true) => eprintln!("Deleted credentials for model provider `{provider_id}`"),
+        Ok(false) => eprintln!("No stored credentials for model provider `{provider_id}`"),
+        Err(err) => {
+            eprintln!("Error deleting provider credentials: {err}");
+            std::process::exit(1);
+        }
     }
     std::process::exit(0);
 }

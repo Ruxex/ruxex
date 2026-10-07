@@ -34,6 +34,7 @@ pub(crate) struct ModelProviderRequirementsChanged;
 pub(crate) struct ConfigManager {
     genex_home: PathBuf,
     cli_overrides: Arc<RwLock<Vec<(String, TomlValue)>>>,
+    active_model_provider_id: Arc<RwLock<Option<String>>>,
     runtime_feature_enablement: Arc<RwLock<BTreeMap<String, bool>>>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
@@ -53,6 +54,7 @@ impl ConfigManager {
         Self {
             genex_home,
             cli_overrides: Arc::new(RwLock::new(cli_overrides)),
+            active_model_provider_id: Arc::new(RwLock::new(None)),
             runtime_feature_enablement: Arc::new(RwLock::new(BTreeMap::new())),
             loader_overrides,
             strict_config,
@@ -74,6 +76,14 @@ impl ConfigManager {
             .read()
             .map(|guard| guard.clone())
             .unwrap_or_default()
+    }
+
+    /// Applies the provider selected by the credential manager to subsequently
+    /// loaded configs without writing a user config file.
+    pub(crate) fn set_active_model_provider_id(&self, provider_id: Option<String>) {
+        if let Ok(mut active_provider_id) = self.active_model_provider_id.write() {
+            *active_provider_id = provider_id;
+        }
     }
 
     pub(crate) fn extend_runtime_feature_enablement<I>(&self, enablement: I) -> Result<(), ()>
@@ -133,6 +143,7 @@ impl ConfigManager {
         .await?;
         self.apply_runtime_feature_enablement(&mut config);
         self.apply_arg0_paths(&mut config);
+        self.apply_active_model_provider(&mut config);
         Ok(config)
     }
 
@@ -186,6 +197,7 @@ impl ConfigManager {
             .await?;
         self.apply_runtime_feature_enablement(&mut config);
         self.apply_arg0_paths(&mut config);
+        self.apply_active_model_provider(&mut config);
         Ok(config)
     }
 
@@ -295,6 +307,7 @@ impl ConfigManager {
             .await?;
         self.apply_runtime_feature_enablement(&mut config);
         self.apply_arg0_paths(&mut config);
+        self.apply_active_model_provider(&mut config);
         Ok(config)
     }
 
@@ -325,6 +338,23 @@ impl ConfigManager {
 
     fn apply_runtime_feature_enablement(&self, config: &mut Config) {
         apply_runtime_feature_enablement(config, &self.current_runtime_feature_enablement());
+    }
+
+    fn apply_active_model_provider(&self, config: &mut Config) {
+        let Some(provider_id) = self
+            .active_model_provider_id
+            .read()
+            .ok()
+            .and_then(|provider_id| provider_id.clone())
+        else {
+            return;
+        };
+        let Some(provider) = config.model_providers.get(&provider_id).cloned() else {
+            warn!(provider_id, "active model provider is not configured");
+            return;
+        };
+        config.model_provider_id = provider_id;
+        config.model_provider = provider;
     }
 
     fn current_runtime_feature_enablement(&self) -> BTreeMap<String, bool> {

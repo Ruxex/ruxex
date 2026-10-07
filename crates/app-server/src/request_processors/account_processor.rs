@@ -2,7 +2,12 @@ use super::*;
 use crate::auth_mode::auth_mode_to_api;
 use crate::outgoing_message::AccountNotification;
 use genex_app_server_protocol::Account;
+use genex_app_server_protocol::AccountDeleteParams;
+use genex_app_server_protocol::AccountDeleteResponse;
+use genex_app_server_protocol::AccountSwitchParams;
+use genex_app_server_protocol::AccountSwitchResponse;
 use genex_app_server_protocol::GetAccountResponse;
+use genex_login::ProviderAuth;
 use genex_model_provider::create_model_provider_for_id;
 
 enum RefreshTokenRequestOutcome {
@@ -59,6 +64,36 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
         self.logout_v2(request_id).await.map(|()| None)
+    }
+
+    pub(crate) async fn switch_account(
+        &self,
+        request_id: ConnectionRequestId,
+        params: AccountSwitchParams,
+    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
+        let result = self.switch_account_common(&params.provider_id).await;
+        self.outgoing.send_result(request_id, result).await;
+        Ok(None)
+    }
+
+    pub(crate) async fn delete_account(
+        &self,
+        request_id: ConnectionRequestId,
+        params: AccountDeleteParams,
+    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
+        let result = self
+            .auth_manager
+            .delete(&params.provider_id)
+            .await
+            .map(|deleted| {
+                if self.auth_manager.active_provider_id().is_none() {
+                    self.config_manager.set_active_model_provider_id(None);
+                }
+                AccountDeleteResponse { deleted }
+            })
+            .map_err(|err| internal_error(format!("failed to delete provider credentials: {err}")));
+        self.outgoing.send_result(request_id, result).await;
+        Ok(None)
     }
 
     pub(crate) async fn cancel_login_account(
@@ -189,8 +224,11 @@ impl AccountRequestProcessor {
         params: LoginAccountParams,
     ) -> Result<(), JSONRPCErrorError> {
         match params {
-            LoginAccountParams::ApiKey { api_key } => {
-                self.login_api_key_v2(request_id, LoginApiKeyParams { api_key })
+            LoginAccountParams::ApiKey {
+                api_key,
+                provider_id,
+            } => {
+                self.login_api_key_v2(request_id, api_key, provider_id)
                     .await;
             }
         }
@@ -205,7 +243,8 @@ impl AccountRequestProcessor {
 
     async fn login_api_key_common(
         &self,
-        params: &LoginApiKeyParams,
+        api_key: &str,
+        provider_id: Option<&str>,
     ) -> std::result::Result<(), JSONRPCErrorError> {
         if self.auth_manager.has_external_auth() {
             return Err(self.external_auth_active_error());
@@ -220,32 +259,62 @@ impl AccountRequestProcessor {
             ));
         }
 
-        match login_with_api_key(
-            &self.config.genex_home,
-            &params.api_key,
-            self.config.cli_auth_credentials_store_mode,
-            self.config.auth_keyring_backend_kind(),
-        ) {
-            Ok(()) => {
-                self.auth_manager.reload().await;
-                Ok(())
-            }
-            Err(err) => Err(internal_error(format!("failed to save api key: {err}"))),
+        let provider_id = provider_id
+            .as_deref()
+            .unwrap_or(self.config.model_provider_id.as_str());
+        if !self.config.model_providers.contains_key(provider_id) {
+            return Err(invalid_request(format!(
+                "model provider `{provider_id}` is not configured"
+            )));
         }
+        self.auth_manager
+            .login(provider_id, ProviderAuth::api_key(api_key))
+            .await
+            .map_err(|err| internal_error(format!("failed to save api key: {err}")))
     }
 
-    async fn login_api_key_v2(&self, request_id: ConnectionRequestId, params: LoginApiKeyParams) {
+    async fn login_api_key_v2(
+        &self,
+        request_id: ConnectionRequestId,
+        api_key: String,
+        provider_id: Option<String>,
+    ) {
         let result = self
-            .login_api_key_common(&params)
+            .login_api_key_common(&api_key, provider_id.as_deref())
             .await
             .map(|()| LoginAccountResponse::ApiKey {});
         let logged_in = result.is_ok();
         self.outgoing.send_result(request_id, result).await;
 
         if logged_in {
+            self.config_manager
+                .set_active_model_provider_id(self.auth_manager.active_provider_id());
             self.send_login_success_notifications(/*login_id*/ None)
                 .await;
         }
+    }
+
+    async fn switch_account_common(
+        &self,
+        provider_id: &str,
+    ) -> Result<AccountSwitchResponse, JSONRPCErrorError> {
+        if !self.config.model_providers.contains_key(provider_id) {
+            return Err(invalid_request(format!(
+                "model provider `{provider_id}` is not configured"
+            )));
+        }
+        let config = self
+            .config_manager
+            .load_latest_config(/*fallback_cwd*/ None)
+            .await
+            .map_err(|err| internal_error(format!("failed to load model providers: {err}")))?;
+        config
+            .switch_model_provider(&self.auth_manager, provider_id)
+            .await
+            .map_err(|err| invalid_request(format!("cannot switch model provider: {err}")))?;
+        self.config_manager
+            .set_active_model_provider_id(Some(provider_id.to_string()));
+        Ok(AccountSwitchResponse {})
     }
 
     async fn cancel_login_response(
@@ -322,6 +391,7 @@ impl AccountRequestProcessor {
                 return Err(internal_error(format!("logout failed: {err}")));
             }
         }
+        self.config_manager.set_active_model_provider_id(None);
 
         Self::maybe_refresh_plugin_caches_for_current_config(
             &self.config_manager,

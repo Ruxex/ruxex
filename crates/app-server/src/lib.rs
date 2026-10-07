@@ -517,7 +517,7 @@ pub async fn run_main_with_transport_options(
     };
     let mut config_warnings = Vec::new();
     let mut plugin_startup_config = PluginStartupConfig::Current;
-    let config = match config_manager
+    let mut config = match config_manager
         .load_latest_config(/*fallback_cwd*/ None)
         .await
     {
@@ -542,6 +542,17 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
+    let auth_manager = AuthManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+        .await
+        .map_err(std::io::Error::other)?;
+    if let Some(provider_id) = auth_manager.active_provider_id()
+        && config.model_providers.contains_key(&provider_id)
+    {
+        config = config
+            .switch_model_provider(&auth_manager, &provider_id)
+            .await?;
+        config_manager.set_active_model_provider_id(Some(provider_id));
+    }
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
@@ -724,10 +735,6 @@ pub async fn run_main_with_transport_options(
         AppServerTransport::Off => {}
     }
     drop(unix_socket_startup_lock);
-
-    let auth_manager = AuthManager::shared_from_config(&config, /*enable_api_key_env*/ false)
-        .await
-        .map_err(std::io::Error::other)?;
 
     let no_local_transport = transport_accept_handles.is_empty();
     if no_local_transport {

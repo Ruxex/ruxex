@@ -1178,6 +1178,13 @@ impl AuthManager {
     }
 
     async fn new_from_auth_config(auth_config: AuthConfig, enable_api_key_env: bool) -> Self {
+        let stored_selection = load_auth_dot_json(
+            &auth_config.genex_home,
+            auth_config.auth_credentials_store_mode,
+            auth_config.keyring_backend_kind,
+        )
+        .ok()
+        .flatten();
         let managed_auth = auth_config
             .load_auth(enable_api_key_env)
             .await
@@ -1194,6 +1201,10 @@ impl AuthManager {
             managed_auth_policy,
             auth_route_config,
         } = auth_config;
+        let model_provider_id = stored_selection
+            .filter(|auth| auth.selection_configured())
+            .and_then(|auth| auth.active_provider_id().map(str::to_owned))
+            .or(model_provider_id);
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Self {
             genex_home,

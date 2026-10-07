@@ -7,7 +7,9 @@ use genex_app_server_daemon::BootstrapOptions as AppServerBootstrapOptions;
 use genex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
 use genex_arg0::Arg0DispatchPaths;
 use genex_arg0::arg0_dispatch_or_else;
+use genex_cli::run_login_delete;
 use genex_cli::run_login_status;
+use genex_cli::run_login_switch;
 use genex_cli::run_logout;
 use genex_exec::Cli as ExecCli;
 use genex_exec::Command as ExecCommand;
@@ -128,7 +130,7 @@ enum Subcommand {
     /// Manage login.
     Login(LoginCommand),
 
-    /// Remove stored authentication credentials.
+    /// Deactivate the active model provider without deleting credentials.
     Logout(LogoutCommand),
 
     /// Manage external MCP servers for Genex.
@@ -443,6 +445,10 @@ struct LoginCommand {
 enum LoginSubcommand {
     /// Show login status.
     Status,
+    /// Activate a configured model provider with stored credentials.
+    Switch { provider_id: String },
+    /// Delete stored credentials for one model provider.
+    Delete { provider_id: String },
 }
 
 #[derive(Debug, Parser)]
@@ -1319,6 +1325,12 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             match login_cli.action {
                 LoginSubcommand::Status => {
                     run_login_status(login_cli.config_overrides).await;
+                }
+                LoginSubcommand::Switch { provider_id } => {
+                    run_login_switch(login_cli.config_overrides, provider_id).await;
+                }
+                LoginSubcommand::Delete { provider_id } => {
+                    run_login_delete(login_cli.config_overrides, provider_id).await;
                 }
             }
         }

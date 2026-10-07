@@ -1,8 +1,12 @@
 // GENERATED CODE! DO NOT MODIFY BY HAND!
 
 export type { Account } from "./Account";
+export type { AccountDeleteParams } from "./AccountDeleteParams";
+export type { AccountDeleteResponse } from "./AccountDeleteResponse";
 export type { AccountLoginCompletedNotification } from "./AccountLoginCompletedNotification";
 export type { AccountRateLimitsUpdatedNotification } from "./AccountRateLimitsUpdatedNotification";
+export type { AccountSwitchParams } from "./AccountSwitchParams";
+export type { AccountSwitchResponse } from "./AccountSwitchResponse";
 export type { AccountUpdatedNotification } from "./AccountUpdatedNotification";
 export type { ActivePermissionProfile } from "./ActivePermissionProfile";
 export type { AdditionalContextEntry } from "./AdditionalContextEntry";
