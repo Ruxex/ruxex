@@ -15,7 +15,7 @@ use genex_extension_api::ToolCall;
 use genex_extension_api::ToolContributor;
 use genex_extension_api::ToolExecutor;
 use genex_login::AuthManager;
-use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_for_id;
 use genex_protocol::AgentPath;
 use genex_utils_output_truncation::TruncationPolicy;
 use serde_json::json;
@@ -49,7 +49,8 @@ impl HistoryNotesExtension {
             && self.auth_manager.current_auth_uses_managed_auth()
         {
             thread_store.insert(HistoryNotesExtensionConfig {
-                backend: HistoryNotesBackend::new(create_model_provider(
+                backend: HistoryNotesBackend::new(create_model_provider_for_id(
+                    config.model_provider_id.clone(),
                     config.model_provider.clone(),
                     Some(self.auth_manager.clone()),
                 )),

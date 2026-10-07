@@ -25,7 +25,12 @@ impl ModelCatalogSource for ProviderModelCatalogSource {
             .provider
             .auth_manager()
             .and_then(|manager| manager.auth_cached());
-        models_identity::identity(self.provider.info(), auth.as_ref()).ok()
+        models_identity::identity(
+            self.provider.provider_id(),
+            self.provider.info(),
+            auth.as_ref(),
+        )
+        .ok()
     }
 
     fn has_command_auth(&self) -> bool {

@@ -30,6 +30,8 @@ use genex_response_debug_context::telemetry_transport_error_message;
 use http::HeaderMap;
 use tokio::time::timeout;
 
+use crate::auth::cached_provider_auth;
+use crate::auth::provider_auth;
 use crate::auth::resolve_provider_auth;
 
 const MODELS_REFRESH_TIMEOUT: Duration = Duration::from_secs(5);
@@ -44,6 +46,7 @@ pub(crate) enum ModelsEndpointAuthMode {
 /// Provider-owned provider-compatible `/models` endpoint.
 #[derive(Debug)]
 pub(crate) struct ModelsEndpoint {
+    provider_id: Option<String>,
     provider_info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
     transport_builder: Arc<dyn ModelsTransportBuilder>,
@@ -55,7 +58,16 @@ impl ModelsEndpoint {
         provider_info: ModelProviderInfo,
         auth_manager: Option<Arc<AuthManager>>,
     ) -> Self {
-        Self::new_with_auth_mode(
+        Self::new_for_provider(None, provider_info, auth_manager)
+    }
+
+    pub(crate) fn new_for_provider(
+        provider_id: Option<String>,
+        provider_info: ModelProviderInfo,
+        auth_manager: Option<Arc<AuthManager>>,
+    ) -> Self {
+        Self::new_with_provider_auth_mode(
+            provider_id,
             provider_info,
             auth_manager,
             ModelsEndpointAuthMode::ConfiguredProvider,
@@ -67,7 +79,17 @@ impl ModelsEndpoint {
         auth_manager: Option<Arc<AuthManager>>,
         auth_mode: ModelsEndpointAuthMode,
     ) -> Self {
+        Self::new_with_provider_auth_mode(None, provider_info, auth_manager, auth_mode)
+    }
+
+    pub(crate) fn new_with_provider_auth_mode(
+        provider_id: Option<String>,
+        provider_info: ModelProviderInfo,
+        auth_manager: Option<Arc<AuthManager>>,
+        auth_mode: ModelsEndpointAuthMode,
+    ) -> Self {
         Self {
+            provider_id,
             provider_info,
             auth_manager,
             transport_builder: Arc::new(RouteAwareModelsTransportBuilder),
@@ -76,10 +98,13 @@ impl ModelsEndpoint {
     }
 
     async fn auth(&self) -> Option<GenexAuth> {
-        match self.auth_manager.as_ref() {
-            Some(auth_manager) => auth_manager.auth().await,
-            None => None,
-        }
+        provider_auth(
+            self.auth_manager.as_ref(),
+            None,
+            &self.provider_info,
+            self.provider_id.as_deref(),
+        )
+        .await
     }
 
     pub(crate) async fn list_models(
@@ -90,7 +115,11 @@ impl ModelsEndpoint {
         let _timer =
             genex_otel::start_global_timer("genex.remote_models.fetch_update.duration_ms", &[]);
         let auth = self.auth().await;
-        let identity = crate::models_identity::identity(&self.provider_info, auth.as_ref())?;
+        let identity = crate::models_identity::identity(
+            self.provider_id.as_deref(),
+            &self.provider_info,
+            auth.as_ref(),
+        )?;
         let auth_mode = auth.as_ref().map(GenexAuth::auth_mode);
         let api_provider = self.provider_info.to_api_provider(auth_mode)?;
         let api_auth = match self.auth_mode {
@@ -150,8 +179,13 @@ impl ModelCatalogSource for ModelsEndpoint {
         let auth = self
             .auth_manager
             .as_ref()
-            .and_then(|manager| manager.auth_cached());
-        crate::models_identity::identity(&self.provider_info, auth.as_ref()).ok()
+            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
+        crate::models_identity::identity(
+            self.provider_id.as_deref(),
+            &self.provider_info,
+            auth.as_ref(),
+        )
+        .ok()
     }
 
     fn has_command_auth(&self) -> bool {
@@ -375,6 +409,7 @@ mod tests {
 
         let observed_request = Arc::new(Mutex::new(None));
         let endpoint = ModelsEndpoint {
+            provider_id: None,
             provider_info: ModelProviderInfo::create_responses_provider(Some(server.uri())),
             auth_manager: None,
             transport_builder: Arc::new(RecordingTransportBuilder {
@@ -421,6 +456,7 @@ mod tests {
             "eu".into(),
         )]));
         let endpoint = ModelsEndpoint {
+            provider_id: None,
             provider_info,
             auth_manager: None,
             transport_builder: Arc::new(RecordingTransportBuilder {

@@ -1343,6 +1343,52 @@ impl AuthManager {
         self.auth_cached()
     }
 
+    /// Resolve stored credentials for one provider without consulting another
+    /// provider's active selection.
+    pub async fn auth_for_provider(&self, provider_id: &str) -> Option<GenexAuth> {
+        if self.has_external_auth() {
+            return self.auth().await;
+        }
+
+        let stores = if self.auth_credentials_store_mode == AuthCredentialsStoreMode::Ephemeral {
+            vec![(
+                AuthCredentialsStoreMode::Ephemeral,
+                AuthKeyringBackendKind::default(),
+            )]
+        } else {
+            vec![
+                (
+                    AuthCredentialsStoreMode::Ephemeral,
+                    AuthKeyringBackendKind::default(),
+                ),
+                (self.auth_credentials_store_mode, self.keyring_backend_kind),
+            ]
+        };
+        for (mode, keyring) in stores {
+            let Some(credentials) =
+                load_provider_auth(&self.genex_home, provider_id, mode, keyring)
+                    .ok()
+                    .flatten()
+            else {
+                continue;
+            };
+            if !credentials.has_supported_credentials() {
+                continue;
+            }
+            let auth = GenexAuth::from_provider_auth(&credentials).await.ok()?;
+            if validate_auth_restrictions(
+                Some(&self.allowed_login_methods()),
+                self.effective_managed_workspaces().as_deref(),
+                &auth,
+            )
+            .is_ok()
+            {
+                return Some(auth);
+            }
+        }
+        None
+    }
+
     /// Reloads auth from the active source. Returns whether the auth value changed.
     pub async fn reload(&self) -> bool {
         tracing::info!("Reloading auth");

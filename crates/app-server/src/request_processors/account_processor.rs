@@ -3,7 +3,7 @@ use crate::auth_mode::auth_mode_to_api;
 use crate::outgoing_message::AccountNotification;
 use genex_app_server_protocol::Account;
 use genex_app_server_protocol::GetAccountResponse;
-use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_for_id;
 
 enum RefreshTokenRequestOutcome {
     NotAttemptedOrSucceeded,
@@ -89,7 +89,8 @@ impl AccountRequestProcessor {
             .load_latest_config(/*fallback_cwd*/ None)
             .await
             .unwrap_or_else(|_| self.config.as_ref().clone());
-        let provider = create_model_provider(
+        let provider = create_model_provider_for_id(
+            config.model_provider_id.clone(),
             config.model_provider.clone(),
             Some(Arc::clone(&self.auth_manager)),
         );

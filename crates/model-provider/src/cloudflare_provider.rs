@@ -25,6 +25,8 @@ use http::HeaderMap;
 use serde_json::Value;
 use tokio::time::timeout;
 
+use super::auth::cached_provider_auth;
+use super::auth::provider_auth;
 use super::auth::resolve_provider_auth;
 use super::models_identity;
 use super::provider::ModelProvider;
@@ -40,13 +42,22 @@ const CLOUDFLARE_MAX_MODEL_PAGES: usize = 100;
 
 #[derive(Clone, Debug)]
 pub(crate) struct CloudflareModelProvider {
+    provider_id: Option<String>,
     info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
 }
 
 impl CloudflareModelProvider {
-    pub(crate) fn new(info: ModelProviderInfo, auth_manager: Option<Arc<AuthManager>>) -> Self {
-        Self { info, auth_manager }
+    pub(crate) fn new(
+        provider_id: Option<String>,
+        info: ModelProviderInfo,
+        auth_manager: Option<Arc<AuthManager>>,
+    ) -> Self {
+        Self {
+            provider_id,
+            info,
+            auth_manager,
+        }
     }
 
     fn chat_base_url(&self) -> CoreResult<String> {
@@ -79,9 +90,9 @@ impl CloudflareModelProvider {
         let auth = self
             .auth_manager
             .as_ref()
-            .and_then(|manager| manager.auth_cached());
+            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
         let provider_info = self.models_info().ok()?;
-        models_identity::identity(&provider_info, auth.as_ref()).ok()
+        models_identity::identity(self.provider_id.as_deref(), &provider_info, auth.as_ref()).ok()
     }
 
     async fn fetch_models(
@@ -165,12 +176,19 @@ impl ModelProvider for CloudflareModelProvider {
         self.auth_manager.clone()
     }
 
+    fn provider_id(&self) -> Option<&str> {
+        self.provider_id.as_deref()
+    }
+
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
-            match self.auth_manager.as_ref() {
-                Some(auth_manager) => auth_manager.auth().await,
-                None => None,
-            }
+            provider_auth(
+                self.auth_manager.as_ref(),
+                None,
+                &self.info,
+                self.provider_id(),
+            )
+            .await
         })
     }
 

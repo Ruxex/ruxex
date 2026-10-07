@@ -18,7 +18,7 @@ use genex_extension_api::ThreadOriginator;
 use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
 use genex_login::AuthManager;
-use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_for_id;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::config_types::WebSearchContextSize;
 use genex_protocol::config_types::WebSearchMode;
@@ -33,6 +33,7 @@ struct WebSearchExtension {
 #[derive(Clone)]
 struct WebSearchExtensionConfig {
     available: bool,
+    provider_id: String,
     provider: ModelProviderInfo,
     settings: SearchSettings,
 }
@@ -43,6 +44,7 @@ impl From<&Config> for WebSearchExtensionConfig {
         Self {
             // Core selects this executor per turn using the feature flag or model metadata.
             available: standalone_web_search_available(&config.model_provider, web_search_mode),
+            provider_id: config.model_provider_id.clone(),
             provider: config.model_provider.clone(),
             settings: search_settings(config, web_search_mode),
         }
@@ -137,7 +139,8 @@ impl ToolContributor for WebSearchExtension {
 
         vec![Arc::new(WebSearchTool {
             session_id: session_store.level_id().to_string(),
-            provider: create_model_provider(
+            provider: create_model_provider_for_id(
+                config.provider_id.clone(),
                 config.provider.clone(),
                 Some(self.auth_manager.clone()),
             ),
@@ -208,6 +211,7 @@ mod tests {
         let thread_store = ExtensionData::new("11111111-1111-4111-8111-111111111111");
         thread_store.insert(WebSearchExtensionConfig {
             available: true,
+            provider_id: "test".to_string(),
             provider: ModelProviderInfo {
                 supports_standalone_web_search: true,
                 ..ModelProviderInfo::default()

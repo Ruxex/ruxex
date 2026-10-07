@@ -54,7 +54,7 @@ use genex_login::GenexAuth;
 use genex_login::default_client::create_client_without_request_logging;
 use genex_login::default_client::default_headers;
 use genex_login::load_auth_dot_json;
-use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_for_id;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::AskForApproval;
 use genex_terminal_detection::Multiplexer;
@@ -2080,7 +2080,11 @@ async fn websocket_reachability_check(
         provider.websocket_connect_timeout().as_millis()
     ));
 
-    let runtime_provider = create_model_provider(provider.clone(), auth_manager);
+    let runtime_provider = create_model_provider_for_id(
+        config.model_provider_id.clone(),
+        provider.clone(),
+        auth_manager,
+    );
     let auth = runtime_provider.auth().await;
     details.push(format!(
         "auth mode: {}",

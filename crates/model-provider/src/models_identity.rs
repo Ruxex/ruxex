@@ -11,6 +11,7 @@ use sha2::Sha256;
 use crate::auth::resolve_provider_auth;
 
 pub(crate) fn identity(
+    provider_id: Option<&str>,
     provider_info: &ModelProviderInfo,
     auth: Option<&GenexAuth>,
 ) -> CoreResult<String> {
@@ -22,6 +23,7 @@ pub(crate) fn identity(
         digest.update(value);
     };
     field(b"models-cache-v1");
+    field(provider_id.unwrap_or_default().as_bytes());
     field(provider.name.as_bytes());
     field(provider.base_url.as_bytes());
     let mut query: Vec<_> = provider.query_params.iter().flatten().collect();

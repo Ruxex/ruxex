@@ -20,6 +20,8 @@ use genex_protocol::error::Result as CoreResult;
 use http::HeaderMap;
 use http::HeaderValue;
 
+use super::auth::cached_provider_auth;
+use super::auth::provider_auth;
 use super::auth::unauthenticated_auth_provider;
 use super::models_endpoint::ModelsEndpoint;
 use super::models_endpoint::ModelsEndpointAuthMode;
@@ -31,13 +33,22 @@ use super::provider::ProviderApi;
 
 #[derive(Clone, Debug)]
 pub(crate) struct MyModelProvider {
+    provider_id: Option<String>,
     info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
 }
 
 impl MyModelProvider {
-    pub(crate) fn new(info: ModelProviderInfo, auth_manager: Option<Arc<AuthManager>>) -> Self {
-        Self { info, auth_manager }
+    pub(crate) fn new(
+        provider_id: Option<String>,
+        info: ModelProviderInfo,
+        auth_manager: Option<Arc<AuthManager>>,
+    ) -> Self {
+        Self {
+            provider_id,
+            info,
+            auth_manager,
+        }
     }
 }
 
@@ -102,7 +113,8 @@ impl ModelProvider for MyModelProvider {
         http_client_factory: HttpClientFactory,
     ) -> ModelProviderFuture<'_, CoreResult<ModelCatalogSnapshot>> {
         let client_version = client_version.to_string();
-        let endpoint = ModelsEndpoint::new_with_auth_mode(
+        let endpoint = ModelsEndpoint::new_with_provider_auth_mode(
+            self.provider_id.clone(),
             self.info.clone(),
             self.auth_manager.clone(),
             ModelsEndpointAuthMode::MyProvider,
@@ -118,12 +130,19 @@ impl ModelProvider for MyModelProvider {
         self.auth_manager.clone()
     }
 
+    fn provider_id(&self) -> Option<&str> {
+        self.provider_id.as_deref()
+    }
+
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
-            match self.auth_manager.as_ref() {
-                Some(auth_manager) => auth_manager.auth().await,
-                None => None,
-            }
+            provider_auth(
+                self.auth_manager.as_ref(),
+                None,
+                &self.info,
+                self.provider_id(),
+            )
+            .await
         })
     }
 
@@ -132,7 +151,7 @@ impl ModelProvider for MyModelProvider {
             self.auth_manager
                 .as_ref()
                 .and_then(|auth_manager| {
-                    let auth = auth_manager.auth_cached()?;
+                    let auth = cached_provider_auth(auth_manager, self.provider_id())?;
                     if auth_manager.refresh_failure_for_auth(&auth).is_some() {
                         return None;
                     }
@@ -219,7 +238,11 @@ mod tests {
         provider_info.base_url = Some(server.uri());
         let auth_manager =
             AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
-        let provider = Arc::new(MyModelProvider::new(provider_info, Some(auth_manager)));
+        let provider = Arc::new(MyModelProvider::new(
+            None,
+            provider_info,
+            Some(auth_manager),
+        ));
         let manager = genex_models_manager::manager::build_models_manager_without_cache(
             Arc::new(ProviderModelCatalogSource::new(provider.clone())),
             provider.auth_manager(),
@@ -244,7 +267,7 @@ mod tests {
             requires_auth: true,
             ..ModelProviderInfo::create_my_provider()
         };
-        let provider = MyModelProvider::new(provider_info, None);
+        let provider = MyModelProvider::new(None, provider_info, None);
 
         assert_eq!(
             provider.account_state(),
@@ -262,7 +285,7 @@ mod tests {
             ..ModelProviderInfo::create_my_provider()
         };
         let auth_manager = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-key"));
-        let provider = MyModelProvider::new(provider_info, Some(auth_manager));
+        let provider = MyModelProvider::new(None, provider_info, Some(auth_manager));
 
         assert_eq!(
             provider.account_state(),
@@ -279,7 +302,7 @@ mod tests {
             requires_auth: false,
             ..ModelProviderInfo::create_my_provider()
         };
-        let provider = MyModelProvider::new(provider_info, None);
+        let provider = MyModelProvider::new(None, provider_info, None);
 
         assert_eq!(
             provider.account_state(),

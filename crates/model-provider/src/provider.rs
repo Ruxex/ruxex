@@ -23,6 +23,8 @@ use genex_protocol::error::Result as CoreResult;
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
 use crate::auth::auth_manager_for_provider;
+use crate::auth::cached_provider_auth;
+use crate::auth::provider_auth;
 use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
 use crate::cloudflare_provider::CloudflareModelProvider;
@@ -136,7 +138,11 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         http_client_factory: HttpClientFactory,
     ) -> ModelProviderFuture<'_, CoreResult<ModelCatalogSnapshot>> {
         let client_version = client_version.to_string();
-        let endpoint = ModelsEndpoint::new(self.info().clone(), self.auth_manager());
+        let endpoint = ModelsEndpoint::new_for_provider(
+            self.provider_id().map(str::to_owned),
+            self.info().clone(),
+            self.auth_manager(),
+        );
         Box::pin(async move {
             endpoint
                 .list_models(&client_version, http_client_factory)
@@ -166,6 +172,11 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// to think through whether Genex should have a unified provider-specific auth
     /// manager throughout the codebase; that is a larger refactor than this change.
     fn auth_manager(&self) -> Option<Arc<AuthManager>>;
+
+    /// Returns the configured provider ID used for provider-scoped credentials.
+    fn provider_id(&self) -> Option<&str> {
+        None
+    }
 
     /// Returns whether this transport failure can be recovered by provider-scoped authentication.
     ///
@@ -237,8 +248,14 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
                 return self.api_auth().await.map(ResolvedProviderAuth::new);
             }
             let auth = self.auth().await;
-            resolve_provider_auth_for_scope(self.auth_manager(), auth.as_ref(), self.info(), scope)
-                .await
+            resolve_provider_auth_for_scope(
+                self.auth_manager(),
+                auth.as_ref(),
+                self.info(),
+                self.provider_id(),
+                scope,
+            )
+            .await
         })
     }
 }
@@ -260,28 +277,57 @@ pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
 ) -> SharedModelProvider {
+    create_model_provider_internal(None, provider_info, auth_manager)
+}
+
+/// Creates a model provider with an explicit configured provider ID.
+pub fn create_model_provider_for_id(
+    provider_id: impl Into<String>,
+    provider_info: ModelProviderInfo,
+    auth_manager: Option<Arc<AuthManager>>,
+) -> SharedModelProvider {
+    create_model_provider_internal(Some(provider_id.into()), provider_info, auth_manager)
+}
+
+fn create_model_provider_internal(
+    provider_id: Option<String>,
+    provider_info: ModelProviderInfo,
+    auth_manager: Option<Arc<AuthManager>>,
+) -> SharedModelProvider {
     match provider_info.name.as_str() {
-        genex_model_provider_info::MY_PROVIDER_NAME => {
-            Arc::new(MyModelProvider::new(provider_info, auth_manager))
-        }
-        genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => {
-            Arc::new(CloudflareModelProvider::new(provider_info, auth_manager))
-        }
-        _ => Arc::new(ConfiguredModelProvider::new(provider_info, auth_manager)),
+        genex_model_provider_info::MY_PROVIDER_NAME => Arc::new(MyModelProvider::new(
+            provider_id,
+            provider_info,
+            auth_manager,
+        )),
+        genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => Arc::new(
+            CloudflareModelProvider::new(provider_id, provider_info, auth_manager),
+        ),
+        _ => Arc::new(ConfiguredModelProvider::new(
+            provider_id,
+            provider_info,
+            auth_manager,
+        )),
     }
 }
 
 /// Runtime model provider backed by configured `ModelProviderInfo`.
 #[derive(Clone, Debug)]
 struct ConfiguredModelProvider {
+    provider_id: Option<String>,
     info: ModelProviderInfo,
     auth_manager: Option<Arc<AuthManager>>,
 }
 
 impl ConfiguredModelProvider {
-    fn new(provider_info: ModelProviderInfo, auth_manager: Option<Arc<AuthManager>>) -> Self {
+    fn new(
+        provider_id: Option<String>,
+        provider_info: ModelProviderInfo,
+        auth_manager: Option<Arc<AuthManager>>,
+    ) -> Self {
         let auth_manager = auth_manager_for_provider(auth_manager, &provider_info);
         Self {
+            provider_id,
             info: provider_info,
             auth_manager,
         }
@@ -312,16 +358,23 @@ impl ModelProvider for ConfiguredModelProvider {
         self.auth_manager.clone()
     }
 
+    fn provider_id(&self) -> Option<&str> {
+        self.provider_id.as_deref()
+    }
+
     fn supports_attestation(&self) -> bool {
         false
     }
 
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
-            match self.auth_manager.as_ref() {
-                Some(auth_manager) => auth_manager.auth().await,
-                None => None,
-            }
+            provider_auth(
+                self.auth_manager.as_ref(),
+                None,
+                &self.info,
+                self.provider_id(),
+            )
+            .await
         })
     }
 
@@ -330,7 +383,7 @@ impl ModelProvider for ConfiguredModelProvider {
             self.auth_manager
                 .as_ref()
                 .and_then(|auth_manager| {
-                    let auth = auth_manager.auth_cached()?;
+                    let auth = cached_provider_auth(auth_manager, self.provider_id())?;
                     if auth_manager.refresh_failure_for_auth(&auth).is_some() {
                         return None;
                     }
@@ -590,6 +643,59 @@ mod tests {
             Some("apikey test-key")
         );
         assert!(!auth.to_auth_headers().contains_key("authorization"));
+    }
+
+    #[tokio::test]
+    async fn provider_auth_does_not_fall_back_to_another_provider() {
+        let home = tempfile::tempdir().expect("temporary auth home");
+        let auth_manager = Arc::new(
+            AuthManager::new(
+                home.path().to_path_buf(),
+                false,
+                genex_login::AuthCredentialsStoreMode::File,
+                None,
+                None,
+                genex_login::AuthKeyringBackendKind::default(),
+                genex_login::AuthRouteConfig::from_http_client_factory(HttpClientFactory::new(
+                    OutboundProxyPolicy::ReqwestDefault,
+                )),
+            )
+            .await,
+        );
+        auth_manager
+            .login("provider-a", genex_login::ProviderAuth::api_key("a-secret"))
+            .await
+            .expect("provider A login");
+
+        let provider_a = create_model_provider_for_id(
+            "provider-a",
+            ModelProviderInfo::create_responses_provider(None),
+            Some(Arc::clone(&auth_manager)),
+        );
+        let provider_b = create_model_provider_for_id(
+            "provider-b",
+            ModelProviderInfo::create_responses_provider(None),
+            Some(auth_manager),
+        );
+
+        assert_eq!(
+            provider_a
+                .api_auth()
+                .await
+                .expect("provider A auth")
+                .to_auth_headers()
+                .get("authorization")
+                .and_then(|value| value.to_str().ok()),
+            Some("Bearer a-secret")
+        );
+        assert!(
+            provider_b
+                .api_auth()
+                .await
+                .expect("provider B auth")
+                .to_auth_headers()
+                .is_empty()
+        );
     }
 
     #[test]

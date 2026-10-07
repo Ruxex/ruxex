@@ -49,6 +49,7 @@ use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_for_id;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
@@ -417,7 +418,11 @@ pub fn build_models_manager(
     config: &Config,
     auth_manager: Arc<AuthManager>,
 ) -> SharedModelsManager {
-    let provider = create_model_provider(config.model_provider.clone(), Some(auth_manager));
+    let provider = create_model_provider_for_id(
+        config.model_provider_id.clone(),
+        config.model_provider.clone(),
+        Some(auth_manager),
+    );
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),

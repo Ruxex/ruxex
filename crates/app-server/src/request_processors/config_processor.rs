@@ -42,7 +42,7 @@ use genex_config::ResidencyRequirement as CoreResidencyRequirement;
 use genex_config::SandboxModeRequirement as CoreSandboxModeRequirement;
 use genex_core::ThreadManager;
 use genex_features::feature_for_key;
-use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_for_id;
 use genex_protocol::config_types::ForcedLoginMethod;
 use genex_protocol::config_types::WebSearchMode;
 use serde_json::json;
@@ -159,7 +159,11 @@ impl ConfigRequestProcessor {
         &self,
     ) -> Result<ModelProviderCapabilitiesReadResponse, JSONRPCErrorError> {
         let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let provider = create_model_provider(config.model_provider, /*auth_manager*/ None);
+        let provider = create_model_provider_for_id(
+            config.model_provider_id,
+            config.model_provider,
+            /*auth_manager*/ None,
+        );
         let capabilities = provider.capabilities();
         Ok(ModelProviderCapabilitiesReadResponse {
             namespace_tools: capabilities.namespace_tools,

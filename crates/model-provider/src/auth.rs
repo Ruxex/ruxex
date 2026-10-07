@@ -40,6 +40,7 @@ impl AuthProvider for HeaderAuthProvider {
 
 struct AuthManagerAuthProvider {
     auth_manager: Arc<AuthManager>,
+    provider_id: Option<String>,
     // Request headers always come from the current AuthManager snapshot below.
     expected_auth: GenexAuth,
 }
@@ -51,6 +52,11 @@ impl AuthManagerAuthProvider {
     }
 
     fn current_auth(&self) -> Option<GenexAuth> {
+        if let Some(provider_id) = self.provider_id.as_deref()
+            && self.auth_manager.active_provider_id().as_deref() != Some(provider_id)
+        {
+            return None;
+        }
         self.auth_manager
             .auth_cached()
             .filter(|auth| self.is_expected_auth(auth))
@@ -128,10 +134,54 @@ pub(crate) async fn resolve_provider_auth_for_scope(
     auth_manager: Option<Arc<AuthManager>>,
     auth: Option<&GenexAuth>,
     provider: &ModelProviderInfo,
+    provider_id: Option<&str>,
     scope: ProviderAuthScope,
 ) -> genex_protocol::error::Result<ResolvedProviderAuth> {
-    let _ = (auth_manager, scope);
-    resolve_provider_auth(auth, provider).map(ResolvedProviderAuth::new)
+    let auth = if provider.auth.is_some() {
+        match auth_manager {
+            Some(auth_manager) => auth_manager.auth().await,
+            None => auth.cloned(),
+        }
+    } else if let (Some(auth_manager), Some(provider_id)) = (auth_manager, provider_id) {
+        auth_manager.auth_for_provider(provider_id).await
+    } else {
+        auth.cloned()
+    };
+    let _ = scope;
+    resolve_provider_auth(auth.as_ref(), provider).map(ResolvedProviderAuth::new)
+}
+
+pub(crate) async fn provider_auth(
+    auth_manager: Option<&Arc<AuthManager>>,
+    fallback_auth: Option<GenexAuth>,
+    provider: &ModelProviderInfo,
+    provider_id: Option<&str>,
+) -> Option<GenexAuth> {
+    if provider.auth.is_some() {
+        return match auth_manager {
+            Some(auth_manager) => auth_manager.auth().await,
+            None => fallback_auth,
+        };
+    }
+    if let (Some(auth_manager), Some(provider_id)) = (auth_manager, provider_id) {
+        return auth_manager.auth_for_provider(provider_id).await;
+    }
+    match auth_manager {
+        Some(auth_manager) => auth_manager.auth().await,
+        None => fallback_auth,
+    }
+}
+
+pub(crate) fn cached_provider_auth(
+    auth_manager: &AuthManager,
+    provider_id: Option<&str>,
+) -> Option<GenexAuth> {
+    if let Some(provider_id) = provider_id
+        && auth_manager.active_provider_id().as_deref() != Some(provider_id)
+    {
+        return None;
+    }
+    auth_manager.auth_cached()
 }
 
 fn bearer_auth_for_provider(
@@ -169,6 +219,7 @@ pub fn auth_provider_from_auth_manager(
 ) -> SharedAuthProvider {
     Arc::new(AuthManagerAuthProvider {
         auth_manager,
+        provider_id: None,
         expected_auth: expected_auth.clone(),
     })
 }

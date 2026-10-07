@@ -127,6 +127,7 @@ use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ResponsesConnectionKey;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_for_id;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_model_provider_info::ModelProviderInfo;
@@ -428,7 +429,47 @@ impl ModelClient {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         http_client_factory: HttpClientFactory,
     ) -> Self {
-        let model_provider = create_model_provider(provider_info, auth_manager);
+        Self::new_with_provider_id(
+            None,
+            auth_manager,
+            thread_id,
+            provider_info,
+            session_source,
+            originator,
+            model_verbosity,
+            content_item_kinds_enabled,
+            enable_request_compression,
+            include_timing_metrics,
+            beta_features_header,
+            concurrent_reasoning_summaries_enabled,
+            attestation_provider,
+            http_client_factory,
+        )
+    }
+
+    /// Creates a session-scoped model client with provider-scoped credentials.
+    pub fn new_with_provider_id(
+        provider_id: Option<String>,
+        auth_manager: Option<Arc<AuthManager>>,
+        thread_id: ThreadId,
+        provider_info: ModelProviderInfo,
+        session_source: SessionSource,
+        originator: String,
+        model_verbosity: Option<VerbosityConfig>,
+        content_item_kinds_enabled: bool,
+        enable_request_compression: bool,
+        include_timing_metrics: bool,
+        beta_features_header: Option<String>,
+        concurrent_reasoning_summaries_enabled: bool,
+        attestation_provider: Option<Arc<dyn AttestationProvider>>,
+        http_client_factory: HttpClientFactory,
+    ) -> Self {
+        let model_provider = match provider_id {
+            Some(provider_id) => {
+                create_model_provider_for_id(provider_id, provider_info, auth_manager)
+            }
+            None => create_model_provider(provider_info, auth_manager),
+        };
         let include_attestation = model_provider.supports_attestation();
         Self {
             state: Arc::new(ModelClientState {
