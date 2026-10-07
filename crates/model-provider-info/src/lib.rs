@@ -336,6 +336,7 @@ impl ModelProviderInfo {
             name: MY_PROVIDER_NAME.to_string(),
             base_url: Some(MY_PROVIDER_DEFAULT_BASE_URL.to_string()),
             wire_api: WireApi::Chat,
+            requires_auth: true,
             ..ModelProviderInfo::default()
         }
     }

@@ -108,9 +108,31 @@ impl ModelProvider for MyModelProvider {
     }
 
     fn account_state(&self) -> ProviderAccountResult {
+        let account = if self.info.requires_auth {
+            self.auth_manager
+                .as_ref()
+                .and_then(|auth_manager| {
+                    let auth = auth_manager.auth_cached()?;
+                    if auth_manager.refresh_failure_for_auth(&auth).is_some() {
+                        return None;
+                    }
+                    if matches!(auth, GenexAuth::Headers(_)) {
+                        return None;
+                    }
+                    Some(auth)
+                })
+                .map(|auth| match &auth {
+                    GenexAuth::ApiKey(_) => Ok(ProviderAccount::ApiKey),
+                    GenexAuth::Headers(_) => Ok(ProviderAccount::ApiKey),
+                })
+                .transpose()?
+        } else {
+            None
+        };
+
         Ok(ProviderAccountState {
-            account: Some(ProviderAccount::ApiKey),
-            requires_auth: false,
+            account,
+            requires_auth: self.info.requires_auth,
         })
     }
 
@@ -237,5 +259,57 @@ mod tests {
 
         assert_eq!(catalog.models.len(), 1);
         assert_eq!(catalog.models[0].slug, model.slug);
+    }
+
+    #[test]
+    fn my_provider_without_auth_requires_login() {
+        let provider_info = ModelProviderInfo {
+            requires_auth: true,
+            ..ModelProviderInfo::create_my_provider()
+        };
+        let provider = MyModelProvider::new(provider_info, None);
+
+        assert_eq!(
+            provider.account_state(),
+            Ok(ProviderAccountState {
+                account: None,
+                requires_auth: true,
+            })
+        );
+    }
+
+    #[test]
+    fn my_provider_with_api_key_reports_api_key_account() {
+        let provider_info = ModelProviderInfo {
+            requires_auth: true,
+            ..ModelProviderInfo::create_my_provider()
+        };
+        let auth_manager = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-key"));
+        let provider = MyModelProvider::new(provider_info, Some(auth_manager));
+
+        assert_eq!(
+            provider.account_state(),
+            Ok(ProviderAccountState {
+                account: Some(ProviderAccount::ApiKey),
+                requires_auth: true,
+            })
+        );
+    }
+
+    #[test]
+    fn my_provider_without_auth_can_disable_login() {
+        let provider_info = ModelProviderInfo {
+            requires_auth: false,
+            ..ModelProviderInfo::create_my_provider()
+        };
+        let provider = MyModelProvider::new(provider_info, None);
+
+        assert_eq!(
+            provider.account_state(),
+            Ok(ProviderAccountState {
+                account: None,
+                requires_auth: false,
+            })
+        );
     }
 }
