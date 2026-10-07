@@ -23,6 +23,28 @@ fn typescript_schema_fixtures_match_generated() -> Result<()> {
     let generated_tree = generate_typescript_schema_fixture_subtree_for_tests()
         .context("generate in-memory typescript schema fixtures")?;
 
+    let client_response = generated_tree
+        .get(Path::new("ClientResponse.ts"))
+        .context("generated ClientResponse.ts should exist")?;
+    let client_response = String::from_utf8_lossy(client_response);
+    anyhow::ensure!(
+        client_response.contains("method: \"thread/list\""),
+        "ClientResponse.ts should contain the thread/list response variant"
+    );
+    anyhow::ensure!(
+        client_response.contains("method: \"turn/start\""),
+        "ClientResponse.ts should contain the turn/start response variant"
+    );
+    let generated_index = String::from_utf8_lossy(
+        generated_tree
+            .get(Path::new("index.ts"))
+            .context("generated TypeScript index should exist")?,
+    );
+    anyhow::ensure!(
+        generated_index.contains("export type { ClientResponse } from \"./ClientResponse\";"),
+        "generated index.ts should export ClientResponse"
+    );
+
     assert_schema_trees_match("typescript", &fixture_tree, &generated_tree)?;
     let config_requirements = generated_tree
         .get(Path::new("v2/ConfigRequirements.ts"))

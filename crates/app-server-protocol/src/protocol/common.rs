@@ -233,15 +233,17 @@ macro_rules! client_request_definitions {
         }
 
         /// Typed response from the server to the client.
-        #[derive(Serialize, Deserialize, Debug, Clone)]
+        #[derive(Serialize, Deserialize, Debug, Clone, TS)]
         #[allow(clippy::large_enum_variant)]
         #[serde(tag = "method", rename_all = "camelCase")]
         pub enum ClientResponse {
             $(
                 $(#[doc = $variant_doc])*
                 #[serde(rename = $wire)]
+                #[ts(rename = $wire)]
                 $variant {
                     #[serde(rename = "id")]
+                    #[ts(rename = "id")]
                     request_id: RequestId,
                     response: $response,
                 },

@@ -1,5 +1,6 @@
 use crate::ClientNotification;
 use crate::ClientRequest;
+use crate::ClientResponse;
 use crate::JsonSchema;
 use crate::ServerNotification;
 use crate::ServerNotificationEnvelope;
@@ -116,6 +117,7 @@ pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> R
     ensure_dir(&v2_out_dir)?;
 
     ClientRequest::export_all_to(out_dir)?;
+    ClientResponse::export_all_to(out_dir)?;
     export_client_responses(out_dir)?;
     ClientNotification::export_all_to(out_dir)?;
     crate::UserVerificationRpcError::export_all_to(out_dir)?;
