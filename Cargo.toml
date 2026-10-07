@@ -117,6 +117,7 @@ members = [
     "crates/genex-experimental-api-macros",
     "crates/plugin",
     "crates/model-provider",
+    "apps/desktop/src-tauri",
 ]
 resolver = "2"
 

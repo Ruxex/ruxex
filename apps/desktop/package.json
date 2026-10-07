@@ -8,7 +8,8 @@
     "check": "tsc --noEmit",
     "build": "vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "stage:runtime": "python3 scripts/stage-genex-package.py"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",

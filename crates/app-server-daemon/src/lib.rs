@@ -159,7 +159,18 @@ pub async fn run(command: LifecycleCommand) -> Result<LifecycleOutput> {
 
 pub async fn bootstrap(options: BootstrapOptions) -> Result<BootstrapOutput> {
     ensure_supported_platform()?;
-    Box::pin(Daemon::from_environment()?.bootstrap(options)).await
+    Box::pin(Daemon::from_environment()?.bootstrap(options, None)).await
+}
+
+/// Bootstraps the managed app-server using an explicitly supplied complete
+/// Genex package. Desktop hosts use this entry point because their executable
+/// lives inside an application bundle rather than directly under `bin/`.
+pub async fn bootstrap_from_package(
+    package_source: &Path,
+    options: BootstrapOptions,
+) -> Result<BootstrapOutput> {
+    ensure_supported_platform()?;
+    Box::pin(Daemon::from_environment()?.bootstrap(options, Some(package_source))).await
 }
 
 pub async fn run_pid_update_loop(
@@ -291,7 +302,7 @@ impl Daemon {
             if let Err(err) = thread_recovery::discard_pending(self) {
                 eprintln!("warning: failed to clear stale daemon recovery before start: {err}");
             }
-            prepare_install::prepare(self, &settings).await?;
+            prepare_install::prepare(self, &settings, None).await?;
             managed.managed_genex_bin = self.current_managed_genex_bin()?;
             managed.ensure_managed_genex_bin()?;
             let pid = managed.start_managed_backend(&settings).await?;
@@ -321,7 +332,7 @@ impl Daemon {
                 "app server is running but is not managed by genex app-server daemon"
             ));
         }
-        prepare_install::prepare(self, &settings).await?;
+        prepare_install::prepare(self, &settings, None).await?;
         let mut managed = self.clone();
         managed.managed_genex_bin = self.current_managed_genex_bin()?;
         if !settings.auto_update_enabled {
@@ -521,12 +532,22 @@ impl Daemon {
         ));
     }
 
-    async fn bootstrap(&self, options: BootstrapOptions) -> Result<BootstrapOutput> {
+    async fn bootstrap(
+        &self,
+        options: BootstrapOptions,
+        package_source: Option<&Path>,
+    ) -> Result<BootstrapOutput> {
         let _operation_lock = self.acquire_operation_lock().await?;
-        self.current_installation()?.bootstrap_locked(options).await
+        self.current_installation()?
+            .bootstrap_locked(options, package_source)
+            .await
     }
 
-    async fn bootstrap_locked(&self, _options: BootstrapOptions) -> Result<BootstrapOutput> {
+    async fn bootstrap_locked(
+        &self,
+        _options: BootstrapOptions,
+        package_source: Option<&Path>,
+    ) -> Result<BootstrapOutput> {
         let settings = self.load_settings().await?;
         if client::probe(&self.socket_path).await.is_ok()
             && self.running_backend(&settings).await?.is_none()
@@ -535,7 +556,7 @@ impl Daemon {
                 "app server is running but is not managed by genex app-server daemon"
             ));
         }
-        prepare_install::prepare(self, &settings).await?;
+        prepare_install::prepare(self, &settings, package_source).await?;
         let mut managed = self.clone();
         managed.managed_genex_bin = self.current_managed_genex_bin()?;
         managed.ensure_managed_genex_bin()?;

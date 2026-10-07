@@ -25,14 +25,23 @@ pub struct InstallRequest {
 }
 
 /// Prepare a missing package while the caller holds the daemon operation lock.
-pub(super) async fn prepare(daemon: &Daemon, settings: &DaemonSettings) -> Result<()> {
-    let source = InstallContext::current().package_layout.as_ref();
+pub(super) async fn prepare(
+    daemon: &Daemon,
+    settings: &DaemonSettings,
+    package_source: Option<&Path>,
+) -> Result<()> {
+    let source = package_source.map(Path::to_path_buf).or_else(|| {
+        InstallContext::current()
+                .package_layout
+                .as_ref()
+                .map(|layout| layout.package_dir.clone().into_path_buf())
+    });
     // Keep package replacement state out of the CLI dispatcher's async stack frame.
     Box::pin(prepare_from_package(
         daemon,
         settings,
         InstallMode::Missing,
-        source.map(|layout| layout.package_dir.as_path()),
+        source.as_deref(),
         &std::env::current_exe()?,
         |_| Ok(true),
     ))
