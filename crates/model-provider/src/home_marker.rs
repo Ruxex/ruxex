@@ -3,7 +3,7 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-use crate::provider::ProviderDescriptor;
+use crate::contract::ProviderDescriptor;
 
 /// File written at the root of a provider-scoped Genex home.
 pub const PROVIDER_HOME_MARKER_FILE: &str = "genex-home.json";

@@ -17,8 +17,74 @@ use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::RateLimitSnapshot;
 use serde_json::Value;
 
-use crate::provider::ProviderCapabilities;
-use crate::provider::ProviderDescriptor;
+/// Remote context-compaction protocols supported by a model provider.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RemoteCompactionSupport {
+    Unsupported,
+    V2,
+}
+
+/// Optional provider-backed features that Genex may expose at runtime.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ProviderCapabilities {
+    pub model_listing: bool,
+    pub streaming: bool,
+    pub usage: bool,
+    pub interactive_login: bool,
+    pub namespace_tools: bool,
+    pub web_search: bool,
+    pub standalone_web_search: bool,
+    pub external_web_access: bool,
+    pub history_notes: bool,
+    pub remote_compaction: RemoteCompactionSupport,
+}
+
+impl Default for ProviderCapabilities {
+    fn default() -> Self {
+        Self {
+            model_listing: true,
+            streaming: true,
+            usage: false,
+            interactive_login: false,
+            namespace_tools: true,
+            web_search: true,
+            standalone_web_search: false,
+            external_web_access: true,
+            history_notes: false,
+            remote_compaction: RemoteCompactionSupport::Unsupported,
+        }
+    }
+}
+
+/// Stable, non-secret provider identity used by the mounted data-root marker.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+pub struct ProviderDescriptor {
+    pub provider_kind: String,
+    pub provider_protocol_version: String,
+}
+
+impl ProviderDescriptor {
+    pub fn new(
+        provider_kind: impl Into<String>,
+        provider_protocol_version: impl Into<String>,
+    ) -> Self {
+        Self {
+            provider_kind: provider_kind.into(),
+            provider_protocol_version: provider_protocol_version.into(),
+        }
+    }
+}
+
+pub const CURRENT_PROVIDER_PROTOCOL_VERSION: &str = "1";
+
+/// Result of a provider-owned usage capability.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ProviderUsage {
+    Unsupported,
+    Available(RateLimitSnapshot),
+}
+
+pub type ProviderUsageResult = Result<ProviderUsage, ProviderError>;
 
 /// Provider-neutral error classes exposed to a Genex host.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -124,10 +190,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
 
     fn logout(&self) -> ProviderFuture<'_, ProviderResult<()>>;
 
-    fn usage(
-        &self,
-        request: UsageRequest,
-    ) -> ProviderFuture<'_, ProviderResult<crate::provider::ProviderUsage>>;
+    fn usage(&self, request: UsageRequest) -> ProviderFuture<'_, ProviderResult<ProviderUsage>>;
 }
 
 #[cfg(test)]
@@ -182,7 +245,7 @@ mod tests {
         fn usage(
             &self,
             _request: UsageRequest,
-        ) -> ProviderFuture<'_, ProviderResult<crate::provider::ProviderUsage>> {
+        ) -> ProviderFuture<'_, ProviderResult<ProviderUsage>> {
             Box::pin(async { Err(ProviderError::Unsupported) })
         }
     }

@@ -67,6 +67,7 @@
 - Managed `requirements.toml` no longer selects or injects Provider registry entries; remaining managed requirements continue to constrain provider-neutral runtime settings.
 - The provider contract audit is recorded in the candidate and compatibility inventories. The old internal transport/credential-facing trait is now named `ProviderRuntime`, while the public `ModelProvider` contract exposes provider-neutral descriptor, capability, chat-stream, model-catalog, auth, usage, and classified-error types.
 - A transitional adapter and object-safety contract test are in place. Existing execution consumers still use `SharedProviderRuntime`; migrating those consumers to `SharedModelProvider` and implementing real chat/catalog adapters remains the next contract slice.
+- Descriptor, capability, usage, and compaction-support types now live with the public contract rather than the transport adapter; the public trait no longer names `ModelProviderInfo`, `CredentialManager`, `GenexAuth`, or concrete API transport/auth types.
 
 ### Task 1: Add the provider descriptor contract
 

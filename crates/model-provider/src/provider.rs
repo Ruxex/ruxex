@@ -24,8 +24,6 @@ use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
 use genex_protocol::protocol::RateLimitSnapshot;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
@@ -35,84 +33,13 @@ use crate::auth::provider_auth;
 use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
 use crate::cloudflare_provider::CloudflareModelProvider;
+use crate::contract::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use crate::contract::ProviderCapabilities;
+use crate::contract::ProviderDescriptor;
+use crate::contract::ProviderUsage;
+use crate::contract::ProviderUsageResult;
+use crate::contract::RemoteCompactionSupport;
 use crate::models_endpoint::ModelsEndpoint;
-
-/// Remote context-compaction protocols supported by a model provider.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RemoteCompactionSupport {
-    /// The provider does not support remote compaction.
-    Unsupported,
-    /// The provider supports `compaction_trigger` items over the Responses endpoint.
-    V2,
-}
-
-/// Optional provider-backed features that Genex may expose at runtime.
-///
-/// These capabilities are a provider-owned upper bound. Callers can disable
-/// more functionality through normal config, but should not expose a feature
-/// that the active provider marks unsupported here.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ProviderCapabilities {
-    /// Whether the provider can enumerate or otherwise expose its model catalog.
-    pub model_listing: bool,
-    /// Whether the provider can return a streamed chat/response result.
-    pub streaming: bool,
-    /// Whether the provider exposes a usage or quota operation.
-    pub usage: bool,
-    /// Whether the provider exposes an interactive login flow.
-    pub interactive_login: bool,
-    pub namespace_tools: bool,
-    pub web_search: bool,
-    /// Whether the provider exposes a standalone web-search backend.
-    pub standalone_web_search: bool,
-    pub external_web_access: bool,
-    /// Whether the provider exposes the managed History/Notes backend.
-    pub history_notes: bool,
-    pub remote_compaction: RemoteCompactionSupport,
-}
-
-/// Stable, non-secret identity and compatibility information for a provider runtime.
-///
-/// This is the contract that will be persisted in the data-root mount marker. It deliberately
-/// excludes endpoints, model settings, and credentials so changing an account or API key within
-/// the same provider does not invalidate the data root.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ProviderDescriptor {
-    pub provider_kind: String,
-    pub provider_protocol_version: String,
-}
-
-impl ProviderDescriptor {
-    pub fn new(
-        provider_kind: impl Into<String>,
-        provider_protocol_version: impl Into<String>,
-    ) -> Self {
-        Self {
-            provider_kind: provider_kind.into(),
-            provider_protocol_version: provider_protocol_version.into(),
-        }
-    }
-}
-
-/// Version of the provider contract represented by the current data-root marker.
-pub const CURRENT_PROVIDER_PROTOCOL_VERSION: &str = "1";
-
-impl Default for ProviderCapabilities {
-    fn default() -> Self {
-        Self {
-            model_listing: true,
-            streaming: true,
-            usage: false,
-            interactive_login: false,
-            namespace_tools: true,
-            web_search: true,
-            standalone_web_search: false,
-            external_web_access: true,
-            history_notes: false,
-            remote_compaction: RemoteCompactionSupport::Unsupported,
-        }
-    }
-}
 
 /// Current app-visible account state for a model provider.
 #[derive(Debug, Clone, PartialEq)]
@@ -124,15 +51,6 @@ pub struct ProviderAccountState {
     pub auth_status: ProviderAuthStatus,
     pub usage: Option<RateLimitSnapshot>,
 }
-
-/// Result of a provider-owned usage capability.
-#[derive(Debug, Clone, PartialEq)]
-pub enum ProviderUsage {
-    Unsupported,
-    Available(RateLimitSnapshot),
-}
-
-pub type ProviderUsageResult = std::result::Result<ProviderUsage, ProviderAccountError>;
 
 /// Provider-neutral credentials supplied by a host login flow.
 #[derive(Clone, PartialEq, Eq)]
