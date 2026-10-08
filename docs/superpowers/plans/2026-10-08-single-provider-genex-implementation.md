@@ -33,7 +33,9 @@
 - AppServer now mounts and validates the configured provider home before credentials and SQLite state are initialized.
 - AppServer constructs one shared provider runtime and reuses it for sessions, model catalogs, account state, and capability queries.
 - AppServer account/model-provider APIs currently retain their protocol shapes, but expose only the configured provider; provider switching requests are rejected with guidance to start another AppServer instance.
-- Remaining work is to inject one shared provider instance through runtime construction, then migrate credentials, persistence, and host surfaces.
+- Runtime resume and AgentControl no longer restore or select a provider from persisted thread metadata; the mounted provider is authoritative.
+- Thread listing accepts omitted/empty/current-provider filters only and rejects requests for another provider; historical provider fields remain read-compatible during the persistence migration.
+- Remaining work is to migrate credentials, remove the retained persistence fields after the rollout/state audit, and finish host surfaces.
 
 ### Task 1: Add the provider descriptor contract
 

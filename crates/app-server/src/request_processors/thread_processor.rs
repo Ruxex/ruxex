@@ -216,7 +216,6 @@ fn merge_persisted_resume_metadata(
     }
 
     typesafe_overrides.model = persisted_metadata.model.clone();
-    typesafe_overrides.model_provider = Some(persisted_metadata.model_provider.clone());
 
     if let Some(reasoning_effort) = persisted_metadata.reasoning_effort.as_ref() {
         request_overrides.get_or_insert_with(HashMap::new).insert(
@@ -255,10 +254,22 @@ fn has_model_resume_override(
     typesafe_overrides: &ConfigOverrides,
 ) -> bool {
     typesafe_overrides.model.is_some()
-        || typesafe_overrides.model_provider.is_some()
         || request_overrides.is_some_and(|overrides| overrides.contains_key("model"))
         || request_overrides
             .is_some_and(|overrides| overrides.contains_key("model_reasoning_effort"))
+}
+
+fn normalize_model_provider_filter(
+    requested: Option<Vec<String>>,
+    active_provider: &str,
+) -> Result<Option<Vec<String>>, String> {
+    let providers = requested.unwrap_or_default();
+    if providers.is_empty() || providers.iter().all(|provider| provider == active_provider) {
+        return Ok(Some(vec![active_provider.to_string()]));
+    }
+    Err(format!(
+        "thread/list can only query the mounted model provider `{active_provider}`"
+    ))
 }
 
 fn has_permission_override(
@@ -5198,17 +5209,11 @@ impl ThreadRequestProcessor {
         let mut items = Vec::with_capacity(requested_page_size);
         let mut next_cursor: Option<String> = None;
 
-        let model_provider_filter = match model_providers {
-            Some(providers) => {
-                if providers.is_empty() {
-                    None
-                } else {
-                    Some(providers)
-                }
-            }
-            None if relation_filter.is_some() => None,
-            None => Some(vec![self.config.model_provider_id.clone()]),
-        };
+        let model_provider_filter = normalize_model_provider_filter(
+            model_providers,
+            self.config.model_provider_id.as_str(),
+        )
+        .map_err(invalid_params)?;
         let (allowed_sources_vec, source_kind_filter) =
             if relation_filter.is_some() && source_kinds.is_none() {
                 (Vec::new(), None)
@@ -5939,4 +5944,40 @@ fn build_thread_from_loaded_snapshot(
         config_snapshot,
         loaded_thread.rollout_path(),
     )
+}
+
+#[cfg(test)]
+mod single_provider_tests {
+    use super::normalize_model_provider_filter;
+
+    #[test]
+    fn omitted_and_empty_filters_select_the_active_provider() {
+        assert_eq!(
+            normalize_model_provider_filter(None, "cloudflare"),
+            Ok(Some(vec!["cloudflare".to_string()]))
+        );
+        assert_eq!(
+            normalize_model_provider_filter(Some(Vec::new()), "cloudflare"),
+            Ok(Some(vec!["cloudflare".to_string()]))
+        );
+    }
+
+    #[test]
+    fn active_provider_filter_is_accepted() {
+        assert_eq!(
+            normalize_model_provider_filter(
+                Some(vec!["cloudflare".to_string(), "cloudflare".to_string()]),
+                "cloudflare",
+            ),
+            Ok(Some(vec!["cloudflare".to_string()]))
+        );
+    }
+
+    #[test]
+    fn another_provider_filter_is_rejected() {
+        assert_eq!(
+            normalize_model_provider_filter(Some(vec!["openai".to_string()]), "cloudflare"),
+            Err("thread/list can only query the mounted model provider `cloudflare`".to_string())
+        );
+    }
 }

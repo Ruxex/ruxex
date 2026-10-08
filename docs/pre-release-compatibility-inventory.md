@@ -224,6 +224,14 @@ earlier one being free of obsolete persisted data:
 | Persisted origin/observability values `codex_cli_rs`, `codex_state`, and existing `codex_*` metadata keys | State extraction, log filters, telemetry, and replay fixtures produce or inspect these values. | Existing persisted/observability identifiers | `retain`; defer cleanup audit | Audit `crates/state`, `crates/rollout`, telemetry filters, and fixtures |
 | `.codex` project folders, code-mode/API URLs, marketplace/plugin identifiers, and `codex_apps` fixture names | Config discovery, app-server fixtures, MCP/plugin consumers, and external URLs use these strings; some are third-party or historical fixtures. | Per-contract retained or versioned external name | `retain` / `defer` | Audit external consumers and fixture ownership before any rename |
 
+### Single-provider runtime persistence audit (2026-10-08)
+
+| Exact symbol/path | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| `ThreadMetadata.model_provider`, `StoredThread.model_provider`, rollout session metadata, and the SQLite `threads.model_provider` column | Existing rollout/state writers and thread-list/read consumers still need to parse historical records while the persisted-data migration is staged. These values are not credentials and are no longer allowed to choose a runtime provider. | `migrate-in-place`: retain as historical read compatibility for this phase; remove or replace only after the rollout/state migration audit in Task 6 | Producer/consumer audit; resume/history coverage; `just check --tests`; `just check` |
+| `merge_persisted_resume_metadata` and AgentControl's stored-provider config rewrite | These consumers previously copied the persisted provider into a resumed session or selected it from the runtime provider registry. A Genex runtime has exactly one host-injected provider, so those paths could route execution away from the mounted provider. | `remove` runtime routing; always resume with the AppServer/runtime provider while retaining historical metadata for display/migration | Focused regression tests; `just check --tests`; `just check` |
+| App-server `thread/list` and thread-store `model_providers` filters | The protocol and store fields are repository-owned, but allowing arbitrary values would make a single-provider runtime query provider-routed state. Empty/all and omitted filters now mean the mounted provider; a non-mounted value is invalid. | `migrate-in-place` to a current-provider-only filter until the protocol field is removed in the final Task 6/7 boundary audit | Filter normalization tests; `just check --tests`; `just check` |
+
 ### Final all-crate Genex audit (2026-10-02)
 
 | Coverage scope | Audit result | Decision | Verification |
