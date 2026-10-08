@@ -48,7 +48,7 @@ async fn state_baseline_contains_current_schema_and_seed_data() {
         .expect("state baseline should apply");
 
     let tables = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name <> '_sqlx_migrations' ORDER BY name",
     )
     .fetch_all(&pool)
     .await
@@ -251,7 +251,7 @@ async fn auxiliary_baselines_preserve_current_schema_contracts() {
         .await
         .expect("goals baseline should apply");
     let goal_tables = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name <> '_sqlx_migrations' ORDER BY name",
     )
     .fetch_all(&goals_pool)
     .await
