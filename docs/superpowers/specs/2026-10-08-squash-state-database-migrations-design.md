@@ -67,7 +67,7 @@
 5. 全trigger名、対象イベント、WHEN条件、trigger body
 6. 移行が意図的に作成する初期行（実行時刻など実行ごとに変わる値は、同じ生成式と値の範囲を比較）
 
-確認では、旧SQLチェーンを一時的なin-memory SQLiteへ適用し、新baselineを別のin-memory SQLiteへ適用して、`sqlite_master`の正規化済み定義と対象初期行を比較する。`backfill_state.updated_at`のような動的値は、両方が`strftime('%s', 'now')`相当の現在時刻を生成し、比較時点の許容範囲に入ることを確認する。比較で差分が出た場合は、SQL削除・Rust変更・テスト更新を進めない。
+確認では、旧SQLチェーンを現在のHEADから`git show`で読み出して一時的なin-memory SQLiteへ適用し、新baselineを別のin-memory SQLiteへ適用して、`sqlite_master`の正規化済み定義と対象初期行を比較する。`backfill_state.updated_at`のような動的値は、両方が`strftime('%s', 'now')`相当の現在時刻を生成し、比較時点の許容範囲に入ることを確認する。比較で差分が出た場合は、履歴圧縮のコミットを作成せずにbaselineを修正する。
 
 さらに、実装後はstate crateのmigration testsで、全baselineが適用可能であること、主要な列/index/trigger/初期行が存在すること、runtimeがbaseline migratorを利用できることを検証する。
 

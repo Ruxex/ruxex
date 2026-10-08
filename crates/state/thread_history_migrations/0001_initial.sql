@@ -9,11 +9,17 @@ CREATE TABLE thread_turns (
     duration_ms INTEGER,
     first_user_item_id TEXT,
     final_agent_item_id TEXT,
+    rollout_byte_offset INTEGER,
+    rollout_end_ordinal INTEGER,
+    rollout_end_byte_offset INTEGER,
     PRIMARY KEY (thread_id, turn_id)
 );
 
 CREATE UNIQUE INDEX idx_thread_turns_page
     ON thread_turns(thread_id, rollout_ordinal);
+CREATE INDEX idx_thread_turns_end_page
+    ON thread_turns(thread_id, rollout_end_ordinal, turn_id)
+    WHERE rollout_end_ordinal IS NOT NULL;
 
 CREATE TABLE thread_items (
     thread_id TEXT NOT NULL,
@@ -22,14 +28,22 @@ CREATE TABLE thread_items (
     rollout_ordinal INTEGER NOT NULL,
     created_at_ms INTEGER NOT NULL,
     item_json TEXT NOT NULL,
+    item_type TEXT NOT NULL DEFAULT '',
+    updated_at_ordinal INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (thread_id, turn_id, item_id)
 );
 
 CREATE UNIQUE INDEX idx_thread_items_page
     ON thread_items(thread_id, rollout_ordinal);
-
 CREATE INDEX idx_thread_items_by_turn_page
     ON thread_items(thread_id, turn_id, rollout_ordinal);
+CREATE INDEX idx_thread_items_user_messages
+    ON thread_items(thread_id, rollout_ordinal)
+    WHERE item_type = 'userMessage';
+CREATE INDEX idx_thread_items_updated_page
+    ON thread_items(thread_id, updated_at_ordinal);
+CREATE INDEX idx_thread_items_by_turn_updated_page
+    ON thread_items(thread_id, turn_id, updated_at_ordinal);
 
 CREATE TABLE thread_history_projection_state (
     thread_id TEXT PRIMARY KEY,
