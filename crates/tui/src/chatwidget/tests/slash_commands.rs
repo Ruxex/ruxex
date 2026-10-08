@@ -2548,42 +2548,6 @@ async fn rejected_queued_cd_drains_following_input() {
 
 
 #[tokio::test]
-async fn slash_rollout_displays_current_path() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    let rollout_path = PathBuf::from("/tmp/genex-test-rollout.jsonl");
-    chat.current_rollout_path = Some(rollout_path.clone());
-
-    chat.dispatch_command(SlashCommand::Rollout);
-
-    let cells = drain_insert_history(&mut rx);
-    assert_eq!(cells.len(), 1, "expected info message for rollout path");
-    let rendered = lines_to_single_string(&cells[0]);
-    assert!(
-        rendered.contains(&rollout_path.display().to_string()),
-        "expected rollout path to be shown: {rendered}"
-    );
-}
-
-#[tokio::test]
-async fn slash_rollout_handles_missing_path() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    chat.dispatch_command(SlashCommand::Rollout);
-
-    let cells = drain_insert_history(&mut rx);
-    assert_eq!(
-        cells.len(),
-        1,
-        "expected info message explaining missing path"
-    );
-    let rendered = lines_to_single_string(&cells[0]);
-    assert!(
-        rendered.contains("not available"),
-        "expected missing rollout path message: {rendered}"
-    );
-}
-
-#[tokio::test]
 async fn raw_slash_command_toggles_and_accepts_on_off_args() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
 

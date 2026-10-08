@@ -1289,13 +1289,6 @@ impl ChatWidget {
         self.request_redraw();
     }
 
-    pub(crate) fn add_debug_config_output(&mut self) {
-        self.add_to_history(crate::debug_config::new_debug_config_output(
-            &self.config,
-            self.session_network_proxy.as_ref(),
-        ));
-    }
-
     pub(crate) fn add_ps_output(&mut self) {
         let processes = self
             .unified_exec_processes

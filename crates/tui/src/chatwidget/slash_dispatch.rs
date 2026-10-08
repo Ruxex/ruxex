@@ -400,9 +400,6 @@ impl ChatWidget {
             SlashCommand::Ide => {
                 self.handle_ide_command();
             }
-            SlashCommand::DebugConfig => {
-                self.add_debug_config_output();
-            }
             SlashCommand::Title => {
                 self.open_terminal_title_setup();
             }
@@ -423,50 +420,6 @@ impl ChatWidget {
             }
             SlashCommand::Plugins => {
                 self.add_plugins_output();
-            }
-            SlashCommand::Rollout => {
-                if let Some(path) = self.rollout_path() {
-                    self.add_info_message(
-                        format!("Current rollout path: {}", path.display()),
-                        /*hint*/ None,
-                    );
-                } else {
-                    self.add_info_message(
-                        "Rollout path is not available yet.".to_string(),
-                        /*hint*/ None,
-                    );
-                }
-            }
-            SlashCommand::TestApproval => {
-                use std::collections::HashMap;
-
-                use crate::approval_events::ApplyPatchApprovalRequestEvent;
-                use crate::diff_model::FileChange;
-
-                self.on_apply_patch_approval_request(
-                    "1".to_string(),
-                    ApplyPatchApprovalRequestEvent {
-                        call_id: "1".to_string(),
-                        turn_id: "turn-1".to_string(),
-                        changes: HashMap::from([
-                            (
-                                PathBuf::from("/tmp/test.txt"),
-                                FileChange::Add {
-                                    content: "test".to_string(),
-                                },
-                            ),
-                            (
-                                PathBuf::from("/tmp/test2.txt"),
-                                FileChange::Update {
-                                    unified_diff: "+test\n-test2".to_string(),
-                                    move_path: None,
-                                },
-                            ),
-                        ]),
-                        reason: None,
-                        grant_root: Some(PathBuf::from("/tmp")),
-                    },
-                );
             }
         }
     }
@@ -1004,19 +957,16 @@ impl ChatWidget {
             | SlashCommand::Daemon
             | SlashCommand::Pwd
             | SlashCommand::Usage
-            | SlashCommand::DebugConfig
             | SlashCommand::Ps
             | SlashCommand::Stop
             | SlashCommand::Mcp
             | SlashCommand::Plugins
-            | SlashCommand::Rollout
             | SlashCommand::Copy
             | SlashCommand::Raw
             | SlashCommand::Vim
             | SlashCommand::Diff
             | SlashCommand::Rename
-            | SlashCommand::Recap
-            | SlashCommand::TestApproval => QueueDrain::Continue,
+            | SlashCommand::Recap => QueueDrain::Continue,
             SlashCommand::Cd => match self.thread_id {
                 Some(thread_id) if self.can_change_working_directory(thread_id) => QueueDrain::Stop,
                 _ => QueueDrain::Continue,
@@ -1055,8 +1005,7 @@ impl ChatWidget {
             | SlashCommand::Hooks
             | SlashCommand::Title
             | SlashCommand::Statusline
-            | SlashCommand::Theme
-            => QueueDrain::Stop,
+            | SlashCommand::Theme => QueueDrain::Stop,
         }
     }
 

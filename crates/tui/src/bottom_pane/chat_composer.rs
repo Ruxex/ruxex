@@ -463,7 +463,6 @@ fn parent_owned_command_is_allowed(command: SlashCommand, args: &str) -> bool {
                 | SlashCommand::Daemon
                 | SlashCommand::Usage
                 | SlashCommand::Ide
-                | SlashCommand::DebugConfig
                 | SlashCommand::Title
                 | SlashCommand::Statusline
                 | SlashCommand::Theme
@@ -471,7 +470,6 @@ fn parent_owned_command_is_allowed(command: SlashCommand, args: &str) -> bool {
                 | SlashCommand::Stop
                 | SlashCommand::Mcp
                 | SlashCommand::Plugins
-                | SlashCommand::Rollout
         )
 }
 

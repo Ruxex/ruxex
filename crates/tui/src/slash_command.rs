@@ -47,7 +47,6 @@ pub enum SlashCommand {
     #[strum(to_string = "pwd", serialize = "cwd")]
     Pwd,
     Usage,
-    DebugConfig,
     Title,
     Statusline,
     Theme,
@@ -56,12 +55,10 @@ pub enum SlashCommand {
     Logout,
     Quit,
     Exit,
-    Rollout,
     Ps,
     #[strum(to_string = "stop", serialize = "clean")]
     Stop,
     Clear,
-    TestApproval,
     #[strum(serialize = "subagents")]
     MultiAgents,
 }
@@ -95,7 +92,6 @@ impl SlashCommand {
             SlashCommand::Cd => "change the current working directory",
             SlashCommand::Pwd => "show the current working directory",
             SlashCommand::Usage => "view account usage or use a usage limit reset",
-            SlashCommand::DebugConfig => "show config layers and requirement sources for debugging",
             SlashCommand::Title => "configure which items appear in the terminal title",
             SlashCommand::Statusline => "configure which items appear in the status line",
             SlashCommand::Theme => "choose a syntax highlighting theme",
@@ -118,8 +114,6 @@ impl SlashCommand {
             SlashCommand::Mcp => "list configured MCP tools; use /mcp verbose for details",
             SlashCommand::Plugins => "browse plugins",
             SlashCommand::Logout => "log out of Genex",
-            SlashCommand::Rollout => "print the rollout file path",
-            SlashCommand::TestApproval => "test approval request",
         }
     }
 
@@ -205,7 +199,6 @@ impl SlashCommand {
             | SlashCommand::Daemon
             | SlashCommand::Pwd
             | SlashCommand::Usage
-            | SlashCommand::DebugConfig
             | SlashCommand::Ps
             | SlashCommand::Stop
             | SlashCommand::Goal
@@ -218,8 +211,6 @@ impl SlashCommand {
             | SlashCommand::Exit
             | SlashCommand::Side
             | SlashCommand::Btw => true,
-            SlashCommand::Rollout => true,
-            SlashCommand::TestApproval => true,
             SlashCommand::Agents | SlashCommand::MultiAgents => true,
             SlashCommand::Theme => false,
         }
@@ -228,7 +219,6 @@ impl SlashCommand {
     fn is_visible(self) -> bool {
         match self {
             SlashCommand::Copy => !cfg!(target_os = "android"),
-            SlashCommand::Rollout | SlashCommand::TestApproval => cfg!(debug_assertions),
             _ => true,
         }
     }
