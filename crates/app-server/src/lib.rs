@@ -12,6 +12,7 @@ use genex_core::resolve_installation_id;
 use genex_login::CredentialManager;
 use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use genex_model_provider::ProviderDescriptor;
+use genex_model_provider::create_model_provider;
 use genex_model_provider::mount_provider_home;
 #[cfg(debug_assertions)]
 use genex_utils_absolute_path::AbsolutePathBuf;
@@ -558,6 +559,10 @@ pub async fn run_main_with_transport_options(
         CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
             .await
             .map_err(std::io::Error::other)?;
+    let provider = create_model_provider(
+        config.model_provider.clone(),
+        Some(Arc::clone(&credential_manager)),
+    );
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
@@ -838,6 +843,7 @@ pub async fn run_main_with_transport_options(
                 &credential_manager,
             ))),
             credential_manager,
+            provider,
             installation_id,
             code_mode_session_provider,
             plugin_startup_tasks: matches!(

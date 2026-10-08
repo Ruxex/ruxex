@@ -69,7 +69,7 @@ use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalService;
 use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::CredentialManager;
-use genex_model_provider::create_model_provider_for_id;
+use genex_model_provider::SharedModelProvider;
 use genex_protocol::ThreadId;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::SessionSource;
@@ -233,6 +233,7 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) config_warnings: Vec<ConfigWarningNotification>,
     pub(crate) session_source: SessionSource,
     pub(crate) credential_manager: Arc<CredentialManager>,
+    pub(crate) provider: SharedModelProvider,
     pub(crate) user_verification: Arc<crate::user_verification::Service>,
     pub(crate) installation_id: String,
     pub(crate) code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>>,
@@ -255,6 +256,7 @@ impl MessageProcessor {
             config_warnings,
             session_source,
             credential_manager,
+            provider,
             user_verification,
             installation_id,
             code_mode_session_provider,
@@ -289,11 +291,6 @@ impl MessageProcessor {
         let extension_event_sink =
             app_server_extension_event_sink(outgoing.clone(), thread_state_manager.clone());
         let mut queue_service = None;
-        let provider = create_model_provider_for_id(
-            config.model_provider_id.clone(),
-            config.model_provider.clone(),
-            Some(Arc::clone(&credential_manager)),
-        );
         let thread_manager = Arc::new_cyclic(|thread_manager| {
             queue_service = queue_store.map(|queue| {
                 Arc::new(QueuedItemService::new(

@@ -86,6 +86,7 @@ use genex_core::config::Config;
 use genex_core::resolve_installation_id;
 use genex_exec_server::EnvironmentManager;
 use genex_login::CredentialManager;
+use genex_model_provider::create_model_provider;
 use genex_protocol::protocol::SessionSource;
 pub use genex_rollout::StateDbHandle;
 pub use genex_state::log_db::LogDbLayer;
@@ -418,6 +419,10 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
         CredentialManager::shared_from_config(args.config.as_ref(), args.enable_api_key_env)
             .await
             .map_err(IoError::other)?;
+    let provider = create_model_provider(
+        args.config.model_provider.clone(),
+        Some(Arc::clone(&credential_manager)),
+    );
     let (client_tx, mut client_rx) = mpsc::channel::<InProcessClientMessage>(channel_capacity);
     let (event_tx, event_rx) = mpsc::channel::<InProcessServerEvent>(channel_capacity);
 
@@ -473,6 +478,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
                     &credential_manager,
                 ))),
                 credential_manager,
+                provider,
                 installation_id,
                 code_mode_session_provider: None,
                 plugin_startup_tasks: Some(PluginStartupConfig::Current),
