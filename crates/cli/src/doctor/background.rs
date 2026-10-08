@@ -7,9 +7,9 @@
 
 use std::path::Path;
 
-use genex_core::config::Config;
 use super::CheckStatus;
 use super::DoctorCheck;
+use genex_core::config::Config;
 
 const MAX_PROBE_ERROR_CHARS: usize = 120;
 const STATE_DIR_NAME: &str = "app-server-daemon";
@@ -253,5 +253,4 @@ mod tests {
                 .any(|detail| detail.starts_with("app-server version: unavailable ("))
         );
     }
-
 }

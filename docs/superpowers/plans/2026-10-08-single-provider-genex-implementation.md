@@ -39,7 +39,8 @@
 - New rollout session metadata no longer writes `model_provider`; optional deserialization remains for historical JSONL and state backfill.
 - SQLite state migration `0002` removes `threads.model_provider` and `idx_threads_provider`; state metadata and runtime SQL no longer persist or filter threads by provider. Historical rollout values remain read-only migration input.
 - Provider-switching host surfaces are removed: CLI `login switch`, TUI provider selection/switching, `Config::switch_model_provider`, and app-server `account/switch` plus generated schema artifacts. The configured provider is used directly; another provider requires another AppServer/data root.
-- Remaining work is to migrate credentials, remove the retained persistence fields after the rollout/state audit, and finish host surfaces.
+- CredentialManager no longer persists or applies `active_provider`, rejects login/delete operations for a different configured provider, and treats logout as deletion of the configured provider's credentials; file, keyring, ephemeral, and legacy-read storage remain.
+- Remaining work is to remove the retained historical persistence fields after the rollout/state audit and finish the final host-surface and provider-neutral contract audit.
 
 ### Task 1: Add the provider descriptor contract
 

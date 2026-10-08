@@ -53,7 +53,10 @@ impl CredentialManagerAuthProvider {
 
     fn current_auth(&self) -> Option<GenexAuth> {
         if let Some(provider_id) = self.provider_id.as_deref()
-            && self.credential_manager.active_provider_id().as_deref() != Some(provider_id)
+            && self
+                .credential_manager
+                .configured_provider_id()
+                .is_some_and(|configured| configured != provider_id)
         {
             return None;
         }
@@ -186,7 +189,9 @@ pub(crate) fn cached_provider_auth(
     provider_id: Option<&str>,
 ) -> Option<GenexAuth> {
     if let Some(provider_id) = provider_id
-        && credential_manager.active_provider_id().as_deref() != Some(provider_id)
+        && credential_manager
+            .configured_provider_id()
+            .is_some_and(|configured| configured != provider_id)
     {
         return None;
     }

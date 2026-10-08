@@ -151,8 +151,10 @@ impl GenexAuth {
         _keyring_backend_kind: AuthKeyringBackendKind,
         _auth_route_config: &AuthRouteConfig,
     ) -> std::io::Result<Self> {
-        let Some(credentials) = auth_dot_json.active_auth() else {
-            return Err(std::io::Error::other("stored auth has no active provider"));
+        let Some(credentials) = auth_dot_json.default_auth() else {
+            return Err(std::io::Error::other(
+                "stored auth has no provider credentials",
+            ));
         };
         Self::from_provider_auth(credentials).await
     }
@@ -423,10 +425,7 @@ pub fn delete_provider_auth(
     if current.providers.contains_key(provider_id) {
         let mut auth = current.into_provider_storage();
         let removed = auth.providers.remove(provider_id).is_some();
-        if auth.active_provider.as_deref() == Some(provider_id) {
-            auth.set_active_provider(None);
-        }
-        if auth.providers.is_empty() && auth.active_provider.is_none() {
+        if auth.providers.is_empty() {
             storage.delete()?;
         } else {
             storage.save(&auth)?;
@@ -440,23 +439,6 @@ pub fn delete_provider_auth(
     Ok(false)
 }
 
-/// List provider IDs with persisted provider-scoped credentials.
-pub fn list_provider_ids(
-    genex_home: &Path,
-    auth_credentials_store_mode: AuthCredentialsStoreMode,
-    keyring_backend_kind: AuthKeyringBackendKind,
-) -> std::io::Result<Vec<String>> {
-    let storage = create_auth_storage(
-        genex_home.to_path_buf(),
-        auth_credentials_store_mode,
-        keyring_backend_kind,
-    );
-    Ok(storage
-        .load()?
-        .map(|auth| auth.providers.into_keys().collect())
-        .unwrap_or_default())
-}
-
 fn validate_provider_id(provider_id: &str) -> std::io::Result<()> {
     if provider_id.trim().is_empty() {
         return Err(std::io::Error::new(
@@ -465,86 +447,6 @@ fn validate_provider_id(provider_id: &str) -> std::io::Result<()> {
         ));
     }
     Ok(())
-}
-
-fn activate_provider_in_storage(
-    genex_home: &Path,
-    provider_id: &str,
-    auth_credentials_store_mode: AuthCredentialsStoreMode,
-    keyring_backend_kind: AuthKeyringBackendKind,
-) -> std::io::Result<()> {
-    validate_provider_id(provider_id)?;
-    let storage = create_auth_storage(
-        genex_home.to_path_buf(),
-        auth_credentials_store_mode,
-        keyring_backend_kind,
-    );
-    let mut auth = storage.load()?.ok_or_else(|| {
-        std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "provider credentials not found",
-        )
-    })?;
-    if !auth.providers.contains_key(provider_id) && auth.has_legacy_auth() {
-        auth.materialize_legacy(provider_id);
-    }
-    let Some(credentials) = auth.providers.get(provider_id) else {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            format!("provider credentials not found for `{provider_id}`"),
-        ));
-    };
-    if !credentials.has_supported_credentials() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("provider `{provider_id}` has no usable stored credentials"),
-        ));
-    }
-    auth.set_active_provider(Some(provider_id.to_string()));
-    storage.save(&auth)
-}
-
-fn select_provider_in_storage(
-    genex_home: &Path,
-    provider_id: &str,
-    auth_credentials_store_mode: AuthCredentialsStoreMode,
-    keyring_backend_kind: AuthKeyringBackendKind,
-) -> std::io::Result<()> {
-    validate_provider_id(provider_id)?;
-    let storage = create_auth_storage(
-        genex_home.to_path_buf(),
-        auth_credentials_store_mode,
-        keyring_backend_kind,
-    );
-    let mut auth = storage.load()?.unwrap_or_default();
-    if !auth.providers.contains_key(provider_id) && auth.has_legacy_auth() {
-        auth.materialize_legacy(provider_id);
-    }
-    auth.set_active_provider(Some(provider_id.to_string()));
-    storage.save(&auth)
-}
-
-fn deactivate_provider_in_storage(
-    genex_home: &Path,
-    provider_id: &str,
-    auth_credentials_store_mode: AuthCredentialsStoreMode,
-    keyring_backend_kind: AuthKeyringBackendKind,
-) -> std::io::Result<bool> {
-    let storage = create_auth_storage(
-        genex_home.to_path_buf(),
-        auth_credentials_store_mode,
-        keyring_backend_kind,
-    );
-    let Some(mut auth) = storage.load()? else {
-        return Ok(false);
-    };
-    if !auth.providers.contains_key(provider_id) && auth.has_legacy_auth() {
-        auth.materialize_legacy(provider_id);
-    }
-    let was_active = auth.active_provider_auth().is_some();
-    auth.set_active_provider(None);
-    storage.save(&auth)?;
-    Ok(was_active)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1096,7 +998,7 @@ impl UnauthorizedRecovery {
 /// different parts of the program seeing inconsistent auth data mid‑run.
 pub struct CredentialManager {
     genex_home: PathBuf,
-    model_provider_id: RwLock<Option<String>>,
+    model_provider_id: Option<String>,
     inner: RwLock<CachedAuth>,
     auth_change_tx: watch::Sender<u64>,
     auth_change_state_tx: watch::Sender<AuthChangeState>,
@@ -1203,13 +1105,6 @@ impl CredentialManager {
     }
 
     async fn new_from_auth_config(auth_config: AuthConfig, enable_api_key_env: bool) -> Self {
-        let stored_selection = load_auth_dot_json(
-            &auth_config.genex_home,
-            auth_config.auth_credentials_store_mode,
-            auth_config.keyring_backend_kind,
-        )
-        .ok()
-        .flatten();
         let managed_auth = auth_config
             .load_auth(enable_api_key_env)
             .await
@@ -1226,14 +1121,10 @@ impl CredentialManager {
             managed_auth_policy,
             auth_route_config,
         } = auth_config;
-        let model_provider_id = stored_selection
-            .filter(|auth| auth.selection_configured())
-            .and_then(|auth| auth.active_provider_id().map(str::to_owned))
-            .or(model_provider_id);
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Self {
             genex_home,
-            model_provider_id: RwLock::new(model_provider_id),
+            model_provider_id,
             inner: RwLock::new(CachedAuth {
                 auth: managed_auth,
                 permanent_refresh_failure: None,
@@ -1268,7 +1159,7 @@ impl CredentialManager {
 
         Arc::new(Self {
             genex_home: PathBuf::from("non-existent"),
-            model_provider_id: RwLock::new(None),
+            model_provider_id: None,
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
@@ -1294,7 +1185,7 @@ impl CredentialManager {
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Arc::new(Self {
             genex_home,
-            model_provider_id: RwLock::new(None),
+            model_provider_id: None,
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
@@ -1315,7 +1206,7 @@ impl CredentialManager {
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Arc::new(Self {
             genex_home: PathBuf::from("non-existent"),
-            model_provider_id: RwLock::new(None),
+            model_provider_id: None,
             inner: RwLock::new(CachedAuth {
                 auth: None,
                 permanent_refresh_failure: None,
@@ -1534,14 +1425,9 @@ impl CredentialManager {
 
         let allowed_login_methods = self.allowed_login_methods();
         let effective_managed_workspaces = self.effective_managed_workspaces();
-        let model_provider_id = self
-            .model_provider_id
-            .read()
-            .ok()
-            .and_then(|provider_id| provider_id.clone());
         load_auth(
             &self.genex_home,
-            model_provider_id.as_deref(),
+            self.model_provider_id.as_deref(),
             self.enable_api_key_env,
             self.auth_credentials_store_mode,
             Some(&allowed_login_methods),
@@ -1818,8 +1704,9 @@ impl CredentialManager {
         result
     }
 
-    /// Persist credentials for a provider and make that provider active.
+    /// Persist credentials for the configured provider and reload the shared snapshot.
     pub async fn login(&self, provider_id: &str, credentials: ProviderAuth) -> std::io::Result<()> {
+        self.ensure_configured_provider(provider_id)?;
         save_provider_auth(
             &self.genex_home,
             provider_id,
@@ -1827,99 +1714,13 @@ impl CredentialManager {
             self.auth_credentials_store_mode,
             self.keyring_backend_kind,
         )?;
-        self.set_model_provider_id(Some(provider_id.to_string()));
-        activate_provider_in_storage(
-            &self.genex_home,
-            provider_id,
-            self.auth_credentials_store_mode,
-            self.keyring_backend_kind,
-        )?;
         self.reload().await;
-        self.publish_provider_selection(Some(provider_id.to_string()), true);
         Ok(())
     }
 
-    /// Make an existing provider with stored credentials active without changing them.
-    pub async fn switch(&self, provider_id: &str) -> std::io::Result<()> {
-        let modes = if self.auth_credentials_store_mode == AuthCredentialsStoreMode::Ephemeral {
-            vec![(
-                AuthCredentialsStoreMode::Ephemeral,
-                AuthKeyringBackendKind::default(),
-            )]
-        } else {
-            vec![
-                (
-                    AuthCredentialsStoreMode::Ephemeral,
-                    AuthKeyringBackendKind::default(),
-                ),
-                (self.auth_credentials_store_mode, self.keyring_backend_kind),
-            ]
-        };
-        let mut last_error = None;
-        for (mode, keyring) in modes {
-            match activate_provider_in_storage(&self.genex_home, provider_id, mode, keyring) {
-                Ok(()) => {
-                    let changed = self.active_provider_id().as_deref() != Some(provider_id);
-                    self.set_model_provider_id(Some(provider_id.to_string()));
-                    self.reload().await;
-                    self.publish_provider_selection(Some(provider_id.to_string()), changed);
-                    return Ok(());
-                }
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                    last_error = Some(error);
-                }
-                Err(error) => return Err(error),
-            }
-        }
-        Err(last_error.unwrap_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                format!("provider credentials not found for `{provider_id}`"),
-            )
-        }))
-    }
-
-    /// Select a provider whose authentication is supplied by configuration or
-    /// which does not require authentication. Stored credentials are retained.
-    pub async fn select_provider(&self, provider_id: &str) -> std::io::Result<()> {
-        let modes = if self.auth_credentials_store_mode == AuthCredentialsStoreMode::Ephemeral {
-            vec![(
-                AuthCredentialsStoreMode::Ephemeral,
-                AuthKeyringBackendKind::default(),
-            )]
-        } else {
-            vec![
-                (
-                    AuthCredentialsStoreMode::Ephemeral,
-                    AuthKeyringBackendKind::default(),
-                ),
-                (self.auth_credentials_store_mode, self.keyring_backend_kind),
-            ]
-        };
-        let mut last_error = None;
-        for (mode, keyring) in modes {
-            if mode == AuthCredentialsStoreMode::Ephemeral
-                && self.auth_credentials_store_mode != AuthCredentialsStoreMode::Ephemeral
-                && load_auth_dot_json(&self.genex_home, mode, keyring)?.is_none()
-            {
-                continue;
-            }
-            match select_provider_in_storage(&self.genex_home, provider_id, mode, keyring) {
-                Ok(()) => {
-                    let changed = self.active_provider_id().as_deref() != Some(provider_id);
-                    self.set_model_provider_id(Some(provider_id.to_string()));
-                    self.reload().await;
-                    self.publish_provider_selection(Some(provider_id.to_string()), changed);
-                    return Ok(());
-                }
-                Err(error) => last_error = Some(error),
-            }
-        }
-        Err(last_error.unwrap_or_else(|| std::io::Error::other("failed to select model provider")))
-    }
-
-    /// Delete one provider's credentials and clear the selection when it is active.
+    /// Delete the configured provider's credentials from all active stores.
     pub async fn delete(&self, provider_id: &str) -> std::io::Result<bool> {
+        self.ensure_configured_provider(provider_id)?;
         let removed_ephemeral = delete_provider_auth(
             &self.genex_home,
             provider_id,
@@ -1938,78 +1739,42 @@ impl CredentialManager {
                 )?
             };
         let removed = removed_ephemeral || removed_persistent;
-        if self.active_provider_id().as_deref() == Some(provider_id) {
-            self.set_model_provider_id(None);
-            self.publish_provider_selection(None, true);
-        }
         if removed {
             self.reload().await;
         }
         Ok(removed)
     }
 
-    /// Returns the provider selected for the current manager instance.
-    pub fn active_provider_id(&self) -> Option<String> {
-        self.model_provider_id
-            .read()
-            .ok()
-            .and_then(|provider_id| provider_id.clone())
+    /// Returns the provider identity fixed when this manager was constructed.
+    pub fn configured_provider_id(&self) -> Option<&str> {
+        self.model_provider_id.as_deref()
     }
 
-    /// Returns whether storage contains an explicit provider selection.
-    pub fn has_persisted_provider_selection(&self) -> bool {
-        load_auth_dot_json(
-            &self.genex_home,
-            self.auth_credentials_store_mode,
-            self.keyring_backend_kind,
-        )
-        .ok()
-        .flatten()
-        .is_some_and(|auth| auth.selection_configured())
-    }
-
-    /// Log out by clearing active provider selection while retaining credentials.
+    /// Log out by deleting the configured provider's persisted credentials.
     pub async fn logout(&self) -> std::io::Result<bool> {
         self.ensure_logout_allowed()?;
-        let provider_id = self
-            .active_provider_id()
-            .unwrap_or_else(|| "legacy".to_string());
-        let deactivated_ephemeral = deactivate_provider_in_storage(
-            &self.genex_home,
-            &provider_id,
-            AuthCredentialsStoreMode::Ephemeral,
-            AuthKeyringBackendKind::default(),
-        )?;
-        let deactivated_persistent =
-            if self.auth_credentials_store_mode == AuthCredentialsStoreMode::Ephemeral {
-                false
-            } else {
-                deactivate_provider_in_storage(
-                    &self.genex_home,
-                    &provider_id,
-                    self.auth_credentials_store_mode,
-                    self.keyring_backend_kind,
-                )?
-            };
-        let was_active = deactivated_ephemeral || deactivated_persistent;
-        self.set_model_provider_id(None);
+        let had_auth = self.auth_cached().is_some() || self.has_external_auth();
+        let removed = match self.model_provider_id.as_deref() {
+            Some(provider_id) => self.delete(provider_id).await?,
+            None => false,
+        };
         self.clear_external_auth();
         self.reload().await;
-        self.publish_provider_selection(None, was_active);
-        Ok(was_active)
+        Ok(removed || had_auth)
     }
 
-    fn set_model_provider_id(&self, provider_id: Option<String>) {
-        if let Ok(mut current) = self.model_provider_id.write() {
-            *current = provider_id;
+    fn ensure_configured_provider(&self, provider_id: &str) -> std::io::Result<()> {
+        if self
+            .model_provider_id
+            .as_deref()
+            .is_some_and(|configured| configured != provider_id)
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("provider `{provider_id}` is not the configured model provider"),
+            ));
         }
-    }
-
-    fn publish_provider_selection(&self, provider_id: Option<String>, changed: bool) {
-        self.auth_change_state_tx.send_modify(|state| {
-            state.provider_id = provider_id;
-            state.active_provider_changed |= changed;
-        });
+        validate_provider_id(provider_id)
     }
 
     fn ensure_logout_allowed(&self) -> std::io::Result<()> {
@@ -2144,7 +1909,13 @@ mod tests {
                 .contains("b-secret")
         );
         assert_eq!(
-            list_provider_ids(home.path(), mode, keyring).expect("list providers"),
+            load_auth_dot_json(home.path(), mode, keyring)
+                .expect("load providers")
+                .expect("stored providers")
+                .providers
+                .keys()
+                .cloned()
+                .collect::<Vec<_>>(),
             vec!["provider-a".to_string(), "provider-b".to_string()]
         );
 
@@ -2215,7 +1986,7 @@ mod tests {
 
         assert!(
             !auth
-                .active_provider_auth()
+                .default_auth()
                 .is_some_and(ProviderAuth::has_supported_credentials)
         );
         let serialized = serde_json::to_string(&auth).expect("serialize unknown auth mode");
@@ -2224,7 +1995,7 @@ mod tests {
             serde_json::from_str(&serialized).expect("deserialize unknown auth mode");
         assert!(
             !round_trip
-                .active_provider_auth()
+                .default_auth()
                 .is_some_and(ProviderAuth::has_supported_credentials)
         );
     }
@@ -2252,12 +2023,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn provider_credential_lifecycle_preserves_records_across_selection_changes() {
+    async fn provider_credential_lifecycle_is_fixed_to_the_configured_provider() {
         let (home, mode, keyring) = file_store();
         let manager = CredentialManager::new_from_auth_config(
             AuthConfig {
                 genex_home: home.path().to_path_buf(),
-                model_provider_id: None,
+                model_provider_id: Some("provider-a".to_string()),
                 auth_credentials_store_mode: mode,
                 keyring_backend_kind: keyring,
                 forced_login_method: None,
@@ -2274,57 +2045,22 @@ mod tests {
             .login("provider-a", ProviderAuth::api_key("a-secret"))
             .await
             .expect("login provider A");
-        save_provider_auth(
-            home.path(),
-            "provider-b",
-            &ProviderAuth::api_key("b-secret"),
-            mode,
-            keyring,
-        )
-        .expect("save provider B");
-
-        manager.switch("provider-b").await.expect("switch to B");
-        assert_eq!(manager.active_provider_id().as_deref(), Some("provider-b"));
         assert_eq!(
             load_provider_auth(home.path(), "provider-a", mode, keyring)
                 .expect("load A")
                 .and_then(|auth| auth.api_key),
             Some("a-secret".to_string())
         );
-        assert_eq!(
-            load_provider_auth(home.path(), "provider-b", mode, keyring)
-                .expect("load B")
-                .and_then(|auth| auth.api_key),
-            Some("b-secret".to_string())
+        assert!(
+            manager
+                .login("provider-b", ProviderAuth::api_key("b-secret"))
+                .await
+                .is_err()
         );
-
         assert!(manager.logout().await.expect("logout"));
-        assert!(manager.active_provider_id().is_none());
-        let stored = load_auth_dot_json(home.path(), mode, keyring)
-            .expect("load selected provider")
-            .expect("stored providers");
-        assert!(stored.selection_configured());
-        assert!(stored.active_provider_auth().is_none());
         assert!(
             load_provider_auth(home.path(), "provider-a", mode, keyring)
-                .expect("load retained A")
-                .is_some()
-        );
-        assert!(
-            load_provider_auth(home.path(), "provider-b", mode, keyring)
-                .expect("load retained B")
-                .is_some()
-        );
-
-        assert!(manager.delete("provider-b").await.expect("delete B"));
-        assert!(
-            load_provider_auth(home.path(), "provider-a", mode, keyring)
-                .expect("load A after delete")
-                .is_some()
-        );
-        assert!(
-            load_provider_auth(home.path(), "provider-b", mode, keyring)
-                .expect("load B after delete")
+                .expect("load deleted provider A")
                 .is_none()
         );
     }

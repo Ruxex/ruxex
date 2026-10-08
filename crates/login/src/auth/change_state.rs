@@ -10,10 +10,6 @@ pub struct AuthChangeState {
     /// Advances on login, logout, or changes of user, workspace, or auth mode.
     /// Credential changes with incomplete owner identity also advance this revision.
     pub owner_generation: u64,
-    /// Provider ID associated with the latest provider-scoped change.
-    pub provider_id: Option<String>,
-    /// Whether the active provider selection changed in the latest update.
-    pub active_provider_changed: bool,
 }
 
 pub(super) fn same_owner(previous: Option<&GenexAuth>, current: Option<&GenexAuth>) -> bool {

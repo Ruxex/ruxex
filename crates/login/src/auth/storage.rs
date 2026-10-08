@@ -167,32 +167,27 @@ impl ProviderAuth {
 
 /// Expected structure for $GENEX_HOME/auth.json.
 ///
-/// The canonical representation contains provider-keyed records. The private
-/// legacy field is populated only when reading the former single-provider
-/// shape, allowing existing installations to be read until a provider-scoped
-/// write migrates them.
+/// Provider-keyed records are retained as a storage migration boundary. The
+/// runtime still resolves exactly one configured provider; the old
+/// `active_provider` field is accepted while reading but is never used or
+/// written again.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AuthDotJson {
     pub providers: BTreeMap<String, ProviderAuth>,
-    pub active_provider: Option<String>,
     legacy: Option<ProviderAuth>,
-    selection_configured: bool,
 }
 
 impl AuthDotJson {
     pub fn for_provider(provider_id: impl Into<String>, auth: ProviderAuth) -> Self {
         Self {
             providers: BTreeMap::from([(provider_id.into(), auth)]),
-            active_provider: None,
             legacy: None,
-            selection_configured: false,
         }
     }
 
     pub fn legacy(auth_mode: Option<AuthMode>, api_key: Option<String>) -> Self {
         Self {
             providers: BTreeMap::new(),
-            active_provider: None,
             legacy: Some(ProviderAuth {
                 auth_mode,
                 api_key,
@@ -200,30 +195,14 @@ impl AuthDotJson {
                 invalid_auth_mode: false,
                 raw_auth_mode: None,
             }),
-            selection_configured: false,
         }
     }
 
-    pub fn active_provider_auth(&self) -> Option<&ProviderAuth> {
-        if self.selection_configured && self.active_provider.is_none() {
-            return None;
-        }
-        if let Some(provider_id) = self.active_provider.as_deref() {
-            return self.providers.get(provider_id);
-        }
+    pub fn default_auth(&self) -> Option<&ProviderAuth> {
         if self.providers.len() == 1 {
             return self.providers.values().next();
         }
         self.legacy.as_ref()
-    }
-
-    pub fn active_provider_id(&self) -> Option<&str> {
-        self.active_provider.as_deref()
-    }
-
-    pub(crate) fn set_active_provider(&mut self, provider_id: Option<String>) {
-        self.active_provider = provider_id;
-        self.selection_configured = true;
     }
 
     pub(crate) fn materialize_legacy(&mut self, provider_id: impl Into<String>) {
@@ -232,24 +211,13 @@ impl AuthDotJson {
         }
     }
 
-    pub fn selection_configured(&self) -> bool {
-        self.selection_configured
-    }
-
-    pub(crate) fn active_auth(&self) -> Option<&ProviderAuth> {
-        self.active_provider_auth()
-    }
-
     pub(crate) fn credentials_for_provider(
         &self,
         provider_id: Option<&str>,
     ) -> Option<&ProviderAuth> {
-        if self.selection_configured {
-            return self.active_auth();
-        }
         provider_id
             .and_then(|provider_id| self.provider_auth(provider_id))
-            .or_else(|| self.active_auth())
+            .or_else(|| self.default_auth())
     }
 
     pub(crate) fn provider_auth(&self, provider_id: &str) -> Option<&ProviderAuth> {
@@ -261,12 +229,7 @@ impl AuthDotJson {
     }
 
     pub(crate) fn into_provider_storage(self) -> Self {
-        Self {
-            providers: self.providers,
-            active_provider: self.active_provider,
-            legacy: None,
-            selection_configured: self.selection_configured,
-        }
+        self
     }
 }
 
@@ -274,9 +237,7 @@ impl Default for AuthDotJson {
     fn default() -> Self {
         Self {
             providers: BTreeMap::new(),
-            active_provider: None,
             legacy: None,
-            selection_configured: false,
         }
     }
 }
@@ -287,7 +248,6 @@ impl Serialize for AuthDotJson {
         S: Serializer,
     {
         if self.providers.is_empty()
-            && self.active_provider.is_none()
             && let Some(legacy) = &self.legacy
         {
             let mut state = serializer.serialize_struct("AuthDotJson", 3)?;
@@ -299,32 +259,9 @@ impl Serialize for AuthDotJson {
             return state.end();
         }
 
-        let mut state = serializer.serialize_struct("AuthDotJson", 3)?;
+        let mut state = serializer.serialize_struct("AuthDotJson", 1)?;
         state.serialize_field("providers", &self.providers)?;
-        if self.selection_configured {
-            state.serialize_field("active_provider", &self.active_provider)?;
-        }
         state.end()
-    }
-}
-
-#[derive(Default)]
-enum ActiveProviderField {
-    #[default]
-    Absent,
-    Null,
-    Value(String),
-}
-
-impl<'de> Deserialize<'de> for ActiveProviderField {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(match Option::<String>::deserialize(deserializer)? {
-            Some(provider_id) => Self::Value(provider_id),
-            None => Self::Null,
-        })
     }
 }
 
@@ -338,8 +275,6 @@ impl<'de> Deserialize<'de> for AuthDotJson {
             #[serde(default)]
             providers: BTreeMap<String, ProviderAuth>,
             #[serde(default)]
-            active_provider: ActiveProviderField,
-            #[serde(default)]
             auth_mode: Option<String>,
             #[serde(default)]
             api_key: Option<String>,
@@ -348,13 +283,8 @@ impl<'de> Deserialize<'de> for AuthDotJson {
         }
 
         let wire = Wire::deserialize(deserializer)?;
-        let (selection_configured, active_provider) = match wire.active_provider {
-            ActiveProviderField::Absent => (false, None),
-            ActiveProviderField::Null => (true, None),
-            ActiveProviderField::Value(provider_id) => (true, Some(provider_id)),
-        };
         let (auth_mode, invalid_auth_mode, raw_auth_mode) = parse_auth_mode(wire.auth_mode);
-        let legacy = if wire.providers.is_empty() && !selection_configured {
+        let legacy = if wire.providers.is_empty() {
             (auth_mode.is_some() || wire.api_key.is_some() || invalid_auth_mode).then_some(
                 ProviderAuth {
                     auth_mode,
@@ -369,9 +299,7 @@ impl<'de> Deserialize<'de> for AuthDotJson {
         };
         Ok(Self {
             providers: wire.providers,
-            active_provider,
             legacy,
-            selection_configured,
         })
     }
 }

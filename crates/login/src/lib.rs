@@ -26,7 +26,6 @@ pub use auth::UnauthorizedRecovery;
 pub use auth::default_client;
 pub use auth::delete_provider_auth;
 pub use auth::enforce_login_restrictions;
-pub use auth::list_provider_ids;
 pub use auth::load_auth_dot_json;
 pub use auth::load_provider_auth;
 pub use auth::login_with_api_key;
