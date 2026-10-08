@@ -11,7 +11,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use futures::Stream;
-use genex_protocol::account::ProviderAuthStatus;
+use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::RateLimitSnapshot;
@@ -137,6 +137,35 @@ pub struct ProviderAuthState {
     pub display_name: Option<String>,
 }
 
+/// A provider-owned credential field exposed to a host login form.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderAuthField {
+    pub id: String,
+    pub label: String,
+    pub secret: bool,
+}
+
+impl ProviderAuthField {
+    pub fn new(id: impl Into<String>, label: impl Into<String>, secret: bool) -> Self {
+        Self {
+            id: id.into(),
+            label: label.into(),
+            secret,
+        }
+    }
+}
+
+/// Provider-owned account and usage state suitable for host/UI projection.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProviderAccountState {
+    pub provider_id: String,
+    pub account: Option<ProviderAccount>,
+    pub account_id: Option<String>,
+    pub display_name: Option<String>,
+    pub auth_status: ProviderAuthStatus,
+    pub usage: Option<RateLimitSnapshot>,
+}
+
 /// Input to a provider model-catalog operation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ListModelsRequest {
@@ -183,12 +212,18 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
 
     fn auth_state(&self) -> ProviderAuthState;
 
+    fn auth_fields(&self) -> Vec<ProviderAuthField>;
+
+    fn account_state(&self) -> ProviderResult<ProviderAccountState>;
+
     fn login(
         &self,
         credentials: BTreeMap<String, String>,
     ) -> ProviderFuture<'_, ProviderResult<()>>;
 
     fn logout(&self) -> ProviderFuture<'_, ProviderResult<()>>;
+
+    fn delete(&self) -> ProviderFuture<'_, ProviderResult<bool>>;
 
     fn usage(&self, request: UsageRequest) -> ProviderFuture<'_, ProviderResult<ProviderUsage>>;
 }
@@ -231,6 +266,21 @@ mod tests {
             }
         }
 
+        fn auth_fields(&self) -> Vec<ProviderAuthField> {
+            vec![ProviderAuthField::new("api_key", "API key", true)]
+        }
+
+        fn account_state(&self) -> ProviderResult<ProviderAccountState> {
+            Ok(ProviderAccountState {
+                provider_id: "fake".to_string(),
+                account: None,
+                account_id: None,
+                display_name: None,
+                auth_status: ProviderAuthStatus::Unauthenticated,
+                usage: None,
+            })
+        }
+
         fn login(
             &self,
             _credentials: BTreeMap<String, String>,
@@ -240,6 +290,10 @@ mod tests {
 
         fn logout(&self) -> ProviderFuture<'_, ProviderResult<()>> {
             Box::pin(async { Ok(()) })
+        }
+
+        fn delete(&self) -> ProviderFuture<'_, ProviderResult<bool>> {
+            Box::pin(async { Ok(false) })
         }
 
         fn usage(

@@ -162,7 +162,7 @@ impl ConfigRequestProcessor {
         &self,
     ) -> Result<ModelProviderCapabilitiesReadResponse, JSONRPCErrorError> {
         let _config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let provider = self.thread_manager.model_provider();
+        let provider = self.thread_manager.model_provider_contract();
         let capabilities = provider.capabilities();
         Ok(ModelProviderCapabilitiesReadResponse {
             namespace_tools: capabilities.namespace_tools,
@@ -174,17 +174,16 @@ impl ConfigRequestProcessor {
         &self,
     ) -> Result<ModelProviderReadResponse, JSONRPCErrorError> {
         let _config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let provider_runtime = self.thread_manager.model_provider();
-        let descriptor = provider_runtime.descriptor();
-        let auth_status = provider_runtime
+        let provider = self.thread_manager.model_provider_contract();
+        let descriptor = provider.descriptor();
+        let account_state = provider
             .account_state()
-            .map_err(|err| invalid_request(err.to_string()))?
-            .auth_status;
+            .map_err(|err| invalid_request(err.to_string()))?;
         Ok(ModelProviderReadResponse {
-            id: descriptor.provider_kind,
-            name: provider_runtime.info().name.clone(),
-            auth_status,
-            auth_fields: provider_runtime
+            id: descriptor.provider_kind.clone(),
+            name: descriptor.provider_kind,
+            auth_status: account_state.auth_status,
+            auth_fields: provider
                 .auth_fields()
                 .into_iter()
                 .map(|field| ModelProviderAuthField {

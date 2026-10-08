@@ -48,8 +48,10 @@ use genex_login::GenexAuth;
 use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::ProviderModelCatalogSource;
+use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderRuntime;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::provider_contract as build_provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
@@ -394,6 +396,7 @@ pub(crate) struct ThreadManagerState {
     thread_id_generator: ThreadIdGenerator,
     credential_manager: Arc<CredentialManager>,
     provider: SharedProviderRuntime,
+    provider_contract: SharedModelProvider,
     models_manager: SharedModelsManager,
     git_root_discovery: Arc<GitRootDiscovery>,
     environment_manager: Arc<EnvironmentManager>,
@@ -509,6 +512,7 @@ impl ThreadManager {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         external_time_provider: Option<Arc<dyn TimeProvider>>,
     ) -> Self {
+        let provider_contract = build_provider_contract(provider.clone());
         let genex_home = config.genex_home.clone();
         let restriction_product = session_source.restriction_product();
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
@@ -541,6 +545,7 @@ impl ThreadManager {
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
                 provider,
+                provider_contract,
                 models_manager,
                 git_root_discovery: Arc::default(),
                 environment_manager,
@@ -683,12 +688,14 @@ impl ThreadManager {
         ));
         let agent_graph_store = local_agent_graph_store_from_state_db(state_db.as_ref());
         let provider = create_model_provider(provider, Some(credential_manager.clone()));
+        let provider_contract = build_provider_contract(provider.clone());
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
                 provider: Arc::clone(&provider),
+                provider_contract,
                 models_manager: build_catalog_models_manager(
                     genex_home,
                     Arc::new(ProviderModelCatalogSource::new(provider.clone())),
@@ -849,6 +856,11 @@ impl ThreadManager {
 
     pub fn model_provider(&self) -> SharedProviderRuntime {
         Arc::clone(&self.state.provider)
+    }
+
+    /// Returns the provider-neutral view of the mounted provider.
+    pub fn model_provider_contract(&self) -> SharedModelProvider {
+        Arc::clone(&self.state.provider_contract)
     }
 
     pub async fn list_models(

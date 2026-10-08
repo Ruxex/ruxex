@@ -3,6 +3,8 @@
 use genex_core::config::Config;
 use genex_login::CredentialManager;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::provider_contract;
+use genex_protocol::account::ProviderAuthStatus;
 use genex_utils_cli::CliConfigOverrides;
 use std::sync::Arc;
 
@@ -19,7 +21,11 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    let authenticated = manager.auth().await.is_some();
+    let provider = provider_contract(create_model_provider(
+        config.model_provider.clone(),
+        Some(manager),
+    ));
+    let authenticated = provider.auth_state().status == ProviderAuthStatus::Authenticated;
     eprintln!(
         "{}: {}",
         config.model_provider_id,
@@ -41,16 +47,20 @@ pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    let provider = create_model_provider(config.model_provider.clone(), Some(Arc::clone(&manager)));
-    let logged_out = match provider.logout().await {
-        Ok(logged_out) => logged_out,
+    let provider = provider_contract(create_model_provider(
+        config.model_provider.clone(),
+        Some(Arc::clone(&manager)),
+    ));
+    let was_authenticated = provider.auth_state().status == ProviderAuthStatus::Authenticated;
+    match provider.logout().await {
+        Ok(()) => {}
         Err(err) => {
             eprintln!("Error logging out: {err}");
             std::process::exit(1);
         }
-    };
+    }
 
-    if logged_out {
+    if was_authenticated {
         eprintln!("Successfully logged out");
     } else {
         eprintln!("Not logged in");
@@ -67,7 +77,10 @@ pub async fn run_login_delete(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    let provider = create_model_provider(config.model_provider.clone(), Some(manager));
+    let provider = provider_contract(create_model_provider(
+        config.model_provider.clone(),
+        Some(manager),
+    ));
     match provider.delete().await {
         Ok(true) => eprintln!(
             "Deleted credentials for model provider `{}`",

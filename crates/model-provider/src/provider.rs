@@ -402,6 +402,30 @@ where
         }
     }
 
+    fn auth_fields(&self) -> Vec<crate::contract::ProviderAuthField> {
+        ProviderRuntime::auth_fields(self)
+            .into_iter()
+            .map(|field| {
+                crate::contract::ProviderAuthField::new(field.id, field.label, field.secret)
+            })
+            .collect()
+    }
+
+    fn account_state(
+        &self,
+    ) -> crate::contract::ProviderResult<crate::contract::ProviderAccountState> {
+        ProviderRuntime::account_state(self)
+            .map(|state| crate::contract::ProviderAccountState {
+                provider_id: state.provider_id,
+                account: state.account,
+                account_id: state.account_id,
+                display_name: state.display_name,
+                auth_status: state.auth_status,
+                usage: state.usage,
+            })
+            .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+    }
+
     fn login(
         &self,
         credentials: BTreeMap<String, String>,
@@ -433,6 +457,19 @@ where
         })
     }
 
+    fn delete(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
+        Box::pin(async move {
+            ProviderRuntime::delete(self)
+                .await
+                .map_err(|error| match error {
+                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
+                    ProviderAuthError::Failed(message) => {
+                        crate::contract::ProviderError::Provider(message)
+                    }
+                })
+        })
+    }
+
     fn usage(
         &self,
         _request: crate::contract::UsageRequest,
@@ -443,6 +480,151 @@ where
                 .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
         })
     }
+}
+
+/// Adapts the legacy transport-backed runtime to the provider-neutral host contract.
+///
+/// The adapter intentionally shares the runtime allocation. It is a transition aid while
+/// execution moves to `ModelProvider`; it must not create a second credential or provider state.
+#[derive(Clone, Debug)]
+struct RuntimeProviderContractAdapter {
+    runtime: SharedProviderRuntime,
+}
+
+impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
+    fn descriptor(&self) -> ProviderDescriptor {
+        self.runtime.descriptor()
+    }
+
+    fn capabilities(&self) -> ProviderCapabilities {
+        self.runtime.capabilities()
+    }
+
+    fn chat(
+        &self,
+        _request: crate::contract::ChatRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+    > {
+        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+    }
+
+    fn list_models(
+        &self,
+        _request: crate::contract::ListModelsRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<genex_protocol::model_types::ModelCatalog>,
+    > {
+        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+    }
+
+    fn auth_state(&self) -> crate::contract::ProviderAuthState {
+        match self.runtime.account_state() {
+            Ok(state) => crate::contract::ProviderAuthState {
+                status: state.auth_status,
+                account_id: state.account_id,
+                display_name: state.display_name,
+            },
+            Err(error) => crate::contract::ProviderAuthState {
+                status: ProviderAuthStatus::Invalid,
+                account_id: None,
+                display_name: Some(error.to_string()),
+            },
+        }
+    }
+
+    fn auth_fields(&self) -> Vec<crate::contract::ProviderAuthField> {
+        self.runtime
+            .auth_fields()
+            .into_iter()
+            .map(|field| {
+                crate::contract::ProviderAuthField::new(field.id, field.label, field.secret)
+            })
+            .collect()
+    }
+
+    fn account_state(
+        &self,
+    ) -> crate::contract::ProviderResult<crate::contract::ProviderAccountState> {
+        self.runtime
+            .account_state()
+            .map(|state| crate::contract::ProviderAccountState {
+                provider_id: state.provider_id,
+                account: state.account,
+                account_id: state.account_id,
+                display_name: state.display_name,
+                auth_status: state.auth_status,
+                usage: state.usage,
+            })
+            .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+    }
+
+    fn login(
+        &self,
+        credentials: BTreeMap<String, String>,
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+        let api_key = credentials.get("api_key").cloned().unwrap_or_default();
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            runtime
+                .login(ProviderLoginRequest::new(api_key, credentials))
+                .await
+                .map_err(|error| match error {
+                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
+                    ProviderAuthError::Failed(message) => {
+                        crate::contract::ProviderError::Provider(message)
+                    }
+                })
+        })
+    }
+
+    fn logout(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            runtime
+                .logout()
+                .await
+                .map(|_| ())
+                .map_err(|error| match error {
+                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
+                    ProviderAuthError::Failed(message) => {
+                        crate::contract::ProviderError::Provider(message)
+                    }
+                })
+        })
+    }
+
+    fn delete(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            runtime.delete().await.map_err(|error| match error {
+                ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
+                ProviderAuthError::Failed(message) => {
+                    crate::contract::ProviderError::Provider(message)
+                }
+            })
+        })
+    }
+
+    fn usage(
+        &self,
+        _request: crate::contract::UsageRequest,
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderUsage>> {
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            runtime
+                .usage()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
+    }
+}
+
+/// Creates the provider-neutral view of an existing runtime provider without duplicating state.
+pub fn provider_contract(provider: SharedProviderRuntime) -> crate::contract::SharedModelProvider {
+    Arc::new(RuntimeProviderContractAdapter { runtime: provider })
 }
 
 pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
@@ -707,6 +889,22 @@ mod tests {
         assert!(capabilities.streaming);
         assert!(!capabilities.usage);
         assert!(!capabilities.interactive_login);
+    }
+
+    #[tokio::test]
+    async fn provider_contract_adapts_lifecycle_without_new_provider_state() {
+        let runtime = create_model_provider(
+            ModelProviderInfo::default(),
+            /*credential_manager*/ None,
+        );
+        let provider = provider_contract(runtime);
+
+        assert_eq!(provider.descriptor().provider_kind, "Responses provider");
+        assert_eq!(provider.auth_fields()[0].id, "api_key");
+        assert!(matches!(
+            provider.delete().await,
+            Err(crate::ProviderError::Unsupported)
+        ));
     }
 
     #[test]

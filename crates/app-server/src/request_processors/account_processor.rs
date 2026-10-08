@@ -5,7 +5,6 @@ use genex_app_server_protocol::Account;
 use genex_app_server_protocol::AccountDeleteParams;
 use genex_app_server_protocol::AccountDeleteResponse;
 use genex_app_server_protocol::GetAccountResponse;
-use genex_model_provider::ProviderLoginRequest;
 
 enum RefreshTokenRequestOutcome {
     NotAttemptedOrSucceeded,
@@ -65,7 +64,7 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
         _params: AccountDeleteParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        let provider = self.thread_manager.model_provider();
+        let provider = self.thread_manager.model_provider_contract();
         let result = provider
             .delete()
             .await
@@ -98,12 +97,12 @@ impl AccountRequestProcessor {
         params: GetAccountParams,
     ) -> Result<GetAccountResponse, JSONRPCErrorError> {
         self.refresh_token_if_requested(params.refresh_token).await;
-        let provider = self.thread_manager.model_provider();
+        let provider = self.thread_manager.model_provider_contract();
         let account_state = provider
             .account_state()
             .map_err(|err| invalid_request(err.to_string()))?;
         let usage = provider
-            .usage()
+            .usage(genex_model_provider::UsageRequest::default())
             .await
             .map_err(|err| invalid_request(err.to_string()))?;
         let usage = match usage {
@@ -197,7 +196,8 @@ impl AccountRequestProcessor {
                 api_key,
                 credentials,
             } => {
-                self.login_api_key_v2(request_id, api_key, credentials).await;
+                self.login_api_key_v2(request_id, api_key, credentials)
+                    .await;
             }
         }
         Ok(())
@@ -227,9 +227,11 @@ impl AccountRequestProcessor {
             ));
         }
 
+        let mut provider_credentials = credentials.clone();
+        provider_credentials.insert("api_key".to_string(), api_key.to_string());
         self.thread_manager
-            .model_provider()
-            .login(ProviderLoginRequest::new(api_key, credentials.clone()))
+            .model_provider_contract()
+            .login(provider_credentials)
             .await
             .map_err(|err| internal_error(format!("failed to save api key: {err}")))
     }
@@ -321,7 +323,7 @@ impl AccountRequestProcessor {
     }
 
     async fn logout_common(&self) -> std::result::Result<Option<AuthMode>, JSONRPCErrorError> {
-        match self.thread_manager.model_provider().logout().await {
+        match self.thread_manager.model_provider_contract().logout().await {
             Ok(_) => {}
             Err(err) => {
                 return Err(internal_error(format!("logout failed: {err}")));
