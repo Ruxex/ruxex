@@ -4,37 +4,33 @@ use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_models_manager::manager::ModelCatalogSource;
 use genex_protocol::error::Result as CoreResult;
 
-use crate::models_identity;
+use crate::contract::SharedModelProvider;
 use crate::provider::SharedProviderRuntime;
+use crate::provider::provider_contract;
 
 /// Adapts a runtime provider to the manager-facing catalog source abstraction.
 #[derive(Clone, Debug)]
 pub struct ProviderModelCatalogSource {
     provider: SharedProviderRuntime,
+    provider_contract: SharedModelProvider,
 }
 
 impl ProviderModelCatalogSource {
     pub fn new(provider: SharedProviderRuntime) -> Self {
-        Self { provider }
+        Self {
+            provider_contract: provider_contract(provider.clone()),
+            provider,
+        }
     }
 }
 
 impl ModelCatalogSource for ProviderModelCatalogSource {
     fn identity(&self) -> Option<String> {
-        let auth = self
-            .provider
-            .credential_manager()
-            .and_then(|manager| manager.auth_cached());
-        models_identity::identity(
-            self.provider.provider_id(),
-            self.provider.info(),
-            auth.as_ref(),
-        )
-        .ok()
+        self.provider_contract.model_catalog_identity().ok()
     }
 
     fn has_command_auth(&self) -> bool {
-        self.provider.info().has_command_auth()
+        self.provider_contract.capabilities().command_auth
     }
 
     fn uses_managed_auth(&self) -> ModelCatalogFuture<'_, bool> {
@@ -42,11 +38,13 @@ impl ModelCatalogSource for ProviderModelCatalogSource {
     }
 
     fn supports_api_key_models(&self) -> bool {
-        self.provider.info().env_key.is_some()
+        self.provider_contract
+            .capabilities()
+            .api_key_model_discovery
     }
 
     fn supports_remote_models(&self) -> bool {
-        true
+        self.provider_contract.capabilities().model_listing
     }
 
     fn list_models<'a>(

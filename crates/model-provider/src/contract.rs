@@ -28,6 +28,8 @@ pub enum RemoteCompactionSupport {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ProviderCapabilities {
     pub model_listing: bool,
+    pub api_key_model_discovery: bool,
+    pub command_auth: bool,
     pub streaming: bool,
     pub usage: bool,
     pub interactive_login: bool,
@@ -43,6 +45,8 @@ impl Default for ProviderCapabilities {
     fn default() -> Self {
         Self {
             model_listing: true,
+            api_key_model_discovery: false,
+            command_auth: false,
             streaming: true,
             usage: false,
             interactive_login: false,
@@ -201,6 +205,12 @@ pub enum ProviderChatEvent {
 /// Provider-owned model execution, catalog, authentication, and usage contract.
 pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     fn descriptor(&self) -> ProviderDescriptor;
+
+    /// Stable cache identity for provider-owned model catalog data.
+    fn model_catalog_identity(&self) -> ProviderResult<String> {
+        Ok(self.descriptor().provider_kind)
+    }
+
     fn capabilities(&self) -> ProviderCapabilities;
 
     fn chat(&self, request: ChatRequest) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;

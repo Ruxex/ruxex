@@ -364,7 +364,24 @@ where
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
-        ProviderRuntime::capabilities(self)
+        let mut capabilities = ProviderRuntime::capabilities(self);
+        capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
+            || ProviderRuntime::api_key_model_discovery_enabled_by_default(self)
+            || ProviderRuntime::info(self).env_key.is_some();
+        capabilities.command_auth =
+            capabilities.command_auth || ProviderRuntime::info(self).has_command_auth();
+        capabilities
+    }
+
+    fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
+        let auth =
+            ProviderRuntime::credential_manager(self).and_then(|manager| manager.auth_cached());
+        crate::models_identity::identity(
+            ProviderRuntime::provider_id(self),
+            ProviderRuntime::info(self),
+            auth.as_ref(),
+        )
+        .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
     }
 
     fn chat(
@@ -497,7 +514,26 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
-        self.runtime.capabilities()
+        let mut capabilities = self.runtime.capabilities();
+        capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
+            || self.runtime.api_key_model_discovery_enabled_by_default()
+            || self.runtime.info().env_key.is_some();
+        capabilities.command_auth =
+            capabilities.command_auth || self.runtime.info().has_command_auth();
+        capabilities
+    }
+
+    fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
+        let auth = self
+            .runtime
+            .credential_manager()
+            .and_then(|manager| manager.auth_cached());
+        crate::models_identity::identity(
+            self.runtime.provider_id(),
+            self.runtime.info(),
+            auth.as_ref(),
+        )
+        .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
     }
 
     fn chat(

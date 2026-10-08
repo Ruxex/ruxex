@@ -70,6 +70,7 @@
 - Descriptor, capability, usage, and compaction-support types now live with the public contract rather than the transport adapter; the public trait no longer names `ModelProviderInfo`, `CredentialManager`, `GenexAuth`, or concrete API transport/auth types.
 - Provider-neutral auth fields, account state, credential deletion, and lifecycle operations are now exposed by `ModelProvider`. AppServer account/config handlers and CLI login status/logout/delete use the shared contract adapter; execution and model catalog transport migration remain outstanding.
 - History/Notes and standalone Web Search capability gating now reads `ProviderCapabilities` through the provider-neutral contract adapter; their provider-specific backend calls remain behind the internal runtime adapter until the chat/extension transport slice.
+- Model catalog cache identity and capability predicates now read through the provider-neutral contract. The legacy runtime remains only for the actual catalog HTTP fetch and snapshot/ETag bridge.
 
 ### Task 1: Add the provider descriptor contract
 
