@@ -1346,7 +1346,7 @@
           ]
         },
         "modelProvider": {
-          "description": "Model provider used for this thread (for example, 'provider').",
+          "description": "Mounted provider reported by the AppServer (for example, 'provider'). This is status only; it is not a persisted or per-thread selection.",
           "type": "string"
         },
         "name": {
@@ -3014,6 +3014,7 @@
       "type": "string"
     },
     "modelProvider": {
+      "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
       "type": "string"
     },
     "reasoningEffort": {

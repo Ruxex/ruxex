@@ -4,7 +4,6 @@
 import type { ForcedLoginMethod } from "../ForcedLoginMethod";
 import type { PathUri } from "../PathUri";
 import type { WebSearchMode } from "../WebSearchMode";
-import type { JsonValue } from "../serde_json/JsonValue";
 import type { AskForApproval } from "./AskForApproval";
 import type { BrowserUseRequirements } from "./BrowserUseRequirements";
 import type { CliAuthCredentialsStoreMode } from "./CliAuthCredentialsStoreMode";
@@ -15,12 +14,6 @@ import type { ResidencyRequirement } from "./ResidencyRequirement";
 import type { SandboxMode } from "./SandboxMode";
 
 export type ConfigRequirements = {/**
- * Exact provider selection required by managed policy.
- */
-modelProvider: string | null, /**
- * Complete required provider definitions, using config.toml field names.
- */
-modelProviders: { [key in string]?: JsonValue } | null, /**
  * Effective login methods after managed, forced-login, and workspace restrictions.
  * An empty list permits no login method. Older servers may omit this field.
  */

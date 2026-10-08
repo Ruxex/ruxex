@@ -3969,21 +3969,6 @@
             "null"
           ]
         },
-        "modelProvider": {
-          "description": "Exact provider selection required by managed policy.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "modelProviders": {
-          "additionalProperties": true,
-          "description": "Complete required provider definitions, using config.toml field names.",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
         "models": {
           "anyOf": [
             {
@@ -13039,7 +13024,7 @@
           ]
         },
         "modelProvider": {
-          "description": "Model provider used for this thread (for example, 'provider').",
+          "description": "Mounted provider reported by the AppServer (for example, 'provider'). This is status only; it is not a persisted or per-thread selection.",
           "type": "string"
         },
         "name": {
@@ -13630,6 +13615,7 @@
           "type": "string"
         },
         "modelProvider": {
+          "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
           "type": "string"
         },
         "reasoningEffort": {
@@ -15328,6 +15314,7 @@
           "type": "string"
         },
         "modelProvider": {
+          "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
           "type": "string"
         },
         "reasoningEffort": {
@@ -15766,6 +15753,7 @@
           "type": "string"
         },
         "modelProvider": {
+          "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
           "type": "string"
         },
         "sandboxPolicy": {
@@ -16000,6 +15988,7 @@
           "type": "string"
         },
         "modelProvider": {
+          "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
           "type": "string"
         },
         "reasoningEffort": {

@@ -12,4 +12,8 @@ import type { SandboxPolicy } from "./SandboxPolicy";
 export type ThreadSettings = {/**
  * Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
  */
-disabledPluginIds: Array<string>, cwd: AbsolutePathBuf, approvalPolicy: AskForApproval, sandboxPolicy: SandboxPolicy, activePermissionProfile: ActivePermissionProfile | null, model: string, modelProvider: string, serviceTier: string | null, effort: ReasoningEffort | null, summary: ReasoningSummary | null, collaborationMode: CollaborationMode};
+disabledPluginIds: Array<string>, cwd: AbsolutePathBuf, approvalPolicy: AskForApproval, sandboxPolicy: SandboxPolicy, activePermissionProfile: ActivePermissionProfile | null, model: string, /**
+ * Mounted provider reported by the AppServer. This is status only; it is
+ * not a per-thread provider selection.
+ */
+modelProvider: string, serviceTier: string | null, effort: ReasoningEffort | null, summary: ReasoningSummary | null, collaborationMode: CollaborationMode};

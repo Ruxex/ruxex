@@ -305,13 +305,6 @@ fn map_requirements_to_api(
         None => ConfigRequirementsToml::default(),
     };
     Some(ConfigRequirements {
-        model_provider: requirements.model_provider,
-        model_providers: requirements.model_providers.map(|providers| {
-            providers
-                .into_iter()
-                .map(|(id, provider)| (id, serde_json::json!(provider)))
-                .collect()
-        }),
         allowed_login_methods: Some(allowed_login_methods),
         application: requirements.application.map(|application| {
             genex_app_server_protocol::ApplicationRequirements {
