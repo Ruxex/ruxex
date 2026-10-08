@@ -116,6 +116,44 @@ Genex core request
 内部型をそのまま公開traitの契約にしない。必要な場合は、内部adapterが公開traitと
 既存実装の間を変換する。
 
+### 5. Providerの識別はデータルートのマウント契約に置く
+
+Providerの種類はスレッドではなく、Genex runtimeが使用するデータルートに紐付ける。
+データルートの既定値は `.genex` とするが、ホストはビルド時の既定値を変更でき、
+起動時にも `genex_home` 相当のパスを指定できる。これにより、Providerごとのバイナリや
+複数のruntimeが同じ既定ディレクトリを誤って共有することを防ぐ。
+
+データルートのルートには、Providerが生成する非秘密のマーカーを置く。
+
+```text
+<genex_home>/
+  genex-home.json
+  state.sqlite
+  sessions/
+  credentials/
+```
+
+`genex-home.json` は少なくとも次を含む。
+
+```json
+{
+  "formatVersion": 1,
+  "providerKind": "example-provider",
+  "providerProtocolVersion": "1"
+}
+```
+
+runtimeのマウント時には、次の順序で検査する。
+
+1. Provider traitから現在の `ProviderDescriptor` を取得する。
+2. データルートが空または新規なら、現在のdescriptorでマーカーを作成する。
+3. 既存マーカーがある場合は、現在のdescriptorと比較する。
+4. Provider種類または互換性バージョンが不一致なら、SQLiteやcredentialを読み込む前に失敗する。
+5. マーカーがない既存データは、暗黙に別Providerとして開かず、明示的なmigrationまたは初期化を要求する。
+
+この検査は「別Providerで同じスレッドを続行する」ためではなく、Providerの異なるruntimeが
+同じ認証情報、履歴、キャッシュを誤って使用することを防ぐためのものである。
+
 ## Provider traitの契約
 
 最終的なメソッド名は実装前のAPIレビューで確定するが、責務は次のように固定する。
@@ -237,29 +275,17 @@ Provider交換を将来導入する場合は、単一Provider traitの拡張で�
 
 ## スレッド永続化
 
-スレッドにProvider実装の選択情報を持たせない。スレッドは現在のruntimeが受け取った
-Providerを使う。
+スレッドにProviderの選択情報やdescriptorを保存しない。スレッドは、マウント済みの
+データルートに対応する唯一のruntime Providerを使う。
 
-ただし、診断・履歴表示・互換性確認のため、次の非秘密metadataは保存してよい。
+Providerの種類や互換性はデータルートの `genex-home.json` が保証するため、
+`threads.model_provider` はroutingのために不要になる。既存の `model_provider` 列を
+変更または削除する場合は、persisted reader、履歴一覧、resume、監査、protocol schemaの
+producer/consumerを先に確認する。
 
-```rust
-pub struct ProviderDescriptor {
-    pub kind: String,
-    pub protocol_version: String,
-}
-```
-
-このmetadataはrouting overrideではない。現在のruntimeのdescriptorと異なる場合は、
-必要に応じて次を行う。
-
-- 履歴表示は許可する。
-- 新しいturnを開始する前に互換性を検査する。
-- 互換性がない場合は、明示的なエラーを返す。
-- 自動的に別Providerへ送信しない。
-
-Providerが同一である限り、Provider切替を理由に古いスレッドを隠したり、新しいAppServerを
-要求したりしない。Providerの種類が異なるruntimeで同じ履歴を開く場合の継続処理は、
-将来の明示的なimport/fork機能とする。
+この設計では、同じProviderの認証情報やAPI keyを変更しても、スレッドは同じデータルートの
+中で継続できる。別Providerのruntimeで同じデータルートを開こうとした場合だけ、マウント時に
+不一致エラーを返す。
 
 ## ProtocolとUI
 
@@ -296,6 +322,11 @@ Providerの実装種類は、次のいずれかでバイナリへ組み込む。
 - Cargo featureでProvider実装を選択する。
 - ライブラリ利用者のバイナリが自身のProvider実装を注入する。
 
+データルートの既定パスはビルド時に変更可能にする。ただし、同じバイナリで複数の
+Provider用データを安全に扱えるよう、ホストは起動時の明示的なデータルート指定も受け付ける。
+実効パスの優先順位は、明示的なbuilder引数、起動時の環境変数またはCLI設定、ビルド時の既定値、
+`.genex` の順とする。
+
 実行時設定は、選択済みProviderのendpoint、model、timeout、retry、credential参照、
 capability overrideなどに限定する。Provider registryとactive provider選択は、Genex
 runtimeの必須設定にしない。
@@ -329,8 +360,8 @@ AppServerは分類をもとに共通のprotocol errorへ変換するが、Provid
 - 同じProviderを複数クライアントが共有する。
 - credential変更後の新規turnが新しいcredentialを使う。
 - 実行中turnのcredential snapshotが不意に変わらない。
-- thread metadataは保存されるが、Provider routingを選択しない。
-- descriptor不一致時に履歴表示とturn開始の扱いが仕様どおりになる。
+- データルートのマーカーが初期化・再利用・不一致検出を正しく処理する。
+- descriptor不一致時にDBやcredentialを開かず失敗する。
 - Provider固有のstream、model catalog、usage、auth errorが共通型へ変換される。
 
 Repository方針に従い、Rustコードを変更する実装段階では `just check` を常に実行し、
@@ -346,8 +377,9 @@ protocolまたはchecked-in generated artifactに影響する場合は `just gen
 4. `ConfigManager` の複数Provider registryとactive-provider runtime stateを削減する。
 5. Coreのthread/turn生成が注入されたProviderを直接参照するようにする。
 6. app-serverのProvider list/switch protocolをstatus/capability protocolへ移行する。
-7. スレッドDBの既存Provider情報は、producer/consumerを監査してmetadata用途へ移行するか削除する。
-8. CLI、TUI、app-server client、テストfixture、schema、生成物を一括監査する。
+7. データルートのProvider markerを導入し、既存Provider情報のproducer/consumerを監査する。
+8. スレッドDBの既存Provider情報を削除またはmarker由来の状態へ移行する。
+9. CLI、TUI、app-server client、テストfixture、schema、生成物を一括監査する。
 
 各段階で、既存の認証・使用量・モデル一覧・チャット・MCP・security behaviorを別々に確認し、
 単一Provider化に不要なものだけを変更する。外部OpenAI endpointが要求するURL、request/response
@@ -361,4 +393,5 @@ field、authentication header、model identifierはこの設計によって変�
 - Providerごとの永続credentialをthreadやrolloutに保存すること。
 - Providerの種類を実行時にpluginとして動的ロードすること。
 - 使用量や認証を、すべてのProviderに必ず実装させること。
+- 1つのデータルートを異なるProvider runtime間で共有すること。
 - OpenAI endpoint固有の外部契約名をGenex独自名へ変更すること。
