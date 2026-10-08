@@ -22,6 +22,8 @@ use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
 use genex_protocol::protocol::RateLimitSnapshot;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
@@ -54,6 +56,32 @@ pub struct ProviderCapabilities {
     pub external_web_access: bool,
     pub remote_compaction: RemoteCompactionSupport,
 }
+
+/// Stable, non-secret identity and compatibility information for a provider runtime.
+///
+/// This is the contract that will be persisted in the data-root mount marker. It deliberately
+/// excludes endpoints, model settings, and credentials so changing an account or API key within
+/// the same provider does not invalidate the data root.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProviderDescriptor {
+    pub provider_kind: String,
+    pub provider_protocol_version: String,
+}
+
+impl ProviderDescriptor {
+    pub fn new(
+        provider_kind: impl Into<String>,
+        provider_protocol_version: impl Into<String>,
+    ) -> Self {
+        Self {
+            provider_kind: provider_kind.into(),
+            provider_protocol_version: provider_protocol_version.into(),
+        }
+    }
+}
+
+/// Version of the provider contract represented by the current data-root marker.
+pub const CURRENT_PROVIDER_PROTOCOL_VERSION: &str = "1";
 
 impl Default for ProviderCapabilities {
     fn default() -> Self {
@@ -133,6 +161,14 @@ pub enum ProviderApi {
 pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
+
+    /// Returns the stable provider identity used to validate a data-root mount.
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor::new(
+            self.provider_id().unwrap_or(self.info().name.as_str()),
+            CURRENT_PROVIDER_PROTOCOL_VERSION,
+        )
+    }
 
     /// Returns the credential values requested by the interactive setup flow.
     fn auth_fields(&self) -> Vec<ProviderAuthField> {
@@ -503,6 +539,43 @@ mod tests {
                 .map(|field| field.id)
                 .collect::<Vec<_>>(),
             vec!["api_key", "account_id"]
+        );
+    }
+
+    #[test]
+    fn provider_descriptor_uses_explicit_provider_id_and_round_trips() {
+        let provider = create_model_provider_for_id(
+            "account-a",
+            ModelProviderInfo::create_responses_provider(None),
+            /*credential_manager*/ None,
+        );
+
+        let descriptor = provider.descriptor();
+        assert_eq!(descriptor.provider_kind, "account-a");
+        assert_eq!(
+            descriptor.provider_protocol_version,
+            CURRENT_PROVIDER_PROTOCOL_VERSION
+        );
+
+        let serialized = serde_json::to_string(&descriptor).expect("descriptor should serialize");
+        let decoded: ProviderDescriptor =
+            serde_json::from_str(&serialized).expect("descriptor should deserialize");
+        assert_eq!(decoded, descriptor);
+    }
+
+    #[test]
+    fn provider_descriptor_falls_back_to_provider_name_without_id() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_responses_provider(None),
+            /*credential_manager*/ None,
+        );
+
+        assert_eq!(
+            provider.descriptor(),
+            ProviderDescriptor {
+                provider_kind: "Responses provider".to_string(),
+                provider_protocol_version: CURRENT_PROVIDER_PROTOCOL_VERSION.to_string(),
+            }
         );
     }
 
