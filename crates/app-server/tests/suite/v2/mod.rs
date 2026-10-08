@@ -35,8 +35,6 @@ mod exec_server_test_support;
 #[cfg(not(target_os = "windows"))]
 mod executor_mcp;
 mod executor_skills;
-mod external_agent_config;
-mod external_agent_import_sync;
 mod fs;
 mod history_notes_extension;
 mod hooks_list;

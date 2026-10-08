@@ -315,8 +315,8 @@ The final audit intentionally leaves persisted identifiers, wire/schema names, s
 削除したのは旧 feature compatibility layer だけであり、同名に近い現行
 capability は次のように保持している。
 
-- `multi_agent_mode`、`plugin_hooks`、`external_migration` は、現行の
-  multi-agent、plugin hooks、external-agent import の consumer を保持
+- `multi_agent_mode`、`plugin_hooks` は、現行の multi-agent と plugin hooks
+  の consumer を保持
 - `search_tool`、`image_detail_original`、`responses_websockets*` は、現行の
   provider/model capability と `supports_websockets` に移行
 - `use_legacy_landlock`、`recommended_plugins`、`workspace_dependencies`、
@@ -577,10 +577,11 @@ separate security/configuration capability pending its own hosted-auth decision.
 skill metadata still consumes the effective provider auth mode, so its auth capability is
 retained while its cache no longer touches an auth snapshot solely to invalidate a cache.
 
-The external-agent migration service passes its provider-aware manager to
-`PluginsManager` while detecting/importing configured marketplace plugins, so that
-dependency is retained. The now-unused `effective_plugins_changed_callback` auth
-parameter was removed instead.
+The external-agent migration service and its app-server/TUI/state/protocol
+consumers were removed together. Marketplace plugin discovery remains active in
+the ordinary plugin paths and no longer depends on a migration-only service.
+The now-unused `effective_plugins_changed_callback` auth parameter was removed
+as part of the provider-neutral plugin cleanup.
 
 | Consumer | Producer/consumer audit | Decision |
 |---|---|---|
@@ -588,4 +589,4 @@ parameter was removed instead.
 | Transport connection ownership and user verification | Auth revision/owner generation and provider account identity invalidate stale work and bind device verification. | `retain` generic security invalidation |
 | Exec/TUI login restrictions | Explicit forced login method/workspace policy is still read from configuration; no generic “logged in” UI gate is introduced. | `retain` explicit policy; audit hosted policy separately |
 | Core plugin skill metadata | Skill projection uses effective auth mode to render capability metadata; cache loading did not consume auth data. | `retain` auth-mode capability; remove dead snapshot read |
-| External-agent migration auth field | Plugin detection and import construct `PluginsManager` with the manager to project configured marketplace plugins; construction, cloning, and test setup are all reachable consumers. | `retain` plugin capability dependency |
+| External-agent migration auth field | The migration service, its `PluginsManager` dependency, and every app-server/TUI/state/protocol consumer were deleted after a producer/consumer audit. Ordinary plugin discovery has independent producers and consumers. | `remove (completed)` migration-only dependency; retain ordinary plugin capability |
