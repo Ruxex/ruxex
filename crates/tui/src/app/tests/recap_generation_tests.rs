@@ -80,9 +80,9 @@ async fn recap_generation_uses_bounded_structured_request_and_inserts_result() -
         format!(
             r#"
 model = "{MODEL}"
-model_provider = "{MODEL_PROVIDER_ID}"
 
-[model_providers.{MODEL_PROVIDER_ID}]
+[model_provider]
+id = "{MODEL_PROVIDER_ID}"
 name = "Recap generation test"
 base_url = "{}/v1"
 wire_api = "responses"

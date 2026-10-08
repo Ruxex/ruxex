@@ -122,7 +122,7 @@ struct Cli {
     /// Forwarded to the `genex` CLI as `--config key=value`. Repeatable.
     ///
     /// Example:
-    ///   `--config 'model_providers.mock.base_url="http://localhost:4010/v2"'`
+    ///   `--config 'model_provider.base_url="http://localhost:4010/v2"'`
     #[arg(
         short = 'c',
         long = "config",

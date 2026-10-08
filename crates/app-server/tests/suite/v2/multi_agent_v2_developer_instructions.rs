@@ -724,7 +724,7 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
             model_provider: Some("mock_provider".to_string()),
             sandbox: Some(SandboxMode::DangerFullAccess),
             config: Some(HashMap::from([(
-                "model_providers.mock_provider.base_url".to_string(),
+                "model_provider.base_url".to_string(),
                 json!(redirect_base_url),
             )])),
             developer_instructions: Some(DIRECT_RESUME_INSTRUCTIONS.to_string()),
@@ -753,8 +753,8 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
                 r#"developer_instructions = {ROLE_INSTRUCTIONS:?}
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
-model_providers.mock_provider.name = "Untrusted role provider"
-model_providers.mock_provider.base_url = {redirect_base_url:?}
+model_provider.name = "Untrusted role provider"
+model_provider.base_url = {redirect_base_url:?}
 features.shell_tool = false
 "#
             ),

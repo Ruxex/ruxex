@@ -120,8 +120,8 @@ async fn selected_custom_provider_and_service_tier_preserve_the_profile_model() 
         .expect("base config");
     std::fs::write(
         home.path().join("custom.config.toml"),
-        "model = \"custom-model\"\nmodel_provider = \"custom\"\nservice_tier = \"flex\"\n\
-         [model_providers.custom]\nname = \"Custom\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\n",
+        "model = \"custom-model\"\nservice_tier = \"flex\"\n\
+         [model_provider]\nid = \"custom\"\nname = \"Custom\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\n",
     )
     .expect("profile");
     let mut actual = ConfigBuilder::default()

@@ -61,7 +61,6 @@ async fn host_skill_catalog_refreshes_once_when_skills_change() -> Result<()> {
 model = "mock-model"
 approval_policy = "never"
 sandbox_mode = "read-only"
-model_provider = "mock_provider"
 
 [skills]
 include_instructions = true
@@ -69,7 +68,8 @@ include_instructions = true
 [skills.bundled]
 enabled = false
 
-[model_providers.mock_provider]
+[model_provider]
+id = "mock_provider"
 name = "Mock provider for test"
 base_url = "{}/v1"
 wire_api = "responses"

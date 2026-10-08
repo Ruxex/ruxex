@@ -1709,9 +1709,9 @@ fn create_config_toml(
 model = "mock-model"
 {top_level_config}
 
-model_provider = "mock_provider"
 
-[model_providers.mock_provider]
+[model_provider]
+id = "mock_provider"
 name = "Mock provider for test"
 base_url = "{server_uri}/v1"
 wire_api = "responses"

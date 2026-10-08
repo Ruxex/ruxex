@@ -70,7 +70,7 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     );
     std::fs::write(
         genex_home.path().join("config.toml"),
-        format!("[model_providers.provider]\nbase_url = \"{server_uri}/v1\"\n{feature_config}"),
+        format!("[model_provider]\nid = \"provider\"\nbase_url = \"{server_uri}/v1\"\n{feature_config}"),
     )?;
     login_with_api_key(
         genex_home.path(),
@@ -326,7 +326,8 @@ async fn list_models_uses_remote_catalog_as_source_of_truth(
 model = "mock-model"
 approval_policy = "never"
 sandbox_mode = "read-only"
-[model_providers.provider]
+[model_provider]
+id = "provider"
 base_url = "{server_uri}/v1"
 [features]
 api_key_model_discovery = true

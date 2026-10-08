@@ -1631,6 +1631,10 @@
           "description": "Additional HTTP headers to include in requests to this provider where the (key, value) pairs are the header name and value.",
           "type": "object"
         },
+        "id": {
+          "description": "Stable identifier used for provider-scoped credentials and diagnostics.",
+          "type": "string"
+        },
         "name": {
           "default": "",
           "description": "Friendly display name.",
@@ -5703,16 +5707,12 @@
       "description": "Optional path to a file containing model instructions that will override the built-in instructions for the selected model. Users are STRONGLY DISCOURAGED from using this field, as deviating from the instructions sanctioned by Genex will likely degrade model performance."
     },
     "model_provider": {
-      "description": "Provider to use from the model_providers map.",
-      "type": "string"
-    },
-    "model_providers": {
-      "additionalProperties": {
-        "$ref": "#/definitions/ModelProviderInfo"
-      },
-      "default": {},
-      "description": "User-defined provider entries that extend the built-in list. Built-in IDs cannot be overridden.",
-      "type": "object"
+      "allOf": [
+        {
+          "$ref": "#/definitions/ModelProviderInfo"
+        }
+      ],
+      "description": "The single provider configuration mounted by this Genex runtime."
     },
     "model_reasoning_effort": {
       "$ref": "#/definitions/ReasoningEffort"

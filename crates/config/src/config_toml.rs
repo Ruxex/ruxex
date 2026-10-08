@@ -134,8 +134,8 @@ pub struct OrchestratorFeatureToml {
 pub struct ConfigToml {
     /// Optional override of model selection.
     pub model: Option<String>,
-    /// Provider to use from the model_providers map.
-    pub model_provider: Option<String>,
+    /// The single provider configuration mounted by this Genex runtime.
+    pub model_provider: Option<ModelProviderInfo>,
 
     /// Size of the context window for the model, in tokens.
     pub model_context_window: Option<i64>,
@@ -267,11 +267,6 @@ pub struct ConfigToml {
     /// Defaults to 1000. Set to 0 to disable the shared grace and wait for each
     /// server's configured `startup_timeout_sec` instead.
     pub mcp_optional_startup_grace_ms: Option<u64>,
-
-    /// User-defined provider entries that extend the built-in list. Built-in
-    /// IDs cannot be overridden.
-    #[serde(default, deserialize_with = "deserialize_model_providers")]
-    pub model_providers: HashMap<String, ModelProviderInfo>,
 
     /// Maximum total bytes of project instruction content across all selected environments.
     #[serde(default = "default_project_doc_max_bytes")]
@@ -676,33 +671,6 @@ fn project_config_for_lookup_key(
     normalized_matches
         .first()
         .map(|(_, project_config)| (**project_config).clone())
-}
-
-pub fn validate_model_providers(
-    model_providers: &HashMap<String, ModelProviderInfo>,
-) -> Result<(), String> {
-    for (key, provider) in model_providers {
-        if provider.name.trim().is_empty() {
-            return Err(format!(
-                "model_providers.{key}: provider name must not be empty"
-            ));
-        }
-        provider
-            .validate()
-            .map_err(|message| format!("model_providers.{key}: {message}"))?;
-    }
-    Ok(())
-}
-
-fn deserialize_model_providers<'de, D>(
-    deserializer: D,
-) -> Result<HashMap<String, ModelProviderInfo>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let model_providers = HashMap::<String, ModelProviderInfo>::deserialize(deserializer)?;
-    validate_model_providers(&model_providers).map_err(serde::de::Error::custom)?;
-    Ok(model_providers)
 }
 
 #[cfg(test)]

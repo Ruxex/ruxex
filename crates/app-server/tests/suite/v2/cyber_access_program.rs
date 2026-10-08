@@ -400,7 +400,7 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
     std::fs::write(
         home.path().join("config.toml"),
         format!(
-            "model = \"example-model\"\napproval_policy = \"never\"\n[model_providers.provider]\nbase_url = \"{0}/v1\"\nmanaged_auth_base_url = \"{0}/backend-api\"\n",
+            "model = \"example-model\"\napproval_policy = \"never\"\n[model_provider]\nid = \"provider\"\nbase_url = \"{0}/v1\"\nmanaged_auth_base_url = \"{0}/backend-api\"\n",
             server.uri(),
         ),
     )?;
@@ -444,7 +444,7 @@ async fn start_authenticated_app(home: &Path, server: &MockServer) -> Result<Tes
     std::fs::write(
         home.join("config.toml"),
         format!(
-            "model = \"example-model\"\napproval_policy = \"never\"\n[model_providers.provider]\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n",
+            "model = \"example-model\"\napproval_policy = \"never\"\n[model_provider]\nid = \"provider\"\nbase_url = \"{}/v1\"\ncli_auth_credentials_store = \"file\"\n",
             server.uri()
         ),
     )?;

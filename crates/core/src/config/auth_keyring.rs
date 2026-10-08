@@ -59,7 +59,12 @@ pub fn bootstrap_auth_config(
         .filter(|workspaces| !workspaces.is_empty());
     let mut auth_config = AuthConfig {
         genex_home: genex_home.to_path_buf(),
-        model_provider_id: config.model_provider.clone(),
+        model_provider_id: config.model_provider.as_ref().and_then(|provider| {
+            provider
+                .id
+                .clone()
+                .or_else(|| (!provider.name.is_empty()).then(|| provider.name.clone()))
+        }),
         auth_credentials_store_mode: config.cli_auth_credentials_store.unwrap_or_default(),
         keyring_backend_kind: resolve_bootstrap_auth_keyring_backend_kind(bootstrap_config)?,
         forced_login_method: config.forced_login_method,

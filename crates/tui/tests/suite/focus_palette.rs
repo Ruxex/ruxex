@@ -110,7 +110,7 @@ async fn interactive_startup_honors_genex_home_symlink_opt_out() -> Result<()> {
              approval_policy = \"never\"\n\
              {config}\n\
              [sandbox_workspace_write]\nwritable_roots = [{visualizations}]\n\
-             [model_providers.test]\nname = \"Mock\"\n\
+             [model_provider]\nid = \"test\"\nname = \"Mock\"\n\
              base_url = \"{base_url}/v1\"\nwire_api = \"responses\"\n\
              supports_websockets = false\n"
         ),
@@ -121,7 +121,7 @@ async fn interactive_startup_honors_genex_home_symlink_opt_out() -> Result<()> {
     let mut terminal = PtyGenex::start(
         &workspace_path,
         genex_home,
-        &["-c", "model_provider=\"test\"", "Write ready.txt"],
+        &["-c", "model_provider.id=\"test\"", "Write ready.txt"],
     )?;
     terminal.wait_for_startup()?;
     let deadline = Instant::now() + STARTUP_TIMEOUT;
@@ -383,9 +383,9 @@ fn contains_bytes(buffer: &[u8], needle: &[u8]) -> bool {
 pub(super) fn write_test_config(genex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root = repo_root.display();
     let config = format!(
-        "model = \"provider-model-d\"\nmodel_provider = \"provider\"\n\
+        "model = \"provider-model-d\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\n\
-         [model_providers.provider]\nname = \"Provider\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\nsupports_websockets = false\n\n\
+         [model_provider]\nid = \"provider\"\nname = \"Provider\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\nsupports_websockets = false\n\n\
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
     );
     std::fs::write(genex_home.join("config.toml"), config)

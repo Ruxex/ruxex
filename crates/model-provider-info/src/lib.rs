@@ -2,8 +2,8 @@
 //!
 //! Providers can be defined in two places:
 //!   1. Built-in defaults compiled into the binary so Genex works out-of-the-box.
-//!   2. User-defined entries inside `~/.genex/config.toml` under the `model_providers`
-//!      key. These override or extend the defaults at runtime.
+//!   2. A single user-defined entry inside `~/.genex/config.toml` under the
+//!      `model_provider` key.
 //!
 //! API provider construction applies the process-wide managed residency policy also
 //! used by default HTTP headers.
@@ -126,6 +126,8 @@ impl<'de> Deserialize<'de> for WireApi {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq, JsonSchema)]
 #[schemars(deny_unknown_fields)]
 pub struct ModelProviderInfo {
+    /// Stable identifier used for provider-scoped credentials and diagnostics.
+    pub id: Option<String>,
     /// Friendly display name.
     #[serde(default)]
     pub name: String,
@@ -372,51 +374,29 @@ impl ModelProviderInfo {
     }
 }
 
-/// Built-in default provider list.
-pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
-    [(
-        CLOUDFLARE_PROVIDER_ID,
-        ModelProviderInfo::create_cloudflare_provider(),
-    )]
-    .into_iter()
-    .map(|(k, v)| (k.to_string(), v))
-    .collect()
-}
-
-/// Merge configured providers into the built-in provider catalog.
-///
-/// Configured providers extend the built-in set without replacing built-in entries.
-pub fn merge_configured_model_providers(
-    mut model_providers: HashMap<String, ModelProviderInfo>,
-    configured_model_providers: HashMap<String, ModelProviderInfo>,
-) -> Result<HashMap<String, ModelProviderInfo>, String> {
-    for (key, provider) in configured_model_providers {
-        model_providers.entry(key).or_insert(provider);
-    }
-
-    Ok(model_providers)
-}
-
 /// Resolve configuration input to the one provider mounted by a runtime.
 ///
-/// The built-in provider is always available as the default and cannot be
-/// overridden by user configuration. The returned value is intentionally a
-/// singleton rather than the intermediate provider catalog.
+/// The built-in provider is available as the default. User configuration may
+/// replace it with one explicit provider definition, but there is no provider
+/// registry or active-provider selector at this boundary.
 pub fn resolve_model_provider(
-    configured_model_providers: HashMap<String, ModelProviderInfo>,
-    selected_provider_id: Option<&str>,
+    configured_provider: Option<ModelProviderInfo>,
 ) -> Result<ResolvedModelProvider, String> {
-    let provider_id = selected_provider_id
-        .unwrap_or(CLOUDFLARE_PROVIDER_ID)
-        .to_string();
-    let provider_info = if provider_id == CLOUDFLARE_PROVIDER_ID {
-        ModelProviderInfo::create_cloudflare_provider()
-    } else {
-        configured_model_providers
-            .get(&provider_id)
-            .cloned()
-            .ok_or_else(|| format!("Model provider `{provider_id}` not found"))?
-    };
+    let provider_info = configured_provider
+        .unwrap_or_else(ModelProviderInfo::create_cloudflare_provider);
+    if provider_info.name.trim().is_empty() {
+        return Err("model_provider.name must not be empty".to_string());
+    }
+    provider_info
+        .validate()
+        .map_err(|message| format!("model_provider: {message}"))?;
+    let provider_id = provider_info
+        .id
+        .clone()
+        .unwrap_or_else(|| provider_info.name.clone());
+    if provider_id.trim().is_empty() {
+        return Err("model_provider.id must not be empty".to_string());
+    }
 
     Ok(ResolvedModelProvider {
         id: provider_id,
@@ -429,6 +409,7 @@ pub fn create_responses_provider_with_base_url(
     wire_api: WireApi,
 ) -> ModelProviderInfo {
     ModelProviderInfo {
+        id: None,
         name: "custom-responses".into(),
         base_url: Some(base_url.into()),
         env_key: None,

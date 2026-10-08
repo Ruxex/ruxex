@@ -48,7 +48,6 @@ use genex_features::Feature;
 use genex_history::InitialHistory;
 use genex_history::RolloutItem;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::built_in_model_providers;
 use genex_models_manager::test_support::test_models_response;
 use genex_plugin::PluginHookSource;
 use genex_plugin::PluginId;

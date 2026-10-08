@@ -499,7 +499,7 @@ impl ModelProviderAuthInfo {
 fn default_provider_auth_timeout_ms() -> NonZeroU64 {
     non_zero_u64(
         DEFAULT_PROVIDER_AUTH_TIMEOUT_MS,
-        "model_providers.<id>.auth.timeout_ms",
+        "model_provider.auth.timeout_ms",
     )
 }
 

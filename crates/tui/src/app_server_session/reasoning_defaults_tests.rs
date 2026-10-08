@@ -43,9 +43,9 @@ async fn embedded_reasoning_defaults_reach_responses() -> Result<()> {
             format!(
                 r#"
 model = "example-model-2"
-model_provider = "reasoning-test"
 {settings}
-[model_providers.reasoning-test]
+[model_provider]
+id = "reasoning-test"
 name = "provider"
 base_url = "{base_url}/v1"
 wire_api = "responses"

@@ -150,7 +150,7 @@ fn configure_multi_agent_v2_with_role(
     std::fs::write(
         &role_path,
         format!(
-            "model = \"{ROLE_MODEL}\"\nmodel_reasoning_effort = \"high\"\ndeveloper_instructions = \"{ROLE_DEVELOPER_INSTRUCTIONS}\"\nsandbox_mode = \"read-only\"\nmodel_provider = \"mock\"\n\n[model_providers.mock]\nname = \"mock\"\nbase_url = \"{model_provider_base_url}\"\nenv_key = \"PATH\"\nwire_api = \"responses\"\n"
+            "model = \"{ROLE_MODEL}\"\nmodel_reasoning_effort = \"high\"\ndeveloper_instructions = \"{ROLE_DEVELOPER_INSTRUCTIONS}\"\nsandbox_mode = \"read-only\"\n\n[model_provider]\nid = \"mock\"\nname = \"mock\"\nbase_url = \"{model_provider_base_url}\"\nenv_key = \"PATH\"\nwire_api = \"responses\"\n"
         ),
     )
     .expect("write durable worker role config");
@@ -473,8 +473,8 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
             r#"model = "{ROLE_MODEL}"
 model_reasoning_effort = "high"
 developer_instructions = "{ROLE_DEVELOPER_INSTRUCTIONS}"
-model_provider = "{ROLE_MODEL_PROVIDER_ID}"
-[model_providers.{ROLE_MODEL_PROVIDER_ID}]
+[model_provider]
+id = "{ROLE_MODEL_PROVIDER_ID}"
 base_url = "{redirected_base_url}"
 "#
         ),

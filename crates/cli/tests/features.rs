@@ -52,10 +52,10 @@ fn interactive_validates_config_before_requiring_terminal() -> Result<()> {
             "work.config.toml",
         ),
         (
-            &["-c", "model_provider=\"missing\""],
+            &["-c", "model_provider.id=\"missing\""],
             "config.toml",
             "",
-            "Model provider `missing` not found",
+            "model_provider.name must not be empty",
         ),
         (&[], "config.toml", "", "stdin is not a terminal"),
     ];

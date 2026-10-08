@@ -31,7 +31,7 @@ async fn invalid_custom_ca_falls_back_to_system_roots() -> Result<()> {
     std::fs::write(
         genex_home.path().join("config.toml"),
         format!(
-            "model_provider = \"local\"\n[model_providers.local]\nname = \"local\"\nbase_url = \"{}/v1\"\nwire_api = \"responses\"\n",
+            "[model_provider]\nid = \"local\"\nname = \"local\"\nbase_url = \"{}/v1\"\nwire_api = \"responses\"\n",
             server.uri()
         ),
     )?;

@@ -182,11 +182,12 @@ fn checks_merged_config_and_ignores_disabled_layers() {
                 name: "Defaults".into(),
             },
             r#"
-[model_providers.custom]
+[model_provider]
+id = "custom"
 name = "Custom"
 wire_api = "responses"
 unknown_timeout = 1
-[model_providers.custom.http_headers]
+[model_provider.http_headers]
 custom_header = "accepted"
 "#,
         ),
@@ -198,7 +199,8 @@ custom_header = "accepted"
         layer(
             ConfigLayerSource::SessionFlags,
             r#"
-[model_providers.custom]
+[model_provider]
+id = "custom"
 unknown_timeout = 42
 [profiles.work.features]
 include_view_image_tool = false
@@ -213,6 +215,6 @@ include_view_image_tool = false
     .unwrap();
     assert_eq!(
         ignored_config_warning(&config, &[]).unwrap(),
-        "Genex is ignoring 3 unrecognized configuration settings. Check for typos or deprecated settings.\n  enterprise-managed (Defaults, cfg): `model_providers.custom.unknown_timeout` is ignored.\n  session-flags: `model_providers.custom.unknown_timeout` is ignored.\n  session-flags: `profiles.work.features.include_view_image_tool` is ignored. Use [features].view_image to configure the image tool."
+        "Genex is ignoring 3 unrecognized configuration settings. Check for typos or deprecated settings.\n  enterprise-managed (Defaults, cfg): `model_provider.unknown_timeout` is ignored.\n  session-flags: `model_provider.unknown_timeout` is ignored.\n  session-flags: `profiles.work.features.include_view_image_tool` is ignored. Use [features].view_image to configure the image tool."
     );
 }

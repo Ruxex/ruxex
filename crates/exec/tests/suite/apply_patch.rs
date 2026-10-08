@@ -231,10 +231,10 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         .arg("-s")
         .arg("danger-full-access")
         .arg("-c")
-        .arg("model_provider=\"test\"")
+        .arg("model_provider.id=\"test\"")
         .arg("-c")
         .arg(format!(
-            "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",supports_websockets=false}}",
+            "model_provider={{name=\"test\",base_url={:?},wire_api=\"responses\",supports_websockets=false}}",
             format!("{}/v1", server.uri())
         ))
         .arg("-c")

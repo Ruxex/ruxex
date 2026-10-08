@@ -25,10 +25,9 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         "approval_policy = \"on-request\"",
         "sandbox_mode = \"workspace-write\"",
         "managed_auth_base_url = \"http://127.0.0.1:1234\"",
-        "model_provider = \"provider-custom\"",
         "shell_snapshot = false",
         "network_proxy = true",
-        "[model_providers.provider-custom]\nname = \"provider\"",
+        "[model_provider]\nid = \"provider-custom\"\nname = \"provider\"",
         "base_url = \"http://127.0.0.1:1234/api/genex\"",
         "[extra]\nenabled = true",
     ] {
@@ -59,7 +58,7 @@ fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
         "model_auto_compact_token_limit = 321",
         "shell_snapshot = false",
         "network_proxy = true",
-        "[model_providers.provider]\nname = \"provider\"",
+        "[model_provider]\nid = \"provider\"\nname = \"provider\"",
         "supports_websockets = false",
     ] {
         assert!(config.contains(expected), "config is missing {expected}");

@@ -31,7 +31,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config =
-        format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
+        format!("model_provider.base_url=\"{}/v1\"", server.uri());
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
@@ -199,7 +199,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config =
-        format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
+        format!("model_provider.base_url=\"{}/v1\"", server.uri());
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
@@ -330,7 +330,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
     let genex_home = tempdir()?;
     let server = MockServer::start().await;
     let provider_base_url_config =
-        format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
+        format!("model_provider.base_url=\"{}/v1\"", server.uri());
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
@@ -458,7 +458,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config =
-        format!("model_providers.provider.base_url=\"{}/v1\"", server.uri());
+        format!("model_provider.base_url=\"{}/v1\"", server.uri());
     write_config(genex_home.path(), &repo_root)?;
     write_auth(genex_home.path())?;
 
@@ -606,7 +606,6 @@ fn write_config(genex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root_display = repo_root.display();
     let config = format!(
         r#"model = "legacy-model"
-model_provider = "provider"
 suppress_unstable_features_warning = true
 
 [projects."{repo_root_display}"]

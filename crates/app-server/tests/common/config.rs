@@ -139,9 +139,9 @@ model = "{model}"
 approval_policy = "{approval_policy}"
 sandbox_mode = "{sandbox_mode}"
 {root_config}
-model_provider = "{provider_id}"
 
-{feature_config}[model_providers.{provider_id}]
+{feature_config}[model_provider]
+id = "{provider_id}"
 name = "{provider_name}"
 base_url = "{provider_base_url}"
 wire_api = "responses"

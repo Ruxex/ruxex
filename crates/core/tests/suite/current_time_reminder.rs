@@ -21,7 +21,6 @@ use genex_core::config::CurrentTimeReminderConfig;
 use genex_features::CurrentTimeReminderDeliveryMode;
 use genex_features::CurrentTimeSource;
 use genex_features::Feature;
-use genex_model_provider_info::built_in_model_providers;
 use genex_protocol::ThreadId;
 use genex_protocol::models::PermissionProfile;
 use genex_protocol::model_types::ReasoningEffort;

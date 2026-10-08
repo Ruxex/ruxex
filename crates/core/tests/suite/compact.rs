@@ -23,7 +23,6 @@ use genex_features::Feature;
 use genex_history::RolloutItem;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::built_in_model_providers;
 use genex_models_manager::test_support::test_models_response;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::config_types::CollaborationMode;

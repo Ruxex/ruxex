@@ -179,9 +179,9 @@ model = "mock-model"
 approval_policy = "never"
 sandbox_mode = "read-only"
 
-model_provider = "mock_provider"
 
-[model_providers.mock_provider]
+[model_provider]
+id = "mock_provider"
 name = "Mock managed provider for test"
 base_url = "{server_uri}/v1"
 wire_api = "responses"

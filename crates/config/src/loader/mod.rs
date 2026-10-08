@@ -65,7 +65,6 @@ const PROJECT_LOCAL_CONFIG_DENYLIST: &[&str] = &[
     "managed_auth_base_url",
     "responses_api_metadata",
     "model_provider",
-    "model_providers",
     "notify",
     "profile",
     "profiles",

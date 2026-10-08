@@ -118,7 +118,8 @@ fn create_config_toml(genex_home: &Path, params: CreateConfigTomlParams) -> std:
         .unwrap_or_else(|| "mock_provider".to_string());
     let provider_section = if model_provider_id == "mock_provider" {
         format!(
-            r#"[model_providers.mock_provider]
+            r#"[model_provider]
+id = "mock_provider"
 name = "Mock provider for test"
 base_url = "{base_url}"
 wire_api = "responses"
@@ -138,7 +139,6 @@ sandbox_mode = "danger-full-access"
 {forced_line}
 {forced_workspace_line}
 
-model_provider = "{model_provider_id}"
 
 [features]
 shell_snapshot = false

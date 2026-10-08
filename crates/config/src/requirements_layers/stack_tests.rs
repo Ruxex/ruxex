@@ -229,8 +229,8 @@ fn provider_selection_and_registry_entries_are_not_managed_requirements() {
         "managed",
         "Provider",
         r#"
-model_provider = "gateway"
-[model_providers.gateway]
+[model_provider]
+id = "gateway"
 name = "Gateway"
 "#,
     )])

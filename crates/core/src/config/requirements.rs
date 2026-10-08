@@ -33,7 +33,7 @@ pub(super) fn apply_to_config(
     apply_exact!(model_catalog_json);
     apply_exact!(allow_login_shell);
     if requirements.enforce_residency.value().is_some() {
-        for (provider_name, provider) in &config.model_providers {
+        if let Some(provider) = config.model_provider.as_ref() {
             let has_residency_header = provider
                 .http_headers
                 .iter()
@@ -43,9 +43,9 @@ pub(super) fn apply_to_config(
 
             if has_residency_header {
                 let warning = format!(
-                    "Ignoring `{RESIDENCY_HEADER_NAME}` in `model_providers.{provider_name}` because managed residency is required."
+                    "Ignoring `{RESIDENCY_HEADER_NAME}` in `model_provider` because managed residency is required."
                 );
-                tracing::warn!(provider = provider_name, "{warning}");
+                tracing::warn!(provider = %provider.name, "{warning}");
                 startup_warnings.push(warning);
             }
         }

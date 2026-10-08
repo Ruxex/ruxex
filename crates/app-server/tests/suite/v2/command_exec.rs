@@ -1399,7 +1399,7 @@ enable_socks5 = false
 fn insert_command_exec_config(genex_home: &Path, inserted_config: &str) -> Result<()> {
     let config_path = genex_home.join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
-    let marker = "\n[model_providers.mock_provider]\n";
+    let marker = "\n[model_provider]\nid = \"mock_provider\"\n";
     let (prefix, suffix) = config
         .split_once(marker)
         .context("test config should include mock provider table")?;

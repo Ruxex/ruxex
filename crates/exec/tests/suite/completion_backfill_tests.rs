@@ -81,7 +81,7 @@ async fn ignores_unrelated_turn_completion_before_backfilling_primary_turn() -> 
 
     let test = test_genex_exec();
     let mock_provider = format!(
-        "model_providers.mock_provider={{name=\"Mock provider for test\",base_url=\"{}/v1\",wire_api=\"responses\",supports_websockets=false}}",
+        "model_provider={{name=\"Mock provider for test\",base_url=\"{}/v1\",wire_api=\"responses\",supports_websockets=false}}",
         server.uri()
     );
     let output = test
@@ -96,7 +96,7 @@ async fn ignores_unrelated_turn_completion_before_backfilling_primary_turn() -> 
         .arg(mock_provider)
         .args([
             "-c",
-            "model_provider=\"mock_provider\"",
+            "model_provider.id=\"mock_provider\"",
             "-c",
             "features.multi_agent=true",
             "-c",

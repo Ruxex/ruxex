@@ -60,6 +60,7 @@ name = "Ollama"
 base_url = "http://localhost:11434/v1"
         "#;
     let expected_provider = ModelProviderInfo {
+        id: None,
         name: "Ollama".into(),
         base_url: Some("http://localhost:11434/v1".into()),
         env_key: None,
@@ -91,6 +92,7 @@ env_key = "AZURE_PROVIDER_API_KEY"
 query_params = { api-version = "2025-04-01-preview" }
         "#;
     let expected_provider = ModelProviderInfo {
+        id: None,
         name: "Azure".into(),
         base_url: Some("https://xxxxx.provider.azure.com/provider".into()),
         env_key: Some("AZURE_PROVIDER_API_KEY".into()),
@@ -126,6 +128,7 @@ env_http_headers = { "X-Example-Env-Header" = "EXAMPLE_ENV_VAR" }
 supports_standalone_web_search = true
         "#;
     let expected_provider = ModelProviderInfo {
+        id: None,
         name: "Example".into(),
         base_url: Some("https://example.com".into()),
         env_key: Some("API_KEY".into()),
@@ -207,52 +210,14 @@ args = ["--format=text"]
 }
 
 #[test]
-fn test_built_in_model_providers_include_cloudflare_provider() {
-    let providers = built_in_model_providers();
-    assert_eq!(providers.len(), 1);
-    let provider = providers
-        .get(CLOUDFLARE_PROVIDER_ID)
-        .expect("Cloudflare provider should be built in");
-
-    assert_eq!(provider.name, CLOUDFLARE_PROVIDER_NAME);
-    assert_eq!(provider.base_url, None);
-    assert_eq!(
-        provider.env_key.as_deref(),
-        Some(CLOUDFLARE_API_TOKEN_ENV_VAR)
-    );
-    assert_eq!(provider.wire_api, WireApi::Chat);
-}
-
-#[test]
-fn test_merge_configured_model_providers_adds_custom_provider() {
-    let custom_provider = ModelProviderInfo {
-        name: "Custom".to_string(),
-        base_url: Some("https://example.com/v1".to_string()),
-        ..ModelProviderInfo::default()
-    };
-    let configured_model_providers =
-        std::collections::HashMap::from([("custom".to_string(), custom_provider.clone())]);
-
-    let mut expected = built_in_model_providers();
-    expected.insert("custom".to_string(), custom_provider);
-
-    assert_eq!(
-        merge_configured_model_providers(built_in_model_providers(), configured_model_providers,),
-        Ok(expected)
-    );
-}
-
-#[test]
 fn test_resolve_model_provider_returns_one_custom_provider() {
     let custom_provider = ModelProviderInfo {
+        id: Some("custom".to_string()),
         name: "Custom".to_string(),
         base_url: Some("https://example.com/v1".to_string()),
         ..ModelProviderInfo::default()
     };
-    let resolved = resolve_model_provider(
-        std::collections::HashMap::from([("custom".to_string(), custom_provider.clone())]),
-        Some("custom"),
-    )
+    let resolved = resolve_model_provider(Some(custom_provider.clone()))
     .expect("custom provider should resolve");
 
     assert_eq!(resolved.id, "custom");
@@ -261,7 +226,7 @@ fn test_resolve_model_provider_returns_one_custom_provider() {
 
 #[test]
 fn test_resolve_model_provider_uses_builtin_default() {
-    let resolved = resolve_model_provider(std::collections::HashMap::new(), None)
+    let resolved = resolve_model_provider(None)
         .expect("built-in provider should resolve");
 
     assert_eq!(resolved.id, CLOUDFLARE_PROVIDER_ID);
@@ -270,10 +235,13 @@ fn test_resolve_model_provider_uses_builtin_default() {
 
 #[test]
 fn test_resolve_model_provider_rejects_unknown_provider() {
-    let error = resolve_model_provider(std::collections::HashMap::new(), Some("missing"))
-        .expect_err("unknown provider should fail");
+    let error = resolve_model_provider(Some(ModelProviderInfo {
+        id: Some("missing".to_string()),
+        ..ModelProviderInfo::default()
+    }))
+    .expect_err("empty provider should fail");
 
-    assert_eq!(error, "Model provider `missing` not found");
+    assert_eq!(error, "model_provider.name must not be empty");
 }
 
 #[test]

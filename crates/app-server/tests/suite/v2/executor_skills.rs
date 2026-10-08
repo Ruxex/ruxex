@@ -126,12 +126,12 @@ model = "mock-model"
 {analytics_config}
 approval_policy = "{approval_policy}"
 {sandbox_config}
-model_provider = "mock_provider"
 
 [skills]
 include_instructions = true
 
-[model_providers.mock_provider]
+[model_provider]
+id = "mock_provider"
 name = "Mock provider for test"
 base_url = "{}/v1"
 wire_api = "responses"

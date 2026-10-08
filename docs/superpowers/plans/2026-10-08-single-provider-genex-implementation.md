@@ -49,10 +49,11 @@
 - Rollout configuration and local thread-store configuration no longer carry a provider ID. Metadata building, rollout backfill/reconciliation, and thread listing/resume no longer accept provider-only arguments.
 - Persisted `ThreadSettingsSnapshot.model_provider_id` is removed; old rollout event objects remain readable because the field is ignored during deserialization, while `SessionConfiguredEvent.model_provider_id` remains only as current-provider client status.
 - The provider status endpoint is singular: `modelProvider/list` and its array response were replaced with `modelProvider/read`, which returns the mounted provider and its authentication fields directly.
-- Runtime `core::Config` no longer stores the merged provider registry; the map remains transient during config construction while execution receives only the resolved mounted provider and ID.
+- Runtime `core::Config` no longer stores or constructs a provider registry; configuration resolves one provider definition and execution receives only the resolved mounted provider and ID.
 - Session `ModelClient` instances now receive the `ThreadManager`'s shared Provider handle instead of recreating a provider from thread/client configuration.
 - Provider-constructing `ModelClient` constructors were removed; callers must inject the runtime's shared Provider handle.
-- Configuration construction now resolves the historical provider map to an explicit `ResolvedModelProvider` singleton before the runtime `Config` is built; the map does not cross the runtime boundary.
+- Configuration construction now parses one `[model_provider]` definition (with an optional stable `id`) and resolves it to an explicit `ResolvedModelProvider` singleton before the runtime `Config` is built; no provider map crosses the runtime boundary.
+- Configuration fixtures, CLI override paths, and the generated config schema now use the singular provider definition; provider switching requires another runtime/data root.
 - Profile and session-thread configuration no longer emit Provider selection or Provider-definition fields; Provider settings remain outside per-thread configuration.
 - The public app-server `ConfigRequirements` response no longer exposes Provider selection or the Provider registry; managed requirements no longer parse or merge Provider selection/registry entries.
 - Managed `requirements.toml` no longer selects or injects Provider registry entries; remaining managed requirements continue to constrain provider-neutral runtime settings.

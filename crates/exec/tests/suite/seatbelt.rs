@@ -89,9 +89,9 @@ async fn genex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
             .args(["-c", "approvals_reviewer=\"user\"", "-c", "features.shell_snapshot_v2=false"])
             // Session overrides cannot authorize the host's exception either.
             .args(["-c", "allow_symlinked_genex_home=true"])
-            .args(["-c", "model_provider=\"test\"", "-c"])
+            .args(["-c", "model_provider.id=\"test\"", "-c"])
             .arg(format!(
-                "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",supports_websockets=false}}",
+                "model_provider={{name=\"test\",base_url={:?},wire_api=\"responses\",supports_websockets=false}}",
                 format!("{}/v1", server.uri())
             ))
             .arg("write the files");

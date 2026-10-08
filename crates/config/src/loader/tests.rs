@@ -416,7 +416,6 @@ async fn packaged_defaults_have_lower_precedence_than_existing_config_layers() {
         packaged_defaults_path.as_path(),
         r#"
 model = "packaged-model"
-model_provider = "packaged-provider"
 model_context_window = 120000
 "#,
     )
@@ -425,7 +424,6 @@ model_context_window = 120000
         &system_config_path,
         r#"
 model = "system-model"
-model_provider = "system-provider"
 "#,
     )
     .expect("write system config");
@@ -474,8 +472,7 @@ model_provider = "system-provider"
         stack.effective_config(),
         toml::toml! {
             model = "session-model"
-            model_provider = "system-provider"
-            model_context_window = 120000
+                        model_context_window = 120000
         }
         .into()
     );

@@ -24,7 +24,6 @@ use genex_core::TurnInputRequest;
 use genex_features::Feature;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::built_in_model_providers;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_models_manager::model_info::BASE_INSTRUCTIONS;

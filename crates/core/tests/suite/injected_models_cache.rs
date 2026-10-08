@@ -24,7 +24,6 @@ use genex_login::GenexAuth;
 use genex_model_provider::ModelProvider;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
-use genex_model_provider_info::built_in_model_providers;
 use genex_models_manager::cache::ModelsCache;
 use genex_models_manager::cache::ModelsCacheEntry;
 use genex_models_manager::cache::ModelsCacheError;

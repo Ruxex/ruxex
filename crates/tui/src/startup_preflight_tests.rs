@@ -246,7 +246,7 @@ fn startup_keeps_composer_when_system_configuration_is_possible() -> std::io::Re
         ));
     }
 
-    std::fs::write(system_config_path.as_path(), "model_provider = 'local'")?;
+    std::fs::write(system_config_path.as_path(), "model_provider.id = 'local'")?;
     assert!(!should_delay_startup_composer_for_first_login(
         &genex_home,
         Ok(system_config_path),

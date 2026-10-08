@@ -73,7 +73,7 @@ fn personal_access_token_exec_command(server: &MockServer, home: &TempDir) -> Co
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.provider.base_url=\"{}/api/genex\"",
+            "model_provider.base_url=\"{}/api/genex\"",
             server.uri()
         ))
         .arg("-c")
@@ -216,7 +216,7 @@ async fn responses_mode_stream_cli() {
 
     let home = TempDir::new().unwrap();
     let provider_override = format!(
-        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
+        "model_provider={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
         server.uri()
     );
     let bin = genex_utils_cargo_bin::cargo_bin("genex").unwrap();
@@ -226,7 +226,7 @@ async fn responses_mode_stream_cli() {
         .arg("-c")
         .arg(&provider_override)
         .arg("-c")
-        .arg("model_provider=\"mock\"")
+        .arg("model_provider.id=\"mock\"")
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
@@ -267,7 +267,7 @@ async fn responses_mode_stream_cli_supports_model_provider_base_url_override() {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.provider.base_url=\"{}/v1\"",
+            "model_provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")
@@ -310,7 +310,7 @@ async fn exec_cli_applies_model_instructions_file() {
     // Build a provider override that points at the mock server and instructs
     // Genex to use the Responses API with the dummy env var.
     let provider_override = format!(
-        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
+        "model_provider={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
         server.uri()
     );
 
@@ -325,7 +325,7 @@ async fn exec_cli_applies_model_instructions_file() {
         .arg("-c")
         .arg(&provider_override)
         .arg("-c")
-        .arg("model_provider=\"mock\"")
+        .arg("model_provider.id=\"mock\"")
         .arg("-c")
         .arg(format!("model_instructions_file=\"{custom_path_str}\""))
         .arg("-C")
@@ -376,7 +376,7 @@ async fn exec_cli_profile_applies_model_instructions_file() {
     let custom_path_str = custom_path.to_string_lossy().replace('\\', "/");
 
     let provider_override = format!(
-        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
+        "model_provider={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
         server.uri()
     );
 
@@ -399,7 +399,7 @@ async fn exec_cli_profile_applies_model_instructions_file() {
         .arg("-c")
         .arg(&provider_override)
         .arg("-c")
-        .arg("model_provider=\"mock\"")
+        .arg("model_provider.id=\"mock\"")
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?\n");
@@ -441,7 +441,7 @@ async fn responses_api_stream_cli() {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.provider.base_url=\"{}/v1\"",
+            "model_provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")
@@ -485,7 +485,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.provider.base_url=\"{}/v1\"",
+            "model_provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")
@@ -604,7 +604,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg("--skip-git-repo-check")
         .arg("-c")
         .arg(format!(
-            "model_providers.provider.base_url=\"{}/v1\"",
+            "model_provider.base_url=\"{}/v1\"",
             server.uri()
         ))
         .arg("-C")

@@ -85,7 +85,6 @@ pub use genex_login::ExternalAuthRefreshContext;
 pub use genex_login::ExternalAuthRefreshReason;
 pub use genex_login::GenexAuth;
 pub use genex_login::default_client::set_default_originator;
-pub use genex_model_provider_info::built_in_model_providers;
 pub use genex_models_manager::manager::RefreshStrategy;
 pub use genex_models_manager::manager::SharedModelsManager;
 pub use genex_protocol::ThreadId;

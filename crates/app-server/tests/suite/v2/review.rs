@@ -385,14 +385,6 @@ async fn review_start_with_detached_delivery_returns_new_thread_id() -> Result<(
         .with_genex_home(genex_home.path())
         .build_initialized()
         .await?;
-    // New threads use the refreshed route; detached review must inherit that route.
-    std::fs::write(
-        genex_home.path().join("requirements.toml"),
-        format!(
-            "model_provider = 'review-gateway'\n[model_providers.review-gateway]\nname = 'Review Gateway'\nbase_url = '{}/v1'\n",
-            server.uri()
-        ),
-    )?;
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),

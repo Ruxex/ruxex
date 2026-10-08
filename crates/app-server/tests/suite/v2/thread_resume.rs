@@ -1083,9 +1083,9 @@ async fn assert_thread_resume_approval_policy(
             r#"
 model = "legacy-model"
 approval_policy = "never"
-model_provider = "mock_provider"
 
-[model_providers.mock_provider]
+[model_provider]
+id = "mock_provider"
 name = "Mock provider for test"
 base_url = "{}/v1"
 wire_api = "responses"

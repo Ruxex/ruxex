@@ -23,7 +23,6 @@ use genex_config::config_toml::ConfigToml;
 use genex_config::config_toml::DEFAULT_PROJECT_DOC_MAX_BYTES;
 use genex_config::config_toml::ProjectConfig;
 use genex_config::config_toml::ThreadStoreToml;
-use genex_config::config_toml::validate_model_providers;
 use genex_config::loader::load_config_layers_state;
 use genex_config::loader::project_trust_key;
 use genex_config::permissions_toml::PermissionProfileToml;
@@ -579,7 +578,7 @@ pub struct Config {
     /// active context or only tokens after the carried compaction-window prefix.
     pub model_auto_compact_token_limit_scope: AutoCompactTokenLimitScope,
 
-    /// Key into the model_providers map that specifies which provider to use.
+    /// Stable identifier for the single provider mounted by this runtime.
     pub model_provider_id: String,
 
     /// Info needed to make an API request to the model.
@@ -2945,8 +2944,6 @@ impl Config {
     ) -> std::io::Result<Self> {
         // Keep the large config-construction future off small test thread stacks.
         Box::pin(async move {
-        validate_model_providers(&cfg.model_providers)
-            .map_err(|message| std::io::Error::new(std::io::ErrorKind::InvalidInput, message))?;
         if let Some(responses_api_metadata) = cfg.responses_api_metadata.as_ref() {
             validate_extra_metadata(responses_api_metadata.iter()).map_err(|message| {
                 std::io::Error::new(std::io::ErrorKind::InvalidInput, message)
@@ -3430,11 +3427,7 @@ impl Config {
         let agent_roles =
             load_agent_roles(fs, &cfg, &config_layer_stack, &mut startup_warnings).await?;
 
-        let selected_model_provider = cfg.model_provider;
-        let resolved_model_provider = resolve_model_provider(
-            cfg.model_providers,
-            selected_model_provider.as_deref(),
-        )
+        let resolved_model_provider = resolve_model_provider(cfg.model_provider)
         .map_err(|message| std::io::Error::new(std::io::ErrorKind::NotFound, message))?;
         let model_provider_id = resolved_model_provider.id;
         let model_provider = resolved_model_provider.info;

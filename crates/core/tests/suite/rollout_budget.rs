@@ -2,7 +2,6 @@ use anyhow::Result;
 use genex_core::TurnInputRequest;
 use genex_core::config::RolloutBudgetConfig;
 use genex_features::Feature;
-use genex_model_provider_info::built_in_model_providers;
 use genex_protocol::protocol::GenexErrorInfo;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;

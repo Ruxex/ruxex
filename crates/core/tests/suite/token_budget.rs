@@ -7,7 +7,6 @@ use genex_core::config::TokenBudgetConfig;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_features::Feature;
 use genex_login::GenexAuth;
-use genex_model_provider_info::built_in_model_providers;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::items::TurnItem;
 use genex_protocol::model_types::ModelTokenBudgetConfig;

@@ -55,14 +55,12 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     let server = responses::start_mock_server().await;
     let config_path = genex_home.path().join("config.toml");
     let config = fs::read_to_string(&config_path)?
-        .replace("model_provider = \"provider\"", "model_provider = \"test\"");
-    fs::write(
-        &config_path,
-        format!(
-            "{config}\n[model_providers.test]\nname = \"Mock\"\nbase_url = \"{}/v1\"\nwire_api = \"responses\"\nsupports_websockets = false\n",
-            server.uri()
-        ),
-    )?;
+        .replace("model_provider.id = \"provider\"", "model_provider.id = \"test\"");
+    let config = config.replace(
+        "base_url = \"http://127.0.0.1:1/v1\"",
+        &format!("base_url = \"{}/v1\"", server.uri()),
+    );
+    fs::write(&config_path, config)?;
     let _reply = responses::mount_sse_once_match(
         &server,
         body_string_contains("marker requested by this test"),

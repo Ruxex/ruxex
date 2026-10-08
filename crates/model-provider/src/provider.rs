@@ -694,6 +694,7 @@ mod tests {
 
     fn provider_for(base_url: String) -> ModelProviderInfo {
         ModelProviderInfo {
+            id: None,
             name: "mock".into(),
             base_url: Some(base_url),
             env_key: None,

@@ -166,14 +166,14 @@ async fn interactive_worktree_start_and_fork_bind_owner_before_turn() -> anyhow:
 cli_auth_credentials_store = "file"
 managed_auth_base_url = "{}/source/backend-api"
 features.worktrees = true
-model_provider = "local"
 model = "test-model"
 sandbox_mode = "workspace-write"
 windows.sandbox = "unelevated"
 tui.disable_paste_burst = true
 [otel]
 metrics_exporter = {{ otlp-http = {{ endpoint = "{}/metrics", protocol = "json" }} }}
-[model_providers.local]
+[model_provider]
+id = "local"
 name = "local test"
 base_url = "{}/v1"
 wire_api = "responses"

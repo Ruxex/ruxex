@@ -37,12 +37,12 @@ async fn write_provider_config(
         r#"model = "legacy-model"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
-model_provider = "custom-provider"
 
 [features]
 shell_snapshot = false
 
-[model_providers.custom-provider]
+[model_provider]
+id = "custom-provider"
 name = "provider"
 base_url = "{model_base_url}/v1"
 wire_api = "responses"
@@ -50,11 +50,11 @@ request_max_retries = 0
 stream_max_retries = 0
 supports_websockets = {supports_websockets}
 
-[model_providers.custom-provider.http_headers]
+[model_provider.http_headers]
 "X-provider-Internal-Codex-Residency" = "eu-static"
 "x-provider-header" = "preserved"
 
-[model_providers.custom-provider.env_http_headers]
+[model_provider.env_http_headers]
 "x-provider-internal-codex-residency" = "{PROVIDER_RESIDENCY_ENV_VAR}"
 "#
     );
@@ -114,7 +114,7 @@ async fn managed_residency_overrides_provider_headers(transport: ModelTransport)
         .await?;
 
     let expected_summary = format!(
-        "Ignoring `{RESIDENCY_HEADER_NAME}` in `model_providers.custom-provider` because managed residency is required."
+        "Ignoring `{RESIDENCY_HEADER_NAME}` in `model_provider` because managed residency is required."
     );
     let notification = timeout(
         READ_TIMEOUT,
