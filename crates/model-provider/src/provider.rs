@@ -4,17 +4,23 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use futures::StreamExt;
 use genex_api::ApiError;
 use genex_api::ChatCompletionApi;
+use genex_api::ChatClient;
+use genex_api::ChatRequestInput;
 use genex_api::Provider;
 use genex_api::SharedAuthProvider;
 use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
 use genex_api::is_azure_responses_provider;
+use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::ProviderAuth;
+use genex_login::default_client::ClientRedirectPolicy;
+use genex_login::default_client::create_client_for_route;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::ProviderAuthField;
 use genex_model_provider_info::WireApi;
@@ -161,6 +167,66 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             WireApi::Responses => ProviderApi::Responses,
             WireApi::Chat => ProviderApi::Chat(Arc::new(StandardChatCompletionApi)),
         }
+    }
+
+    /// Streams a provider-owned chat request through the provider-neutral contract.
+    ///
+    /// This first migration slice covers the existing Chat Completions transport. Responses
+    /// transport remains in `core::ModelClient` until its websocket/HTTP session state can move
+    /// behind the same operation without losing turn-scoped retry and continuation behavior.
+    fn chat(
+        &self,
+        request: crate::contract::ChatRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+    > {
+        Box::pin(async move {
+            let ProviderApi::Chat(chat_api) = self.api() else {
+                return Err(crate::contract::ProviderError::Unsupported);
+            };
+            let api_provider = self
+                .api_provider()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let api_auth = self
+                .api_auth()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let client = create_client_for_route(
+                &request.http_client_factory,
+                &api_provider.url_for_path("/chat/completions"),
+                ClientRouteClass::Api,
+                ClientRedirectPolicy::Default,
+            )
+            .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
+            let transport = genex_api::ReqwestTransport::from_http_client(client);
+            let chat_request = chat_api
+                .build_request(ChatRequestInput {
+                    provider: &api_provider,
+                    model: &request.model,
+                    instructions: request.instructions.as_deref().unwrap_or_default(),
+                    input: &request.input,
+                    tools: &request.tools,
+                    conversation_id: request.conversation_id,
+                    session_source: request.session_source,
+                })
+                .map_err(|error| crate::contract::ProviderError::InvalidRequest(error.to_string()))?;
+            let stream = ChatClient::with_api(
+                transport,
+                api_provider,
+                api_auth,
+                chat_api,
+            )
+            .stream_request(chat_request)
+            .await
+            .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            Ok(Box::pin(stream.map(|event| {
+                event
+                    .map(crate::contract::ProviderChatEvent::from)
+                    .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+            })) as crate::contract::ProviderChatStream)
+        })
     }
 
     /// Fetches the provider's current model catalog.
@@ -386,12 +452,12 @@ where
 
     fn chat(
         &self,
-        _request: crate::contract::ChatRequest,
+        request: crate::contract::ChatRequest,
     ) -> crate::contract::ProviderFuture<
         '_,
         crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
     > {
-        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+        ProviderRuntime::chat(self, request)
     }
 
     fn list_models(
@@ -549,12 +615,13 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 
     fn chat(
         &self,
-        _request: crate::contract::ChatRequest,
+        request: crate::contract::ChatRequest,
     ) -> crate::contract::ProviderFuture<
         '_,
         crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
     > {
-        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+        let runtime = self.runtime.clone();
+        Box::pin(async move { ProviderRuntime::chat(runtime.as_ref(), request).await })
     }
 
     fn list_models(

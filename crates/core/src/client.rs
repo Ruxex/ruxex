@@ -34,11 +34,8 @@ use std::sync::atomic::Ordering;
 
 use crate::GenexResponsesHeaders;
 use async_channel::Sender;
-use genex_api::AggregateStreamExt;
 use genex_api::ApiError;
 use genex_api::AuthProvider;
-use genex_api::ChatClient as ApiChatClient;
-use genex_api::ChatRequestInput;
 use genex_api::Compression;
 use genex_api::Provider as ApiProvider;
 use genex_api::Reasoning;
@@ -1280,7 +1277,6 @@ impl ModelClientSession {
         session_telemetry: &SessionTelemetry,
         responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
-        chat_api: Arc<dyn genex_api::ChatCompletionApi>,
     ) -> Result<ResponseStream> {
         if prompt.output_schema.is_some() {
             return Err(genex_protocol::error::GenexErr::UnsupportedOperation(
@@ -1289,98 +1285,33 @@ impl ModelClientSession {
         }
 
         let tools = create_tools_json_for_chat_completions_api(&prompt.tools)?;
-        let credential_manager = self.client.state.provider.credential_manager();
-        let mut auth_recovery = credential_manager
-            .as_ref()
-            .map(CredentialManager::unauthorized_recovery);
-        let mut provider_auth_recovery_attempted = false;
-        let mut pending_retry = PendingUnauthorizedRetry::default();
-
-        loop {
-            let client_setup = self.client.current_client_setup().await?;
-            let transport = self.client.build_api_transport(
-                &client_setup.api_provider,
-                "/chat/completions",
-                client_setup.redirect_policy,
-            )?;
-            let request = chat_api
-                .build_request(ChatRequestInput {
-                    provider: &client_setup.api_provider,
-                    model: &model_info.slug,
-                    instructions: &prompt.base_instructions.text,
-                    input: &prompt.input,
-                    tools: &tools,
-                    conversation_id: Some(responses_metadata.session_id.clone()),
-                    session_source: Some(self.client.state.session_source.clone()),
-                })
-                .map_err(|error| self.client.state.provider.map_api_error(error))?;
-            let request_auth_context =
-                AuthRequestTelemetryContext::new(client_setup.api_auth.as_ref(), pending_retry);
-            let (request_telemetry, sse_telemetry) = Self::build_streaming_telemetry(
-                session_telemetry,
-                request_auth_context,
-                RequestRouteTelemetry::for_endpoint("/chat/completions"),
-            );
-            let inference_trace_attempt = inference_trace.start_attempt();
-            let client = ApiChatClient::with_api(
-                transport,
-                client_setup.api_provider,
-                client_setup.api_auth,
-                Arc::clone(&chat_api),
-            )
-            .with_telemetry(Some(request_telemetry), Some(sse_telemetry));
-
-            match client.stream_request(request).await {
-                Ok(stream) => {
-                    let (stream, _) = map_response_events(
-                        None,
-                        stream.aggregate(),
-                        session_telemetry.clone(),
-                        inference_trace_attempt,
-                        Arc::clone(&self.client.state.provider),
-                    );
-                    return Ok(stream);
-                }
-                Err(ApiError::Transport(unauthorized_transport))
-                    if self
-                        .client
-                        .state
-                        .provider
-                        .is_recoverable_auth_error(&unauthorized_transport) =>
-                {
-                    let response_debug_context =
-                        extract_response_debug_context(&unauthorized_transport);
-                    inference_trace_attempt.record_failed(
-                        &unauthorized_transport,
-                        response_debug_context.request_id.as_deref(),
-                        /*output_items*/ &[],
-                    );
-                    pending_retry = PendingUnauthorizedRetry::from_recovery(
-                        handle_unauthorized(
-                            unauthorized_transport,
-                            &mut auth_recovery,
-                            &mut provider_auth_recovery_attempted,
-                            session_telemetry,
-                            &self.client.state.provider,
-                            self.client.event_sender.as_ref(),
-                            responses_metadata.turn_id.as_deref(),
-                        )
-                        .await?,
-                    );
-                }
-                Err(err) => {
-                    let response_debug_context =
-                        extract_response_debug_context_from_api_error(&err);
-                    let err = self.client.state.provider.map_api_error(err);
-                    inference_trace_attempt.record_failed(
-                        &err,
-                        response_debug_context.request_id.as_deref(),
-                        /*output_items*/ &[],
-                    );
-                    return Err(err);
-                }
-            }
-        }
+        let request = genex_model_provider::ChatRequest {
+            model: model_info.slug.clone(),
+            instructions: Some(prompt.base_instructions.text.clone()),
+            input: prompt.input.clone(),
+            tools,
+            metadata: std::collections::BTreeMap::new(),
+            conversation_id: Some(responses_metadata.session_id.clone()),
+            session_source: Some(self.client.state.session_source.clone()),
+            http_client_factory: self.client.http_client_factory.clone(),
+        };
+        let provider_stream = self
+            .client
+            .state
+            .provider_contract
+            .chat(request)
+            .await
+            .map_err(|error| GenexErr::Fatal(error.to_string()))?;
+        let api_stream = provider_stream
+            .map(|event| event.map_err(|error| ApiError::Stream(error.to_string())));
+        let (stream, _) = map_response_events(
+            None,
+            api_stream,
+            session_telemetry.clone(),
+            inference_trace.start_attempt(),
+            Arc::clone(&self.client.state.provider),
+        );
+        Ok(stream)
     }
 
     /// Streams a turn via the provider Responses API.
@@ -1913,14 +1844,13 @@ impl ModelClientSession {
                 )
                 .await
             }
-            ProviderApi::Chat(chat_api) => {
+            ProviderApi::Chat(_) => {
                 self.stream_chat_completions(
                     prompt,
                     model_info,
                     session_telemetry,
                     responses_metadata,
                     inference_trace,
-                    chat_api,
                 )
                 .await
             }

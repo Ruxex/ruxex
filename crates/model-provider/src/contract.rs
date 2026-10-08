@@ -16,6 +16,7 @@ use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::RateLimitSnapshot;
+use genex_protocol::protocol::SessionSource;
 use serde_json::Value;
 
 /// Remote context-compaction protocols supported by a model provider.
@@ -209,17 +210,16 @@ pub struct ChatRequest {
     pub input: Vec<ResponseItem>,
     pub tools: Vec<Value>,
     pub metadata: BTreeMap<String, Value>,
+    pub conversation_id: Option<String>,
+    pub session_source: Option<SessionSource>,
+    pub http_client_factory: HttpClientFactory,
 }
 
 /// Provider-neutral streamed chat events.
-#[derive(Debug, Clone, PartialEq)]
-pub enum ProviderChatEvent {
-    TextDelta(String),
-    OutputItem(ResponseItem),
-    Usage(RateLimitSnapshot),
-    Completed { response_id: Option<String> },
-    Metadata(Value),
-}
+///
+/// The current migration reuses the repository's normalized response event vocabulary. Wire
+/// transport errors are still converted to [`ProviderError`] by the provider adapter.
+pub type ProviderChatEvent = genex_api::ResponseEvent;
 
 /// Provider-owned model execution, catalog, authentication, and usage contract.
 pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
