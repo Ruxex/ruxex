@@ -1291,10 +1291,6 @@ pub struct ThreadListParams {
     /// Optional sort direction; defaults to descending (newest first).
     #[ts(optional = nullable)]
     pub sort_direction: Option<SortDirection>,
-    /// Optional provider filter; when set, only sessions recorded under these
-    /// providers are returned. When present but empty, includes all providers.
-    #[ts(optional = nullable)]
-    pub model_providers: Option<Vec<String>>,
     /// Optional source filter; when set, only sessions from these source kinds
     /// are returned. When omitted or empty, defaults to interactive sources.
     #[ts(optional = nullable)]

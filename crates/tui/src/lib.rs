@@ -668,15 +668,12 @@ async fn lookup_session_target_with_app_server(
         };
     }
 
-    let model_provider =
-        (!app_server.uses_remote_workspace()).then_some(config.model_provider_id.as_str());
     Ok(named_session_lookup::lookup(
         app_server,
         config.genex_home.as_path(),
         id_or_name,
         &[named_session_lookup::SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
-        model_provider,
     )
     .await?
     .and_then(session_target_from_app_server_thread))
@@ -697,7 +694,6 @@ async fn lookup_latest_session_target_with_app_server(
         let response = app_server
             .thread_list(latest_session_lookup_params(
                 uses_remote_filesystem,
-                uses_remote_workspace,
                 config,
                 cwd_filter,
                 include_non_interactive,
@@ -725,7 +721,6 @@ enum LatestSessionLookupMode {
 
 fn latest_session_lookup_params(
     uses_remote_filesystem: bool,
-    uses_remote_workspace: bool,
     config: &Config,
     cwd_filter: Option<&Path>,
     include_non_interactive: bool,
@@ -737,11 +732,6 @@ fn latest_session_lookup_params(
         limit: Some(1),
         sort_key: Some(AppServerThreadSortKey::UpdatedAt),
         sort_direction: None,
-        model_providers: if uses_remote_workspace {
-            None
-        } else {
-            Some(vec![config.model_provider_id.clone()])
-        },
         source_kinds: Some(resume_source_kinds(include_non_interactive)),
         archived: Some(false),
         section_id: None,

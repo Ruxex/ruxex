@@ -444,7 +444,6 @@ async fn execute_inner(
                             limit: Some(limit),
                             sort_key: Some(ThreadSortKey::UpdatedAt),
                             sort_direction: Some(SortDirection::Desc),
-                            model_providers: Some(Vec::new()),
                             source_kinds: None,
                             archived: Some(archived),
                             section_id: None,

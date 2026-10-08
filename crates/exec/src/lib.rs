@@ -1571,8 +1571,6 @@ async fn resolve_resume_thread_id(
     state_db: Option<&StateDbHandle>,
     args: &crate::cli::ResumeArgs,
 ) -> anyhow::Result<Option<String>> {
-    let model_providers = resume_lookup_model_providers(config, args);
-
     if args.last {
         let mut use_state_db_only = state_db.is_some();
         let mut cursor = None;
@@ -1587,7 +1585,6 @@ async fn resolve_resume_thread_id(
                         limit: Some(100),
                         sort_key: Some(ThreadSortKey::UpdatedAt),
                         sort_direction: None,
-                        model_providers: model_providers.clone(),
                         source_kinds: Some(all_thread_source_kinds()),
                         archived: Some(false),
                         section_id: None,
@@ -1673,7 +1670,6 @@ async fn resolve_resume_thread_id(
                     limit: Some(100),
                     sort_key: Some(ThreadSortKey::UpdatedAt),
                     sort_direction: None,
-                    model_providers: model_providers.clone(),
                     source_kinds: Some(all_thread_source_kinds()),
                     archived: Some(false),
                     section_id: None,
@@ -1702,17 +1698,6 @@ async fn resolve_resume_thread_id(
             return Ok(None);
         };
         cursor = Some(next_cursor);
-    }
-}
-
-fn resume_lookup_model_providers(
-    config: &Config,
-    args: &crate::cli::ResumeArgs,
-) -> Option<Vec<String>> {
-    if args.last {
-        Some(vec![config.model_provider_id.clone()])
-    } else {
-        None
     }
 }
 

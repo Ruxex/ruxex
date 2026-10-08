@@ -34,7 +34,7 @@
 - AppServer constructs one shared provider runtime and reuses it for sessions, model catalogs, account state, and capability queries.
 - AppServer model-provider/account status APIs expose only the configured provider; provider switching is no longer represented in runtime, host commands, or app-server protocol.
 - Runtime resume and AgentControl no longer restore or select a provider from persisted thread metadata; the mounted provider is authoritative.
-- Thread listing accepts omitted/empty/current-provider filters only and rejects requests for another provider; historical provider fields remain read-compatible during the persistence migration.
+- App-server `thread/list` no longer exposes a provider filter; listing is always scoped to the mounted provider. Lower thread-store/rollout filter parameters remain under the final persistence audit.
 - Stored-thread responses now expose the mounted provider so clients cannot restore a historical provider into their local session state.
 - New rollout session metadata no longer writes `model_provider`; optional deserialization remains for historical JSONL and state backfill.
 - SQLite state migration `0002` removes `threads.model_provider` and `idx_threads_provider`; state metadata and runtime SQL no longer persist or filter threads by provider. Historical rollout values remain read-only migration input.

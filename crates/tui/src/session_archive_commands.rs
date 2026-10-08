@@ -165,7 +165,6 @@ async fn resolve_session_target(
         &[super::resume_source_kinds(
             /*include_non_interactive*/ false,
         )],
-        /*model_provider*/ None,
     )
     .await?
     {

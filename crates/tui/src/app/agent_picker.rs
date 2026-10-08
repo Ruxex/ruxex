@@ -42,7 +42,6 @@ impl App {
                                 limit: Some(AGENT_PICKER_PAGE_SIZE),
                                 sort_key: None,
                                 sort_direction: Some(SortDirection::Desc),
-                                model_providers: Some(vec![]),
                                 source_kinds: Some(vec![ThreadSourceKind::SubAgentThreadSpawn]),
                                 archived: None,
                                 section_id: None,

@@ -54,7 +54,6 @@ async fn lookup_name(
     name: &str,
     collections: &[SessionCollection],
     mode: ThreadParamsMode,
-    model_provider: Option<&str>,
 ) -> color_eyre::Result<Option<genex_app_server_protocol::Thread>> {
     let mut app_server = AppServerSession::new(
         genex_app_server_client::AppServerClient::InProcess(
@@ -68,7 +67,6 @@ async fn lookup_name(
         name,
         collections,
         &[resume_source_kinds(/*include_non_interactive*/ false)],
-        model_provider,
     )
     .await?;
     app_server.shutdown().await?;
@@ -207,29 +205,11 @@ async fn resolves_name_and_preview_from_server_list() -> color_eyre::Result<()> 
         thread_metadata(&config, preview_id, preview_path, "preview text"),
     )
     .await?;
-    let other_id = ThreadId::new();
-    let mut other_config = config.clone();
-    other_config.model_provider_id = "another-provider".to_string();
-    let other_path = write_rollout(
-        &other_config,
-        other_id,
-        "2025-02-03T10:00:00Z",
-        "preview text",
-        SessionSource::Cli,
-        ThreadHistoryMode::Paginated,
-    )?;
-    upsert_thread(
-        &runtime,
-        thread_metadata(&other_config, other_id, other_path, "saved-session"),
-    )
-    .await?;
-
     let named = lookup_name(
         &config,
         "saved-session",
         &[SessionCollection::Active],
         ThreadParamsMode::Embedded,
-        Some(&config.model_provider_id),
     )
     .await?;
     let preview = lookup_name(
@@ -237,37 +217,16 @@ async fn resolves_name_and_preview_from_server_list() -> color_eyre::Result<()> 
         "preview text",
         &[SessionCollection::Active],
         ThreadParamsMode::Embedded,
-        Some(&config.model_provider_id),
-    )
-    .await?;
-    let switched_provider = lookup_name(
-        &config,
-        "saved-session",
-        &[SessionCollection::Active],
-        ThreadParamsMode::Embedded,
-        Some(&other_config.model_provider_id),
-    )
-    .await?;
-    let remote = lookup_name(
-        &other_config,
-        "saved-session",
-        &[SessionCollection::Active],
-        ThreadParamsMode::Remote,
-        /*model_provider*/ None,
     )
     .await?;
     assert_eq!(
         (
             named.map(|thread| thread.id),
             preview.map(|thread| thread.id),
-            switched_provider.map(|thread| thread.id),
-            remote.map(|thread| thread.id),
         ),
         (
             Some(named_id.to_string()),
             Some(preview_id.to_string()),
-            Some(other_id.to_string()),
-            Some(other_id.to_string()),
         ),
     );
     Ok(())
@@ -315,7 +274,6 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
         "same-label",
         &[SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
-        Some(&config.model_provider_id),
     )
     .await
     .expect_err("duplicate labels should require an ID");
@@ -325,7 +283,6 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
         "other-1",
         &[SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
-        Some(&config.model_provider_id),
     )
     .await
     .expect_err("paginated listings cannot prove uniqueness on older servers");
@@ -410,7 +367,6 @@ async fn skips_stale_listed_thread_before_valid_label() -> color_eyre::Result<()
         "same-label",
         &[SessionCollection::Active],
         ThreadParamsMode::Embedded,
-        Some(&config.model_provider_id),
     )
     .await?;
     assert_eq!(found.map(|thread| thread.id), Some(valid_id.to_string()));
@@ -507,7 +463,6 @@ async fn uses_listed_thread_when_older_server_cannot_read_it() -> color_eyre::Re
             "saved-session",
             &[SessionCollection::Active],
             &[resume_source_kinds(/*include_non_interactive*/ false)],
-            /*model_provider*/ None,
         )
         .await?;
         assert_eq!(found, Some(listed.clone()));

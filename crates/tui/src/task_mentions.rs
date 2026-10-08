@@ -95,7 +95,6 @@ pub(crate) fn spawn_search(
                         limit: Some(MAX_SEARCH_RESULTS),
                         sort_key: Some(ThreadSortKey::UpdatedAt),
                         sort_direction: Some(SortDirection::Desc),
-                        model_providers: Some(Vec::new()),
                         source_kinds: Some(Vec::new()),
                         archived: Some(false),
                         section_id: None,

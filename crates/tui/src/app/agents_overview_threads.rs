@@ -220,7 +220,6 @@ impl App {
                                         limit: Some(20),
                                         sort_key: Some(sort_key),
                                         sort_direction: None,
-                                        model_providers: Some(Vec::new()),
                                         source_kinds: Some(source_kinds.clone()),
                                         archived: Some(false),
                                         section_id: None,

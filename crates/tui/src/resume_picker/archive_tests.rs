@@ -1,7 +1,6 @@
 use super::super::PickerLoadRequest;
 use super::super::PickerLoader;
 use super::super::PickerState;
-use super::super::ProviderFilter;
 use super::super::Row;
 use super::super::SessionPickerAction;
 use super::super::SessionPickerLaunchContext;
@@ -39,7 +38,6 @@ fn archive_picker_state() -> (PickerState, Arc<Mutex<Vec<ThreadId>>>) {
     let state = PickerState::new(
         FrameRequester::test_dummy(),
         picker_loader,
-        ProviderFilter::Any,
         /*show_all*/ true,
         /*filter_cwd*/ None,
         SessionPickerAction::Resume,

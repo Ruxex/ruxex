@@ -18,10 +18,6 @@ sortKey?: ThreadSortKey | null, /**
  * Optional sort direction; defaults to descending (newest first).
  */
 sortDirection?: SortDirection | null, /**
- * Optional provider filter; when set, only sessions recorded under these
- * providers are returned. When present but empty, includes all providers.
- */
-modelProviders?: Array<string> | null, /**
  * Optional source filter; when set, only sessions from these source kinds
  * are returned. When omitted or empty, defaults to interactive sources.
  */

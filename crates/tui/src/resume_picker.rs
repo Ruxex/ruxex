@@ -173,7 +173,6 @@ struct PageLoadRequest {
     mode: PageLoadMode,
     cwd_filter: Option<PathBuf>,
     status: SessionStatus,
-    provider_filter: ProviderFilter,
     sort_key: ThreadSortKey,
 }
 
@@ -192,12 +191,6 @@ enum PickerLoadRequest {
     Unarchive {
         thread_id: ThreadId,
     },
-}
-
-#[derive(Clone)]
-enum ProviderFilter {
-    Any,
-    MatchDefault(String),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -340,7 +333,6 @@ struct SessionPickerRunOptions {
     worktrees_enabled: bool,
     action: SessionPickerAction,
     launch_context: SessionPickerLaunchContext,
-    provider_filter: ProviderFilter,
     initial_density: SessionListDensity,
     view_persistence: Option<SessionPickerViewPersistence>,
     pager_keymap: PagerKeymap,
@@ -442,7 +434,6 @@ async fn run_resume_picker_with_launch_context(
         app_server.remote_cwd_override(),
     );
     let local_filter_cwd = local_picker_cwd_filter(&cwd_filter, uses_remote_filesystem);
-    let provider_filter = picker_provider_filter(config, uses_remote_workspace);
     let runtime_keymap = picker_runtime_keymap(local_settings)?;
     let options = SessionPickerRunOptions {
         use_theme_colors: local_settings.tui.status_line_use_colors,
@@ -452,7 +443,6 @@ async fn run_resume_picker_with_launch_context(
         worktrees_enabled: config.features.enabled(genex_features::Feature::Worktrees),
         action: SessionPickerAction::Resume,
         launch_context,
-        provider_filter,
         initial_density: SessionListDensity::from(
             local_settings.tui.session_picker_view.unwrap_or_default(),
         ),
@@ -503,7 +493,6 @@ pub async fn run_fork_picker_with_app_server(
         app_server.remote_cwd_override(),
     );
     let local_filter_cwd = local_picker_cwd_filter(&cwd_filter, uses_remote_filesystem);
-    let provider_filter = picker_provider_filter(config, uses_remote_workspace);
     let runtime_keymap = picker_runtime_keymap(local_settings)?;
     let options = SessionPickerRunOptions {
         use_theme_colors: local_settings.tui.status_line_use_colors,
@@ -513,7 +502,6 @@ pub async fn run_fork_picker_with_app_server(
         worktrees_enabled: config.features.enabled(genex_features::Feature::Worktrees),
         action: SessionPickerAction::Fork,
         launch_context: SessionPickerLaunchContext::Startup,
-        provider_filter,
         initial_density: SessionListDensity::from(
             local_settings.tui.session_picker_view.unwrap_or_default(),
         ),
@@ -556,7 +544,6 @@ async fn run_session_picker_with_loader(
     let mut state = PickerState::new(
         alt.tui.frame_requester(),
         picker_loader,
-        options.provider_filter,
         options.show_all,
         options.filter_cwd,
         options.action,
@@ -660,14 +647,6 @@ fn local_picker_cwd_filter(
     }
 }
 
-fn picker_provider_filter(config: &Config, uses_remote_workspace: bool) -> ProviderFilter {
-    if uses_remote_workspace {
-        ProviderFilter::Any
-    } else {
-        ProviderFilter::MatchDefault(config.model_provider_id.to_string())
-    }
-}
-
 fn picker_runtime_keymap(config: &crate::local_settings::LocalSettings) -> Result<RuntimeKeymap> {
     RuntimeKeymap::from_config(&config.tui.keymap)
         .map_err(|err| color_eyre::eyre::eyre!("invalid keymap configuration: {err}"))
@@ -718,7 +697,6 @@ fn spawn_app_server_page_loader(
                         cursor,
                         cwd_filter,
                         request.status,
-                        request.provider_filter,
                         request.sort_key,
                         include_non_interactive,
                         matches!(request.mode, PageLoadMode::StateDbOnly),
@@ -853,7 +831,6 @@ struct PickerState {
     picker_loader: PickerLoader,
     view_rows: Option<usize>,
     view_width: Option<u16>,
-    provider_filter: ProviderFilter,
     filter_mode: SessionFilterMode,
     status: SessionStatus,
     filter_cwd: Option<PathBuf>,
@@ -1027,7 +1004,6 @@ impl PickerState {
     fn new(
         requester: FrameRequester,
         picker_loader: PickerLoader,
-        provider_filter: ProviderFilter,
         show_all: bool,
         filter_cwd: Option<PathBuf>,
         action: SessionPickerAction,
@@ -1052,7 +1028,6 @@ impl PickerState {
             picker_loader,
             view_rows: None,
             view_width: None,
-            provider_filter,
             filter_mode: SessionFilterMode::from_show_all(show_all, filter_cwd.as_deref()),
             status: SessionStatus::Active,
             local_filter_cwd: filter_cwd.clone(),
@@ -1462,7 +1437,6 @@ impl PickerState {
             mode,
             cwd_filter: self.active_cwd_filter(),
             status: self.status,
-            provider_filter: self.provider_filter.clone(),
             sort_key: self.sort_key,
         }));
     }
@@ -1502,7 +1476,6 @@ impl PickerState {
                         mode: PageLoadMode::StoreDefault,
                         cwd_filter: self.active_cwd_filter(),
                         status: self.status,
-                        provider_filter: self.provider_filter.clone(),
                         sort_key: self.sort_key,
                     }));
                     return Ok(None);
@@ -1815,7 +1788,6 @@ impl PickerState {
             mode,
             cwd_filter: self.active_cwd_filter(),
             status: self.status,
-            provider_filter: self.provider_filter.clone(),
             sort_key: self.sort_key,
         }));
     }
@@ -2049,7 +2021,6 @@ fn thread_list_params(
     cursor: Option<String>,
     cwd_filter: Option<ThreadListCwdFilter>,
     status: SessionStatus,
-    provider_filter: ProviderFilter,
     sort_key: ThreadSortKey,
     include_non_interactive: bool,
     use_state_db_only: bool,
@@ -2060,10 +2031,6 @@ fn thread_list_params(
         limit: Some(PAGE_SIZE as u32),
         sort_key: Some(sort_key),
         sort_direction: None,
-        model_providers: match provider_filter {
-            ProviderFilter::Any => None,
-            ProviderFilter::MatchDefault(default_provider) => Some(vec![default_provider]),
-        },
         source_kinds: Some(crate::resume_source_kinds(include_non_interactive)),
         archived: Some(status == SessionStatus::Archived),
         section_id: None,

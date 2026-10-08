@@ -50,7 +50,6 @@ pub(super) async fn lookup(
     name: &str,
     collections: &[SessionCollection],
     source_kind_filters: &[Vec<ThreadSourceKind>],
-    model_provider: Option<&str>,
 ) -> Result<Option<Thread>> {
     if name.trim().is_empty() {
         return Ok(None);
@@ -73,7 +72,6 @@ pub(super) async fn lookup(
                         limit: Some(100),
                         sort_key: Some(sort_key),
                         sort_direction: None,
-                        model_providers: model_provider.map(|provider| vec![provider.to_string()]),
                         source_kinds: Some(source_kinds.clone()),
                         archived: Some(matches!(collection, SessionCollection::Archived)),
                         section_id: None,
