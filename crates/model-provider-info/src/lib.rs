@@ -174,6 +174,17 @@ pub struct ModelProviderInfo {
     pub supports_standalone_web_search: bool,
 }
 
+/// The single provider configuration selected for one Genex runtime.
+///
+/// Configuration files may still use the historical provider map while they
+/// are being migrated, but this is the boundary passed to runtime code. A
+/// runtime must never receive the map itself.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResolvedModelProvider {
+    pub id: String,
+    pub info: ModelProviderInfo,
+}
+
 impl ModelProviderInfo {
     pub fn validate(&self) -> std::result::Result<(), String> {
         let Some(auth) = self.auth.as_ref() else {
@@ -384,6 +395,33 @@ pub fn merge_configured_model_providers(
     }
 
     Ok(model_providers)
+}
+
+/// Resolve configuration input to the one provider mounted by a runtime.
+///
+/// The built-in provider is always available as the default and cannot be
+/// overridden by user configuration. The returned value is intentionally a
+/// singleton rather than the intermediate provider catalog.
+pub fn resolve_model_provider(
+    configured_model_providers: HashMap<String, ModelProviderInfo>,
+    selected_provider_id: Option<&str>,
+) -> Result<ResolvedModelProvider, String> {
+    let provider_id = selected_provider_id
+        .unwrap_or(CLOUDFLARE_PROVIDER_ID)
+        .to_string();
+    let provider_info = if provider_id == CLOUDFLARE_PROVIDER_ID {
+        ModelProviderInfo::create_cloudflare_provider()
+    } else {
+        configured_model_providers
+            .get(&provider_id)
+            .cloned()
+            .ok_or_else(|| format!("Model provider `{provider_id}` not found"))?
+    };
+
+    Ok(ResolvedModelProvider {
+        id: provider_id,
+        info: provider_info,
+    })
 }
 
 pub fn create_responses_provider_with_base_url(

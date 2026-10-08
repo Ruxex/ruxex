@@ -79,10 +79,8 @@ use genex_mcp::McpProtocolMode;
 use genex_mcp::McpServerRegistration;
 use genex_mcp::ResolvedMcpCatalog;
 use genex_model_provider::ProviderCapabilities;
-use genex_model_provider_info::CLOUDFLARE_PROVIDER_ID;
 use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::built_in_model_providers;
-use genex_model_provider_info::merge_configured_model_providers;
+use genex_model_provider_info::resolve_model_provider;
 use genex_models_manager::ModelsManagerConfig;
 use genex_prompts::ResolvedModelMessages;
 use genex_protocol::config_types::AltScreenMode;
@@ -3436,21 +3434,18 @@ impl Config {
         let agent_roles =
             load_agent_roles(fs, &cfg, &config_layer_stack, &mut startup_warnings).await?;
 
-        let model_providers =
-            merge_configured_model_providers(built_in_model_providers(), cfg.model_providers)
-                .map_err(|message| std::io::Error::new(std::io::ErrorKind::InvalidData, message))?;
-
-        let model_provider_id = config_layer_stack.required_model_provider().map(str::to_string)
+        let selected_model_provider = config_layer_stack
+            .required_model_provider()
+            .map(str::to_string)
             .or(model_provider)
-            .or(cfg.model_provider)
-            .unwrap_or_else(|| CLOUDFLARE_PROVIDER_ID.to_string());
-        let model_provider = model_providers
-            .get(&model_provider_id)
-            .ok_or_else(|| {
-                let message = format!("Model provider `{model_provider_id}` not found");
-                std::io::Error::new(std::io::ErrorKind::NotFound, message)
-            })?
-            .clone();
+            .or(cfg.model_provider);
+        let resolved_model_provider = resolve_model_provider(
+            cfg.model_providers,
+            selected_model_provider.as_deref(),
+        )
+        .map_err(|message| std::io::Error::new(std::io::ErrorKind::NotFound, message))?;
+        let model_provider_id = resolved_model_provider.id;
+        let model_provider = resolved_model_provider.info;
 
         let shell_environment_policy = ShellEnvironmentPolicy::from(cfg.shell_environment_policy);
         let allow_login_shell = cfg.allow_login_shell.unwrap_or(true);

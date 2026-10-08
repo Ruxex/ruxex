@@ -243,6 +243,40 @@ fn test_merge_configured_model_providers_adds_custom_provider() {
 }
 
 #[test]
+fn test_resolve_model_provider_returns_one_custom_provider() {
+    let custom_provider = ModelProviderInfo {
+        name: "Custom".to_string(),
+        base_url: Some("https://example.com/v1".to_string()),
+        ..ModelProviderInfo::default()
+    };
+    let resolved = resolve_model_provider(
+        std::collections::HashMap::from([("custom".to_string(), custom_provider.clone())]),
+        Some("custom"),
+    )
+    .expect("custom provider should resolve");
+
+    assert_eq!(resolved.id, "custom");
+    assert_eq!(resolved.info, custom_provider);
+}
+
+#[test]
+fn test_resolve_model_provider_uses_builtin_default() {
+    let resolved = resolve_model_provider(std::collections::HashMap::new(), None)
+        .expect("built-in provider should resolve");
+
+    assert_eq!(resolved.id, CLOUDFLARE_PROVIDER_ID);
+    assert_eq!(resolved.info, ModelProviderInfo::create_cloudflare_provider());
+}
+
+#[test]
+fn test_resolve_model_provider_rejects_unknown_provider() {
+    let error = resolve_model_provider(std::collections::HashMap::new(), Some("missing"))
+        .expect_err("unknown provider should fail");
+
+    assert_eq!(error, "Model provider `missing` not found");
+}
+
+#[test]
 fn test_deserialize_provider_auth_config_allows_zero_refresh_interval() {
     let base_dir = tempdir().unwrap();
     let provider_toml = r#"
