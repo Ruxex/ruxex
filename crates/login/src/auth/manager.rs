@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::env;
 use std::fmt::Debug;
 use std::future::Future;
@@ -42,7 +43,10 @@ impl PartialEq for GenexAuth {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Headers(a), Self::Headers(b)) => a == b,
-            _ => self.api_auth_mode() == other.api_auth_mode(),
+            (Self::ApiKey(a), Self::ApiKey(b)) => {
+                a.api_key == b.api_key && a.credentials == b.credentials
+            }
+            _ => false,
         }
     }
 }
@@ -50,6 +54,7 @@ impl PartialEq for GenexAuth {
 #[derive(Debug, Clone)]
 pub struct ApiKeyAuth {
     api_key: String,
+    credentials: BTreeMap<String, String>,
 }
 
 const REFRESH_TOKEN_UNKNOWN_MESSAGE: &str = "Authentication refresh is unavailable.";
@@ -77,7 +82,9 @@ enum CredentialManagerInitializationErrorSource {
 
 impl From<RefreshTokenError> for CredentialManagerInitializationError {
     fn from(error: RefreshTokenError) -> Self {
-        Self(CredentialManagerInitializationErrorSource::InitialAuth(error))
+        Self(CredentialManagerInitializationErrorSource::InitialAuth(
+            error,
+        ))
     }
 }
 
@@ -156,7 +163,10 @@ impl GenexAuth {
             let Some(api_key) = credentials.api_key.as_deref() else {
                 return Err(std::io::Error::other("API key auth is missing a key."));
             };
-            return Ok(Self::from_api_key(api_key));
+            return Ok(Self::from_api_key_with_credentials(
+                api_key,
+                credentials.credentials.clone(),
+            ));
         }
         if auth_mode == AuthMode::Headers {
             return Err(std::io::Error::other(
@@ -247,13 +257,31 @@ impl GenexAuth {
                 .account_id()
                 .filter(|account_id| !account_id.is_empty() && account_id.trim() == *account_id)
                 .map(ToOwned::to_owned),
-            _ => None,
+            Self::ApiKey(auth) => auth.credentials.get("account_id").cloned(),
+        }
+    }
+
+    pub fn credential(&self, id: &str) -> Option<String> {
+        match self {
+            Self::ApiKey(auth) => auth.credentials.get(id).cloned(),
+            Self::Headers(_) => None,
         }
     }
 
     pub fn from_api_key(api_key: &str) -> Self {
         Self::ApiKey(ApiKeyAuth {
             api_key: api_key.to_owned(),
+            credentials: BTreeMap::new(),
+        })
+    }
+
+    pub fn from_api_key_with_credentials(
+        api_key: &str,
+        credentials: BTreeMap<String, String>,
+    ) -> Self {
+        Self::ApiKey(ApiKeyAuth {
+            api_key: api_key.to_owned(),
+            credentials,
         })
     }
 }
@@ -1443,7 +1471,7 @@ impl CredentialManager {
         match (a, b) {
             (None, None) => true,
             (Some(a), Some(b)) => match (a.api_auth_mode(), b.api_auth_mode()) {
-                (AuthMode::ApiKey, AuthMode::ApiKey) => a.api_key() == b.api_key(),
+                (AuthMode::ApiKey, AuthMode::ApiKey) => a == b,
                 (AuthMode::Headers, AuthMode::Headers) => a == b,
                 _ => false,
             },

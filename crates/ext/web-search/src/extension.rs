@@ -152,7 +152,10 @@ impl ToolContributor for WebSearchExtension {
     }
 }
 
-pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, credential_manager: Arc<CredentialManager>) {
+pub fn install(
+    registry: &mut ExtensionRegistryBuilder<Config>,
+    credential_manager: Arc<CredentialManager>,
+) {
     let extension = Arc::new(WebSearchExtension { credential_manager });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());
@@ -168,8 +171,8 @@ mod tests {
     use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
 
-    use super::CredentialManager;
     use super::Config;
+    use super::CredentialManager;
     use super::WebSearchExtensionConfig;
     use super::external_web_access_for_mode;
     use super::install;

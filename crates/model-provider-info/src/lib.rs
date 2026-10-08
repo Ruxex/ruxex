@@ -62,13 +62,28 @@ const MAX_STREAM_MAX_RETRIES: u64 = 100;
 /// Hard cap for user-configured `request_max_retries`.
 const MAX_REQUEST_MAX_RETRIES: u64 = 100;
 
-pub const MY_PROVIDER_ID: &str = "my-provider";
-pub const MY_PROVIDER_NAME: &str = "My Provider";
-pub const MY_PROVIDER_DEFAULT_BASE_URL: &str = "https://example.com";
 pub const CLOUDFLARE_PROVIDER_ID: &str = "cloudflare";
 pub const CLOUDFLARE_PROVIDER_NAME: &str = "Cloudflare Workers AI";
 pub const CLOUDFLARE_API_TOKEN_ENV_VAR: &str = "CLOUDFLARE_API_TOKEN";
 pub const CLOUDFLARE_ACCOUNT_ID_ENV_VAR: &str = "CLOUDFLARE_ACCOUNT_ID";
+
+/// A credential value requested by a provider during interactive setup.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderAuthField {
+    pub id: String,
+    pub label: String,
+    pub secret: bool,
+}
+
+impl ProviderAuthField {
+    pub fn new(id: impl Into<String>, label: impl Into<String>, secret: bool) -> Self {
+        Self {
+            id: id.into(),
+            label: label.into(),
+            secret,
+        }
+    }
+}
 /// Wire protocol that the provider speaks.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
@@ -151,13 +166,6 @@ pub struct ModelProviderInfo {
     /// Maximum time (in milliseconds) to wait for a websocket connection attempt before treating
     /// it as failed.
     pub websocket_connect_timeout_ms: Option<u64>,
-    /// Does this provider require stored authentication? If true, the user is
-    /// presented with the authentication screen on first run and the selected
-    /// credential is stored in auth.json. If false (which is the default), the
-    /// authentication screen is skipped and provider configuration supplies any
-    /// required credential.
-    #[serde(default)]
-    pub requires_auth: bool,
     /// Whether this provider supports the Responses API WebSocket transport.
     #[serde(default)]
     pub supports_websockets: bool,
@@ -183,10 +191,6 @@ impl ModelProviderInfo {
         if self.experimental_bearer_token.is_some() {
             conflicts.push("experimental_bearer_token");
         }
-        if self.requires_auth {
-            conflicts.push("requires_auth");
-        }
-
         if conflicts.is_empty() {
             Ok(())
         } else {
@@ -329,18 +333,7 @@ impl ModelProviderInfo {
                     .collect(),
             ),
             env_http_headers: None,
-            requires_auth: true,
             supports_websockets: true,
-            ..ModelProviderInfo::default()
-        }
-    }
-
-    pub fn create_my_provider() -> ModelProviderInfo {
-        ModelProviderInfo {
-            name: MY_PROVIDER_NAME.to_string(),
-            base_url: Some(MY_PROVIDER_DEFAULT_BASE_URL.to_string()),
-            wire_api: WireApi::Chat,
-            requires_auth: true,
             ..ModelProviderInfo::default()
         }
     }
@@ -370,13 +363,10 @@ impl ModelProviderInfo {
 
 /// Built-in default provider list.
 pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
-    [
-        (MY_PROVIDER_ID, ModelProviderInfo::create_my_provider()),
-        (
-            CLOUDFLARE_PROVIDER_ID,
-            ModelProviderInfo::create_cloudflare_provider(),
-        ),
-    ]
+    [(
+        CLOUDFLARE_PROVIDER_ID,
+        ModelProviderInfo::create_cloudflare_provider(),
+    )]
     .into_iter()
     .map(|(k, v)| (k.to_string(), v))
     .collect()
@@ -415,7 +405,6 @@ pub fn create_responses_provider_with_base_url(
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     }

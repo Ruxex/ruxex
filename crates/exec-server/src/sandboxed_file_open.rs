@@ -20,7 +20,7 @@ pub(crate) async fn open(
     path: PathUri,
 ) -> Result<tokio::fs::File, JSONRPCErrorError> {
     let request = serde_json::to_vec(&FsHelperRequest::Open(FsHelperOpenParams { path }))
-    .map_err(|error| internal_error(format!("invalid fs sandbox helper request: {error}")))?;
+        .map_err(|error| internal_error(format!("invalid fs sandbox helper request: {error}")))?;
     open_platform(command, request).await
 }
 

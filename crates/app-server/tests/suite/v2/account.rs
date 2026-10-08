@@ -81,7 +81,6 @@ struct CreateConfigTomlParams {
     forced_method: Option<String>,
     forced_workspace_id: Option<String>,
     forced_workspace_ids: Option<Vec<String>>,
-    requires_auth: Option<bool>,
     base_url: Option<String>,
     managed_auth_base_url: Option<String>,
     model_provider_id: Option<String>,
@@ -110,11 +109,6 @@ fn create_config_toml(genex_home: &Path, params: CreateConfigTomlParams) -> std:
     } else {
         String::new()
     };
-    let requires_line = match params.requires_auth {
-        Some(true) => "requires_auth = true\n".to_string(),
-        Some(false) => String::new(),
-        None => String::new(),
-    };
     let managed_auth_base_url_line = params
         .managed_auth_base_url
         .map(|url| format!("managed_auth_base_url = \"{url}\"\n"))
@@ -130,7 +124,6 @@ base_url = "{base_url}"
 wire_api = "responses"
 request_max_retries = 0
 stream_max_retries = 0
-{requires_line}
 "#
         )
     } else {
@@ -461,7 +454,6 @@ async fn get_account_no_auth() -> Result<()> {
     create_config_toml(
         genex_home.path(),
         CreateConfigTomlParams {
-            requires_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -482,7 +474,6 @@ async fn get_account_no_auth() -> Result<()> {
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
 
     assert_eq!(account.account, None, "expected no account");
-    assert_eq!(account.requires_auth, true);
     Ok(())
 }
 
@@ -492,7 +483,6 @@ async fn get_account_with_api_key() -> Result<()> {
     create_config_toml(
         genex_home.path(),
         CreateConfigTomlParams {
-            requires_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -524,45 +514,6 @@ async fn get_account_with_api_key() -> Result<()> {
         display_name: None,
         auth_status: ProviderAuthStatus::Authenticated,
         usage: None,
-        requires_auth: true,
-    };
-    assert_eq!(received, expected);
-    Ok(())
-}
-
-#[tokio::test]
-async fn get_account_when_auth_not_required() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_config_toml(
-        genex_home.path(),
-        CreateConfigTomlParams {
-            requires_auth: Some(false),
-            ..Default::default()
-        },
-    )?;
-
-    let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .without_auto_env()
-        .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
-        .await?;
-
-    let params = GetAccountParams {
-        refresh_token: false,
-    };
-    let request_id = mcp.send_get_account_request(params).await?;
-
-    let received: GetAccountResponse =
-        timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(request_id)).await??;
-
-    let expected = GetAccountResponse {
-        provider_id: "mock_provider".to_string(),
-        account: None,
-        account_id: None,
-        display_name: None,
-        auth_status: ProviderAuthStatus::NotRequired,
-        usage: None,
-        requires_auth: false,
     };
     assert_eq!(received, expected);
     Ok(())
@@ -588,9 +539,8 @@ async fn account_reads_use_startup_config_when_config_reload_fails() -> Result<(
             account: None,
             account_id: None,
             display_name: None,
-            auth_status: ProviderAuthStatus::NotRequired,
+            auth_status: ProviderAuthStatus::Unauthenticated,
             usage: None,
-            requires_auth: false,
         }
     );
 

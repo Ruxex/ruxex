@@ -26,7 +26,10 @@ use genex_app_server_protocol::ConfiguredHookMatcherGroup;
 use genex_app_server_protocol::InAppBrowserRequirements;
 use genex_app_server_protocol::JSONRPCErrorError;
 use genex_app_server_protocol::ManagedHooksRequirements;
+use genex_app_server_protocol::ModelProviderAuthField;
 use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use genex_app_server_protocol::ModelProviderListEntry;
+use genex_app_server_protocol::ModelProviderListResponse;
 use genex_app_server_protocol::ModelsRequirements;
 use genex_app_server_protocol::NetworkDomainPermission;
 use genex_app_server_protocol::NetworkRequirements;
@@ -115,7 +118,9 @@ impl ConfigRequestProcessor {
             .map_err(map_error)?;
         let requirements = map_requirements_to_api(
             requirements,
-            self.thread_manager.credential_manager().allowed_login_methods(),
+            self.thread_manager
+                .credential_manager()
+                .allowed_login_methods(),
         );
 
         Ok(ConfigRequirementsReadResponse { requirements })
@@ -168,6 +173,48 @@ impl ConfigRequestProcessor {
         Ok(ModelProviderCapabilitiesReadResponse {
             namespace_tools: capabilities.namespace_tools,
             web_search: capabilities.web_search,
+        })
+    }
+
+    pub(crate) async fn model_provider_list(
+        &self,
+    ) -> Result<ModelProviderListResponse, JSONRPCErrorError> {
+        let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
+        let active_provider_id = Some(config.model_provider_id.clone());
+        let credential_manager = self.thread_manager.credential_manager();
+        let mut providers = Vec::with_capacity(config.model_providers.len());
+        for (id, provider) in config.model_providers {
+            let provider_runtime = create_model_provider_for_id(
+                id.clone(),
+                provider.clone(),
+                Some(Arc::clone(&credential_manager)),
+            );
+            let auth_status = provider_runtime
+                .account_state()
+                .map_err(|err| invalid_request(err.to_string()))?
+                .auth_status;
+
+            providers.push(ModelProviderListEntry {
+                active: active_provider_id.as_deref() == Some(id.as_str()),
+                auth_status,
+                auth_fields: provider_runtime
+                    .auth_fields()
+                    .into_iter()
+                    .map(|field| ModelProviderAuthField {
+                        id: field.id,
+                        label: field.label,
+                        secret: field.secret,
+                    })
+                    .collect(),
+                id,
+                name: provider.name,
+            });
+        }
+        providers.sort_by(|left, right| left.id.cmp(&right.id));
+
+        Ok(ModelProviderListResponse {
+            active_provider_id,
+            providers,
         })
     }
 

@@ -10,6 +10,7 @@ use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
+use genex_protocol::error::GenexErr;
 use genex_protocol::model_types::ModelAccessPrograms;
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::turn_input::CyberAccessProgram;
@@ -259,9 +260,9 @@ fn provider_manager_for_tests(
     provider_manager_for_tests_with_auth(
         genex_home,
         catalog_source,
-        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-            "test-api-key",
-        ))),
+        Some(CredentialManager::from_auth_for_testing(
+            GenexAuth::from_api_key("test-api-key"),
+        )),
     )
 }
 
@@ -292,6 +293,57 @@ where
 
 fn static_manager_for_tests(model_catalog: ModelCatalog) -> StaticModelsManager {
     StaticModelsManager::new(/*credential_manager*/ None, model_catalog)
+}
+
+#[derive(Debug)]
+struct FailingModelCatalogSource;
+
+impl ModelCatalogSource for FailingModelCatalogSource {
+    fn identity(&self) -> Option<String> {
+        Some("failing-provider".to_string())
+    }
+
+    fn has_command_auth(&self) -> bool {
+        false
+    }
+
+    fn uses_managed_auth(&self) -> ModelCatalogFuture<'_, bool> {
+        Box::pin(async { false })
+    }
+
+    fn supports_remote_models(&self) -> bool {
+        true
+    }
+
+    fn list_models<'a>(
+        &'a self,
+        _client_version: &'a str,
+        _http_client_factory: HttpClientFactory,
+    ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
+        Box::pin(async {
+            Err(GenexErr::InvalidRequest(
+                "model catalog request failed".to_string(),
+            ))
+        })
+    }
+}
+
+#[tokio::test]
+async fn list_models_result_propagates_catalog_source_errors() {
+    let manager = RemoteModelsManager::new_without_cache(
+        Arc::new(FailingModelCatalogSource),
+        /*credential_manager*/ None,
+    );
+
+    let result = manager
+        .list_models_result(RefreshStrategy::Online, DEFAULT_HTTP_CLIENT_FACTORY)
+        .await;
+
+    assert!(result.is_err());
+    assert_eq!(
+        result.unwrap_err().to_string(),
+        "model catalog request failed"
+    );
 }
 
 #[tokio::test]
@@ -611,9 +663,9 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
     let manager = provider_manager_for_tests_with_auth(
         genex_home.path().to_path_buf(),
         endpoint.clone(),
-        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-            "test-api-key",
-        ))),
+        Some(CredentialManager::from_auth_for_testing(
+            GenexAuth::from_api_key("test-api-key"),
+        )),
     );
     manager
         .refresh_available_models(
@@ -820,9 +872,9 @@ async fn refresh_available_models_drops_removed_remote_models() {
             Duration::ZERO,
         )),
         endpoint.clone(),
-        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-            "test-api-key",
-        ))),
+        Some(CredentialManager::from_auth_for_testing(
+            GenexAuth::from_api_key("test-api-key"),
+        )),
     );
     manager.set_api_key_model_discovery_enabled(true);
 

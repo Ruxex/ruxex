@@ -1306,6 +1306,13 @@
             "apiKey": {
               "type": "string"
             },
+            "credentials": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Additional provider-specific credential values.",
+              "type": "object"
+            },
             "providerId": {
               "description": "Optional configured model provider ID. When omitted, the active configured provider is used.",
               "type": [
@@ -1553,6 +1560,9 @@
       "type": "object"
     },
     "ModelProviderCapabilitiesReadParams": {
+      "type": "object"
+    },
+    "ModelProviderListParams": {
       "type": "object"
     },
     "MultiAgentMode": {
@@ -6011,6 +6021,30 @@
         "params"
       ],
       "title": "ModelProvider/capabilities/readRequest",
+      "type": "object"
+    },
+    {
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/RequestId"
+        },
+        "method": {
+          "enum": [
+            "modelProvider/list"
+          ],
+          "title": "ModelProvider/listRequestMethod",
+          "type": "string"
+        },
+        "params": {
+          "$ref": "#/definitions/ModelProviderListParams"
+        }
+      },
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "title": "ModelProvider/listRequest",
       "type": "object"
     },
     {

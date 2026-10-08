@@ -938,6 +938,11 @@ client_request_definitions! {
         serialization: None,
         response: v2::ModelProviderCapabilitiesReadResponse,
     },
+    ModelProviderList => "modelProvider/list" {
+        params: v2::ModelProviderListParams,
+        serialization: None,
+        response: v2::ModelProviderListResponse,
+    },
     PermissionProfileList => "permissionProfile/list" {
         params: v2::PermissionProfileListParams,
         serialization: global_shared_read("config"),
@@ -2616,6 +2621,7 @@ mod tests {
             params: v2::LoginAccountParams::ApiKey {
                 api_key: "secret".to_string(),
                 provider_id: None,
+                credentials: std::collections::BTreeMap::new(),
             },
         };
         assert_eq!(

@@ -54,7 +54,10 @@ impl RouteAwareClientPool {
         let mut previous_route = None;
         loop {
             let current_url = request.url().clone();
-            let network_permit = self.http_client_factory.network_policy().acquire(&current_url)?;
+            let network_permit = self
+                .http_client_factory
+                .network_policy()
+                .acquire(&current_url)?;
             let (current_route, client, selected_tls_backend) = match timeout_deadline {
                 Some(timeout_deadline) => tokio::time::timeout_at(
                     timeout_deadline,

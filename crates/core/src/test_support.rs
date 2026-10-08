@@ -69,7 +69,10 @@ pub fn credential_manager_from_auth(auth: GenexAuth) -> Arc<CredentialManager> {
     CredentialManager::from_auth_for_testing(auth)
 }
 
-pub fn credential_manager_from_auth_with_home(auth: GenexAuth, genex_home: PathBuf) -> Arc<CredentialManager> {
+pub fn credential_manager_from_auth_with_home(
+    auth: GenexAuth,
+    genex_home: PathBuf,
+) -> Arc<CredentialManager> {
     CredentialManager::from_auth_for_testing_with_home(auth, genex_home)
 }
 

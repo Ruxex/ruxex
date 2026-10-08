@@ -71,9 +71,9 @@ use genex_git_utils::resolve_root_git_project_for_trust;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_install_context::InstallContext;
-use genex_login::CredentialManagerConfig;
 use genex_login::AuthRouteConfig;
 use genex_login::CredentialManager;
+use genex_login::CredentialManagerConfig;
 use genex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
 use genex_mcp::McpConfig;
 use genex_mcp::McpPluginAttribution;
@@ -81,7 +81,7 @@ use genex_mcp::McpProtocolMode;
 use genex_mcp::McpServerRegistration;
 use genex_mcp::ResolvedMcpCatalog;
 use genex_model_provider::ProviderCapabilities;
-use genex_model_provider_info::MY_PROVIDER_ID;
+use genex_model_provider_info::CLOUDFLARE_PROVIDER_ID;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::built_in_model_providers;
 use genex_model_provider_info::merge_configured_model_providers;
@@ -1404,10 +1404,8 @@ impl ConfigBuilder {
 impl Config {
     /// Select a configured model provider and coordinate its credential state.
     ///
-    /// Providers that require stored authentication must have a usable
-    /// provider-scoped credential. Providers whose authentication is supplied
-    /// by configuration (or which are unauthenticated) only update selection;
-    /// existing stored credentials remain untouched.
+    /// Providers with credentials supplied by configuration only update
+    /// selection; providers using stored credentials activate their record.
     pub async fn switch_model_provider(
         &self,
         credential_manager: &CredentialManager,
@@ -1420,9 +1418,10 @@ impl Config {
             )
         })?;
 
-        if provider.requires_auth {
-            credential_manager.switch(provider_id).await?;
-        } else {
+        if provider.env_key.is_some()
+            || provider.experimental_bearer_token.is_some()
+            || provider.auth.is_some()
+        {
             if provider.env_key.is_some() {
                 provider.api_key().map_err(|error| {
                     std::io::Error::new(
@@ -1434,6 +1433,8 @@ impl Config {
                 })?;
             }
             credential_manager.select_provider(provider_id).await?;
+        } else {
+            credential_manager.switch(provider_id).await?;
         }
 
         let mut switched = self.clone();
@@ -3500,7 +3501,7 @@ impl Config {
         let model_provider_id = config_layer_stack.required_model_provider().map(str::to_string)
             .or(model_provider)
             .or(cfg.model_provider)
-            .unwrap_or_else(|| MY_PROVIDER_ID.to_string());
+            .unwrap_or_else(|| CLOUDFLARE_PROVIDER_ID.to_string());
         let model_provider = model_providers
             .get(&model_provider_id)
             .ok_or_else(|| {

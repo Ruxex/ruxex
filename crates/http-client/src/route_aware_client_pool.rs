@@ -24,9 +24,9 @@ use crate::ClientRouteClass;
 use crate::HttpClient;
 use crate::HttpClientBuilder;
 use crate::HttpClientFactory;
+use crate::NetworkPolicyDenied;
 use crate::OutboundProxyPolicy;
 use crate::OutboundProxyRoute;
-use crate::NetworkPolicyDenied;
 use crate::RouteFailureClass;
 use crate::tls_backend_fallback::RustlsClientCache;
 

@@ -26,7 +26,6 @@ model_provider = "gateway"
 [model_providers.gateway]
 name = "Managed gateway"
 base_url = "https://gateway.example.test/v1"
-requires_auth = true
 "#;
     std::fs::write(home.path().join("requirements.toml"), requirements)?;
     std::fs::write(

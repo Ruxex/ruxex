@@ -14,8 +14,10 @@ use genex_login::GenexAuth;
 use genex_login::default_client::create_client_for_route_async;
 use genex_model_provider_info::CLOUDFLARE_ACCOUNT_ID_ENV_VAR;
 use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::ProviderAuthField;
 use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_models_manager::model_info::model_info_template_from_slug;
+use genex_protocol::account::ProviderAccount;
 use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::error::EnvVarError;
 use genex_protocol::error::GenexErr;
@@ -40,6 +42,7 @@ const CLOUDFLARE_API_ROOT: &str = "https://api.cloudflare.com/client/v4";
 const CLOUDFLARE_MODELS_TIMEOUT: Duration = Duration::from_secs(5);
 const CLOUDFLARE_MODELS_PAGE_SIZE: usize = 100;
 const CLOUDFLARE_MAX_MODEL_PAGES: usize = 100;
+const CLOUDFLARE_TEXT_GENERATION_TASK: &str = "Text%20Generation";
 
 #[derive(Clone, Debug)]
 pub(crate) struct CloudflareModelProvider {
@@ -66,7 +69,7 @@ impl CloudflareModelProvider {
             return Ok(base_url.clone());
         }
 
-        let account_id = cloudflare_account_id()?;
+        let account_id = self.cloudflare_account_id()?;
         Ok(format!("{CLOUDFLARE_API_ROOT}/accounts/{account_id}/ai/v1"))
     }
 
@@ -81,7 +84,7 @@ impl CloudflareModelProvider {
         let base_url = if let Some(base_url) = &self.info.base_url {
             base_url.clone()
         } else {
-            let account_id = cloudflare_account_id()?;
+            let account_id = self.cloudflare_account_id()?;
             format!("{CLOUDFLARE_API_ROOT}/accounts/{account_id}/ai")
         };
         Ok(self.effective_info(base_url))
@@ -110,7 +113,7 @@ impl CloudflareModelProvider {
 
         for page in 1..=CLOUDFLARE_MAX_MODEL_PAGES {
             let request_url = format!(
-                "{}?task=text-generation&hide_experimental=true&per_page={CLOUDFLARE_MODELS_PAGE_SIZE}&page={page}",
+                "{}?task={CLOUDFLARE_TEXT_GENERATION_TASK}&hide_experimental=true&per_page={CLOUDFLARE_MODELS_PAGE_SIZE}&page={page}",
                 api_provider.url_for_path("models/search")
             );
             let transport = create_client_for_route_async(
@@ -145,6 +148,13 @@ impl CloudflareModelProvider {
 impl ModelProvider for CloudflareModelProvider {
     fn info(&self) -> &ModelProviderInfo {
         &self.info
+    }
+
+    fn auth_fields(&self) -> Vec<ProviderAuthField> {
+        vec![
+            ProviderAuthField::new("api_key", "API key", true),
+            ProviderAuthField::new("account_id", "Account ID", false),
+        ]
     }
 
     fn api(&self) -> ProviderApi {
@@ -194,17 +204,27 @@ impl ModelProvider for CloudflareModelProvider {
     }
 
     fn account_state(&self) -> ProviderAccountResult {
+        let auth = self
+            .credential_manager
+            .as_ref()
+            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
+        let configured_auth =
+            self.info.api_key().is_ok() || self.info.experimental_bearer_token.is_some();
+        let authenticated = auth.is_some() || configured_auth;
         Ok(ProviderAccountState {
             provider_id: self
                 .provider_id()
                 .unwrap_or(self.info.name.as_str())
                 .to_string(),
-            account: None,
-            account_id: None,
+            account: authenticated.then_some(ProviderAccount::ApiKey),
+            account_id: auth.as_ref().and_then(|auth| auth.credential("account_id")),
             display_name: None,
-            auth_status: ProviderAuthStatus::NotRequired,
+            auth_status: if authenticated {
+                ProviderAuthStatus::Authenticated
+            } else {
+                ProviderAuthStatus::Unauthenticated
+            },
             usage: None,
-            requires_auth: false,
         })
     }
 
@@ -228,7 +248,22 @@ impl ModelProvider for CloudflareModelProvider {
     }
 }
 
-fn cloudflare_account_id() -> CoreResult<String> {
+impl CloudflareModelProvider {
+    fn cloudflare_account_id(&self) -> CoreResult<String> {
+        if let Some(account_id) = self
+            .credential_manager
+            .as_ref()
+            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()))
+            .and_then(|auth| auth.credential("account_id"))
+        {
+            return Ok(account_id);
+        }
+
+        cloudflare_account_id_from_env()
+    }
+}
+
+fn cloudflare_account_id_from_env() -> CoreResult<String> {
     std::env::var(CLOUDFLARE_ACCOUNT_ID_ENV_VAR)
         .ok()
         .filter(|value| !value.trim().is_empty())

@@ -5,4 +5,4 @@ import type { ProviderAuthStatus } from "../ProviderAuthStatus";
 import type { Account } from "./Account";
 import type { RateLimitSnapshot } from "./RateLimitSnapshot";
 
-export type GetAccountResponse = { providerId: string, account: Account | null, accountId: string | null, displayName: string | null, authStatus: ProviderAuthStatus, usage: RateLimitSnapshot | null, requiresAuth: boolean, };
+export type GetAccountResponse = { providerId: string, account: Account | null, accountId: string | null, displayName: string | null, authStatus: ProviderAuthStatus, usage: RateLimitSnapshot | null, };

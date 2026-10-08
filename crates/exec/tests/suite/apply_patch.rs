@@ -234,7 +234,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         .arg("model_provider=\"test\"")
         .arg("-c")
         .arg(format!(
-            "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",requires_auth=false,supports_websockets=false}}",
+            "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",supports_websockets=false}}",
             format!("{}/v1", server.uri())
         ))
         .arg("-c")

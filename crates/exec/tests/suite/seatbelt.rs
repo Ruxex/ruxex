@@ -91,7 +91,7 @@ async fn genex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
             .args(["-c", "allow_symlinked_genex_home=true"])
             .args(["-c", "model_provider=\"test\"", "-c"])
             .arg(format!(
-                "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",requires_auth=false,supports_websockets=false}}",
+                "model_providers.test={{name=\"test\",base_url={:?},wire_api=\"responses\",supports_websockets=false}}",
                 format!("{}/v1", server.uri())
             ))
             .arg("write the files");

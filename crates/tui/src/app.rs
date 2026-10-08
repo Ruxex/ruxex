@@ -742,7 +742,6 @@ impl App {
             initial_user_message,
             enhanced_keys_supported: self.enhanced_keys_supported,
             has_managed_account: self.chat_widget.has_managed_account(),
-            requires_auth: self.chat_widget.requires_auth,
             has_genex_backend_auth: self.chat_widget.has_genex_backend_auth(),
             model_catalog: self.model_catalog.clone(),
             is_first_run: false,

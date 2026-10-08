@@ -135,12 +135,51 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
         )
     }
 
+    /// List all available models and propagate model-catalog refresh errors.
+    ///
+    /// The existing [`Self::list_models`] method intentionally keeps its
+    /// fallback behavior for callers that can use a stale or empty catalog.
+    /// Callers such as the app-server model endpoint should use this method so
+    /// provider failures are visible to the client instead of becoming an
+    /// apparently successful empty response.
+    fn list_models_result(
+        &self,
+        refresh_strategy: RefreshStrategy,
+        http_client_factory: HttpClientFactory,
+    ) -> ModelsManagerFuture<'_, CoreResult<Vec<ModelPreset>>> {
+        Box::pin(
+            async move {
+                let catalog = self
+                    .raw_model_catalog_result(refresh_strategy, http_client_factory)
+                    .await?;
+                Ok(self.build_available_models(catalog.models))
+            }
+            .instrument(tracing::info_span!(
+                "list_models_result",
+                refresh_strategy = %refresh_strategy
+            )),
+        )
+    }
+
     /// Return the active raw model catalog, refreshing according to the specified strategy.
     fn raw_model_catalog(
         &self,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
     ) -> ModelsManagerFuture<'_, ModelCatalog>;
+
+    /// Return the active raw model catalog and propagate refresh errors.
+    fn raw_model_catalog_result(
+        &self,
+        refresh_strategy: RefreshStrategy,
+        http_client_factory: HttpClientFactory,
+    ) -> ModelsManagerFuture<'_, CoreResult<ModelCatalog>> {
+        Box::pin(async move {
+            Ok(self
+                .raw_model_catalog(refresh_strategy, http_client_factory)
+                .await)
+        })
+    }
 
     /// Return the current in-memory remote model catalog without refreshing or loading cache state.
     fn get_remote_models(&self) -> ModelsManagerFuture<'_, Vec<ModelInfo>>;
@@ -252,7 +291,9 @@ pub fn build_models_manager(
     config_model_catalog: Option<ModelCatalog>,
 ) -> SharedModelsManager {
     match config_model_catalog {
-        Some(model_catalog) => Arc::new(StaticModelsManager::new(credential_manager, model_catalog)),
+        Some(model_catalog) => {
+            Arc::new(StaticModelsManager::new(credential_manager, model_catalog))
+        }
         None => Arc::new(RemoteModelsManager::new(
             genex_home,
             catalog_source,
@@ -268,7 +309,9 @@ pub fn build_models_manager_without_cache(
     config_model_catalog: Option<ModelCatalog>,
 ) -> SharedModelsManager {
     match config_model_catalog {
-        Some(model_catalog) => Arc::new(StaticModelsManager::new(credential_manager, model_catalog)),
+        Some(model_catalog) => {
+            Arc::new(StaticModelsManager::new(credential_manager, model_catalog))
+        }
         None => Arc::new(RemoteModelsManager::new_without_cache(
             catalog_source,
             credential_manager,
@@ -284,7 +327,9 @@ pub fn build_models_manager_with_cache(
     config_model_catalog: Option<ModelCatalog>,
 ) -> SharedModelsManager {
     match config_model_catalog {
-        Some(model_catalog) => Arc::new(StaticModelsManager::new(credential_manager, model_catalog)),
+        Some(model_catalog) => {
+            Arc::new(StaticModelsManager::new(credential_manager, model_catalog))
+        }
         None => Arc::new(RemoteModelsManager::new_with_cache(
             cache,
             catalog_source,
@@ -371,7 +416,10 @@ impl RemoteModelsManager {
 
 impl StaticModelsManager {
     /// Construct a static model manager from an authoritative catalog.
-    pub fn new(credential_manager: Option<Arc<CredentialManager>>, model_catalog: ModelCatalog) -> Self {
+    pub fn new(
+        credential_manager: Option<Arc<CredentialManager>>,
+        model_catalog: ModelCatalog,
+    ) -> Self {
         Self {
             remote_models: model_catalog.models,
             credential_manager,
@@ -391,6 +439,18 @@ impl ModelsManager for RemoteModelsManager {
         http_client_factory: HttpClientFactory,
     ) -> ModelsManagerFuture<'_, ModelCatalog> {
         Box::pin(RemoteModelsManager::raw_model_catalog(
+            self,
+            refresh_strategy,
+            http_client_factory,
+        ))
+    }
+
+    fn raw_model_catalog_result(
+        &self,
+        refresh_strategy: RefreshStrategy,
+        http_client_factory: HttpClientFactory,
+    ) -> ModelsManagerFuture<'_, CoreResult<ModelCatalog>> {
+        Box::pin(RemoteModelsManager::raw_model_catalog_result(
             self,
             refresh_strategy,
             http_client_factory,
@@ -446,15 +506,30 @@ impl RemoteModelsManager {
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
     ) -> ModelCatalog {
-        if let Err(err) = self
-            .refresh_available_models(refresh_strategy, &http_client_factory)
+        match self
+            .raw_model_catalog_result(refresh_strategy, http_client_factory)
             .await
         {
-            error!("failed to refresh available models: {err}");
+            Ok(catalog) => catalog,
+            Err(err) => {
+                error!("failed to refresh available models: {err}");
+                ModelCatalog {
+                    models: self.get_remote_models().await,
+                }
+            }
         }
-        ModelCatalog {
+    }
+
+    async fn raw_model_catalog_result(
+        &self,
+        refresh_strategy: RefreshStrategy,
+        http_client_factory: HttpClientFactory,
+    ) -> CoreResult<ModelCatalog> {
+        self.refresh_available_models(refresh_strategy, &http_client_factory)
+            .await?;
+        Ok(ModelCatalog {
             models: self.get_remote_models().await,
-        }
+        })
     }
 
     async fn refresh_if_new_etag(&self, etag: String, http_client_factory: HttpClientFactory) {
@@ -557,7 +632,9 @@ impl RemoteModelsManager {
             && self
                 .credential_manager
                 .as_ref()
-                .is_some_and(|credential_manager| credential_manager.auth_mode() == Some(AuthMode::ApiKey))
+                .is_some_and(|credential_manager| {
+                    credential_manager.auth_mode() == Some(AuthMode::ApiKey)
+                })
     }
 
     async fn should_refresh_models(&self) -> bool {

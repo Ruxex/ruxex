@@ -1653,11 +1653,6 @@
           "minimum": 0.0,
           "type": "integer"
         },
-        "requires_auth": {
-          "default": false,
-          "description": "Does this provider require stored authentication? If true, the user is presented with the authentication screen on first run and the selected credential is stored in auth.json. If false (which is the default), the authentication screen is skipped and provider configuration supplies any required credential.",
-          "type": "boolean"
-        },
         "stream_idle_timeout_ms": {
           "description": "Idle timeout (in milliseconds) to wait for activity on a streaming response before treating the connection as lost.",
           "format": "uint64",

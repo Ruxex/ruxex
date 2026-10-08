@@ -398,19 +398,23 @@ async fn build_report(
                     })
                 },
                 async {
-                    run_sync_check("auth", progress.clone(), || match &credential_manager_result {
-                        Ok(_) => auth_check(config),
-                        Err(error) => DoctorCheck::new(
-                            "auth.load",
-                            "auth",
-                            CheckStatus::Fail,
-                            "authentication could not be initialized",
-                        )
-                        .detail(error.to_string())
-                        .remediation(
-                            "Fix the reported authentication error, then rerun genex doctor.",
-                        ),
-                    })
+                    run_sync_check(
+                        "auth",
+                        progress.clone(),
+                        || match &credential_manager_result {
+                            Ok(_) => auth_check(config),
+                            Err(error) => DoctorCheck::new(
+                                "auth.load",
+                                "auth",
+                                CheckStatus::Fail,
+                                "authentication could not be initialized",
+                            )
+                            .detail(error.to_string())
+                            .remediation(
+                                "Fix the reported authentication error, then rerun genex doctor.",
+                            ),
+                        },
+                    )
                 },
                 run_async_check("updates", progress.clone(), updates_check(config)),
                 async {
@@ -1147,26 +1151,20 @@ fn auth_check(config: &Config) -> DoctorCheck {
     ));
     details.push(format!("auth file: {}", auth_path.display()));
 
-    let env_auth_vars = [GENEX_API_KEY_ENV_VAR]
-        .into_iter()
-        .filter(|name| env_var_present(name))
-        .collect::<Vec<_>>();
+    let env_auth_vars = [
+        Some(GENEX_API_KEY_ENV_VAR),
+        config.model_provider.env_key.as_deref(),
+    ]
+    .into_iter()
+    .flatten()
+    .filter(|name| env_var_present(name))
+    .collect::<Vec<_>>();
     if !env_auth_vars.is_empty() {
         details.push(format!(
             "auth env vars present: {}",
             env_auth_vars.join(", ")
         ));
     }
-    if let Some(check) = provider_specific_auth_check(
-        config.model_provider.requires_auth,
-        config.model_provider.env_key.as_deref(),
-        config.model_provider.env_key_instructions.as_deref(),
-        details.clone(),
-        env_var_present,
-    ) {
-        return check;
-    }
-
     match load_auth_dot_json(
         &config.genex_home,
         config.cli_auth_credentials_store_mode,
@@ -1237,61 +1235,6 @@ fn auth_check(config: &Config) -> DoctorCheck {
         .detail(err.to_string())
         .remediation(
             "Fix auth storage access or provide credentials through a supported environment variable.",
-        ),
-    }
-}
-
-fn provider_specific_auth_check(
-    requires_auth: bool,
-    provider_env_key: Option<&str>,
-    provider_env_key_instructions: Option<&str>,
-    mut details: Vec<String>,
-    env_var_present: impl Fn(&str) -> bool,
-) -> Option<DoctorCheck> {
-    details.push(format!(
-        "model provider requires authentication: {requires_auth}"
-    ));
-    if requires_auth {
-        return None;
-    }
-
-    match provider_env_key {
-        Some(env_key) if env_var_present(env_key) => {
-            details.push(format!("provider auth env var: {env_key} (present)"));
-            Some(
-                DoctorCheck::new(
-                    "auth.credentials",
-                    "auth",
-                    CheckStatus::Ok,
-                    "auth is provided by the active model provider",
-                )
-                .details(details),
-            )
-        }
-        Some(env_key) => {
-            details.push(format!("provider auth env var: {env_key} (missing)"));
-            let remediation = provider_env_key_instructions
-                .map(str::to_string)
-                .unwrap_or_else(|| format!("Set {env_key} for the active model provider."));
-            Some(
-                DoctorCheck::new(
-                    "auth.credentials",
-                    "auth",
-                    CheckStatus::Fail,
-                    "active model provider auth env var is missing",
-                )
-                .details(details)
-                .remediation(remediation),
-            )
-        }
-        None => Some(
-            DoctorCheck::new(
-                "auth.credentials",
-                "auth",
-                CheckStatus::Ok,
-                "Stored authentication is not required for the active model provider",
-            )
-            .details(details),
         ),
     }
 }
@@ -2287,14 +2230,12 @@ struct ReachabilityEndpoint {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ProviderAuthReachabilityMode {
-    NotRequired,
     ApiKey,
 }
 
 impl ProviderAuthReachabilityMode {
     fn description(self) -> &'static str {
         match self {
-            Self::NotRequired => "provider auth",
             Self::ApiKey => "API key auth",
         }
     }
@@ -2315,7 +2256,6 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
     .ok()
     .flatten();
     let mode = provider_auth_reachability_mode_from_auth(
-        config.model_provider.requires_auth,
         config.model_provider.env_key.as_deref(),
         config.model_provider.base_url.as_deref(),
         env_var_present,
@@ -2343,15 +2283,11 @@ fn default_reachability_plan() -> ReachabilityPlan {
 }
 
 fn provider_auth_reachability_mode_from_auth(
-    requires_auth: bool,
     provider_env_key: Option<&str>,
     provider_base_url: Option<&str>,
     env_var_present: impl Fn(&str) -> bool,
     stored_auth: Option<&AuthDotJson>,
 ) -> ProviderAuthReachabilityMode {
-    if !requires_auth {
-        return ProviderAuthReachabilityMode::NotRequired;
-    }
     if provider_base_url.is_some_and(|url| !url.trim().is_empty())
         && provider_env_key
             .is_some_and(|env_key| !env_key.trim().is_empty() && env_var_present(env_key))
@@ -2380,19 +2316,16 @@ fn provider_reachability_plan_from_parts(
             should_probe_models_route(provider_name, url)
                 .then(|| provider_url_for_path(url, "models", provider_query_params))
         });
-    let endpoints = match (mode, provider_base_url) {
-        (ProviderAuthReachabilityMode::ApiKey, _) | (_, Some(_)) => vec![ReachabilityEndpoint {
-            label: format!("{provider_id} API"),
-            url: provider_url_for_path(
-                provider_base_url.unwrap_or("https://api.example.com/v1"),
-                "responses",
-                provider_query_params,
-            ),
-            required: true,
-            route_probe_url: provider_route_probe_url,
-        }],
-        (ProviderAuthReachabilityMode::NotRequired, None) => Vec::new(),
-    };
+    let endpoints = vec![ReachabilityEndpoint {
+        label: format!("{provider_id} API"),
+        url: provider_url_for_path(
+            provider_base_url.unwrap_or("https://api.example.com/v1"),
+            "responses",
+            provider_query_params,
+        ),
+        required: true,
+        route_probe_url: provider_route_probe_url,
+    }];
     ReachabilityPlan {
         description: mode.description().to_string(),
         endpoints,

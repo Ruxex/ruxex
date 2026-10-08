@@ -12,6 +12,7 @@ use genex_protocol::protocol::RateLimitWindow as CoreRateLimitWindow;
 use genex_protocol::protocol::SpendControlLimitSnapshot as CoreSpendControlLimitSnapshot;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::BTreeMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 #[serde(tag = "type", rename_all = "camelCase")]
@@ -46,6 +47,9 @@ pub enum LoginAccountParams {
         /// configured provider is used.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         provider_id: Option<String>,
+        /// Additional provider-specific credential values.
+        #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+        credentials: BTreeMap<String, String>,
     },
 }
 
@@ -207,7 +211,6 @@ pub struct GetAccountResponse {
     pub display_name: Option<String>,
     pub auth_status: ProviderAuthStatus,
     pub usage: Option<RateLimitSnapshot>,
-    pub requires_auth: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

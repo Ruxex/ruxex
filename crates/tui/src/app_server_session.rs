@@ -5,6 +5,7 @@
 
 mod fs;
 mod history;
+mod model_provider;
 mod models;
 mod rollout_history;
 mod thread_list;
@@ -13,6 +14,7 @@ pub(crate) use history::HISTORY_ITEM_PAGE_LIMIT;
 pub(crate) use history::HISTORY_ITEM_SCAN_LIMIT;
 pub(crate) use history::HistoryHydrationScope;
 pub(crate) use history::thread_items_page_params;
+pub(crate) use model_provider::authenticated_model_provider_id;
 
 use crate::app_event::PermissionProfileSelection;
 use crate::app_event_sender::AppEventSender;
@@ -271,10 +273,6 @@ pub(crate) struct AppServerBootstrap {
     pub(crate) auth_mode: Option<TelemetryAuthMode>,
     pub(crate) status_account_display: Option<StatusAccountDisplay>,
     pub(crate) plan_type: Option<genex_protocol::account::PlanType>,
-    /// Whether the configured model provider needs provider-style auth. Combined
-    /// with `has_managed_account` to decide if a startup rate-limit prefetch
-    /// should be fired.
-    pub(crate) requires_auth: bool,
     pub(crate) default_model: String,
     pub(crate) has_managed_account: bool,
     pub(crate) available_models: Vec<ModelPreset>,
@@ -631,7 +629,6 @@ impl AppServerSession {
             auth_mode,
             status_account_display,
             plan_type,
-            requires_auth: account.requires_auth,
             default_model,
             has_managed_account,
             available_models,

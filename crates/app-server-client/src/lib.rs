@@ -1267,9 +1267,8 @@ mod tests {
                         account: None,
                         account_id: None,
                         display_name: None,
-                        auth_status: ProviderAuthStatus::NotRequired,
+                        auth_status: ProviderAuthStatus::Unauthenticated,
                         usage: None,
-                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1326,9 +1325,8 @@ mod tests {
                         account: None,
                         account_id: None,
                         display_name: None,
-                        auth_status: ProviderAuthStatus::NotRequired,
+                        auth_status: ProviderAuthStatus::Unauthenticated,
                         usage: None,
-                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1378,8 +1376,7 @@ mod tests {
                     result: serde_json::json!({
                         "providerId": "mock_provider",
                         "account": null,
-                        "authStatus": "notRequired",
-                        "requiresAuth": false,
+                        "authStatus": "unauthenticated",
                         "padding": padding,
                     }),
                 }),
@@ -1408,9 +1405,8 @@ mod tests {
                 account: None,
                 account_id: None,
                 display_name: None,
-                auth_status: ProviderAuthStatus::NotRequired,
+                auth_status: ProviderAuthStatus::Unauthenticated,
                 usage: None,
-                requires_auth: false,
             }
         );
 
@@ -1514,9 +1510,8 @@ mod tests {
                         account: None,
                         account_id: None,
                         display_name: None,
-                        auth_status: ProviderAuthStatus::NotRequired,
+                        auth_status: ProviderAuthStatus::Unauthenticated,
                         usage: None,
-                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1572,9 +1567,8 @@ mod tests {
                 account: None,
                 account_id: None,
                 display_name: None,
-                auth_status: ProviderAuthStatus::NotRequired,
+                auth_status: ProviderAuthStatus::Unauthenticated,
                 usage: None,
-                requires_auth: false,
             }
         );
 

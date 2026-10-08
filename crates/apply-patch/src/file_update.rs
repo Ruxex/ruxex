@@ -192,14 +192,8 @@ pub async fn unified_diff_from_chunks_with_context(
     let AppliedPatch {
         original_contents,
         new_contents,
-    } = derive_new_contents_from_chunks(
-        path,
-        chunks,
-        fs,
-        /*follow_symlinks*/ true,
-        sandbox,
-    )
-    .await?;
+    } = derive_new_contents_from_chunks(path, chunks, fs, /*follow_symlinks*/ true, sandbox)
+        .await?;
     let text_diff = TextDiff::from_lines(&original_contents, &new_contents);
     let unified_diff = text_diff.unified_diff().context_radius(context).to_string();
     Ok(ApplyPatchFileUpdate {

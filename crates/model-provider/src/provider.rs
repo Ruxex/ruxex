@@ -14,6 +14,7 @@ use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::ProviderAuthField;
 use genex_model_provider_info::WireApi;
 use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_protocol::account::ProviderAccount;
@@ -24,14 +25,13 @@ use genex_protocol::protocol::RateLimitSnapshot;
 
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
-use crate::auth::credential_manager_for_provider;
 use crate::auth::cached_provider_auth;
+use crate::auth::credential_manager_for_provider;
 use crate::auth::provider_auth;
 use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
 use crate::cloudflare_provider::CloudflareModelProvider;
 use crate::models_endpoint::ModelsEndpoint;
-use crate::my_provider::MyModelProvider;
 
 /// Remote context-compaction protocols supported by a model provider.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -75,7 +75,6 @@ pub struct ProviderAccountState {
     pub display_name: Option<String>,
     pub auth_status: ProviderAuthStatus,
     pub usage: Option<RateLimitSnapshot>,
-    pub requires_auth: bool,
 }
 
 /// Result of a provider-owned usage capability.
@@ -134,6 +133,15 @@ pub enum ProviderApi {
 pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
+
+    /// Returns the credential values requested by the interactive setup flow.
+    fn auth_fields(&self) -> Vec<ProviderAuthField> {
+        if self.info().auth.is_some() || self.info().experimental_bearer_token.is_some() {
+            Vec::new()
+        } else {
+            vec![ProviderAuthField::new("api_key", "API key", true)]
+        }
+    }
 
     /// Resolves the runtime API implementation for this provider.
     fn api(&self) -> ProviderApi {
@@ -287,8 +295,7 @@ pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a
 pub type SharedModelProvider = Arc<dyn ModelProvider>;
 
 fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
-    provider.requires_auth
-        && provider.env_key.is_none()
+    provider.env_key.is_none()
         && provider.experimental_bearer_token.is_none()
         && provider.auth.is_none()
 }
@@ -316,11 +323,6 @@ fn create_model_provider_internal(
     credential_manager: Option<Arc<CredentialManager>>,
 ) -> SharedModelProvider {
     match provider_info.name.as_str() {
-        genex_model_provider_info::MY_PROVIDER_NAME => Arc::new(MyModelProvider::new(
-            provider_id,
-            provider_info,
-            credential_manager,
-        )),
         genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => Arc::new(
             CloudflareModelProvider::new(provider_id, provider_info, credential_manager),
         ),
@@ -346,7 +348,8 @@ impl ConfiguredModelProvider {
         provider_info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
-        let credential_manager = credential_manager_for_provider(credential_manager, &provider_info);
+        let credential_manager =
+            credential_manager_for_provider(credential_manager, &provider_info);
         Self {
             provider_id,
             info: provider_info,
@@ -403,34 +406,31 @@ impl ModelProvider for ConfiguredModelProvider {
         let auth = self
             .credential_manager
             .as_ref()
-            .and_then(|credential_manager| cached_provider_auth(credential_manager, self.provider_id()));
+            .and_then(|credential_manager| {
+                cached_provider_auth(credential_manager, self.provider_id())
+            });
         let auth_invalid = auth.as_ref().is_some_and(|auth| {
             self.credential_manager
                 .as_ref()
-                .is_some_and(|credential_manager| credential_manager.refresh_failure_for_auth(auth).is_some())
-        });
-        let account = if self.info.requires_auth {
-            auth.filter(|_| !auth_invalid)
-                .filter(|auth| !matches!(auth, GenexAuth::Headers(_)))
-                .map(|auth| match &auth {
-                    GenexAuth::ApiKey(_) => Ok(ProviderAccount::ApiKey),
-                    GenexAuth::Headers(_) => Ok(ProviderAccount::ApiKey),
+                .is_some_and(|credential_manager| {
+                    credential_manager.refresh_failure_for_auth(auth).is_some()
                 })
-                .transpose()?
+        });
+        let configured_auth =
+            self.info.experimental_bearer_token.is_some() || self.info.api_key().is_ok();
+        let account = if auth_invalid {
+            None
+        } else if auth.is_some() || configured_auth {
+            Some(ProviderAccount::ApiKey)
         } else {
             None
         };
-
-        let auth_status = if self.info.requires_auth {
-            if auth_invalid {
-                ProviderAuthStatus::Invalid
-            } else if account.is_some() {
-                ProviderAuthStatus::Authenticated
-            } else {
-                ProviderAuthStatus::Unauthenticated
-            }
+        let auth_status = if auth_invalid {
+            ProviderAuthStatus::Invalid
+        } else if account.is_some() {
+            ProviderAuthStatus::Authenticated
         } else {
-            ProviderAuthStatus::NotRequired
+            ProviderAuthStatus::Unauthenticated
         };
 
         Ok(ProviderAccountState {
@@ -439,14 +439,16 @@ impl ModelProvider for ConfiguredModelProvider {
                 .unwrap_or(self.info.name.as_str())
                 .to_string(),
             account,
-            account_id: self.credential_manager.as_ref().and_then(|credential_manager| {
-                cached_provider_auth(credential_manager, self.provider_id())
-                    .and_then(|auth| auth.get_account_id())
-            }),
+            account_id: self
+                .credential_manager
+                .as_ref()
+                .and_then(|credential_manager| {
+                    cached_provider_auth(credential_manager, self.provider_id())
+                        .and_then(|auth| auth.get_account_id())
+                }),
             display_name: None,
             auth_status,
             usage: None,
-            requires_auth: self.info.requires_auth,
         })
     }
 }
@@ -478,37 +480,6 @@ mod tests {
     use crate::model_catalog_source::ProviderModelCatalogSource;
 
     #[test]
-    fn my_provider_selects_chat_runtime_api() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_my_provider(),
-            /*credential_manager*/ None,
-        );
-
-        assert!(matches!(provider.api(), ProviderApi::Chat(_)));
-    }
-
-    #[test]
-    fn my_provider_factory_reports_unauthenticated_requires_auth() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_my_provider(),
-            /*credential_manager*/ None,
-        );
-
-        assert_eq!(
-            provider.account_state(),
-            Ok(ProviderAccountState {
-                provider_id: "My Provider".to_string(),
-                account: None,
-                account_id: None,
-                display_name: None,
-                auth_status: ProviderAuthStatus::Unauthenticated,
-                usage: None,
-                requires_auth: true,
-            })
-        );
-    }
-
-    #[test]
     fn cloudflare_provider_selects_chat_runtime_api() {
         let provider = create_model_provider(
             ModelProviderInfo::create_cloudflare_provider(),
@@ -516,6 +487,23 @@ mod tests {
         );
 
         assert!(matches!(provider.api(), ProviderApi::Chat(_)));
+    }
+
+    #[test]
+    fn cloudflare_provider_declares_api_key_and_account_id_auth_fields() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_cloudflare_provider(),
+            /*credential_manager*/ None,
+        );
+
+        assert_eq!(
+            provider
+                .auth_fields()
+                .into_iter()
+                .map(|field| field.id)
+                .collect::<Vec<_>>(),
+            vec!["api_key", "account_id"]
+        );
     }
 
     #[test]
@@ -537,7 +525,7 @@ mod tests {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
             .and(path("/models/search"))
-            .and(wiremock::matchers::query_param("task", "text-generation"))
+            .and(wiremock::matchers::query_param("task", "Text Generation"))
             .and(wiremock::matchers::query_param("hide_experimental", "true"))
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                 "success": true,
@@ -597,7 +585,6 @@ mod tests {
                     .try_into()
                     .expect("current dir should be absolute"),
             }),
-            requires_auth: false,
             ..ModelProviderInfo::create_responses_provider(/*base_url*/ None)
         }
     }
@@ -622,7 +609,6 @@ mod tests {
             stream_max_retries: Some(0),
             stream_idle_timeout_ms: Some(5_000),
             websocket_connect_timeout_ms: None,
-            requires_auth: false,
             supports_websockets: false,
             supports_standalone_web_search: false,
         }
@@ -668,29 +654,6 @@ mod tests {
             .expect("auth should resolve");
 
         assert!(auth.auth.to_auth_headers().is_empty());
-    }
-
-    #[tokio::test]
-    async fn my_provider_uses_api_key_header_auth() {
-        let provider = create_model_provider(
-            ModelProviderInfo {
-                name: "My Provider".to_string(),
-                base_url: Some("https://example.com".to_string()),
-                ..ModelProviderInfo::default()
-            },
-            Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-                "test-key",
-            ))),
-        );
-
-        let auth = provider.api_auth().await.expect("auth should resolve");
-        assert_eq!(
-            auth.to_auth_headers()
-                .get("APIKEY")
-                .and_then(|value| value.to_str().ok()),
-            Some("apikey test-key")
-        );
-        assert!(!auth.to_auth_headers().contains_key("authorization"));
     }
 
     #[tokio::test]
@@ -843,7 +806,6 @@ mod tests {
                 display_name: None,
                 auth_status: ProviderAuthStatus::Unauthenticated,
                 usage: None,
-                requires_auth: true,
             })
         );
     }
@@ -852,9 +814,9 @@ mod tests {
     fn responses_provider_returns_api_key_account_state() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
-            Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-                "provider-api-key",
-            ))),
+            Some(CredentialManager::from_auth_for_testing(
+                GenexAuth::from_api_key("provider-api-key"),
+            )),
         );
 
         assert_eq!(
@@ -866,7 +828,6 @@ mod tests {
                 display_name: None,
                 auth_status: ProviderAuthStatus::Authenticated,
                 usage: None,
-                requires_auth: true,
             })
         );
     }
@@ -888,7 +849,6 @@ mod tests {
                 name: "Custom".to_string(),
                 base_url: Some("http://localhost:1234/v1".to_string()),
                 wire_api: WireApi::Responses,
-                requires_auth: false,
                 ..Default::default()
             },
             /*credential_manager*/ None,
@@ -901,9 +861,8 @@ mod tests {
                 account: None,
                 account_id: None,
                 display_name: None,
-                auth_status: ProviderAuthStatus::NotRequired,
+                auth_status: ProviderAuthStatus::Unauthenticated,
                 usage: None,
-                requires_auth: false,
             })
         );
     }
@@ -931,9 +890,9 @@ mod tests {
         provider_info.experimental_bearer_token = Some("provider-token".into());
         let provider = create_model_provider(
             provider_info,
-            Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-                "ambient-api-key",
-            ))),
+            Some(CredentialManager::from_auth_for_testing(
+                GenexAuth::from_api_key("ambient-api-key"),
+            )),
         );
 
         let manager = build_models_manager(

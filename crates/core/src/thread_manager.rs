@@ -676,7 +676,8 @@ impl ThreadManager {
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
                 models_manager: {
-                    let provider = create_model_provider(provider, Some(credential_manager.clone()));
+                    let provider =
+                        create_model_provider(provider, Some(credential_manager.clone()));
                     build_catalog_models_manager(
                         genex_home,
                         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
@@ -844,6 +845,17 @@ impl ThreadManager {
         self.state
             .models_manager
             .list_models(refresh_strategy, http_client_factory)
+            .await
+    }
+
+    pub async fn list_models_result(
+        &self,
+        refresh_strategy: RefreshStrategy,
+        http_client_factory: genex_http_client::HttpClientFactory,
+    ) -> GenexResult<Vec<ModelPreset>> {
+        self.state
+            .models_manager
+            .list_models_result(refresh_strategy, http_client_factory)
             .await
     }
 
@@ -1229,8 +1241,11 @@ impl ThreadManager {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.state.credential_manager), agent_control);
+        let mut request = ThreadSpawnRequest::new(
+            options,
+            Arc::clone(&self.state.credential_manager),
+            agent_control,
+        );
         request.user_shell_override = Some(user_shell_override);
         Box::pin(self.state.spawn_thread(request)).await
     }
@@ -1491,8 +1506,11 @@ impl ThreadManager {
         );
         options.initial_history = fork_history_from_snapshot(snapshot, history, interrupted_marker);
         let agent_control = self.agent_control_for_config(&options.config);
-        let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.state.credential_manager), agent_control);
+        let mut request = ThreadSpawnRequest::new(
+            options,
+            Arc::clone(&self.state.credential_manager),
+            agent_control,
+        );
         request.forked_from_thread_id = source_thread_id;
         request.fork_persistence = fork_persistence;
         request.inherited_instructions = Some(instructions);

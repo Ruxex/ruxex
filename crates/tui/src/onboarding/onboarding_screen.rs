@@ -18,6 +18,7 @@ use genex_app_server_client::AppServerEvent;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::ConfigBatchWriteParams;
+use genex_app_server_protocol::ModelProviderAuthField;
 use genex_app_server_protocol::RequestId;
 use genex_exec_server::LOCAL_FS;
 use genex_git_utils::resolve_root_git_project_for_trust;
@@ -37,8 +38,6 @@ use crate::config_update::write_trusted_project;
 use crate::key_hint::KeyBindingListExt;
 use crate::legacy_core::config::Config;
 use crate::onboarding::auth::AuthModeWidget;
-use crate::onboarding::auth::SignInOption;
-use crate::onboarding::auth::SignInState;
 use crate::onboarding::keys;
 use crate::onboarding::trust_directory::TrustDirectorySelection;
 use crate::onboarding::trust_directory::TrustDirectoryWidget;
@@ -48,8 +47,6 @@ use crate::tui::Tui;
 use crate::tui::TuiEvent;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
-use std::sync::Arc;
-use std::sync::RwLock;
 use uuid::Uuid;
 
 #[path = "directory_trust.rs"]
@@ -93,6 +90,7 @@ pub(crate) struct OnboardingScreenArgs {
     pub show_login_screen: bool,
     pub login_status: LoginStatus,
     pub app_server_request_handle: Option<AppServerRequestHandle>,
+    pub provider_auth_fields: Vec<ModelProviderAuthField>,
     pub config: Config,
 }
 
@@ -118,31 +116,27 @@ impl OnboardingScreen {
             show_login_screen,
             login_status,
             app_server_request_handle,
+            provider_auth_fields,
             config,
         } = args;
-        let local_settings = crate::local_settings::LocalSettings::from(&config);
         let cwd = config.cwd.to_path_buf();
         let remote_trust_key = remote_project_trust
             .as_ref()
             .map(|project| project.trust_target.to_string_lossy().into_owned());
         let auth_config = config.auth_config();
         let mut steps: Vec<Step> = Vec::new();
-        steps.push(Step::Welcome(WelcomeWidget::new(
-            !matches!(login_status, LoginStatus::NotAuthenticated),
-            tui.frame_requester(),
-            local_settings.tui.animations,
-        )));
+        steps.push(Step::Welcome(WelcomeWidget::new(!matches!(
+            login_status,
+            LoginStatus::NotAuthenticated
+        ))));
         if show_login_screen {
-            let highlighted_mode = SignInOption::ApiKey;
             if let Some(app_server_request_handle) = app_server_request_handle {
-                steps.push(Step::Auth(AuthModeWidget {
-                    request_frame: tui.frame_requester(),
-                    highlighted_mode,
-                    error: Arc::new(RwLock::new(None)),
-                    sign_in_state: Arc::new(RwLock::new(SignInState::PickMode)),
+                steps.push(Step::Auth(AuthModeWidget::new(
+                    tui.frame_requester(),
                     app_server_request_handle,
                     auth_config,
-                }));
+                    provider_auth_fields,
+                )));
             } else {
                 tracing::warn!("skipping onboarding login step without app-server request handle");
             }
@@ -383,9 +377,6 @@ impl WidgetRef for &OnboardingScreen {
             }
             let scratch_area = Rect::new(0, 0, width, max_h);
             let mut scratch = Buffer::empty(scratch_area);
-            if let Step::Welcome(widget) = step {
-                widget.update_layout_area(scratch_area);
-            }
             step.render_ref(scratch_area, &mut scratch);
             let h = used_rows(&scratch, width, max_h).min(max_h);
             if h > 0 {

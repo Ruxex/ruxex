@@ -74,7 +74,6 @@ base_url = "http://localhost:11434/v1"
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -108,7 +107,6 @@ query_params = { api-version = "2025-04-01-preview" }
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: false,
     };
@@ -146,7 +144,6 @@ supports_standalone_web_search = true
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_auth: false,
         supports_websockets: false,
         supports_standalone_web_search: true,
     };
@@ -210,23 +207,9 @@ args = ["--format=text"]
 }
 
 #[test]
-fn test_built_in_model_providers_include_my_provider() {
-    let providers = built_in_model_providers();
-    let provider = providers
-        .get(MY_PROVIDER_ID)
-        .expect("my provider should be built in");
-
-    assert_eq!(provider.name, MY_PROVIDER_NAME);
-    assert_eq!(
-        provider.base_url.as_deref(),
-        Some(MY_PROVIDER_DEFAULT_BASE_URL)
-    );
-    assert_eq!(provider.wire_api, WireApi::Chat);
-}
-
-#[test]
 fn test_built_in_model_providers_include_cloudflare_provider() {
     let providers = built_in_model_providers();
+    assert_eq!(providers.len(), 1);
     let provider = providers
         .get(CLOUDFLARE_PROVIDER_ID)
         .expect("Cloudflare provider should be built in");
@@ -238,7 +221,6 @@ fn test_built_in_model_providers_include_cloudflare_provider() {
         Some(CLOUDFLARE_API_TOKEN_ENV_VAR)
     );
     assert_eq!(provider.wire_api, WireApi::Chat);
-    assert!(!provider.requires_auth);
 }
 
 #[test]

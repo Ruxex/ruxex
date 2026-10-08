@@ -114,8 +114,9 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
             .await;
     }
 
-    let credential_manager =
-        CredentialManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(HeaderMap::new())));
+    let credential_manager = CredentialManager::from_auth_for_testing(GenexAuth::Headers(
+        AuthHeaders::new(HeaderMap::new()),
+    ));
     let backend = HistoryNotesBackend::new(create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/backend-api/genex",

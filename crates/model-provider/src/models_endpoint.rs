@@ -37,12 +37,6 @@ use crate::auth::resolve_provider_auth;
 const MODELS_REFRESH_TIMEOUT: Duration = Duration::from_secs(5);
 const MODELS_ENDPOINT: &str = "/models";
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum ModelsEndpointAuthMode {
-    ConfiguredProvider,
-    MyProvider,
-}
-
 /// Provider-owned provider-compatible `/models` endpoint.
 #[derive(Debug)]
 pub(crate) struct ModelsEndpoint {
@@ -50,7 +44,6 @@ pub(crate) struct ModelsEndpoint {
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     transport_builder: Arc<dyn ModelsTransportBuilder>,
-    auth_mode: ModelsEndpointAuthMode,
 }
 
 impl ModelsEndpoint {
@@ -66,34 +59,11 @@ impl ModelsEndpoint {
         provider_info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
-        Self::new_with_provider_auth_mode(
-            provider_id,
-            provider_info,
-            credential_manager,
-            ModelsEndpointAuthMode::ConfiguredProvider,
-        )
-    }
-
-    pub(crate) fn new_with_auth_mode(
-        provider_info: ModelProviderInfo,
-        credential_manager: Option<Arc<CredentialManager>>,
-        auth_mode: ModelsEndpointAuthMode,
-    ) -> Self {
-        Self::new_with_provider_auth_mode(None, provider_info, credential_manager, auth_mode)
-    }
-
-    pub(crate) fn new_with_provider_auth_mode(
-        provider_id: Option<String>,
-        provider_info: ModelProviderInfo,
-        credential_manager: Option<Arc<CredentialManager>>,
-        auth_mode: ModelsEndpointAuthMode,
-    ) -> Self {
         Self {
             provider_id,
             provider_info,
             credential_manager,
             transport_builder: Arc::new(RouteAwareModelsTransportBuilder),
-            auth_mode,
         }
     }
 
@@ -122,14 +92,7 @@ impl ModelsEndpoint {
         )?;
         let auth_mode = auth.as_ref().map(GenexAuth::auth_mode);
         let api_provider = self.provider_info.to_api_provider(auth_mode)?;
-        let api_auth = match self.auth_mode {
-            ModelsEndpointAuthMode::ConfiguredProvider => {
-                resolve_provider_auth(auth.as_ref(), &self.provider_info)?
-            }
-            ModelsEndpointAuthMode::MyProvider => {
-                crate::my_provider::my_provider_auth_provider(auth.as_ref())
-            }
-        };
+        let api_auth = resolve_provider_auth(auth.as_ref(), &self.provider_info)?;
         let request_url =
             ModelsClient::<ReqwestTransport>::request_url(&api_provider, client_version);
         let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
@@ -172,7 +135,6 @@ impl ModelsEndpoint {
 impl ModelCatalogSource for ModelsEndpoint {
     fn supports_api_key_models(&self) -> bool {
         self.provider_info.env_key.is_some()
-            || matches!(self.auth_mode, ModelsEndpointAuthMode::MyProvider)
     }
 
     fn identity(&self) -> Option<String> {
@@ -369,7 +331,6 @@ mod tests {
                     .try_into()
                     .expect("current dir should be absolute"),
             }),
-            requires_auth: false,
             ..ModelProviderInfo::create_responses_provider(/*base_url*/ None)
         }
     }
@@ -415,7 +376,6 @@ mod tests {
             transport_builder: Arc::new(RecordingTransportBuilder {
                 observed_request: Arc::clone(&observed_request),
             }),
-            auth_mode: ModelsEndpointAuthMode::ConfiguredProvider,
         };
 
         endpoint
@@ -462,7 +422,6 @@ mod tests {
             transport_builder: Arc::new(RecordingTransportBuilder {
                 observed_request: Arc::new(Mutex::new(None)),
             }),
-            auth_mode: ModelsEndpointAuthMode::ConfiguredProvider,
         };
 
         set_default_client_residency_requirement(Some(ResidencyRequirement::Us));

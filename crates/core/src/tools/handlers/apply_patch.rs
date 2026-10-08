@@ -495,7 +495,7 @@ pub(crate) async fn intercept_apply_patch(
 ) -> Result<Option<FunctionToolOutput>, FunctionCallError> {
     let sandbox = turn_environment.sandbox_context(/*additional_permissions*/ None);
     match genex_apply_patch::maybe_parse_apply_patch_verified(command, cwd, fs, Some(&sandbox))
-    .await
+        .await
     {
         genex_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
             let tool_ctx = ToolCtx {

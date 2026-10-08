@@ -58,8 +58,6 @@ pub enum ProviderAuthStatus {
     Authenticated,
     /// The provider requires credentials, but none are currently available.
     Unauthenticated,
-    /// The provider does not require authentication.
-    NotRequired,
     /// Provider configuration or credentials are invalid.
     Invalid,
 }
@@ -140,10 +138,6 @@ mod tests {
         assert_eq!(
             serde_json::to_string(&ProviderAuthStatus::Authenticated).unwrap(),
             "\"authenticated\""
-        );
-        assert_eq!(
-            serde_json::to_string(&ProviderAuthStatus::NotRequired).unwrap(),
-            "\"notRequired\""
         );
         assert_eq!(
             serde_json::to_string(&ProviderAuthStatus::Invalid).unwrap(),

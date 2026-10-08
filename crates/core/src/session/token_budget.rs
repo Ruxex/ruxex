@@ -21,7 +21,6 @@ pub(super) fn apply_experimental_context(
     let provider = &config.model_provider;
     if !config.features.enabled(Feature::ContextManagement)
         || !starting_model.supports_experimental_context
-        || !provider.requires_auth
         || provider.env_key.is_some()
         || provider.experimental_bearer_token.is_some()
         || provider.auth.is_some()

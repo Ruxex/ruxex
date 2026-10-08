@@ -95,8 +95,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
         .with_provider_name("Custom Responses")
         .with_provider_base_url(&format!("{}/v1", server.uri()))
         .with_provider_config("env_key = \"CUSTOM_RESPONSES_API_KEY\"")
-        .with_provider_config("supports_standalone_web_search = true")
-        .with_provider_config("requires_auth = false");
+        .with_provider_config("supports_standalone_web_search = true");
     config.write(genex_home.path())?;
 
     let env_overrides = vec![

@@ -180,7 +180,11 @@ pub fn find_system_bwrap_in_path(
     file_system_policy: &FileSystemSandboxPolicy,
     sandbox_policy_cwd: &Path,
 ) -> Option<PathBuf> {
-    find_pre_sandbox_executable_in_path(SYSTEM_BWRAP_PROGRAM, file_system_policy, sandbox_policy_cwd)
+    find_pre_sandbox_executable_in_path(
+        SYSTEM_BWRAP_PROGRAM,
+        file_system_policy,
+        sandbox_policy_cwd,
+    )
 }
 
 /// Finds the first canonical PATH executable for use before sandbox construction.

@@ -1551,6 +1551,30 @@
             },
             "method": {
               "enum": [
+                "modelProvider/list"
+              ],
+              "title": "ModelProvider/listRequestMethod",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/definitions/v2/ModelProviderListParams"
+            }
+          },
+          "required": [
+            "id",
+            "method",
+            "params"
+          ],
+          "title": "ModelProvider/listRequest",
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/v2/RequestId"
+            },
+            "method": {
+              "enum": [
                 "permissionProfile/list"
               ],
               "title": "PermissionProfile/listRequestMethod",
@@ -8884,9 +8908,6 @@
           "providerId": {
             "type": "string"
           },
-          "requiresAuth": {
-            "type": "boolean"
-          },
           "usage": {
             "anyOf": [
               {
@@ -8900,8 +8921,7 @@
         },
         "required": [
           "authStatus",
-          "providerId",
-          "requiresAuth"
+          "providerId"
         ],
         "title": "GetAccountResponse",
         "type": "object"
@@ -9678,6 +9698,13 @@
             "properties": {
               "apiKey": {
                 "type": "string"
+              },
+              "credentials": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Additional provider-specific credential values.",
+                "type": "object"
               },
               "providerId": {
                 "description": "Optional configured model provider ID. When omitted, the active configured provider is used.",
@@ -10757,6 +10784,25 @@
         "title": "ModelListResponse",
         "type": "object"
       },
+      "ModelProviderAuthField": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "secret"
+        ],
+        "type": "object"
+      },
       "ModelProviderCapabilitiesReadParams": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "ModelProviderCapabilitiesReadParams",
@@ -10777,6 +10823,63 @@
           "webSearch"
         ],
         "title": "ModelProviderCapabilitiesReadResponse",
+        "type": "object"
+      },
+      "ModelProviderListEntry": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "authFields": {
+            "items": {
+              "$ref": "#/definitions/v2/ModelProviderAuthField"
+            },
+            "type": "array"
+          },
+          "authStatus": {
+            "$ref": "#/definitions/v2/ProviderAuthStatus"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "authFields",
+          "authStatus",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "ModelProviderListParams": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ModelProviderListParams",
+        "type": "object"
+      },
+      "ModelProviderListResponse": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "activeProviderId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/definitions/v2/ModelProviderListEntry"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "providers"
+        ],
+        "title": "ModelProviderListResponse",
         "type": "object"
       },
       "ModelRerouteReason": {
@@ -12366,13 +12469,6 @@
             "description": "The provider requires credentials, but none are currently available.",
             "enum": [
               "unauthenticated"
-            ],
-            "type": "string"
-          },
-          {
-            "description": "The provider does not require authentication.",
-            "enum": [
-              "notRequired"
             ],
             "type": "string"
           },

@@ -16,6 +16,10 @@ alias c := codex
 codex *args:
     cargo run --bin genex -- {args}
 
+# Run the Genex CLI with the same native GStreamer and rusty_v8 setup as `check`.
+run *args:
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo run -p genex-cli -- "$@"
+
 # `genex exec`
 exec *args:
     cargo run --bin genex -- exec {args}

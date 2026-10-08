@@ -34,7 +34,10 @@ impl OutgoingMessageSender {
             .retain(|_, entry| entry.verification_owner != Some(connection_id));
     }
 
-    pub(crate) fn watch_user_verification_auth(self: &Arc<Self>, credential_manager: Arc<CredentialManager>) {
+    pub(crate) fn watch_user_verification_auth(
+        self: &Arc<Self>,
+        credential_manager: Arc<CredentialManager>,
+    ) {
         let mut changes = credential_manager.auth_change_receiver();
         if self.verification_auth.set(credential_manager).is_err() {
             return;

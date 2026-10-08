@@ -13,7 +13,10 @@ pub(crate) struct TurnCostWorker;
 pub(crate) struct TurnCostWorkerHandle;
 
 impl TurnCostWorker {
-    pub(crate) fn spawn(_config: Arc<Config>, _credential_manager: Arc<CredentialManager>) -> Option<Self> {
+    pub(crate) fn spawn(
+        _config: Arc<Config>,
+        _credential_manager: Arc<CredentialManager>,
+    ) -> Option<Self> {
         None
     }
 

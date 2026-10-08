@@ -324,7 +324,6 @@ async fn transcript_preview_for_history_mode(
         &server.uri(),
         &Default::default(),
         /*auto_compact_limit*/ 100_000,
-        /*requires_auth*/ None,
         "mock_provider",
         "compact",
     )

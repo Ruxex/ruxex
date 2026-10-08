@@ -72,7 +72,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                         let result = match request.method.as_str() {
                             "initialize" => json!({"userAgent": "trust-pty"}),
                             "account/read" => {
-                                json!({"providerId": "provider", "account": {"type": "apiKey"}, "authStatus": "notRequired", "requiresAuth": false})
+                                json!({"providerId": "provider", "account": {"type": "apiKey"}, "authStatus": "authenticated"})
                             }
                             "config/read" => {
                                 if request

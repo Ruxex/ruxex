@@ -14,7 +14,6 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         .enable_feature(Feature::NetworkProxy)
         .disable_feature(Feature::ShellSnapshot)
         .with_root_config("managed_auth_base_url = \"http://127.0.0.1:1234\"")
-        .with_provider_config("requires_auth = true")
         .with_extra_config("[extra]\nenabled = true")
         .write(home.path())
         .expect("write composable mock Responses config");
@@ -31,7 +30,6 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         "network_proxy = true",
         "[model_providers.provider-custom]\nname = \"provider\"",
         "base_url = \"http://127.0.0.1:1234/api/genex\"",
-        "requires_auth = true",
         "[extra]\nenabled = true",
     ] {
         assert!(config.contains(expected), "config is missing {expected}");
@@ -49,7 +47,6 @@ fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
             (Feature::ShellSnapshot, false),
         ]),
         /*auto_compact_limit*/ 321,
-        Some(true),
         "provider",
         "compact this",
     )
@@ -64,7 +61,6 @@ fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
         "network_proxy = true",
         "[model_providers.provider]\nname = \"provider\"",
         "supports_websockets = false",
-        "requires_auth = true",
     ] {
         assert!(config.contains(expected), "config is missing {expected}");
     }

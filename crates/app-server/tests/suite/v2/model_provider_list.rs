@@ -1,0 +1,53 @@
+use anyhow::Result;
+use app_test_support::MockResponsesConfig;
+use app_test_support::TestAppServer;
+use pretty_assertions::assert_eq;
+use serde_json::Value;
+use tempfile::TempDir;
+use tokio::time::timeout;
+
+const DEFAULT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+
+#[tokio::test]
+async fn lists_configured_providers_and_active_auth_state() -> Result<()> {
+    let genex_home = TempDir::new()?;
+    MockResponsesConfig::new("http://127.0.0.1:1/v1")
+        .with_model_provider("provider_a")
+        .with_provider_name("Provider A")
+        .with_extra_config(
+            "[model_providers.provider_b]\nname = \"Provider B\"\nbase_url = \"http://127.0.0.1:2/v1\"\nwire_api = \"responses\"",
+        )
+        .write(genex_home.path())?;
+
+    let mut app_server = TestAppServer::builder()
+        .with_genex_home(genex_home.path())
+        .without_auto_env()
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = app_server
+        .send_request("modelProvider/list", Some(serde_json::json!({})))
+        .await?;
+    let received: Value = timeout(DEFAULT_TIMEOUT, app_server.read_response(request_id)).await??;
+
+    let providers = received["providers"]
+        .as_array()
+        .expect("providers should be an array");
+    let provider_a = providers
+        .iter()
+        .find(|provider| provider["id"] == "provider_a")
+        .expect("provider_a should be listed");
+    let provider_b = providers
+        .iter()
+        .find(|provider| provider["id"] == "provider_b")
+        .expect("provider_b should be listed");
+
+    assert_eq!(received["activeProviderId"], "provider_a");
+    assert_eq!(provider_a["name"], "Provider A");
+    assert_eq!(provider_a["active"], true);
+    assert_eq!(provider_a["authStatus"], "unauthenticated");
+    assert_eq!(provider_b["name"], "Provider B");
+    assert_eq!(provider_b["active"], false);
+    assert_eq!(provider_b["authStatus"], "unauthenticated");
+    Ok(())
+}

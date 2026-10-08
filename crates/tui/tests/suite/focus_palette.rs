@@ -112,7 +112,7 @@ async fn interactive_startup_honors_genex_home_symlink_opt_out() -> Result<()> {
              [sandbox_workspace_write]\nwritable_roots = [{visualizations}]\n\
              [model_providers.test]\nname = \"Mock\"\n\
              base_url = \"{base_url}/v1\"\nwire_api = \"responses\"\n\
-             requires_auth = false\nsupports_websockets = false\n"
+             supports_websockets = false\n"
         ),
     )?;
 
@@ -385,7 +385,7 @@ pub(super) fn write_test_config(genex_home: &Path, repo_root: &Path) -> Result<(
     let config = format!(
         "model = \"provider-model-d\"\nmodel_provider = \"provider\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\n\
-         [model_providers.provider]\nname = \"Provider\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\nrequires_auth = false\nsupports_websockets = false\n\n\
+         [model_providers.provider]\nname = \"Provider\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\nsupports_websockets = false\n\n\
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
     );
     std::fs::write(genex_home.join("config.toml"), config)

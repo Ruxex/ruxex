@@ -107,11 +107,8 @@ impl ManagedMitmCa {
             private_key_path.is_absolute(),
             "network.mitm_ca.private_key_file must be an absolute path"
         );
-        let certificate_pem = read_external_ca_file(
-            certificate_path,
-            "network.mitm_ca.certificate_file",
-            false,
-        )?;
+        let certificate_pem =
+            read_external_ca_file(certificate_path, "network.mitm_ca.certificate_file", false)?;
         anyhow::ensure!(
             !certificate_pem
                 .lines()
@@ -119,11 +116,8 @@ impl ManagedMitmCa {
                     && line.contains("PRIVATE KEY-----")),
             "network.mitm_ca.certificate_file must not contain a private key"
         );
-        let private_key_pem = read_external_ca_file(
-            private_key_path,
-            "network.mitm_ca.private_key_file",
-            true,
-        )?;
+        let private_key_pem =
+            read_external_ca_file(private_key_path, "network.mitm_ca.private_key_file", true)?;
         let certificate = CertificateDer::from_pem_slice(certificate_pem.as_bytes())
             .context("failed to parse network.mitm_ca.certificate_file")?;
         let private_key_der = PrivateKeyDer::from_pem_slice(private_key_pem.as_bytes())
@@ -191,7 +185,10 @@ fn read_external_ca_file(path: &Path, field: &str, private: bool) -> Result<Stri
     let metadata = file
         .metadata()
         .with_context(|| format!("failed to inspect {field}"))?;
-    anyhow::ensure!(metadata.file_type().is_file(), "{field} must be a regular file");
+    anyhow::ensure!(
+        metadata.file_type().is_file(),
+        "{field} must be a regular file"
+    );
     anyhow::ensure!(
         metadata.len() <= MAX_EXTERNAL_CA_FILE_BYTES,
         "{field} exceeds {MAX_EXTERNAL_CA_FILE_BYTES} bytes"
@@ -946,11 +943,9 @@ mod tests {
             } else {
                 drop(lease);
             }
-            let bundle_path = persist_managed_ca_trust_bundle(
-                dir.path(),
-                &format!("roots\n{certificate}"),
-            )
-            .unwrap();
+            let bundle_path =
+                persist_managed_ca_trust_bundle(dir.path(), &format!("roots\n{certificate}"))
+                    .unwrap();
             artifacts.push((certificate_path, bundle_path));
         }
         let unrelated_path = dir.path().join("ca-user.pem");

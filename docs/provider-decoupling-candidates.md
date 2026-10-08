@@ -391,7 +391,7 @@ BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Rese
 
 Bedrock、custom `model_providers`、汎用 credential storage、Responses-compatible provider の consumer があるため、クレート全体の削除ではなく first-party adapter の分割・削除を先に検討する。
 
-モデル一覧については、`MyModelProvider` と Amazon Bedrock が `ModelProvider::models_manager()` 経由で provider の `/models` を動的取得するよう移行済み。provider の bundled catalog と暗黙 fallback は削除し、明示的な `model_catalog_json` だけを静的なローカル上書き経路として保持する。
+モデル一覧については、Cloudflare と任意の設定済み provider が provider 所有の endpoint 経由でモデルを動的取得する。provider の bundled catalog と暗黙 fallback は削除し、明示的な `model_catalog_json` だけを静的なローカル上書き経路として保持する。旧 `MyModelProvider` は専用の組み込み実装・既定値・`APIKEY` 認証経路を持つため、CloudflareProvider への一本化に伴う削除候補として監査する。
 
 ### 3.4 Apps / host-owned MCP
 
@@ -491,8 +491,7 @@ Windows support are superseded by this audit for the current slice.
 3. protocol/app-server の互換 alias・schema は**完了**。ただし ChatGPT account/auth の現行 protocol surface は、次の first-party auth 境界で別途判断する。
 4. TUI の BackendBanner/Reserve recovery と hosted/curated marketplace UI は**完了**。
    通常の status/account 表示と active bundled/runtime marketplace boundary は保持する。
-5. login/model-provider の first-party auth adapter は、共有 auth capability の名称を
-   `requires_auth` に移行済みで、ChatGPT/workload-identity の runtime consumer と
+5. login/model-provider の first-party auth adapter は、すべての model provider が認証対象であることを前提に整理し、ChatGPT/workload-identity の runtime consumer と
    token auth は `d22689112` で削除済み。API Key、Bedrock、外部Bearer、
    provider-neutralなcredential/MCP OAuthは保持する。残る作業は未登録テストソース、
    obsolete な環境変数マーカーの cleanup であり、generated index の更新は Hawk の

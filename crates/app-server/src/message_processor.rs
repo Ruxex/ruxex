@@ -1076,6 +1076,11 @@ impl MessageProcessor {
                 .model_provider_capabilities_read()
                 .await
                 .map(|response| Some(response.into())),
+            ClientRequest::ModelProviderList { params: _, .. } => self
+                .config_processor
+                .model_provider_list()
+                .await
+                .map(|response| Some(response.into())),
             ClientRequest::ThreadStart { params, .. } => {
                 self.thread_processor
                     .thread_start(

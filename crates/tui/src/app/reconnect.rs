@@ -271,7 +271,6 @@ impl App {
             ),
         );
         self.chat_widget.cyber_policy_notice = Default::default();
-        self.chat_widget.requires_auth = bootstrap.requires_auth;
         self.chat_widget.remote_connection =
             crate::status::remote_connection::remote_connection_status_value(
                 &self.app_server_target,

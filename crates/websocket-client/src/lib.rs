@@ -102,9 +102,11 @@ impl WebSocketConnector {
         let network_permit = self
             .http_client_factory
             .network_policy()
-            .acquire(&url::Url::parse(request.uri().to_string().as_str()).map_err(|error| {
-                WebSocketError::Io(io::Error::new(io::ErrorKind::InvalidInput, error))
-            })?)
+            .acquire(
+                &url::Url::parse(request.uri().to_string().as_str()).map_err(|error| {
+                    WebSocketError::Io(io::Error::new(io::ErrorKind::InvalidInput, error))
+                })?,
+            )
             .map_err(network_policy_error)?;
         let proxy_route = self
             .http_client_factory
@@ -118,7 +120,7 @@ impl WebSocketConnector {
             /*loopback_direct*/ false,
             network_permit,
         )
-            .await
+        .await
     }
 
     /// Connects to a validated loopback destination without consulting proxy settings.
@@ -139,9 +141,11 @@ impl WebSocketConnector {
         let network_permit = self
             .http_client_factory
             .network_policy()
-            .acquire(&url::Url::parse(request.uri().to_string().as_str()).map_err(|error| {
-                WebSocketError::Io(io::Error::new(io::ErrorKind::InvalidInput, error))
-            })?)
+            .acquire(
+                &url::Url::parse(request.uri().to_string().as_str()).map_err(|error| {
+                    WebSocketError::Io(io::Error::new(io::ErrorKind::InvalidInput, error))
+                })?,
+            )
             .map_err(network_policy_error)?;
         self.connect_with_route(
             request,
@@ -171,7 +175,13 @@ impl WebSocketConnector {
         )
         .boxed()
         .await?;
-        Ok((WebSocketConnection { inner, network_permit }, response))
+        Ok((
+            WebSocketConnection {
+                inner,
+                network_permit,
+            },
+            response,
+        ))
     }
 }
 

@@ -30,9 +30,9 @@ export function AccountPage() {
               <div>
                 <dt className="text-sm text-base-content/60">Status</dt>
                 <dd className="font-medium">
-                  {data?.requiresAuth
-                    ? "Authentication required"
-                    : "Authenticated"}
+                  {data?.authStatus === "authenticated"
+                    ? "Authenticated"
+                    : "Authentication required"}
                 </dd>
               </div>
               <div>
@@ -43,7 +43,7 @@ export function AccountPage() {
               </div>
             </dl>
           </div>
-          {data?.requiresAuth && (
+          {data?.authStatus !== "authenticated" && (
             <Link className="btn btn-primary self-end" to="/login">
               Log in
             </Link>

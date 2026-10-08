@@ -5,4 +5,4 @@
 /**
  * Authentication state for the currently selected model provider.
  */
-export type ProviderAuthStatus = "authenticated" | "unauthenticated" | "notRequired" | "invalid";
+export type ProviderAuthStatus = "authenticated" | "unauthenticated" | "invalid";

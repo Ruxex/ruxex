@@ -86,8 +86,8 @@ impl AuthProvider for CredentialManagerAuthProvider {
     }
 }
 
-// Some providers are meant to send no auth headers. Examples include local OSS
-// providers and custom test providers with `requires_auth = false`.
+// Providers without a resolved credential send no auth headers until the user
+// completes the provider authentication flow.
 #[derive(Clone, Debug)]
 struct UnauthenticatedAuthProvider;
 
@@ -116,18 +116,18 @@ pub(crate) fn resolve_provider_auth(
     auth: Option<&GenexAuth>,
     provider: &ModelProviderInfo,
 ) -> genex_protocol::error::Result<SharedAuthProvider> {
+    // Explicitly selected/stored credentials take precedence over provider
+    // environment configuration. This lets the login flow work even when an
+    // env-backed provider does not have its env var set.
+    if let Some(auth) = auth {
+        return Ok(auth_provider_from_auth(auth));
+    }
+
     if let Some(auth) = bearer_auth_for_provider(provider)? {
         return Ok(Arc::new(auth));
     }
 
-    if !provider.requires_auth && provider.auth.is_none() {
-        return Ok(unauthenticated_auth_provider());
-    }
-
-    Ok(match auth {
-        Some(auth) => auth_provider_from_auth(auth),
-        None => unauthenticated_auth_provider(),
-    })
+    Ok(unauthenticated_auth_provider())
 }
 
 pub(crate) async fn resolve_provider_auth_for_scope(
@@ -142,7 +142,8 @@ pub(crate) async fn resolve_provider_auth_for_scope(
             Some(credential_manager) => credential_manager.auth().await,
             None => auth.cloned(),
         }
-    } else if let (Some(credential_manager), Some(provider_id)) = (credential_manager, provider_id) {
+    } else if let (Some(credential_manager), Some(provider_id)) = (credential_manager, provider_id)
+    {
         credential_manager.auth_for_provider(provider_id).await
     } else {
         auth.cloned()

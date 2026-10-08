@@ -48,7 +48,6 @@ base_url = "{model_base_url}/v1"
 wire_api = "responses"
 request_max_retries = 0
 stream_max_retries = 0
-requires_auth = true
 supports_websockets = {supports_websockets}
 
 [model_providers.custom-provider.http_headers]

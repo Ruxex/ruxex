@@ -626,10 +626,9 @@ impl TestGenexBuilder {
             auth.clone(),
             config.genex_home.to_path_buf(),
         );
-        let models_manager = self
-            .models_manager
-            .clone()
-            .unwrap_or_else(|| genex_core::build_models_manager(&config, credential_manager.clone()));
+        let models_manager = self.models_manager.clone().unwrap_or_else(|| {
+            genex_core::build_models_manager(&config, credential_manager.clone())
+        });
         let code_mode_host_program = self
             .code_mode_host_program
             .take()
@@ -668,10 +667,11 @@ impl TestGenexBuilder {
 
         let new_conversation = match (resume_from, user_shell_override) {
             (Some(path), Some(user_shell_override)) => {
-                let credential_manager = genex_core::test_support::credential_manager_from_auth_with_home(
-                    auth,
-                    config.genex_home.to_path_buf(),
-                );
+                let credential_manager =
+                    genex_core::test_support::credential_manager_from_auth_with_home(
+                        auth,
+                        config.genex_home.to_path_buf(),
+                    );
                 Box::pin(
                     genex_core::test_support::resume_thread_from_rollout_with_user_shell_override(
                         thread_manager.as_ref(),
@@ -685,10 +685,11 @@ impl TestGenexBuilder {
                 .await?
             }
             (Some(path), None) => {
-                let credential_manager = genex_core::test_support::credential_manager_from_auth_with_home(
-                    auth,
-                    config.genex_home.to_path_buf(),
-                );
+                let credential_manager =
+                    genex_core::test_support::credential_manager_from_auth_with_home(
+                        auth,
+                        config.genex_home.to_path_buf(),
+                    );
                 Box::pin(thread_manager.resume_thread_from_rollout(
                     config.clone(),
                     path,

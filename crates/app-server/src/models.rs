@@ -7,6 +7,7 @@ use genex_app_server_protocol::ReasoningEffortOption;
 use genex_core::ThreadManager;
 use genex_http_client::HttpClientFactory;
 use genex_models_manager::manager::RefreshStrategy;
+use genex_protocol::error::Result as CoreResult;
 use genex_protocol::model_types::ModelPreset;
 use genex_protocol::model_types::ReasoningEffortPreset;
 
@@ -14,14 +15,14 @@ pub async fn supported_models(
     thread_manager: Arc<ThreadManager>,
     include_hidden: bool,
     http_client_factory: HttpClientFactory,
-) -> Vec<Model> {
-    thread_manager
-        .list_models(RefreshStrategy::OnlineIfUncached, http_client_factory)
-        .await
+) -> CoreResult<Vec<Model>> {
+    Ok(thread_manager
+        .list_models_result(RefreshStrategy::OnlineIfUncached, http_client_factory)
+        .await?
         .into_iter()
         .filter(|preset| include_hidden || preset.show_in_picker)
         .map(model_from_preset)
-        .collect()
+        .collect())
 }
 
 fn model_from_preset(preset: ModelPreset) -> Model {

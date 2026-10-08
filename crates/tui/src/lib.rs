@@ -26,6 +26,7 @@ pub use app::ExitReason;
 pub use app::ResumableThread;
 use app_server_session::AppServerSession;
 use app_server_session::ThreadParamsMode;
+use app_server_session::authenticated_model_provider_id;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 use genex_app_server_client::AppServerClient;
@@ -35,10 +36,10 @@ use genex_app_server_client::InProcessClientStartArgs;
 use genex_app_server_client::RemoteAppServerClient;
 use genex_app_server_client::RemoteAppServerConnectArgs;
 pub use genex_app_server_client::RemoteAppServerEndpoint;
-use genex_app_server_protocol::Account as AppServerAccount;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::ConfigWarningNotification;
 use genex_app_server_protocol::GetAccountResponse;
+use genex_app_server_protocol::ProviderAuthStatus;
 use genex_app_server_protocol::Thread as AppServerThread;
 #[cfg(test)]
 use genex_app_server_protocol::ThreadListCwdFilter;
@@ -100,7 +101,6 @@ mod app_server_approval_conversions;
 mod app_server_connection;
 mod app_server_session;
 mod approval_events;
-mod ascii_animation;
 mod bottom_pane;
 mod branch_summary;
 mod chatwidget;
@@ -128,7 +128,6 @@ mod exec_cell;
 mod exec_command;
 mod external_editor;
 mod file_search;
-mod frames;
 mod get_git_diff;
 mod git_action_directives;
 mod goal_display;
@@ -229,6 +228,7 @@ pub(crate) mod test_backend;
 #[cfg(test)]
 pub(crate) mod test_support;
 
+use crate::onboarding::model_provider::run_model_provider_selection;
 use crate::onboarding::onboarding_screen::OnboardingScreenArgs;
 use crate::onboarding::onboarding_screen::run_onboarding_app;
 use crate::startup_hooks_review::StartupHooksReviewOutcome;
@@ -965,7 +965,7 @@ async fn run_ratatui_app(
     strict_config: bool,
     mut app_server_target: AppServerTarget,
     remote_cwd_override: Option<PathBuf>,
-    initial_config: Config,
+    mut initial_config: Config,
     overrides: ConfigOverrides,
     cli_kv_overrides: Vec<(String, toml::Value)>,
     log_db: Option<log_db::LogDbLayer>,
@@ -1055,6 +1055,79 @@ async fn run_ratatui_app(
     let mut app_server = Some(app_server_session);
     // Folder consent runs after the picker resolves the actual destination.
     let should_show_trust_screen_flag = false;
+
+    let provider_list = startup_draft
+        .run_until(
+            &mut tui,
+            app_server
+                .as_mut()
+                .expect("app server should exist before model provider selection")
+                .model_provider_list(),
+        )
+        .await;
+    let provider_list = match provider_list {
+        Ok(Ok(provider_list)) => provider_list,
+        Ok(Err(err)) => {
+            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+            return Err(err);
+        }
+        Err(err) => {
+            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+            return Err(err.into());
+        }
+    };
+    let (provider_id, provider_auth_fields) =
+        if let Some(provider_id) = authenticated_model_provider_id(&provider_list) {
+            let auth_fields = provider_list
+                .providers
+                .iter()
+                .find(|provider| provider.id == provider_id)
+                .map(|provider| provider.auth_fields.clone())
+                .unwrap_or_default();
+            (provider_id.to_string(), auth_fields)
+        } else {
+            let provider = run_model_provider_selection(&mut tui, provider_list.providers).await;
+            match provider {
+                Ok(Some(provider)) => (provider.id, provider.auth_fields),
+                Ok(None) => {
+                    shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+                    let _ = tui.terminal.clear();
+                    return Ok(AppExitInfo {
+                        token_usage: crate::token_usage::TokenUsage::default(),
+                        thread_id: None,
+                        resume_hint: None,
+                        disconnect_info: None,
+                        update_action: None,
+                        exit_reason: ExitReason::UserRequested,
+                    });
+                }
+                Err(err) => {
+                    shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+                    return Err(err.into());
+                }
+            }
+        };
+    let switch_result = startup_draft
+        .run_until(
+            &mut tui,
+            app_server
+                .as_mut()
+                .expect("app server should exist before model provider switch")
+                .switch_model_provider(&mut initial_config, &provider_id),
+        )
+        .await;
+    match switch_result {
+        Ok(Ok(_)) => {}
+        Ok(Err(err)) => {
+            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+            return Err(err);
+        }
+        Err(err) => {
+            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
+            return Err(err.into());
+        }
+    }
+
     let startup_model_provider = initial_config.model_provider_id.clone();
     let Some(active_app_server) = app_server.as_mut() else {
         unreachable!("app server should exist when auth is required");
@@ -1073,11 +1146,8 @@ async fn run_ratatui_app(
             return Err(err.into());
         }
     };
-    let requires_auth = startup_account
-        .as_ref()
-        .is_some_and(|account| account.requires_auth);
     let should_show_onboarding =
-        should_show_onboarding(login_status, requires_auth, should_show_trust_screen_flag);
+        should_show_onboarding(login_status, should_show_trust_screen_flag);
 
     let config = if should_show_onboarding {
         if let Err(err) = startup_draft.flush_pending_events(&mut tui).await {
@@ -1086,7 +1156,7 @@ async fn run_ratatui_app(
         }
         // Authentication can change while any interactive onboarding screen is open.
         startup_account = None;
-        let show_login_screen = should_show_login_screen(login_status, requires_auth);
+        let show_login_screen = should_show_login_screen(login_status);
         let onboarding_result = run_onboarding_app(
             OnboardingScreenArgs {
                 show_login_screen,
@@ -1096,6 +1166,7 @@ async fn run_ratatui_app(
                 app_server_request_handle: app_server
                     .as_ref()
                     .map(AppServerSession::request_handle),
+                provider_auth_fields: provider_auth_fields.clone(),
                 config: initial_config.clone(),
             },
             if show_login_screen {
@@ -1831,9 +1902,11 @@ async fn get_login_status(
     app_server: &mut AppServerSession,
 ) -> color_eyre::Result<(LoginStatus, GetAccountResponse)> {
     let account = app_server.read_account().await?;
-    let login_status = match &account.account {
-        Some(AppServerAccount::ApiKey {}) => LoginStatus::AuthMode(AuthMode::ApiKey),
-        None => LoginStatus::NotAuthenticated,
+    let login_status = match account.auth_status {
+        ProviderAuthStatus::Authenticated => LoginStatus::AuthMode(AuthMode::ApiKey),
+        ProviderAuthStatus::Unauthenticated | ProviderAuthStatus::Invalid => {
+            LoginStatus::NotAuthenticated
+        }
     };
     Ok((login_status, account))
 }
@@ -1962,24 +2035,15 @@ fn should_show_trust_screen(config: &Config) -> bool {
     config.active_project.trust_level.is_none()
 }
 
-fn should_show_onboarding(
-    login_status: LoginStatus,
-    requires_auth: bool,
-    show_trust_screen: bool,
-) -> bool {
+fn should_show_onboarding(login_status: LoginStatus, show_trust_screen: bool) -> bool {
     if show_trust_screen {
         return true;
     }
 
-    should_show_login_screen(login_status, requires_auth)
+    should_show_login_screen(login_status)
 }
 
-fn should_show_login_screen(login_status: LoginStatus, requires_auth: bool) -> bool {
-    // Only show the authentication screen for providers that require stored auth.
-    if !requires_auth {
-        return false;
-    }
-
+fn should_show_login_screen(login_status: LoginStatus) -> bool {
     login_status == LoginStatus::NotAuthenticated
 }
 

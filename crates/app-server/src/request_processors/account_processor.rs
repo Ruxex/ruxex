@@ -149,7 +149,6 @@ impl AccountRequestProcessor {
             display_name: account_state.display_name,
             auth_status: account_state.auth_status,
             usage,
-            requires_auth: account_state.requires_auth,
         })
     }
 
@@ -227,8 +226,9 @@ impl AccountRequestProcessor {
             LoginAccountParams::ApiKey {
                 api_key,
                 provider_id,
+                credentials,
             } => {
-                self.login_api_key_v2(request_id, api_key, provider_id)
+                self.login_api_key_v2(request_id, api_key, provider_id, credentials)
                     .await;
             }
         }
@@ -245,6 +245,7 @@ impl AccountRequestProcessor {
         &self,
         api_key: &str,
         provider_id: Option<&str>,
+        credentials: &std::collections::BTreeMap<String, String>,
     ) -> std::result::Result<(), JSONRPCErrorError> {
         if self.credential_manager.has_external_auth() {
             return Err(self.external_auth_active_error());
@@ -268,7 +269,10 @@ impl AccountRequestProcessor {
             )));
         }
         self.credential_manager
-            .login(provider_id, ProviderAuth::api_key(api_key))
+            .login(
+                provider_id,
+                ProviderAuth::api_key_with_credentials(api_key, credentials.clone()),
+            )
             .await
             .map_err(|err| internal_error(format!("failed to save api key: {err}")))
     }
@@ -278,9 +282,10 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
         api_key: String,
         provider_id: Option<String>,
+        credentials: std::collections::BTreeMap<String, String>,
     ) {
         let result = self
-            .login_api_key_common(&api_key, provider_id.as_deref())
+            .login_api_key_common(&api_key, provider_id.as_deref(), &credentials)
             .await
             .map(|()| LoginAccountResponse::ApiKey {});
         let logged_in = result.is_ok();

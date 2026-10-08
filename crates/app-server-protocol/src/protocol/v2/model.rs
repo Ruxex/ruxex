@@ -2,6 +2,7 @@ use super::shared::v2_enum_from_core;
 use super::turn::CyberAccessProgram;
 use crate::JsonSchema;
 use crate::TS;
+use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::model_types::InputModality;
 use genex_protocol::model_types::ModelAccessPrograms as CoreModelAccessPrograms;
 use genex_protocol::model_types::ModelAvailabilityNux as CoreModelAvailabilityNux;
@@ -45,6 +46,39 @@ pub struct ModelProviderCapabilitiesReadParams {}
 pub struct ModelProviderCapabilitiesReadResponse {
     pub namespace_tools: bool,
     pub web_search: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub struct ModelProviderListParams {}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub struct ModelProviderListResponse {
+    pub active_provider_id: Option<String>,
+    pub providers: Vec<ModelProviderListEntry>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub struct ModelProviderAuthField {
+    pub id: String,
+    pub label: String,
+    pub secret: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub struct ModelProviderListEntry {
+    pub id: String,
+    pub name: String,
+    pub active: bool,
+    pub auth_status: ProviderAuthStatus,
+    pub auth_fields: Vec<ModelProviderAuthField>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema, TS)]

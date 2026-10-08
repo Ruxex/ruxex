@@ -187,7 +187,6 @@ base_url = "{server_uri}/v1"
 wire_api = "responses"
 request_max_retries = 0
 stream_max_retries = 0
-requires_auth = true
 supports_websockets = true
 "#
         ),

@@ -3,8 +3,8 @@
 //! Production code should receive an [`AuthRouteConfig`](crate::AuthRouteConfig) adapted from the
 //! application's resolved HTTP client factory instead of depending on this module.
 
-use crate::CredentialManager;
 use crate::AuthRouteConfig;
+use crate::CredentialManager;
 use crate::GenexAuth;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;

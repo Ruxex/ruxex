@@ -33,12 +33,10 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     };
     let active_provider_id = manager.active_provider_id();
     let mut has_active_provider = false;
-    for (provider_id, provider) in &config.model_providers {
+    for (provider_id, _provider) in &config.model_providers {
         let state = if active_provider_id.as_deref() == Some(provider_id) {
             has_active_provider = true;
             "active"
-        } else if !provider.requires_auth {
-            "available"
         } else if stored_provider_ids.iter().any(|id| id == provider_id) {
             "authenticated"
         } else {

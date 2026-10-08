@@ -39,6 +39,8 @@ pub struct ProviderAuth {
 
     pub api_key: Option<String>,
 
+    pub credentials: BTreeMap<String, String>,
+
     invalid_auth_mode: bool,
     raw_auth_mode: Option<String>,
 }
@@ -54,6 +56,8 @@ impl Serialize for ProviderAuth {
             auth_mode: Option<&'a str>,
             #[serde(skip_serializing_if = "Option::is_none")]
             api_key: Option<&'a str>,
+            #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+            credentials: &'a BTreeMap<String, String>,
         }
 
         let auth_mode = if self.invalid_auth_mode {
@@ -67,6 +71,7 @@ impl Serialize for ProviderAuth {
         Wire {
             auth_mode,
             api_key: self.api_key.as_deref(),
+            credentials: &self.credentials,
         }
         .serialize(serializer)
     }
@@ -83,6 +88,8 @@ impl<'de> Deserialize<'de> for ProviderAuth {
             auth_mode: Option<String>,
             #[serde(default)]
             api_key: Option<String>,
+            #[serde(default)]
+            credentials: BTreeMap<String, String>,
         }
 
         let wire = Wire::deserialize(deserializer)?;
@@ -90,6 +97,7 @@ impl<'de> Deserialize<'de> for ProviderAuth {
         Ok(Self {
             auth_mode,
             api_key: wire.api_key,
+            credentials: wire.credentials,
             invalid_auth_mode,
             raw_auth_mode,
         })
@@ -110,9 +118,27 @@ impl ProviderAuth {
         Self {
             auth_mode: Some(AuthMode::ApiKey),
             api_key: Some(api_key.into()),
+            credentials: BTreeMap::new(),
             invalid_auth_mode: false,
             raw_auth_mode: None,
         }
+    }
+
+    pub fn api_key_with_credentials(
+        api_key: impl Into<String>,
+        credentials: BTreeMap<String, String>,
+    ) -> Self {
+        Self {
+            auth_mode: Some(AuthMode::ApiKey),
+            api_key: Some(api_key.into()),
+            credentials,
+            invalid_auth_mode: false,
+            raw_auth_mode: None,
+        }
+    }
+
+    pub fn credential(&self, id: &str) -> Option<&str> {
+        self.credentials.get(id).map(String::as_str)
     }
 
     pub fn has_supported_credentials(&self) -> bool {
@@ -170,6 +196,7 @@ impl AuthDotJson {
             legacy: Some(ProviderAuth {
                 auth_mode,
                 api_key,
+                credentials: BTreeMap::new(),
                 invalid_auth_mode: false,
                 raw_auth_mode: None,
             }),
@@ -263,13 +290,16 @@ impl Serialize for AuthDotJson {
             && self.active_provider.is_none()
             && let Some(legacy) = &self.legacy
         {
-            let mut state = serializer.serialize_struct("AuthDotJson", 2)?;
+            let mut state = serializer.serialize_struct("AuthDotJson", 3)?;
             state.serialize_field("auth_mode", &legacy.serialized_auth_mode())?;
             state.serialize_field("api_key", &legacy.api_key)?;
+            if !legacy.credentials.is_empty() {
+                state.serialize_field("credentials", &legacy.credentials)?;
+            }
             return state.end();
         }
 
-        let mut state = serializer.serialize_struct("AuthDotJson", 2)?;
+        let mut state = serializer.serialize_struct("AuthDotJson", 3)?;
         state.serialize_field("providers", &self.providers)?;
         if self.selection_configured {
             state.serialize_field("active_provider", &self.active_provider)?;
@@ -313,6 +343,8 @@ impl<'de> Deserialize<'de> for AuthDotJson {
             auth_mode: Option<String>,
             #[serde(default)]
             api_key: Option<String>,
+            #[serde(default)]
+            credentials: BTreeMap<String, String>,
         }
 
         let wire = Wire::deserialize(deserializer)?;
@@ -327,6 +359,7 @@ impl<'de> Deserialize<'de> for AuthDotJson {
                 ProviderAuth {
                     auth_mode,
                     api_key: wire.api_key,
+                    credentials: wire.credentials,
                     invalid_auth_mode,
                     raw_auth_mode,
                 },

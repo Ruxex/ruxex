@@ -20,9 +20,9 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
     });
     let manager = RemoteModelsManager::new_without_cache(
         endpoint.clone(),
-        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-            "test-key",
-        ))),
+        Some(CredentialManager::from_auth_for_testing(
+            GenexAuth::from_api_key("test-key"),
+        )),
     );
     assert_eq!(
         manager

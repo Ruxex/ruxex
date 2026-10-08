@@ -102,7 +102,6 @@ base_url = "{local_url}"
 [model_providers.gateway]
 name = "Managed gateway"
 base_url = "{gateway_url}"
-requires_auth = true
 [model_providers.gateway.http_headers]
 X-Managed = "required"
 "#

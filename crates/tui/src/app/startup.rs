@@ -328,7 +328,6 @@ impl App {
         let auth_mode = bootstrap.auth_mode;
         let has_managed_account = bootstrap.has_managed_account;
         let has_genex_backend_auth = false;
-        let requires_auth = bootstrap.requires_auth;
         let status_account_display = bootstrap.status_account_display.clone();
         let initial_plan_type = bootstrap.plan_type;
         let session_telemetry = SessionTelemetry::new(
@@ -422,7 +421,6 @@ impl App {
                     ),
                     enhanced_keys_supported,
                     has_managed_account,
-                    requires_auth,
                     has_genex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
@@ -543,7 +541,6 @@ impl App {
                     .filter(|_| resumed.is_some()),
                     enhanced_keys_supported,
                     has_managed_account,
-                    requires_auth,
                     has_genex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
@@ -647,7 +644,6 @@ impl App {
                     .filter(|_| forked.is_some()),
                     enhanced_keys_supported,
                     has_managed_account,
-                    requires_auth,
                     has_genex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
@@ -903,7 +899,7 @@ See the Genex keymap documentation for supported actions and examples."
             "tui startup initial frame scheduled"
         );
         app.refresh_startup_skills(&app_server);
-        if requires_auth && has_managed_account {
+        if has_managed_account {
             crate::daybreak::prefetch_notice(
                 &app.config,
                 &app_server,

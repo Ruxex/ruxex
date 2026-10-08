@@ -541,9 +541,10 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
-    let credential_manager = CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
-        .await
-        .map_err(std::io::Error::other)?;
+    let credential_manager =
+        CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+            .await
+            .map_err(std::io::Error::other)?;
     if credential_manager.has_persisted_provider_selection()
         && let Some(provider_id) = credential_manager.active_provider_id()
         && config.model_providers.contains_key(&provider_id)

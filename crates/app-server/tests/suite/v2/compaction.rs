@@ -92,9 +92,7 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
     let genex_home = TempDir::new()?;
     let mut config = compaction_config(&server.uri(), /*auto_compact_limit*/ 200_000);
     if let CompactionRoute::Remote = route {
-        config = config
-            .with_provider_name("provider")
-            .with_provider_config("requires_auth = true");
+        config = config.with_provider_name("provider");
         write_api_key_auth(
             genex_home.path(),
             ApiKeyAuthFixture::new("test-token").plan_type("pro"),

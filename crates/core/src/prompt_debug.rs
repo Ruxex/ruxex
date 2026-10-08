@@ -32,9 +32,10 @@ pub async fn build_prompt_input(
 ) -> GenexResult<Vec<ResponseItem>> {
     config.ephemeral = true;
 
-    let credential_manager = CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
-        .await
-        .map_err(|err| GenexErr::Fatal(err.to_string()))?;
+    let credential_manager =
+        CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+            .await
+            .map_err(|err| GenexErr::Fatal(err.to_string()))?;
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
         config.genex_self_exe.clone(),

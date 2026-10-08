@@ -4,7 +4,6 @@ mod cloudflare_provider;
 mod model_catalog_source;
 mod models_endpoint;
 mod models_identity;
-mod my_provider;
 mod provider;
 pub mod test_support;
 

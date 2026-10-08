@@ -161,23 +161,16 @@ pub fn write_mock_responses_config_toml(
     server_uri: &str,
     feature_flags: &BTreeMap<Feature, bool>,
     auto_compact_limit: i64,
-    requires_auth: Option<bool>,
     model_provider_id: &str,
     compact_prompt: &str,
 ) -> std::io::Result<()> {
-    let mut config = MockResponsesConfig::new(server_uri)
+    let config = MockResponsesConfig::new(server_uri)
         .with_model_provider(model_provider_id)
         .with_features(feature_flags)
         .with_root_config(&format!(
             "compact_prompt = \"{compact_prompt}\"\nmodel_auto_compact_token_limit = {auto_compact_limit}"
         ))
         .with_provider_config("supports_websockets = false");
-
-    if matches!(requires_auth, Some(true)) {
-        config = config
-            .with_provider_name("provider")
-            .with_provider_config("requires_auth = true");
-    }
 
     config.write(genex_home)
 }

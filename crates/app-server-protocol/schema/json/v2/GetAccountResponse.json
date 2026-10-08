@@ -82,13 +82,6 @@
           "type": "string"
         },
         {
-          "description": "The provider does not require authentication.",
-          "enum": [
-            "notRequired"
-          ],
-          "type": "string"
-        },
-        {
           "description": "Provider configuration or credentials are invalid.",
           "enum": [
             "invalid"
@@ -279,9 +272,6 @@
     "providerId": {
       "type": "string"
     },
-    "requiresAuth": {
-      "type": "boolean"
-    },
     "usage": {
       "anyOf": [
         {
@@ -295,8 +285,7 @@
   },
   "required": [
     "authStatus",
-    "providerId",
-    "requiresAuth"
+    "providerId"
   ],
   "title": "GetAccountResponse",
   "type": "object"

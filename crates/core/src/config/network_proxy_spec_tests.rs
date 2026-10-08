@@ -264,7 +264,9 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
         restricted.environment_policy(),
         EnvironmentNetworkPolicy {
             requires_proxy: true,
-            ..EnvironmentNetworkPolicy::from_config(&owner, /*managed_allowed_domains_only*/ false)
+            ..EnvironmentNetworkPolicy::from_config(
+                &owner, /*managed_allowed_domains_only*/ false
+            )
         }
     );
     let external = PermissionProfile::External {

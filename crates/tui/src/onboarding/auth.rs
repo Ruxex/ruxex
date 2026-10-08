@@ -15,6 +15,7 @@ use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::LoginAccountParams;
 use genex_app_server_protocol::LoginAccountResponse;
+use genex_app_server_protocol::ModelProviderAuthField;
 use genex_login::AuthConfig;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
@@ -22,7 +23,6 @@ use ratatui::layout::Layout;
 use ratatui::layout::Rect;
 use ratatui::prelude::Widget;
 use ratatui::style::Color;
-use ratatui::style::Modifier;
 use ratatui::style::Style;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
@@ -34,6 +34,7 @@ use ratatui::widgets::WidgetRef;
 use ratatui::widgets::Wrap;
 
 use genex_protocol::config_types::ForcedLoginMethod;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -53,14 +54,8 @@ pub(crate) fn mark_underlined_hyperlink(buf: &mut Buffer, area: Rect, url: &str)
 
 #[derive(Clone)]
 pub(crate) enum SignInState {
-    PickMode,
     ApiKeyEntry(ApiKeyInputState),
     ApiKeyConfigured,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum SignInOption {
-    ApiKey,
 }
 
 const API_KEY_DISABLED_MESSAGE: &str = "API key login is disabled.";
@@ -70,53 +65,68 @@ pub(super) fn onboarding_request_id() -> genex_app_server_protocol::RequestId {
 
 #[derive(Clone, Default)]
 pub(crate) struct ApiKeyInputState {
+    fields: Vec<ModelProviderAuthField>,
+    field_index: usize,
+    values: BTreeMap<String, String>,
     value: String,
     prepopulated_from_env: bool,
+}
+
+impl ApiKeyInputState {
+    fn new(mut fields: Vec<ModelProviderAuthField>) -> Self {
+        if fields.is_empty() {
+            fields.push(ModelProviderAuthField {
+                id: "api_key".to_string(),
+                label: "API key".to_string(),
+                secret: true,
+            });
+        }
+        Self {
+            fields,
+            field_index: 0,
+            values: BTreeMap::new(),
+            value: String::new(),
+            prepopulated_from_env: false,
+        }
+    }
+
+    fn current_field(&self) -> &ModelProviderAuthField {
+        &self.fields[self.field_index]
+    }
+
+    fn into_credentials(mut self) -> Option<(String, BTreeMap<String, String>)> {
+        let current = self.current_field().id.clone();
+        self.values.insert(current, self.value.trim().to_string());
+        let api_key = self.values.remove("api_key")?;
+        if api_key.is_empty() {
+            return None;
+        }
+        Some((api_key, self.values))
+    }
+
+    fn next_field(&mut self) -> bool {
+        self.values.insert(
+            self.current_field().id.clone(),
+            self.value.trim().to_string(),
+        );
+        if self.field_index + 1 >= self.fields.len() {
+            return false;
+        }
+        self.field_index += 1;
+        self.value = self
+            .values
+            .get(self.current_field().id.as_str())
+            .cloned()
+            .unwrap_or_default();
+        self.prepopulated_from_env = false;
+        true
+    }
 }
 
 impl KeyboardHandler for AuthModeWidget {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         if self.handle_api_key_entry_key_event(&key_event) {
             return;
-        }
-
-        if keys::MOVE_UP.is_pressed(key_event) {
-            self.move_highlight(/*delta*/ -1);
-            return;
-        }
-        if keys::MOVE_DOWN.is_pressed(key_event) {
-            self.move_highlight(/*delta*/ 1);
-            return;
-        }
-        if keys::SELECT_FIRST.is_pressed(key_event) {
-            self.select_option_by_index(/*index*/ 0);
-            return;
-        }
-        if keys::SELECT_SECOND.is_pressed(key_event) {
-            self.select_option_by_index(/*index*/ 1);
-            return;
-        }
-        if keys::SELECT_THIRD.is_pressed(key_event) {
-            self.select_option_by_index(/*index*/ 2);
-            return;
-        }
-        if keys::SELECT_FOURTH.is_pressed(key_event) {
-            self.select_option_by_index(/*index*/ 3);
-            return;
-        }
-        if keys::CONFIRM.is_pressed(key_event) {
-            let sign_in_state = { (*self.sign_in_state.read().unwrap()).clone() };
-            match sign_in_state {
-                SignInState::PickMode => {
-                    self.handle_sign_in_option(self.highlighted_mode);
-                }
-                _ => {}
-            }
-            return;
-        }
-        if keys::CANCEL.is_pressed(key_event) {
-            tracing::info!("Cancel onboarding auth step");
-            self.cancel_active_attempt();
         }
     }
 
@@ -136,7 +146,6 @@ impl KeyboardHandler for AuthModeWidget {
 #[allow(dead_code)]
 pub(crate) struct AuthModeWidget {
     pub request_frame: FrameRequester,
-    pub highlighted_mode: SignInOption,
     pub error: Arc<RwLock<Option<String>>>,
     pub sign_in_state: Arc<RwLock<SignInState>>,
     pub app_server_request_handle: AppServerRequestHandle,
@@ -144,8 +153,35 @@ pub(crate) struct AuthModeWidget {
 }
 
 impl AuthModeWidget {
+    pub(crate) fn new(
+        request_frame: FrameRequester,
+        app_server_request_handle: AppServerRequestHandle,
+        auth_config: AuthConfig,
+        auth_fields: Vec<ModelProviderAuthField>,
+    ) -> Self {
+        Self {
+            request_frame,
+            error: Arc::new(RwLock::new(None)),
+            sign_in_state: Arc::new(RwLock::new(SignInState::ApiKeyEntry(
+                ApiKeyInputState::new(auth_fields),
+            ))),
+            app_server_request_handle,
+            auth_config,
+        }
+    }
+
     pub(crate) fn cancel_active_attempt(&self) {
-        *self.sign_in_state.write().unwrap() = SignInState::PickMode;
+        let fields = self
+            .sign_in_state
+            .read()
+            .ok()
+            .and_then(|state| match &*state {
+                SignInState::ApiKeyEntry(state) => Some(state.fields.clone()),
+                SignInState::ApiKeyConfigured => None,
+            })
+            .unwrap_or_default();
+        *self.sign_in_state.write().unwrap() =
+            SignInState::ApiKeyEntry(ApiKeyInputState::new(fields));
         self.set_error(/*message*/ None);
         self.request_frame.schedule_frame();
     }
@@ -176,10 +212,6 @@ impl AuthModeWidget {
         })
     }
 
-    fn confirm_binding(&self) -> KeyBinding {
-        keys::CONFIRM[0]
-    }
-
     fn cancel_binding(&self) -> KeyBinding {
         keys::CANCEL[0]
     }
@@ -189,126 +221,9 @@ impl AuthModeWidget {
             .is_login_method_allowed(ForcedLoginMethod::Api)
     }
 
-    fn displayed_sign_in_options(&self) -> Vec<SignInOption> {
-        let mut options = Vec::new();
-        if self.is_api_login_allowed() {
-            options.push(SignInOption::ApiKey);
-        }
-        options
-    }
-
-    fn selectable_sign_in_options(&self) -> Vec<SignInOption> {
-        self.displayed_sign_in_options()
-    }
-
-    fn move_highlight(&mut self, delta: isize) {
-        let options = self.selectable_sign_in_options();
-        if options.is_empty() {
-            return;
-        }
-
-        let current_index = options
-            .iter()
-            .position(|option| *option == self.highlighted_mode)
-            .unwrap_or(0);
-        let next_index =
-            (current_index as isize + delta).rem_euclid(options.len() as isize) as usize;
-        self.highlighted_mode = options[next_index];
-    }
-
-    fn select_option_by_index(&mut self, index: usize) {
-        let options = self.displayed_sign_in_options();
-        if let Some(option) = options.get(index).copied() {
-            self.handle_sign_in_option(option);
-        }
-    }
-
-    fn handle_sign_in_option(&mut self, option: SignInOption) {
-        match option {
-            SignInOption::ApiKey => {
-                if self.is_api_login_allowed() {
-                    self.start_api_key_entry();
-                } else {
-                    self.disallow_api_login();
-                }
-            }
-        }
-    }
-
     fn disallow_api_login(&mut self) {
-        self.highlighted_mode = SignInOption::ApiKey;
         self.set_error(Some(API_KEY_DISABLED_MESSAGE.to_string()));
-        *self.sign_in_state.write().unwrap() = SignInState::PickMode;
         self.request_frame.schedule_frame();
-    }
-
-    fn render_pick_mode(&self, area: Rect, buf: &mut Buffer) {
-        let mut lines: Vec<Line> = vec!["  Choose how you want to use Genex.".into(), "".into()];
-
-        let create_mode_item = |idx: usize,
-                                selected_mode: SignInOption,
-                                text: &str,
-                                description: &str|
-         -> Vec<Line<'static>> {
-            let is_selected = self.highlighted_mode == selected_mode;
-            let caret = if is_selected { ">" } else { " " };
-
-            let line1 = if is_selected {
-                Line::from(vec![
-                    format!("{caret} {index}. ", index = idx + 1).cyan().dim(),
-                    text.to_string().cyan(),
-                ])
-            } else {
-                format!("  {index}. {text}", index = idx + 1).into()
-            };
-
-            let line2 = if is_selected {
-                Line::from(format!("     {description}"))
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::DIM)
-            } else {
-                Line::from(format!("     {description}"))
-                    .style(Style::default().add_modifier(Modifier::DIM))
-            };
-
-            vec![line1, line2]
-        };
-
-        for (idx, option) in self.displayed_sign_in_options().into_iter().enumerate() {
-            match option {
-                SignInOption::ApiKey => {
-                    lines.extend(create_mode_item(
-                        idx,
-                        option,
-                        "Provide your own API key",
-                        "Pay for what you use",
-                    ));
-                }
-            }
-            lines.push("".into());
-        }
-
-        if !self.is_api_login_allowed() {
-            lines.push(
-                "  API key login is disabled by this workspace."
-                    .dim()
-                    .into(),
-            );
-            lines.push("".into());
-        }
-        lines.push(Line::from(vec![
-            "  Press ".dim(),
-            self.confirm_binding().into(),
-            " to continue".dim(),
-        ]));
-        if let Some(err) = self.error_message() {
-            lines.push("".into());
-            lines.push(err.red().into());
-        }
-
-        Paragraph::new(lines)
-            .wrap(Wrap { trim: false })
-            .render(area, buf);
     }
 
     fn render_api_key_configured(&self, area: Rect, buf: &mut Buffer) {
@@ -331,13 +246,11 @@ impl AuthModeWidget {
         ])
         .areas(area);
 
+        let field = state.current_field();
         let mut intro_lines: Vec<Line> = vec![
-            Line::from(vec![
-                "> ".into(),
-                "Use a provider API key for usage-based billing".bold(),
-            ]),
+            Line::from(vec!["> ".into(), format!("Enter {}", field.label).bold()]),
             "".into(),
-            "  Paste or type your API key below. It will be stored locally in auth.json.".into(),
+            "  This value will be stored locally in auth.json.".into(),
             "".into(),
         ];
         if state.prepopulated_from_env {
@@ -354,7 +267,7 @@ impl AuthModeWidget {
             .render(intro_area, buf);
 
         let content_line: Line = if state.value.is_empty() {
-            vec!["Paste or type your API key".dim()].into()
+            vec![format!("Paste or type your {}", field.label).dim()].into()
         } else {
             Line::from(state.value.clone())
         };
@@ -362,7 +275,7 @@ impl AuthModeWidget {
             .wrap(Wrap { trim: false })
             .block(
                 Block::default()
-                    .title("API key")
+                    .title(field.label.clone())
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded)
                     .border_style(Style::default().fg(Color::Cyan)),
@@ -372,8 +285,12 @@ impl AuthModeWidget {
         let mut footer_lines: Vec<Line> = vec![
             Line::from(vec![
                 "  Press ".dim(),
-                self.confirm_binding().into(),
-                " to save".dim(),
+                keys::CONFIRM[0].into(),
+                if state.field_index + 1 < state.fields.len() {
+                    " to continue".dim()
+                } else {
+                    " to save".dim()
+                },
             ]),
             Line::from(vec![
                 "  Press ".dim(),
@@ -392,22 +309,35 @@ impl AuthModeWidget {
 
     fn handle_api_key_entry_key_event(&mut self, key_event: &KeyEvent) -> bool {
         let mut should_save: Option<String> = None;
+        let mut credentials = BTreeMap::new();
+        let mut retry_state = None;
         let mut should_request_frame = false;
 
         {
             let mut guard = self.sign_in_state.write().unwrap();
             if let SignInState::ApiKeyEntry(state) = &mut *guard {
                 if keys::CANCEL.is_pressed(*key_event) {
-                    *guard = SignInState::PickMode;
+                    let fields = state.fields.clone();
+                    *guard = SignInState::ApiKeyEntry(ApiKeyInputState::new(fields));
                     self.set_error(/*message*/ None);
                     should_request_frame = true;
                 } else if keys::CONFIRM.is_pressed(*key_event) {
                     let trimmed = state.value.trim().to_string();
                     if trimmed.is_empty() {
-                        self.set_error(Some("API key cannot be empty".to_string()));
+                        let label = state.current_field().label.clone();
+                        self.set_error(Some(format!("{label} cannot be empty")));
+                        should_request_frame = true;
+                    } else if state.field_index + 1 < state.fields.len() {
+                        state.next_field();
+                        self.set_error(/*message*/ None);
                         should_request_frame = true;
                     } else {
-                        should_save = Some(trimmed);
+                        retry_state = Some(state.clone());
+                        let completed = state.clone();
+                        if let Some((api_key, extra_credentials)) = completed.into_credentials() {
+                            should_save = Some(api_key);
+                            credentials = extra_credentials;
+                        }
                     }
                 } else {
                     match key_event.code {
@@ -445,7 +375,7 @@ impl AuthModeWidget {
         }
 
         if let Some(api_key) = should_save {
-            self.save_api_key(api_key);
+            self.save_api_key(api_key, credentials, retry_state.expect("save state"));
         } else if should_request_frame {
             self.request_frame.schedule_frame();
         }
@@ -476,37 +406,12 @@ impl AuthModeWidget {
         true
     }
 
-    fn start_api_key_entry(&mut self) {
-        if !self.is_api_login_allowed() {
-            self.disallow_api_login();
-            return;
-        }
-        self.set_error(/*message*/ None);
-        let prefill_from_env: Option<String> = None;
-        let mut guard = self.sign_in_state.write().unwrap();
-        match &mut *guard {
-            SignInState::ApiKeyEntry(state) => {
-                if state.value.is_empty() {
-                    if let Some(prefill) = prefill_from_env {
-                        state.value = prefill;
-                        state.prepopulated_from_env = true;
-                    } else {
-                        state.prepopulated_from_env = false;
-                    }
-                }
-            }
-            _ => {
-                *guard = SignInState::ApiKeyEntry(ApiKeyInputState {
-                    value: prefill_from_env.clone().unwrap_or_default(),
-                    prepopulated_from_env: prefill_from_env.is_some(),
-                });
-            }
-        }
-        drop(guard);
-        self.request_frame.schedule_frame();
-    }
-
-    fn save_api_key(&mut self, api_key: String) {
+    fn save_api_key(
+        &mut self,
+        api_key: String,
+        credentials: BTreeMap<String, String>,
+        retry_state: ApiKeyInputState,
+    ) {
         if !self.is_api_login_allowed() {
             self.disallow_api_login();
             return;
@@ -523,6 +428,7 @@ impl AuthModeWidget {
                     params: LoginAccountParams::ApiKey {
                         api_key: api_key.clone(),
                         provider_id: None,
+                        credentials,
                     },
                 })
                 .await
@@ -533,10 +439,7 @@ impl AuthModeWidget {
                 }
                 Err(err) => {
                     *error.write().unwrap() = Some(format!("Failed to save API key: {err}"));
-                    *sign_in_state.write().unwrap() = SignInState::ApiKeyEntry(ApiKeyInputState {
-                        value: api_key,
-                        prepopulated_from_env: false,
-                    });
+                    *sign_in_state.write().unwrap() = SignInState::ApiKeyEntry(retry_state);
                 }
             }
             request_frame.schedule_frame();
@@ -549,7 +452,7 @@ impl StepStateProvider for AuthModeWidget {
     fn get_step_state(&self) -> StepState {
         let sign_in_state = self.sign_in_state.read().unwrap();
         match &*sign_in_state {
-            SignInState::PickMode | SignInState::ApiKeyEntry(_) => StepState::InProgress,
+            SignInState::ApiKeyEntry(_) => StepState::InProgress,
             SignInState::ApiKeyConfigured => StepState::Complete,
         }
     }
@@ -559,9 +462,6 @@ impl WidgetRef for AuthModeWidget {
     fn render_ref(&self, area: Rect, buf: &mut Buffer) {
         let sign_in_state = self.sign_in_state.read().unwrap();
         match &*sign_in_state {
-            SignInState::PickMode => {
-                self.render_pick_mode(area, buf);
-            }
             SignInState::ApiKeyEntry(state) => {
                 self.render_api_key_entry(area, buf, state);
             }

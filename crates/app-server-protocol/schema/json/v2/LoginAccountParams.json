@@ -6,6 +6,13 @@
         "apiKey": {
           "type": "string"
         },
+        "credentials": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Additional provider-specific credential values.",
+          "type": "object"
+        },
         "providerId": {
           "description": "Optional configured model provider ID. When omitted, the active configured provider is used.",
           "type": [

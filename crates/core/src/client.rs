@@ -885,7 +885,6 @@ impl ModelClient {
         let provider = self.state.provider.info();
         auth.is_some_and(GenexAuth::uses_managed_auth)
             && provider.is_responses_provider()
-            && provider.requires_auth
             && provider.env_key.is_none()
             && provider.experimental_bearer_token.is_none()
             && provider.auth.is_none()

@@ -75,7 +75,8 @@ impl Service {
         let credential_manager = Arc::clone(&self.credential_manager);
         let auth_changes = credential_manager.auth_change_receiver();
         let auth_revision = *auth_changes.borrow();
-        let Some(identity) = identity(&credential_manager).filter(|_| self.platform_supported) else {
+        let Some(identity) = identity(&credential_manager).filter(|_| self.platform_supported)
+        else {
             return match operation {
                 NativeOperation::Status => Ok(GuardedResponse {
                     payload: rpc::UserVerificationStatusResponse {
