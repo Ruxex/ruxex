@@ -4325,7 +4325,7 @@ fn is_permission_allowed(
 
 /// Returns the path to the Genex configuration directory, which can be
 /// specified by the `GENEX_HOME` environment variable. If not set, defaults to
-/// `~/.genex`.
+/// the build-time configured Genex home directory name under the user's home directory.
 ///
 /// - If `GENEX_HOME` is set, the value must exist and be a directory. The
 ///   value will be canonicalized and this function will Err otherwise.
@@ -4334,6 +4334,9 @@ fn is_permission_allowed(
 pub fn find_genex_home() -> std::io::Result<AbsolutePathBuf> {
     genex_utils_home_dir::find_genex_home()
 }
+
+/// Build-time configured fallback directory name used when `GENEX_HOME` is unset.
+pub const DEFAULT_GENEX_HOME_DIR_NAME: &str = genex_utils_home_dir::DEFAULT_GENEX_HOME_DIR_NAME;
 
 /// Returns the path to the folder where Genex logs are stored. Does not verify
 /// that the directory exists.

@@ -2,9 +2,18 @@ use dirs::home_dir;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use std::path::PathBuf;
 
+/// Build-time configurable fallback directory name under the user's home directory.
+///
+/// Set `GENEX_DEFAULT_HOME_DIR_NAME` when building a provider-specific binary to avoid
+/// collisions between binaries that otherwise share the same default home.
+pub const DEFAULT_GENEX_HOME_DIR_NAME: &str = match option_env!("GENEX_DEFAULT_HOME_DIR_NAME") {
+    Some(value) => value,
+    None => ".genex",
+};
+
 /// Returns the path to the Genex configuration directory, which can be
 /// specified by the `GENEX_HOME` environment variable. If not set, defaults to
-/// `~/.genex`.
+/// `~/{DEFAULT_GENEX_HOME_DIR_NAME}`.
 ///
 /// - If `GENEX_HOME` is set, the value must exist and be a directory. The
 ///   value will be canonicalized and this function will Err otherwise.
@@ -56,7 +65,7 @@ fn find_genex_home_from_env(genex_home_env: Option<&str>) -> std::io::Result<Abs
                     "Could not find home directory",
                 )
             })?;
-            p.push(".genex");
+            p.push(DEFAULT_GENEX_HOME_DIR_NAME);
             AbsolutePathBuf::from_absolute_path(p)
         }
     }
@@ -127,7 +136,7 @@ mod tests {
         let resolved =
             find_genex_home_from_env(/*genex_home_env*/ None).expect("default GENEX_HOME");
         let mut expected = home_dir().expect("home dir");
-        expected.push(".genex");
+        expected.push(super::DEFAULT_GENEX_HOME_DIR_NAME);
         let expected = AbsolutePathBuf::from_absolute_path(expected).expect("absolute home");
         assert_eq!(resolved, expected);
     }
