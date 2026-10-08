@@ -162,6 +162,8 @@ pub struct ThreadStartParams {
 pub struct ThreadStartResponse {
     pub thread: Thread,
     pub model: String,
+    /// Mounted provider reported by the AppServer. This is status only; it is
+    /// not a per-thread provider selection.
     pub model_provider: String,
     pub service_tier: Option<String>,
     /// Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
@@ -278,6 +280,8 @@ pub struct ThreadSettings {
     pub sandbox_policy: SandboxPolicy,
     pub active_permission_profile: Option<ActivePermissionProfile>,
     pub model: String,
+    /// Mounted provider reported by the AppServer. This is status only; it is
+    /// not a per-thread provider selection.
     pub model_provider: String,
     pub service_tier: Option<String>,
     pub effort: Option<ReasoningEffort>,
@@ -394,6 +398,8 @@ pub struct ThreadResumeParams {
 pub struct ThreadResumeResponse {
     pub thread: Thread,
     pub model: String,
+    /// Mounted provider reported by the AppServer. This is status only; it is
+    /// not a per-thread provider selection.
     pub model_provider: String,
     pub service_tier: Option<String>,
     /// Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
@@ -586,6 +592,8 @@ pub struct ThreadForkParams {
 pub struct ThreadForkResponse {
     pub thread: Thread,
     pub model: String,
+    /// Mounted provider reported by the AppServer. This is status only; it is
+    /// not a per-thread provider selection.
     pub model_provider: String,
     pub service_tier: Option<String>,
     /// Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.

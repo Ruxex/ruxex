@@ -226,7 +226,8 @@ pub struct Thread {
     /// Persisted thread history contract selected when this thread was created.
     #[serde(default)]
     pub history_mode: ThreadHistoryMode,
-    /// Model provider used for this thread (for example, 'provider').
+    /// Mounted provider reported by the AppServer (for example, 'provider').
+    /// This is status only; it is not a persisted or per-thread selection.
     pub model_provider: String,
     /// Current configured model when loaded, otherwise the latest persisted model.
     /// Null when unavailable. This is not per-turn execution telemetry.
