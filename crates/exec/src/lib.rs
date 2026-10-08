@@ -858,7 +858,6 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
                 params: ThreadForkParams {
                     thread_id: source_thread_id,
                     model: config.model.clone(),
-                    model_provider: Some(config.model_provider_id.clone()),
                     cwd: Some(config.cwd.to_string_lossy().to_string()),
                     runtime_workspace_roots: Some(config.workspace_roots.clone()),
                     approval_policy: Some(config.permissions.approval_policy.value().into()),
@@ -1175,7 +1174,6 @@ fn thread_start_params_from_config(
     });
     ThreadStartParams {
         model: config.model.clone(),
-        model_provider: Some(config.model_provider_id.clone()),
         cwd: Some(config.cwd.to_string_lossy().to_string()),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),
         approval_policy: Some(config.permissions.approval_policy.value().into()),
@@ -1200,7 +1198,6 @@ fn thread_resume_params_from_config(config: &Config, thread_id: String) -> Threa
     ThreadResumeParams {
         thread_id,
         model: config.model.clone(),
-        model_provider: Some(config.model_provider_id.clone()),
         cwd: Some(config.cwd.to_string_lossy().to_string()),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),
         approval_policy: Some(config.permissions.approval_policy.value().into()),

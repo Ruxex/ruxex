@@ -304,21 +304,12 @@ pub(crate) enum ThreadParamsMode {
 /// Determines where model settings come from when resuming a thread.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ResumeModelSettings {
-    /// Sends the current config's model, provider, and reasoning effort as explicit overrides.
+    /// Sends the current config's model and reasoning effort as explicit overrides.
     OverrideFromCurrentConfig,
     /// Omits those overrides so app-server restores the settings saved with the thread.
     RestoreFromThread,
     /// Rejoins a loaded thread without changing any of its existing settings.
     PreserveExistingThread,
-}
-
-impl ThreadParamsMode {
-    fn model_provider_from_config(self, config: &Config) -> Option<String> {
-        match self {
-            Self::Embedded => Some(config.model_provider_id.clone()),
-            Self::Remote => None,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -1851,7 +1842,6 @@ pub(crate) fn thread_start_params_from_config(
         .flatten();
     ThreadStartParams {
         model: config.model.clone(),
-        model_provider: thread_params_mode.model_provider_from_config(config),
         service_tier: service_tier_override_from_config(config),
         cwd: thread_cwd_from_config(config, thread_params_mode, remote_cwd_override),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),
@@ -1905,19 +1895,15 @@ fn thread_resume_params_from_config(
             config_overrides = None;
         }
     }
-    let (model, model_provider) = match model_settings {
-        ResumeModelSettings::OverrideFromCurrentConfig => (
-            config.model.clone(),
-            thread_params_mode.model_provider_from_config(&config),
-        ),
+    let model = match model_settings {
+        ResumeModelSettings::OverrideFromCurrentConfig => config.model.clone(),
         ResumeModelSettings::RestoreFromThread | ResumeModelSettings::PreserveExistingThread => {
-            (None, None)
+            None
         }
     };
     let mut params = ThreadResumeParams {
         thread_id: thread_id.to_string(),
         model,
-        model_provider,
         service_tier: service_tier_override_from_config(&config),
         cwd: thread_cwd_from_config(&config, thread_params_mode, remote_cwd_override),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),
@@ -1959,7 +1945,6 @@ fn thread_fork_params_from_config(
     ThreadForkParams {
         thread_id: thread_id.to_string(),
         model: config.model.clone(),
-        model_provider: thread_params_mode.model_provider_from_config(&config),
         service_tier: service_tier_override_from_config(&config),
         cwd: thread_cwd_from_config(&config, thread_params_mode, remote_cwd_override),
         runtime_workspace_roots: Some(config.workspace_roots.clone()),

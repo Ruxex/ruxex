@@ -223,7 +223,6 @@ impl App {
         };
         let options = TemporaryStructuredThreadOptions {
             model,
-            model_provider: config.model_provider_id.clone(),
             cwd,
             active_permission_profile: config
                 .permissions

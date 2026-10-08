@@ -33,10 +33,9 @@ use uuid::Uuid;
 const STRUCTURED_TURN_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 30);
 const STRUCTURED_RESPONSE_MAX_BYTES: usize = 8 * 1024;
 
-/// Preserve the visible thread's provider, permissions, and external-tool isolation.
+/// Preserve the visible thread's permissions and external-tool isolation.
 pub(crate) struct TemporaryStructuredThreadOptions {
     pub(crate) model: String,
-    pub(crate) model_provider: String,
     pub(crate) cwd: String,
     pub(crate) active_permission_profile: Option<String>,
     pub(crate) mcp_server_names: Vec<String>,
@@ -52,7 +51,6 @@ pub(crate) async fn start_temporary_thread(
 ) -> color_eyre::Result<ThreadStartResponse> {
     let TemporaryStructuredThreadOptions {
         model,
-        model_provider,
         cwd,
         active_permission_profile,
         mcp_server_names,
@@ -127,7 +125,6 @@ pub(crate) async fn start_temporary_thread(
                 request_id: RequestId::String(format!("temporary-structured-{}", Uuid::new_v4())),
                 params: ThreadStartParams {
                     model: Some(model),
-                    model_provider: Some(model_provider),
                     cwd: Some(cwd),
                     approval_policy: Some(AskForApproval::Never),
                     sandbox: custom_permission_profile

@@ -1503,12 +1503,6 @@
         "null"
       ]
     },
-    "modelProvider": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "sandbox": {
       "anyOf": [
         {

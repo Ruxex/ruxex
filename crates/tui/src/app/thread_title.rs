@@ -89,7 +89,6 @@ impl App {
         let config = self.chat_widget.config_ref();
         let options = TemporaryStructuredThreadOptions {
             model,
-            model_provider: config.model_provider_id.clone(),
             cwd: config.cwd.display().to_string(),
             active_permission_profile: config
                 .permissions

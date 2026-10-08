@@ -586,7 +586,6 @@ async fn execute_inner(
                     "ephemeral tasks cannot create inspectable background tasks".to_string()
                 );
             }
-            thread_start_params.model_provider = Some(source_thread.model_provider.clone());
             thread_start_params.cwd = Some(source_thread.cwd.to_string_lossy().into_owned());
             thread_start_params.project_id = source_thread.project_id.clone();
             thread_start_params.ephemeral = Some(source_thread.ephemeral);

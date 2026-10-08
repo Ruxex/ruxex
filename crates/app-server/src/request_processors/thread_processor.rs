@@ -116,14 +116,6 @@ fn collect_resume_override_mismatches(
             config_snapshot.model
         ));
     }
-    if let Some(requested_provider) = request.model_provider.as_deref()
-        && requested_provider != config_snapshot.model_provider_id
-    {
-        mismatch_details.push(format!(
-            "model_provider requested={requested_provider} active={}",
-            config_snapshot.model_provider_id
-        ));
-    }
     if let Some(requested_service_tier) = request.service_tier.as_ref()
         && requested_service_tier != &config_snapshot.service_tier
     {
@@ -1074,7 +1066,6 @@ impl ThreadRequestProcessor {
     ) -> Result<(), JSONRPCErrorError> {
         let ThreadStartParams {
             model,
-            model_provider,
             allow_provider_model_fallback,
             service_tier,
             cwd,
@@ -1136,7 +1127,6 @@ impl ThreadRequestProcessor {
             resolve_turn_environment_selections(self.thread_manager.as_ref(), environments)?;
         let mut typesafe_overrides = self.build_thread_config_overrides(
             model,
-            model_provider,
             service_tier,
             cwd,
             runtime_workspace_roots,
@@ -1586,7 +1576,6 @@ impl ThreadRequestProcessor {
     fn build_thread_config_overrides(
         &self,
         model: Option<String>,
-        model_provider: Option<String>,
         service_tier: Option<Option<String>>,
         cwd: Option<String>,
         runtime_workspace_roots: Option<Vec<AbsolutePathBuf>>,
@@ -1598,7 +1587,6 @@ impl ThreadRequestProcessor {
     ) -> ConfigOverrides {
         ConfigOverrides {
             model,
-            model_provider,
             service_tier,
             cwd: cwd.map(PathBuf::from),
             workspace_roots: runtime_workspace_roots,
@@ -3514,7 +3502,6 @@ impl ThreadRequestProcessor {
             history,
             path,
             model,
-            model_provider,
             service_tier,
             cwd,
             runtime_workspace_roots,
@@ -3703,7 +3690,6 @@ impl ThreadRequestProcessor {
         }
         let mut typesafe_overrides = self.build_thread_config_overrides(
             model,
-            model_provider,
             service_tier,
             cwd,
             runtime_workspace_roots,
@@ -4654,7 +4640,6 @@ impl ThreadRequestProcessor {
             before_turn_id,
             path,
             model,
-            model_provider,
             service_tier,
             cwd,
             runtime_workspace_roots,
@@ -4775,7 +4760,6 @@ impl ThreadRequestProcessor {
         let runtime_workspace_roots = runtime_workspace_roots.map(resolve_runtime_workspace_roots);
         let mut typesafe_overrides = self.build_thread_config_overrides(
             model,
-            model_provider,
             service_tier,
             cwd,
             runtime_workspace_roots,

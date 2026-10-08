@@ -15596,12 +15596,6 @@
               "null"
             ]
           },
-          "modelProvider": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "sandbox": {
             "anyOf": [
               {
@@ -17292,12 +17286,6 @@
               "null"
             ]
           },
-          "modelProvider": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "sandbox": {
             "anyOf": [
               {
@@ -17963,12 +17951,6 @@
             ]
           },
           "model": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "modelProvider": {
             "type": [
               "string",
               "null"
