@@ -55,6 +55,9 @@ use genex_features::Feature;
 use genex_login::default_client::originator;
 use genex_login::default_client::set_default_client_residency_requirement;
 use genex_login::enforce_login_restrictions;
+use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use genex_model_provider::ProviderDescriptor;
+use genex_model_provider::mount_provider_home;
 use genex_protocol::ThreadId;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::AltScreenMode;
@@ -291,14 +294,26 @@ async fn init_state_db_for_app_server_target(
     app_server_target: &AppServerTarget,
 ) -> std::io::Result<Option<StateDbHandle>> {
     match app_server_target {
-        AppServerTarget::Embedded => state_db::try_init(config).await.map(Some).map_err(|err| {
-            let database_path = genex_state::runtime_db_path_for_corruption_error(&err)
-                .unwrap_or_else(|| config.sqlite_config().state_db_path());
-            std::io::Error::other(LocalStateDbStartupError::new(
-                database_path,
-                format!("{err:#}"),
-            ))
-        }),
+        AppServerTarget::Embedded => {
+            let provider_descriptor = ProviderDescriptor::new(
+                config.model_provider_id.clone(),
+                CURRENT_PROVIDER_PROTOCOL_VERSION,
+            );
+            mount_provider_home(&config.genex_home, &provider_descriptor).map_err(|err| {
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    format!("failed to mount provider data root: {err}"),
+                )
+            })?;
+            state_db::try_init(config).await.map(Some).map_err(|err| {
+                let database_path = genex_state::runtime_db_path_for_corruption_error(&err)
+                    .unwrap_or_else(|| config.sqlite_config().state_db_path());
+                std::io::Error::other(LocalStateDbStartupError::new(
+                    database_path,
+                    format!("{err:#}"),
+                ))
+            })
+        }
         AppServerTarget::LocalDaemon { .. } | AppServerTarget::Remote { .. } => {
             Ok(state_db::get_state_db(config).await)
         }
