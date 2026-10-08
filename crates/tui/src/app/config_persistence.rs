@@ -36,8 +36,7 @@ pub(super) fn resume_model_settings_for_overrides(
             .iter()
             .any(|key| layer.config.get(*key).is_some())
     });
-    if harness_overrides.model.is_some() || has_layer_override
-    {
+    if harness_overrides.model.is_some() || has_layer_override {
         crate::app_server_session::ResumeModelSettings::OverrideFromCurrentConfig
     } else {
         crate::app_server_session::ResumeModelSettings::RestoreFromThread

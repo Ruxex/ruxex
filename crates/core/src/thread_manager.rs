@@ -512,7 +512,43 @@ impl ThreadManager {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         external_time_provider: Option<Arc<dyn TimeProvider>>,
     ) -> Self {
-        let provider_contract = build_provider_contract(provider.clone());
+        Self::new_with_provider_contract(
+            config,
+            credential_manager,
+            provider.clone(),
+            build_provider_contract(provider),
+            models_manager,
+            session_source,
+            environment_manager,
+            extensions,
+            user_instructions_provider,
+            image_store,
+            thread_store,
+            agent_graph_store,
+            installation_id,
+            attestation_provider,
+            external_time_provider,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_with_provider_contract(
+        config: &Config,
+        credential_manager: Arc<CredentialManager>,
+        provider: SharedProviderRuntime,
+        provider_contract: SharedModelProvider,
+        models_manager: SharedModelsManager,
+        session_source: SessionSource,
+        environment_manager: Arc<EnvironmentManager>,
+        extensions: Arc<ExtensionRegistry<Config>>,
+        user_instructions_provider: Arc<dyn UserInstructionsProvider>,
+        image_store: Arc<dyn AttachmentStore>,
+        thread_store: Arc<dyn ThreadStore>,
+        agent_graph_store: Option<Arc<dyn AgentGraphStore>>,
+        installation_id: String,
+        attestation_provider: Option<Arc<dyn AttestationProvider>>,
+        external_time_provider: Option<Arc<dyn TimeProvider>>,
+    ) -> Self {
         let genex_home = config.genex_home.clone();
         let restriction_product = session_source.restriction_product();
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);

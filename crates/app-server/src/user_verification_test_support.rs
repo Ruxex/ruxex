@@ -147,10 +147,8 @@ impl Harness {
         );
         let (sender, messages) = mpsc::channel(/*buffer*/ 16);
         let outgoing = Arc::new(OutgoingMessageSender::new(sender, ()));
-        let model_provider = create_model_provider(
-            config.model_provider.clone(),
-            Some(Arc::clone(&auth)),
-        );
+        let model_provider =
+            create_model_provider(config.model_provider.clone(), Some(Arc::clone(&auth)));
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
             outgoing: Arc::clone(&outgoing),
             arg0_paths: Arg0DispatchPaths::default(),

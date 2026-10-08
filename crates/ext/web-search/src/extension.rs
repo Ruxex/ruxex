@@ -157,8 +157,16 @@ impl ToolContributor for WebSearchExtension {
 }
 
 pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: SharedProviderRuntime) {
+    install_with_provider_contract(registry, provider.clone(), provider_contract(provider));
+}
+
+pub fn install_with_provider_contract(
+    registry: &mut ExtensionRegistryBuilder<Config>,
+    provider: SharedProviderRuntime,
+    provider_contract: SharedModelProvider,
+) {
     let extension = Arc::new(WebSearchExtension {
-        provider_contract: provider_contract(provider.clone()),
+        provider_contract,
         provider,
     });
     registry.thread_lifecycle_contributor(extension.clone());

@@ -153,12 +153,13 @@ impl ConfigManager {
             .map_err(|err| ConfigManagerError::json("failed to deserialize configuration", err))?;
 
         let mut origins = layers.origins_with_path_filter(|segments| {
-            !matches!(segments.first().map(String::as_str),
-                Some("model_provider" | "model_providers"))
-                && layers
-                    .requirements_toml()
-                    .exact_requirement_for_config_path(segments)
-                    .is_none()
+            !matches!(
+                segments.first().map(String::as_str),
+                Some("model_provider" | "model_providers")
+            ) && layers
+                .requirements_toml()
+                .exact_requirement_for_config_path(segments)
+                .is_none()
         });
         origins.retain(|_, metadata| {
             !matches!(&metadata.name, ConfigLayerSource::PackagedDefaults { .. })

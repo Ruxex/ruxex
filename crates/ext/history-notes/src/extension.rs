@@ -169,9 +169,23 @@ pub fn install(
     credential_manager: Arc<CredentialManager>,
     provider: SharedProviderRuntime,
 ) {
+    install_with_provider_contract(
+        registry,
+        credential_manager,
+        provider.clone(),
+        provider_contract(provider),
+    );
+}
+
+pub fn install_with_provider_contract(
+    registry: &mut ExtensionRegistryBuilder<Config>,
+    credential_manager: Arc<CredentialManager>,
+    provider: SharedProviderRuntime,
+    provider_contract: SharedModelProvider,
+) {
     let extension = Arc::new(HistoryNotesExtension {
         credential_manager,
-        provider_contract: provider_contract(provider.clone()),
+        provider_contract,
         provider,
     });
     registry.thread_lifecycle_contributor(extension.clone());
