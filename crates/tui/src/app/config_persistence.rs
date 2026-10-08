@@ -769,18 +769,6 @@ impl App {
         self.chat_widget.set_tui_theme(Some(name));
     }
 
-    #[cfg(test)]
-    pub(super) fn sync_tui_pet_selection(&mut self, pet: String) {
-        self.local_settings.tui.pet = Some(pet.clone());
-        self.chat_widget.set_tui_pet(Some(pet));
-    }
-
-    pub(super) fn sync_tui_pet_disabled(&mut self) {
-        let pet = crate::pets::DISABLED_PET_ID.to_string();
-        self.local_settings.tui.pet = Some(pet.clone());
-        self.chat_widget.set_tui_pet(Some(pet));
-    }
-
     pub(super) fn restore_runtime_theme_from_config(&self) {
         if let Some(name) = self.local_settings.tui.theme.as_deref()
             && let Some(theme) = crate::render::highlight::resolve_theme_by_name(

@@ -114,7 +114,6 @@ mod config_update;
 pub(crate) mod custom_terminal;
 mod daybreak;
 mod permission_discovery;
-mod pets;
 mod worktree_browser;
 pub use custom_terminal::Terminal;
 mod assistant_directives;

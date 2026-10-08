@@ -44,7 +44,6 @@ use genex_config::types::ToolSuggestDisabledTool;
 use genex_config::types::ToolSuggestDiscoverable;
 use genex_config::types::TuiKeymap;
 use genex_config::types::TuiNotificationSettings;
-use genex_config::types::TuiPetAnchor;
 use genex_config::types::UriBasedFileOpener;
 use genex_core_plugins::PluginLoadOutcome;
 use genex_core_plugins::PluginsConfigInput;
@@ -722,12 +721,6 @@ pub struct Config {
 
     /// Syntax highlighting theme override (kebab-case name).
     pub tui_theme: Option<String>,
-
-    /// Pet id preselected by the terminal pet picker.
-    pub tui_pet: Option<String>,
-
-    /// Vertical anchor used by terminal pet rendering.
-    pub tui_pet_anchor: TuiPetAnchor,
 
     /// Preferred layout for resume/fork session picker results.
     pub tui_session_picker_view: SessionPickerViewMode,
@@ -4059,12 +4052,6 @@ impl Config {
                 .unwrap_or(true),
             tui_terminal_title: cfg.tui.as_ref().and_then(|t| t.terminal_title.clone()),
             tui_theme: cfg.tui.as_ref().and_then(|t| t.theme.clone()),
-            tui_pet: cfg.tui.as_ref().and_then(|t| t.pet.clone()),
-            tui_pet_anchor: cfg
-                .tui
-                .as_ref()
-                .map(|t| t.pet_anchor)
-                .unwrap_or_default(),
             tui_session_picker_view: cfg
                 .tui
                 .as_ref()

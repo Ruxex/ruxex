@@ -89,14 +89,6 @@ pub fn syntax_theme_edit(name: &str) -> ConfigEdit {
     }
 }
 
-/// Produces a config edit that sets [tui].pet = "<name>".
-pub fn tui_pet_edit(name: &str) -> ConfigEdit {
-    ConfigEdit::SetPath {
-        segments: vec!["tui".to_string(), "pet".to_string()],
-        value: value(name.to_string()),
-    }
-}
-
 /// Produces a config edit that sets `[tui].session_picker_view = "<mode>"`.
 pub fn session_picker_view_edit(mode: SessionPickerViewMode) -> ConfigEdit {
     ConfigEdit::SetPath {
@@ -947,10 +939,6 @@ mod tests {
         assert!(matches!(
             syntax_theme_edit("dark"),
             ConfigEdit::SetPath { segments, .. } if segments == ["tui", "theme"]
-        ));
-        assert!(matches!(
-            tui_pet_edit("cat"),
-            ConfigEdit::SetPath { segments, .. } if segments == ["tui", "pet"]
         ));
         assert!(matches!(
             keymap_binding_edit("global", "quit", "ctrl-c"),

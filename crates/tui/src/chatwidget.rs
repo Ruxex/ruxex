@@ -168,8 +168,6 @@ const TRUSTED_ACCESS_FOR_CYBER_VERIFICATION_WARNING: &str = "Your conversations 
 const PLAN_MODE_REASONING_SCOPE_TITLE: &str = "Apply reasoning change";
 const PLAN_MODE_REASONING_SCOPE_PLAN_ONLY: &str = "Apply to Plan mode override";
 const PLAN_MODE_REASONING_SCOPE_ALL_MODES: &str = "Apply to global default and Plan mode override";
-const PET_SELECTION_LOADING_VIEW_ID: &str = "pet-selection-loading";
-const AMBIENT_PET_WRAP_GAP_COLUMNS: u16 = 2;
 const TUI_STUB_MESSAGE: &str = "Not available in TUI yet.";
 const PARENT_OWNED_INPUT_MESSAGE: &str =
     "This sub-agent is controlled by its parent. Direct input is disabled.";
@@ -329,7 +327,6 @@ use self::mcp_startup::McpStartupStatus;
 mod misalignment_policy;
 pub(crate) use misalignment_policy::MisalignmentReview;
 pub(crate) use misalignment_policy::MisalignmentTurnSource;
-mod pets;
 mod session_flow;
 mod session_header;
 use self::session_header::SessionHeader;
@@ -618,17 +615,6 @@ pub(crate) struct ChatWidget {
     review: ReviewState,
     // Active hook runs render in a dedicated live cell so they can run alongside tools.
     active_hook_cell: Option<HookCell>,
-    // Reused for built-in pet CDN requests so redirects remain route-aware.
-    pub(crate) pet_http_client: genex_http_client::RouteAwareClientPool,
-    // Ambient companion rendered over the transcript area, never inside the footer rows.
-    ambient_pet: Option<crate::pets::AmbientPet>,
-    pet_picker_preview_state: crate::pets::PetPickerPreviewState,
-    pet_picker_preview_pet: Option<crate::pets::AmbientPet>,
-    pet_picker_preview_request_id: u64,
-    pet_picker_preview_image_visible: std::cell::Cell<bool>,
-    pet_selection_load_request_id: u64,
-    #[cfg(test)]
-    pet_image_support_override: Option<crate::pets::PetImageSupport>,
     thread_id: Option<ThreadId>,
     thread_name: Option<String>,
     thread_rename_block_message: Option<String>,
@@ -1038,9 +1024,6 @@ impl ChatWidget {
         self.update_due_hook_visibility();
         self.schedule_hook_timer_if_needed();
         self.bottom_pane.pre_draw_tick();
-        if let Some(pet) = self.ambient_pet.as_ref() {
-            pet.schedule_next_frame();
-        }
         self.refresh_goal_status_indicator_for_time_tick();
         if self.terminal_title_shows_action_required() != self.last_terminal_title_requires_action {
             self.refresh_terminal_title();
@@ -1476,6 +1459,10 @@ impl ChatWidget {
                 Some(crate::width::usable_content_width(width, reserved_cols).unwrap_or(1))
             }
         })
+    }
+
+    pub(crate) fn history_wrap_width(&self, width: u16) -> u16 {
+        width.max(1)
     }
 
     pub(crate) fn raw_output_mode(&self) -> bool {
