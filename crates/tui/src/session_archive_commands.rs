@@ -293,7 +293,6 @@ pub(super) async fn start_app_server_for_session_command(
             } else {
                 cwd
             },
-            model_provider: None,
             genex_self_exe: arg0_paths.genex_self_exe.clone(),
             genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
             main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),

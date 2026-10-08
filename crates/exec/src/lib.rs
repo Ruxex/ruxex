@@ -475,7 +475,6 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         persisted_permission_profile_id: None,
         cwd: resolved_cwd,
         workspace_roots: None,
-        model_provider: None,
         service_tier: None,
         genex_self_exe: arg0_paths.genex_self_exe.clone(),
         genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),

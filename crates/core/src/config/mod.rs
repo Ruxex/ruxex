@@ -2382,7 +2382,6 @@ pub struct ConfigOverrides {
     /// permission overrides take precedence, and stale profile IDs fall back
     /// to the configured default.
     pub persisted_permission_profile_id: Option<String>,
-    pub model_provider: Option<String>,
     pub service_tier: Option<Option<String>>,
     pub genex_self_exe: Option<PathBuf>,
     pub genex_linux_sandbox_exe: Option<PathBuf>,
@@ -3015,7 +3014,6 @@ impl Config {
             permission_profile,
             default_permissions: default_permissions_override,
             persisted_permission_profile_id,
-            model_provider,
             service_tier: service_tier_override,
             genex_self_exe,
             genex_linux_sandbox_exe,
@@ -3437,7 +3435,6 @@ impl Config {
         let selected_model_provider = config_layer_stack
             .required_model_provider()
             .map(str::to_string)
-            .or(model_provider)
             .or(cfg.model_provider);
         let resolved_model_provider = resolve_model_provider(
             cfg.model_providers,

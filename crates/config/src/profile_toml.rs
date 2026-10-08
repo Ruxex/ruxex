@@ -23,9 +23,6 @@ pub struct ConfigProfile {
     /// Optional explicit service tier request id for new turns (for example
     /// `default`, `priority`, or `flex`; legacy `fast` also works).
     pub service_tier: Option<String>,
-    /// The key in the `model_providers` map identifying the
-    /// [`ModelProviderInfo`] to use.
-    pub model_provider: Option<String>,
     #[schemars(with = "Option<crate::schema::ConfigAskForApproval>")]
     pub approval_policy: Option<AskForApproval>,
     pub sandbox_mode: Option<SandboxMode>,

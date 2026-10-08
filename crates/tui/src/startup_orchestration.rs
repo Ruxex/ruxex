@@ -106,7 +106,6 @@ pub(super) async fn run_main_inner(
                 approval_policy,
                 sandbox_mode,
                 cwd: validation_cwd.map(AbsolutePathBuf::into_path_buf),
-                model_provider: None,
                 bypass_hook_trust: cli.bypass_hook_trust.then_some(true),
                 additional_writable_roots: cli.add_dir.clone(),
                 ..Default::default()
@@ -237,7 +236,6 @@ pub(super) async fn run_main_inner(
         approval_policy,
         sandbox_mode,
         cwd: cwd_override,
-        model_provider: None,
         genex_self_exe: arg0_paths.genex_self_exe.clone(),
         genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),

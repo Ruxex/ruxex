@@ -857,33 +857,12 @@ impl App {
         {
             Ok(Some(defaults)) => {
                 server_model_cleared = defaults.model.is_none();
-                let use_server_provider = matches!(
-                    app_server.thread_params_mode(),
-                    crate::app_server_session::ThreadParamsMode::Embedded
-                ) && self.harness_overrides.model.is_none()
-                    && !super::new_session::has_launch_setting(
-                        &config,
-                        &self.cli_kv_overrides,
-                        "model",
-                    )
-                    && self.harness_overrides.model_provider.is_none()
-                    && !super::new_session::has_launch_setting(
-                        &config,
-                        &self.cli_kv_overrides,
-                        "model_provider",
-                    );
                 super::new_session::overlay_new_session_defaults(
                     &mut config,
                     &defaults,
                     &self.cli_kv_overrides,
                     &self.harness_overrides,
                 );
-                // Embedded thread/start sends a provider ID alongside the selected model.
-                if use_server_provider {
-                    config.model_provider_id = defaults
-                        .model_provider
-                        .unwrap_or_else(|| "provider".to_string());
-                }
             }
             Ok(None) => {}
             Err(error) => {

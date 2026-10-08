@@ -6,7 +6,6 @@ use genex_config::config_toml::ConfigToml;
 use genex_config::test_support::CloudConfigBundleFixture;
 use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
 use genex_login::GenexAuth;
 use genex_models_manager::test_support::test_models_response;
 use core_test_support::responses::ev_completed;
@@ -154,10 +153,6 @@ X-Managed = "required"
                     "model_provider".into(),
                     toml::Value::String(cli_provider.into()),
                 )])
-                .harness_overrides(ConfigOverrides {
-                    model_provider: Some("provider".into()),
-                    ..Default::default()
-                })
                 .build()
                 .await?;
             let warnings = overridden

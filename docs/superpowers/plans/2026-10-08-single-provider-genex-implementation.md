@@ -53,6 +53,7 @@
 - Session `ModelClient` instances now receive the `ThreadManager`'s shared Provider handle instead of recreating a provider from thread/client configuration.
 - Provider-constructing `ModelClient` constructors were removed; callers must inject the runtime's shared Provider handle.
 - Configuration construction now resolves the historical provider map to an explicit `ResolvedModelProvider` singleton before the runtime `Config` is built; the map does not cross the runtime boundary.
+- Profile and session-thread configuration no longer emit Provider selection or Provider-definition fields; Provider settings remain outside per-thread configuration.
 
 ### Task 1: Add the provider descriptor contract
 
