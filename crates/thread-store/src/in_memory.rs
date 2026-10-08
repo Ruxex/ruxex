@@ -185,7 +185,6 @@ mod tests {
                     runtime_workspace_roots: None,
                     metadata: ThreadPersistenceMetadata {
                         cwd: None,
-                        model_provider: "test-provider".to_string(),
                     },
                 })
                 .await
@@ -480,7 +479,6 @@ mod tests {
     fn thread_metadata() -> ThreadPersistenceMetadata {
         ThreadPersistenceMetadata {
             cwd: None,
-            model_provider: "test-provider".to_string(),
         }
     }
 }
@@ -594,7 +592,6 @@ impl InMemoryThreadStore {
             originator: params.originator.clone(),
             source: params.source.clone(),
             thread_source: params.thread_source.clone(),
-            model_provider: Some(params.metadata.model_provider.clone()),
             base_instructions: Some(params.base_instructions.clone()),
             dynamic_tools: (!params.dynamic_tools.is_empty()).then(|| params.dynamic_tools.clone()),
             selected_capability_roots: params.selected_capability_roots.clone(),
@@ -1085,9 +1082,6 @@ fn stored_thread_from_state(
             .and_then(|metadata| metadata.preview.clone())
             .unwrap_or_default(),
         name,
-        model_provider: metadata
-            .and_then(|metadata| metadata.model_provider.clone())
-            .unwrap_or_else(|| "test".to_string()),
         model: metadata.and_then(|metadata| metadata.model.clone()),
         reasoning_effort: metadata
             .and_then(|metadata| metadata.reasoning_effort.clone())

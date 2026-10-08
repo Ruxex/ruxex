@@ -967,7 +967,6 @@ mod tests {
                 include_archived: false,
                 metadata: ThreadPersistenceMetadata {
                     cwd: Some(home.path().to_path_buf()),
-                    model_provider: "test-provider".to_string(),
                 },
             },
         )
@@ -1274,7 +1273,6 @@ mod tests {
                 include_archived: false,
                 metadata: ThreadPersistenceMetadata {
                     cwd: Some(home.path().to_path_buf()),
-                    model_provider: "different-provider".to_string(),
                 },
             },
         )
@@ -1327,7 +1325,6 @@ mod tests {
                 include_archived: false,
                 metadata: ThreadPersistenceMetadata {
                     cwd: Some(home.path().to_path_buf()),
-                    model_provider: "different-provider".to_string(),
                 },
             },
         )
@@ -1632,7 +1629,6 @@ mod tests {
                 include_archived: true,
                 metadata: ThreadPersistenceMetadata {
                     cwd: None,
-                    model_provider: "test-provider".to_string(),
                 },
             })
             .await
@@ -2026,7 +2022,6 @@ mod tests {
     fn thread_metadata() -> ThreadPersistenceMetadata {
         ThreadPersistenceMetadata {
             cwd: Some(std::env::current_dir().expect("cwd")),
-            model_provider: "test-provider".to_string(),
         }
     }
 

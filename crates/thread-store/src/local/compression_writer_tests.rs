@@ -49,7 +49,6 @@ fn resume(thread_id: ThreadId, path: &Path, home: &Path) -> ResumeThreadParams {
         include_archived: true,
         metadata: ThreadPersistenceMetadata {
             cwd: Some(home.to_path_buf()),
-            model_provider: "test-provider".into(),
         },
     }
 }

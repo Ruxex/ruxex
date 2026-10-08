@@ -964,7 +964,6 @@ impl Session {
                             runtime_workspace_roots: Some(config.workspace_roots.clone()),
                             metadata: ThreadPersistenceMetadata {
                                 cwd: Some(config.cwd.to_path_buf()),
-                                model_provider: config.model_provider_id.clone(),
                             },
                         };
                         if is_paginated_subagent
@@ -992,7 +991,6 @@ impl Session {
                             include_archived: true,
                             metadata: ThreadPersistenceMetadata {
                                 cwd: Some(config.cwd.to_path_buf()),
-                                model_provider: config.model_provider_id.clone(),
                             },
                         };
                         guard

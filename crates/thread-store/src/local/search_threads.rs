@@ -168,7 +168,6 @@ pub(super) async fn search_threads(
             stored_thread_from_rollout_item(
                 item.item,
                 params.archived,
-                store.config.default_model_provider_id.as_str(),
             )
             .map(|thread| StoredThreadSearchResult {
                 thread,

@@ -84,8 +84,6 @@ pub struct ThreadItem {
     pub agent_nickname: Option<String>,
     /// Role (agent_role) from session metadata for AgentControl-spawned sub-agents.
     pub agent_role: Option<String>,
-    /// Model provider from session metadata.
-    pub model_provider: Option<String>,
     /// Latest persisted model in SQLite-owned metadata, when available.
     pub model: Option<String>,
     /// Latest persisted reasoning effort in SQLite-owned metadata, when available.
@@ -117,7 +115,6 @@ struct HeadTailSummary {
     parent_thread_id: Option<ThreadId>,
     agent_nickname: Option<String>,
     agent_role: Option<String>,
-    model_provider: Option<String>,
     cli_version: Option<String>,
     created_at: Option<String>,
     updated_at: Option<String>,
@@ -792,7 +789,6 @@ async fn build_thread_item(
             parent_thread_id,
             agent_nickname,
             agent_role,
-            model_provider,
             cli_version,
             created_at,
             updated_at: mut summary_updated_at,
@@ -819,7 +815,6 @@ async fn build_thread_item(
             parent_thread_id,
             agent_nickname,
             agent_role,
-            model_provider,
             model: None,
             reasoning_effort: None,
             cli_version,
@@ -1093,7 +1088,6 @@ async fn read_head_summary(path: &Path, head_limit: usize) -> io::Result<HeadTai
                     summary.parent_thread_id = session_meta_line.meta.parent_thread_id;
                     summary.agent_nickname = session_meta_line.meta.agent_nickname.clone();
                     summary.agent_role = session_meta_line.meta.agent_role.clone();
-                    summary.model_provider = session_meta_line.meta.model_provider.clone();
                     summary.thread_id = Some(session_meta_line.meta.id);
                     summary.cwd = Some(session_meta_line.meta.cwd.clone());
                     summary.git_branch = session_meta_line

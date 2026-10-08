@@ -204,7 +204,6 @@ async fn read_thread_from_rollout_path(
     let mut thread = stored_thread_from_rollout_item(
         item,
         archived,
-        store.config.default_model_provider_id.as_str(),
     )
     .ok_or_else(|| ThreadStoreError::Internal {
         message: format!("failed to read thread id from {}", path.display()),
@@ -214,13 +213,6 @@ async fn read_thread_from_rollout_path(
     thread.forked_from_id = meta_line.meta.forked_from_id;
     thread.parent_thread_id = meta_line.meta.parent_thread_id;
     thread.history_mode = meta_line.meta.history_mode;
-    if let Some(model_provider) = meta_line
-        .meta
-        .model_provider
-        .filter(|provider| !provider.is_empty())
-    {
-        thread.model_provider = model_provider;
-    }
     Ok(thread)
 }
 
@@ -285,7 +277,7 @@ pub(super) async fn stored_thread_from_sqlite_metadata(
 }
 
 pub(super) fn stored_thread_from_state_metadata(
-    store: &LocalThreadStore,
+    _store: &LocalThreadStore,
     metadata: ThreadMetadata,
     parent_thread_id: Option<genex_protocol::ThreadId>,
 ) -> StoredThread {
@@ -306,7 +298,6 @@ pub(super) fn stored_thread_from_state_metadata(
         parent_thread_id,
         preview,
         name,
-        model_provider: store.config.default_model_provider_id.clone(),
         model: metadata.model,
         reasoning_effort: metadata.reasoning_effort,
         created_at: metadata.created_at,
@@ -362,7 +353,7 @@ async fn read_required_session_meta_line(
 }
 
 fn stored_thread_from_meta_line(
-    store: &LocalThreadStore,
+    _store: &LocalThreadStore,
     meta_line: SessionMetaLine,
     path: std::path::PathBuf,
     archived: bool,
@@ -382,11 +373,6 @@ fn stored_thread_from_meta_line(
         parent_thread_id: meta_line.meta.parent_thread_id,
         preview: String::new(),
         name: None,
-        model_provider: meta_line
-            .meta
-            .model_provider
-            .filter(|provider| !provider.is_empty())
-            .unwrap_or_else(|| store.config.default_model_provider_id.clone()),
         model: None,
         reasoning_effort: None,
         created_at,
@@ -546,7 +532,6 @@ mod tests {
             Utc::now(),
             SessionSource::Cli,
         );
-        builder.model_provider = Some(config.default_model_provider_id.clone());
         builder.git_branch = Some("sqlite-branch".to_string());
         let recency_at = chrono::DateTime::parse_from_rfc3339("2026-01-03T12:00:00Z")
             .expect("timestamp should parse")
@@ -707,7 +692,6 @@ mod tests {
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
-        builder.model_provider = Some(config.default_model_provider_id.clone());
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
@@ -772,7 +756,6 @@ mod tests {
             SessionSource::Cli,
         );
         builder.history_mode = ThreadHistoryMode::Paginated;
-        builder.model_provider = Some("Canonical SQLite provider".to_string());
         builder.cwd = home.path().to_path_buf();
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
         metadata.name = Some("Canonical SQLite name".to_string());
@@ -811,7 +794,6 @@ mod tests {
                     thread.name.as_deref(),
                     thread.preview.as_str(),
                     thread.first_user_message.as_deref(),
-                    thread.model_provider.as_str(),
                     thread.model.as_deref(),
                     thread.originator.as_deref(),
                 ),
@@ -819,7 +801,6 @@ mod tests {
                     Some("Canonical SQLite name"),
                     "Canonical SQLite preview",
                     Some("Canonical SQLite first user message"),
-                    "Canonical SQLite provider",
                     Some("Canonical SQLite model"),
                     Some("test_originator"),
                 )
@@ -844,7 +825,6 @@ mod tests {
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
-        builder.model_provider = Some(config.default_model_provider_id.clone());
         builder.cwd = home.path().to_path_buf();
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
         metadata.preview = Some("Hello from user".to_string());
@@ -886,7 +866,6 @@ mod tests {
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
-        builder.model_provider = Some(config.default_model_provider_id.clone());
         builder.cwd = home.path().to_path_buf();
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
         metadata.sandbox_policy = "danger-full-access".to_string();
@@ -957,7 +936,6 @@ mod tests {
             Utc::now(),
             SessionSource::Cli,
         );
-        builder.model_provider = Some(config.default_model_provider_id.clone());
         let sqlite_cwd = home.path().join("sqlite-workspace");
         builder.cwd = sqlite_cwd.clone();
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
@@ -982,7 +960,6 @@ mod tests {
         assert_eq!(thread.rollout_path, Some(rollout_path.clone()));
         assert_eq!(thread.preview, "Hello from sqlite");
         assert_eq!(thread.name, Some("Saved title".to_string()));
-        assert_eq!(thread.model_provider, "test-provider");
         assert_eq!(thread.cwd, sqlite_cwd);
         let legacy_policy = SandboxPolicy::WorkspaceWrite {
             writable_roots: Vec::new(),
@@ -1099,7 +1076,6 @@ mod tests {
             Utc::now(),
             SessionSource::Cli,
         );
-        builder.model_provider = Some("sqlite-provider".to_string());
         builder.cwd = home.path().join("workspace");
         builder.cli_version = Some("sqlite-cli".to_string());
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
@@ -1122,7 +1098,6 @@ mod tests {
         assert_eq!(thread.rollout_path, Some(rollout_path));
         assert_eq!(thread.preview, "");
         assert_eq!(thread.name.as_deref(), Some("Command-only thread"));
-        assert_eq!(thread.model_provider, "sqlite-provider");
         assert_eq!(thread.cwd, home.path().join("workspace"));
         assert_eq!(thread.cli_version, "sqlite-cli");
         assert_eq!(thread.originator.as_deref(), Some("test_originator"));
@@ -1188,7 +1163,6 @@ mod tests {
         assert_eq!(thread.rollout_path, Some(rollout_path));
         assert_eq!(thread.preview, "");
         assert_eq!(thread.name, None);
-        assert_eq!(thread.model_provider, "rollout-provider");
         assert_eq!(
             thread.created_at,
             parse_rfc3339_non_optional("2025-01-03T12:00:00Z").unwrap()
@@ -1226,7 +1200,6 @@ mod tests {
             Utc::now(),
             SessionSource::Exec,
         );
-        builder.model_provider = Some("sqlite-provider".to_string());
         builder.cwd = external.path().join("workspace");
         builder.cli_version = Some("sqlite-cli".to_string());
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
@@ -1256,7 +1229,6 @@ mod tests {
             Some("next normal prompt")
         );
         assert_eq!(thread.name, None);
-        assert_eq!(thread.model_provider, "sqlite-provider");
         assert_eq!(thread.model.as_deref(), Some("sqlite-model"));
         assert_eq!(thread.cwd, external.path().join("workspace"));
         assert_eq!(thread.cli_version, "sqlite-cli");

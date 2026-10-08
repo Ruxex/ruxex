@@ -96,7 +96,7 @@ pub(super) async fn resume_thread(
         genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd,
-        model_provider_id: params.metadata.model_provider.clone(),
+        model_provider_id: store.config.default_model_provider_id.clone(),
     };
     let rollout_id =
         genex_rollout::rollout_id_from_path(rollout_path.as_path()).ok_or_else(|| {

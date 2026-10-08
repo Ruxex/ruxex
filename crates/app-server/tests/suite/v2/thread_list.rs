@@ -1022,7 +1022,6 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
             created_at,
             source,
         );
-        builder.model_provider = Some(model_provider.to_string());
         builder.cwd = genex_home.path().to_path_buf();
         builder.cli_version = Some("0.0.0".to_string());
         let mut metadata = builder.build(model_provider);

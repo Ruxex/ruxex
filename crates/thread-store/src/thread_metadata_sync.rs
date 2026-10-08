@@ -62,7 +62,6 @@ impl ThreadMetadataSync {
             None
         };
         let update = ThreadMetadataPatch {
-            model_provider: Some(params.metadata.model_provider.clone()),
             created_at: Some(created_at),
             updated_at: Some(created_at),
             source: Some(params.source.clone()),
@@ -233,11 +232,6 @@ impl ThreadMetadataSync {
                     update.agent_nickname = Some(meta_line.meta.agent_nickname.clone());
                     update.agent_role = Some(meta_line.meta.agent_role.clone());
                     update.agent_path = Some(meta_line.meta.agent_path.clone());
-                    if let Some(model_provider) = meta_line.meta.model_provider.clone()
-                        && !model_provider.is_empty()
-                    {
-                        update.model_provider = Some(model_provider);
-                    }
                     if !meta_line.meta.cli_version.is_empty() {
                         update.cli_version = Some(meta_line.meta.cli_version.clone());
                     }
@@ -288,7 +282,6 @@ impl ThreadMetadataSync {
                     let settings = &event.thread_settings;
                     self.cwd_seen = true;
                     update.model = Some(settings.model.clone());
-                    update.model_provider = Some(settings.model_provider_id.clone());
                     update.reasoning_effort = Some(settings.reasoning_effort.clone());
                     update.cwd = Some(settings.cwd.clone().into_path_buf());
                     update.approval_mode = Some(settings.approval_policy);
@@ -362,7 +355,6 @@ fn update_has_metadata_facts(update: &ThreadMetadataPatch) -> bool {
     update.rollout_path.is_some()
         || update.preview.is_some()
         || update.title.is_some()
-        || update.model_provider.is_some()
         || update.model.is_some()
         || update.reasoning_effort.is_some()
         || update.created_at.is_some()
@@ -444,7 +436,6 @@ mod tests {
             runtime_workspace_roots: None,
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
-                model_provider: "test-provider".to_string(),
             },
         })
         .await;
@@ -664,10 +655,6 @@ mod tests {
 
         assert_eq!(update.patch.model.as_deref(), Some("example-model"));
         assert_eq!(
-            update.patch.model_provider.as_deref(),
-            Some("updated-provider")
-        );
-        assert_eq!(
             update.patch.reasoning_effort,
             Some(Some(ReasoningEffort::Ultra))
         );
@@ -780,7 +767,6 @@ mod tests {
             include_archived: false,
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
-                model_provider: "test-provider".to_string(),
             },
         }
     }

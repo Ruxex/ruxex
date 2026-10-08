@@ -193,7 +193,6 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
             include_archived: false,
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(genex_home.clone()),
-                model_provider: "test-provider".to_string(),
             },
         })
         .await
@@ -872,7 +871,6 @@ async fn paginated_fork_reads_compressed_shared_lineage_without_materializing() 
             include_archived: true,
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(home.path().to_path_buf()),
-                model_provider: "test-provider".to_string(),
             },
         })
         .await
@@ -2348,7 +2346,6 @@ async fn create_paginated_subagent_thread(
             runtime_workspace_roots: None,
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(std::env::current_dir().expect("cwd")),
-                model_provider: "test-provider".to_string(),
             },
         })
         .await

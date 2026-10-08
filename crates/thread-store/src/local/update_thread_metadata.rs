@@ -412,7 +412,6 @@ async fn metadata_for_missing_sqlite_row(
         created_at,
         patch.source.clone().unwrap_or(SessionSource::Unknown),
     );
-    builder.model_provider = patch.model_provider.clone();
     builder.history_mode = canonical_history_mode(store, thread_id, rollout_path).await?;
     builder.thread_source = patch.thread_source.clone().flatten();
     builder.agent_nickname = patch.agent_nickname.clone().flatten();
@@ -487,7 +486,6 @@ fn has_observed_metadata_facts(patch: &ThreadMetadataPatch) -> bool {
     patch.rollout_path.is_some()
         || patch.preview.is_some()
         || patch.title.is_some()
-        || patch.model_provider.is_some()
         || patch.model.is_some()
         || patch.reasoning_effort.is_some()
         || patch.created_at.is_some()
@@ -1817,7 +1815,6 @@ mod tests {
     fn test_thread_metadata() -> ThreadPersistenceMetadata {
         ThreadPersistenceMetadata {
             cwd: Some(std::env::current_dir().expect("cwd")),
-            model_provider: "test-provider".to_string(),
         }
     }
 }

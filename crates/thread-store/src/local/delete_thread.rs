@@ -776,7 +776,6 @@ SELECT
                 include_archived: false,
                 metadata: ThreadPersistenceMetadata {
                     cwd: Some(home.path().to_path_buf()),
-                    model_provider: "test-provider".to_string(),
                 },
             })
             .await

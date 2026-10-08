@@ -128,7 +128,6 @@ pub(super) fn restore_rollout_moves(moves: &[(PathBuf, PathBuf)]) -> std::io::Re
 pub(super) fn stored_thread_from_rollout_item(
     item: ThreadItem,
     archived: bool,
-    default_provider: &str,
 ) -> Option<StoredThread> {
     let thread_id = item
         .thread_id
@@ -158,10 +157,6 @@ pub(super) fn stored_thread_from_rollout_item(
         parent_thread_id: item.parent_thread_id,
         preview,
         name: None,
-        model_provider: item
-            .model_provider
-            .filter(|provider| !provider.is_empty())
-            .unwrap_or_else(|| default_provider.to_string()),
         model: item.model,
         reasoning_effort: item.reasoning_effort,
         created_at,
@@ -326,7 +321,6 @@ mod tests {
                 ..Default::default()
             },
             /*archived*/ false,
-            "test-provider",
         )
         .expect("stored thread");
 

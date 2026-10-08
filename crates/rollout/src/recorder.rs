@@ -1273,7 +1273,6 @@ fn fill_missing_thread_item_metadata(item: &mut ThreadItem, state_item: ThreadIt
         parent_thread_id,
         agent_nickname,
         agent_role,
-        model_provider,
         model,
         reasoning_effort,
         cli_version,
@@ -1320,9 +1319,6 @@ fn fill_missing_thread_item_metadata(item: &mut ThreadItem, state_item: ThreadIt
     }
     if item.agent_role.is_none() {
         item.agent_role = agent_role;
-    }
-    if item.model_provider.is_none() {
-        item.model_provider = model_provider;
     }
     if item.cli_version.is_none() {
         item.cli_version = cli_version;
@@ -2017,7 +2013,6 @@ fn thread_item_from_state_metadata(
         parent_thread_id,
         agent_nickname: item.agent_nickname,
         agent_role: item.agent_role,
-        model_provider: None,
         model: item.model,
         reasoning_effort: item.reasoning_effort,
         cli_version: Some(item.cli_version),

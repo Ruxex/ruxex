@@ -1033,7 +1033,6 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         created_at,
         SessionSource::Cli,
     );
-    builder.model_provider = Some(config.model_provider_id.clone());
     builder.cwd = home.path().to_path_buf();
     let mut metadata = builder.build(config.model_provider_id.as_str());
     metadata.first_user_message = Some("Hello from user".to_string());
@@ -1056,7 +1055,6 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         valid_created_at,
         SessionSource::Cli,
     );
-    valid_builder.model_provider = Some(config.model_provider_id.clone());
     valid_builder.cwd = home.path().to_path_buf();
     let mut valid_metadata = valid_builder.build(config.model_provider_id.as_str());
     valid_metadata.first_user_message = Some("Older valid thread".to_string());
@@ -1221,7 +1219,6 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
         created_at,
         SessionSource::Cli,
     );
-    builder.model_provider = Some(config.model_provider_id.clone());
     builder.cwd = stale_cwd.clone();
     let mut metadata = builder.build(config.model_provider_id.as_str());
     metadata.first_user_message = Some("Hello from user".to_string());
@@ -1308,7 +1305,6 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
         created_at,
         SessionSource::Cli,
     );
-    builder.model_provider = Some(config.model_provider_id.clone());
     builder.cwd = home.path().to_path_buf();
     builder.git_branch = Some("sqlite-branch".to_string());
     builder.git_sha = Some("sqlite-sha".to_string());
@@ -1374,7 +1370,6 @@ fn fill_missing_thread_item_metadata_preserves_identity_and_prefers_state_git_fi
         parent_thread_id: None,
         agent_nickname: None,
         agent_role: None,
-        model_provider: None,
         model: None,
         reasoning_effort: None,
         cli_version: None,
@@ -1407,7 +1402,6 @@ fn fill_missing_thread_item_metadata_preserves_identity_and_prefers_state_git_fi
         parent_thread_id: None,
         agent_nickname: Some("state-agent".to_string()),
         agent_role: Some("state-role".to_string()),
-        model_provider: Some("state-provider".to_string()),
         model: None,
         reasoning_effort: None,
         cli_version: Some("state-version".to_string()),
@@ -1444,7 +1438,6 @@ fn fill_missing_thread_item_metadata_preserves_identity_and_prefers_state_git_fi
     assert_eq!(item.source, Some(SessionSource::Exec));
     assert_eq!(item.agent_nickname.as_deref(), Some("state-agent"));
     assert_eq!(item.agent_role.as_deref(), Some("state-role"));
-    assert_eq!(item.model_provider.as_deref(), Some("state-provider"));
     assert_eq!(item.cli_version.as_deref(), Some("state-version"));
     assert_eq!(item.created_at.as_deref(), Some("2025-01-03T16:00:00Z"));
     assert_eq!(item.recency_at.as_deref(), Some("2025-01-03T16:00:30.001Z"));
@@ -1480,7 +1473,6 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
         created_at,
         SessionSource::Cli,
     );
-    builder.model_provider = Some(config.model_provider_id.clone());
     builder.cwd = home.path().to_path_buf();
     let mut metadata = builder.build(config.model_provider_id.as_str());
     metadata.title = "needle stale first user".to_string();

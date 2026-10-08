@@ -58,8 +58,6 @@ pub struct ThreadPersistenceMetadata {
     ///
     /// `None` means the thread has no filesystem/environment context.
     pub cwd: Option<PathBuf>,
-    /// Model provider associated with the thread.
-    pub model_provider: String,
 }
 
 /// Extra configuration fields for a thread.
@@ -586,8 +584,6 @@ pub struct StoredThread {
     pub preview: String,
     /// Optional user-facing thread name/title.
     pub name: Option<String>,
-    /// Model provider id associated with the thread.
-    pub model_provider: String,
     /// Latest observed model, if known.
     pub model: Option<String>,
     /// Latest observed reasoning effort, if known.
@@ -711,8 +707,6 @@ pub struct ThreadMetadataPatch {
     pub preview: Option<String>,
     /// Best-effort title derived from history.
     pub title: Option<String>,
-    /// Model provider associated with the thread.
-    pub model_provider: Option<String>,
     /// Latest observed model.
     pub model: Option<String>,
     /// Latest observed reasoning effort.
@@ -804,9 +798,6 @@ impl ThreadMetadataPatch {
         if next.title.is_some() {
             self.title = next.title;
         }
-        if next.model_provider.is_some() {
-            self.model_provider = next.model_provider;
-        }
         if next.model.is_some() {
             self.model = next.model;
         }
@@ -876,7 +867,6 @@ impl ThreadMetadataPatch {
             && self.rollout_path.is_none()
             && self.preview.is_none()
             && self.title.is_none()
-            && self.model_provider.is_none()
             && self.model.is_none()
             && self.reasoning_effort.is_none()
             && self.created_at.is_none()

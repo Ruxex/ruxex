@@ -246,7 +246,6 @@ async fn create_paginated_thread(store: &LocalThreadStore, thread_id: ThreadId) 
             runtime_workspace_roots: Some(vec![store.config.genex_home.join("workspace").abs()]),
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(std::env::current_dir().expect("cwd")),
-                model_provider: "test-provider".to_string(),
             },
         })
         .await

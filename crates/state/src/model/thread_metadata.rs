@@ -214,8 +214,6 @@ pub struct ThreadMetadataBuilder {
     pub agent_role: Option<String>,
     /// Optional canonical agent path assigned to the session.
     pub agent_path: Option<String>,
-    /// The model provider identifier, if known.
-    pub model_provider: Option<String>,
     /// The working directory for the thread.
     pub cwd: PathBuf,
     /// Version of the CLI that created the thread.
@@ -255,7 +253,6 @@ impl ThreadMetadataBuilder {
             agent_nickname: None,
             agent_role: None,
             agent_path: None,
-            model_provider: None,
             cwd: PathBuf::new(),
             cli_version: None,
             sandbox_policy: SandboxPolicy::new_read_only_policy(),

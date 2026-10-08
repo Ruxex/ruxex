@@ -77,7 +77,6 @@ pub(super) async fn list_threads(
             stored_thread_from_rollout_item(
                 item,
                 params.archived,
-                store.config.default_model_provider_id.as_str(),
             )
         })
         .collect::<Vec<_>>();
@@ -402,7 +401,6 @@ mod tests {
             .expect("thread listing");
 
         assert_eq!(page.items.len(), 1);
-        assert_eq!(page.items[0].model_provider, "test-provider");
     }
 
     #[tokio::test]
@@ -432,7 +430,6 @@ mod tests {
             created_at,
             SessionSource::Cli,
         );
-        builder.model_provider = Some(config.default_model_provider_id.clone());
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
@@ -501,7 +498,6 @@ mod tests {
             SessionSource::Cli,
         );
         builder.history_mode = ThreadHistoryMode::Paginated;
-        builder.model_provider = Some(config.default_model_provider_id.clone());
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
         let mut metadata = builder.build(config.default_model_provider_id.as_str());
@@ -652,7 +648,6 @@ mod tests {
             page.items[0].first_user_message.as_deref(),
             Some("Hello from user")
         );
-        assert_eq!(page.items[0].model_provider, "test-provider");
         assert_eq!(page.items[0].cli_version, "test_version");
         assert_eq!(page.items[0].source, SessionSource::Cli);
     }

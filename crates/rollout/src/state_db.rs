@@ -636,7 +636,7 @@ pub async fn read_repair_rollout_path(
 pub async fn apply_rollout_items(
     context: Option<&genex_state::StateRuntime>,
     rollout_path: &Path,
-    default_provider: &str,
+    _default_provider: &str,
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
     stage: &str,
@@ -659,9 +659,6 @@ pub async fn apply_rollout_items(
             }
         },
     };
-    if builder.model_provider.is_none() {
-        builder.model_provider = Some(default_provider.to_string());
-    }
     builder.rollout_path = rollout_path.to_path_buf();
     builder.cwd = normalize_cwd_for_state_db(&builder.cwd);
     if let Err(err) = ctx

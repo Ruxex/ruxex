@@ -23,7 +23,7 @@ pub(super) async fn create_thread(
         genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd,
-        model_provider_id: params.metadata.model_provider.clone(),
+        model_provider_id: store.config.default_model_provider_id.clone(),
     };
     RolloutRecorder::new_with_writer_lock(
         &config,

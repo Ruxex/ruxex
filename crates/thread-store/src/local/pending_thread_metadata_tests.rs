@@ -187,7 +187,6 @@ fn create_thread_params(thread_id: ThreadId) -> CreateThreadParams {
         runtime_workspace_roots: None,
         metadata: ThreadPersistenceMetadata {
             cwd: Some(std::env::current_dir().expect("cwd")),
-            model_provider: "test-provider".to_string(),
         },
     }
 }
