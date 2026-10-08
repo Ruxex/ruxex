@@ -31,17 +31,16 @@
 
 ---
 
-## Task 1: Remove external-agent state persistence and crate/workspace ownership
+## Task 1: Remove external-agent state persistence
 
-**Files:** `crates/state/src/lib.rs`, `crates/state/src/runtime.rs`, `crates/state/src/runtime/external_agent_config_imports.rs`, its test file, `crates/state/migrations/0038_external_agent_config_imports.sql`, `crates/state/migrations/0044_external_agent_config_imports_provider_id.sql`, `crates/external-agent-migration/**`, root `Cargo.toml`, `Cargo.lock`, and direct dependency declarations.
+**Files:** `crates/state/src/lib.rs`, `crates/state/src/runtime.rs`, `crates/state/src/runtime/external_agent_config_imports.rs`, its test file, `crates/state/migrations/0038_external_agent_config_imports.sql`, and `crates/state/migrations/0044_external_agent_config_imports_provider_id.sql`.
 
 - [ ] Confirm exact state API consumers with `rg`; distinguish migration-only records from normal thread/history state.
 - [ ] Remove state module declarations, re-exports, record/query/write implementation, and its tests.
 - [ ] Delete the two migration SQL files; do not add a replacement `DROP TABLE` migration because Genex has no released database consumers.
-- [ ] Remove the external-agent migration crate directory and workspace/dependency declarations after app-server/TUI references are removed in the same change set.
 - [ ] Keep shared MCP/config/plugin/session code intact; only delete code whose producer/consumer audit is migration-specific.
 
-**Expected:** No production source or Cargo manifest declares the migration crate or state import-record API; the only remaining failures, if any, are references in app-server/TUI/protocol that are removed in Task 2.
+**Expected:** No production source or state crate declares the state import-record API; the migration crate and its consumers remain until Task 2 removes the complete feature boundary.
 
 ## Task 2: Remove app-server, protocol, and TUI migration surfaces
 
@@ -50,6 +49,7 @@
 - [ ] Remove app-server migration processor construction, stored field, request dispatch arms, notification handling, and migration-specific test fixtures.
 - [ ] Remove the four `externalAgentConfig/*` request methods and two progress/completed notifications from protocol Rust definitions and protocol tests.
 - [ ] Remove TUI `/import` enum/help/completion/dispatch/test consumers, migration screen/flow/model/render/source modules, app event, app-server client wrappers, completion state, event routing, and notification output.
+- [ ] Delete `crates/external-agent-migration/**`, remove its workspace member and app-server dependency declarations, and update `Cargo.lock` after all consumers are gone.
 - [ ] Verify that slash-command parser and unrelated `/config`, `/mcp`, `/skills`, `/plugin`, and `/hooks` paths remain registered.
 - [ ] Remove protocol Rust types only after all workspace consumers are deleted; do not alter unrelated account, model, MCP, or config protocol types.
 
