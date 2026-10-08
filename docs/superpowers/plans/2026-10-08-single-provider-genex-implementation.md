@@ -31,6 +31,7 @@
 - The provider descriptor, common capability flags, and provider-home marker contract are implemented.
 - AppServer no longer applies a persisted active-provider selection to reloaded configuration.
 - AppServer now mounts and validates the configured provider home before credentials and SQLite state are initialized.
+- AppServer constructs one shared provider runtime and reuses it for sessions, model catalogs, account state, and capability queries.
 - AppServer account/model-provider APIs currently retain their protocol shapes, but expose only the configured provider; provider switching requests are rejected with guidance to start another AppServer instance.
 - Remaining work is to inject one shared provider instance through runtime construction, then migrate credentials, persistence, and host surfaces.
 

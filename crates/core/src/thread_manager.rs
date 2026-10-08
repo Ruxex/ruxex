@@ -48,6 +48,7 @@ use genex_login::GenexAuth;
 use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::ProviderModelCatalogSource;
+use genex_model_provider::SharedModelProvider;
 use genex_model_provider::create_model_provider;
 use genex_model_provider::create_model_provider_for_id;
 use genex_model_provider_info::ModelProviderInfo;
@@ -393,6 +394,7 @@ pub(crate) struct ThreadManagerState {
     thread_created_tx: broadcast::Sender<ThreadId>,
     thread_id_generator: ThreadIdGenerator,
     credential_manager: Arc<CredentialManager>,
+    provider: SharedModelProvider,
     models_manager: SharedModelsManager,
     git_root_discovery: Arc<GitRootDiscovery>,
     environment_manager: Arc<EnvironmentManager>,
@@ -418,11 +420,25 @@ pub fn build_models_manager(
     config: &Config,
     credential_manager: Arc<CredentialManager>,
 ) -> SharedModelsManager {
-    let provider = create_model_provider_for_id(
+    let provider = build_model_provider(config, credential_manager);
+    build_models_manager_with_provider(config, provider)
+}
+
+pub fn build_model_provider(
+    config: &Config,
+    credential_manager: Arc<CredentialManager>,
+) -> SharedModelProvider {
+    create_model_provider_for_id(
         config.model_provider_id.clone(),
         config.model_provider.clone(),
         Some(credential_manager),
-    );
+    )
+}
+
+pub fn build_models_manager_with_provider(
+    config: &Config,
+    provider: SharedModelProvider,
+) -> SharedModelsManager {
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
@@ -485,6 +501,7 @@ impl ThreadManager {
     pub fn new(
         config: &Config,
         credential_manager: Arc<CredentialManager>,
+        provider: SharedModelProvider,
         models_manager: SharedModelsManager,
         session_source: SessionSource,
         environment_manager: Arc<EnvironmentManager>,
@@ -528,6 +545,7 @@ impl ThreadManager {
                 threads: Arc::new(RwLock::new(HashMap::new())),
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
+                provider,
                 models_manager,
                 git_root_discovery: Arc::default(),
                 environment_manager,
@@ -670,21 +688,19 @@ impl ThreadManager {
             state_db.clone(),
         ));
         let agent_graph_store = local_agent_graph_store_from_state_db(state_db.as_ref());
+        let provider = create_model_provider(provider, Some(credential_manager.clone()));
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
-                models_manager: {
-                    let provider =
-                        create_model_provider(provider, Some(credential_manager.clone()));
-                    build_catalog_models_manager(
-                        genex_home,
-                        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-                        provider.credential_manager(),
-                        /*config_model_catalog*/ None,
-                    )
-                },
+                provider: Arc::clone(&provider),
+                models_manager: build_catalog_models_manager(
+                    genex_home,
+                    Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+                    provider.credential_manager(),
+                    /*config_model_catalog*/ None,
+                ),
                 git_root_discovery: Arc::default(),
                 environment_manager,
                 starting_mcp_runtimes: std::sync::Mutex::new(Vec::new()),
@@ -835,6 +851,10 @@ impl ThreadManager {
 
     pub fn get_models_manager(&self) -> SharedModelsManager {
         self.state.models_manager.clone()
+    }
+
+    pub fn model_provider(&self) -> SharedModelProvider {
+        Arc::clone(&self.state.provider)
     }
 
     pub async fn list_models(
@@ -2143,6 +2163,7 @@ impl ThreadManagerState {
             thread_source: thread_source.clone(),
             originator,
             agent_control,
+            provider: Arc::clone(&self.provider),
             dynamic_tools,
             metrics_service_name,
             inherited_environments,

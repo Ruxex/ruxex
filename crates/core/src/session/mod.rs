@@ -206,7 +206,7 @@ use crate::thread_rollout_truncation::initial_history_has_prior_user_turns;
 use genex_config::CONFIG_TOML_FILE;
 use genex_config::ConfigLayerSource;
 use genex_config::types::McpServerConfig;
-use genex_model_provider::create_model_provider_for_id;
+use genex_model_provider::SharedModelProvider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::GenexErrorDetails;
@@ -407,6 +407,7 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) instructions: SessionInstructions,
     pub(crate) installation_id: String,
     pub(crate) credential_manager: Arc<CredentialManager>,
+    pub(crate) provider: SharedModelProvider,
     pub(crate) models_manager: SharedModelsManager,
     pub(crate) git_root_discovery: Arc<GitRootDiscovery>,
     pub(crate) environment_manager: Arc<EnvironmentManager>,
@@ -509,6 +510,7 @@ impl Session {
             instructions,
             installation_id,
             credential_manager,
+            provider,
             models_manager,
             git_root_discovery,
             environment_manager,
@@ -742,11 +744,7 @@ impl Session {
             unsupported_service_tier_warning(config.service_tier.as_deref(), &model_info);
         let service_tier = get_service_tier(config.service_tier.clone(), &model_info);
         let session_configuration = SessionConfiguration {
-            provider: create_model_provider_for_id(
-                config.model_provider_id.clone(),
-                config.model_provider.clone(),
-                Some(Arc::clone(&credential_manager)),
-            ),
+            provider,
             step_settings: Arc::new(StepSettings {
                 collaboration_mode,
                 reasoning_summary: config.model_reasoning_summary,
@@ -1884,6 +1882,11 @@ impl Session {
     pub(crate) async fn provider(&self) -> ModelProviderInfo {
         let state = self.state.lock().await;
         state.session_configuration.provider.info().clone()
+    }
+
+    pub(crate) async fn model_provider(&self) -> SharedModelProvider {
+        let state = self.state.lock().await;
+        Arc::clone(&state.session_configuration.provider)
     }
 
     pub(crate) async fn refresh_runtime_config(&self, next_config: Config) {

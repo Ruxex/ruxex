@@ -5,6 +5,7 @@ use genex_exec_server::ExecServerRuntimePaths;
 use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::UserInstructionsProvider;
 use genex_login::CredentialManager;
+use genex_model_provider::create_model_provider_for_id;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
@@ -44,10 +45,16 @@ pub async fn build_prompt_input(
 
     let thread_store = thread_store_from_config(&config, state_db.clone());
     let installation_id = resolve_installation_id(&config.genex_home).await?;
+    let provider = create_model_provider_for_id(
+        config.model_provider_id.clone(),
+        config.model_provider.clone(),
+        Some(Arc::clone(&credential_manager)),
+    );
     let thread_manager = ThreadManager::new(
         &config,
         Arc::clone(&credential_manager),
-        crate::thread_manager::build_models_manager(&config, Arc::clone(&credential_manager)),
+        Arc::clone(&provider),
+        crate::build_models_manager_with_provider(&config, Arc::clone(&provider)),
         SessionSource::Exec,
         Arc::new(
             EnvironmentManager::from_genex_home(

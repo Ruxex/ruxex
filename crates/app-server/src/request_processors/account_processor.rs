@@ -8,7 +8,6 @@ use genex_app_server_protocol::AccountSwitchParams;
 use genex_app_server_protocol::AccountSwitchResponse;
 use genex_app_server_protocol::GetAccountResponse;
 use genex_login::ProviderAuth;
-use genex_model_provider::create_model_provider_for_id;
 
 enum RefreshTokenRequestOutcome {
     NotAttemptedOrSucceeded,
@@ -124,16 +123,7 @@ impl AccountRequestProcessor {
         params: GetAccountParams,
     ) -> Result<GetAccountResponse, JSONRPCErrorError> {
         self.refresh_token_if_requested(params.refresh_token).await;
-        let config = self
-            .config_manager
-            .load_latest_config(/*fallback_cwd*/ None)
-            .await
-            .unwrap_or_else(|_| self.config.as_ref().clone());
-        let provider = create_model_provider_for_id(
-            config.model_provider_id.clone(),
-            config.model_provider.clone(),
-            Some(Arc::clone(&self.credential_manager)),
-        );
+        let provider = self.thread_manager.model_provider();
         let account_state = provider
             .account_state()
             .map_err(|err| invalid_request(err.to_string()))?;

@@ -629,6 +629,7 @@ impl TestGenexBuilder {
         let models_manager = self.models_manager.clone().unwrap_or_else(|| {
             genex_core::build_models_manager(&config, credential_manager.clone())
         });
+        let provider = genex_core::build_model_provider(&config, credential_manager.clone());
         let code_mode_host_program = self
             .code_mode_host_program
             .take()
@@ -638,6 +639,7 @@ impl TestGenexBuilder {
             let thread_manager = ThreadManager::new(
                 &config,
                 credential_manager.clone(),
+                provider,
                 models_manager,
                 SessionSource::Exec,
                 Arc::clone(&environment_manager),

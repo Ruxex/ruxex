@@ -108,6 +108,8 @@ pub use thread_manager::StartThreadOptions;
 pub use thread_manager::ThreadManager;
 pub use thread_manager::ThreadShutdownReport;
 pub use thread_manager::build_models_manager;
+pub use thread_manager::build_model_provider;
+pub use thread_manager::build_models_manager_with_provider;
 pub use thread_manager::local_agent_graph_store_from_state_db;
 pub use thread_manager::passthrough_image_store;
 pub use thread_manager::thread_store_from_config;

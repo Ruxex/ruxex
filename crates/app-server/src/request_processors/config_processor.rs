@@ -45,7 +45,6 @@ use genex_config::ResidencyRequirement as CoreResidencyRequirement;
 use genex_config::SandboxModeRequirement as CoreSandboxModeRequirement;
 use genex_core::ThreadManager;
 use genex_features::feature_for_key;
-use genex_model_provider::create_model_provider_for_id;
 use genex_protocol::config_types::ForcedLoginMethod;
 use genex_protocol::config_types::WebSearchMode;
 use serde_json::json;
@@ -163,12 +162,8 @@ impl ConfigRequestProcessor {
     pub(crate) async fn model_provider_capabilities_read(
         &self,
     ) -> Result<ModelProviderCapabilitiesReadResponse, JSONRPCErrorError> {
-        let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let provider = create_model_provider_for_id(
-            config.model_provider_id,
-            config.model_provider,
-            /*credential_manager*/ None,
-        );
+        let _config = self.load_latest_config(/*fallback_cwd*/ None).await?;
+        let provider = self.thread_manager.model_provider();
         let capabilities = provider.capabilities();
         Ok(ModelProviderCapabilitiesReadResponse {
             namespace_tools: capabilities.namespace_tools,
@@ -179,14 +174,9 @@ impl ConfigRequestProcessor {
     pub(crate) async fn model_provider_list(
         &self,
     ) -> Result<ModelProviderListResponse, JSONRPCErrorError> {
-        let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let credential_manager = self.thread_manager.credential_manager();
-        let id = config.model_provider_id.clone();
-        let provider_runtime = create_model_provider_for_id(
-            id.clone(),
-            config.model_provider.clone(),
-            Some(Arc::clone(&credential_manager)),
-        );
+        let _config = self.load_latest_config(/*fallback_cwd*/ None).await?;
+        let provider_runtime = self.thread_manager.model_provider();
+        let descriptor = provider_runtime.descriptor();
         let auth_status = provider_runtime
             .account_state()
             .map_err(|err| invalid_request(err.to_string()))?
@@ -203,12 +193,12 @@ impl ConfigRequestProcessor {
                     secret: field.secret,
                 })
                 .collect(),
-            id,
-            name: config.model_provider.name,
+            id: descriptor.provider_kind,
+            name: provider_runtime.info().name.clone(),
         }];
 
         Ok(ModelProviderListResponse {
-            active_provider_id: Some(config.model_provider_id),
+            active_provider_id: Some(providers[0].id.clone()),
             providers,
         })
     }

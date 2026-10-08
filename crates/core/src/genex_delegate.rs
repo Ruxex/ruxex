@@ -87,6 +87,7 @@ pub(crate) async fn run_genex_thread_interactive(
         instructions,
         installation_id: parent_session.installation_id.clone(),
         credential_manager,
+        provider: parent_session.model_provider().await,
         models_manager,
         git_root_discovery: Arc::clone(&parent_session.services.git_root_discovery),
         environment_manager: parent_session
