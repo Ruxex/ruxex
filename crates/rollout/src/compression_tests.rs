@@ -398,7 +398,6 @@ async fn resume_materializes_compressed_rollout_path() -> anyhow::Result<()> {
         genex_home: home.path().to_path_buf(),
         sqlite: genex_state::SqliteConfig::new_for_testing(home.path().abs()),
         cwd: home.path().to_path_buf(),
-        model_provider_id: "test-provider".to_string(),
     };
     let uuid = Uuid::from_u128(3);
     let thread_id = ThreadId::from_string(&uuid.to_string())?;

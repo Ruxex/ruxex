@@ -46,7 +46,7 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
         let config = test_config(home.path());
         let state_db = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("initialize state database");
@@ -122,7 +122,7 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
                     Utc::now(),
                     SessionSource::Cli,
                 )
-                .build("test-provider");
+                .build();
                 metadata.first_user_message = Some("needle in selected rollout".to_string());
                 state_db
                     .upsert_thread(&metadata)

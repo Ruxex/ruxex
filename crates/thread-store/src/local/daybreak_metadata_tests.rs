@@ -25,7 +25,7 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
     let original_rollout = std::fs::read(&rollout_path)?;
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        config.default_model_provider_id.clone(),
+        String::new(),
     )
     .await?;
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
@@ -52,7 +52,6 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
     genex_rollout::state_db::reconcile_rollout(
         Some(runtime.as_ref()),
         &rollout_path,
-        &config.default_model_provider_id,
         /*builder*/ None,
         &[],
         /*archived_only*/ None,
@@ -63,7 +62,7 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
 
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        config.default_model_provider_id.clone(),
+        String::new(),
     )
     .await?;
     let store = LocalThreadStore::new(config, Some(runtime));

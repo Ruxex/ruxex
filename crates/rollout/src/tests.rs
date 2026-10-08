@@ -115,7 +115,7 @@ async fn insert_state_db_thread(
     if archived {
         builder.archived_at = Some(created_at);
     }
-    let mut metadata = builder.build(TEST_PROVIDER);
+    let mut metadata = builder.build();
     metadata.first_user_message = Some("Hello from user".to_string());
     metadata.preview = metadata.first_user_message.clone();
     runtime

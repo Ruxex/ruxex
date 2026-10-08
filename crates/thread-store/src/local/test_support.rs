@@ -14,7 +14,6 @@ pub(super) fn test_config(genex_home: &Path) -> LocalThreadStoreConfig {
     LocalThreadStoreConfig {
         genex_home: genex_home.to_path_buf(),
         sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
-        default_model_provider_id: "test-provider".to_string(),
     }
 }
 

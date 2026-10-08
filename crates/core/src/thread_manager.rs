@@ -683,7 +683,6 @@ impl ThreadManager {
             LocalThreadStoreConfig {
                 genex_home: genex_home.clone(),
                 sqlite: genex_state::SqliteConfig::new_for_testing(absolute_genex_home),
-                default_model_provider_id: "test".to_string(),
             },
             state_db.clone(),
         ));

@@ -52,12 +52,10 @@ pub(super) async fn list_threads(
         genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd: store.config.genex_home.clone(),
-        model_provider_id: store.config.default_model_provider_id.clone(),
     };
     let page = list_rollout_threads(
         state_db.clone(),
         &rollout_config,
-        store.config.default_model_provider_id.as_str(),
         &params,
         cursor.as_ref(),
         sort_key,
@@ -244,7 +242,6 @@ async fn list_section_threads(
 pub(super) async fn list_rollout_threads(
     state_db: Option<genex_rollout::StateDbHandle>,
     config: &RolloutConfig,
-    default_model_provider_id: &str,
     params: &ListThreadsParams,
     cursor: Option<&genex_rollout::Cursor>,
     sort_key: genex_rollout::ThreadSortKey,
@@ -293,7 +290,6 @@ pub(super) async fn list_rollout_threads(
             sort_direction,
             params.allowed_sources.as_slice(),
             params.cwd_filters.as_deref(),
-            default_model_provider_id,
             params.search_term.as_deref(),
         )
         .await
@@ -307,7 +303,6 @@ pub(super) async fn list_rollout_threads(
             sort_direction,
             params.allowed_sources.as_slice(),
             params.cwd_filters.as_deref(),
-            default_model_provider_id,
             params.search_term.as_deref(),
         )
         .await
@@ -321,7 +316,6 @@ pub(super) async fn list_rollout_threads(
             sort_direction,
             params.allowed_sources.as_slice(),
             params.cwd_filters.as_deref(),
-            default_model_provider_id,
             params.search_term.as_deref(),
         )
         .await
@@ -335,7 +329,6 @@ pub(super) async fn list_rollout_threads(
             sort_direction,
             params.allowed_sources.as_slice(),
             params.cwd_filters.as_deref(),
-            default_model_provider_id,
             params.search_term.as_deref(),
         )
         .await
@@ -368,7 +361,7 @@ mod tests {
     use crate::local::test_support::write_session_file_with;
 
     #[tokio::test]
-    async fn list_threads_uses_default_provider_when_rollout_omits_provider() {
+    async fn list_threads_accepts_rollout_without_provider_metadata() {
         let home = TempDir::new().expect("temp dir");
         let store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
         write_session_file_with(
@@ -414,7 +407,7 @@ mod tests {
 
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -432,7 +425,7 @@ mod tests {
         );
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.title = "needle title".to_string();
         metadata.first_user_message = Some("plain preview".to_string());
         metadata.preview = metadata.first_user_message.clone();
@@ -482,7 +475,7 @@ mod tests {
 
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -500,7 +493,7 @@ mod tests {
         builder.history_mode = ThreadHistoryMode::Paginated;
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.name = Some("canonical paginated name".to_string());
         metadata.title = "stale title name".to_string();
         metadata.first_user_message = Some("plain preview".to_string());
@@ -658,7 +651,7 @@ mod tests {
         let config = test_config(home.path());
         let state = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("initialize state");
@@ -675,7 +668,6 @@ mod tests {
             genex_rollout::state_db::reconcile_rollout(
                 Some(state.as_ref()),
                 rollout_path.as_path(),
-                "test-provider",
                 /*builder*/ None,
                 &[],
                 /*archived_only*/ None,

@@ -70,7 +70,6 @@ pub(super) async fn search_threads(
         genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd: store.config.genex_home.clone(),
-        model_provider_id: store.config.default_model_provider_id.clone(),
     };
     let rg_command = InstallContext::current().rg_command();
     let matching_rollouts = search_rollout_matches(
@@ -115,7 +114,6 @@ pub(super) async fn search_threads(
         let page = list_rollout_threads(
             state_db.clone(),
             &rollout_config,
-            store.config.default_model_provider_id.as_str(),
             &scan_params,
             page_cursor.as_ref(),
             sort_key,

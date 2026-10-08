@@ -68,7 +68,7 @@ async fn list_threads_db_rejects_mismatched_sqlite_config_without_cleanup() -> a
         Utc::now(),
         SessionSource::Cli,
     )
-    .build("test-provider");
+    .build();
     runtime.upsert_thread(&metadata).await?;
 
     let page = list_threads_db(
@@ -114,7 +114,6 @@ async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> 
     let initialized = try_init_with_roots_and_backfill_lease(
         home.path().to_path_buf(),
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        "test-provider".to_string(),
         /*backfill_lease_seconds*/ 60,
     )
     .await?;
@@ -141,7 +140,6 @@ async fn try_init_times_out_waiting_for_stuck_startup_backfill() -> anyhow::Resu
     let result = try_init_with_roots_and_backfill_lease(
         home.path().to_path_buf(),
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        "test-provider".to_string(),
         /*backfill_lease_seconds*/ 60,
     )
     .await;
@@ -185,7 +183,6 @@ async fn reconcile_rollout_preserves_existing_explicit_title() -> anyhow::Result
     reconcile_rollout(
         Some(runtime.as_ref()),
         rollout_path.as_path(),
-        "test-provider",
         /*builder*/ None,
         &[],
         /*archived_only*/ Some(false),
@@ -249,7 +246,6 @@ async fn filesystem_repair_preserves_existing_rollout_path() -> anyhow::Result<(
     reconcile_rollout(
         Some(runtime.as_ref()),
         old_rollout_path.as_path(),
-        "test-provider",
         /*builder*/ None,
         &[],
         /*archived_only*/ None,

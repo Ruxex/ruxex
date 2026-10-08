@@ -992,10 +992,10 @@ ON CONFLICT(id) DO UPDATE SET
         let existing_metadata = self.get_thread(builder.id).await?;
         let mut metadata = existing_metadata
             .clone()
-            .unwrap_or_else(|| builder.build(""));
+            .unwrap_or_else(|| builder.build());
         metadata.rollout_path = builder.rollout_path.clone();
         for item in items {
-            apply_rollout_item(&mut metadata, item, "");
+            apply_rollout_item(&mut metadata, item);
         }
         if let Some(existing_metadata) = existing_metadata.as_ref() {
             metadata.prefer_existing_git_info(existing_metadata);

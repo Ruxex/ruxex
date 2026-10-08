@@ -734,7 +734,7 @@ mod tests {
             Utc::now(),
             SessionSource::Exec,
         )
-        .build("test-provider");
+        .build();
         metadata.preview = Some("goal-first preview".to_string());
         metadata.first_user_message = Some("[Image]".to_string());
         let params = resume_params(

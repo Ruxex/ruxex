@@ -208,13 +208,11 @@ impl LiveWriterLocks {
 /// Process-scoped configuration for local thread storage.
 ///
 /// This describes where local storage lives. New-thread rollout metadata such
-/// as cwd, provider, and memory mode is supplied when live persistence is opened.
+/// as cwd and memory mode is supplied when live persistence is opened.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LocalThreadStoreConfig {
     pub genex_home: PathBuf,
     pub sqlite: SqliteConfig,
-    /// Provider used only when older local metadata does not contain one.
-    pub default_model_provider_id: String,
 }
 
 impl LocalThreadStoreConfig {
@@ -222,7 +220,6 @@ impl LocalThreadStoreConfig {
         Self {
             genex_home: config.genex_home().to_path_buf(),
             sqlite: config.sqlite_config().clone(),
-            default_model_provider_id: config.model_provider_id().to_string(),
         }
     }
 }
@@ -852,7 +849,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -887,7 +884,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -922,7 +919,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -948,7 +945,7 @@ mod tests {
         );
         builder.history_mode = ThreadHistoryMode::Paginated;
         builder.cwd = home.path().to_path_buf();
-        let mut metadata = builder.build("test-provider");
+        let mut metadata = builder.build();
         metadata.preview = Some("original user message".to_string());
         metadata.first_user_message = Some("original user message".to_string());
         metadata.title = "original user message".to_string();
@@ -1003,7 +1000,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1078,7 +1075,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1174,7 +1171,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1210,7 +1207,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1254,7 +1251,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1306,7 +1303,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");

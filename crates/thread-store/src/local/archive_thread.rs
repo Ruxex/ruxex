@@ -325,7 +325,7 @@ mod tests {
             .join(active_path.file_name().expect("file name"));
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -342,7 +342,7 @@ mod tests {
         );
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
-        let metadata = builder.build(config.default_model_provider_id.as_str());
+        let metadata = builder.build();
         runtime
             .upsert_thread(&metadata)
             .await

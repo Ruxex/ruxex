@@ -42,7 +42,6 @@ fn test_config(genex_home: &Path) -> RolloutConfig {
         genex_home: genex_home.to_path_buf(),
         sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
         cwd: genex_home.to_path_buf(),
-        model_provider_id: "test-provider".to_string(),
     }
 }
 
@@ -963,7 +962,6 @@ async fn list_threads_db_disabled_does_not_skip_paginated_items() -> std::io::Re
     let middle = write_session_file(home.path(), "2025-01-02T12-00-00", Uuid::from_u128(9002))?;
     let _oldest = write_session_file(home.path(), "2025-01-01T12-00-00", Uuid::from_u128(9003))?;
 
-    let default_provider = config.model_provider_id.clone();
     let page1 = RolloutRecorder::list_threads(
         /*state_db_ctx*/ None,
         &config,
@@ -973,7 +971,6 @@ async fn list_threads_db_disabled_does_not_skip_paginated_items() -> std::io::Re
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ None,
-        default_provider.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -990,7 +987,6 @@ async fn list_threads_db_disabled_does_not_skip_paginated_items() -> std::io::Re
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ None,
-        default_provider.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1013,7 +1009,7 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        config.model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1032,7 +1028,7 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         SessionSource::Cli,
     );
     builder.cwd = home.path().to_path_buf();
-    let mut metadata = builder.build(config.model_provider_id.as_str());
+    let mut metadata = builder.build();
     metadata.first_user_message = Some("Hello from user".to_string());
     metadata.preview = metadata.first_user_message.clone();
     runtime
@@ -1054,7 +1050,7 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         SessionSource::Cli,
     );
     valid_builder.cwd = home.path().to_path_buf();
-    let mut valid_metadata = valid_builder.build(config.model_provider_id.as_str());
+    let mut valid_metadata = valid_builder.build();
     valid_metadata.first_user_message = Some("Older valid thread".to_string());
     valid_metadata.preview = valid_metadata.first_user_message.clone();
     runtime
@@ -1062,7 +1058,6 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         .await
         .expect("state db upsert should succeed");
 
-    let default_provider = config.model_provider_id.clone();
     let page = RolloutRecorder::list_threads(
         Some(runtime.clone()),
         &config,
@@ -1072,7 +1067,6 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ None,
-        default_provider.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1098,7 +1092,7 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        config.model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1149,7 +1143,6 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ Some(cwd_filters.as_slice()),
-        config.model_provider_id.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1164,7 +1157,6 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ Some(cwd_filters.as_slice()),
-        config.model_provider_id.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1179,7 +1171,6 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ Some(cwd_filters.as_slice()),
-        config.model_provider_id.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1199,7 +1190,7 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        config.model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1218,7 +1209,7 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
         SessionSource::Cli,
     );
     builder.cwd = stale_cwd.clone();
-    let mut metadata = builder.build(config.model_provider_id.as_str());
+    let mut metadata = builder.build();
     metadata.first_user_message = Some("Hello from user".to_string());
     metadata.preview = metadata.first_user_message.clone();
     runtime
@@ -1236,7 +1227,6 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ Some(cwd_filters.as_slice()),
-        config.model_provider_id.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1251,7 +1241,6 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ Some(cwd_filters.as_slice()),
-        config.model_provider_id.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1266,7 +1255,6 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ Some(cwd_filters.as_slice()),
-        config.model_provider_id.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1285,7 +1273,7 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        config.model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1309,7 +1297,7 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
     builder.git_origin_url = Some(
         SanitizedGitUrl::try_from("https://example.com/repo.git").expect("valid git remote URL"),
     );
-    let mut metadata = builder.build(config.model_provider_id.as_str());
+    let mut metadata = builder.build();
     metadata.first_user_message = Some("Hello from user".to_string());
     metadata.preview = metadata.first_user_message.clone();
     runtime
@@ -1326,7 +1314,6 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
         SortDirection::Desc,
         &[SessionSource::Cli],
         /*cwd_filters*/ None,
-        config.model_provider_id.as_str(),
         /*search_term*/ None,
     )
     .await?;
@@ -1453,7 +1440,7 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        config.model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1472,7 +1459,7 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
         SessionSource::Cli,
     );
     builder.cwd = home.path().to_path_buf();
-    let mut metadata = builder.build(config.model_provider_id.as_str());
+    let mut metadata = builder.build();
     metadata.title = "needle stale first user".to_string();
     metadata.first_user_message = Some(metadata.title.clone());
     metadata.preview = metadata.first_user_message.clone();
@@ -1490,7 +1477,6 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ None,
-        config.model_provider_id.as_str(),
         Some("needle"),
     )
     .await?;
@@ -1505,7 +1491,6 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ None,
-        config.model_provider_id.as_str(),
         Some("needle"),
     )
     .await?;
@@ -1520,7 +1505,6 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
         SortDirection::Desc,
         &[],
         /*cwd_filters*/ None,
-        config.model_provider_id.as_str(),
         Some("needle"),
     )
     .await?;
@@ -1573,7 +1557,6 @@ async fn resume_candidate_matches_cwd_reads_latest_turn_context() -> std::io::Re
             path.as_path(),
             Some(stale_cwd.as_path()),
             latest_cwd.as_path(),
-            "test-provider",
         )
         .await
     );

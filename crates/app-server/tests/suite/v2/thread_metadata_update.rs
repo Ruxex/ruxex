@@ -172,7 +172,6 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
         reconcile_rollout(
             Some(&state_db),
             rollout_path(genex_home.path(), filename_timestamp, &thread_id).as_path(),
-            "mock_provider",
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -413,7 +412,6 @@ async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_res
         reconcile_rollout(
             Some(&state_db),
             rollout_path(genex_home.path(), filename_timestamp, &thread_id).as_path(),
-            "mock_provider",
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -948,7 +946,6 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
     reconcile_rollout(
         Some(&state_db),
         rollout_path.as_path(),
-        "mock_provider",
         /*builder*/ None,
         &[],
         /*archived_only*/ None,

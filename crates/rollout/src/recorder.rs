@@ -373,7 +373,6 @@ impl RolloutRecorder {
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
         cwd_filters: Option<&[PathBuf]>,
-        default_provider: &str,
         search_term: Option<&str>,
     ) -> std::io::Result<ThreadsPage> {
         Self::list_threads_with_db_fallback(
@@ -385,7 +384,6 @@ impl RolloutRecorder {
             sort_direction,
             allowed_sources,
             cwd_filters,
-            default_provider,
             ThreadListArchiveFilter::Active,
             ThreadListRepairMode::ScanAndRepair,
             search_term,
@@ -403,7 +401,6 @@ impl RolloutRecorder {
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
         cwd_filters: Option<&[PathBuf]>,
-        default_provider: &str,
         search_term: Option<&str>,
     ) -> std::io::Result<ThreadsPage> {
         Self::list_threads_with_db_fallback(
@@ -415,7 +412,6 @@ impl RolloutRecorder {
             sort_direction,
             allowed_sources,
             cwd_filters,
-            default_provider,
             ThreadListArchiveFilter::Active,
             ThreadListRepairMode::StateDbOnly,
             search_term,
@@ -434,7 +430,6 @@ impl RolloutRecorder {
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
         cwd_filters: Option<&[PathBuf]>,
-        default_provider: &str,
         search_term: Option<&str>,
     ) -> std::io::Result<ThreadsPage> {
         Self::list_threads_with_db_fallback(
@@ -446,7 +441,6 @@ impl RolloutRecorder {
             sort_direction,
             allowed_sources,
             cwd_filters,
-            default_provider,
             ThreadListArchiveFilter::Archived,
             ThreadListRepairMode::ScanAndRepair,
             search_term,
@@ -464,7 +458,6 @@ impl RolloutRecorder {
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
         cwd_filters: Option<&[PathBuf]>,
-        default_provider: &str,
         search_term: Option<&str>,
     ) -> std::io::Result<ThreadsPage> {
         Self::list_threads_with_db_fallback(
@@ -476,7 +469,6 @@ impl RolloutRecorder {
             sort_direction,
             allowed_sources,
             cwd_filters,
-            default_provider,
             ThreadListArchiveFilter::Archived,
             ThreadListRepairMode::StateDbOnly,
             search_term,
@@ -494,7 +486,6 @@ impl RolloutRecorder {
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
         cwd_filters: Option<&[PathBuf]>,
-        default_provider: &str,
         archive_filter: ThreadListArchiveFilter,
         repair_mode: ThreadListRepairMode,
         search_term: Option<&str>,
@@ -597,7 +588,6 @@ impl RolloutRecorder {
                 state_db::reconcile_rollout(
                     state_db_ctx.as_deref(),
                     item.path.as_path(),
-                    default_provider,
                     /*builder*/ None,
                     &[],
                     Some(archived),
@@ -636,7 +626,6 @@ impl RolloutRecorder {
                     state_db::reconcile_rollout(
                         state_db_ctx.as_deref(),
                         item.rollout_path.as_path(),
-                        default_provider,
                         /*builder*/ None,
                         &[],
                         Some(archived),
@@ -675,7 +664,6 @@ impl RolloutRecorder {
                     state_db::reconcile_rollout(
                         state_db_ctx.as_deref(),
                         item.rollout_path.as_path(),
-                        default_provider,
                         /*builder*/ None,
                         &[],
                         Some(archived),
@@ -752,7 +740,6 @@ impl RolloutRecorder {
         cursor: Option<&Cursor>,
         sort_key: ThreadSortKey,
         allowed_sources: &[SessionSource],
-        default_provider: &str,
         filter_cwd: Option<&Path>,
     ) -> std::io::Result<Option<PathBuf>> {
         let genex_home = config.genex_home();
@@ -783,7 +770,7 @@ impl RolloutRecorder {
                     break;
                 };
                 if let Some(path) =
-                    select_resume_path_from_db_page(&db_page, filter_cwd, default_provider).await
+                    select_resume_path_from_db_page(&db_page, filter_cwd).await
                 {
                     return Ok(Some(path));
                 }
@@ -813,7 +800,7 @@ impl RolloutRecorder {
                 cwd_filter.as_ref().map(std::slice::from_ref),
             )
             .await?;
-            if let Some(path) = select_resume_path(&page, filter_cwd, default_provider).await {
+            if let Some(path) = select_resume_path(&page, filter_cwd).await {
                 return Ok(Some(path));
             }
             cursor = page.next_cursor;
@@ -2022,7 +2009,6 @@ fn thread_item_from_state_metadata(
 async fn select_resume_path(
     page: &ThreadsPage,
     filter_cwd: Option<&Path>,
-    default_provider: &str,
 ) -> Option<PathBuf> {
     match filter_cwd {
         Some(cwd) => {
@@ -2031,7 +2017,6 @@ async fn select_resume_path(
                     item.path.as_path(),
                     item.cwd.as_deref(),
                     cwd,
-                    default_provider,
                 )
                 .await
                 {
@@ -2048,7 +2033,6 @@ async fn resume_candidate_matches_cwd(
     rollout_path: &Path,
     cached_cwd: Option<&Path>,
     cwd: &Path,
-    _default_provider: &str,
 ) -> bool {
     if cached_cwd.is_some_and(|session_cwd| cwd_matches(session_cwd, cwd)) {
         return true;
@@ -2080,7 +2064,6 @@ async fn resume_candidate_matches_cwd(
 async fn select_resume_path_from_db_page(
     page: &genex_state::ThreadsPage,
     filter_cwd: Option<&Path>,
-    default_provider: &str,
 ) -> Option<PathBuf> {
     match filter_cwd {
         Some(cwd) => {
@@ -2089,7 +2072,6 @@ async fn select_resume_path_from_db_page(
                     item.rollout_path.as_path(),
                     Some(item.cwd.as_path()),
                     cwd,
-                    default_provider,
                 )
                 .await
                 {

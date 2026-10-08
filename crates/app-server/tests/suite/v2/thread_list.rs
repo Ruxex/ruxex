@@ -584,7 +584,6 @@ sqlite = true
         genex_home: genex_home.path().to_path_buf(),
         sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         cwd: genex_home.path().to_path_buf(),
-        model_provider_id: "mock_provider".to_string(),
     };
     let repaired_page = genex_core::RolloutRecorder::list_threads(
         Some(state_db.clone()),
@@ -1971,7 +1970,6 @@ async fn thread_list_sort_recency_at_uses_state_db_order() -> Result<()> {
         genex_home: genex_home.path().to_path_buf(),
         sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
         cwd: genex_home.path().to_path_buf(),
-        model_provider_id: "mock_provider".to_string(),
     };
     genex_core::RolloutRecorder::list_threads(
         Some(state_db.clone()),

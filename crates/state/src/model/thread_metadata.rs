@@ -265,7 +265,7 @@ impl ThreadMetadataBuilder {
     }
 
     /// Build canonical thread metadata, filling missing values from defaults.
-    pub fn build(&self, _default_provider: &str) -> ThreadMetadata {
+    pub fn build(&self) -> ThreadMetadata {
         let source = crate::extract::enum_to_string(&self.source);
         let sandbox_policy = crate::extract::enum_to_string(&self.sandbox_policy);
         let approval_mode = crate::extract::enum_to_string(&self.approval_mode);

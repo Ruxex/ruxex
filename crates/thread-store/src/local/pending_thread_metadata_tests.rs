@@ -140,7 +140,7 @@ async fn store_with_runtime() -> (
     let config = test_config(home.path());
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        config.default_model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state db should initialize");

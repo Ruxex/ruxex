@@ -159,8 +159,8 @@ async fn extract_metadata_from_rollout_uses_session_meta() {
         .expect("extract");
 
     let builder = builder_from_session_meta(&session_meta_line, path.as_path()).expect("builder");
-    let mut expected = builder.build("provider");
-    apply_rollout_item(&mut expected, &rollout_line.item, "provider");
+    let mut expected = builder.build();
+    apply_rollout_item(&mut expected, &rollout_line.item);
     expected.updated_at = file_modified_time_utc(&path).await.expect("mtime");
     expected.recency_at = expected.updated_at;
 
@@ -277,7 +277,7 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     ))
     .await;
 
-    backfill_sessions(runtime.as_ref(), genex_home.as_path(), "test-provider").await;
+    backfill_sessions(runtime.as_ref(), genex_home.as_path()).await;
 
     let first_id = ThreadId::from_string(&first_uuid.to_string()).expect("first thread id");
     let second_id = ThreadId::from_string(&second_uuid.to_string()).expect("second thread id");
@@ -350,7 +350,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         .await
         .expect("existing metadata upsert");
 
-    backfill_sessions(runtime.as_ref(), genex_home.as_path(), "test-provider").await;
+    backfill_sessions(runtime.as_ref(), genex_home.as_path()).await;
 
     let persisted = runtime
         .get_thread(thread_id)
@@ -388,7 +388,7 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
     .await
     .expect("initialize runtime");
 
-    backfill_sessions(runtime.as_ref(), genex_home.as_path(), "test-provider").await;
+    backfill_sessions(runtime.as_ref(), genex_home.as_path()).await;
 
     let thread_id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
     let stored = runtime

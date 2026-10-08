@@ -7,7 +7,6 @@ pub trait RolloutConfigView {
     fn genex_home(&self) -> &Path;
     fn sqlite_config(&self) -> &SqliteConfig;
     fn cwd(&self) -> &Path;
-    fn model_provider_id(&self) -> &str;
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -15,7 +14,6 @@ pub struct RolloutConfig {
     pub genex_home: PathBuf,
     pub sqlite: SqliteConfig,
     pub cwd: PathBuf,
-    pub model_provider_id: String,
 }
 
 pub type Config = RolloutConfig;
@@ -26,7 +24,6 @@ impl RolloutConfig {
             genex_home: view.genex_home().to_path_buf(),
             sqlite: view.sqlite_config().clone(),
             cwd: view.cwd().to_path_buf(),
-            model_provider_id: view.model_provider_id().to_string(),
         }
     }
 }
@@ -44,9 +41,6 @@ impl RolloutConfigView for RolloutConfig {
         self.cwd.as_path()
     }
 
-    fn model_provider_id(&self) -> &str {
-        self.model_provider_id.as_str()
-    }
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
@@ -62,9 +56,6 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
         (*self).cwd()
     }
 
-    fn model_provider_id(&self) -> &str {
-        (*self).model_provider_id()
-    }
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
@@ -80,7 +71,4 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
         self.as_ref().cwd()
     }
 
-    fn model_provider_id(&self) -> &str {
-        self.as_ref().model_provider_id()
-    }
 }

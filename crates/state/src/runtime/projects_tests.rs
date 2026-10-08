@@ -26,7 +26,7 @@ async fn project_lifecycle_preserves_order_and_clears_assignments() -> anyhow::R
         chrono::Utc::now(),
         SessionSource::Cli,
     )
-    .build("test-provider");
+    .build();
     runtime.upsert_thread(&metadata).await?;
 
     let roots = vec![
@@ -104,7 +104,7 @@ async fn project_lifecycle_preserves_order_and_clears_assignments() -> anyhow::R
         chrono::Utc::now(),
         SessionSource::Cli,
     )
-    .build("test-provider");
+    .build();
     runtime.upsert_thread(&active_metadata).await?;
     runtime
         .set_thread_project(&active_thread_id.to_string(), Some(&project.id))
@@ -424,7 +424,7 @@ async fn project_list_orders_and_pages_recency_with_roots_and_nulls() -> anyhow:
                     chrono::DateTime::from_timestamp_millis(timestamp).unwrap(),
                     SessionSource::Exec,
                 )
-                .build("test-provider");
+                .build();
                 metadata.archived_at = archived.then(chrono::Utc::now);
                 runtime.upsert_thread(&metadata).await?;
                 // Force exact ties despite the monotonic timestamp allocator.
@@ -713,7 +713,7 @@ async fn initial_project_assignment_is_inserted_with_thread_row() -> anyhow::Res
         chrono::Utc::now(),
         SessionSource::Cli,
     )
-    .build("test-provider");
+    .build();
     metadata.project_id = Some(project.id.clone());
     assert!(runtime.insert_thread_if_absent(&metadata).await?);
     assert_eq!(
@@ -728,7 +728,7 @@ async fn initial_project_assignment_is_inserted_with_thread_row() -> anyhow::Res
         chrono::Utc::now(),
         SessionSource::Cli,
     )
-    .build("test-provider");
+    .build();
     missing_project_metadata.project_id = Some("00000000-0000-0000-0000-000000000000".to_string());
     let error = runtime
         .insert_thread_if_absent(&missing_project_metadata)

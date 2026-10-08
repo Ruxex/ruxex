@@ -521,7 +521,7 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -537,7 +537,7 @@ mod tests {
             .expect("timestamp should parse")
             .with_timezone(&Utc);
         builder.recency_at = Some(recency_at);
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.name = Some("Canonical SQLite name".to_string());
         metadata.section = Some(genex_state::ThreadSection {
             id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
@@ -685,7 +685,7 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -694,7 +694,7 @@ mod tests {
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.name = Some("Saved title".to_string());
         metadata.first_user_message = Some("Hello from user".to_string());
         runtime
@@ -744,7 +744,7 @@ mod tests {
         .expect("append rollout user message");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -757,7 +757,7 @@ mod tests {
         );
         builder.history_mode = ThreadHistoryMode::Paginated;
         builder.cwd = home.path().to_path_buf();
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.name = Some("Canonical SQLite name".to_string());
         metadata.preview = Some("Canonical SQLite preview".to_string());
         metadata.first_user_message = Some("Canonical SQLite first user message".to_string());
@@ -818,7 +818,7 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -826,7 +826,7 @@ mod tests {
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
         builder.cwd = home.path().to_path_buf();
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.preview = Some("Hello from user".to_string());
         let permission_profile: PermissionProfile = PermissionProfile::Disabled;
         metadata.sandbox_policy =
@@ -859,7 +859,7 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -867,7 +867,7 @@ mod tests {
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
         builder.cwd = home.path().to_path_buf();
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.sandbox_policy = "danger-full-access".to_string();
         runtime
             .upsert_thread(&metadata)
@@ -892,7 +892,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -938,7 +938,7 @@ mod tests {
         );
         let sqlite_cwd = home.path().join("sqlite-workspace");
         builder.cwd = sqlite_cwd.clone();
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.name = Some("Saved title".to_string());
         metadata.first_user_message = Some("Hello from sqlite".to_string());
         metadata.sandbox_policy = "workspace-write".to_string();
@@ -1065,7 +1065,7 @@ mod tests {
 
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1078,7 +1078,7 @@ mod tests {
         );
         builder.cwd = home.path().join("workspace");
         builder.cli_version = Some("sqlite-cli".to_string());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.name = Some("Command-only thread".to_string());
         runtime
             .upsert_thread(&metadata)
@@ -1189,7 +1189,7 @@ mod tests {
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1202,7 +1202,7 @@ mod tests {
         );
         builder.cwd = external.path().join("workspace");
         builder.cli_version = Some("sqlite-cli".to_string());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.preview = Some("optimize the benchmark".to_string());
         metadata.first_user_message = Some("next normal prompt".to_string());
         metadata.title = "next normal prompt".to_string();
@@ -1249,7 +1249,7 @@ mod tests {
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1257,7 +1257,7 @@ mod tests {
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         builder.archived_at = Some(Utc::now());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.first_user_message = Some("Archived SQLite preview".to_string());
         runtime
             .upsert_thread(&metadata)
@@ -1304,7 +1304,7 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1316,7 +1316,7 @@ mod tests {
             SessionSource::Cli,
         );
         builder.archived_at = Some(Utc::now());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.first_user_message = Some("Archived SQLite preview".to_string());
         runtime
             .upsert_thread(&metadata)

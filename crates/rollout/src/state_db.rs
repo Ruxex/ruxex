@@ -43,7 +43,7 @@ const STARTUP_BACKFILL_WAIT_TIMEOUT: Duration = Duration::from_secs(2);
 /// initialized handle.
 pub async fn init(config: &impl RolloutConfigView) -> Option<StateDbHandle> {
     let config = RolloutConfig::from_view(config);
-    match try_init_with_roots(config.genex_home, config.sqlite, config.model_provider_id).await {
+    match try_init_with_roots(config.genex_home, config.sqlite).await {
         Ok(runtime) => Some(runtime),
         Err(err) => {
             emit_startup_warning(&format!("failed to initialize state runtime: {err:#}"));
@@ -58,59 +58,42 @@ pub async fn init(config: &impl RolloutConfigView) -> Option<StateDbHandle> {
 /// tracing or UI setup has completed.
 pub async fn try_init(config: &impl RolloutConfigView) -> anyhow::Result<StateDbHandle> {
     let config = RolloutConfig::from_view(config);
-    try_init_with_roots(config.genex_home, config.sqlite, config.model_provider_id).await
+    try_init_with_roots(config.genex_home, config.sqlite).await
 }
 
 async fn try_init_with_roots(
     genex_home: PathBuf,
     sqlite: SqliteConfig,
-    default_model_provider_id: String,
 ) -> anyhow::Result<StateDbHandle> {
-    try_init_with_roots_inner(
-        genex_home,
-        sqlite,
-        default_model_provider_id,
-        /*backfill_lease_seconds*/ None,
-    )
-    .await
+    try_init_with_roots_inner(genex_home, sqlite, /*backfill_lease_seconds*/ None).await
 }
 
 #[cfg(test)]
 async fn try_init_with_roots_and_backfill_lease(
     genex_home: PathBuf,
     sqlite: SqliteConfig,
-    default_model_provider_id: String,
     backfill_lease_seconds: i64,
 ) -> anyhow::Result<StateDbHandle> {
-    try_init_with_roots_inner(
-        genex_home,
-        sqlite,
-        default_model_provider_id,
-        Some(backfill_lease_seconds),
-    )
-    .await
+    try_init_with_roots_inner(genex_home, sqlite, Some(backfill_lease_seconds)).await
 }
 
 async fn try_init_with_roots_inner(
     genex_home: PathBuf,
     sqlite: SqliteConfig,
-    default_model_provider_id: String,
     backfill_lease_seconds: Option<i64>,
 ) -> anyhow::Result<StateDbHandle> {
-    let runtime =
-        genex_state::StateRuntime::init(sqlite.clone(), default_model_provider_id.clone())
-            .await
-            .with_context(|| {
-                format!(
-                    "failed to initialize state runtime at {}",
-                    sqlite.home().display()
-                )
-            })?;
+    let runtime = genex_state::StateRuntime::init(sqlite.clone(), String::new())
+        .await
+        .with_context(|| {
+            format!(
+                "failed to initialize state runtime at {}",
+                sqlite.home().display()
+            )
+        })?;
     let backfill_gate_started = Instant::now();
     let backfill_gate_result = wait_for_backfill_gate(
         runtime.as_ref(),
         genex_home.as_path(),
-        default_model_provider_id.as_str(),
         backfill_lease_seconds,
     )
     .await;
@@ -129,7 +112,6 @@ async fn try_init_with_roots_inner(
 async fn wait_for_backfill_gate(
     runtime: &genex_state::StateRuntime,
     genex_home: &Path,
-    default_model_provider_id: &str,
     backfill_lease_seconds: Option<i64>,
 ) -> anyhow::Result<()> {
     let wait_started = Instant::now();
@@ -149,12 +131,11 @@ async fn wait_for_backfill_gate(
             metadata::backfill_sessions_with_lease(
                 runtime,
                 genex_home,
-                default_model_provider_id,
                 backfill_lease_seconds,
             )
             .await;
         } else {
-            metadata::backfill_sessions(runtime, genex_home, default_model_provider_id).await;
+            metadata::backfill_sessions(runtime, genex_home).await;
         }
         let backfill_state = runtime.get_backfill_state().await.map_err(|err| {
             anyhow::anyhow!(
@@ -216,7 +197,7 @@ pub async fn get_state_db(config: &impl RolloutConfigView) -> Option<StateDbHand
     }
     let runtime = match genex_state::StateRuntime::init(
         config.sqlite_config().clone(),
-        config.model_provider_id().to_string(),
+        String::new(),
     )
     .await
     {
@@ -494,7 +475,6 @@ pub async fn find_rollout_path_by_id(
 pub async fn reconcile_rollout(
     context: Option<&genex_state::StateRuntime>,
     rollout_path: &Path,
-    _default_provider: &str,
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
     archived_only: Option<bool>,
@@ -616,7 +596,6 @@ pub async fn read_repair_rollout_path(
     reconcile_rollout(
         Some(ctx),
         rollout_path,
-        "",
         /*builder*/ None,
         &[],
         archived_only,

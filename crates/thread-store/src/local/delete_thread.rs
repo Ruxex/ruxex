@@ -726,7 +726,7 @@ SELECT
         let config = test_config(home.path());
         let state_db = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("initialize state database for materialized history");

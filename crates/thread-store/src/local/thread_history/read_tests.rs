@@ -1014,7 +1014,7 @@ async fn store_with_mode(history_mode: ThreadHistoryMode) -> (TempDir, LocalThre
     }
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        config.default_model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state runtime");
@@ -1026,7 +1026,7 @@ async fn store_with_mode(history_mode: ThreadHistoryMode) -> (TempDir, LocalThre
     );
     builder.history_mode = history_mode;
     runtime
-        .upsert_thread(&builder.build(config.default_model_provider_id.as_str()))
+        .upsert_thread(&builder.build())
         .await
         .expect("seed thread metadata");
     let store = LocalThreadStore::new(config, Some(runtime));

@@ -408,7 +408,6 @@ impl ThreadGoalRequestProcessor {
         reconcile_rollout(
             Some(state_db),
             rollout_path.as_path(),
-            self.config.model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,

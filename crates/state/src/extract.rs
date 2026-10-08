@@ -15,7 +15,6 @@ use serde_json::Value;
 pub fn apply_rollout_item(
     metadata: &mut ThreadMetadata,
     item: &RolloutItem,
-    _default_provider: &str,
 ) {
     match item {
         RolloutItem::SessionMeta(meta_line) => apply_session_meta_from_item(metadata, meta_line),
@@ -219,7 +218,7 @@ mod tests {
             .into(),
         );
 
-        apply_rollout_item(&mut metadata, &item, "test-provider");
+        apply_rollout_item(&mut metadata, &item);
 
         assert_eq!(metadata.first_user_message, None);
         assert_eq!(metadata.preview, None);
@@ -238,7 +237,7 @@ mod tests {
             ..Default::default()
         }));
 
-        apply_rollout_item(&mut metadata, &item, "test-provider");
+        apply_rollout_item(&mut metadata, &item);
 
         assert_eq!(
             metadata.first_user_message.as_deref(),
@@ -262,7 +261,7 @@ mod tests {
             completed_at_ms: 0,
         }));
 
-        apply_rollout_item(&mut metadata, &item, "test-provider");
+        apply_rollout_item(&mut metadata, &item);
 
         assert_eq!(
             metadata.first_user_message.as_deref(),
@@ -284,7 +283,7 @@ mod tests {
             ..Default::default()
         }));
 
-        apply_rollout_item(&mut metadata, &item, "test-provider");
+        apply_rollout_item(&mut metadata, &item);
 
         assert_eq!(metadata.first_user_message.as_deref(), Some("[Image]"));
         assert_eq!(metadata.preview.as_deref(), Some("[Image]"));
@@ -305,7 +304,7 @@ mod tests {
             ..Default::default()
         }));
 
-        apply_rollout_item(&mut metadata, &item, "test-provider");
+        apply_rollout_item(&mut metadata, &item);
 
         assert_eq!(metadata.first_user_message.as_deref(), Some("[Audio]"));
         assert_eq!(metadata.preview.as_deref(), Some("[Audio]"));
@@ -324,7 +323,7 @@ mod tests {
             ..Default::default()
         }));
 
-        apply_rollout_item(&mut metadata, &item, "test-provider");
+        apply_rollout_item(&mut metadata, &item);
 
         assert_eq!(metadata.first_user_message, None);
         assert_eq!(metadata.preview, None);
@@ -350,7 +349,7 @@ mod tests {
                 },
             }));
 
-        apply_rollout_item(&mut metadata, &goal_item, "test-provider");
+        apply_rollout_item(&mut metadata, &goal_item);
 
         assert_eq!(metadata.preview.as_deref(), Some("optimize the benchmark"));
         assert_eq!(metadata.first_user_message, None);
@@ -365,7 +364,7 @@ mod tests {
             ..Default::default()
         }));
 
-        apply_rollout_item(&mut metadata, &user_item, "test-provider");
+        apply_rollout_item(&mut metadata, &user_item);
 
         assert_eq!(metadata.preview.as_deref(), Some("optimize the benchmark"));
         assert_eq!(
@@ -413,7 +412,6 @@ mod tests {
                 },
                 git: None,
             }),
-            "test-provider",
         );
         apply_rollout_item(
             &mut metadata,
@@ -445,7 +443,6 @@ mod tests {
                 effort: None,
                 summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
-            "test-provider",
         );
 
         assert_eq!(metadata.cwd, PathBuf::from("/child/worktree"));
@@ -492,7 +489,6 @@ mod tests {
                 effort: None,
                 summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
-            "test-provider",
         );
 
         assert_eq!(
@@ -535,7 +531,6 @@ mod tests {
                 effort: Some(ReasoningEffort::High),
                 summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
-            "test-provider",
         );
 
         assert_eq!(metadata.cwd, fallback_cwd);
@@ -575,7 +570,6 @@ mod tests {
                 effort: Some(ReasoningEffort::High),
                 summary: genex_protocol::config_types::ReasoningSummary::Auto,
             }),
-            "test-provider",
         );
 
         assert_eq!(metadata.model.as_deref(), Some("example-model"));
@@ -617,7 +611,7 @@ mod tests {
         ));
 
         assert!(rollout_item_affects_thread_metadata(&item));
-        apply_rollout_item(&mut metadata, &item, "test-provider");
+        apply_rollout_item(&mut metadata, &item);
 
         assert_eq!(metadata.model.as_deref(), Some("example-model"));
         assert_eq!(metadata.reasoning_effort, Some(ReasoningEffort::Ultra));
@@ -666,7 +660,6 @@ mod tests {
                 },
                 git: None,
             }),
-            "test-provider",
         );
 
         assert_eq!(metadata.model, None);

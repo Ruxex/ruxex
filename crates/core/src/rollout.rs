@@ -33,9 +33,6 @@ impl genex_rollout::RolloutConfigView for Config {
         self.cwd.as_path()
     }
 
-    fn model_provider_id(&self) -> &str {
-        self.model_provider_id.as_str()
-    }
 }
 
 pub(crate) mod list {

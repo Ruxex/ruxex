@@ -92,7 +92,7 @@ mod tests {
             Utc::now(),
             SessionSource::Cli,
         )
-        .build("test");
+        .build();
         state_db.upsert_thread(&metadata).await?;
 
         store

@@ -233,7 +233,7 @@ mod tests {
             .join(archived_path.file_name().expect("file name"));
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -250,7 +250,7 @@ mod tests {
         );
         builder.cwd = home.path().to_path_buf();
         builder.cli_version = Some("test_version".to_string());
-        let mut metadata = builder.build(config.default_model_provider_id.as_str());
+        let mut metadata = builder.build();
         metadata.archived_at = Some(metadata.updated_at);
         metadata.section = Some(genex_state::ThreadSection {
             id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),

@@ -419,7 +419,7 @@ async fn metadata_for_missing_sqlite_row(
     builder.agent_path = patch.agent_path.clone().flatten();
     builder.cwd = patch.cwd.clone().map(normalize_cwd).unwrap_or_default();
     builder.cli_version = patch.cli_version.clone();
-    let mut metadata = builder.build(store.config.default_model_provider_id.as_str());
+    let mut metadata = builder.build();
     if rollout_path_archived {
         metadata.archived_at = Some(metadata.updated_at);
     }
@@ -602,7 +602,7 @@ mod tests {
         let original_rollout = std::fs::read_to_string(&rollout_path).expect("read rollout");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -611,7 +611,6 @@ mod tests {
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             rollout_path.as_path(),
-            "test-provider",
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -754,7 +753,7 @@ mod tests {
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -830,14 +829,13 @@ mod tests {
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
-            config.default_model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -898,7 +896,6 @@ mod tests {
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
-            config.default_model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -928,7 +925,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -975,7 +972,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1032,7 +1029,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1094,7 +1091,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1145,7 +1142,6 @@ mod tests {
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
-            config.default_model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -1185,7 +1181,6 @@ mod tests {
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
-            config.default_model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -1258,7 +1253,6 @@ mod tests {
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
-            config.default_model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -1320,7 +1314,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1397,7 +1391,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1441,7 +1435,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1500,7 +1494,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1547,7 +1541,7 @@ mod tests {
         .expect("session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1588,7 +1582,7 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1625,7 +1619,7 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1695,7 +1689,7 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1707,7 +1701,6 @@ mod tests {
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             archived_path.as_path(),
-            config.default_model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ Some(true),
@@ -1758,7 +1751,7 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            config.default_model_provider_id.clone(),
+            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1770,7 +1763,6 @@ mod tests {
         genex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             archived_path.as_path(),
-            config.default_model_provider_id.as_str(),
             /*builder*/ None,
             &[],
             /*archived_only*/ Some(true),

@@ -106,7 +106,6 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
         genex_home: genex_home.clone(),
         sqlite: sqlite.clone(),
         cwd: genex_home.clone(),
-        model_provider_id: "test-provider".to_string(),
     };
     let recorder = RolloutRecorder::new(
         &rollout_config,
@@ -1311,7 +1310,7 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
     let thread_id = ThreadId::default();
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        config.default_model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("state runtime");
@@ -1323,7 +1322,7 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
     );
     builder.history_mode = ThreadHistoryMode::Paginated;
     runtime
-        .upsert_thread(&builder.build(config.default_model_provider_id.as_str()))
+        .upsert_thread(&builder.build())
         .await
         .expect("seed thread metadata");
     let store = LocalThreadStore::new(config, Some(runtime));
@@ -2291,7 +2290,7 @@ async fn projection_store(genex_home: &Path) -> LocalThreadStore {
     let config = test_config(genex_home);
     let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        config.default_model_provider_id.clone(),
+        String::new(),
     )
     .await
     .expect("initialize state database for paginated history");

@@ -46,6 +46,7 @@
 - Historical provider fields have now been removed from live thread/state projections and from the `SessionMeta` protocol type; old JSONL keeps loading because unknown fields are ignored. Remaining work is the final host-surface and provider-neutral contract audit.
 - The mounted-provider list response no longer exposes `activeProviderId` or per-entry `active` selection state; it reports the single mounted provider and its auth fields.
 - `StateRuntime` no longer stores or consults a provider identity; the retained initialization parameter is compatibility-only while state metadata construction is provider-neutral.
+- Rollout configuration and local thread-store configuration no longer carry a provider ID. Metadata building, rollout backfill/reconciliation, and thread listing/resume no longer accept provider-only arguments.
 
 ### Task 1: Add the provider descriptor contract
 

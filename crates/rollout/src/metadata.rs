@@ -148,9 +148,9 @@ pub async fn extract_metadata_from_rollout(
             rollout_path.display()
         )
     })?;
-    let mut metadata = builder.build("");
+    let mut metadata = builder.build();
     for item in &items {
-        apply_rollout_item(&mut metadata, item, "");
+        apply_rollout_item(&mut metadata, item);
     }
     if let Some(updated_at) = file_modified_time_utc(rollout_path).await {
         metadata.updated_at = updated_at;
@@ -165,21 +165,13 @@ pub async fn extract_metadata_from_rollout(
 pub(crate) async fn backfill_sessions(
     runtime: &genex_state::StateRuntime,
     genex_home: &Path,
-    _default_provider: &str,
 ) {
-    backfill_sessions_with_lease(
-        runtime,
-        genex_home,
-        _default_provider,
-        BACKFILL_LEASE_SECONDS,
-    )
-    .await;
+    backfill_sessions_with_lease(runtime, genex_home, BACKFILL_LEASE_SECONDS).await;
 }
 
 pub(crate) async fn backfill_sessions_with_lease(
     runtime: &genex_state::StateRuntime,
     genex_home: &Path,
-    _default_provider: &str,
     backfill_lease_seconds: i64,
 ) {
     let metric_client = genex_otel::global();

@@ -147,7 +147,6 @@ async fn create_replacement_recorder(
         genex_home: store.config.genex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd: source_meta.cwd.clone(),
-        model_provider_id: store.config.default_model_provider_id.clone(),
     };
     let mut params = RolloutRecorderParams::new(
         source_meta.id,
