@@ -6,14 +6,6 @@
       "type": "string"
     },
     "AccountDeleteParams": {
-      "properties": {
-        "providerId": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "providerId"
-      ],
       "type": "object"
     },
     "AdditionalContextEntry": {
@@ -1301,13 +1293,6 @@
               },
               "description": "Additional provider-specific credential values.",
               "type": "object"
-            },
-            "providerId": {
-              "description": "Optional configured model provider ID. When omitted, the active configured provider is used.",
-              "type": [
-                "string",
-                "null"
-              ]
             },
             "type": {
               "enum": [

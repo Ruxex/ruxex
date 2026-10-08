@@ -66,21 +66,12 @@ impl AccountRequestProcessor {
     pub(crate) async fn delete_account(
         &self,
         request_id: ConnectionRequestId,
-        params: AccountDeleteParams,
+        _params: AccountDeleteParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        if params.provider_id != self.config.model_provider_id {
-            let result: std::result::Result<AccountDeleteResponse, JSONRPCErrorError> = Err(
-                invalid_request(format!(
-                    "model provider switching is not supported by this runtime; configured provider is `{}`",
-                    self.config.model_provider_id
-                )),
-            );
-            self.outgoing.send_result(request_id, result).await;
-            return Ok(None);
-        }
+        let provider_id = self.config.model_provider_id.as_str();
         let result = self
             .credential_manager
-            .delete(&params.provider_id)
+            .delete(provider_id)
             .await
             .map(|deleted| AccountDeleteResponse { deleted })
             .map_err(|err| internal_error(format!("failed to delete provider credentials: {err}")));
@@ -208,11 +199,9 @@ impl AccountRequestProcessor {
         match params {
             LoginAccountParams::ApiKey {
                 api_key,
-                provider_id,
                 credentials,
             } => {
-                self.login_api_key_v2(request_id, api_key, provider_id, credentials)
-                    .await;
+                self.login_api_key_v2(request_id, api_key, credentials).await;
             }
         }
         Ok(())
@@ -227,7 +216,6 @@ impl AccountRequestProcessor {
     async fn login_api_key_common(
         &self,
         api_key: &str,
-        provider_id: Option<&str>,
         credentials: &std::collections::BTreeMap<String, String>,
     ) -> std::result::Result<(), JSONRPCErrorError> {
         if self.credential_manager.has_external_auth() {
@@ -243,18 +231,9 @@ impl AccountRequestProcessor {
             ));
         }
 
-        let provider_id = provider_id
-            .as_deref()
-            .unwrap_or(self.config.model_provider_id.as_str());
-        if provider_id != self.config.model_provider_id.as_str() {
-            return Err(invalid_request(format!(
-                "model provider switching is not supported by this runtime; configured provider is `{}`",
-                self.config.model_provider_id
-            )));
-        }
         self.credential_manager
             .login(
-                provider_id,
+                self.config.model_provider_id.as_str(),
                 ProviderAuth::api_key_with_credentials(api_key, credentials.clone()),
             )
             .await
@@ -265,11 +244,10 @@ impl AccountRequestProcessor {
         &self,
         request_id: ConnectionRequestId,
         api_key: String,
-        provider_id: Option<String>,
         credentials: std::collections::BTreeMap<String, String>,
     ) {
         let result = self
-            .login_api_key_common(&api_key, provider_id.as_deref(), &credentials)
+            .login_api_key_common(&api_key, &credentials)
             .await
             .map(|()| LoginAccountResponse::ApiKey {});
         let logged_in = result.is_ok();

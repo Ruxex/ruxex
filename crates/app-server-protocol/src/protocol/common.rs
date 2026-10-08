@@ -2614,7 +2614,6 @@ mod tests {
             request_id: RequestId::Integer(2),
             params: v2::LoginAccountParams::ApiKey {
                 api_key: "secret".to_string(),
-                provider_id: None,
                 credentials: std::collections::BTreeMap::new(),
             },
         };

@@ -43,10 +43,6 @@ pub enum LoginAccountParams {
         #[serde(rename = "apiKey")]
         #[ts(rename = "apiKey")]
         api_key: String,
-        /// Optional configured model provider ID. When omitted, the active
-        /// configured provider is used.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        provider_id: Option<String>,
         /// Additional provider-specific credential values.
         #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
         credentials: BTreeMap<String, String>,
@@ -167,7 +163,6 @@ pub struct LogoutAccountResponse {}
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct AccountDeleteParams {
-    pub provider_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

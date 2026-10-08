@@ -4,11 +4,6 @@
 
 export type LoginAccountParams = { "type": "apiKey", apiKey: string,
 /**
- * Optional configured model provider ID. When omitted, the active
- * configured provider is used.
- */
-providerId?: string | null,
-/**
  * Additional provider-specific credential values.
  */
 credentials?: { [key in string]?: string }, };
