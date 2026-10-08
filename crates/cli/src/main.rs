@@ -23,7 +23,6 @@ use genex_rollout_trace::replay_bundle;
 use genex_tui::AppExitInfo;
 use genex_tui::Cli as TuiCli;
 use genex_tui::ExitReason;
-use genex_tui::UpdateAction;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_cli::CliConfigOverrides;
 use genex_utils_cli::ProfileV2Name;
@@ -44,8 +43,6 @@ use supports_color::Stream;
 static ALLOCATOR: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 mod cloud_config;
-mod daemon_install;
-mod daemon_telemetry;
 mod doctor;
 mod exec_server_telemetry;
 mod marketplace_cmd;
@@ -570,32 +567,12 @@ enum AppServerDaemonSubcommand {
     /// Restart the local app server daemon.
     Restart,
 
-    /// Update the daemon package (may interrupt running work).
-    Update {
-        /// Copy and pin this CLI package.
-        #[arg(long)]
-        from_cli: bool,
-        /// Confirm replacing the daemon package without an interactive prompt.
-        #[arg(short = 'y', long, requires = "from_cli")]
-        yes: bool,
-    },
-
     /// Stop the local app server daemon.
     Stop,
 
     /// Print local CLI and running app-server versions as JSON.
     Version,
 
-    /// [internal] Run the detached pid-backed standalone updater loop.
-    #[clap(hide = true)]
-    PidUpdateLoop {
-        /// Check support for daemon-owned packages without starting the updater.
-        #[arg(long, hide = true)]
-        check_package_ownership: bool,
-        /// Authorize one production restoration of this selected release.
-        #[arg(long, hide = true)]
-        restore_release: Option<String>,
-    },
 }
 
 #[derive(Debug, Args)]
@@ -646,11 +623,8 @@ fn parse_socket_path(raw: &str) -> Result<AbsolutePathBuf, String> {
         .map_err(|err| format!("failed to resolve socket path `{raw}`: {err}"))
 }
 
-/// Handle the app exit and print the results. Optionally run the update action.
-fn handle_app_exit(
-    exit_info: AppExitInfo,
-    cli_executable: Option<&std::path::Path>,
-) -> anyhow::Result<()> {
+/// Handle the app exit and print the results.
+fn handle_app_exit(exit_info: AppExitInfo) -> anyhow::Result<()> {
     let is_fatal = match &exit_info.exit_reason {
         ExitReason::Fatal(message) => {
             eprintln!("ERROR: {message}");
@@ -662,54 +636,14 @@ fn handle_app_exit(
         | ExitReason::ThreadRemoved => false,
     };
 
-    let update_action = exit_info.update_action;
-    if !matches!(update_action, Some(UpdateAction::Daemon(_))) {
-        let color_enabled = supports_color::on(Stream::Stdout).is_some();
-        for line in exit_info.format_exit_messages(color_enabled) {
-            println!("{line}");
-        }
+    let color_enabled = supports_color::on(Stream::Stdout).is_some();
+    for line in exit_info.format_exit_messages(color_enabled) {
+        println!("{line}");
     }
     if is_fatal {
         std::io::stdout().flush()?;
         std::process::exit(1);
     }
-    if let Some(action) = update_action {
-        run_update_action(action, cli_executable)?;
-    }
-    Ok(())
-}
-
-/// Run the update action and print the result.
-fn run_update_action(
-    action: UpdateAction,
-    cli_executable: Option<&std::path::Path>,
-) -> anyhow::Result<()> {
-    if let UpdateAction::Daemon(source) = action {
-        let executable = cli_executable
-            .ok_or_else(|| anyhow::anyhow!("Cannot locate the launching Genex CLI"))?;
-        println!("Updating the local background server...");
-        let status = std::process::Command::new(executable)
-            .args(source.command_args())
-            .env(genex_app_server_daemon::telemetry::HANDOFF_ENV, "1")
-            .status()?;
-        anyhow::ensure!(
-            status.success(),
-            "Daemon update failed with status {status}"
-        );
-        println!("Relaunch Genex to reconnect.");
-        return Ok(());
-    }
-    println!();
-    let cmd_str = action.command_str();
-    println!("Updating Genex via `{cmd_str}`...");
-    let status = {
-        let (cmd, args) = action.command_args();
-        std::process::Command::new(cmd).args(args).status()?
-    };
-    if !status.success() {
-        anyhow::bail!("`{cmd_str}` failed with status {status}");
-    }
-    println!("\n🎉 Update ran successfully! Please restart Genex.");
     Ok(())
 }
 
@@ -868,14 +802,6 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         subcommand,
     } = MultitoolCli::parse();
     reject_removed_top_level_command(&subcommand, &interactive)?;
-    // Retain the launch target through TUI exit, even if a launcher changes selection.
-    let daemon_cli_executable = arg0_paths
-        .genex_self_exe
-        .as_ref()
-        .and_then(|path| path.canonicalize().ok());
-    interactive.daemon_cli_executable = daemon_cli_executable
-        .clone()
-        .and_then(|path| AbsolutePathBuf::from_absolute_path(path).ok());
     reject_unsupported_worktree_for_subcommand(interactive.shared.worktree, &subcommand)?;
     // Fold --enable/--disable into config overrides so they flow to all subcommands.
     let toggle_overrides = feature_toggles.to_overrides()?;
@@ -953,7 +879,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 arg0_paths.clone(),
             )
             .await?;
-            handle_app_exit(exit_info, daemon_cli_executable.as_deref())?;
+            handle_app_exit(exit_info)?;
         }
         Some(Subcommand::TcpTunnel(args)) => {
             return genex_tcp_tunnel::run(args).await;
@@ -1099,81 +1025,11 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     AppServerDaemonSubcommand::Restart => {
                         print_app_server_daemon_output(AppServerLifecycleCommand::Restart).await?;
                     }
-                    AppServerDaemonSubcommand::Update {
-                        from_cli: true,
-                        yes,
-                    } => {
-                        let result = genex_app_server_daemon::update_from_cli(|request| {
-                            daemon_install::confirm_install(request, yes)
-                        })
-                        .await;
-                        daemon_telemetry::record_command(
-                            &root_config_overrides,
-                            metrics_default_enabled,
-                            "this_cli",
-                            &result,
-                        )
-                        .await;
-                        if let Some(output) = result? {
-                            println!("{}", serde_json::to_string(&output)?);
-                        }
-                    }
                     AppServerDaemonSubcommand::Stop => {
                         print_app_server_daemon_output(AppServerLifecycleCommand::Stop).await?;
                     }
                     AppServerDaemonSubcommand::Version => {
                         print_app_server_daemon_output(AppServerLifecycleCommand::Version).await?;
-                    }
-                    AppServerDaemonSubcommand::PidUpdateLoop {
-                        check_package_ownership: true,
-                        ..
-                    } => return Ok(()),
-                    AppServerDaemonSubcommand::Update {
-                        from_cli: false, ..
-                    }
-                    | AppServerDaemonSubcommand::PidUpdateLoop {
-                        check_package_ownership: false,
-                        ..
-                    } => {
-                        let cli_overrides = root_config_overrides
-                            .parse_overrides()
-                            .map_err(anyhow::Error::msg)?;
-                        let config = ConfigBuilder::default()
-                            .cli_overrides(cli_overrides)
-                            .build()
-                            .await
-                            .map_err(anyhow::Error::from);
-                        let http_client_factory = updater_http_client_factory(config);
-                        if matches!(
-                            daemon_cli.subcommand,
-                            AppServerDaemonSubcommand::Update { .. }
-                        ) {
-                            let result = genex_app_server_daemon::update(http_client_factory)
-                                .await
-                                .map(Some);
-                            daemon_telemetry::record_command(
-                                &root_config_overrides,
-                                metrics_default_enabled,
-                                "public_stable",
-                                &result,
-                            )
-                            .await;
-                            if let Some(output) = result? {
-                                println!("{}", serde_json::to_string(&output)?);
-                            }
-                        } else {
-                            let AppServerDaemonSubcommand::PidUpdateLoop {
-                                restore_release, ..
-                            } = daemon_cli.subcommand
-                            else {
-                                unreachable!()
-                            };
-                            genex_app_server_daemon::run_pid_update_loop(
-                                http_client_factory,
-                                restore_release,
-                            )
-                            .await?;
-                        }
                     }
                 },
                 Some(AppServerSubcommand::Proxy(proxy_cli)) => {
@@ -1231,7 +1087,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 arg0_paths.clone(),
             )
             .await?;
-            handle_app_exit(exit_info, daemon_cli_executable.as_deref())?;
+            handle_app_exit(exit_info)?;
         }
         Some(Subcommand::Archive(cmd)) => {
             let output = run_session_archive_cli_command(
@@ -1310,7 +1166,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 arg0_paths.clone(),
             )
             .await?;
-            handle_app_exit(exit_info, daemon_cli_executable.as_deref())?;
+            handle_app_exit(exit_info)?;
         }
         Some(Subcommand::Login(mut login_cli)) => {
             reject_remote_mode_for_subcommand(
@@ -2002,10 +1858,8 @@ fn app_server_subcommand_name(subcommand: Option<&AppServerSubcommand>) -> &'sta
             AppServerDaemonSubcommand::Bootstrap => "app-server daemon bootstrap",
             AppServerDaemonSubcommand::Start => "app-server daemon start",
             AppServerDaemonSubcommand::Restart => "app-server daemon restart",
-            AppServerDaemonSubcommand::Update { .. } => "app-server daemon update",
             AppServerDaemonSubcommand::Stop => "app-server daemon stop",
             AppServerDaemonSubcommand::Version => "app-server daemon version",
-            AppServerDaemonSubcommand::PidUpdateLoop { .. } => "app-server daemon pid-update-loop",
         },
         Some(AppServerSubcommand::Proxy(_)) => "app-server proxy",
         Some(AppServerSubcommand::GenerateTs(_)) => "app-server generate-ts",
@@ -2020,20 +1874,6 @@ async fn print_app_server_daemon_output(command: AppServerLifecycleCommand) -> a
     let output = genex_app_server_daemon::run(command).await?;
     println!("{}", serde_json::to_string(&output)?);
     Ok(())
-}
-
-fn updater_http_client_factory(
-    config: anyhow::Result<genex_core::config::Config>,
-) -> genex_http_client::HttpClientFactory {
-    match config {
-        Ok(config) => config.http_client_factory(),
-        Err(error) => {
-            eprintln!("warning: failed to load updater network configuration: {error}");
-            genex_http_client::HttpClientFactory::new(
-                genex_http_client::OutboundProxyPolicy::ReqwestDefault,
-            )
-        }
-    }
 }
 
 fn read_remote_auth_token_from_env_var_with<F>(

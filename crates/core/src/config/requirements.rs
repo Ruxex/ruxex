@@ -35,7 +35,6 @@ pub(super) fn apply_to_config(
     if let Some(providers) = &requirements.model_providers {
         config.model_providers.extend(providers.value.clone());
     }
-    apply_exact!(check_for_update_on_startup);
     apply_exact!(allow_login_shell);
     if requirements.enforce_residency.value().is_some() {
         for (provider_name, provider) in &config.model_providers {

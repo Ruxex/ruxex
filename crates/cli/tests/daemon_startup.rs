@@ -75,7 +75,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
         fs::create_dir(home.path().join("app-server-daemon"))?;
         fs::write(
             home.path().join("app-server-daemon/settings.json"),
-            r#"{"shutdownGraceSeconds":0,"updater":{"autoUpdateEnabled":false}}"#,
+            r#"{"shutdownGraceSeconds":0}"#,
         )?;
     }
     let result = async {

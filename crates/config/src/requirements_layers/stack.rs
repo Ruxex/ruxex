@@ -215,7 +215,6 @@ fn populate_merged_regular_fields_with_sources(
         model_catalog_json,
         model_provider,
         model_providers,
-        check_for_update_on_startup,
         allow_login_shell,
         allowed_approval_policies,
         allowed_sandbox_modes,
@@ -252,10 +251,6 @@ fn populate_merged_regular_fields_with_sources(
     set_sourced!(model_catalog_json, &["model_catalog_json"]);
     set_sourced!(model_provider, &["model_provider"]);
     set_sourced!(model_providers, &["model_providers"]);
-    set_sourced!(
-        check_for_update_on_startup,
-        &["check_for_update_on_startup"]
-    );
     set_sourced!(allow_login_shell, &["allow_login_shell"]);
     set_sourced!(allowed_approval_policies, &["allowed_approval_policies"]);
     set_sourced!(allowed_sandbox_modes, &["allowed_sandbox_modes"]);

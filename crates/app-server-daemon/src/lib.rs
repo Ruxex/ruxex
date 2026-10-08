@@ -1,16 +1,13 @@
-//! Managed app-server lifecycle, serialized across CLI invocations and the updater.
+//! Managed app-server lifecycle, serialized across CLI invocations.
 
 mod backend;
 mod client;
 mod install_lock;
 mod managed_install;
 mod prepare_install;
-pub use prepare_install::InstallRequest;
-pub use prepare_install::update_from_cli;
 mod settings;
 pub mod telemetry;
 mod thread_recovery;
-mod update_loop;
 
 use std::path::Path;
 use std::path::PathBuf;
@@ -36,9 +33,7 @@ const START_TIMEOUT: Duration = Duration::from_secs(10);
 const OPERATION_LOCK_TIMEOUT: Duration =
     Duration::from_secs(MAX_SHUTDOWN_GRACE_SECONDS as u64 + 75);
 const LEGACY_PID_FILE_NAME: &str = "app-server.pid";
-const LEGACY_UPDATE_PID_FILE_NAME: &str = "app-server-updater.pid";
 const DAEMON_PID_FILE_NAME: &str = "daemon.pid";
-const DAEMON_UPDATE_PID_FILE_NAME: &str = "daemon-updater.pid";
 const OPERATION_LOCK_FILE_NAME: &str = "daemon.lock";
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const STATE_DIR_NAME: &str = "app-server-daemon";
@@ -99,56 +94,11 @@ pub enum BootstrapStatus {
 pub struct BootstrapOutput {
     pub status: BootstrapStatus,
     pub backend: BackendKind,
-    pub auto_update_enabled: bool,
     pub managed_genex_path: PathBuf,
     pub managed_genex_version: Option<String>,
     pub socket_path: PathBuf,
     pub cli_version: String,
     pub app_server_version: String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum UpdateStatus {
-    Updated,
-    NoUpdate,
-    Unsupported,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateOutput {
-    pub status: UpdateStatus,
-    pub managed_genex_path: PathBuf,
-    pub installed_version: Option<String>,
-    pub running_version: Option<String>,
-    pub message: String,
-}
-
-#[cfg(unix)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum RestartIfRunningOutcome {
-    Busy,
-    NotRunning,
-    NotReady,
-    AlreadyCurrent,
-    Restarted,
-}
-
-#[cfg(unix)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum RestartMode {
-    IfVersionChanged,
-    IfBinaryOrVersionChanged,
-    Always,
-}
-
-#[cfg(unix)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum RestartDecision {
-    NotReady,
-    AlreadyCurrent,
-    Restart,
 }
 
 pub async fn run(command: LifecycleCommand) -> Result<LifecycleOutput> {
@@ -170,21 +120,6 @@ pub async fn bootstrap_from_package(package_source: &Path) -> Result<BootstrapOu
     Box::pin(Daemon::from_environment()?.bootstrap(BootstrapOptions {}, Some(package_source))).await
 }
 
-pub async fn run_pid_update_loop(
-    http_client_factory: genex_http_client::HttpClientFactory,
-    restore_release: Option<String>,
-) -> Result<()> {
-    ensure_supported_platform()?;
-    update_loop::run(http_client_factory, restore_release).await
-}
-
-pub async fn update(
-    http_client_factory: genex_http_client::HttpClientFactory,
-) -> Result<UpdateOutput> {
-    ensure_supported_platform()?;
-    update_loop::request_manual_update(&Daemon::from_environment()?, http_client_factory).await
-}
-
 #[cfg(unix)]
 fn ensure_supported_platform() -> Result<()> {
     Ok(())
@@ -194,7 +129,6 @@ fn ensure_supported_platform() -> Result<()> {
 struct Daemon {
     socket_path: PathBuf,
     pid_file: PathBuf,
-    update_pid_file: PathBuf,
     operation_lock_file: PathBuf,
     settings_file: PathBuf,
     managed_genex_bin: PathBuf,
@@ -209,16 +143,15 @@ impl Daemon {
         let state_dir = genex_home.as_path().join(STATE_DIR_NAME);
         let managed_genex_bin = managed_genex_bin(genex_home.as_path());
         // Old CLIs must not mistake a daemon-owned installation for their backend.
-        let (pid_file, update_pid_file) =
+        let pid_file =
             if managed_genex_bin.starts_with(genex_home.as_path().join("packages/standalone")) {
-                (LEGACY_PID_FILE_NAME, LEGACY_UPDATE_PID_FILE_NAME)
+                LEGACY_PID_FILE_NAME
             } else {
-                (DAEMON_PID_FILE_NAME, DAEMON_UPDATE_PID_FILE_NAME)
+                DAEMON_PID_FILE_NAME
             };
         Ok(Self {
             socket_path,
             pid_file: state_dir.join(pid_file),
-            update_pid_file: state_dir.join(update_pid_file),
             operation_lock_file: state_dir.join(OPERATION_LOCK_FILE_NAME),
             settings_file: state_dir.join(SETTINGS_FILE_NAME),
             managed_genex_bin,
@@ -234,8 +167,8 @@ impl Daemon {
         ))
     }
 
-    // Call only after taking the operation lock: an explicit update may have
-    // migrated the package and PID namespace while this command was waiting.
+    // Call only after taking the operation lock: package selection may have
+    // changed while this command was waiting.
     fn current_installation(&self) -> Result<Self> {
         let managed_genex_bin = self.current_managed_genex_bin()?;
         let home = self
@@ -243,15 +176,14 @@ impl Daemon {
             .parent()
             .and_then(Path::parent)
             .context("daemon settings path has no Genex home")?;
-        let (pid, updater) = if managed_genex_bin.starts_with(home.join("packages/standalone")) {
-            (LEGACY_PID_FILE_NAME, LEGACY_UPDATE_PID_FILE_NAME)
+        let pid = if managed_genex_bin.starts_with(home.join("packages/standalone")) {
+            LEGACY_PID_FILE_NAME
         } else {
-            (DAEMON_PID_FILE_NAME, DAEMON_UPDATE_PID_FILE_NAME)
+            DAEMON_PID_FILE_NAME
         };
         Ok(Self {
             managed_genex_bin,
             pid_file: self.pid_file.with_file_name(pid),
-            update_pid_file: self.update_pid_file.with_file_name(updater),
             ..self.clone()
         })
     }
@@ -310,11 +242,6 @@ impl Daemon {
                 self.wait_until_ready().await?,
             )
         };
-        if backend.is_some()
-            && let Err(err) = managed.ensure_managed_updater(&settings).await
-        {
-            eprintln!("warning: failed to ensure managed updater after app-server start: {err:#}");
-        }
         Ok(managed
             .output(status, backend, pid, Some(info.app_server_version))
             .await)
@@ -332,11 +259,6 @@ impl Daemon {
         prepare_install::prepare(self, &settings, None).await?;
         let mut managed = self.clone();
         managed.managed_genex_bin = self.current_managed_genex_bin()?;
-        if !settings.auto_update_enabled {
-            backend::pid_update_loop_backend(self.backend_paths(&settings))
-                .stop()
-                .await?;
-        }
 
         managed.ensure_managed_genex_bin()?;
         if let Some(backend) = self.running_backend_instance(&settings).await? {
@@ -350,11 +272,6 @@ impl Daemon {
 
         let pid = managed.start_managed_backend(&settings).await?;
         let info = self.wait_until_ready().await?;
-        if let Err(err) = managed.ensure_managed_updater(&settings).await {
-            eprintln!(
-                "warning: failed to ensure managed updater after app-server restart: {err:#}"
-            );
-        }
         Ok(managed
             .output(
                 LifecycleStatus::Restarted,
@@ -363,87 +280,6 @@ impl Daemon {
                 Some(info.app_server_version),
             )
             .await)
-    }
-
-    #[cfg(unix)]
-    pub(crate) async fn try_restart_if_running(
-        &self,
-        mode: RestartMode,
-        managed_genex_bin: &Path,
-    ) -> Result<RestartIfRunningOutcome> {
-        let operation_lock = self.open_operation_lock_file().await?;
-        if !try_lock_file(&operation_lock)? {
-            return Ok(RestartIfRunningOutcome::Busy);
-        }
-        let settings = self.load_settings().await?;
-        let outcome = if let Some(backend) = self.running_backend_instance(&settings).await? {
-            let info = client::probe(&self.socket_path).await.ok();
-            let managed_version = if info.is_some() {
-                Some(managed_genex_version(managed_genex_bin).await?)
-            } else {
-                None
-            };
-            // The installer can retarget `current` while the updater waits for
-            // this lock or probes the running server. Never restart from a
-            // release that is no longer the selected latest-channel binary.
-            if !self.is_stable_standalone_release()?
-                || managed_install::resolved_managed_genex_bin(&self.current_managed_genex_bin()?)
-                    .await
-                    .ok()
-                    .as_deref()
-                    != Some(managed_genex_bin)
-            {
-                return Ok(RestartIfRunningOutcome::AlreadyCurrent);
-            }
-            let mode = if mode == RestartMode::IfBinaryOrVersionChanged {
-                let managed_identity =
-                    managed_install::executable_identity(managed_genex_bin).await?;
-                if backend.running_executable_identity().await?.as_ref() == Some(&managed_identity)
-                {
-                    RestartMode::IfVersionChanged
-                } else {
-                    RestartMode::Always
-                }
-            } else {
-                mode
-            };
-            match restart_decision(mode, info.as_ref(), managed_version.as_deref()) {
-                RestartDecision::NotReady => return Ok(RestartIfRunningOutcome::NotReady),
-                RestartDecision::AlreadyCurrent => RestartIfRunningOutcome::AlreadyCurrent,
-                RestartDecision::Restart => {
-                    if let Err(err) = thread_recovery::discard_pending(self) {
-                        eprintln!(
-                            "warning: failed to clear stale daemon recovery before update: {err}"
-                        );
-                    }
-                    backend
-                        .stop_with_grace(settings.shutdown_grace_seconds)
-                        .await?;
-                    let _ = self
-                        .start_managed_backend_with_bin(&settings, managed_genex_bin)
-                        .await?;
-                    self.wait_until_ready().await?;
-                    RestartIfRunningOutcome::Restarted
-                }
-            }
-        } else if client::probe(&self.socket_path).await.is_ok() {
-            return Err(anyhow!(
-                "app server is running but is not managed by genex app-server daemon"
-            ));
-        } else {
-            RestartIfRunningOutcome::NotRunning
-        };
-
-        if !self.is_stable_standalone_release()?
-            || managed_install::resolved_managed_genex_bin(&self.current_managed_genex_bin()?)
-                .await
-                .ok()
-                .as_deref()
-                != Some(managed_genex_bin)
-        {
-            return Ok(RestartIfRunningOutcome::AlreadyCurrent);
-        }
-        Ok(outcome)
     }
 
     async fn stop(&self) -> Result<LifecycleOutput> {
@@ -559,9 +395,6 @@ impl Daemon {
         managed.ensure_managed_genex_bin()?;
         settings.save(&self.settings_file).await?;
 
-        backend::pid_update_loop_backend(self.backend_paths(&settings))
-            .stop()
-            .await?;
         if let Some(backend) = self.running_backend_instance(&settings).await? {
             if let Err(err) = thread_recovery::discard_pending(self) {
                 eprintln!("warning: failed to clear stale daemon recovery before bootstrap: {err}");
@@ -574,12 +407,10 @@ impl Daemon {
         let backend = backend::pid_backend(managed.backend_paths(&settings));
         backend.start().await?;
         let info = self.wait_until_ready().await?;
-        let auto_update_enabled = managed.ensure_managed_updater(&settings).await?;
         let managed_genex_version = managed.managed_genex_version_best_effort().await;
         Ok(BootstrapOutput {
             status: BootstrapStatus::Bootstrapped,
             backend: BackendKind::Pid,
-            auto_update_enabled,
             managed_genex_path: managed.managed_genex_bin,
             managed_genex_version,
             socket_path: self.socket_path.clone(),
@@ -621,87 +452,13 @@ impl Daemon {
         backend.start().await
     }
 
-    async fn ensure_managed_updater(&self, settings: &DaemonSettings) -> Result<bool> {
-        let updater = backend::pid_update_loop_backend(self.backend_paths(settings));
-        if !settings.auto_update_enabled {
-            updater.stop().await?;
-            return Ok(false);
-        }
-        if !self.is_stable_standalone_release()? {
-            // An installer publishes current and the latest marker separately.
-            // Keep its updater alive while that publication may be in progress.
-            if !self.has_latest_selection_marker() {
-                updater.stop().await?;
-            }
-            return Ok(false);
-        }
-        let Ok(genex_bin) =
-            managed_install::resolved_managed_genex_bin(&self.managed_genex_bin).await
-        else {
-            if !self.has_latest_selection_marker() {
-                updater.stop().await?;
-            }
-            return Ok(false);
-        };
-        if !managed_install::supports_daemon_update_loop(&genex_bin).await
-            || !self.is_stable_standalone_release()?
-            || !managed_install::resolved_managed_genex_bin(&self.managed_genex_bin)
-                .await
-                .is_ok_and(|selected| selected == genex_bin)
-        {
-            if !self.has_latest_selection_marker() {
-                updater.stop().await?;
-            }
-            return Ok(false);
-        }
-        backend::pid_update_loop_backend(self.backend_paths_with_bin(settings, &genex_bin))
-            .start()
-            .await?;
-        Ok(true)
-    }
-
-    fn is_stable_standalone_release(&self) -> Result<bool> {
-        let genex_home = self
-            .settings_file
-            .parent()
-            .and_then(Path::parent)
-            .context("daemon settings path has no Genex home")?;
-        Ok(managed_install::is_stable_standalone_release(
-            genex_home,
-            &self.current_managed_genex_bin()?,
-        ))
-    }
-
     fn current_managed_genex_bin(&self) -> Result<PathBuf> {
-        // An installer can move a legacy binary into bin/ while this updater runs.
         let home = self
             .settings_file
             .parent()
             .and_then(Path::parent)
             .context("daemon settings path has no Genex home")?;
         Ok(managed_install::managed_genex_bin(home))
-    }
-
-    fn has_latest_selection_marker(&self) -> bool {
-        self.settings_file
-            .parent()
-            .and_then(Path::parent)
-            .is_some_and(|home| {
-                managed_install::package_root(home)
-                    .join("auto-update-version")
-                    .is_file()
-            })
-    }
-
-    async fn is_bootstrapped(&self, settings: &DaemonSettings) -> Result<bool> {
-        if !settings.auto_update_enabled
-            || !self.is_stable_standalone_release()?
-            || !managed_install::supports_daemon_update_loop(&self.managed_genex_bin).await
-        {
-            return Ok(self.running_backend_instance(settings).await?.is_some());
-        }
-        let updater = backend::pid_update_loop_backend(self.backend_paths(settings));
-        updater.is_starting_or_running().await
     }
 
     fn ensure_managed_genex_bin(&self) -> Result<()> {
@@ -732,12 +489,7 @@ impl Daemon {
         BackendPaths {
             genex_bin: managed_genex_bin.to_path_buf(),
             pid_file: self.pid_file.clone(),
-            update_pid_file: self.update_pid_file.clone(),
         }
-    }
-
-    fn manual_update_socket_path(&self) -> PathBuf {
-        self.update_pid_file.with_extension("sock")
     }
 
     async fn load_settings(&self) -> Result<DaemonSettings> {
@@ -810,26 +562,6 @@ impl Daemon {
 }
 
 #[cfg(unix)]
-fn restart_decision(
-    mode: RestartMode,
-    info: Option<&client::ProbeInfo>,
-    managed_version: Option<&str>,
-) -> RestartDecision {
-    match (mode, info, managed_version) {
-        (RestartMode::IfBinaryOrVersionChanged, _, _) => {
-            unreachable!("binary comparison is resolved before restart decision")
-        }
-        (RestartMode::IfVersionChanged, None, _) => RestartDecision::NotReady,
-        (RestartMode::IfVersionChanged, Some(info), Some(managed_version))
-            if info.app_server_version == managed_version =>
-        {
-            RestartDecision::AlreadyCurrent
-        }
-        _ => RestartDecision::Restart,
-    }
-}
-
-#[cfg(unix)]
 fn try_lock_file(file: &tokio::fs::File) -> Result<bool> {
     use std::os::fd::AsRawFd;
 
@@ -847,51 +579,10 @@ fn try_lock_file(file: &tokio::fs::File) -> Result<bool> {
 
 #[cfg(all(test, unix))]
 mod tests {
-    use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
     use super::Daemon;
     use super::LifecycleStatus;
-    use super::RestartDecision;
-    use super::RestartMode;
-    use super::restart_decision;
-    use crate::client::ProbeInfo;
-    #[cfg(unix)]
-    use crate::settings::DaemonSettings;
-
-    #[test]
-    fn restart_decision_preserves_forced_refreshes() {
-        let current_info = ProbeInfo {
-            app_server_version: "0.1.0".to_string(),
-        };
-
-        assert_eq!(
-            [
-                restart_decision(
-                    RestartMode::IfVersionChanged,
-                    Some(&current_info),
-                    Some("0.1.0"),
-                ),
-                restart_decision(
-                    RestartMode::IfVersionChanged,
-                    /*info*/ None,
-                    /*managed_version*/ None,
-                ),
-                restart_decision(RestartMode::Always, Some(&current_info), Some("0.1.0")),
-                restart_decision(
-                    RestartMode::Always,
-                    /*info*/ None,
-                    /*managed_version*/ None,
-                ),
-            ],
-            [
-                RestartDecision::AlreadyCurrent,
-                RestartDecision::NotReady,
-                RestartDecision::Restart,
-                RestartDecision::Restart,
-            ]
-        );
-    }
 
     #[tokio::test]
     async fn waiting_lifecycle_command_uses_migrated_installation() {
@@ -902,7 +593,6 @@ mod tests {
         let daemon = Daemon {
             socket_path: home.path().join("server.sock"),
             pid_file: state.join(super::LEGACY_PID_FILE_NAME),
-            update_pid_file: state.join(super::LEGACY_UPDATE_PID_FILE_NAME),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
             managed_genex_bin: super::managed_genex_bin(home.path()),
@@ -935,7 +625,6 @@ mod tests {
         let daemon = Daemon {
             socket_path: state.join("server.sock"),
             pid_file: state.join("server.pid"),
-            update_pid_file: state.join("updater.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
             managed_genex_bin: state.join("missing-genex"),
@@ -960,7 +649,6 @@ mod tests {
         let daemon = Daemon {
             socket_path: home.path().join("server.sock"),
             pid_file: state.join("server.pid"),
-            update_pid_file: state.join("updater.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
             managed_genex_bin: home.path().join("genex"),
@@ -992,56 +680,12 @@ mod tests {
         assert!(!daemon.recovery_file().expect("recovery path").exists());
     }
 
-    #[cfg(unix)]
-    #[tokio::test]
-    async fn managed_local_backend_counts_as_bootstrapped_without_updater() {
-        use std::os::unix::fs::PermissionsExt;
-
-        let home = TempDir::new().expect("home");
-        let standalone = home.path().join("packages/standalone");
-        let local_bin = standalone.join("local-main/bin/genex");
-        tokio::fs::create_dir_all(local_bin.parent().expect("bin parent"))
-            .await
-            .expect("local bin directory");
-        tokio::fs::write(&local_bin, b"#!/bin/sh\nexec sleep 30\n")
-            .await
-            .expect("local bin");
-        std::fs::set_permissions(&local_bin, std::fs::Permissions::from_mode(0o755))
-            .expect("executable local bin");
-        std::os::unix::fs::symlink("local-main", standalone.join("current"))
-            .expect("current local build");
-        let state = home.path().join("app-server-daemon");
-        let daemon = Daemon {
-            socket_path: home
-                .path()
-                .join("app-server-control/app-server-control.sock"),
-            pid_file: state.join("app-server.pid"),
-            update_pid_file: state.join("app-server-updater.pid"),
-            operation_lock_file: state.join("daemon.lock"),
-            settings_file: state.join("settings.json"),
-            managed_genex_bin: standalone.join("current/bin/genex"),
-        };
-        let settings = DaemonSettings::default();
-        assert!(
-            !daemon
-                .is_bootstrapped(&settings)
-                .await
-                .expect("not running")
-        );
-        let backend = crate::backend::pid_backend(daemon.backend_paths(&settings));
-        backend.start().await.expect("start local backend");
-        let bootstrapped = daemon.is_bootstrapped(&settings).await;
-        backend.stop().await.expect("stop local backend");
-        assert!(bootstrapped.expect("managed local backend"));
-    }
-
     #[tokio::test]
     async fn not_ready_context_reports_daemon_app_server_before_stderr() {
         let temp_dir = TempDir::new().expect("temp dir");
         let daemon = Daemon {
             socket_path: temp_dir.path().join("app-server-control.sock"),
             pid_file: temp_dir.path().join("app-server.pid"),
-            update_pid_file: temp_dir.path().join("app-server-updater.pid"),
             operation_lock_file: temp_dir.path().join("daemon.lock"),
             settings_file: temp_dir.path().join("settings.json"),
             managed_genex_bin: temp_dir.path().join("missing-genex"),

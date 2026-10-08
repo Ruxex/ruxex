@@ -355,13 +355,13 @@ BackendBanner の parser/CTA/render、bottom pane の専用 inline banner、Rese
 
 ### 3.1.1 CLI doctor の update/install と desktop security boundary
 
-`crates/cli/src/doctor/updates.rs` は GitHub/Homebrew/npm/Bun/Vite+/pnpm と Desktop appcast・bundle identity を検査し、`crates/cli/src/doctor/desktop/{macos_security.rs,windows_security.rs,platform.rs}` と `crates/cli/src/doctor/security.rs` は既存の Codex Desktop、署名、sandbox helper、endpoint exclusion の producer/consumer である。`crates/cli/src/doctor/output.rs` と各テスト/snapshot が診断表示を消費する。
+`crates/cli/src/doctor/updates.rs` は削除済みで、GitHub/Homebrew/npm/Bun/Vite+/pnpm と Desktop appcast の更新検査は存在しない。`crates/cli/src/doctor/desktop/{macos_security.rs,windows_security.rs,platform.rs}` と `crates/cli/src/doctor/security.rs` の署名、sandbox helper、endpoint exclusion の producer/consumer は更新機能とは独立して残っている。`crates/cli/src/doctor/output.rs` と各テスト/snapshot は残存する診断表示を消費する。
 
-これらは `genex` CLI の内部命名変更とは別に、固定 hosted installer、外部 package、OS bundle/process identity、security policy に依存する残存 capability である。今回の rename では URL、package、bundle、security identity、検出挙動を変更せず、既存の [`2026-09-30-remove-chatgpt-hosted-surfaces`](superpowers/plans/2026-09-30-remove-chatgpt-hosted-surfaces.md) と inventory の update/security rows に follow-up として残す。
+更新検査は `genex` CLI の更新不要方針に従って削除した。一方、OS bundle/process identity、security policy、署名、sandbox helper、endpoint exclusion の診断は更新機能とは別の安全性境界として維持する。
 
 | 対象 | Producer/consumer audit | Decision |
 |---|---|---|
-| `genex-cli` doctor update/install, Desktop diagnostics, endpoint security checks | Doctor update checks produce external release/package/appcast probes; desktop/platform/security modules consume OS package, bundle, executable, signing, and exclusion identities; output/tests render the result. | `retain` current security behavior and external contracts; separately `remove` fixed hosted installer paths or `migrate-in-place` to an explicitly configured provider-neutral source |
+| `genex-cli` doctor update/install, Desktop diagnostics, endpoint security checks | Doctor update checks and their output/tests were removed after auditing their external release/package/appcast probes. Desktop/platform/security modules still consume OS package, bundle, executable, signing, and exclusion identities; output/tests render those retained results. | `remove` doctor update/install checks and fixed hosted probes; `retain` current security behavior and external contracts |
 
 ### 3.2 provider Curated / Bundled marketplace
 

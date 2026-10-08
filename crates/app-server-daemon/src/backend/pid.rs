@@ -33,14 +33,13 @@ pub(crate) struct PidBackend {
     genex_bin: PathBuf,
     pid_file: PathBuf,
     lock_file: PathBuf,
-    command_kind: PidCommandKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct PidRecord {
     pid: u32,
-    // Keep the legacy timestamp for older CLI/updater versions reading this record.
+    // Keep the legacy timestamp for older daemon versions reading this record.
     process_start_time: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(alias = "linuxProcessIdentity")]
@@ -75,43 +74,13 @@ enum PidFileState {
     Running(PidRecord),
 }
 
-#[derive(Debug, Clone)]
-enum PidCommandKind {
-    AppServer,
-    UpdateLoop { restore_release: Option<String> },
-}
-
 impl PidBackend {
-    pub(crate) async fn running_executable_identity(&self) -> Result<Option<ExecutableIdentity>> {
-        match self.read_pid_file_state().await? {
-            PidFileState::Running(record) if self.record_is_active(&record).await? => {
-                Ok(record.executable_identity)
-            }
-            _ => Ok(None),
-        }
-    }
-
     pub(crate) fn new(genex_bin: PathBuf, pid_file: PathBuf) -> Self {
         let lock_file = pid_file.with_extension("pid.lock");
         Self {
             genex_bin,
             pid_file,
             lock_file,
-            command_kind: PidCommandKind::AppServer,
-        }
-    }
-
-    pub(crate) fn new_update_loop(
-        genex_bin: PathBuf,
-        pid_file: PathBuf,
-        restore_release: Option<String>,
-    ) -> Self {
-        let lock_file = pid_file.with_extension("pid.lock");
-        Self {
-            genex_bin,
-            pid_file,
-            lock_file,
-            command_kind: PidCommandKind::UpdateLoop { restore_release },
         }
     }
 
@@ -135,7 +104,7 @@ impl PidBackend {
 
     #[cfg(unix)]
     pub(crate) async fn start(&self) -> Result<Option<u32>> {
-        self.start_inner(/*replacement*/ None).await
+        self.start_inner().await
     }
 
     pub(crate) async fn stop(&self) -> Result<()> {
@@ -166,7 +135,7 @@ impl PidBackend {
                 if let Ok(raw_pid) = libc::pid_t::try_from(pid)
                     && raw_pid > 0
                 {
-                    // A previous updater may have started this child; reap it if it has exited.
+                    // A previous child may have exited without a retained Child handle.
                     unsafe { libc::waitpid(raw_pid, std::ptr::null_mut(), libc::WNOHANG) };
                 }
                 if !self.record_is_active(&record).await? {
@@ -319,33 +288,17 @@ impl PidBackend {
 
     #[cfg(unix)]
     fn command_args(&self) -> Vec<&str> {
-        match &self.command_kind {
-            PidCommandKind::AppServer => vec!["app-server", "--listen", "unix://"],
-            PidCommandKind::UpdateLoop { restore_release } => {
-                let mut args = vec!["app-server", "daemon", "pid-update-loop"];
-                if let Some(release) = restore_release {
-                    args.extend(["--restore-release", release.as_str()]);
-                }
-                args
-            }
-        }
+        vec!["app-server", "--listen", "unix://"]
     }
 
     #[cfg(unix)]
     fn terminate_process(&self, pid: u32) -> Result<()> {
-        match self.command_kind {
-            PidCommandKind::AppServer => terminate_process(pid),
-            #[cfg(unix)]
-            PidCommandKind::UpdateLoop { .. } => terminate_process_group(pid),
-        }
+        terminate_process(pid)
     }
 
     #[cfg(unix)]
     fn force_terminate_process(&self, pid: u32) -> Result<()> {
-        match self.command_kind {
-            PidCommandKind::AppServer => force_terminate_process(pid),
-            PidCommandKind::UpdateLoop { .. } => force_terminate_process_group(pid),
-        }
+        force_terminate_process(pid)
     }
 
     async fn record_is_active(&self, record: &PidRecord) -> Result<bool> {
@@ -443,36 +396,6 @@ fn force_terminate_process(pid: u32) -> Result<()> {
 }
 
 #[cfg(unix)]
-fn terminate_process_group(pid: u32) -> Result<()> {
-    let raw_pid = libc::pid_t::try_from(pid)
-        .with_context(|| format!("pid-managed updater pid {pid} is out of range"))?;
-    let result = unsafe { libc::kill(-raw_pid, libc::SIGTERM) };
-    if result == 0 {
-        return Ok(());
-    }
-    let err = std::io::Error::last_os_error();
-    if err.raw_os_error() == Some(libc::ESRCH) {
-        return Ok(());
-    }
-    Err(err).with_context(|| format!("failed to terminate pid-managed updater group {pid}"))
-}
-
-#[cfg(unix)]
-fn force_terminate_process_group(pid: u32) -> Result<()> {
-    let raw_pid = libc::pid_t::try_from(pid)
-        .with_context(|| format!("pid-managed updater pid {pid} is out of range"))?;
-    let result = unsafe { libc::kill(-raw_pid, libc::SIGKILL) };
-    if result == 0 {
-        return Ok(());
-    }
-    let err = std::io::Error::last_os_error();
-    if err.raw_os_error() == Some(libc::ESRCH) {
-        return Ok(());
-    }
-    Err(err).with_context(|| format!("failed to force terminate pid-managed updater group {pid}"))
-}
-
-#[cfg(unix)]
 async fn process_matches_record(record: &PidRecord) -> Result<bool> {
     if !process_exists(record.pid) {
         return Ok(false);
@@ -500,7 +423,7 @@ async fn process_matches_record(record: &PidRecord) -> Result<bool> {
     match details {
         Ok((is_zombie, matches)) => {
             // An unreaped zombie still passes kill(pid, 0) and retains its start
-            // time, but it can no longer run the app-server or updater.
+            // time, but it can no longer run the app-server.
             if is_zombie {
                 if matches && let Ok(raw_pid) = libc::pid_t::try_from(record.pid) {
                     // Re-exec can lose the Child handle without changing parenthood.

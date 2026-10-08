@@ -576,26 +576,6 @@ pub(super) async fn run_main_inner(
         worktree.report_startup_failure();
     }
 
-    // The TUI owns this request's consent. The child is silent; installation remains unconfirmed.
-    if let Ok(exit) = &app_result
-        && let Some(UpdateAction::Daemon(source)) = exit.update_action
-        && let Some(metrics) = otel.as_ref().and_then(genex_otel::OtelProvider::metrics)
-    {
-        let mut tags = daemon_settings.to_vec();
-        tags.extend([
-            ("initiation_source", "tui_handoff"),
-            (
-                "update_target",
-                match source {
-                    DaemonUpdateSource::PublicStable => "public_stable",
-                    DaemonUpdateSource::ThisCli => "this_cli",
-                },
-            ),
-            ("outcome", "handoff_requested"),
-        ]);
-        let _ = metrics.counter("genex.daemon.update", /*inc*/ 1, &tags);
-    }
-
     if let Some(otel) = otel
         && let Err(err) = otel
             .shutdown_with_timeout(INTERACTIVE_OTEL_SHUTDOWN_TIMEOUT)

@@ -25,7 +25,7 @@ pub(super) fn background_terminals_blocker(
                             || source.message.contains("unknown method"))) =>
         {
             Some(
-                "The local Genex service cannot check background terminals. Run `genex app-server daemon update`, then restart Genex.",
+                "The local Genex service cannot check background terminals. Restart Genex and try again.",
             )
         }
         _ => Some("Active background terminals block /cd."),

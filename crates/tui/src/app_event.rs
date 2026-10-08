@@ -206,8 +206,6 @@ pub(crate) struct AgentsOverviewThreadRefresh {
 #[derive(Debug, IntoStaticStr)]
 pub(crate) enum AppEvent {
     OpenDaemonMenu,
-    ConfirmDaemonUpdate(crate::update_action::DaemonUpdateSource),
-    RunDaemonUpdate(crate::update_action::DaemonUpdateSource),
     ReviewMisalignment(Arc<crate::chatwidget::MisalignmentReview>),
     ContinueMisalignment(Arc<crate::chatwidget::MisalignmentReview>),
     CloseMisalignmentReview,

@@ -5202,10 +5202,6 @@
     "browser_use": {
       "$ref": "#/definitions/BrowserUseConfigToml"
     },
-    "check_for_update_on_startup": {
-      "description": "When `true`, checks for Genex updates on startup and surfaces update prompts. Set to `false` only if your Genex updates are centrally managed. Defaults to `true`.",
-      "type": "boolean"
-    },
     "cli_auth_credentials_store": {
       "allOf": [
         {

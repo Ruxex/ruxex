@@ -1,5 +1,4 @@
-//! Detached process launch and PID publication. Hold the reservation lock until
-//! the record is published until an updater acknowledges startup.
+//! Detached process launch and PID publication.
 
 use super::PidBackend;
 use super::PidFileState;
@@ -8,13 +7,12 @@ use super::read_process_start_time;
 use crate::managed_install::executable_identity;
 use anyhow::Context;
 use anyhow::Result;
-use anyhow::bail;
 use std::process::Stdio;
 use tokio::fs;
 use tokio::process::Command;
 
 impl PidBackend {
-    pub(super) async fn start_inner(&self, replacement: Option<PidRecord>) -> Result<Option<u32>> {
+    pub(super) async fn start_inner(&self) -> Result<Option<u32>> {
         if let Some(parent) = self.pid_file.parent() {
             genex_uds::prepare_private_socket_directory(parent)
                 .await
@@ -36,16 +34,6 @@ impl PidBackend {
                     match self.read_pid_file_state_with_lock_held().await? {
                         PidFileState::Missing => continue,
                         PidFileState::Running(record) => {
-                            if replacement.as_ref() == Some(&record) {
-                                break;
-                            }
-                            if replacement.is_some() {
-                                if self.record_is_active(&record).await? {
-                                    bail!("updater ownership changed before handoff");
-                                }
-                                // A failed rollback may leave the dead successor's record.
-                                break;
-                            }
                             if self.record_is_active(&record).await? {
                                 return Ok(None);
                             }
@@ -68,33 +56,22 @@ impl PidBackend {
         let genex_bin = fs::canonicalize(&self.genex_bin)
             .await
             .unwrap_or_else(|_| self.genex_bin.clone());
-        let launched_identity =
-            if matches!(self.command_kind, super::PidCommandKind::AppServer { .. }) {
-                executable_identity(&genex_bin).await.ok()
-            } else {
-                None
-            };
+        let launched_identity = executable_identity(&genex_bin).await.ok();
         let mut command = Command::new(&genex_bin);
         let stderr_log = match self.open_stderr_log().await {
             Ok(stderr_log) => stderr_log,
             Err(err) => {
-                if replacement.is_none() {
-                    let _ = fs::remove_file(&self.pid_file).await;
-                }
+                let _ = fs::remove_file(&self.pid_file).await;
                 return Err(err);
             }
         };
         command
-            // Handoff suppression belongs to the foreground CLI, not its long-lived children.
-            .env_remove(crate::telemetry::HANDOFF_ENV)
             .args(self.command_args())
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::from(stderr_log.into_std().await));
         // Older or pinned managed binaries may predate this optional startup flag.
-        let managed_app_server = matches!(self.command_kind, super::PidCommandKind::AppServer);
-        if managed_app_server
-            && matches!(
+        if matches!(
                 tokio::time::timeout(
                     std::time::Duration::from_secs(5),
                     Command::new(&genex_bin)
@@ -109,7 +86,7 @@ impl PidBackend {
             )
         {
             command.arg("--managed-daemon");
-        } else if managed_app_server {
+        } else {
             let genex_home = self
                 .pid_file
                 .parent()
@@ -139,9 +116,7 @@ impl PidBackend {
         let child = match command.spawn() {
             Ok(child) => child,
             Err(err) => {
-                if replacement.is_none() {
-                    let _ = fs::remove_file(&self.pid_file).await;
-                }
+                let _ = fs::remove_file(&self.pid_file).await;
                 return Err(err).with_context(|| {
                     format!(
                         "failed to spawn detached app-server process using {}",
@@ -177,9 +152,7 @@ impl PidBackend {
                 let mut context =
                     format!("failed to record pid-managed app-server process {pid} startup");
                 super::super::append_stderr_log_tail_context(&self.pid_file, &mut context).await;
-                if replacement.is_none() {
-                    let _ = fs::remove_file(&self.pid_file).await;
-                }
+                let _ = fs::remove_file(&self.pid_file).await;
                 return Err(err).context(context);
             }
         };
@@ -187,9 +160,7 @@ impl PidBackend {
         let temp_pid_file = self.pid_file.with_extension("pid.tmp");
         if let Err(err) = fs::write(&temp_pid_file, &contents).await {
             let _ = self.terminate_process(pid);
-            if replacement.is_none() {
-                let _ = fs::remove_file(&self.pid_file).await;
-            }
+            let _ = fs::remove_file(&self.pid_file).await;
             return Err(err).with_context(|| {
                 format!("failed to write pid temp file {}", temp_pid_file.display())
             });
@@ -197,9 +168,7 @@ impl PidBackend {
         if let Err(err) = fs::rename(&temp_pid_file, &self.pid_file).await {
             let _ = self.terminate_process(pid);
             let _ = fs::remove_file(&temp_pid_file).await;
-            if replacement.is_none() {
-                let _ = fs::remove_file(&self.pid_file).await;
-            }
+            let _ = fs::remove_file(&self.pid_file).await;
             return Err(err).with_context(|| {
                 format!("failed to publish pid file {}", self.pid_file.display())
             });

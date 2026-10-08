@@ -1,7 +1,6 @@
 use clap::Args;
 use clap::FromArgMatches;
 use clap::Parser;
-use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_cli::ApprovalModeCliArg;
 use genex_utils_cli::CliConfigOverrides;
 use genex_utils_cli::SharedCliOptions;
@@ -9,10 +8,6 @@ use genex_utils_cli::SharedCliOptions;
 #[derive(Parser, Clone, Debug)]
 #[command(version)]
 pub struct Cli {
-    /// Internal: launching CLI that handles daemon updates after the TUI exits.
-    #[clap(skip)]
-    pub daemon_cli_executable: Option<AbsolutePathBuf>,
-
     /// Optional user prompt to start the session.
     #[arg(value_name = "PROMPT", value_hint = clap::ValueHint::Other)]
     pub prompt: Option<String>,

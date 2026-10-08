@@ -2,8 +2,6 @@
 
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::Stdio;
-use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -12,7 +10,6 @@ use serde::Deserialize;
 use serde::Serialize;
 use tokio::fs;
 use tokio::process::Command;
-use tokio::time::timeout;
 
 /// New daemons own their packages, regardless of how the calling CLI was installed.
 /// Preserve legacy launch state, including logs left after a daemon is stopped;
@@ -31,8 +28,6 @@ pub(crate) fn package_root(genex_home: &Path) -> PathBuf {
             [
                 crate::DAEMON_PID_FILE_NAME,
                 "daemon.stderr.log",
-                crate::DAEMON_UPDATE_PID_FILE_NAME,
-                "daemon-updater.stderr.log",
             ],
         ),
         (
@@ -40,8 +35,6 @@ pub(crate) fn package_root(genex_home: &Path) -> PathBuf {
             [
                 crate::LEGACY_PID_FILE_NAME,
                 "app-server.stderr.log",
-                crate::LEGACY_UPDATE_PID_FILE_NAME,
-                "app-server-updater.stderr.log",
             ],
         ),
     ] {
@@ -66,81 +59,6 @@ pub(crate) fn managed_genex_bin(genex_home: &Path) -> PathBuf {
     } else {
         legacy
     }
-}
-
-/// Only latest-channel stable releases may run the public latest-version updater.
-pub(crate) fn is_stable_standalone_release(genex_home: &Path, genex_bin: &Path) -> bool {
-    let standalone = package_root(genex_home);
-    let Ok(releases) = std::fs::canonicalize(standalone.join("releases")) else {
-        return false;
-    };
-    let Ok(release) = std::fs::canonicalize(standalone.join("current")) else {
-        return false;
-    };
-    if release.parent() != Some(releases.as_path()) {
-        return false;
-    }
-    let Some(release_name) = release.file_name().and_then(|name| name.to_str()) else {
-        return false;
-    };
-    // GNU packages can seed the new directory; retain legacy updater eligibility.
-    if standalone.ends_with("standalone") && release_name.ends_with("-gnu") {
-        return false;
-    }
-    let targets = [
-        "aarch64-apple-darwin",
-        "x86_64-apple-darwin",
-        "aarch64-unknown-linux-gnu",
-        "x86_64-unknown-linux-gnu",
-        "aarch64-unknown-linux-musl",
-        "x86_64-unknown-linux-musl",
-    ];
-    let Some(version) = targets
-        .iter()
-        .find_map(|target| release_name.strip_suffix(&format!("-{target}")))
-    else {
-        return false;
-    };
-    let components: Vec<_> = version.split('.').collect();
-    components.len() == 3
-        && components.iter().all(|component| {
-            !component.is_empty() && component.bytes().all(|byte| byte.is_ascii_digit())
-        })
-        && std::fs::read_to_string(standalone.join("auto-update-version"))
-            .is_ok_and(|selected| selected == release_name)
-        && std::fs::canonicalize(genex_bin).is_ok_and(|bin| bin.starts_with(&release))
-}
-
-/// Older managed binaries can serve app-server requests without owning an updater.
-pub(crate) async fn supports_daemon_update_loop(genex_bin: &Path) -> bool {
-    supports_daemon_command(genex_bin, &["pid-update-loop", "--help"]).await
-}
-
-/// Probe an internal daemon command without running a long-lived process.
-pub(crate) async fn supports_daemon_command(genex_bin: &Path, args: &[&str]) -> bool {
-    let mut command = Command::new(genex_bin);
-    timeout(
-        Duration::from_secs(5),
-        command
-            .args(["app-server", "daemon"])
-            .args(args)
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .kill_on_drop(true)
-            .status(),
-    )
-    .await
-    .is_ok_and(|result| result.is_ok_and(|status| status.success()))
-}
-
-pub(crate) async fn resolved_managed_genex_bin(genex_bin: &Path) -> Result<PathBuf> {
-    fs::canonicalize(genex_bin).await.with_context(|| {
-        format!(
-            "failed to resolve managed Genex binary {}",
-            genex_bin.display()
-        )
-    })
 }
 
 pub(crate) async fn managed_genex_version(genex_bin: &Path) -> Result<String> {

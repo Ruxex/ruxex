@@ -180,14 +180,6 @@ fn render_debug_config_lines(
         ));
     }
 
-    if let Some(check_for_update_on_startup) = requirements.check_for_update_on_startup.as_ref() {
-        requirement_lines.push(requirement_line(
-            "check_for_update_on_startup",
-            check_for_update_on_startup.value.to_string(),
-            Some(&check_for_update_on_startup.source),
-        ));
-    }
-
     if let Some(allow_login_shell) = requirements.allow_login_shell.as_ref() {
         requirement_lines.push(requirement_line(
             "allow_login_shell",

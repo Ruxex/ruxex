@@ -53,33 +53,3 @@ async fn reused_pid_can_belong_to_root() {
         (false, false)
     );
 }
-
-#[cfg(target_os = "macos")]
-#[tokio::test]
-async fn promotes_timestamp_only_macos_record() {
-    use crate::backend::pid::PidBackend;
-    use crate::backend::pid::PidRecord;
-
-    let temp = tempfile::TempDir::new().unwrap();
-    let path = temp.path().join("server.pid");
-    let (_, identity) = super::read_process_details(std::process::id())
-        .await
-        .unwrap();
-    let mut legacy = serde_json::to_value(&identity).unwrap();
-    legacy.as_object_mut().unwrap().remove("bootId");
-    legacy.as_object_mut().unwrap().remove("uniqueId");
-    let mut record = PidRecord {
-        pid: std::process::id(),
-        process_start_time: "unused legacy text".into(),
-        process_identity: Some(serde_json::from_value(legacy).unwrap()),
-        executable_identity: None,
-    };
-    std::fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
-    let backend = PidBackend::new(temp.path().join("genex"), path.clone());
-    backend.promote_legacy_identity().await.unwrap();
-    record.process_identity = Some(identity);
-    assert_eq!(
-        serde_json::from_slice::<PidRecord>(&std::fs::read(path).unwrap()).unwrap(),
-        record,
-    );
-}

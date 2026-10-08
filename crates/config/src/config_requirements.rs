@@ -152,7 +152,6 @@ pub struct ConfigRequirements {
     pub model_catalog_json: Option<Sourced<AbsolutePathBuf>>,
     pub model_provider: Option<Sourced<String>>,
     pub model_providers: Option<Sourced<HashMap<String, ModelProviderInfo>>>,
-    pub check_for_update_on_startup: Option<Sourced<bool>>,
     pub allow_login_shell: Option<Sourced<bool>>,
     pub approval_policy: ConstrainedWithSource<AskForApproval>,
     pub permission_profile: ConstrainedWithSource<PermissionProfile>,
@@ -188,7 +187,6 @@ impl Default for ConfigRequirements {
             model_catalog_json: None,
             model_provider: None,
             model_providers: None,
-            check_for_update_on_startup: None,
             allow_login_shell: None,
             approval_policy: ConstrainedWithSource::new(
                 Constrained::allow_any_from_default(),
@@ -805,7 +803,6 @@ pub struct ConfigRequirementsToml {
     pub model_provider: Option<String>,
     /// Complete provider definitions; each entry replaces the configured provider.
     pub model_providers: Option<HashMap<String, ModelProviderInfo>>,
-    pub check_for_update_on_startup: Option<bool>,
     pub allow_login_shell: Option<bool>,
     pub allowed_approval_policies: Option<Vec<AskForApproval>>,
     pub allowed_sandbox_modes: Option<Vec<SandboxModeRequirement>>,
@@ -900,7 +897,6 @@ pub struct ConfigRequirementsWithSources {
     pub model_catalog_json: Option<Sourced<AbsolutePathBuf>>,
     pub model_provider: Option<Sourced<String>>,
     pub model_providers: Option<Sourced<HashMap<String, ModelProviderInfo>>>,
-    pub check_for_update_on_startup: Option<Sourced<bool>>,
     pub allow_login_shell: Option<Sourced<bool>>,
     pub allowed_approval_policies: Option<Sourced<Vec<AskForApproval>>>,
     pub allowed_sandbox_modes: Option<Sourced<Vec<SandboxModeRequirement>>>,
@@ -955,7 +951,6 @@ impl ConfigRequirementsWithSources {
             model_catalog_json: _,
             model_provider: _,
             model_providers: _,
-            check_for_update_on_startup: _,
             allow_login_shell: _,
             allowed_approval_policies: _,
             allowed_sandbox_modes: _,
@@ -998,7 +993,6 @@ impl ConfigRequirementsWithSources {
                 model_catalog_json,
                 model_provider,
                 model_providers,
-                check_for_update_on_startup,
                 allow_login_shell,
                 allowed_approval_policies,
                 allowed_sandbox_modes,
@@ -1038,7 +1032,6 @@ impl ConfigRequirementsWithSources {
             model_catalog_json,
             model_provider,
             model_providers,
-            check_for_update_on_startup,
             allow_login_shell,
             allowed_approval_policies,
             allowed_sandbox_modes,
@@ -1074,7 +1067,6 @@ impl ConfigRequirementsWithSources {
             model_catalog_json: model_catalog_json.map(|sourced| sourced.value),
             model_provider: model_provider.map(|sourced| sourced.value),
             model_providers: model_providers.map(|sourced| sourced.value),
-            check_for_update_on_startup: check_for_update_on_startup.map(|sourced| sourced.value),
             allow_login_shell: allow_login_shell.map(|sourced| sourced.value),
             allowed_approval_policies: allowed_approval_policies.map(|sourced| sourced.value),
             allowed_sandbox_modes: allowed_sandbox_modes.map(|sourced| sourced.value),
@@ -1173,7 +1165,6 @@ impl ConfigRequirementsToml {
             && self.model_catalog_json.is_none()
             && self.model_provider.is_none()
             && self.model_providers.as_ref().is_none_or(HashMap::is_empty)
-            && self.check_for_update_on_startup.is_none()
             && self.allow_login_shell.is_none()
             && self.allowed_approval_policies.is_none()
             && self.allowed_sandbox_modes.is_none()
@@ -1249,7 +1240,6 @@ impl ConfigRequirementsToml {
         if let Some(providers) = &self.model_providers {
             config.model_providers.extend(providers.clone());
         }
-        apply_exact!(check_for_update_on_startup);
         apply_exact!(allow_login_shell);
     }
 
@@ -1262,7 +1252,7 @@ impl ConfigRequirementsToml {
         }) {
             return Some("model_providers");
         }
-        let managed_fields: [(bool, &[&str], &'static str); 8] = [
+        let managed_fields: [(bool, &[&str], &'static str); 7] = [
             (
                 self.model_provider.is_some(),
                 &["model_provider"],
@@ -1274,11 +1264,6 @@ impl ConfigRequirementsToml {
                 self.model_catalog_json.is_some(),
                 &["model_catalog_json"],
                 "model_catalog_json",
-            ),
-            (
-                self.check_for_update_on_startup.is_some(),
-                &["check_for_update_on_startup"],
-                "check_for_update_on_startup",
             ),
             (
                 self.allow_login_shell.is_some(),
@@ -1349,7 +1334,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             model_catalog_json,
             model_provider,
             model_providers,
-            check_for_update_on_startup,
             allow_login_shell,
             allowed_approval_policies,
             allowed_sandbox_modes,
@@ -1594,7 +1578,6 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
             model_catalog_json,
             model_provider,
             model_providers,
-            check_for_update_on_startup,
             allow_login_shell,
             approval_policy,
             permission_profile,
@@ -1688,7 +1671,6 @@ mod tests {
             sqlite_home: Some(managed_path.clone()),
             log_dir: Some(managed_path.clone()),
             model_catalog_json: Some(managed_path),
-            check_for_update_on_startup: Some(false),
             allow_login_shell: Some(false),
             ..Default::default()
         };
@@ -1701,10 +1683,6 @@ mod tests {
             (&["sqlite_home"], Some("sqlite_home")),
             (&["log_dir"], Some("log_dir")),
             (&["model_catalog_json"], Some("model_catalog_json")),
-            (
-                &["check_for_update_on_startup"],
-                Some("check_for_update_on_startup"),
-            ),
             (&["allow_login_shell"], Some("allow_login_shell")),
             (&[], Some("sqlite_home")),
             (&["windows", "sandbox"], None),
@@ -1748,7 +1726,6 @@ mod tests {
             model_catalog_json,
             model_provider,
             model_providers,
-            check_for_update_on_startup,
             allow_login_shell,
             allowed_approval_policies,
             allowed_sandbox_modes,
@@ -1791,8 +1768,6 @@ mod tests {
             model_provider: model_provider
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             model_providers: model_providers
-                .map(|value| Sourced::new(value, RequirementSource::Unknown)),
-            check_for_update_on_startup: check_for_update_on_startup
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
             allow_login_shell: allow_login_shell
                 .map(|value| Sourced::new(value, RequirementSource::Unknown)),
@@ -2225,7 +2200,6 @@ mod tests {
             model_catalog_json: Some(model_catalog_json.clone()),
             model_provider: Some("gateway".to_string()),
             model_providers: Some(HashMap::new()),
-            check_for_update_on_startup: Some(false),
             allow_login_shell: Some(false),
             allowed_approval_policies: Some(allowed_approval_policies.clone()),
             allowed_sandbox_modes: Some(allowed_sandbox_modes.clone()),
@@ -2279,10 +2253,6 @@ mod tests {
                 model_catalog_json: Some(Sourced::new(model_catalog_json, source.clone())),
                 model_provider: Some(Sourced::new("gateway".to_string(), source.clone())),
                 model_providers: Some(Sourced::new(HashMap::new(), source.clone())),
-                check_for_update_on_startup: Some(Sourced::new(
-                    /*value*/ false,
-                    source.clone(),
-                )),
                 allow_login_shell: Some(Sourced::new(/*value*/ false, source.clone())),
                 allowed_approval_policies: Some(Sourced::new(
                     allowed_approval_policies,

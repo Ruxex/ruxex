@@ -65,39 +65,6 @@ impl ProcessIdentity {
     }
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-impl super::PidBackend {
-    pub(crate) async fn promote_legacy_identity(&self) -> Result<()> {
-        let _reservation = self.acquire_reservation_lock().await?;
-        let super::PidFileState::Running(mut record) =
-            self.read_pid_file_state_with_lock_held().await?
-        else {
-            return Ok(());
-        };
-        if matches!(
-            record.process_identity,
-            Some(ProcessIdentity::Linux { .. } | ProcessIdentity::MacOsUnique { .. })
-        ) {
-            return Ok(());
-        }
-        // An updater keeps its PID across exec during upgrades. Only promote a
-        // legacy record while its original check still identifies the process,
-        // with the native identity unchanged on both sides of that check.
-        let before = read_process_details(record.pid).await?;
-        if before.0 || !super::process_matches_record(&record).await? {
-            return Ok(());
-        }
-        if read_process_details(record.pid).await? != before {
-            return Ok(());
-        }
-        record.process_identity = Some(before.1);
-        let temporary = self.pid_file.with_extension("pid.tmp");
-        tokio::fs::write(&temporary, serde_json::to_vec(&record)?).await?;
-        tokio::fs::rename(&temporary, &self.pid_file).await?;
-        Ok(())
-    }
-}
-
 #[cfg(target_os = "macos")]
 pub(super) async fn read_process_details(pid: u32) -> Result<(bool, ProcessIdentity)> {
     let boot_id = read_boot_id().await?;

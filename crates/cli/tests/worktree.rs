@@ -166,7 +166,6 @@ async fn interactive_worktree_start_and_fork_bind_owner_before_turn() -> anyhow:
 cli_auth_credentials_store = "file"
 managed_auth_base_url = "{}/source/backend-api"
 features.worktrees = true
-check_for_update_on_startup = false
 model_provider = "local"
 model = "test-model"
 sandbox_mode = "workspace-write"
@@ -370,29 +369,7 @@ trust_level = "trusted"
             );
         }
         if matches!(startup_result, Ok(Ok(()))) && renamed.is_ok() {
-            if !fork {
-                for (input, expected) in [
-                    ("/daemon\r", "Install latest public stable"),
-                    ("\r", "Update and exit"),
-                    ("\x1b[B\r", "Updating the local background server..."),
-                ] {
-                    session
-                        .writer_sender()
-                        .send(input.as_bytes().to_vec())
-                        .await?;
-                    tokio::time::timeout(Duration::from_secs(/*secs*/ 10), async {
-                        while !output.contains(expected) {
-                            let bytes = stdout.recv().await.context("TUI exited before handoff")?;
-                            output.push_str(&String::from_utf8_lossy(&bytes));
-                        }
-                        Ok::<_, anyhow::Error>(())
-                    })
-                    .await
-                    .with_context(|| format!("waiting for {expected}: {output}"))??;
-                }
-            } else {
-                session.writer_sender().send(b"/quit\r".to_vec()).await?;
-            }
+            session.writer_sender().send(b"/quit\r".to_vec()).await?;
         } else {
             session.terminate();
         }
@@ -424,12 +401,6 @@ trust_level = "trusted"
                 .flat_map(|resource| resource["scopeMetrics"].as_array().into_iter().flatten())
                 .flat_map(|scope| scope["metrics"].as_array().into_iter().flatten())
                 .collect::<Vec<_>>();
-            let update = exported
-                .iter()
-                .find(|metric| metric["name"] == "genex.daemon.update")
-                .context("handoff metric")?;
-            let update_point = &update["sum"]["dataPoints"][0];
-            assert_eq!(update_point["asInt"], 1);
             let point = exported
                 .iter()
                 .filter(|metric| metric["name"] == "genex.tui.start")
@@ -457,9 +428,6 @@ trust_level = "trusted"
                     ("multiplexer", "none"),
                     ("daemon_selection_reason", "incompatible_option"),
                     ("daemon_auto_start", "disabled"),
-                    ("auto_update", "enabled"),
-                    ("auto_update_setting", "default"),
-                    ("update_interval_setting", "default"),
                     ("shutdown_grace_setting", "default"),
                 ])
             );

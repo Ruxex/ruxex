@@ -175,7 +175,7 @@ provider 固有機能を除去した後に残る、汎用プロバイダ版ク�
 
 ### Phase 1: CLI 表面だけを縮小
 
-**進捗:** 完了。`codex app` とトップレベルの `codex update`、および `codex login` の ChatGPT OAuth、device auth、provider API key、access token の各経路は削除済み。旧トップレベルコマンド名は対話プロンプトとして誤実行されないよう、CLI 入口で明示的に拒否する。provider-neutral な認証状態確認に利用できる `codex login status` と `codex logout` は残している。TUI 終了時の更新処理と app-server daemon の更新処理は、この Phase の対象外として残している。
+**進捗:** 完了。`codex app` とトップレベルの `codex update`、および `codex login` の ChatGPT OAuth、device auth、provider API key、access token の各経路は削除済み。旧トップレベルコマンド名は対話プロンプトとして誤実行されないよう、CLI 入口で明示的に拒否する。provider-neutral な認証状態確認に利用できる `codex login status` と `codex logout` は残している。TUI 終了時の更新処理、doctor の更新診断、app-server daemon の更新処理も削除済みで、通常の bootstrap と lifecycle のみを残している。
 
 **後続対応:** `genex-cli` 外に残っていた TUI の Desktop app tooltip と status card、app-server daemon README、exec-server README の旧 `codex app`、`codex update`、`codex login` への案内も削除済み。
 

@@ -35,7 +35,6 @@ async fn run_startup_for_test(
         /*daemon_startup_warning*/ None,
         crate::startup_draft::tests::quiet_startup_test_pump(),
         /*managed_worktree*/ None,
-        /*daemon_cli_executable*/ None,
     )
     .await
 }

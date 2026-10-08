@@ -16,19 +16,10 @@ pub enum BackendKind {
 pub(crate) struct BackendPaths {
     pub(crate) genex_bin: PathBuf,
     pub(crate) pid_file: PathBuf,
-    pub(crate) update_pid_file: PathBuf,
 }
 
 pub(crate) fn pid_backend(paths: BackendPaths) -> PidBackend {
     PidBackend::new(paths.genex_bin, paths.pid_file)
-}
-
-pub(crate) fn pid_update_loop_backend(paths: BackendPaths) -> PidBackend {
-    PidBackend::new_update_loop(
-        paths.genex_bin,
-        paths.update_pid_file,
-        /*restore_release*/ None,
-    )
 }
 
 pub(crate) async fn append_stderr_log_tail_context(pid_file: &Path, context: &mut String) {

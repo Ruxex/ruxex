@@ -80,7 +80,6 @@ mod security;
 mod system;
 mod thread_inventory;
 mod title;
-mod updates;
 
 #[cfg(test)]
 #[path = "doctor/desktop_tests.rs"]
@@ -99,7 +98,6 @@ use sandbox::sandbox_check;
 use system::system_check;
 use thread_inventory::thread_inventory_check;
 use title::terminal_title_check;
-use updates::updates_check;
 
 const WEBSOCKET_IMMEDIATE_CLOSE_GRACE: Duration = Duration::from_millis(250);
 const SLOW_CHECK_PROGRESS_THRESHOLD: Duration = Duration::from_secs(2);
@@ -376,7 +374,6 @@ async fn build_report(
             let (
                 config_check,
                 auth_check,
-                updates_check,
                 network_check,
                 websocket_check,
                 mcp_check,
@@ -416,7 +413,6 @@ async fn build_report(
                         },
                     )
                 },
-                run_async_check("updates", progress.clone(), updates_check(config)),
                 async {
                     run_sync_check("network", progress.clone(), || network::check(Some(config)))
                 },
@@ -470,7 +466,6 @@ async fn build_report(
             checks.extend([
                 config_check,
                 auth_check,
-                updates_check,
                 network_check,
                 websocket_check,
                 mcp_check,
@@ -537,11 +532,6 @@ async fn build_report(
 
     progress.begin("desktop");
     if let Some(desktop) = desktop::collect().await {
-        #[cfg(target_os = "macos")]
-        if let Some(application) = desktop.application.as_ref() {
-            updates::append_desktop_update(&mut checks, config_result.as_ref().ok(), application)
-                .await;
-        }
         progress.finish("desktop", overall_status(&desktop.checks));
         checks.extend(desktop.checks);
     }

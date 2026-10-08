@@ -204,17 +204,8 @@ mod transcript_reflow;
 mod tui;
 mod ui_consts;
 mod unarchive_prompt;
-pub(crate) mod update_action;
 mod worktree_startup;
-pub use update_action::DaemonUpdateSource;
-pub use update_action::UpdateAction;
-#[cfg(not(debug_assertions))]
-pub use update_action::get_update_action;
-mod update_prompt;
 mod update_versions;
-mod updates;
-#[cfg(any(not(debug_assertions), test))]
-mod updates_cache;
 mod version;
 mod vim_search;
 mod width;
@@ -950,7 +941,6 @@ pub async fn run_main(
             thread_id: None,
             resume_hint: None,
             disconnect_info: None,
-            update_action: None,
             exit_reason: ExitReason::UserRequested,
         }),
         result => result,
@@ -990,30 +980,6 @@ async fn run_ratatui_app(
         prev_hook(info);
     }));
     let (mut tui, mut terminal_restore_guard, mut startup_draft) = startup_draft.into_parts();
-
-    #[cfg(not(debug_assertions))]
-    {
-        use crate::update_prompt::UpdatePromptOutcome;
-
-        let skip_update_prompt = cli.prompt.as_ref().is_some_and(|prompt| !prompt.is_empty());
-        if !skip_update_prompt {
-            startup_draft.flush_pending_events(&mut tui).await?;
-            match update_prompt::run_update_prompt_if_needed(&mut tui, &initial_config).await? {
-                UpdatePromptOutcome::Continue => {}
-                UpdatePromptOutcome::RunUpdate(action) => {
-                    terminal_restore_guard.restore()?;
-                    return Ok(AppExitInfo {
-                        token_usage: crate::token_usage::TokenUsage::default(),
-                        thread_id: None,
-                        resume_hint: None,
-                        disconnect_info: None,
-                        update_action: Some(action),
-                        exit_reason: ExitReason::UserRequested,
-                    });
-                }
-            }
-        }
-    }
 
     // Initialize high-fidelity session event logging if enabled.
     session_log::maybe_init(&initial_config);
@@ -1097,7 +1063,6 @@ async fn run_ratatui_app(
                         thread_id: None,
                         resume_hint: None,
                         disconnect_info: None,
-                        update_action: None,
                         exit_reason: ExitReason::UserRequested,
                     });
                 }
@@ -1192,7 +1157,6 @@ async fn run_ratatui_app(
                 thread_id: None,
                 resume_hint: None,
                 disconnect_info: None,
-                update_action: None,
                 exit_reason: ExitReason::UserRequested,
             });
         }
@@ -1250,7 +1214,6 @@ async fn run_ratatui_app(
                 thread_id: None,
                 resume_hint: None,
                 disconnect_info: None,
-                update_action: None,
                 exit_reason: ExitReason::Fatal(format!(
                     "No saved session found with ID {id_str}. Run `genex {action}` without an ID to choose from existing sessions."
                 )),
@@ -1362,7 +1325,6 @@ async fn run_ratatui_app(
                         thread_id: None,
                         resume_hint: None,
                         disconnect_info: None,
-                        update_action: None,
                         exit_reason: ExitReason::UserRequested,
                     });
                 }
@@ -1460,7 +1422,6 @@ async fn run_ratatui_app(
                     thread_id: None,
                     resume_hint: None,
                     disconnect_info: None,
-                    update_action: None,
                     exit_reason: ExitReason::UserRequested,
                 });
             }
@@ -1510,7 +1471,6 @@ async fn run_ratatui_app(
                 thread_id: None,
                 resume_hint: None,
                 disconnect_info: None,
-                update_action: None,
                 exit_reason: ExitReason::UserRequested,
             });
         }
@@ -1689,7 +1649,6 @@ async fn run_ratatui_app(
                     thread_id: None,
                     resume_hint: None,
                     disconnect_info: None,
-                    update_action: None,
                     exit_reason: ExitReason::UserRequested,
                 });
             }
@@ -1730,7 +1689,6 @@ async fn run_ratatui_app(
         prompt,
         shared,
         no_alt_screen,
-        daemon_cli_executable,
         ..
     } = cli;
     let images = shared.into_inner().images;
@@ -1821,7 +1779,6 @@ async fn run_ratatui_app(
         daemon_startup_warning,
         startup_draft,
         managed_worktree,
-        daemon_cli_executable,
     ))
     .await;
 

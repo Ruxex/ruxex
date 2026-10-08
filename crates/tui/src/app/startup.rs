@@ -154,7 +154,6 @@ impl App {
         daemon_startup_warning: Option<String>,
         mut startup_draft: StartupDraftPump,
         managed_worktree: Option<crate::ManagedTuiWorktree>,
-        daemon_cli_executable: Option<AbsolutePathBuf>,
     ) -> Result<AppExitInfo> {
         use tokio_stream::StreamExt;
 
@@ -692,9 +691,6 @@ Fix the config and retry.\n\
 See the Genex keymap documentation for supported actions and examples."
                 )
             })?;
-        #[cfg(not(debug_assertions))]
-        let upgrade_version = crate::updates::get_upgrade_version(&config);
-
         let mut app = Self {
             model_catalog,
             session_telemetry: session_telemetry.clone(),
@@ -741,8 +737,6 @@ See the Genex keymap documentation for supported actions and examples."
                     .map(|(_, key)| key.clone()),
                 ..Default::default()
             },
-            daemon_cli_executable,
-            pending_update_action: None,
             pending_shutdown_exit_thread_id: None,
             thread_event_channels: HashMap::new(),
             temporary_structured_requests: HashMap::new(),
@@ -912,25 +906,6 @@ See the Genex keymap documentation for supported actions and examples."
         let mut waiting_for_initial_session_configured = wait_for_initial_session_configured;
         let mut waiting_for_initial_session_header = true;
 
-        #[cfg(not(debug_assertions))]
-        let pre_loop_exit_reason = if let Some(latest_version) = upgrade_version {
-            let control = Box::pin(app.handle_event(
-                tui,
-                &mut app_server,
-                AppEvent::InsertHistoryCell(Box::new(UpdateAvailableHistoryCell::new(
-                    latest_version,
-                    crate::update_action::get_update_action(),
-                ))),
-            ))
-            .await?;
-            match control {
-                AppRunControl::Continue => None,
-                AppRunControl::Exit(exit_reason) => Some(exit_reason),
-            }
-        } else {
-            None
-        };
-        #[cfg(debug_assertions)]
         let pre_loop_exit_reason: Option<ExitReason> = None;
 
         let exit_reason_result = if let Some(exit_reason) = pre_loop_exit_reason {

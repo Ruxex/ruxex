@@ -426,7 +426,6 @@ fn map_requirements_to_api(
         sqlite_home: requirements.sqlite_home.map(Into::into),
         log_dir: requirements.log_dir.map(Into::into),
         model_catalog_json: requirements.model_catalog_json.map(Into::into),
-        check_for_update_on_startup: requirements.check_for_update_on_startup,
         allow_login_shell: requirements.allow_login_shell,
     })
 }

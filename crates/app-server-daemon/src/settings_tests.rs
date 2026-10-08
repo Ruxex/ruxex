@@ -59,32 +59,6 @@ async fn shutdown_grace_accepts_zero_through_five_minutes() {
 }
 
 #[tokio::test]
-async fn update_interval_accepts_long_values_and_rejects_zero() {
-    let temp = TempDir::new().expect("temp dir");
-    let path = temp.path().join("settings.json");
-    for minutes in [u32::MAX, 0] {
-        tokio::fs::write(
-            &path,
-            serde_json::to_vec(&serde_json::json!({
-                "updater": {"updateIntervalMinutes": minutes},
-            }))
-            .expect("serialize invalid settings"),
-        )
-        .await
-        .expect("write invalid settings");
-        let loaded = DaemonSettings::load(&path).await;
-        if minutes == 0 {
-            assert!(loaded.is_err());
-        } else {
-            assert_eq!(
-                loaded.expect("load long interval").update_interval_minutes,
-                minutes
-            );
-        }
-    }
-}
-
-#[tokio::test]
 async fn telemetry_distinguishes_presence_from_default_values() -> anyhow::Result<()> {
     let home = TempDir::new()?;
     let dir = home.path().join("app-server-daemon");
@@ -92,17 +66,14 @@ async fn telemetry_distinguishes_presence_from_default_values() -> anyhow::Resul
     let path = dir.join("settings.json");
     for (contents, presence) in [
         ("{}", "default"),
-        (
-            r#"{"updater":{"autoUpdateEnabled":true,"updateIntervalMinutes":60},"shutdownGraceSeconds":60}"#,
-            "configured",
-        ),
+        (r#"{"shutdownGraceSeconds":60}"#, "configured"),
     ] {
         tokio::fs::write(&path, contents).await?;
         assert_eq!(
             crate::telemetry::settings_tags(home.path())
                 .await
                 .map(|(_, value)| value),
-            ["enabled", presence, presence, presence]
+            [presence]
         );
     }
     Ok(())

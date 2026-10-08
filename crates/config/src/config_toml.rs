@@ -398,11 +398,6 @@ pub struct ConfigToml {
     #[serde(default)]
     pub project_root_markers: Option<Vec<String>>,
 
-    /// When `true`, checks for Genex updates on startup and surfaces update prompts.
-    /// Set to `false` only if your Genex updates are centrally managed.
-    /// Defaults to `true`.
-    pub check_for_update_on_startup: Option<bool>,
-
     /// When `false`, disables metrics across Genex product surfaces in this machine.
     /// Defaults to `true`.
     pub metrics: Option<MetricsConfigToml>,

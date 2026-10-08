@@ -30,8 +30,6 @@ impl App {
             && !matches!(
                 &event,
                 AppEvent::OpenDaemonMenu
-                    | AppEvent::ConfirmDaemonUpdate(_)
-                    | AppEvent::RunDaemonUpdate(_)
                     | AppEvent::InsertHistoryCell(_)
                     | AppEvent::ResetTranscriptForThreadSwitch
                     | AppEvent::FinishPromptRevert { .. }
@@ -70,11 +68,6 @@ impl App {
 
         match event {
             AppEvent::OpenDaemonMenu => self.open_daemon_menu(),
-            AppEvent::ConfirmDaemonUpdate(source) => self.confirm_daemon_update(source),
-            AppEvent::RunDaemonUpdate(source) => {
-                self.pending_update_action = Some(UpdateAction::Daemon(source));
-                return Ok(self.handle_exit_mode(app_server, ExitMode::Immediate).await);
-            }
             AppEvent::UserVerificationApproved { thread_id, server_name, request_id } => {
                 Box::pin(self.start_user_verification(app_server, thread_id, server_name, request_id)).await?;
             }
