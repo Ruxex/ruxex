@@ -75,6 +75,7 @@
 - CLI login status/logout/delete now perform the same provider-home mount before constructing the credential manager.
 - AppServer now creates one provider-neutral contract handle at its host boundary and shares it with `ThreadManager` and History/Notes/Web Search extensions; the internal runtime handle remains only for the not-yet-migrated execution and backend transport paths.
 - AppServer now also passes that same contract handle into the model catalog manager; catalog cache identity and capability checks share the host contract, while catalog HTTP fetching remains on the internal runtime transport bridge.
+- Session configuration and turn contexts now retain the same provider-neutral contract handle; compaction, hosted/standalone Web Search, and namespace-tool capability decisions use it. Responses wire selection and request transport remain an explicit follow-up boundary.
 
 ### Task 1: Add the provider descriptor contract
 

@@ -2221,6 +2221,7 @@ impl ThreadManagerState {
             originator,
             agent_control,
             provider: Arc::clone(&self.provider),
+            provider_contract: Arc::clone(&self.provider_contract),
             dynamic_tools,
             metrics_service_name,
             inherited_environments,

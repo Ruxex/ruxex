@@ -23,6 +23,7 @@ use crate::turn_metadata::ExecutionMetadata;
 use genex_attachment_store::AttachmentStore;
 use genex_extension_api::ExtensionDataInit;
 use genex_model_provider::SharedProviderRuntime;
+use genex_model_provider::SharedModelProvider;
 use genex_prompts::render_model_instructions;
 use genex_protocol::SessionId;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
@@ -91,6 +92,8 @@ pub(crate) struct Session {
 pub(crate) struct SessionConfiguration {
     /// Runtime provider and its provider-specific execution policy.
     pub(super) provider: SharedProviderRuntime,
+    /// Provider-neutral contract shared by this session and its turns.
+    pub(super) provider_contract: SharedModelProvider,
 
     /// Desired configured inputs inherited by future turns.
     pub(super) step_settings: Arc<StepSettings>,

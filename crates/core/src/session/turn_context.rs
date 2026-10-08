@@ -18,6 +18,7 @@ use genex_core_plugins::ResolvedPluginMetricsOperation;
 use genex_core_plugins::TrustedPluginRoots;
 use genex_exec_server::ExecutorFileSystem;
 use genex_file_system::FileSystemSandboxContext;
+use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderRuntime;
 use genex_protocol::SessionId;
 use genex_protocol::ThreadId;
@@ -294,6 +295,7 @@ pub struct TurnContext {
     /// Turn-wide telemetry; model-attributed step work should use `StepContext::session_telemetry`.
     pub(crate) session_telemetry: SessionTelemetry,
     pub(crate) provider: SharedProviderRuntime,
+    pub(crate) provider_contract: SharedModelProvider,
     pub(crate) session_source: SessionSource,
     pub(crate) history_mode: ThreadHistoryMode,
     pub(crate) parent_thread_id: Option<ThreadId>,
@@ -557,6 +559,7 @@ impl TurnContext {
             current_settings: ArcSwap::from(step_settings),
             session_telemetry,
             provider: self.provider.clone(),
+            provider_contract: self.provider_contract.clone(),
             session_source: self.session_source.clone(),
             history_mode: self.history_mode,
             parent_thread_id: self.parent_thread_id,
@@ -726,7 +729,7 @@ impl Session {
         let resolved_web_search_mode = resolve_web_search_mode_for_turn(
             &per_turn_config.web_search_mode,
             &permission_profile,
-            session_configuration.provider.capabilities(),
+            session_configuration.provider_contract.capabilities(),
         );
         if let Err(err) = per_turn_config
             .web_search_mode
@@ -842,6 +845,7 @@ impl Session {
             current_settings: ArcSwap::from(step_settings),
             session_telemetry: session_telemetry_for_context,
             provider,
+            provider_contract: session_configuration.provider_contract.clone(),
             session_source,
             history_mode: session_configuration.history_mode,
             parent_thread_id: session_configuration.parent_thread_id,

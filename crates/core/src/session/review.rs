@@ -121,6 +121,7 @@ pub(super) async fn spawn_review_thread(
         current_settings: ArcSwap::from(step_settings),
         session_telemetry: session_telemetry_for_context,
         provider: provider_for_context,
+        provider_contract: parent_turn_context.provider_contract.clone(),
         session_source,
         history_mode: parent_turn_context.history_mode,
         parent_thread_id: parent_turn_context.parent_thread_id,

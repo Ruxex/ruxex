@@ -29,6 +29,11 @@ AppServer の provider-neutral contract は `MessageProcessor` の生成境界�
 モデルカタログの HTTP fetch、モデル実行、拡張バックエンドの transport は、まだ内部 `ProviderRuntime` の移行対象として残す。
 モデルカタログの cache identity と capability 判定は同じ契約ハンドルを共有する。
 
+さらに `SessionConfiguration` から `TurnContext` まで同じ contract handle を引き継ぎ、compaction、
+hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
+Responses wire 判定、websocket/SSE、auth recovery、request/response event mapping は、依然として
+provider-specific runtime transport を必要とするため、この変更では保持した。
+
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
 ## 調査範囲と検証
