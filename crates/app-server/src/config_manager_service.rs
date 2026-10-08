@@ -143,16 +143,22 @@ impl ConfigManager {
             .apply_exact_to_config(&mut effective_config_toml);
         effective_config_toml.allow_login_shell.get_or_insert(true);
 
-        let json_value = serde_json::to_value(&effective_config_toml)
+        let mut json_value = serde_json::to_value(&effective_config_toml)
             .map_err(|err| ConfigManagerError::json("failed to serialize configuration", err))?;
+        if let Some(object) = json_value.as_object_mut() {
+            object.remove("model_provider");
+            object.remove("model_providers");
+        }
         let config: ApiConfig = serde_json::from_value(json_value)
             .map_err(|err| ConfigManagerError::json("failed to deserialize configuration", err))?;
 
         let mut origins = layers.origins_with_path_filter(|segments| {
-            layers
-                .requirements_toml()
-                .exact_requirement_for_config_path(segments)
-                .is_none()
+            !matches!(segments.first().map(String::as_str),
+                Some("model_provider" | "model_providers"))
+                && layers
+                    .requirements_toml()
+                    .exact_requirement_for_config_path(segments)
+                    .is_none()
         });
         origins.retain(|_, metadata| {
             !matches!(&metadata.name, ConfigLayerSource::PackagedDefaults { .. })
@@ -170,7 +176,14 @@ impl ConfigManager {
                     .filter(|layer| {
                         !matches!(&layer.name, ConfigLayerSource::PackagedDefaults { .. })
                     })
-                    .map(|layer| config_layer_to_api(layer.as_layer()))
+                    .map(|layer| {
+                        let mut layer = config_layer_to_api(layer.as_layer());
+                        if let Some(object) = layer.config.as_object_mut() {
+                            object.remove("model_provider");
+                            object.remove("model_providers");
+                        }
+                        layer
+                    })
                     .collect()
             }),
         })

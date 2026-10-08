@@ -312,12 +312,6 @@
             "null"
           ]
         },
-        "model_provider": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "model_reasoning_effort": {
           "anyOf": [
             {
