@@ -1,13 +1,10 @@
 use std::time::Duration;
 
-use genex_api::ReqwestTransport;
-use genex_client::HttpTransport;
-use genex_client::RequestBody;
-use genex_login::default_client::create_client;
-use genex_model_provider::SharedProviderRuntime;
+use genex_http_client::HttpClientFactory;
+use genex_model_provider::ProviderBackendRequest;
+use genex_model_provider::SharedModelProvider;
 use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderValue;
-use http::Method;
 use serde_json::Value;
 use serde_json::json;
 
@@ -18,12 +15,19 @@ const OPERATION_ERROR_PREFIX: &str = "Unable to perform operation:";
 
 #[derive(Clone)]
 pub(crate) struct HistoryNotesBackend {
-    provider: SharedProviderRuntime,
+    provider: SharedModelProvider,
+    http_client_factory: HttpClientFactory,
 }
 
 impl HistoryNotesBackend {
-    pub(crate) fn new(provider: SharedProviderRuntime) -> Self {
-        Self { provider }
+    pub(crate) fn new(
+        provider: SharedModelProvider,
+        http_client_factory: HttpClientFactory,
+    ) -> Self {
+        Self {
+            provider,
+            http_client_factory,
+        }
     }
 
     pub(crate) async fn call(
@@ -45,19 +49,12 @@ impl HistoryNotesBackend {
             }),
         );
 
-        let provider = self.provider.api_provider().await.map_err(|_| {
-            format!("{OPERATION_ERROR_PREFIX} Could not resolve the backend provider.")
-        })?;
-        let auth = self.provider.api_auth().await.map_err(|_| {
-            format!("{OPERATION_ERROR_PREFIX} Could not resolve backend authentication.")
-        })?;
-
-        let mut request = provider.build_request(Method::POST, path);
         let encoded_truncation_policy =
             serde_json::to_string(&truncation_policy).map_err(|_| {
                 format!("{OPERATION_ERROR_PREFIX} Could not encode the output truncation policy.")
             })?;
-        request.headers.insert(
+        let mut headers = http::HeaderMap::new();
+        headers.insert(
             TOOL_OUTPUT_TRUNCATION_POLICY_HEADER,
             HeaderValue::from_str(&encoded_truncation_policy).map_err(|_| {
                 format!(
@@ -72,23 +69,35 @@ impl HistoryNotesBackend {
                 | "alpha/notes/v2/append_to_file"
                 | "alpha/notes/v2/write_file"
         ) {
-            request.headers.insert(
+            headers.insert(
                 ENCRYPTED_TOOL_ARGUMENTS_HEADER,
                 HeaderValue::from_static("true"),
             );
         }
-        request.body = Some(RequestBody::Json(arguments));
-        request.timeout = Some(HISTORY_NOTES_BACKEND_TIMEOUT);
-        let request = auth.apply_auth(request).await.map_err(|_| {
-            format!("{OPERATION_ERROR_PREFIX} Could not apply backend authentication.")
-        })?;
-        let response = ReqwestTransport::from_http_client(create_client())
-            .execute(request)
+        let response = self
+            .provider
+            .backend(ProviderBackendRequest {
+                path: path.to_string(),
+                body: arguments,
+                headers,
+                timeout: HISTORY_NOTES_BACKEND_TIMEOUT,
+                http_client_factory: self.http_client_factory.clone(),
+            })
             .await
-            .map_err(|_| format!("{OPERATION_ERROR_PREFIX} The backend request failed."))?;
+            .map_err(|error| match error {
+                genex_model_provider::ProviderError::Unauthenticated
+                | genex_model_provider::ProviderError::Unauthorized => {
+                    format!("{OPERATION_ERROR_PREFIX} Could not apply backend authentication.")
+                }
+                genex_model_provider::ProviderError::Provider(message)
+                    if message.contains("invalid JSON") =>
+                {
+                        format!("{OPERATION_ERROR_PREFIX} The backend returned invalid JSON.")
+                    }
+                _ => format!("{OPERATION_ERROR_PREFIX} The backend request failed."),
+            })?;
 
-        serde_json::from_slice(&response.body)
-            .map_err(|_| format!("{OPERATION_ERROR_PREFIX} The backend returned invalid JSON."))
+        Ok(response.body)
     }
 }
 

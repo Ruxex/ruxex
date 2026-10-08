@@ -4801,11 +4801,10 @@ name = "genex-history-notes-extension"
 version = "0.0.0"
 dependencies = [
  "core_test_support",
- "genex-api",
- "genex-client",
  "genex-config",
  "genex-core",
  "genex-extension-api",
+ "genex-http-client",
  "genex-login",
  "genex-model-provider",
  "genex-model-provider-info",

@@ -1,7 +1,10 @@
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderMap;
@@ -43,7 +46,10 @@ async fn routes_through_genex_backend_and_injects_trusted_session_agent_context(
         ))),
         Some(credential_manager),
     );
-    let backend = HistoryNotesBackend::new(provider);
+    let backend = HistoryNotesBackend::new(
+        provider_contract(provider),
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+    );
 
     let response = backend
         .call(
@@ -117,13 +123,16 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
     let credential_manager = CredentialManager::from_auth_for_testing(GenexAuth::Headers(
         AuthHeaders::new(HeaderMap::new()),
     ));
-    let backend = HistoryNotesBackend::new(create_model_provider(
-        ModelProviderInfo::create_responses_provider(Some(format!(
-            "{}/backend-api/genex",
-            server.uri()
-        ))),
-        Some(credential_manager),
-    ));
+    let backend = HistoryNotesBackend::new(
+        provider_contract(create_model_provider(
+            ModelProviderInfo::create_responses_provider(Some(format!(
+                "{}/backend-api/genex",
+                server.uri()
+            ))),
+            Some(credential_manager),
+        )),
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+    );
 
     for (route, arguments) in cases {
         backend

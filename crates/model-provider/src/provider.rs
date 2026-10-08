@@ -20,6 +20,8 @@ use genex_api::SharedAuthProvider;
 use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
 use genex_api::is_azure_responses_provider;
+use genex_http_client::HttpTransport;
+use genex_http_client::RequestBody;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
@@ -162,6 +164,19 @@ fn map_api_error_to_provider_error(error: ApiError) -> crate::contract::Provider
             crate::contract::ProviderError::Transient("server overloaded".to_string())
         }
         other => crate::contract::ProviderError::Provider(other.to_string()),
+    }
+}
+
+fn map_transport_error_to_provider_error(error: TransportError) -> crate::contract::ProviderError {
+    match error {
+        TransportError::Http { status, .. }
+            if status == http::StatusCode::UNAUTHORIZED => {
+                crate::contract::ProviderError::Unauthorized
+            }
+        TransportError::Timeout => {
+            crate::contract::ProviderError::Transient("provider request timed out".to_string())
+        }
+        other => crate::contract::ProviderError::Transport(other.to_string()),
     }
 }
 
@@ -363,6 +378,56 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 output: response.output,
                 results: response.results,
             })
+        })
+    }
+
+    /// Executes a provider-owned JSON backend operation.
+    ///
+    /// The request path remains a provider/backend contract. The host supplies only the
+    /// feature-specific JSON and headers; endpoint resolution, authentication, routing, and
+    /// transport stay inside the runtime provider.
+    fn backend(
+        &self,
+        request: crate::contract::ProviderBackendRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
+    > {
+        Box::pin(async move {
+            let api_provider = self
+                .api_provider()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let api_auth = self
+                .api_auth()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let client = create_client_for_route(
+                &request.http_client_factory,
+                &api_provider.url_for_path(&request.path),
+                ClientRouteClass::Api,
+                ClientRedirectPolicy::Default,
+            )
+            .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
+            let mut backend_request =
+                api_provider.build_request(http::Method::POST, &request.path);
+            backend_request.headers.extend(request.headers);
+            backend_request.body = Some(RequestBody::Json(request.body));
+            backend_request.timeout = Some(request.timeout);
+            let backend_request = api_auth
+                .apply_auth(backend_request)
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let response = genex_api::ReqwestTransport::from_http_client(client)
+                .execute(backend_request)
+                .await
+                .map_err(map_transport_error_to_provider_error)?;
+            let body = serde_json::from_slice(&response.body).map_err(|error| {
+                crate::contract::ProviderError::Provider(format!(
+                    "provider backend returned invalid JSON: {error}"
+                ))
+            })?;
+            Ok(crate::contract::ProviderBackendResponse { body })
         })
     }
 
@@ -607,6 +672,16 @@ where
         ProviderRuntime::search(self, request)
     }
 
+    fn backend(
+        &self,
+        request: crate::contract::ProviderBackendRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
+    > {
+        ProviderRuntime::backend(self, request)
+    }
+
     fn list_models(
         &self,
         request: crate::contract::ListModelsRequest,
@@ -780,6 +855,17 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
     > {
         let runtime = self.runtime.clone();
         Box::pin(async move { ProviderRuntime::search(runtime.as_ref(), request).await })
+    }
+
+    fn backend(
+        &self,
+        request: crate::contract::ProviderBackendRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
+    > {
+        let runtime = self.runtime.clone();
+        Box::pin(async move { ProviderRuntime::backend(runtime.as_ref(), request).await })
     }
 
     fn list_models(

@@ -10,15 +10,16 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::OnceLock;
+use std::time::Duration;
 
 use futures::Stream;
 use genex_http_client::HttpClientFactory;
-use http::HeaderMap;
 use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::RateLimitSnapshot;
 use genex_protocol::protocol::SessionSource;
+use http::HeaderMap;
 use serde_json::Value;
 
 /// Remote context-compaction protocols supported by a model provider.
@@ -258,6 +259,25 @@ pub struct ProviderSearchResponse {
     pub results: Option<Vec<Value>>,
 }
 
+/// Provider-neutral request for a provider-owned JSON backend operation.
+///
+/// The host owns feature-specific context and headers. The provider owns endpoint resolution,
+/// authentication, outbound routing, and the concrete HTTP transport.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderBackendRequest {
+    pub path: String,
+    pub body: Value,
+    pub headers: HeaderMap,
+    pub timeout: Duration,
+    pub http_client_factory: HttpClientFactory,
+}
+
+/// JSON response returned by a provider-owned backend operation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderBackendResponse {
+    pub body: Value,
+}
+
 /// Provider-neutral streamed chat events.
 ///
 /// The current migration reuses the repository's normalized response event vocabulary. Wire
@@ -281,6 +301,14 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
         &self,
         request: ProviderSearchRequest,
     ) -> ProviderFuture<'_, ProviderResult<ProviderSearchResponse>> {
+        let _ = request;
+        Box::pin(async { Err(ProviderError::Unsupported) })
+    }
+
+    fn backend(
+        &self,
+        request: ProviderBackendRequest,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderBackendResponse>> {
         let _ = request;
         Box::pin(async { Err(ProviderError::Unsupported) })
     }

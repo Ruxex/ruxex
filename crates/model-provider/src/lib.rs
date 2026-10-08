@@ -40,6 +40,8 @@ pub use contract::ModelProvider;
 pub use contract::ProviderAccountState;
 pub use contract::ProviderAuthField;
 pub use contract::ProviderAuthState;
+pub use contract::ProviderBackendRequest;
+pub use contract::ProviderBackendResponse;
 pub use contract::ProviderCapabilities;
 pub use contract::ProviderChatEvent;
 pub use contract::ProviderChatStream;

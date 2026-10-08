@@ -21,7 +21,6 @@ use genex_goal_extension::GoalService;
 use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::SharedProviderRuntime;
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
@@ -36,7 +35,6 @@ use crate::thread_state::ThreadStateManager;
 pub(crate) struct ThreadExtensionDependencies {
     pub(crate) event_sink: Arc<dyn ExtensionEventSink>,
     pub(crate) credential_manager: Arc<CredentialManager>,
-    pub(crate) provider: SharedProviderRuntime,
     pub(crate) provider_contract: SharedModelProvider,
     pub(crate) http_client_factory: HttpClientFactory,
     pub(crate) state_db: Option<StateDbHandle>,
@@ -55,7 +53,6 @@ pub(crate) fn thread_extensions(
     let ThreadExtensionDependencies {
         event_sink,
         credential_manager,
-        provider,
         provider_contract,
         http_client_factory,
         state_db,
@@ -76,8 +73,8 @@ pub(crate) fn thread_extensions(
     genex_history_notes_extension::install_with_provider_contract(
         &mut builder,
         credential_manager,
-        provider.clone(),
         provider_contract.clone(),
+        http_client_factory.clone(),
     );
     if let Some(state_db) = state_db {
         genex_goal_extension::install_with_backend(

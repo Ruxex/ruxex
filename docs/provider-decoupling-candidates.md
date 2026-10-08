@@ -25,8 +25,9 @@ CLI の logout/delete も同じ producer/consumer 監査を行い、設定済み
 
 AppServer の provider-neutral contract は `MessageProcessor` の生成境界で一度だけ作成し、同じ
 `SharedModelProvider` を `ThreadManager` と History/Notes・Web Search 拡張へ注入する形へ移行した。
-これにより capability・auth・account の参照は AppServer 内で同じ契約インスタンスを共有する。モデル実行、
-拡張バックエンドの transport は、まだ内部 `ProviderRuntime` の移行対象として残す。
+これにより capability・auth・account の参照は AppServer 内で同じ契約インスタンスを共有する。Chat/Responses HTTP
+モデル実行と拡張バックエンドの transport は契約操作へ移し、WebSocket 等の残る実行境界だけを内部
+`ProviderRuntime` の移行対象として残す。
 モデルカタログの cache identity と capability 判定は同じ契約ハンドルを共有する。
 モデル列挙の呼び出し自体は `ModelProvider::list_models` へ移し、既存の HTTP fetch は runtime adapter 内で
 provider-neutral な catalog/identity/ETag snapshot へ変換する。
@@ -37,8 +38,9 @@ state は引き続き次の実行移行対象である。
 
 さらに `SessionConfiguration` から `TurnContext` まで同じ contract handle を引き継ぎ、compaction、
 hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
-standalone Web Search の request/response transport も契約経由へ移し、History/Notes backend transport は
-引き続き内部 adapter に残している。
+standalone Web Search の request/response transport と History/Notes backend transport も契約経由へ移す。
+拡張は provider-neutral な入力と外部機能固有の context/header を組み立て、endpoint 解決、認証、HTTP
+transport は provider adapter が所有する。
 Responses wire 判定、WebSocket、auth recovery、request/response event mapping は、依然として
 provider-specific runtime transport を必要とするため、この変更では保持した。
 `ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。旧 constructor は

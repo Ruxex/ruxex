@@ -13,10 +13,9 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-api = { workspace = true }
-genex-client = { workspace = true }
 genex-core = { workspace = true }
 genex-extension-api = { workspace = true }
+genex-http-client = { workspace = true }
 genex-login = { workspace = true }
 genex-model-provider = { workspace = true }
 genex-protocol = { workspace = true }
