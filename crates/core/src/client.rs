@@ -429,11 +429,9 @@ impl ModelClient {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         http_client_factory: HttpClientFactory,
     ) -> Self {
-        Self::new_with_provider_id(
-            None,
-            credential_manager,
+        Self::new_with_provider(
+            create_model_provider(provider_info, credential_manager),
             thread_id,
-            provider_info,
             session_source,
             originator,
             model_verbosity,
@@ -465,11 +463,49 @@ impl ModelClient {
         http_client_factory: HttpClientFactory,
     ) -> Self {
         let model_provider = match provider_id {
-            Some(provider_id) => {
-                create_model_provider_for_id(provider_id, provider_info, credential_manager)
-            }
+            Some(provider_id) => create_model_provider_for_id(
+                provider_id,
+                provider_info,
+                credential_manager,
+            ),
             None => create_model_provider(provider_info, credential_manager),
         };
+        Self::new_with_provider(
+            model_provider,
+            thread_id,
+            session_source,
+            originator,
+            model_verbosity,
+            content_item_kinds_enabled,
+            enable_request_compression,
+            include_timing_metrics,
+            beta_features_header,
+            concurrent_reasoning_summaries_enabled,
+            attestation_provider,
+            http_client_factory,
+        )
+    }
+
+    /// Creates a session-scoped model client from the runtime's shared provider.
+    ///
+    /// A runtime owns one provider instance. Sessions must retain that instance
+    /// instead of reconstructing a provider from persisted or client-side
+    /// configuration.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_with_provider(
+        model_provider: SharedModelProvider,
+        thread_id: ThreadId,
+        session_source: SessionSource,
+        originator: String,
+        model_verbosity: Option<VerbosityConfig>,
+        content_item_kinds_enabled: bool,
+        enable_request_compression: bool,
+        include_timing_metrics: bool,
+        beta_features_header: Option<String>,
+        concurrent_reasoning_summaries_enabled: bool,
+        attestation_provider: Option<Arc<dyn AttestationProvider>>,
+        http_client_factory: HttpClientFactory,
+    ) -> Self {
         let include_attestation = model_provider.supports_attestation();
         Self {
             state: Arc::new(ModelClientState {

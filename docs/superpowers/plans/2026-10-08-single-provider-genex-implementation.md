@@ -50,6 +50,7 @@
 - Persisted `ThreadSettingsSnapshot.model_provider_id` is removed; old rollout event objects remain readable because the field is ignored during deserialization, while `SessionConfiguredEvent.model_provider_id` remains only as current-provider client status.
 - The provider status endpoint is singular: `modelProvider/list` and its array response were replaced with `modelProvider/read`, which returns the mounted provider and its authentication fields directly.
 - Runtime `core::Config` no longer stores the merged provider registry; the map remains transient during config construction while execution receives only the resolved mounted provider and ID.
+- Session `ModelClient` instances now receive the `ThreadManager`'s shared Provider handle instead of recreating a provider from thread/client configuration.
 
 ### Task 1: Add the provider descriptor contract
 
