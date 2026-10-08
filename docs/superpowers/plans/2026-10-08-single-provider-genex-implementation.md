@@ -74,6 +74,7 @@
 - AppServer, in-process, and embedded TUI marker mounting now derive `ProviderDescriptor` from the Provider implementation itself before credentials or local state are opened.
 - CLI login status/logout/delete now perform the same provider-home mount before constructing the credential manager.
 - AppServer now creates one provider-neutral contract handle at its host boundary and shares it with `ThreadManager` and History/Notes/Web Search extensions; the internal runtime handle remains only for the not-yet-migrated execution and backend transport paths.
+- AppServer now also passes that same contract handle into the model catalog manager; catalog cache identity and capability checks share the host contract, while catalog HTTP fetching remains on the internal runtime transport bridge.
 
 ### Task 1: Add the provider descriptor contract
 

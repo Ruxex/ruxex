@@ -26,7 +26,8 @@ CLI の logout/delete も同じ producer/consumer 監査を行い、設定済み
 AppServer の provider-neutral contract は `MessageProcessor` の生成境界で一度だけ作成し、同じ
 `SharedModelProvider` を `ThreadManager` と History/Notes・Web Search 拡張へ注入する形へ移行した。
 これにより capability・auth・account の参照は AppServer 内で同じ契約インスタンスを共有する。モデル実行、
-モデルカタログ HTTP、拡張バックエンドの transport は、まだ内部 `ProviderRuntime` の移行対象として残す。
+モデルカタログの HTTP fetch、モデル実行、拡張バックエンドの transport は、まだ内部 `ProviderRuntime` の移行対象として残す。
+モデルカタログの cache identity と capability 判定は同じ契約ハンドルを共有する。
 
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 

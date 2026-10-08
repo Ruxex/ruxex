@@ -307,9 +307,10 @@ impl MessageProcessor {
                 credential_manager.clone(),
                 Arc::clone(&provider),
                 provider_contract.clone(),
-                genex_core::build_models_manager_with_provider(
+                genex_core::build_models_manager_with_provider_contract(
                     config.as_ref(),
                     Arc::clone(&provider),
+                    provider_contract.clone(),
                 ),
                 session_source,
                 environment_manager,

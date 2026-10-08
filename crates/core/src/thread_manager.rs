@@ -437,16 +437,31 @@ pub fn build_models_manager_with_provider(
     config: &Config,
     provider: SharedProviderRuntime,
 ) -> SharedModelsManager {
+    build_models_manager_with_provider_contract(
+        config,
+        provider.clone(),
+        build_provider_contract(provider),
+    )
+}
+
+pub fn build_models_manager_with_provider_contract(
+    config: &Config,
+    provider: SharedProviderRuntime,
+    provider_contract: SharedModelProvider,
+) -> SharedModelsManager {
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
-        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
+        Arc::new(ProviderModelCatalogSource::new_with_provider_contract(
+            provider.clone(),
+            provider_contract.clone(),
+        )),
         provider.credential_manager(),
         config.model_catalog.clone(),
     );
     // MyProvider's API is the source of truth for the user's model catalog; keep discovery
     // enabled even while the generic provider feature remains opt-in.
     if config.features.enabled(Feature::ApiKeyModelDiscovery)
-        || provider.api_key_model_discovery_enabled_by_default()
+        || provider_contract.capabilities().api_key_model_discovery
     {
         manager.set_api_key_model_discovery_enabled(true);
     }

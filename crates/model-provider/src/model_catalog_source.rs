@@ -17,8 +17,15 @@ pub struct ProviderModelCatalogSource {
 
 impl ProviderModelCatalogSource {
     pub fn new(provider: SharedProviderRuntime) -> Self {
+        Self::new_with_provider_contract(provider.clone(), provider_contract(provider))
+    }
+
+    pub fn new_with_provider_contract(
+        provider: SharedProviderRuntime,
+        provider_contract: SharedModelProvider,
+    ) -> Self {
         Self {
-            provider_contract: provider_contract(provider.clone()),
+            provider_contract,
             provider,
         }
     }
