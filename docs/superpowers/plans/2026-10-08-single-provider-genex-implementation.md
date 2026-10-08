@@ -72,6 +72,7 @@
 - History/Notes and standalone Web Search capability gating now reads `ProviderCapabilities` through the provider-neutral contract adapter; their provider-specific backend calls remain behind the internal runtime adapter until the chat/extension transport slice.
 - Model catalog cache identity and capability predicates now read through the provider-neutral contract. The legacy runtime remains only for the actual catalog HTTP fetch and snapshot/ETag bridge.
 - AppServer, in-process, and embedded TUI marker mounting now derive `ProviderDescriptor` from the Provider implementation itself before credentials or local state are opened.
+- CLI login status/logout/delete now perform the same provider-home mount before constructing the credential manager.
 
 ### Task 1: Add the provider descriptor contract
 
