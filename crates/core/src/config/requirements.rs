@@ -31,10 +31,6 @@ pub(super) fn apply_to_config(
     apply_exact!(sqlite_home);
     apply_exact!(log_dir);
     apply_exact!(model_catalog_json);
-    apply_exact!(model_provider);
-    if let Some(providers) = &requirements.model_providers {
-        config.model_providers.extend(providers.value.clone());
-    }
     apply_exact!(allow_login_shell);
     if requirements.enforce_residency.value().is_some() {
         for (provider_name, provider) in &config.model_providers {
@@ -124,15 +120,10 @@ mod tests {
     #[test]
     fn applies_exact_requirements_and_reports_conflicts() {
         let mut config = ConfigToml {
-            model_provider: Some("configured".to_string()),
             allow_login_shell: Some(false),
             ..Default::default()
         };
         let requirements = ConfigRequirements {
-            model_provider: Some(Sourced::new(
-                "managed".to_string(),
-                RequirementSource::Unknown,
-            )),
             allow_login_shell: Some(Sourced::new(true, RequirementSource::Unknown)),
             ..Default::default()
         };
@@ -140,9 +131,8 @@ mod tests {
 
         apply_to_config(&mut config, &requirements, &mut warnings);
 
-        assert_eq!(config.model_provider.as_deref(), Some("managed"));
         assert_eq!(config.allow_login_shell, Some(true));
-        assert_eq!(warnings.len(), 2);
+        assert_eq!(warnings.len(), 1);
         assert!(
             warnings
                 .iter()

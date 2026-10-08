@@ -221,10 +221,6 @@ impl ConfigLayerEntry {
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ConfigLayerStack {
-    /// Cached TOML projection derived only from `requirements_toml`.
-    /// Construction validates provider definitions and reports serialization errors,
-    /// so `effective_config()` can replace complete entries without a fallible conversion.
-    model_provider_requirements: Option<TomlValue>,
     /// Layers are listed from lowest precedence (base) to highest (top), so
     /// later entries in the Vec override earlier ones.
     layers: Vec<ConfigLayerEntry>,
@@ -256,11 +252,7 @@ impl ConfigLayerStack {
     ) -> std::io::Result<Self> {
         validate_enabled_config_layers(&layers)?;
         verify_layer_ordering(&layers)?;
-        let model_provider_requirements = Some(crate::model_provider_requirements::to_config(
-            &requirements_toml,
-        )?);
         Ok(Self {
-            model_provider_requirements,
             layers,
             requirements,
             requirements_toml,
@@ -390,7 +382,6 @@ impl ConfigLayerStack {
         }
         Ok(Self {
             layers,
-            model_provider_requirements: self.model_provider_requirements.clone(),
             requirements: self.requirements.clone(),
             requirements_toml: self.requirements_toml.clone(),
             ignore_user_and_project_exec_policy_rules: self
@@ -425,7 +416,6 @@ impl ConfigLayerStack {
         }
         Self {
             layers,
-            model_provider_requirements: self.model_provider_requirements.clone(),
             requirements: self.requirements.clone(),
             requirements_toml: self.requirements_toml.clone(),
             ignore_user_and_project_exec_policy_rules: self
@@ -436,22 +426,13 @@ impl ConfigLayerStack {
 
     /// Returns the merged config-layer view.
     ///
-    /// Required provider definitions replace local entries before deserialization.
-    /// Selection and other requirements are applied when constructing the final config.
+    /// Requirements are applied when constructing the final config.
     pub fn effective_config(&self) -> TomlValue {
         let mut merged = TomlValue::Table(toml::map::Map::new());
         for layer in self.layers_low_to_high() {
             merge_toml_values(&mut merged, &layer.config);
         }
-        if let Some(requirements) = &self.model_provider_requirements {
-            crate::model_provider_requirements::apply(&mut merged, requirements);
-        }
         merged
-    }
-
-    /// Required provider selection used when building the effective configuration.
-    pub fn required_model_provider(&self) -> Option<&str> {
-        self.requirements_toml.model_provider.as_deref()
     }
 
     /// Returns field origins for the merged config-layer view.

@@ -2983,8 +2983,6 @@ impl Config {
             sqlite_home: _,
             log_dir: _,
             model_catalog_json: _,
-            model_provider: _,
-            model_providers: _,
             allow_login_shell: _,
             approval_policy: mut constrained_approval_policy,
             permission_profile: mut constrained_permission_profile,
@@ -3432,10 +3430,7 @@ impl Config {
         let agent_roles =
             load_agent_roles(fs, &cfg, &config_layer_stack, &mut startup_warnings).await?;
 
-        let selected_model_provider = config_layer_stack
-            .required_model_provider()
-            .map(str::to_string)
-            .or(cfg.model_provider);
+        let selected_model_provider = cfg.model_provider;
         let resolved_model_provider = resolve_model_provider(
             cfg.model_providers,
             selected_model_provider.as_deref(),

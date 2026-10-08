@@ -6,8 +6,6 @@ mod collaboration_mode_list;
 #[cfg(unix)]
 mod command_exec;
 mod compaction;
-#[path = "config_model_provider_requirements_tests.rs"]
-mod config_model_provider_requirements;
 mod config_requirements_application;
 #[path = "config_requirements_browser_use_tests.rs"]
 mod config_requirements_browser_use;
@@ -47,8 +45,6 @@ mod misalignment_policy;
 mod model_list;
 mod model_provider_capabilities_read;
 mod model_provider_read;
-#[path = "model_provider_enforcement_tests.rs"]
-mod model_provider_enforcement;
 mod multi_agent_v2_developer_instructions;
 mod output_schema;
 mod permission_profile_list;

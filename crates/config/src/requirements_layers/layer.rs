@@ -104,31 +104,13 @@ impl ComposableRequirementsLayer {
             // These fields can only be set locally; ignore them before validating cloud policy.
             strip_cloud_auth_requirements(&source, &mut regular_toml);
 
-            // Provider fragments can be incomplete until all requirements layers
-            // are merged. Resolve explicit paths while their source base is still
-            // available, without deserializing complete auth command objects.
-            if let Some(providers) = regular_toml
-                .get_mut("model_providers")
-                .and_then(TomlValue::as_table_mut)
-            {
-                for (id, provider) in providers.iter_mut() {
-                    if let Some(cwd) = provider
-                        .get_mut("auth")
-                        .and_then(|auth| auth.get_mut("cwd"))
-                    {
-                        let resolved: AbsolutePathBuf =
-                            cwd.clone().try_into().map_err(|err: toml::de::Error| {
-                                RequirementsCompositionError::Parse {
-                                    layer_source: source.clone(),
-                                    message: format!("model_providers.{id}.auth.cwd: {err}"),
-                                }
-                            })?;
-                        *cwd = toml_value_from_serializable(resolved)?;
-                    }
-                }
-            }
+            // Provider selection and registry entries belong to the host-injected
+            // runtime provider, not to managed requirements.
             let mut layer_requirements_toml = regular_toml.clone();
+            remove_top_level_field(&mut regular_toml, "model_provider");
+            remove_top_level_field(&mut regular_toml, "model_providers");
             remove_top_level_field(&mut layer_requirements_toml, "model_providers");
+            remove_top_level_field(&mut layer_requirements_toml, "model_provider");
             let _path_context = path_context.as_ref().map(ConfigPathContext::enter);
             let requirements = parse_layer_requirements(
                 &RequirementsLayerToml::Value(layer_requirements_toml),

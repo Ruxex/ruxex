@@ -39,11 +39,7 @@ pub async fn load_managed_requirements_state(
     let (requirements, _, _) =
         load_requirements_from_sources(fs, genex_home, &overrides, strict_config).await?;
     let _: ConfigRequirements = requirements.clone().try_into()?;
-    let requirements_toml = requirements.into_toml();
-    // Full config loads also validate required provider definitions when
-    // constructing ConfigLayerStack, including providers not in use by this thread.
-    let _ = crate::model_provider_requirements::to_config(&requirements_toml)?;
-    Ok(requirements_toml)
+    Ok(requirements.into_toml())
 }
 
 /// Composes the same requirements for full config loads and policy-only checks.

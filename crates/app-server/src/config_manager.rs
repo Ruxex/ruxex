@@ -3,7 +3,6 @@ use genex_config::ConfigLayerStack;
 use genex_config::LoaderOverrides;
 use genex_config::ThreadConfigLoader;
 use genex_config::loader::load_config_layers_state;
-use genex_config::loader::load_managed_requirements_state;
 use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
@@ -22,12 +21,6 @@ use std::sync::RwLock;
 use toml::Value as TomlValue;
 use tracing::instrument;
 use tracing::warn;
-
-#[derive(Debug, thiserror::Error)]
-#[error(
-    "Your organization's required model provider settings changed. Restart Genex to apply them; this request was not sent"
-)]
-pub(crate) struct ModelProviderRequirementsChanged;
 
 /// Shared app-server entry point for loading effective Genex configuration.
 #[derive(Clone)]
@@ -134,43 +127,6 @@ impl ConfigManager {
         self.apply_runtime_feature_enablement(&mut config);
         self.apply_arg0_paths(&mut config);
         Ok(config)
-    }
-
-    /// Checks the retained session route against current managed provider requirements.
-    pub(crate) async fn check_thread_model_provider(
-        &self,
-        current: &Config,
-    ) -> std::io::Result<()> {
-        // Existing threads retain their session route; only managed
-        // requirements can invalidate it.
-        let requirements = load_managed_requirements_state(
-            LOCAL_FS.as_ref(),
-            &self.genex_home,
-            genex_config::ConfigLoadOptions {
-                loader_overrides: self.loader_overrides.clone(),
-                strict_config: self.strict_config,
-            },
-        )
-        .await?;
-        let selection_changed = requirements
-            .model_provider
-            .as_ref()
-            .is_some_and(|provider_id| provider_id != &current.model_provider_id);
-        let required_provider = requirements
-            .model_providers
-            .as_ref()
-            .and_then(|providers| providers.get(&current.model_provider_id))
-            .cloned();
-        let definition_changed = required_provider
-            .as_ref()
-            .is_some_and(|provider| provider != &current.model_provider);
-        if selection_changed || definition_changed {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::PermissionDenied,
-                ModelProviderRequirementsChanged,
-            ));
-        }
-        Ok(())
     }
 
     pub(crate) async fn load_default_config(&self) -> std::io::Result<Config> {

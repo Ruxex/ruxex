@@ -22,7 +22,6 @@ mod mcp_ema;
 mod mcp_requirements;
 mod mcp_types;
 mod merge;
-mod model_provider_requirements;
 mod overrides;
 mod path_context;
 pub mod permissions_toml;

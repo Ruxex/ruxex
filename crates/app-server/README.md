@@ -138,15 +138,6 @@ any files were compressed; failures are reported through existing logs and metri
 There are no progress notifications or cancellation API. Clients sharing this
 Genex home must support compressed rollout files, including shared histories.
 
-## Managed model provider requirements
-
-Existing threads retain their provider configuration. Input RPCs reject requests when managed
-`model_provider` or `model_providers` requirements no longer match that configuration, or cannot
-be loaded. This covers turn start/steer, review, compaction, manual queue start, and active goal
-updates. Realtime connections use separate routing configuration and are not checked here.
-Interrupt, realtime stop, and goal pause/clear remain available. User and project
-configuration changes alone do not invalidate existing threads.
-
 ## Stored thread attachments
 
 - `thread/attachment/add` — add a durable resource reference to a stored thread without loading it. Repeated writes with the same attachment type and identity key return the existing attachment.

@@ -54,7 +54,8 @@
 - Provider-constructing `ModelClient` constructors were removed; callers must inject the runtime's shared Provider handle.
 - Configuration construction now resolves the historical provider map to an explicit `ResolvedModelProvider` singleton before the runtime `Config` is built; the map does not cross the runtime boundary.
 - Profile and session-thread configuration no longer emit Provider selection or Provider-definition fields; Provider settings remain outside per-thread configuration.
-- The public app-server `ConfigRequirements` response no longer exposes Provider selection or the Provider registry; internal managed requirement parsing remains for the pending singular configuration migration.
+- The public app-server `ConfigRequirements` response no longer exposes Provider selection or the Provider registry; managed requirements no longer parse or merge Provider selection/registry entries.
+- Managed `requirements.toml` no longer selects or injects Provider registry entries; remaining managed requirements continue to constrain provider-neutral runtime settings.
 
 ### Task 1: Add the provider descriptor contract
 
