@@ -19,7 +19,7 @@ use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
 #[cfg(test)]
 use genex_login::CredentialManager;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_protocol::config_types::WebSearchContextSize;
 use genex_protocol::config_types::WebSearchMode;
 
@@ -27,7 +27,7 @@ use crate::tool::WebSearchTool;
 
 #[derive(Clone)]
 struct WebSearchExtension {
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
 }
 
 #[derive(Clone)]
@@ -37,7 +37,7 @@ struct WebSearchExtensionConfig {
 }
 
 impl WebSearchExtensionConfig {
-    fn from_config(config: &Config, provider: &SharedModelProvider) -> Self {
+    fn from_config(config: &Config, provider: &SharedProviderRuntime) -> Self {
         let web_search_mode = config.web_search_mode.value();
         Self {
             // Core selects this executor per turn using the feature flag or model metadata.
@@ -149,7 +149,7 @@ impl ToolContributor for WebSearchExtension {
 
 pub fn install(
     registry: &mut ExtensionRegistryBuilder<Config>,
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
 ) {
     let extension = Arc::new(WebSearchExtension { provider });
     registry.thread_lifecycle_contributor(extension.clone());

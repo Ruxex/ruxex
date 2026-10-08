@@ -48,7 +48,7 @@ use genex_login::GenexAuth;
 use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::ProviderModelCatalogSource;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
@@ -393,7 +393,7 @@ pub(crate) struct ThreadManagerState {
     thread_created_tx: broadcast::Sender<ThreadId>,
     thread_id_generator: ThreadIdGenerator,
     credential_manager: Arc<CredentialManager>,
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
     models_manager: SharedModelsManager,
     git_root_discovery: Arc<GitRootDiscovery>,
     environment_manager: Arc<EnvironmentManager>,
@@ -426,13 +426,13 @@ pub fn build_models_manager(
 pub fn build_model_provider(
     config: &Config,
     credential_manager: Arc<CredentialManager>,
-) -> SharedModelProvider {
+) -> SharedProviderRuntime {
     create_model_provider(config.model_provider.clone(), Some(credential_manager))
 }
 
 pub fn build_models_manager_with_provider(
     config: &Config,
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
 ) -> SharedModelsManager {
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
@@ -496,7 +496,7 @@ impl ThreadManager {
     pub fn new(
         config: &Config,
         credential_manager: Arc<CredentialManager>,
-        provider: SharedModelProvider,
+        provider: SharedProviderRuntime,
         models_manager: SharedModelsManager,
         session_source: SessionSource,
         environment_manager: Arc<EnvironmentManager>,
@@ -847,7 +847,7 @@ impl ThreadManager {
         self.state.models_manager.clone()
     }
 
-    pub fn model_provider(&self) -> SharedModelProvider {
+    pub fn model_provider(&self) -> SharedProviderRuntime {
         Arc::clone(&self.state.provider)
     }
 

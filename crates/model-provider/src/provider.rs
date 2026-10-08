@@ -216,7 +216,7 @@ pub enum ProviderApi {
 /// Implementations own provider-specific behavior for a model backend. The
 /// `ModelProviderInfo` returned by `info` is the serialized/configured provider
 /// metadata used by the default provider-compatible implementation.
-pub trait ModelProvider: fmt::Debug + Send + Sync {
+pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
 
@@ -433,10 +433,104 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     }
 }
 
+/// Transitional adapter from the existing runtime implementation to the public provider-neutral
+/// contract. New provider implementations should implement [`crate::ModelProvider`] directly;
+/// this blanket adapter exists so the current transport-backed provider can be migrated without
+/// changing every execution consumer in one step.
+impl<T> crate::contract::ModelProvider for T
+where
+    T: ProviderRuntime,
+{
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderRuntime::descriptor(self)
+    }
+
+    fn capabilities(&self) -> ProviderCapabilities {
+        ProviderRuntime::capabilities(self)
+    }
+
+    fn chat(
+        &self,
+        _request: crate::contract::ChatRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+    > {
+        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+    }
+
+    fn list_models(
+        &self,
+        _request: crate::contract::ListModelsRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<genex_protocol::model_types::ModelCatalog>,
+    > {
+        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+    }
+
+    fn auth_state(&self) -> crate::contract::ProviderAuthState {
+        match ProviderRuntime::account_state(self) {
+            Ok(state) => crate::contract::ProviderAuthState {
+                status: state.auth_status,
+                account_id: state.account_id,
+                display_name: state.display_name,
+            },
+            Err(error) => crate::contract::ProviderAuthState {
+                status: ProviderAuthStatus::Invalid,
+                account_id: None,
+                display_name: Some(error.to_string()),
+            },
+        }
+    }
+
+    fn login(
+        &self,
+        credentials: BTreeMap<String, String>,
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+        let api_key = credentials.get("api_key").cloned().unwrap_or_default();
+        Box::pin(async move {
+            ProviderRuntime::login(self, ProviderLoginRequest::new(api_key, credentials))
+                .await
+                .map_err(|error| match error {
+                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
+                    ProviderAuthError::Failed(message) => {
+                        crate::contract::ProviderError::Provider(message)
+                    }
+                })
+        })
+    }
+
+    fn logout(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+        Box::pin(async move {
+            ProviderRuntime::logout(self)
+                .await
+                .map(|_| ())
+                .map_err(|error| match error {
+                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
+                    ProviderAuthError::Failed(message) => {
+                        crate::contract::ProviderError::Provider(message)
+                    }
+                })
+        })
+    }
+
+    fn usage(
+        &self,
+        _request: crate::contract::UsageRequest,
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderUsage>> {
+        Box::pin(async move {
+            ProviderRuntime::usage(self)
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
+    }
+}
+
 pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// Shared runtime model provider handle.
-pub type SharedModelProvider = Arc<dyn ModelProvider>;
+pub type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
 
 fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
     provider.env_key.is_none()
@@ -448,7 +542,7 @@ fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
 pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
-) -> SharedModelProvider {
+) -> SharedProviderRuntime {
     let provider_id = provider_info.id.clone();
     create_model_provider_internal(provider_id, provider_info, credential_manager)
 }
@@ -457,7 +551,7 @@ fn create_model_provider_internal(
     provider_id: Option<String>,
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
-) -> SharedModelProvider {
+) -> SharedProviderRuntime {
     match provider_info.name.as_str() {
         genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => Arc::new(
             CloudflareModelProvider::new(provider_id, provider_info, credential_manager),
@@ -494,7 +588,7 @@ impl ConfiguredModelProvider {
     }
 }
 
-impl ModelProvider for ConfiguredModelProvider {
+impl ProviderRuntime for ConfiguredModelProvider {
     fn info(&self) -> &ModelProviderInfo {
         &self.info
     }

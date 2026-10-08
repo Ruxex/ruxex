@@ -20,7 +20,7 @@ use genex_extension_items::web_search::WebSearchAction;
 use genex_extension_items::web_search::WebSearchItem;
 use genex_login::default_client::add_originator_header;
 use genex_login::default_client::create_client;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::WebSearchBeginEvent;
@@ -44,7 +44,7 @@ const RESULTS_PAYLOAD_BYTES_METRIC: &str = "genex.web_search.results.payload_byt
 
 pub(crate) struct WebSearchTool {
     pub(crate) session_id: String,
-    pub(crate) provider: SharedModelProvider,
+    pub(crate) provider: SharedProviderRuntime,
     pub(crate) settings: SearchSettings,
     pub(crate) originator: Option<String>,
 }

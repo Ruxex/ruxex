@@ -5075,6 +5075,7 @@ version = "0.0.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
+ "futures",
  "genex-api",
  "genex-http-client",
  "genex-login",

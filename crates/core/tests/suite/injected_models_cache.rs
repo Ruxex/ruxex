@@ -21,7 +21,6 @@ use core_test_support::wait_for_event;
 use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
-use genex_model_provider::ModelProvider;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
 use genex_models_manager::cache::ModelsCache;

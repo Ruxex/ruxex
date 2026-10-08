@@ -4,7 +4,7 @@ use genex_api::ReqwestTransport;
 use genex_client::HttpTransport;
 use genex_client::RequestBody;
 use genex_login::default_client::create_client;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderValue;
 use http::Method;
@@ -18,11 +18,11 @@ const OPERATION_ERROR_PREFIX: &str = "Unable to perform operation:";
 
 #[derive(Clone)]
 pub(crate) struct HistoryNotesBackend {
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
 }
 
 impl HistoryNotesBackend {
-    pub(crate) fn new(provider: SharedModelProvider) -> Self {
+    pub(crate) fn new(provider: SharedProviderRuntime) -> Self {
         Self { provider }
     }
 

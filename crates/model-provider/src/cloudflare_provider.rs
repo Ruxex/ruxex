@@ -32,11 +32,11 @@ use super::auth::cached_provider_auth;
 use super::auth::provider_auth;
 use super::auth::resolve_provider_auth;
 use super::models_identity;
-use super::provider::ModelProvider;
 use super::provider::ModelProviderFuture;
 use super::provider::ProviderAccountResult;
 use super::provider::ProviderAccountState;
 use super::provider::ProviderApi;
+use super::provider::ProviderRuntime;
 
 const CLOUDFLARE_API_ROOT: &str = "https://api.cloudflare.com/client/v4";
 const CLOUDFLARE_MODELS_TIMEOUT: Duration = Duration::from_secs(5);
@@ -145,7 +145,7 @@ impl CloudflareModelProvider {
     }
 }
 
-impl ModelProvider for CloudflareModelProvider {
+impl ProviderRuntime for CloudflareModelProvider {
     fn info(&self) -> &ModelProviderInfo {
         &self.info
     }

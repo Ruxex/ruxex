@@ -14,6 +14,7 @@ workspace = true
 
 [dependencies]
 chrono = { workspace = true }
+futures = { workspace = true }
 genex-api = { workspace = true }
 genex-http-client = { workspace = true }
 genex-login = { workspace = true }

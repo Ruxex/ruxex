@@ -611,3 +611,17 @@ as part of the provider-neutral plugin cleanup.
 | Exec/TUI login restrictions | Explicit forced login method/workspace policy is still read from configuration; no generic “logged in” UI gate is introduced. | `retain` explicit policy; audit hosted policy separately |
 | Core plugin skill metadata | Skill projection uses effective auth mode to render capability metadata; cache loading did not consume auth data. | `retain` auth-mode capability; remove dead snapshot read |
 | External-agent migration auth field | The migration service, its `PluginsManager` dependency, and every app-server/TUI/state/protocol consumer were deleted after a producer/consumer audit. Ordinary plugin discovery has independent producers and consumers. | `remove (completed)` migration-only dependency; retain ordinary plugin capability |
+
+### ModelProvider public contract boundary (2026-10-09)
+
+The current runtime provider trait is consumed by core request execution, model catalog, account,
+CLI, app-server, and extensions. Its methods still expose repository implementation types such as
+`ModelProviderInfo`, `CredentialManager`, `GenexAuth`, and concrete API provider/auth handles.
+Those consumers are active runtime paths, so this is not a deletion candidate. The boundary will be
+migrated in place: introduce provider-neutral request, stream, auth, usage, and error types, retain
+an explicitly internal runtime adapter during the transition, and migrate consumers before removing
+the old adapter contract.
+
+| Area | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| Public `ModelProvider` trait and shared handle | `genex-model-provider` produces the configured and Cloudflare implementations; core Chat/session, models-manager, app-server account/capability handlers, CLI auth, Web Search, and History/Notes consume the shared handle. The current trait directly exposes provider configuration, credential storage, auth snapshots, and API transport types. | `migrate-in-place`: split a provider-neutral public contract from the internal runtime adapter; retain the adapter only until all consumers use neutral types | Cross-crate trait/method audit; focused and full `just check --tests`; `just check` |

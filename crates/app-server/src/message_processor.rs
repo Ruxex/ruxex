@@ -69,7 +69,7 @@ use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalService;
 use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::CredentialManager;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_protocol::ThreadId;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::SessionSource;
@@ -233,7 +233,7 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) config_warnings: Vec<ConfigWarningNotification>,
     pub(crate) session_source: SessionSource,
     pub(crate) credential_manager: Arc<CredentialManager>,
-    pub(crate) provider: SharedModelProvider,
+    pub(crate) provider: SharedProviderRuntime,
     pub(crate) user_verification: Arc<crate::user_verification::Service>,
     pub(crate) installation_id: String,
     pub(crate) code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>>,

@@ -19,7 +19,7 @@ use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalExtensionConfig;
 use genex_goal_extension::GoalService;
 use genex_login::CredentialManager;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::Event;
 use genex_protocol::protocol::EventMsg;
@@ -34,7 +34,7 @@ use crate::thread_state::ThreadStateManager;
 pub(crate) struct ThreadExtensionDependencies {
     pub(crate) event_sink: Arc<dyn ExtensionEventSink>,
     pub(crate) credential_manager: Arc<CredentialManager>,
-    pub(crate) provider: SharedModelProvider,
+    pub(crate) provider: SharedProviderRuntime,
     pub(crate) state_db: Option<StateDbHandle>,
     pub(crate) thread_manager: Weak<ThreadManager>,
     pub(crate) goal_service: Arc<GoalService>,

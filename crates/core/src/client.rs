@@ -125,7 +125,7 @@ use genex_model_provider::ProviderApi;
 use genex_model_provider::ProviderAuthScope;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ResponsesConnectionKey;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_protocol::error::GenexErr;
@@ -172,7 +172,7 @@ fn session_telemetry_for_request(
 #[derive(Debug)]
 struct ModelClientState {
     thread_id: ThreadId,
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
     session_source: SessionSource,
     originator: String,
     model_verbosity: Option<VerbosityConfig>,
@@ -411,7 +411,7 @@ impl ModelClient {
     /// configuration.
     #[allow(clippy::too_many_arguments)]
     pub fn new_with_provider(
-        model_provider: SharedModelProvider,
+        model_provider: SharedProviderRuntime,
         thread_id: ThreadId,
         session_source: SessionSource,
         originator: String,
@@ -1966,7 +1966,7 @@ fn map_response_stream(
     api_stream: genex_api::ResponseStream,
     session_telemetry: SessionTelemetry,
     inference_trace_attempt: InferenceTraceAttempt,
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
 ) -> (ResponseStream, oneshot::Receiver<LastResponse>) {
     let genex_api::ResponseStream {
         rx_event,
@@ -1990,7 +1990,7 @@ fn map_response_events<S>(
     api_stream: S,
     session_telemetry: SessionTelemetry,
     inference_trace_attempt: InferenceTraceAttempt,
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
 ) -> (ResponseStream, oneshot::Receiver<LastResponse>)
 where
     S: futures::Stream<Item = std::result::Result<ResponseEvent, ApiError>>
@@ -2192,7 +2192,7 @@ struct WebsocketConnectParams<'a> {
 fn emit_auth_recovery_event(
     event_sender: Option<&Sender<ProtocolEvent>>,
     turn_id: Option<&str>,
-    provider: &SharedModelProvider,
+    provider: &SharedProviderRuntime,
     message: &str,
     event: fn(AuthRecoveryEvent) -> EventMsg,
 ) {
@@ -2212,7 +2212,7 @@ async fn handle_unauthorized(
     auth_recovery: &mut Option<UnauthorizedRecovery>,
     provider_auth_recovery_attempted: &mut bool,
     session_telemetry: &SessionTelemetry,
-    provider: &SharedModelProvider,
+    provider: &SharedProviderRuntime,
     event_sender: Option<&Sender<ProtocolEvent>>,
     turn_id: Option<&str>,
 ) -> Result<UnauthorizedRecoveryExecution> {

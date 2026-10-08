@@ -5,16 +5,16 @@ use genex_models_manager::manager::ModelCatalogSource;
 use genex_protocol::error::Result as CoreResult;
 
 use crate::models_identity;
-use crate::provider::SharedModelProvider;
+use crate::provider::SharedProviderRuntime;
 
 /// Adapts a runtime provider to the manager-facing catalog source abstraction.
 #[derive(Clone, Debug)]
 pub struct ProviderModelCatalogSource {
-    provider: SharedModelProvider,
+    provider: SharedProviderRuntime,
 }
 
 impl ProviderModelCatalogSource {
-    pub fn new(provider: SharedModelProvider) -> Self {
+    pub fn new(provider: SharedProviderRuntime) -> Self {
         Self { provider }
     }
 }

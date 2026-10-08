@@ -206,7 +206,7 @@ use crate::thread_rollout_truncation::initial_history_has_prior_user_turns;
 use genex_config::CONFIG_TOML_FILE;
 use genex_config::ConfigLayerSource;
 use genex_config::types::McpServerConfig;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::GenexErrorDetails;
@@ -407,7 +407,7 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) instructions: SessionInstructions,
     pub(crate) installation_id: String,
     pub(crate) credential_manager: Arc<CredentialManager>,
-    pub(crate) provider: SharedModelProvider,
+    pub(crate) provider: SharedProviderRuntime,
     pub(crate) models_manager: SharedModelsManager,
     pub(crate) git_root_discovery: Arc<GitRootDiscovery>,
     pub(crate) environment_manager: Arc<EnvironmentManager>,
@@ -1884,7 +1884,7 @@ impl Session {
         state.session_configuration.provider.info().clone()
     }
 
-    pub(crate) async fn model_provider(&self) -> SharedModelProvider {
+    pub(crate) async fn model_provider(&self) -> SharedProviderRuntime {
         let state = self.state.lock().await;
         Arc::clone(&state.session_configuration.provider)
     }

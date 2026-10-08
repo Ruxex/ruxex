@@ -18,7 +18,7 @@ use genex_core_plugins::ResolvedPluginMetricsOperation;
 use genex_core_plugins::TrustedPluginRoots;
 use genex_exec_server::ExecutorFileSystem;
 use genex_file_system::FileSystemSandboxContext;
-use genex_model_provider::SharedModelProvider;
+use genex_model_provider::SharedProviderRuntime;
 use genex_protocol::SessionId;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::ShellEnvironmentPolicy;
@@ -293,7 +293,7 @@ pub struct TurnContext {
     pub(super) current_settings: ArcSwap<ResolvedStepSettings>,
     /// Turn-wide telemetry; model-attributed step work should use `StepContext::session_telemetry`.
     pub(crate) session_telemetry: SessionTelemetry,
-    pub(crate) provider: SharedModelProvider,
+    pub(crate) provider: SharedProviderRuntime,
     pub(crate) session_source: SessionSource,
     pub(crate) history_mode: ThreadHistoryMode,
     pub(crate) parent_thread_id: Option<ThreadId>,
@@ -767,7 +767,7 @@ impl Session {
         session_id: SessionId,
         credential_manager: Option<Arc<CredentialManager>>,
         session_telemetry: &SessionTelemetry,
-        provider: SharedModelProvider,
+        provider: SharedProviderRuntime,
         session_configuration: &SessionConfiguration,
         multi_agent_version: MultiAgentVersion,
         user_shell: &shell::Shell,
