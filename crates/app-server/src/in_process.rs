@@ -86,8 +86,6 @@ use genex_core::config::Config;
 use genex_core::resolve_installation_id;
 use genex_exec_server::EnvironmentManager;
 use genex_login::CredentialManager;
-use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
-use genex_model_provider::ProviderDescriptor;
 use genex_model_provider::create_model_provider;
 use genex_model_provider::mount_provider_home;
 use genex_protocol::protocol::SessionSource;
@@ -416,10 +414,8 @@ async fn run_outbound_router(
 
 async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClientHandle> {
     args.config.auth_config().validate()?;
-    let provider_descriptor = ProviderDescriptor::new(
-        args.config.model_provider_id.clone(),
-        CURRENT_PROVIDER_PROTOCOL_VERSION,
-    );
+    let provider_descriptor =
+        create_model_provider(args.config.model_provider.clone(), None).descriptor();
     mount_provider_home(&args.config.genex_home, &provider_descriptor).map_err(|err| {
         IoError::new(
             ErrorKind::InvalidData,

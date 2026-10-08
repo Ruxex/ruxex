@@ -10,8 +10,6 @@ use genex_core::config::Config;
 use genex_core::config::UnsupportedUntrustedApprovalPolicyError;
 use genex_core::resolve_installation_id;
 use genex_login::CredentialManager;
-use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
-use genex_model_provider::ProviderDescriptor;
 use genex_model_provider::create_model_provider;
 use genex_model_provider::mount_provider_home;
 #[cfg(debug_assertions)]
@@ -545,10 +543,8 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
-    let provider_descriptor = ProviderDescriptor::new(
-        config.model_provider_id.clone(),
-        CURRENT_PROVIDER_PROTOCOL_VERSION,
-    );
+    let provider_descriptor =
+        create_model_provider(config.model_provider.clone(), None).descriptor();
     mount_provider_home(&config.genex_home, &provider_descriptor).map_err(|err| {
         std::io::Error::new(
             ErrorKind::InvalidData,
