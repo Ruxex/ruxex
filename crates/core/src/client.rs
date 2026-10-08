@@ -41,10 +41,8 @@ use genex_api::Provider as ApiProvider;
 use genex_api::Reasoning;
 use genex_api::ReasoningContext;
 use genex_api::RequestTelemetry;
-use genex_api::ReqwestTransport;
 use genex_api::ResponseCreateWsRequest;
 use genex_api::ResponsesApiRequest;
-use genex_api::ResponsesClient as ApiResponsesClient;
 use genex_api::ResponsesOptions as ApiResponsesOptions;
 use genex_api::ResponsesWebsocketClient as ApiWebSocketResponsesClient;
 use genex_api::ResponsesWebsocketConnection as ApiWebSocketConnection;
@@ -58,15 +56,12 @@ use genex_api::auth_header_telemetry;
 use genex_api::build_session_headers;
 use genex_api::create_text_param_for_request;
 use genex_api::response_create_client_metadata;
-use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::RefreshTokenError;
 use genex_login::UnauthorizedRecovery;
-use genex_login::default_client::ClientRedirectPolicy;
 use genex_login::default_client::add_originator_header;
-use genex_login::default_client::create_client_for_route;
 use genex_otel::SessionTelemetry;
 use genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
 use genex_otel::current_span_w3c_trace_context;
@@ -196,7 +191,6 @@ struct CurrentClientSetup {
     auth_owner_generation: Option<u64>,
     auth_revision: Option<u64>,
     api_provider: ApiProvider,
-    redirect_policy: ClientRedirectPolicy,
     api_auth: SharedAuthProvider,
 }
 
@@ -632,21 +626,6 @@ impl ModelClient {
             .await
     }
 
-    /// Builds request telemetry for unary API calls (e.g., Compact endpoint).
-    fn build_request_telemetry(
-        session_telemetry: &SessionTelemetry,
-        auth_context: AuthRequestTelemetryContext,
-        request_route_telemetry: RequestRouteTelemetry,
-    ) -> Arc<dyn RequestTelemetry> {
-        let telemetry = Arc::new(ApiTelemetry::new(
-            session_telemetry.clone(),
-            auth_context,
-            request_route_telemetry,
-        ));
-        let request_telemetry: Arc<dyn RequestTelemetry> = telemetry;
-        request_telemetry
-    }
-
     fn build_reasoning(
         &self,
         model_info: &ModelInfo,
@@ -830,7 +809,6 @@ impl ModelClient {
             let revision = auth_changes.as_ref().map(|changes| *changes.borrow());
             let auth = self.state.provider.auth().await;
             let api_provider = self.state.provider.api_provider().await?;
-            let redirect_policy = ClientRedirectPolicy::Default;
             let resolved_auth = self
                 .state
                 .provider
@@ -855,7 +833,6 @@ impl ModelClient {
                 auth_owner_generation,
                 auth_revision: revision,
                 api_provider,
-                redirect_policy,
                 api_auth: resolved_auth.auth,
             });
         }
@@ -893,22 +870,6 @@ impl ModelClient {
             None => format!("model={model}"),
         };
         HeaderValue::from_str(&routing_hint).ok()
-    }
-
-    fn build_api_transport(
-        &self,
-        api_provider: &ApiProvider,
-        endpoint: &str,
-        redirect_policy: ClientRedirectPolicy,
-    ) -> Result<ReqwestTransport> {
-        let client = create_client_for_route(
-            &self.http_client_factory,
-            &api_provider.url_for_path(endpoint),
-            ClientRouteClass::Api,
-            redirect_policy,
-        )
-        .map_err(std::io::Error::from)?;
-        Ok(ReqwestTransport::from_http_client(client))
     }
 
     pub(crate) async fn prewarm_auth(&self) -> Result<()> {
@@ -1293,7 +1254,15 @@ impl ModelClientSession {
             metadata: std::collections::BTreeMap::new(),
             conversation_id: Some(responses_metadata.session_id.clone()),
             session_source: Some(self.client.state.session_source.clone()),
-            http_client_factory: self.client.http_client_factory.clone(),
+            payload: None,
+            transport: genex_model_provider::ChatTransportOptions {
+                http_client_factory: self.client.http_client_factory.clone(),
+                session_id: None,
+                thread_id: None,
+                extra_headers: ApiHeaderMap::new(),
+                compression: genex_model_provider::ProviderRequestCompression::None,
+                turn_state: None,
+            },
         };
         let provider_stream = self
             .client
@@ -1347,123 +1316,111 @@ impl ModelClientSession {
             .as_ref()
             .map(CredentialManager::unauthorized_recovery);
         let mut provider_auth_recovery_attempted = false;
-        let mut pending_retry = PendingUnauthorizedRetry::default();
         loop {
-            let client_setup = self.client.current_client_setup().await?;
-            let responses_headers = self
-                .client
-                .responses_headers(client_setup.auth.as_ref(), &model_info.slug);
-            tracing::Span::current().record("api.path", "/responses");
-            let transport = self.client.build_api_transport(
-                &client_setup.api_provider,
-                "/responses",
-                client_setup.redirect_policy,
-            )?;
-            let request_auth_context =
-                AuthRequestTelemetryContext::new(client_setup.api_auth.as_ref(), pending_retry);
-            let (request_telemetry, sse_telemetry) = Self::build_streaming_telemetry(
-                session_telemetry,
-                request_auth_context,
-                RequestRouteTelemetry::for_endpoint("/responses"),
-            );
-            let compression = self.responses_request_compression(client_setup.auth.as_ref());
-            let mut options = self
-                .build_responses_options(
-                    responses_metadata,
-                    compression,
-                    model_info.use_responses_lite,
-                )
-                .await;
-
-            let mut request = self.client.build_responses_request(
-                prompt,
-                model_info,
-                effort.clone(),
-                summary,
-                service_tier.clone(),
+        let client_setup = self.client.current_client_setup().await?;
+        let responses_headers = self
+            .client
+            .responses_headers(client_setup.auth.as_ref(), &model_info.slug);
+        tracing::Span::current().record("api.path", "/responses");
+        let compression = self.responses_request_compression(client_setup.auth.as_ref());
+        let mut options = self
+            .build_responses_options(
                 responses_metadata,
-            )?;
-            ModelClient::filter_tool_result_metadata(
-                &mut request.input,
-                &client_setup.api_provider,
-            );
-            if let Some(header_value) = self.client.build_routing_hint_header(
-                client_setup.auth.as_ref(),
-                &request.model,
-                request.service_tier.as_deref(),
-            ) {
-                options
-                    .extra_headers
-                    .insert(X_GENEX_ROUTING_HINT_HEADER, header_value);
-            }
-            request.access_programs =
-                cyber_access_program::for_program(prompt.cyber_access_program);
-            self.client
-                .prepare_response_items_for_request(&mut request.input);
-            let request_session_telemetry =
-                session_telemetry_for_request(session_telemetry, &request);
-            options.extra_headers.extend(responses_headers);
-            let inference_trace_attempt = inference_trace.start_attempt();
-            inference_trace_attempt.add_request_headers(&mut options.extra_headers);
-            inference_trace_attempt.record_started(&request);
-            let client = ApiResponsesClient::new(
-                transport,
-                client_setup.api_provider,
-                client_setup.api_auth,
+                compression,
+                model_info.use_responses_lite,
             )
-            .with_telemetry(Some(request_telemetry), Some(sse_telemetry));
-            let stream_result = client.stream_request(request, options).await;
+            .await;
 
-            match stream_result {
-                Ok(stream) => {
-                    let (stream, _) = map_response_stream(
-                        stream,
-                        request_session_telemetry,
-                        inference_trace_attempt,
-                        Arc::clone(&self.client.state.provider),
-                    );
-                    return Ok(stream);
-                }
-                Err(ApiError::Transport(unauthorized_transport))
-                    if self
-                        .client
-                        .state
-                        .provider
-                        .is_recoverable_auth_error(&unauthorized_transport) =>
-                {
-                    let response_debug_context =
-                        extract_response_debug_context(&unauthorized_transport);
-                    inference_trace_attempt.record_failed(
-                        &unauthorized_transport,
-                        response_debug_context.request_id.as_deref(),
-                        /*output_items*/ &[],
-                    );
-                    pending_retry = PendingUnauthorizedRetry::from_recovery(
-                        handle_unauthorized(
-                            unauthorized_transport,
-                            &mut auth_recovery,
-                            &mut provider_auth_recovery_attempted,
-                            session_telemetry,
-                            &self.client.state.provider,
-                            self.client.event_sender.as_ref(),
-                            responses_metadata.turn_id.as_deref(),
-                        )
-                        .await?,
-                    );
-                    continue;
-                }
-                Err(err) => {
-                    let response_debug_context =
-                        extract_response_debug_context_from_api_error(&err);
-                    let err = self.client.state.provider.map_api_error(err);
-                    inference_trace_attempt.record_failed(
-                        &err,
-                        response_debug_context.request_id.as_deref(),
-                        /*output_items*/ &[],
-                    );
-                    return Err(err);
-                }
+        let mut request = self.client.build_responses_request(
+            prompt,
+            model_info,
+            effort.clone(),
+            summary,
+            service_tier.clone(),
+            responses_metadata,
+        )?;
+        ModelClient::filter_tool_result_metadata(&mut request.input, &client_setup.api_provider);
+        if let Some(header_value) = self.client.build_routing_hint_header(
+            client_setup.auth.as_ref(),
+            &request.model,
+            request.service_tier.as_deref(),
+        ) {
+            options
+                .extra_headers
+                .insert(X_GENEX_ROUTING_HINT_HEADER, header_value);
+        }
+        request.access_programs = cyber_access_program::for_program(prompt.cyber_access_program);
+        self.client
+            .prepare_response_items_for_request(&mut request.input);
+        let request_session_telemetry = session_telemetry_for_request(session_telemetry, &request);
+        options.extra_headers.extend(responses_headers);
+        let inference_trace_attempt = inference_trace.start_attempt();
+        inference_trace_attempt.add_request_headers(&mut options.extra_headers);
+        inference_trace_attempt.record_started(&request);
+        let payload = serde_json::to_value(&request).map_err(|error| {
+            GenexErr::Fatal(format!("failed to encode responses request: {error}"))
+        })?;
+        let provider_request = genex_model_provider::ChatRequest {
+            model: request.model.clone(),
+            instructions: Some(request.instructions.clone()),
+            input: Vec::new(),
+            tools: Vec::new(),
+            metadata: std::collections::BTreeMap::new(),
+            conversation_id: Some(self.client.responses_session_id(responses_metadata)),
+            session_source: Some(self.client.state.session_source.clone()),
+            payload: Some(payload),
+            transport: genex_model_provider::ChatTransportOptions {
+                http_client_factory: self.client.http_client_factory.clone(),
+                session_id: options.session_id.clone(),
+                thread_id: options.thread_id.clone(),
+                extra_headers: options.extra_headers,
+                compression: match options.compression {
+                    Compression::None => genex_model_provider::ProviderRequestCompression::None,
+                    Compression::Zstd => genex_model_provider::ProviderRequestCompression::Zstd,
+                },
+                turn_state: options.turn_state,
+            },
+        };
+        let provider_result = self
+            .client
+            .state
+            .provider_contract
+            .chat(provider_request)
+            .await;
+        match provider_result {
+            Ok(provider_stream) => {
+                let api_stream = provider_stream
+                    .map(|event| event.map_err(|error| ApiError::Stream(error.to_string())));
+                let (stream, _) = map_response_events(
+                    None,
+                    api_stream,
+                    request_session_telemetry,
+                    inference_trace_attempt,
+                    Arc::clone(&self.client.state.provider),
+                );
+                return Ok(stream);
             }
+            Err(genex_model_provider::ProviderError::Unauthorized) => {
+                let transport = TransportError::Http {
+                    status: StatusCode::UNAUTHORIZED,
+                    url: Some(client_setup.api_provider.url_for_path("/responses")),
+                    headers: None,
+                    body: None,
+                };
+                let _recovery = handle_unauthorized(
+                    transport,
+                    &mut auth_recovery,
+                    &mut provider_auth_recovery_attempted,
+                    session_telemetry,
+                    &self.client.state.provider,
+                    self.client.event_sender.as_ref(),
+                    responses_metadata.turn_id.as_deref(),
+                )
+                .await?;
+                continue;
+            }
+            Err(error) => return Err(GenexErr::Fatal(error.to_string())),
+        }
         }
     }
 
@@ -1700,22 +1657,6 @@ impl ModelClientSession {
             self.websocket_session.last_response_rx = Some(last_request_rx);
             return Ok(WebsocketStreamOutcome::Stream(stream));
         }
-    }
-
-    /// Builds request and SSE telemetry for streaming API calls.
-    fn build_streaming_telemetry(
-        session_telemetry: &SessionTelemetry,
-        auth_context: AuthRequestTelemetryContext,
-        request_route_telemetry: RequestRouteTelemetry,
-    ) -> (Arc<dyn RequestTelemetry>, Arc<dyn SseTelemetry>) {
-        let telemetry = Arc::new(ApiTelemetry::new(
-            session_telemetry.clone(),
-            auth_context,
-            request_route_telemetry,
-        ));
-        let request_telemetry: Arc<dyn RequestTelemetry> = telemetry.clone();
-        let sse_telemetry: Arc<dyn SseTelemetry> = telemetry;
-        (request_telemetry, sse_telemetry)
     }
 
     /// Builds telemetry for the Responses API WebSocket transport.

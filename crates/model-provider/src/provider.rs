@@ -10,6 +10,7 @@ use genex_api::ChatCompletionApi;
 use genex_api::ChatClient;
 use genex_api::ChatRequestInput;
 use genex_api::Provider;
+use genex_api::ResponsesClient;
 use genex_api::SharedAuthProvider;
 use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
@@ -135,6 +136,38 @@ pub enum ProviderApi {
     Chat(Arc<dyn ChatCompletionApi>),
 }
 
+fn map_api_error_to_provider_error(error: ApiError) -> crate::contract::ProviderError {
+    match error {
+        ApiError::Transport(TransportError::Http { status, .. })
+            if status == http::StatusCode::UNAUTHORIZED => {
+            crate::contract::ProviderError::Unauthorized
+        }
+        ApiError::InvalidRequest { message } => {
+            crate::contract::ProviderError::InvalidRequest(message)
+        }
+        ApiError::RateLimitExceeded { delay, .. } => {
+            crate::contract::ProviderError::RateLimited {
+                retry_after_seconds: delay.map(|delay| delay.as_secs()),
+            }
+        }
+        ApiError::Retryable { message, .. } => {
+            crate::contract::ProviderError::Transient(message_or_default(message))
+        }
+        ApiError::ServerOverloaded => {
+            crate::contract::ProviderError::Transient("server overloaded".to_string())
+        }
+        other => crate::contract::ProviderError::Provider(other.to_string()),
+    }
+}
+
+fn message_or_default(message: String) -> String {
+    if message.is_empty() {
+        "provider request failed".to_string()
+    } else {
+        message
+    }
+}
+
 /// Runtime provider abstraction used by model execution.
 ///
 /// Implementations own provider-specific behavior for a model backend. The
@@ -169,11 +202,11 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         }
     }
 
-    /// Streams a provider-owned chat request through the provider-neutral contract.
+    /// Streams a provider-owned request through the provider-neutral contract.
     ///
-    /// This first migration slice covers the existing Chat Completions transport. Responses
-    /// transport remains in `core::ModelClient` until its websocket/HTTP session state can move
-    /// behind the same operation without losing turn-scoped retry and continuation behavior.
+    /// The contract currently carries the normalized Chat Completions input and the serialized
+    /// Responses payload. Request construction and HTTP transport are owned here; the remaining
+    /// core-owned boundaries are Responses authentication recovery/continuation and WebSocket.
     fn chat(
         &self,
         request: crate::contract::ChatRequest,
@@ -182,9 +215,6 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
     > {
         Box::pin(async move {
-            let ProviderApi::Chat(chat_api) = self.api() else {
-                return Err(crate::contract::ProviderError::Unsupported);
-            };
             let api_provider = self
                 .api_provider()
                 .await
@@ -193,39 +223,90 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 .api_auth()
                 .await
                 .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
-            let client = create_client_for_route(
-                &request.http_client_factory,
-                &api_provider.url_for_path("/chat/completions"),
-                ClientRouteClass::Api,
-                ClientRedirectPolicy::Default,
-            )
-            .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
-            let transport = genex_api::ReqwestTransport::from_http_client(client);
-            let chat_request = chat_api
-                .build_request(ChatRequestInput {
-                    provider: &api_provider,
-                    model: &request.model,
-                    instructions: request.instructions.as_deref().unwrap_or_default(),
-                    input: &request.input,
-                    tools: &request.tools,
-                    conversation_id: request.conversation_id,
-                    session_source: request.session_source,
-                })
-                .map_err(|error| crate::contract::ProviderError::InvalidRequest(error.to_string()))?;
-            let stream = ChatClient::with_api(
-                transport,
-                api_provider,
-                api_auth,
-                chat_api,
-            )
-            .stream_request(chat_request)
-            .await
-            .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
-            Ok(Box::pin(stream.map(|event| {
-                event
-                    .map(crate::contract::ProviderChatEvent::from)
-                    .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-            })) as crate::contract::ProviderChatStream)
+            match self.api() {
+                ProviderApi::Chat(chat_api) => {
+                    let client = create_client_for_route(
+                        &request.transport.http_client_factory,
+                        &api_provider.url_for_path("/chat/completions"),
+                        ClientRouteClass::Api,
+                        ClientRedirectPolicy::Default,
+                    )
+                    .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
+                    let transport = genex_api::ReqwestTransport::from_http_client(client);
+                    let chat_request = chat_api
+                        .build_request(ChatRequestInput {
+                            provider: &api_provider,
+                            model: &request.model,
+                            instructions: request.instructions.as_deref().unwrap_or_default(),
+                            input: &request.input,
+                            tools: &request.tools,
+                            conversation_id: request.conversation_id,
+                            session_source: request.session_source,
+                        })
+                        .map_err(|error| crate::contract::ProviderError::InvalidRequest(error.to_string()))?;
+                    let stream = ChatClient::with_api(
+                        transport,
+                        api_provider,
+                        api_auth,
+                        chat_api,
+                    )
+                    .stream_request(chat_request)
+                    .await
+                    .map_err(map_api_error_to_provider_error)?;
+                    Ok(Box::pin(stream.map(|event| {
+                        event
+                            .map(crate::contract::ProviderChatEvent::from)
+                            .map_err(map_api_error_to_provider_error)
+                    })) as crate::contract::ProviderChatStream)
+                }
+                ProviderApi::Responses => {
+                    let payload = request.payload.ok_or_else(|| {
+                        crate::contract::ProviderError::InvalidRequest(
+                            "Responses provider chat request is missing payload".to_string(),
+                        )
+                    })?;
+                    let client = create_client_for_route(
+                        &request.transport.http_client_factory,
+                        &api_provider.url_for_path("/responses"),
+                        ClientRouteClass::Api,
+                        ClientRedirectPolicy::Default,
+                    )
+                    .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
+                    let transport = genex_api::ReqwestTransport::from_http_client(client);
+                    let compression = match request.transport.compression {
+                        crate::contract::ProviderRequestCompression::None => {
+                            genex_api::Compression::None
+                        }
+                        crate::contract::ProviderRequestCompression::Zstd => {
+                            genex_api::Compression::Zstd
+                        }
+                    };
+                    let mut headers = request.transport.extra_headers;
+                    headers.extend(genex_api::build_session_headers(
+                        request.transport.session_id,
+                        request.transport.thread_id.clone(),
+                    ));
+                    if let Some(thread_id) = request.transport.thread_id {
+                        if let Ok(value) = http::HeaderValue::from_str(&thread_id) {
+                            headers.insert(http::header::HeaderName::from_static("x-client-request-id"), value);
+                        }
+                    }
+                    let stream = ResponsesClient::new(transport, api_provider, api_auth)
+                        .stream(
+                            payload,
+                            headers,
+                            compression,
+                            request.transport.turn_state,
+                        )
+                        .await
+                        .map_err(map_api_error_to_provider_error)?;
+                    Ok(Box::pin(stream.map(|event| {
+                        event
+                            .map(crate::contract::ProviderChatEvent::from)
+                            .map_err(map_api_error_to_provider_error)
+                    })) as crate::contract::ProviderChatStream)
+                }
+            }
         })
     }
 

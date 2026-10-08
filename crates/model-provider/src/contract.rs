@@ -9,9 +9,11 @@ use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
+use std::sync::OnceLock;
 
 use futures::Stream;
 use genex_http_client::HttpClientFactory;
+use http::HeaderMap;
 use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
@@ -212,7 +214,28 @@ pub struct ChatRequest {
     pub metadata: BTreeMap<String, Value>,
     pub conversation_id: Option<String>,
     pub session_source: Option<SessionSource>,
+    pub payload: Option<Value>,
+    pub transport: ChatTransportOptions,
+}
+
+/// Host-owned transport context passed to a provider operation.
+///
+/// The provider chooses the endpoint and wire protocol; the host supplies outbound networking
+/// policy and request-scoped routing state without exposing its client implementation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChatTransportOptions {
     pub http_client_factory: HttpClientFactory,
+    pub session_id: Option<String>,
+    pub thread_id: Option<String>,
+    pub extra_headers: HeaderMap,
+    pub compression: ProviderRequestCompression,
+    pub turn_state: Option<Arc<OnceLock<String>>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProviderRequestCompression {
+    None,
+    Zstd,
 }
 
 /// Provider-neutral streamed chat events.

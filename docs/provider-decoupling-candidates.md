@@ -26,17 +26,18 @@ CLI の logout/delete も同じ producer/consumer 監査を行い、設定済み
 AppServer の provider-neutral contract は `MessageProcessor` の生成境界で一度だけ作成し、同じ
 `SharedModelProvider` を `ThreadManager` と History/Notes・Web Search 拡張へ注入する形へ移行した。
 これにより capability・auth・account の参照は AppServer 内で同じ契約インスタンスを共有する。モデル実行、
-モデルカタログの HTTP fetch、モデル実行、拡張バックエンドの transport は、まだ内部 `ProviderRuntime` の移行対象として残す。
+拡張バックエンドの transport は、まだ内部 `ProviderRuntime` の移行対象として残す。
 モデルカタログの cache identity と capability 判定は同じ契約ハンドルを共有する。
 モデル列挙の呼び出し自体は `ModelProvider::list_models` へ移し、既存の HTTP fetch は runtime adapter 内で
 provider-neutral な catalog/identity/ETag snapshot へ変換する。
 Chat Completions の実行も `ModelProvider::chat` 経由へ移し、request construction と SSE stream の生成を
-runtime adapter に閉じ込めた。Responses の HTTP/WebSocket、auth recovery、turn continuation state は
-引き続き次の実行移行対象である。
+runtime adapter に閉じ込めた。Responses HTTP も同じ契約経由で `ResponsesClient` を呼び出す形へ移し、
+core は移行途中の payload/header 組み立てだけを担う。Responses WebSocket、auth recovery、turn continuation
+state は引き続き次の実行移行対象である。
 
 さらに `SessionConfiguration` から `TurnContext` まで同じ contract handle を引き継ぎ、compaction、
 hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
-Responses wire 判定、websocket/SSE、auth recovery、request/response event mapping は、依然として
+Responses wire 判定、WebSocket、auth recovery、request/response event mapping は、依然として
 provider-specific runtime transport を必要とするため、この変更では保持した。
 `ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。旧 constructor は
 テスト等の移行途中の caller 向けに adapter を作る互換境界として残し、AppServer の production session は
@@ -644,5 +645,6 @@ the old adapter contract.
 | Area | Producer/consumer audit | Decision | Verification |
 |---|---|---|---|
 | Public `ModelProvider` trait and shared handle | `genex-model-provider` produces the configured and Cloudflare runtime implementations; core Chat/session, models-manager, app-server account/capability handlers, CLI auth, Web Search, and History/Notes consume the shared handle. Account/config handlers, CLI auth, extension capability gates, and model-catalog metadata and list operation now consume the provider-neutral adapter; core execution, extension backend calls, and provider-owned catalog HTTP implementation remain behind the runtime adapter. | `migrate-in-place`: split a provider-neutral public contract from the internal runtime adapter; retain the adapter only until execution, catalog transport, and extension backend consumers use neutral types | Cross-crate trait/method audit; provider adapter lifecycle/catalog capability tests; focused and full `just check --tests`; `just check` |
-| Chat Completions execution operation | Core `ModelClient` previously built the Chat Completions request and SSE client directly from `ProviderRuntime`. The active Chat wire path now sends a provider-neutral `ChatRequest` through the shared `ModelProvider` handle; the runtime adapter owns provider auth resolution, request construction, and stream creation. Responses HTTP/WebSocket execution and its auth-recovery/continuation state remain separate active consumers. | `migrate-in-place`: route Chat Completions through `ModelProvider::chat`; retain Responses transport and its session-specific behavior until the next execution slice | Core/model-provider chat producer-consumer audit; focused `just check --tests`; `just check` |
+| Chat Completions execution operation | Core `ModelClient` previously built the Chat Completions request and SSE client directly from `ProviderRuntime`. The active Chat wire path now sends a provider-neutral `ChatRequest` through the shared `ModelProvider` handle; the runtime adapter owns provider auth resolution, request construction, and stream creation. | `migrate-in-place`: route Chat Completions through `ModelProvider::chat` | Core/model-provider chat producer-consumer audit; focused `just check --tests`; `just check` |
+| Responses HTTP execution operation | Core `ModelClient` still normalizes the active Responses payload and request headers, but the request now flows through `ModelProvider::chat`; the runtime adapter owns route selection, `ResponsesClient`, session/thread headers, compression, and SSE stream creation. WebSocket execution, auth recovery, and continuation state remain separate active consumers. | `migrate-in-place`: route Responses HTTP through `ModelProvider::chat`; retain WebSocket and turn-session behavior until the next execution slice | Core/model-provider Responses producer-consumer audit; focused `just check --tests`; `just check` |
 | Build-time default data-root name | `genex-utils-home-dir::find_genex_home` produces the fallback `~/.genex` path used by core, CLI, app-server, executor, and MCP startup paths; `GENEX_HOME` is the existing runtime override. The fallback directory name is repository-owned and is not an external protocol or persisted field. | `migrate-in-place`: make the fallback directory name configurable through `GENEX_DEFAULT_HOME_DIR_NAME` at build time; retain runtime `GENEX_HOME` precedence and `.genex` as the default value | Home-directory producer/consumer audit; focused `just check --tests`; `just check` |
