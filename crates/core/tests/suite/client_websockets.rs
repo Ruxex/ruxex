@@ -14,6 +14,7 @@ use genex_features::Feature;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
+use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::WireApi;
 use genex_otel::MetricsClient;
@@ -2785,10 +2786,9 @@ async fn websocket_harness_with_provider_options_and_auth(
     .with_metrics(metrics);
     let effort = None;
     let summary = ReasoningSummary::Auto;
-    let client = ModelClient::new(
-        client_credential_manager,
+    let client = ModelClient::new_with_provider(
+        create_model_provider(provider.clone(), client_credential_manager),
         thread_id,
-        provider.clone(),
         SessionSource::Exec,
         "test_originator".to_string(),
         config.model_verbosity,

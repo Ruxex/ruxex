@@ -51,6 +51,7 @@
 - The provider status endpoint is singular: `modelProvider/list` and its array response were replaced with `modelProvider/read`, which returns the mounted provider and its authentication fields directly.
 - Runtime `core::Config` no longer stores the merged provider registry; the map remains transient during config construction while execution receives only the resolved mounted provider and ID.
 - Session `ModelClient` instances now receive the `ThreadManager`'s shared Provider handle instead of recreating a provider from thread/client configuration.
+- Provider-constructing `ModelClient` constructors were removed; callers must inject the runtime's shared Provider handle.
 
 ### Task 1: Add the provider descriptor contract
 

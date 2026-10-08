@@ -126,11 +126,8 @@ use genex_model_provider::ProviderAuthScope;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ResponsesConnectionKey;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::create_model_provider;
-use genex_model_provider::create_model_provider_for_id;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
-use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use genex_response_debug_context::extract_response_debug_context;
@@ -407,85 +404,6 @@ enum WebsocketStreamOutcome {
 }
 
 impl ModelClient {
-    #[allow(clippy::too_many_arguments)]
-    /// Creates a new session-scoped `ModelClient`.
-    ///
-    /// All arguments are expected to be stable for the lifetime of a Genex session. Per-turn values
-    /// are passed to [`ModelClientSession::stream`] (and other turn-scoped methods) explicitly. The
-    /// HTTP client factory must come from the effective session configuration so every transport
-    /// observes the resolved outbound proxy policy.
-    pub fn new(
-        credential_manager: Option<Arc<CredentialManager>>,
-        thread_id: ThreadId,
-        provider_info: ModelProviderInfo,
-        session_source: SessionSource,
-        originator: String,
-        model_verbosity: Option<VerbosityConfig>,
-        content_item_kinds_enabled: bool,
-        enable_request_compression: bool,
-        include_timing_metrics: bool,
-        beta_features_header: Option<String>,
-        concurrent_reasoning_summaries_enabled: bool,
-        attestation_provider: Option<Arc<dyn AttestationProvider>>,
-        http_client_factory: HttpClientFactory,
-    ) -> Self {
-        Self::new_with_provider(
-            create_model_provider(provider_info, credential_manager),
-            thread_id,
-            session_source,
-            originator,
-            model_verbosity,
-            content_item_kinds_enabled,
-            enable_request_compression,
-            include_timing_metrics,
-            beta_features_header,
-            concurrent_reasoning_summaries_enabled,
-            attestation_provider,
-            http_client_factory,
-        )
-    }
-
-    /// Creates a session-scoped model client with provider-scoped credentials.
-    pub fn new_with_provider_id(
-        provider_id: Option<String>,
-        credential_manager: Option<Arc<CredentialManager>>,
-        thread_id: ThreadId,
-        provider_info: ModelProviderInfo,
-        session_source: SessionSource,
-        originator: String,
-        model_verbosity: Option<VerbosityConfig>,
-        content_item_kinds_enabled: bool,
-        enable_request_compression: bool,
-        include_timing_metrics: bool,
-        beta_features_header: Option<String>,
-        concurrent_reasoning_summaries_enabled: bool,
-        attestation_provider: Option<Arc<dyn AttestationProvider>>,
-        http_client_factory: HttpClientFactory,
-    ) -> Self {
-        let model_provider = match provider_id {
-            Some(provider_id) => create_model_provider_for_id(
-                provider_id,
-                provider_info,
-                credential_manager,
-            ),
-            None => create_model_provider(provider_info, credential_manager),
-        };
-        Self::new_with_provider(
-            model_provider,
-            thread_id,
-            session_source,
-            originator,
-            model_verbosity,
-            content_item_kinds_enabled,
-            enable_request_compression,
-            include_timing_metrics,
-            beta_features_header,
-            concurrent_reasoning_summaries_enabled,
-            attestation_provider,
-            http_client_factory,
-        )
-    }
-
     /// Creates a session-scoped model client from the runtime's shared provider.
     ///
     /// A runtime owns one provider instance. Sessions must retain that instance
