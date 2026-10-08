@@ -10,6 +10,9 @@ use genex_core::config::Config;
 use genex_core::config::UnsupportedUntrustedApprovalPolicyError;
 use genex_core::resolve_installation_id;
 use genex_login::CredentialManager;
+use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use genex_model_provider::ProviderDescriptor;
+use genex_model_provider::mount_provider_home;
 #[cfg(debug_assertions)]
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_cli::CliConfigOverrides;
@@ -516,7 +519,7 @@ pub async fn run_main_with_transport_options(
     };
     let mut config_warnings = Vec::new();
     let mut plugin_startup_config = PluginStartupConfig::Current;
-    let mut config = match config_manager
+    let config = match config_manager
         .load_latest_config(/*fallback_cwd*/ None)
         .await
     {
@@ -541,19 +544,20 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
+    let provider_descriptor = ProviderDescriptor::new(
+        config.model_provider_id.clone(),
+        CURRENT_PROVIDER_PROTOCOL_VERSION,
+    );
+    mount_provider_home(&config.genex_home, &provider_descriptor).map_err(|err| {
+        std::io::Error::new(
+            ErrorKind::InvalidData,
+            format!("failed to mount provider data root: {err}"),
+        )
+    })?;
     let credential_manager =
         CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
             .await
             .map_err(std::io::Error::other)?;
-    if credential_manager.has_persisted_provider_selection()
-        && let Some(provider_id) = credential_manager.active_provider_id()
-        && config.model_providers.contains_key(&provider_id)
-    {
-        config = config
-            .switch_model_provider(&credential_manager, &provider_id)
-            .await?;
-        config_manager.set_active_model_provider_id(Some(provider_id));
-    }
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),

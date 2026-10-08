@@ -180,40 +180,35 @@ impl ConfigRequestProcessor {
         &self,
     ) -> Result<ModelProviderListResponse, JSONRPCErrorError> {
         let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let active_provider_id = Some(config.model_provider_id.clone());
         let credential_manager = self.thread_manager.credential_manager();
-        let mut providers = Vec::with_capacity(config.model_providers.len());
-        for (id, provider) in config.model_providers {
-            let provider_runtime = create_model_provider_for_id(
-                id.clone(),
-                provider.clone(),
-                Some(Arc::clone(&credential_manager)),
-            );
-            let auth_status = provider_runtime
-                .account_state()
-                .map_err(|err| invalid_request(err.to_string()))?
-                .auth_status;
-
-            providers.push(ModelProviderListEntry {
-                active: active_provider_id.as_deref() == Some(id.as_str()),
-                auth_status,
-                auth_fields: provider_runtime
-                    .auth_fields()
-                    .into_iter()
-                    .map(|field| ModelProviderAuthField {
-                        id: field.id,
-                        label: field.label,
-                        secret: field.secret,
-                    })
-                    .collect(),
-                id,
-                name: provider.name,
-            });
-        }
-        providers.sort_by(|left, right| left.id.cmp(&right.id));
+        let id = config.model_provider_id.clone();
+        let provider_runtime = create_model_provider_for_id(
+            id.clone(),
+            config.model_provider.clone(),
+            Some(Arc::clone(&credential_manager)),
+        );
+        let auth_status = provider_runtime
+            .account_state()
+            .map_err(|err| invalid_request(err.to_string()))?
+            .auth_status;
+        let providers = vec![ModelProviderListEntry {
+            active: true,
+            auth_status,
+            auth_fields: provider_runtime
+                .auth_fields()
+                .into_iter()
+                .map(|field| ModelProviderAuthField {
+                    id: field.id,
+                    label: field.label,
+                    secret: field.secret,
+                })
+                .collect(),
+            id,
+            name: config.model_provider.name,
+        }];
 
         Ok(ModelProviderListResponse {
-            active_provider_id,
+            active_provider_id: Some(config.model_provider_id),
             providers,
         })
     }

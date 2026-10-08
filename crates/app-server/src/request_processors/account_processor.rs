@@ -81,16 +81,21 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
         params: AccountDeleteParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
+        if params.provider_id != self.config.model_provider_id {
+            let result: std::result::Result<AccountDeleteResponse, JSONRPCErrorError> = Err(
+                invalid_request(format!(
+                    "model provider switching is not supported by this runtime; configured provider is `{}`",
+                    self.config.model_provider_id
+                )),
+            );
+            self.outgoing.send_result(request_id, result).await;
+            return Ok(None);
+        }
         let result = self
             .credential_manager
             .delete(&params.provider_id)
             .await
-            .map(|deleted| {
-                if self.credential_manager.active_provider_id().is_none() {
-                    self.config_manager.set_active_model_provider_id(None);
-                }
-                AccountDeleteResponse { deleted }
-            })
+            .map(|deleted| AccountDeleteResponse { deleted })
             .map_err(|err| internal_error(format!("failed to delete provider credentials: {err}")));
         self.outgoing.send_result(request_id, result).await;
         Ok(None)
@@ -263,9 +268,10 @@ impl AccountRequestProcessor {
         let provider_id = provider_id
             .as_deref()
             .unwrap_or(self.config.model_provider_id.as_str());
-        if !self.config.model_providers.contains_key(provider_id) {
+        if provider_id != self.config.model_provider_id.as_str() {
             return Err(invalid_request(format!(
-                "model provider `{provider_id}` is not configured"
+                "model provider switching is not supported by this runtime; configured provider is `{}`",
+                self.config.model_provider_id
             )));
         }
         self.credential_manager
@@ -292,8 +298,6 @@ impl AccountRequestProcessor {
         self.outgoing.send_result(request_id, result).await;
 
         if logged_in {
-            self.config_manager
-                .set_active_model_provider_id(self.credential_manager.active_provider_id());
             self.send_login_success_notifications(/*login_id*/ None)
                 .await;
         }
@@ -301,25 +305,11 @@ impl AccountRequestProcessor {
 
     async fn switch_account_common(
         &self,
-        provider_id: &str,
+        _provider_id: &str,
     ) -> Result<AccountSwitchResponse, JSONRPCErrorError> {
-        if !self.config.model_providers.contains_key(provider_id) {
-            return Err(invalid_request(format!(
-                "model provider `{provider_id}` is not configured"
-            )));
-        }
-        let config = self
-            .config_manager
-            .load_latest_config(/*fallback_cwd*/ None)
-            .await
-            .map_err(|err| internal_error(format!("failed to load model providers: {err}")))?;
-        config
-            .switch_model_provider(&self.credential_manager, provider_id)
-            .await
-            .map_err(|err| invalid_request(format!("cannot switch model provider: {err}")))?;
-        self.config_manager
-            .set_active_model_provider_id(Some(provider_id.to_string()));
-        Ok(AccountSwitchResponse {})
+        Err(invalid_request(
+            "model provider switching is not supported by this runtime; start another AppServer instance with the desired provider",
+        ))
     }
 
     async fn cancel_login_response(
@@ -396,8 +386,6 @@ impl AccountRequestProcessor {
                 return Err(internal_error(format!("logout failed: {err}")));
             }
         }
-        self.config_manager.set_active_model_provider_id(None);
-
         Self::maybe_refresh_plugin_caches_for_current_config(
             &self.config_manager,
             &self.thread_manager,

@@ -102,6 +102,10 @@ use genex_app_server_protocol::TurnStartParams;
 use genex_app_server_protocol::TurnStartResponse;
 use genex_app_server_protocol::TurnSteerParams;
 use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use genex_model_provider::PROVIDER_HOME_MARKER_FILE;
+use genex_model_provider::ProviderDescriptor;
+use genex_model_provider::ProviderHomeMarker;
 use serde::de::DeserializeOwned;
 use tempfile::TempDir;
 use tokio::process::Command;
@@ -1619,6 +1623,7 @@ impl TestAppServerBuilder {
                 )
             }
         };
+        initialize_test_provider_home(&genex_home)?;
         let attribution_settings_server = if genex_home.join("auth.json").is_file() {
             let config_path = genex_home.join("config.toml");
             let config = std::fs::read_to_string(&config_path)?;
@@ -1707,6 +1712,34 @@ impl TestAppServerBuilder {
         app_server._attribution_settings_server = attribution_settings_server;
         Ok(app_server)
     }
+}
+
+fn initialize_test_provider_home(genex_home: &Path) -> anyhow::Result<()> {
+    let marker_path = genex_home.join(PROVIDER_HOME_MARKER_FILE);
+    if marker_path.exists() {
+        return Ok(());
+    }
+
+    let provider_id = std::fs::read_to_string(genex_home.join("config.toml"))
+        .ok()
+        .and_then(|config| {
+            config.lines().find_map(|line| {
+                let (key, value) = line.split_once('=')?;
+                (key.trim() == "model_provider").then(|| {
+                    value
+                        .trim()
+                        .trim_matches('"')
+                        .trim_matches('\'')
+                        .to_string()
+                })
+            })
+        })
+        .filter(|provider_id| !provider_id.is_empty())
+        .unwrap_or_else(|| "cloudflare".to_string());
+    let descriptor = ProviderDescriptor::new(provider_id, CURRENT_PROVIDER_PROTOCOL_VERSION);
+    let marker = ProviderHomeMarker::from(&descriptor);
+    std::fs::write(marker_path, serde_json::to_vec_pretty(&marker)?)?;
+    Ok(())
 }
 
 impl Drop for TestAppServer {

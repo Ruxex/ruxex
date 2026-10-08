@@ -26,6 +26,14 @@
 - A mismatched data-root marker must be rejected before state or credentials are opened: mount tests in Task 4.
 - Existing threads and rollouts must remain resumable while their provider-routing fields are being migrated: persistence tests in Task 6.
 
+## Implementation Progress
+
+- The provider descriptor, common capability flags, and provider-home marker contract are implemented.
+- AppServer no longer applies a persisted active-provider selection to reloaded configuration.
+- AppServer now mounts and validates the configured provider home before credentials and SQLite state are initialized.
+- AppServer account/model-provider APIs currently retain their protocol shapes, but expose only the configured provider; provider switching requests are rejected with guidance to start another AppServer instance.
+- Remaining work is to inject one shared provider instance through runtime construction, then migrate credentials, persistence, and host surfaces.
+
 ### Task 1: Add the provider descriptor contract
 
 **Files:**
