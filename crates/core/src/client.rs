@@ -657,7 +657,8 @@ impl ModelClient {
         responses_metadata: &GenexResponsesMetadata,
     ) -> Result<ResponsesApiRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
-        let is_responses_provider = self.state.provider.info().is_responses_provider();
+        let is_responses_provider =
+            matches!(self.state.provider_contract.wire_api(), ProviderWireApi::Responses);
         let (instructions, tools) = if model_info.use_responses_lite {
             // These prompt-only items are rebuilt on every request. Hash their visible payloads
             // within the thread so retries and resumed sessions preserve their identity.
@@ -1218,7 +1219,10 @@ impl ModelClientSession {
     fn responses_request_compression(&self, auth: Option<&GenexAuth>) -> Compression {
         if self.client.state.enable_request_compression
             && auth.is_some_and(GenexAuth::uses_managed_auth)
-            && self.client.state.provider.info().is_responses_provider()
+            && matches!(
+                self.client.state.provider_contract.wire_api(),
+                ProviderWireApi::Responses
+            )
         {
             Compression::Zstd
         } else {
