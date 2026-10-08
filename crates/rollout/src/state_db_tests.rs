@@ -79,7 +79,6 @@ async fn list_threads_db_rejects_mismatched_sqlite_config_without_cleanup() -> a
         ThreadSortKey::CreatedAt,
         SortDirection::Desc,
         &[],
-        /*model_providers*/ None,
         /*cwd_filters*/ None,
         /*relation_filter*/ None,
         /*archived*/ false,

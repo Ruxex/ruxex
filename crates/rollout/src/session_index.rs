@@ -163,7 +163,6 @@ pub async fn find_thread_meta_by_name_str(
         name,
         state_db_ctx,
         /*allowed_sources*/ &[],
-        /*allowed_model_providers*/ &[],
     )
     .await?
     .into_iter()
@@ -172,15 +171,13 @@ pub async fn find_thread_meta_by_name_str(
 
 /// Locate readable rollouts for a recorded thread name, newest modification time first.
 ///
-/// Empty filter slices disable their respective filters. Provider filtering only rejects explicit
-/// mismatches because older rollouts omitted provider metadata. Filtering happens before ranking,
-/// so an ineligible newer duplicate cannot hide an older usable session.
+/// Empty source filters disable source filtering. Filtering happens before ranking, so an
+/// ineligible newer duplicate cannot hide an older usable session.
 pub async fn find_thread_meta_candidates_by_name_str(
     genex_home: &Path,
     name: &str,
     state_db_ctx: Option<&genex_state::StateRuntime>,
     allowed_sources: &[SessionSource],
-    allowed_model_providers: &[String],
 ) -> std::io::Result<Vec<(PathBuf, SessionMetaLine)>> {
     if name.trim().is_empty() {
         return Ok(Vec::new());
@@ -208,13 +205,6 @@ pub async fn find_thread_meta_candidates_by_name_str(
         .await?
             && let Ok(session_meta) = super::list::read_session_meta_line(&path).await
             && (allowed_sources.is_empty() || allowed_sources.contains(&session_meta.meta.source))
-            && session_meta
-                .meta
-                .model_provider
-                .as_ref()
-                .is_none_or(|provider| {
-                    allowed_model_providers.is_empty() || allowed_model_providers.contains(provider)
-                })
         {
             let modified = tokio::fs::metadata(&path)
                 .await

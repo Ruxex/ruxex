@@ -81,13 +81,6 @@ fn rollout_line_decoder_preserves_canonical_json_compatibility() -> Result<()> {
     Ok(())
 }
 
-fn provider_vec(providers: &[&str]) -> Vec<String> {
-    providers
-        .iter()
-        .map(std::string::ToString::to_string)
-        .collect()
-}
-
 fn thread_id_from_uuid(uuid: Uuid) -> ThreadId {
     ThreadId::from_string(&uuid.to_string()).expect("valid thread id")
 }
@@ -687,16 +680,13 @@ async fn test_list_conversations_latest_first() {
     )
     .unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 10,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -867,16 +857,13 @@ async fn test_pagination_cursor() {
     )
     .unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page1 = get_threads(
         home,
         /*page_size*/ 2,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -962,9 +949,7 @@ async fn test_pagination_cursor() {
         page1.next_cursor.as_ref(),
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1050,9 +1035,7 @@ async fn test_pagination_cursor() {
         page2.next_cursor.as_ref(),
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1108,16 +1091,13 @@ async fn test_list_threads_scans_past_head_for_user_event() {
     write_session_file_with_delayed_user_event(home, ts, uuid, /*meta_lines_before_user*/ 12)
         .unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 10,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1142,16 +1122,13 @@ async fn test_list_threads_uses_goal_objective_as_preview() {
     )
     .unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 10,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1179,16 +1156,13 @@ async fn test_get_thread_contents() {
     )
     .unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 1,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1281,16 +1255,13 @@ async fn test_base_instructions_missing_in_meta_defaults_to_null() {
     });
     write_session_file_with_meta_payload(home, ts, uuid, payload).unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 1,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1325,16 +1296,13 @@ async fn test_base_instructions_present_in_meta_is_preserved() {
     });
     write_session_file_with_meta_payload(home, ts, uuid, payload).unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 1,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1417,16 +1385,13 @@ async fn test_created_at_sort_uses_file_mtime_for_updated_at() -> Result<()> {
     let times = FileTimes::new().set_modified(updated.into());
     file.set_times(times)?;
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 1,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await?;
 
@@ -1518,16 +1483,13 @@ async fn test_updated_at_uses_file_mtime() -> Result<()> {
     }
     drop(file);
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page = get_threads(
         home,
         /*page_size*/ 1,
         /*cursor*/ None,
         ThreadSortKey::UpdatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await?;
     let item = page.items.first().expect("conversation item");
@@ -1580,16 +1542,13 @@ async fn test_timestamp_only_cursor_skips_same_second_filesystem_ties() {
     )
     .unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let page1 = get_threads(
         home,
         /*page_size*/ 2,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1676,9 +1635,7 @@ async fn test_timestamp_only_cursor_skips_same_second_filesystem_ties() {
         page1.next_cursor.as_ref(),
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1718,16 +1675,13 @@ async fn test_source_filter_excludes_non_matching_sessions() {
     )
     .unwrap();
 
-    let provider_filter = provider_vec(&[TEST_PROVIDER]);
     let interactive_only = get_threads(
         home,
         /*page_size*/ 10,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         INTERACTIVE_SESSION_SOURCES.as_slice(),
-        Some(provider_filter.as_slice()),
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1748,9 +1702,7 @@ async fn test_source_filter_excludes_non_matching_sessions() {
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
         NO_SOURCE_FILTER,
-        /*model_providers*/ None,
         /*cwd_filters*/ None,
-        TEST_PROVIDER,
     )
     .await
     .unwrap();
@@ -1766,111 +1718,4 @@ async fn test_source_filter_excludes_non_matching_sessions() {
     assert!(all_paths.iter().any(|path| {
         path.ends_with("rollout-2025-08-01T10-00-00-00000000-0000-0000-0000-00000000004d.jsonl")
     }));
-}
-
-#[tokio::test]
-async fn test_model_provider_filter_selects_only_matching_sessions() -> Result<()> {
-    let temp = TempDir::new().unwrap();
-    let home = temp.path();
-
-    let provider_id = Uuid::from_u128(1);
-    let beta_id = Uuid::from_u128(2);
-    let none_id = Uuid::from_u128(3);
-
-    write_session_file_with_provider(
-        home,
-        "2025-09-01T12-00-00",
-        provider_id,
-        /*num_records*/ 1,
-        Some(SessionSource::VSCode),
-        Some("provider"),
-    )?;
-    write_session_file_with_provider(
-        home,
-        "2025-09-01T11-00-00",
-        beta_id,
-        /*num_records*/ 1,
-        Some(SessionSource::VSCode),
-        Some("beta"),
-    )?;
-    write_session_file_with_provider(
-        home,
-        "2025-09-01T10-00-00",
-        none_id,
-        /*num_records*/ 1,
-        Some(SessionSource::VSCode),
-        /*model_provider*/ None,
-    )?;
-
-    let provider_id_str = provider_id.to_string();
-    let none_id_str = none_id.to_string();
-    let provider_filter = provider_vec(&["provider"]);
-    let provider_sessions = get_threads(
-        home,
-        /*page_size*/ 10,
-        /*cursor*/ None,
-        ThreadSortKey::CreatedAt,
-        NO_SOURCE_FILTER,
-        Some(provider_filter.as_slice()),
-        /*cwd_filters*/ None,
-        "provider",
-    )
-    .await?;
-    assert_eq!(provider_sessions.items.len(), 2);
-    let provider_ids: Vec<_> = provider_sessions
-        .items
-        .iter()
-        .filter_map(|item| item.thread_id.as_ref().map(ToString::to_string))
-        .collect();
-    assert!(provider_ids.contains(&provider_id_str));
-    assert!(provider_ids.contains(&none_id_str));
-
-    let beta_filter = provider_vec(&["beta"]);
-    let beta_sessions = get_threads(
-        home,
-        /*page_size*/ 10,
-        /*cursor*/ None,
-        ThreadSortKey::CreatedAt,
-        NO_SOURCE_FILTER,
-        Some(beta_filter.as_slice()),
-        /*cwd_filters*/ None,
-        "provider",
-    )
-    .await?;
-    assert_eq!(beta_sessions.items.len(), 1);
-    let beta_id_str = beta_id.to_string();
-    let beta_head = beta_sessions
-        .items
-        .first()
-        .and_then(|item| item.thread_id.as_ref().map(ToString::to_string));
-    assert_eq!(beta_head.as_deref(), Some(beta_id_str.as_str()));
-
-    let unknown_filter = provider_vec(&["unknown"]);
-    let unknown_sessions = get_threads(
-        home,
-        /*page_size*/ 10,
-        /*cursor*/ None,
-        ThreadSortKey::CreatedAt,
-        NO_SOURCE_FILTER,
-        Some(unknown_filter.as_slice()),
-        /*cwd_filters*/ None,
-        "provider",
-    )
-    .await?;
-    assert!(unknown_sessions.items.is_empty());
-
-    let all_sessions = get_threads(
-        home,
-        /*page_size*/ 10,
-        /*cursor*/ None,
-        ThreadSortKey::CreatedAt,
-        NO_SOURCE_FILTER,
-        /*model_providers*/ None,
-        /*cwd_filters*/ None,
-        "provider",
-    )
-    .await?;
-    assert_eq!(all_sessions.items.len(), 3);
-
-    Ok(())
 }

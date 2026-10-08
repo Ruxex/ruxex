@@ -74,7 +74,7 @@ async fn list_threads(
     mcp: &mut TestAppServer,
     cursor: Option<String>,
     limit: Option<u32>,
-    providers: Option<Vec<String>>,
+    _providers: Option<Vec<String>>,
     source_kinds: Option<Vec<ThreadSourceKind>>,
     archived: Option<bool>,
 ) -> Result<ThreadListResponse> {
@@ -82,7 +82,7 @@ async fn list_threads(
         mcp,
         cursor,
         limit,
-        providers,
+        _providers,
         source_kinds,
         /*sort_key*/ None,
         archived,
@@ -94,7 +94,7 @@ async fn list_threads_with_sort(
     mcp: &mut TestAppServer,
     cursor: Option<String>,
     limit: Option<u32>,
-    providers: Option<Vec<String>>,
+    _providers: Option<Vec<String>>,
     source_kinds: Option<Vec<ThreadSourceKind>>,
     sort_key: Option<ThreadSortKey>,
     archived: Option<bool>,
@@ -107,7 +107,6 @@ async fn list_threads_with_sort(
             limit,
             sort_key,
             sort_direction: None,
-            model_providers: providers,
             source_kinds,
             archived,
             section_id: None,
@@ -132,7 +131,7 @@ async fn list_threads_for_relation(
     relation: ThreadListRelation,
     cursor: Option<String>,
     limit: u32,
-    model_providers: Option<Vec<String>>,
+    _model_providers: Option<Vec<String>>,
     source_kinds: Option<Vec<ThreadSourceKind>>,
 ) -> Result<ThreadListResponse> {
     let (parent_thread_id, ancestor_thread_id) = match relation {
@@ -147,7 +146,6 @@ async fn list_threads_for_relation(
             limit: Some(limit),
             sort_key: None,
             sort_direction: None,
-            model_providers,
             source_kinds,
             archived: None,
             section_id: None,
@@ -445,59 +443,6 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
 }
 
 #[tokio::test]
-async fn thread_list_respects_provider_filter() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_minimal_config(genex_home.path())?;
-
-    // Create rollouts under two providers.
-    let _a = create_fake_rollout(
-        genex_home.path(),
-        "2025-01-02T10-00-00",
-        "2025-01-02T10:00:00Z",
-        "X",
-        Some("mock_provider"),
-        /*git_info*/ None,
-    )?; // mock_provider
-    let _b = create_fake_rollout(
-        genex_home.path(),
-        "2025-01-02T11-00-00",
-        "2025-01-02T11:00:00Z",
-        "X",
-        Some("other_provider"),
-        /*git_info*/ None,
-    )?;
-
-    let mut mcp = init_mcp(genex_home.path()).await?;
-
-    // Filter to only other_provider; expect 1 item, nextCursor None.
-    let ThreadListResponse {
-        data, next_cursor, ..
-    } = list_threads(
-        &mut mcp,
-        /*cursor*/ None,
-        Some(10),
-        Some(vec!["other_provider".to_string()]),
-        /*source_kinds*/ None,
-        /*archived*/ None,
-    )
-    .await?;
-    assert_eq!(data.len(), 1);
-    assert_eq!(next_cursor, None);
-    let thread = &data[0];
-    assert_eq!(thread.preview, "X");
-    assert_eq!(thread.model_provider, "other_provider");
-    let expected_ts = chrono::DateTime::parse_from_rfc3339("2025-01-02T11:00:00Z")?.timestamp();
-    assert_eq!(thread.created_at, expected_ts);
-    assert_eq!(thread.updated_at, expected_ts);
-    assert_eq!(thread.cwd, test_absolute_path("/"));
-    assert_eq!(thread.cli_version, "0.0.0");
-    assert_eq!(thread.source, SessionSource::Cli);
-    assert_eq!(thread.git_info, None);
-
-    Ok(())
-}
-
-#[tokio::test]
 async fn thread_list_respects_cwd_filters() -> Result<()> {
     let genex_home = TempDir::new()?;
     create_minimal_config(genex_home.path())?;
@@ -553,7 +498,6 @@ async fn thread_list_respects_cwd_filters() -> Result<()> {
             limit: Some(10),
             sort_key: None,
             sort_direction: None,
-            model_providers: Some(vec!["mock_provider".to_string()]),
             source_kinds: None,
             archived: None,
             section_id: None,
@@ -650,7 +594,6 @@ sqlite = true
         genex_core::ThreadSortKey::CreatedAt,
         genex_core::SortDirection::Desc,
         &[],
-        /*model_providers*/ None,
         /*cwd_filters*/ None,
         "mock_provider",
         /*search_term*/ None,
@@ -666,7 +609,6 @@ sqlite = true
             limit: Some(10),
             sort_key: None,
             sort_direction: None,
-            model_providers: Some(vec!["mock_provider".to_string()]),
             source_kinds: None,
             archived: None,
             section_id: None,
@@ -954,7 +896,6 @@ sqlite = true
             limit: Some(10),
             sort_key: None,
             sort_direction: None,
-            model_providers: Some(vec!["mock_provider".to_string()]),
             source_kinds: None,
             archived: None,
             section_id: None,
@@ -991,7 +932,6 @@ sqlite = true
             limit: Some(10),
             sort_key: None,
             sort_direction: None,
-            model_providers: Some(vec!["mock_provider".to_string()]),
             source_kinds: None,
             archived: None,
             section_id: None,
@@ -1021,7 +961,6 @@ sqlite = true
             limit: Some(10),
             sort_key: None,
             sort_direction: None,
-            model_providers: Some(vec!["mock_provider".to_string()]),
             source_kinds: None,
             archived: None,
             section_id: None,
@@ -1113,7 +1052,6 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
         ThreadListRelation::DirectChildrenOf(parent_id),
         /*cursor*/ None,
         /*limit*/ 1,
-        /*model_providers*/ None,
         /*source_kinds*/ None,
     )
     .await?;
@@ -1122,7 +1060,6 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
         ThreadListRelation::DirectChildrenOf(parent_id),
         first_page.next_cursor.clone(),
         /*limit*/ 1,
-        /*model_providers*/ None,
         /*source_kinds*/ None,
     )
     .await?;
@@ -1157,7 +1094,6 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
         ThreadListRelation::DirectChildrenOf(parent_id),
         /*cursor*/ None,
         /*limit*/ 10,
-        /*model_providers*/ None,
         /*source_kinds*/ Some(Vec::new()),
     )
     .await?;
@@ -1175,7 +1111,6 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
         ThreadListRelation::DescendantsOf(parent_id),
         /*cursor*/ None,
         /*limit*/ 10,
-        /*model_providers*/ None,
         /*source_kinds*/ None,
     )
     .await?;
@@ -1207,7 +1142,6 @@ async fn thread_list_relation_filters_reject_invalid_requests() -> Result<()> {
             limit: Some(10),
             sort_key: None,
             sort_direction: None,
-            model_providers: None,
             source_kinds: None,
             archived: None,
             section_id: None,
@@ -1234,7 +1168,6 @@ async fn thread_list_relation_filters_reject_invalid_requests() -> Result<()> {
             limit: Some(10),
             sort_key: None,
             sort_direction: None,
-            model_providers: None,
             source_kinds: None,
             archived: None,
             section_id: None,
@@ -1521,7 +1454,6 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
                 limit: Some(10),
                 sort_key: None,
                 sort_direction: None,
-                model_providers: Some(vec!["mock_provider".to_string()]),
                 source_kinds: Some(vec![ThreadSourceKind::SubAgentThreadSpawn]),
                 archived: None,
                 section_id: None,
@@ -1732,70 +1664,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
 }
 
 #[tokio::test]
-async fn thread_list_fetches_until_limit_or_exhausted() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_minimal_config(genex_home.path())?;
-
-    // Newest 16 conversations belong to a different provider; the older 8 are the
-    // only ones that match the filter. We request 8 so the server must keep
-    // paging past the first two pages to reach the desired count.
-    create_fake_rollouts(
-        genex_home.path(),
-        /*count*/ 24,
-        |i| {
-            if i < 16 {
-                "skip_provider"
-            } else {
-                "target_provider"
-            }
-        },
-        |i| {
-            timestamp_at(
-                /*year*/ 2025,
-                /*month*/ 3,
-                30 - i as u32,
-                /*hour*/ 12,
-                /*minute*/ 0,
-                /*second*/ 0,
-            )
-        },
-        "Hello",
-    )?;
-
-    let mut mcp = init_mcp(genex_home.path()).await?;
-
-    // Request 8 threads for the target provider; the matches only start on the
-    // third page so we rely on pagination to reach the limit.
-    let ThreadListResponse {
-        data, next_cursor, ..
-    } = list_threads(
-        &mut mcp,
-        /*cursor*/ None,
-        Some(8),
-        Some(vec!["target_provider".to_string()]),
-        /*source_kinds*/ None,
-        /*archived*/ None,
-    )
-    .await?;
-    assert_eq!(
-        data.len(),
-        8,
-        "should keep paging until the requested count is filled"
-    );
-    assert!(
-        data.iter()
-            .all(|thread| thread.model_provider == "target_provider"),
-        "all returned threads must match the requested provider"
-    );
-    assert_eq!(
-        next_cursor, None,
-        "once the requested count is satisfied on the final page, nextCursor should be None"
-    );
-
-    Ok(())
-}
-
-#[tokio::test]
 async fn thread_list_enforces_max_limit() -> Result<()> {
     let genex_home = TempDir::new()?;
     create_minimal_config(genex_home.path())?;
@@ -1840,69 +1708,6 @@ async fn thread_list_enforces_max_limit() -> Result<()> {
     assert!(
         next_cursor.is_some(),
         "when more than the maximum exist, nextCursor should continue pagination"
-    );
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn thread_list_stops_when_not_enough_filtered_results_exist() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_minimal_config(genex_home.path())?;
-
-    // Only the last 7 conversations match the provider filter; we ask for 10 to
-    // ensure the server exhausts pagination without looping forever.
-    create_fake_rollouts(
-        genex_home.path(),
-        /*count*/ 22,
-        |i| {
-            if i < 15 {
-                "skip_provider"
-            } else {
-                "target_provider"
-            }
-        },
-        |i| {
-            timestamp_at(
-                /*year*/ 2025,
-                /*month*/ 4,
-                28 - i as u32,
-                /*hour*/ 8,
-                /*minute*/ 0,
-                /*second*/ 0,
-            )
-        },
-        "Hello",
-    )?;
-
-    let mut mcp = init_mcp(genex_home.path()).await?;
-
-    // Request more threads than exist after filtering; expect all matches to be
-    // returned with nextCursor None.
-    let ThreadListResponse {
-        data, next_cursor, ..
-    } = list_threads(
-        &mut mcp,
-        /*cursor*/ None,
-        Some(10),
-        Some(vec!["target_provider".to_string()]),
-        /*source_kinds*/ None,
-        /*archived*/ None,
-    )
-    .await?;
-    assert_eq!(
-        data.len(),
-        7,
-        "all available filtered threads should be returned"
-    );
-    assert!(
-        data.iter()
-            .all(|thread| thread.model_provider == "target_provider"),
-        "results should still respect the provider filter"
-    );
-    assert_eq!(
-        next_cursor, None,
-        "when results are exhausted before reaching the limit, nextCursor should be None"
     );
 
     Ok(())
@@ -2130,7 +1935,7 @@ async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
 }
 
 #[tokio::test]
-async fn thread_list_sort_recency_at_uses_state_db_order_with_provider_filter() -> Result<()> {
+async fn thread_list_sort_recency_at_uses_state_db_order() -> Result<()> {
     let genex_home = TempDir::new()?;
     create_minimal_config(genex_home.path())?;
 
@@ -2177,7 +1982,6 @@ async fn thread_list_sort_recency_at_uses_state_db_order_with_provider_filter() 
         genex_core::ThreadSortKey::CreatedAt,
         genex_core::SortDirection::Desc,
         genex_core::INTERACTIVE_SESSION_SOURCES.as_slice(),
-        /*model_providers*/ None,
         /*cwd_filters*/ None,
         "mock_provider",
         /*search_term*/ None,
@@ -2342,7 +2146,6 @@ async fn thread_list_backwards_cursor_can_seed_forward_delta_sync() -> Result<()
                 limit: Some(1),
                 sort_key: Some(ThreadSortKey::UpdatedAt),
                 sort_direction: Some(SortDirection::Desc),
-                model_providers: Some(vec!["mock_provider".to_string()]),
                 source_kinds: None,
                 archived: None,
                 section_id: None,
@@ -2384,7 +2187,6 @@ async fn thread_list_backwards_cursor_can_seed_forward_delta_sync() -> Result<()
                 limit: Some(10),
                 sort_key: Some(ThreadSortKey::UpdatedAt),
                 sort_direction: Some(SortDirection::Asc),
-                model_providers: Some(vec!["mock_provider".to_string()]),
                 source_kinds: None,
                 archived: None,
                 section_id: None,
@@ -2754,7 +2556,6 @@ async fn thread_list_invalid_cursor_returns_error() -> Result<()> {
             limit: Some(2),
             sort_key: None,
             sort_direction: None,
-            model_providers: Some(vec!["mock_provider".to_string()]),
             source_kinds: None,
             archived: None,
             section_id: None,

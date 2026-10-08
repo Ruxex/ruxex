@@ -149,9 +149,7 @@ pub enum ThreadListLayout {
 
 pub struct ThreadListConfig<'a> {
     pub allowed_sources: &'a [SessionSource],
-    pub model_providers: Option<&'a [String]>,
     pub cwd_filters: Option<&'a [PathBuf]>,
-    pub default_provider: &'a str,
     pub layout: ThreadListLayout,
 }
 
@@ -239,7 +237,6 @@ struct FilesByCreatedAtVisitor<'a> {
     anchor_state: AnchorState,
     more_matches_available: bool,
     allowed_sources: &'a [SessionSource],
-    provider_matcher: Option<&'a ProviderMatcher<'a>>,
     cwd_filters: Option<&'a [PathBuf]>,
 }
 
@@ -269,7 +266,6 @@ impl<'a> RolloutFileVisitor for FilesByCreatedAtVisitor<'a> {
         if let Some(item) = build_thread_item(
             path,
             self.allowed_sources,
-            self.provider_matcher,
             self.cwd_filters,
             updated_at,
         )
@@ -352,9 +348,7 @@ pub async fn get_threads(
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
-    model_providers: Option<&[String]>,
     cwd_filters: Option<&[PathBuf]>,
-    default_provider: &str,
 ) -> io::Result<ThreadsPage> {
     let root = genex_home.join(SESSIONS_SUBDIR);
     get_threads_in_root(
@@ -364,9 +358,7 @@ pub async fn get_threads(
         sort_key,
         ThreadListConfig {
             allowed_sources,
-            model_providers,
             cwd_filters,
-            default_provider,
             layout: ThreadListLayout::NestedByDate,
         },
     )
@@ -391,10 +383,6 @@ pub async fn get_threads_in_root(
 
     let anchor = cursor.cloned();
 
-    let provider_matcher = config
-        .model_providers
-        .and_then(|filters| ProviderMatcher::new(filters, config.default_provider));
-
     let result = match config.layout {
         ThreadListLayout::NestedByDate => {
             traverse_directories_for_paths(
@@ -403,7 +391,6 @@ pub async fn get_threads_in_root(
                 anchor,
                 sort_key,
                 config.allowed_sources,
-                provider_matcher.as_ref(),
                 config.cwd_filters,
             )
             .await?
@@ -415,7 +402,6 @@ pub async fn get_threads_in_root(
                 anchor,
                 sort_key,
                 config.allowed_sources,
-                provider_matcher.as_ref(),
                 config.cwd_filters,
             )
             .await?
@@ -434,7 +420,6 @@ async fn traverse_directories_for_paths(
     anchor: Option<Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
-    provider_matcher: Option<&ProviderMatcher<'_>>,
     cwd_filters: Option<&[PathBuf]>,
 ) -> io::Result<ThreadsPage> {
     match sort_key {
@@ -444,7 +429,6 @@ async fn traverse_directories_for_paths(
                 page_size,
                 anchor,
                 allowed_sources,
-                provider_matcher,
                 cwd_filters,
             )
             .await
@@ -455,7 +439,6 @@ async fn traverse_directories_for_paths(
                 page_size,
                 anchor,
                 allowed_sources,
-                provider_matcher,
                 cwd_filters,
             )
             .await
@@ -469,7 +452,6 @@ async fn traverse_flat_paths(
     anchor: Option<Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
-    provider_matcher: Option<&ProviderMatcher<'_>>,
     cwd_filters: Option<&[PathBuf]>,
 ) -> io::Result<ThreadsPage> {
     match sort_key {
@@ -479,7 +461,6 @@ async fn traverse_flat_paths(
                 page_size,
                 anchor,
                 allowed_sources,
-                provider_matcher,
                 cwd_filters,
             )
             .await
@@ -490,7 +471,6 @@ async fn traverse_flat_paths(
                 page_size,
                 anchor,
                 allowed_sources,
-                provider_matcher,
                 cwd_filters,
             )
             .await
@@ -509,7 +489,6 @@ async fn traverse_directories_for_paths_created(
     page_size: usize,
     anchor: Option<Cursor>,
     allowed_sources: &[SessionSource],
-    provider_matcher: Option<&ProviderMatcher<'_>>,
     cwd_filters: Option<&[PathBuf]>,
 ) -> io::Result<ThreadsPage> {
     let mut items: Vec<ThreadItem> = Vec::with_capacity(page_size);
@@ -521,7 +500,6 @@ async fn traverse_directories_for_paths_created(
         anchor_state: AnchorState::new(anchor),
         more_matches_available,
         allowed_sources,
-        provider_matcher,
         cwd_filters,
     };
     walk_rollout_files(&root, &mut scanned_files, &mut visitor).await?;
@@ -558,7 +536,6 @@ async fn traverse_directories_for_paths_updated(
     page_size: usize,
     anchor: Option<Cursor>,
     allowed_sources: &[SessionSource],
-    provider_matcher: Option<&ProviderMatcher<'_>>,
     cwd_filters: Option<&[PathBuf]>,
 ) -> io::Result<ThreadsPage> {
     let mut items: Vec<ThreadItem> = Vec::with_capacity(page_size);
@@ -586,7 +563,6 @@ async fn traverse_directories_for_paths_updated(
         if let Some(item) = build_thread_item(
             candidate.path,
             allowed_sources,
-            provider_matcher,
             cwd_filters,
             updated_at_fallback,
         )
@@ -619,7 +595,6 @@ async fn traverse_flat_paths_created(
     page_size: usize,
     anchor: Option<Cursor>,
     allowed_sources: &[SessionSource],
-    provider_matcher: Option<&ProviderMatcher<'_>>,
     cwd_filters: Option<&[PathBuf]>,
 ) -> io::Result<ThreadsPage> {
     let mut items: Vec<ThreadItem> = Vec::with_capacity(page_size);
@@ -643,7 +618,6 @@ async fn traverse_flat_paths_created(
         if let Some(item) = build_thread_item(
             path,
             allowed_sources,
-            provider_matcher,
             cwd_filters,
             updated_at,
         )
@@ -676,7 +650,6 @@ async fn traverse_flat_paths_updated(
     page_size: usize,
     anchor: Option<Cursor>,
     allowed_sources: &[SessionSource],
-    provider_matcher: Option<&ProviderMatcher<'_>>,
     cwd_filters: Option<&[PathBuf]>,
 ) -> io::Result<ThreadsPage> {
     let mut items: Vec<ThreadItem> = Vec::with_capacity(page_size);
@@ -704,7 +677,6 @@ async fn traverse_flat_paths_updated(
         if let Some(item) = build_thread_item(
             candidate.path,
             allowed_sources,
-            provider_matcher,
             cwd_filters,
             updated_at_fallback,
         )
@@ -779,7 +751,6 @@ fn build_next_cursor(items: &[ThreadItem], sort_key: ThreadSortKey) -> Option<Cu
 async fn build_thread_item(
     path: PathBuf,
     allowed_sources: &[SessionSource],
-    provider_matcher: Option<&ProviderMatcher<'_>>,
     cwd_filters: Option<&[PathBuf]>,
     updated_at: Option<String>,
 ) -> Option<ThreadItem> {
@@ -793,11 +764,6 @@ async fn build_thread_item(
             .source
             .as_ref()
             .is_some_and(|source| allowed_sources.contains(source))
-    {
-        return None;
-    }
-    if let Some(matcher) = provider_matcher
-        && !matcher.matches(summary.model_provider.as_deref())
     {
         return None;
     }
@@ -874,7 +840,6 @@ pub async fn read_thread_item_from_rollout(path: PathBuf) -> Option<ThreadItem> 
     build_thread_item(
         path,
         &[],
-        /*provider_matcher*/ None,
         /*cwd_filters*/ None,
         /*updated_at*/ None,
     )
@@ -1082,32 +1047,6 @@ async fn walk_rollout_files(
     }
 
     Ok(())
-}
-
-struct ProviderMatcher<'a> {
-    filters: &'a [String],
-    matches_default_provider: bool,
-}
-
-impl<'a> ProviderMatcher<'a> {
-    fn new(filters: &'a [String], default_provider: &'a str) -> Option<Self> {
-        if filters.is_empty() {
-            return None;
-        }
-
-        let matches_default_provider = filters.iter().any(|provider| provider == default_provider);
-        Some(Self {
-            filters,
-            matches_default_provider,
-        })
-    }
-
-    fn matches(&self, session_provider: Option<&str>) -> bool {
-        match session_provider {
-            Some(provider) => self.filters.iter().any(|candidate| candidate == provider),
-            None => self.matches_default_provider,
-        }
-    }
 }
 
 async fn read_head_summary(path: &Path, head_limit: usize) -> io::Result<HeadTailSummary> {

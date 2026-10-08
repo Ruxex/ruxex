@@ -161,7 +161,6 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
             sort_key: ThreadSortKey::CreatedAt,
             sort_direction: SortDirection::Desc,
             allowed_sources: Vec::new(),
-            model_providers: None,
             cwd_filters: None,
             archived: false,
             search_term: None,

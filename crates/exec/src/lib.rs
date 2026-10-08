@@ -1638,7 +1638,6 @@ async fn resolve_resume_thread_id(
             .find_thread_by_exact_title(
                 session_id,
                 &[],
-                /*model_providers*/ None,
                 /*archived_only*/ false,
                 cwd,
             )

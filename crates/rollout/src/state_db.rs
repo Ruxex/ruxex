@@ -299,7 +299,6 @@ pub async fn list_thread_ids_db(
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
-    model_providers: Option<&[String]>,
     archived_only: bool,
     stage: &str,
 ) -> Option<Vec<ThreadId>> {
@@ -322,7 +321,6 @@ pub async fn list_thread_ids_db(
             Err(_) => String::new(),
         })
         .collect();
-    let model_providers = model_providers.map(<[String]>::to_vec);
     match ctx
         .list_thread_ids(
             page_size,
@@ -333,7 +331,6 @@ pub async fn list_thread_ids_db(
                 ThreadSortKey::RecencyAt => genex_state::SortKey::RecencyAt,
             },
             allowed_sources.as_slice(),
-            model_providers.as_deref(),
             archived_only,
         )
         .await
@@ -356,7 +353,6 @@ pub async fn list_threads_db(
     sort_key: ThreadSortKey,
     sort_direction: SortDirection,
     allowed_sources: &[SessionSource],
-    model_providers: Option<&[String]>,
     cwd_filters: Option<&[PathBuf]>,
     relation_filter: Option<genex_state::ThreadRelationFilter>,
     archived: bool,
@@ -383,7 +379,6 @@ pub async fn list_threads_db(
             Err(_) => String::new(),
         })
         .collect();
-    let model_providers = model_providers.map(<[String]>::to_vec);
     let normalized_cwd_filters = cwd_filters.map(|filters| {
         filters
             .iter()
@@ -405,7 +400,6 @@ pub async fn list_threads_db(
             archived_only: archived,
             section,
             allowed_sources: allowed_sources.as_slice(),
-            model_providers: model_providers.as_deref(),
             cwd_filters: normalized_cwd_filters.as_deref(),
             project_id,
             anchor: anchor.as_ref(),
@@ -433,7 +427,6 @@ pub async fn list_threads_db(
             archived_only: archived,
             section,
             allowed_sources: allowed_sources.as_slice(),
-            model_providers: model_providers.as_deref(),
             cwd_filters: normalized_cwd_filters.as_deref(),
             project_id,
             anchor: anchor.as_ref(),

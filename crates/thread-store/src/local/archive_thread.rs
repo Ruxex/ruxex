@@ -288,7 +288,6 @@ mod tests {
                 sort_key: ThreadSortKey::CreatedAt,
                 sort_direction: crate::SortDirection::Desc,
                 allowed_sources: Vec::new(),
-                model_providers: None,
                 cwd_filters: None,
                 section: None,
                 project_id: None,

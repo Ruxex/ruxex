@@ -105,7 +105,6 @@ async fn list_threads(mcp: &mut TestAppServer) -> Result<ThreadListResponse> {
             limit: Some(50),
             sort_key: None,
             sort_direction: None,
-            model_providers: None,
             source_kinds: None,
             archived: None,
             section_id: None,

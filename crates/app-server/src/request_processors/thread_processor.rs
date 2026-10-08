@@ -5198,7 +5198,6 @@ impl ThreadRequestProcessor {
                     sort_key,
                     sort_direction: store_sort_direction,
                     allowed_sources: allowed_sources.to_vec(),
-                    model_providers: None,
                     cwd_filters: cwd_filters.clone(),
                     archived,
                     section: section_id.clone(),

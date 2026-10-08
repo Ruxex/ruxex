@@ -386,7 +386,6 @@ ON CONFLICT(child_thread_id) DO NOTHING
         &self,
         title: &str,
         allowed_sources: &[String],
-        model_providers: Option<&[String]>,
         archived_only: bool,
         cwd: Option<&Path>,
     ) -> anyhow::Result<Option<crate::ThreadMetadata>> {
@@ -398,7 +397,6 @@ ON CONFLICT(child_thread_id) DO NOTHING
             ThreadFilterOptions {
                 archived_only,
                 allowed_sources,
-                model_providers,
                 cwd_filters: None,
                 section: None,
                 project_id: None,
@@ -515,7 +513,6 @@ ON CONFLICT(child_thread_id) DO NOTHING
         anchor: Option<&crate::Anchor>,
         sort_key: crate::SortKey,
         allowed_sources: &[String],
-        model_providers: Option<&[String]>,
         archived_only: bool,
     ) -> anyhow::Result<Vec<ThreadId>> {
         let mut builder = QueryBuilder::<Sqlite>::new("SELECT threads.id FROM threads");
@@ -524,7 +521,6 @@ ON CONFLICT(child_thread_id) DO NOTHING
             ThreadFilterOptions {
                 archived_only,
                 allowed_sources,
-                model_providers,
                 cwd_filters: None,
                 section: None,
                 project_id: None,
@@ -1278,7 +1274,6 @@ fn thread_spawn_parent_thread_id_from_source_str(source: &str) -> Option<ThreadI
 pub struct ThreadFilterOptions<'a> {
     pub archived_only: bool,
     pub allowed_sources: &'a [String],
-    pub model_providers: Option<&'a [String]>,
     pub cwd_filters: Option<&'a [PathBuf]>,
     pub section: Option<Option<&'a str>>,
     pub project_id: Option<Option<&'a str>>,
@@ -1310,7 +1305,6 @@ fn push_thread_filters_with_preview<'a>(
     let ThreadFilterOptions {
         archived_only,
         allowed_sources,
-        model_providers: _,
         cwd_filters,
         section,
         project_id,
@@ -1531,7 +1525,6 @@ mod tests {
         let filters = |anchor, section| ThreadFilterOptions {
             archived_only: false,
             allowed_sources: &[],
-            model_providers: None,
             cwd_filters: None,
             section,
             project_id: None,
@@ -1664,7 +1657,6 @@ mod tests {
         let filters = |anchor| ThreadFilterOptions {
             archived_only: false,
             allowed_sources: &[],
-            model_providers: None,
             cwd_filters: None,
             section: Some(Some(CUSTOM_THREAD_SECTION_ID)),
             project_id: None,
@@ -1905,14 +1897,12 @@ mod tests {
             ts: older_updated_at,
             id: None,
         };
-        let model_providers = ["test-provider".to_string()];
         let page = runtime
             .list_threads(
                 /*page_size*/ 1,
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: Some(&model_providers),
                     cwd_filters: None,
                     section: None,
                     project_id: None,
@@ -1942,7 +1932,6 @@ mod tests {
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: Some(&model_providers),
                     cwd_filters: None,
                     section: None,
                     project_id: None,
@@ -2000,7 +1989,6 @@ mod tests {
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: None,
                     cwd_filters: Some(cwd_filters.as_slice()),
                     section: None,
                     project_id: None,
@@ -2034,7 +2022,6 @@ mod tests {
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: None,
                     cwd_filters: Some(cwd_filters.as_slice()),
                     section: None,
                     project_id: None,
@@ -2061,7 +2048,6 @@ mod tests {
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: None,
                     cwd_filters: Some(&[]),
                     section: None,
                     project_id: None,
@@ -2087,7 +2073,6 @@ mod tests {
         .await
         .expect("state db should initialize");
 
-        let model_providers = ["test-provider".to_string()];
         let cwd_filters = [
             PathBuf::from("/workspace/one"),
             PathBuf::from("/workspace/two"),
@@ -2130,7 +2115,6 @@ mod tests {
                     ThreadFilterOptions {
                         archived_only: false,
                         allowed_sources: &[],
-                        model_providers: Some(&model_providers),
                         cwd_filters,
                         section: None,
                         project_id: None,
@@ -2232,7 +2216,6 @@ mod tests {
             ThreadFilterOptions {
                 archived_only: false,
                 allowed_sources: &[],
-                model_providers: None,
                 cwd_filters: None,
                 section: None,
                 project_id: None,
@@ -2262,7 +2245,6 @@ mod tests {
         let filters = |anchor| ThreadFilterOptions {
             archived_only: false,
             allowed_sources: &[],
-            model_providers: None,
             cwd_filters: None,
             section: None,
             project_id: None,
@@ -2908,7 +2890,6 @@ mod tests {
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: None,
                     cwd_filters: None,
                     section: None,
                     project_id: None,
@@ -2942,7 +2923,6 @@ mod tests {
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: None,
                     cwd_filters: None,
                     section: None,
                     project_id: None,
@@ -2976,7 +2956,6 @@ mod tests {
                 ThreadFilterOptions {
                     archived_only: false,
                     allowed_sources: &[],
-                    model_providers: None,
                     cwd_filters: None,
                     section: None,
                     project_id: None,

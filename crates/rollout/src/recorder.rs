@@ -372,7 +372,6 @@ impl RolloutRecorder {
         sort_key: ThreadSortKey,
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
-        model_providers: Option<&[String]>,
         cwd_filters: Option<&[PathBuf]>,
         default_provider: &str,
         search_term: Option<&str>,
@@ -385,7 +384,6 @@ impl RolloutRecorder {
             sort_key,
             sort_direction,
             allowed_sources,
-            model_providers,
             cwd_filters,
             default_provider,
             ThreadListArchiveFilter::Active,
@@ -404,7 +402,6 @@ impl RolloutRecorder {
         sort_key: ThreadSortKey,
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
-        model_providers: Option<&[String]>,
         cwd_filters: Option<&[PathBuf]>,
         default_provider: &str,
         search_term: Option<&str>,
@@ -417,7 +414,6 @@ impl RolloutRecorder {
             sort_key,
             sort_direction,
             allowed_sources,
-            model_providers,
             cwd_filters,
             default_provider,
             ThreadListArchiveFilter::Active,
@@ -437,7 +433,6 @@ impl RolloutRecorder {
         sort_key: ThreadSortKey,
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
-        model_providers: Option<&[String]>,
         cwd_filters: Option<&[PathBuf]>,
         default_provider: &str,
         search_term: Option<&str>,
@@ -450,7 +445,6 @@ impl RolloutRecorder {
             sort_key,
             sort_direction,
             allowed_sources,
-            model_providers,
             cwd_filters,
             default_provider,
             ThreadListArchiveFilter::Archived,
@@ -469,7 +463,6 @@ impl RolloutRecorder {
         sort_key: ThreadSortKey,
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
-        model_providers: Option<&[String]>,
         cwd_filters: Option<&[PathBuf]>,
         default_provider: &str,
         search_term: Option<&str>,
@@ -482,7 +475,6 @@ impl RolloutRecorder {
             sort_key,
             sort_direction,
             allowed_sources,
-            model_providers,
             cwd_filters,
             default_provider,
             ThreadListArchiveFilter::Archived,
@@ -501,7 +493,6 @@ impl RolloutRecorder {
         sort_key: ThreadSortKey,
         sort_direction: SortDirection,
         allowed_sources: &[SessionSource],
-        model_providers: Option<&[String]>,
         cwd_filters: Option<&[PathBuf]>,
         default_provider: &str,
         archive_filter: ThreadListArchiveFilter,
@@ -527,7 +518,6 @@ impl RolloutRecorder {
                 sort_key,
                 sort_direction,
                 allowed_sources,
-                model_providers,
                 cwd_filters,
                 /*relation_filter*/ None,
                 archived,
@@ -541,7 +531,6 @@ impl RolloutRecorder {
         }
 
         let listing_has_metadata_filters = !allowed_sources.is_empty()
-            || model_providers.is_some()
             || cwd_filters.is_some()
             || search_term.is_some();
         // Filesystem-first listing intentionally overfetches so we can repair stale/missing
@@ -555,9 +544,7 @@ impl RolloutRecorder {
                     cursor,
                     sort_key,
                     allowed_sources,
-                    model_providers,
                     cwd_filters,
-                    default_provider,
                     archived,
                     search_term,
                 )
@@ -570,9 +557,7 @@ impl RolloutRecorder {
                     cursor,
                     sort_key,
                     allowed_sources,
-                    model_providers,
                     cwd_filters,
-                    default_provider,
                     archived,
                     search_term,
                 )
@@ -637,7 +622,6 @@ impl RolloutRecorder {
             sort_key,
             sort_direction,
             allowed_sources,
-            model_providers,
             cwd_filters,
             /*relation_filter*/ None,
             archived,
@@ -667,7 +651,6 @@ impl RolloutRecorder {
                     sort_key,
                     sort_direction,
                     allowed_sources,
-                    model_providers,
                     cwd_filters,
                     /*relation_filter*/ None,
                     archived,
@@ -708,7 +691,6 @@ impl RolloutRecorder {
                         sort_key,
                         sort_direction,
                         allowed_sources,
-                        model_providers,
                         cwd_filters,
                         /*relation_filter*/ None,
                         archived,
@@ -770,7 +752,6 @@ impl RolloutRecorder {
         cursor: Option<&Cursor>,
         sort_key: ThreadSortKey,
         allowed_sources: &[SessionSource],
-        model_providers: Option<&[String]>,
         default_provider: &str,
         filter_cwd: Option<&Path>,
     ) -> std::io::Result<Option<PathBuf>> {
@@ -789,7 +770,6 @@ impl RolloutRecorder {
                     sort_key,
                     SortDirection::Desc,
                     allowed_sources,
-                    model_providers,
                     cwd_filter.as_ref().map(std::slice::from_ref),
                     /*relation_filter*/ None,
                     /*archived*/ false,
@@ -830,9 +810,7 @@ impl RolloutRecorder {
                 cursor.as_ref(),
                 sort_key,
                 allowed_sources,
-                model_providers,
                 cwd_filter.as_ref().map(std::slice::from_ref),
-                default_provider,
             )
             .await?;
             if let Some(path) = select_resume_path(&page, filter_cwd, default_provider).await {
@@ -1367,9 +1345,7 @@ async fn list_threads_from_files_desc(
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
-    model_providers: Option<&[String]>,
     cwd_filters: Option<&[PathBuf]>,
-    default_provider: &str,
     archived: bool,
     search_term: Option<&str>,
 ) -> std::io::Result<ThreadsPage> {
@@ -1385,12 +1361,10 @@ async fn list_threads_from_files_desc(
                 genex_home,
                 scan_page_size,
                 page_cursor.as_ref(),
-                sort_key,
-                allowed_sources,
-                model_providers,
-                cwd_filters,
-                default_provider,
-                archived,
+                    sort_key,
+                    allowed_sources,
+                    cwd_filters,
+                    archived,
             )
             .await?;
             scanned_files = scanned_files.saturating_add(page.num_scanned_files);
@@ -1429,9 +1403,7 @@ async fn list_threads_from_files_desc(
         cursor,
         sort_key,
         allowed_sources,
-        model_providers,
         cwd_filters,
-        default_provider,
         archived,
     )
     .await
@@ -1444,9 +1416,7 @@ async fn list_threads_from_files_desc_unfiltered(
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
-    model_providers: Option<&[String]>,
     cwd_filters: Option<&[PathBuf]>,
-    default_provider: &str,
     archived: bool,
 ) -> std::io::Result<ThreadsPage> {
     if archived {
@@ -1458,9 +1428,7 @@ async fn list_threads_from_files_desc_unfiltered(
             sort_key,
             ThreadListConfig {
                 allowed_sources,
-                model_providers,
                 cwd_filters,
-                default_provider,
                 layout: ThreadListLayout::Flat,
             },
         )
@@ -1472,9 +1440,7 @@ async fn list_threads_from_files_desc_unfiltered(
             cursor,
             sort_key,
             allowed_sources,
-            model_providers,
             cwd_filters,
-            default_provider,
         )
         .await
     }
@@ -1487,9 +1453,7 @@ async fn list_threads_from_files_asc(
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
-    model_providers: Option<&[String]>,
     cwd_filters: Option<&[PathBuf]>,
-    default_provider: &str,
     archived: bool,
     search_term: Option<&str>,
 ) -> std::io::Result<ThreadsPage> {
@@ -1505,9 +1469,7 @@ async fn list_threads_from_files_asc(
             page_cursor.as_ref(),
             sort_key,
             allowed_sources,
-            model_providers,
             cwd_filters,
-            default_provider,
             archived,
             /*search_term*/ None,
         )

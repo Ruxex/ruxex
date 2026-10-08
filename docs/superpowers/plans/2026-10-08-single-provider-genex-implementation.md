@@ -36,6 +36,7 @@
 - Runtime resume and AgentControl no longer restore or select a provider from persisted thread metadata; the mounted provider is authoritative.
 - App-server `thread/list` no longer exposes a provider filter; listing is always scoped to the mounted provider. Lower thread-store/rollout filter parameters remain under the final persistence audit.
 - `thread/start`, `thread/resume`, and `thread/fork` no longer accept provider request overrides; TUI/CLI producers and AppServer override/mismatch consumers use the mounted provider implicitly. Response provider status remains available.
+- Lower thread-store/state/rollout provider list filters and named-session provider allowlists are removed; historical rollout `SessionMeta.model_provider` remains read-only compatibility data for the subsequent persisted-field audit.
 - Stored-thread responses now expose the mounted provider so clients cannot restore a historical provider into their local session state.
 - New rollout session metadata no longer writes `model_provider`; optional deserialization remains for historical JSONL and state backfill.
 - SQLite state migration `0002` removes `threads.model_provider` and `idx_threads_provider`; state metadata and runtime SQL no longer persist or filter threads by provider. Historical rollout values remain read-only migration input.

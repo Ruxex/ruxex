@@ -348,7 +348,6 @@ async fn thread_delete_with_non_local_thread_store_does_not_create_local_persist
                 limit: Some(10),
                 sort_key: None,
                 sort_direction: None,
-                model_providers: Some(Vec::new()),
                 source_kinds: None,
                 archived: None,
                 section_id: None,

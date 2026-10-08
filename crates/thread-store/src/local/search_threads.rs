@@ -98,7 +98,6 @@ pub(super) async fn search_threads(
         sort_key: params.sort_key,
         sort_direction: params.sort_direction,
         allowed_sources: params.allowed_sources.clone(),
-        model_providers: None,
         cwd_filters: None,
         section: None,
         project_id: None,

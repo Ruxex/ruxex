@@ -311,9 +311,6 @@ pub struct ListThreadsParams {
     pub sort_direction: SortDirection,
     /// Allowed session sources. Empty means implementation default.
     pub allowed_sources: Vec<SessionSource>,
-    /// Optional model provider filter. `None` means implementation default, while an empty vector
-    /// means all providers.
-    pub model_providers: Option<Vec<String>>,
     /// Optional cwd filters. `None` means all working directories, while an empty vector matches no
     /// threads.
     pub cwd_filters: Option<Vec<PathBuf>>,

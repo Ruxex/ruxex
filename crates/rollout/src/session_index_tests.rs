@@ -251,14 +251,11 @@ async fn find_thread_meta_candidates_filter_metadata_before_ranking() -> std::io
         .append(true)
         .open(&allowed_path)?
         .set_times(std::fs::FileTimes::new().set_modified(std::time::UNIX_EPOCH))?;
-    let allowed_model_providers = vec!["test-provider".to_string()];
-
     let found = find_thread_meta_candidates_by_name_str(
         temp.path(),
         "same",
         /*state_db_ctx*/ None,
         &[SessionSource::Cli],
-        &allowed_model_providers,
     )
     .await?;
 
