@@ -32,12 +32,13 @@
 - AppServer no longer applies a persisted active-provider selection to reloaded configuration.
 - AppServer now mounts and validates the configured provider home before credentials and SQLite state are initialized.
 - AppServer constructs one shared provider runtime and reuses it for sessions, model catalogs, account state, and capability queries.
-- AppServer account/model-provider APIs currently retain their protocol shapes, but expose only the configured provider; provider switching requests are rejected with guidance to start another AppServer instance.
+- AppServer model-provider/account status APIs expose only the configured provider; provider switching is no longer represented in runtime, host commands, or app-server protocol.
 - Runtime resume and AgentControl no longer restore or select a provider from persisted thread metadata; the mounted provider is authoritative.
 - Thread listing accepts omitted/empty/current-provider filters only and rejects requests for another provider; historical provider fields remain read-compatible during the persistence migration.
 - Stored-thread responses now expose the mounted provider so clients cannot restore a historical provider into their local session state.
 - New rollout session metadata no longer writes `model_provider`; optional deserialization remains for historical JSONL and state backfill.
 - SQLite state migration `0002` removes `threads.model_provider` and `idx_threads_provider`; state metadata and runtime SQL no longer persist or filter threads by provider. Historical rollout values remain read-only migration input.
+- Provider-switching host surfaces are removed: CLI `login switch`, TUI provider selection/switching, `Config::switch_model_provider`, and app-server `account/switch` plus generated schema artifacts. The configured provider is used directly; another provider requires another AppServer/data root.
 - Remaining work is to migrate credentials, remove the retained persistence fields after the rollout/state audit, and finish host surfaces.
 
 ### Task 1: Add the provider descriptor contract

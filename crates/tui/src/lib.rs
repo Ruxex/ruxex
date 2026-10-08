@@ -26,7 +26,6 @@ pub use app::ExitReason;
 pub use app::ResumableThread;
 use app_server_session::AppServerSession;
 use app_server_session::ThreadParamsMode;
-use app_server_session::authenticated_model_provider_id;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 use genex_app_server_client::AppServerClient;
@@ -202,12 +201,12 @@ mod transcript_reflow;
 mod tui;
 mod ui_consts;
 mod unarchive_prompt;
-mod worktree_startup;
 mod update_versions;
 mod version;
 mod vim_search;
 mod width;
 mod workspace_command;
+mod worktree_startup;
 
 mod wrapping;
 
@@ -217,7 +216,6 @@ pub(crate) mod test_backend;
 #[cfg(test)]
 pub(crate) mod test_support;
 
-use crate::onboarding::model_provider::run_model_provider_selection;
 use crate::onboarding::onboarding_screen::OnboardingScreenArgs;
 use crate::onboarding::onboarding_screen::run_onboarding_app;
 use crate::startup_hooks_review::StartupHooksReviewOutcome;
@@ -953,7 +951,7 @@ async fn run_ratatui_app(
     strict_config: bool,
     mut app_server_target: AppServerTarget,
     remote_cwd_override: Option<PathBuf>,
-    mut initial_config: Config,
+    initial_config: Config,
     overrides: ConfigOverrides,
     cli_kv_overrides: Vec<(String, toml::Value)>,
     log_db: Option<log_db::LogDbLayer>,
@@ -1040,56 +1038,10 @@ async fn run_ratatui_app(
             return Err(err.into());
         }
     };
-    let (provider_id, provider_auth_fields) =
-        if let Some(provider_id) = authenticated_model_provider_id(&provider_list) {
-            let auth_fields = provider_list
-                .providers
-                .iter()
-                .find(|provider| provider.id == provider_id)
-                .map(|provider| provider.auth_fields.clone())
-                .unwrap_or_default();
-            (provider_id.to_string(), auth_fields)
-        } else {
-            let provider = run_model_provider_selection(&mut tui, provider_list.providers).await;
-            match provider {
-                Ok(Some(provider)) => (provider.id, provider.auth_fields),
-                Ok(None) => {
-                    shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
-                    let _ = tui.terminal.clear();
-                    return Ok(AppExitInfo {
-                        token_usage: crate::token_usage::TokenUsage::default(),
-                        thread_id: None,
-                        resume_hint: None,
-                        disconnect_info: None,
-                        exit_reason: ExitReason::UserRequested,
-                    });
-                }
-                Err(err) => {
-                    shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
-                    return Err(err.into());
-                }
-            }
-        };
-    let switch_result = startup_draft
-        .run_until(
-            &mut tui,
-            app_server
-                .as_mut()
-                .expect("app server should exist before model provider switch")
-                .switch_model_provider(&mut initial_config, &provider_id),
-        )
-        .await;
-    match switch_result {
-        Ok(Ok(_)) => {}
-        Ok(Err(err)) => {
-            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
-            return Err(err);
-        }
-        Err(err) => {
-            shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
-            return Err(err.into());
-        }
-    }
+    let provider = provider_list.providers.into_iter().next().ok_or_else(|| {
+        color_eyre::eyre::eyre!("modelProvider/list returned no mounted provider")
+    })?;
+    let provider_auth_fields = provider.auth_fields;
 
     let startup_model_provider = initial_config.model_provider_id.clone();
     let Some(active_app_server) = app_server.as_mut() else {

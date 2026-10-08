@@ -16,17 +16,6 @@
       ],
       "type": "object"
     },
-    "AccountSwitchParams": {
-      "properties": {
-        "providerId": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "providerId"
-      ],
-      "type": "object"
-    },
     "AdditionalContextEntry": {
       "properties": {
         "kind": {
@@ -6266,30 +6255,6 @@
         "method"
       ],
       "title": "Account/logoutRequest",
-      "type": "object"
-    },
-    {
-      "properties": {
-        "id": {
-          "$ref": "#/definitions/RequestId"
-        },
-        "method": {
-          "enum": [
-            "account/switch"
-          ],
-          "title": "Account/switchRequestMethod",
-          "type": "string"
-        },
-        "params": {
-          "$ref": "#/definitions/AccountSwitchParams"
-        }
-      },
-      "required": [
-        "id",
-        "method",
-        "params"
-      ],
-      "title": "Account/switchRequest",
       "type": "object"
     },
     {

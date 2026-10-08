@@ -71,7 +71,6 @@ use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_install_context::InstallContext;
 use genex_login::AuthRouteConfig;
-use genex_login::CredentialManager;
 use genex_login::CredentialManagerConfig;
 use genex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
 use genex_mcp::McpConfig;
@@ -1390,47 +1389,6 @@ impl ConfigBuilder {
 }
 
 impl Config {
-    /// Select a configured model provider and coordinate its credential state.
-    ///
-    /// Providers with credentials supplied by configuration only update
-    /// selection; providers using stored credentials activate their record.
-    pub async fn switch_model_provider(
-        &self,
-        credential_manager: &CredentialManager,
-        provider_id: &str,
-    ) -> std::io::Result<Self> {
-        let provider = self.model_providers.get(provider_id).ok_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                format!("model provider `{provider_id}` is not configured"),
-            )
-        })?;
-
-        if provider.env_key.is_some()
-            || provider.experimental_bearer_token.is_some()
-            || provider.auth.is_some()
-        {
-            if provider.env_key.is_some() {
-                provider.api_key().map_err(|error| {
-                    std::io::Error::new(
-                        std::io::ErrorKind::InvalidInput,
-                        format!(
-                            "model provider `{provider_id}` has unusable configured auth: {error}"
-                        ),
-                    )
-                })?;
-            }
-            credential_manager.select_provider(provider_id).await?;
-        } else {
-            credential_manager.switch(provider_id).await?;
-        }
-
-        let mut switched = self.clone();
-        switched.model_provider_id = provider_id.to_string();
-        switched.model_provider = provider.clone();
-        Ok(switched)
-    }
-
     pub fn sqlite_config(&self) -> &genex_state::SqliteConfig {
         &self.sqlite
     }

@@ -4,8 +4,6 @@ use crate::outgoing_message::AccountNotification;
 use genex_app_server_protocol::Account;
 use genex_app_server_protocol::AccountDeleteParams;
 use genex_app_server_protocol::AccountDeleteResponse;
-use genex_app_server_protocol::AccountSwitchParams;
-use genex_app_server_protocol::AccountSwitchResponse;
 use genex_app_server_protocol::GetAccountResponse;
 use genex_login::ProviderAuth;
 
@@ -63,16 +61,6 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
         self.logout_v2(request_id).await.map(|()| None)
-    }
-
-    pub(crate) async fn switch_account(
-        &self,
-        request_id: ConnectionRequestId,
-        params: AccountSwitchParams,
-    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        let result = self.switch_account_common(&params.provider_id).await;
-        self.outgoing.send_result(request_id, result).await;
-        Ok(None)
     }
 
     pub(crate) async fn delete_account(
@@ -291,15 +279,6 @@ impl AccountRequestProcessor {
             self.send_login_success_notifications(/*login_id*/ None)
                 .await;
         }
-    }
-
-    async fn switch_account_common(
-        &self,
-        _provider_id: &str,
-    ) -> Result<AccountSwitchResponse, JSONRPCErrorError> {
-        Err(invalid_request(
-            "model provider switching is not supported by this runtime; start another AppServer instance with the desired provider",
-        ))
     }
 
     async fn cancel_login_response(

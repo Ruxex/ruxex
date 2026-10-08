@@ -9,7 +9,6 @@ use genex_arg0::Arg0DispatchPaths;
 use genex_arg0::arg0_dispatch_or_else;
 use genex_cli::run_login_delete;
 use genex_cli::run_login_status;
-use genex_cli::run_login_switch;
 use genex_cli::run_logout;
 use genex_exec::Cli as ExecCli;
 use genex_exec::Command as ExecCommand;
@@ -442,10 +441,8 @@ struct LoginCommand {
 enum LoginSubcommand {
     /// Show login status.
     Status,
-    /// Activate a configured model provider with stored credentials.
-    Switch { provider_id: String },
-    /// Delete stored credentials for one model provider.
-    Delete { provider_id: String },
+    /// Delete stored credentials for the configured model provider.
+    Delete,
 }
 
 #[derive(Debug, Parser)]
@@ -572,7 +569,6 @@ enum AppServerDaemonSubcommand {
 
     /// Print local CLI and running app-server versions as JSON.
     Version,
-
 }
 
 #[derive(Debug, Args)]
@@ -1182,11 +1178,8 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 LoginSubcommand::Status => {
                     run_login_status(login_cli.config_overrides).await;
                 }
-                LoginSubcommand::Switch { provider_id } => {
-                    run_login_switch(login_cli.config_overrides, provider_id).await;
-                }
-                LoginSubcommand::Delete { provider_id } => {
-                    run_login_delete(login_cli.config_overrides, provider_id).await;
+                LoginSubcommand::Delete => {
+                    run_login_delete(login_cli.config_overrides).await;
                 }
             }
         }

@@ -100,24 +100,6 @@
       "title": "AccountRateLimitsUpdatedNotification",
       "type": "object"
     },
-    "AccountSwitchParams": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "providerId": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "providerId"
-      ],
-      "title": "AccountSwitchParams",
-      "type": "object"
-    },
-    "AccountSwitchResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "AccountSwitchResponse",
-      "type": "object"
-    },
     "AccountUpdatedNotification": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
@@ -2394,30 +2376,6 @@
             "method"
           ],
           "title": "Account/logoutRequest",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/RequestId"
-            },
-            "method": {
-              "enum": [
-                "account/switch"
-              ],
-              "title": "Account/switchRequestMethod",
-              "type": "string"
-            },
-            "params": {
-              "$ref": "#/definitions/AccountSwitchParams"
-            }
-          },
-          "required": [
-            "id",
-            "method",
-            "params"
-          ],
-          "title": "Account/switchRequest",
           "type": "object"
         },
         {

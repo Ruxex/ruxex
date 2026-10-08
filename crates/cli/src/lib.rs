@@ -13,7 +13,6 @@ pub use debug_sandbox::run_command_under_landlock;
 pub use debug_sandbox::run_command_under_seatbelt;
 pub use login::run_login_delete;
 pub use login::run_login_status;
-pub use login::run_login_switch;
 pub use login::run_logout;
 
 #[derive(Debug, Default, Args)]
