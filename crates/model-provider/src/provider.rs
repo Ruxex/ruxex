@@ -11,6 +11,11 @@ use genex_api::ChatClient;
 use genex_api::ChatRequestInput;
 use genex_api::Provider;
 use genex_api::ResponsesClient;
+use genex_api::SearchClient;
+use genex_api::SearchCommands;
+use genex_api::SearchInput;
+use genex_api::SearchRequest;
+use genex_api::SearchSettings;
 use genex_api::SharedAuthProvider;
 use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
@@ -310,6 +315,57 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         })
     }
 
+    fn search(
+        &self,
+        request: crate::contract::ProviderSearchRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
+    > {
+        Box::pin(async move {
+            let api_provider = self
+                .api_provider()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let api_auth = self
+                .api_auth()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let client = create_client_for_route(
+                &request.http_client_factory,
+                &api_provider.url_for_path("alpha/search"),
+                ClientRouteClass::Api,
+                ClientRedirectPolicy::Default,
+            )
+            .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
+            let commands: SearchCommands = serde_json::from_value(request.commands)
+                .map_err(|error| crate::contract::ProviderError::InvalidRequest(error.to_string()))?;
+            let settings: SearchSettings = serde_json::from_value(request.settings)
+                .map_err(|error| crate::contract::ProviderError::InvalidRequest(error.to_string()))?;
+            let search_request = SearchRequest {
+                id: request.id,
+                model: request.model,
+                reasoning: None,
+                input: Some(SearchInput::Items(request.input)),
+                commands: Some(commands),
+                settings: Some(settings),
+                max_output_tokens: request.max_output_tokens,
+            };
+            let response = SearchClient::new(
+                genex_api::ReqwestTransport::from_http_client(client),
+                api_provider,
+                api_auth,
+            )
+            .search(&search_request, request.extra_headers)
+            .await
+            .map_err(map_api_error_to_provider_error)?;
+            Ok(crate::contract::ProviderSearchResponse {
+                output: response.output,
+                results: response.results,
+            })
+        })
+    }
+
     /// Fetches the provider's current model catalog.
     ///
     /// The default delegates to the provider-compatible `/models` endpoint.
@@ -541,6 +597,16 @@ where
         ProviderRuntime::chat(self, request)
     }
 
+    fn search(
+        &self,
+        request: crate::contract::ProviderSearchRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
+    > {
+        ProviderRuntime::search(self, request)
+    }
+
     fn list_models(
         &self,
         request: crate::contract::ListModelsRequest,
@@ -703,6 +769,17 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
     > {
         let runtime = self.runtime.clone();
         Box::pin(async move { ProviderRuntime::chat(runtime.as_ref(), request).await })
+    }
+
+    fn search(
+        &self,
+        request: crate::contract::ProviderSearchRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
+    > {
+        let runtime = self.runtime.clone();
+        Box::pin(async move { ProviderRuntime::search(runtime.as_ref(), request).await })
     }
 
     fn list_models(

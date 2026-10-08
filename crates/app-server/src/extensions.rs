@@ -18,6 +18,7 @@ use genex_extension_api::ExtensionWarning;
 use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalExtensionConfig;
 use genex_goal_extension::GoalService;
+use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderRuntime;
@@ -37,6 +38,7 @@ pub(crate) struct ThreadExtensionDependencies {
     pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) provider: SharedProviderRuntime,
     pub(crate) provider_contract: SharedModelProvider,
+    pub(crate) http_client_factory: HttpClientFactory,
     pub(crate) state_db: Option<StateDbHandle>,
     pub(crate) thread_manager: Weak<ThreadManager>,
     pub(crate) goal_service: Arc<GoalService>,
@@ -55,6 +57,7 @@ pub(crate) fn thread_extensions(
         credential_manager,
         provider,
         provider_contract,
+        http_client_factory,
         state_db,
         thread_manager,
         goal_service,
@@ -93,8 +96,8 @@ pub(crate) fn thread_extensions(
     genex_mcp_extension::install_executor_plugins(&mut builder, environment_manager);
     genex_web_search_extension::install_with_provider_contract(
         &mut builder,
-        provider,
         provider_contract,
+        http_client_factory,
     );
     let skill_providers = genex_skills_extension::SkillProviders::new()
         .with_executor_provider(executor_skill_provider)

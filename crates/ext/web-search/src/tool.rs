@@ -1,8 +1,6 @@
-use genex_api::ReqwestTransport;
-use genex_api::SearchClient;
 use genex_api::SearchCommands;
+use genex_api::SearchInput;
 use genex_api::SearchQuery;
-use genex_api::SearchRequest;
 use genex_api::SearchSettings;
 use genex_core::X_GENEX_TURN_METADATA_HEADER;
 use genex_core::web_search_action_detail;
@@ -18,9 +16,10 @@ use genex_extension_api::parse_tool_input_schema_without_compaction;
 use genex_extension_items::ExtensionItem;
 use genex_extension_items::web_search::WebSearchAction;
 use genex_extension_items::web_search::WebSearchItem;
+use genex_http_client::HttpClientFactory;
 use genex_login::default_client::add_originator_header;
-use genex_login::default_client::create_client;
-use genex_model_provider::SharedProviderRuntime;
+use genex_model_provider::ProviderSearchRequest;
+use genex_model_provider::SharedModelProvider;
 use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::WebSearchBeginEvent;
@@ -44,7 +43,8 @@ const RESULTS_PAYLOAD_BYTES_METRIC: &str = "genex.web_search.results.payload_byt
 
 pub(crate) struct WebSearchTool {
     pub(crate) session_id: String,
-    pub(crate) provider: SharedProviderRuntime,
+    pub(crate) provider: SharedModelProvider,
+    pub(crate) http_client_factory: HttpClientFactory,
     pub(crate) settings: SearchSettings,
     pub(crate) originator: Option<String>,
 }
@@ -98,34 +98,26 @@ impl WebSearchTool {
     ) -> Result<Box<dyn ToolOutput>, FunctionCallError> {
         let commands = parse_commands(&call)?;
         let command_action = command_action(&commands);
-        let provider = self
-            .provider
-            .api_provider()
-            .await
-            .map_err(|err| FunctionCallError::Fatal(err.to_string()))?;
-        let auth = self
-            .provider
-            .api_auth()
-            .await
-            .map_err(|err| FunctionCallError::Fatal(err.to_string()))?;
-        let client = SearchClient::new(
-            ReqwestTransport::from_http_client(create_client()),
-            provider,
-            auth,
-        );
-        let request = SearchRequest {
+        let request = ProviderSearchRequest {
             id: self.session_id.clone(),
             model: call.model.clone(),
-            reasoning: None,
-            input: recent_input(call.conversation_history.items()),
-            commands: Some(commands),
-            settings: Some(self.settings.clone()),
+            input: match recent_input(call.conversation_history.items()) {
+                Some(SearchInput::Items(items)) => items,
+                Some(SearchInput::Text(_)) | None => Vec::new(),
+            },
+            commands: serde_json::to_value(&commands)
+                .map_err(|err| FunctionCallError::Fatal(err.to_string()))?,
+            settings: serde_json::to_value(&self.settings)
+                .map_err(|err| FunctionCallError::Fatal(err.to_string()))?,
             max_output_tokens: Some(
                 u64::try_from(call.truncation_policy.token_budget()).unwrap_or(u64::MAX),
             ),
+            http_client_factory: self.http_client_factory.clone(),
+            extra_headers: search_request_headers(
+                self.originator.as_deref(),
+                call.turn_metadata.as_deref(),
+            ),
         };
-        let extra_headers =
-            search_request_headers(self.originator.as_deref(), call.turn_metadata.as_deref());
         call.turn_item_emitter
             .emit_started(extension_turn_item(
                 WebSearchItem {
@@ -139,8 +131,9 @@ impl WebSearchTool {
                 }),
             ))
             .await;
-        let response = client
-            .search(&request, extra_headers)
+        let response = self
+            .provider
+            .search(request)
             .await
             .map_err(|err| FunctionCallError::Fatal(err.to_string()))?;
         let output = response.output;

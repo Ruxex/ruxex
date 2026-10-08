@@ -37,6 +37,8 @@ state は引き続き次の実行移行対象である。
 
 さらに `SessionConfiguration` から `TurnContext` まで同じ contract handle を引き継ぎ、compaction、
 hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
+standalone Web Search の request/response transport も契約経由へ移し、History/Notes backend transport は
+引き続き内部 adapter に残している。
 Responses wire 判定、WebSocket、auth recovery、request/response event mapping は、依然として
 provider-specific runtime transport を必要とするため、この変更では保持した。
 `ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。旧 constructor は

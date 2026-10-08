@@ -17,6 +17,7 @@ genex-api = { workspace = true }
 genex-core = { workspace = true }
 genex-extension-api = { workspace = true }
 genex-extension-items = { workspace = true }
+genex-http-client = { workspace = true }
 genex-login = { workspace = true }
 genex-model-provider = { workspace = true }
 genex-model-provider-info = { workspace = true }

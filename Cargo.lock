@@ -6075,6 +6075,7 @@ dependencies = [
  "genex-core",
  "genex-extension-api",
  "genex-extension-items",
+ "genex-http-client",
  "genex-login",
  "genex-model-provider",
  "genex-model-provider-info",

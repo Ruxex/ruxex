@@ -238,6 +238,26 @@ pub enum ProviderRequestCompression {
     Zstd,
 }
 
+/// Provider-neutral request for the standalone web-search operation.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProviderSearchRequest {
+    pub id: String,
+    pub model: String,
+    pub input: Vec<ResponseItem>,
+    pub commands: Value,
+    pub settings: Value,
+    pub max_output_tokens: Option<u64>,
+    pub http_client_factory: HttpClientFactory,
+    pub extra_headers: HeaderMap,
+}
+
+/// Provider-neutral standalone web-search result.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProviderSearchResponse {
+    pub output: String,
+    pub results: Option<Vec<Value>>,
+}
+
 /// Provider-neutral streamed chat events.
 ///
 /// The current migration reuses the repository's normalized response event vocabulary. Wire
@@ -256,6 +276,14 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     fn capabilities(&self) -> ProviderCapabilities;
 
     fn chat(&self, request: ChatRequest) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;
+
+    fn search(
+        &self,
+        request: ProviderSearchRequest,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderSearchResponse>> {
+        let _ = request;
+        Box::pin(async { Err(ProviderError::Unsupported) })
+    }
 
     fn list_models(
         &self,

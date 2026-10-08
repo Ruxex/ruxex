@@ -19,6 +19,7 @@ use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
 #[cfg(test)]
 use genex_login::CredentialManager;
+use genex_http_client::HttpClientFactory;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderRuntime;
 use genex_model_provider::provider_contract;
@@ -29,8 +30,8 @@ use crate::tool::WebSearchTool;
 
 #[derive(Clone)]
 struct WebSearchExtension {
-    provider: SharedProviderRuntime,
     provider_contract: SharedModelProvider,
+    http_client_factory: HttpClientFactory,
 }
 
 #[derive(Clone)]
@@ -145,9 +146,10 @@ impl ToolContributor for WebSearchExtension {
             return Vec::new();
         }
 
-        vec![Arc::new(WebSearchTool {
-            session_id: session_store.level_id().to_string(),
-            provider: self.provider.clone(),
+                vec![Arc::new(WebSearchTool {
+                    session_id: session_store.level_id().to_string(),
+                    provider: self.provider_contract.clone(),
+                    http_client_factory: self.http_client_factory.clone(),
             settings: config.settings.clone(),
             originator: thread_store
                 .get::<ThreadOriginator>()
@@ -157,17 +159,21 @@ impl ToolContributor for WebSearchExtension {
 }
 
 pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: SharedProviderRuntime) {
-    install_with_provider_contract(registry, provider.clone(), provider_contract(provider));
+    install_with_provider_contract(
+        registry,
+        provider_contract(provider),
+        HttpClientFactory::new(genex_http_client::OutboundProxyPolicy::ReqwestDefault),
+    );
 }
 
 pub fn install_with_provider_contract(
     registry: &mut ExtensionRegistryBuilder<Config>,
-    provider: SharedProviderRuntime,
     provider_contract: SharedModelProvider,
+    http_client_factory: HttpClientFactory,
 ) {
     let extension = Arc::new(WebSearchExtension {
         provider_contract,
-        provider,
+        http_client_factory,
     });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());

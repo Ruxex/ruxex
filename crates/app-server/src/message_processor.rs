@@ -319,6 +319,7 @@ impl MessageProcessor {
                     credential_manager: credential_manager.clone(),
                     provider: Arc::clone(&provider),
                     provider_contract: provider_contract.clone(),
+                    http_client_factory: config.http_client_factory(),
                     state_db: state_db.clone(),
                     thread_manager: thread_manager.clone(),
                     goal_service: Arc::clone(&goal_service),
