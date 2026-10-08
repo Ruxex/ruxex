@@ -57,6 +57,7 @@ pub use contract::ProviderSearchResponse;
 pub use contract::ProviderUsage;
 pub use contract::ProviderUsageResult;
 pub use contract::ProviderUnauthorizedRecovery;
+pub use contract::ProviderWireApi;
 pub use contract::RemoteCompactionSupport;
 pub use contract::SharedModelProvider;
 pub use contract::UsageRequest;

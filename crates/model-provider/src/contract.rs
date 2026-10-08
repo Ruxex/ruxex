@@ -36,6 +36,7 @@ pub struct ProviderCapabilities {
     pub api_key_model_discovery: bool,
     pub command_auth: bool,
     pub streaming: bool,
+    pub websocket: bool,
     pub usage: bool,
     pub interactive_login: bool,
     pub namespace_tools: bool,
@@ -53,6 +54,7 @@ impl Default for ProviderCapabilities {
             api_key_model_discovery: false,
             command_auth: false,
             streaming: true,
+            websocket: false,
             usage: false,
             interactive_login: false,
             namespace_tools: true,
@@ -63,6 +65,13 @@ impl Default for ProviderCapabilities {
             remote_compaction: RemoteCompactionSupport::Unsupported,
         }
     }
+}
+
+/// Provider wire protocol selected by the mounted provider.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProviderWireApi {
+    Responses,
+    Chat,
 }
 
 /// Stable, non-secret provider identity used by the mounted data-root marker.
@@ -303,6 +312,10 @@ pub type ProviderChatEvent = genex_api::ResponseEvent;
 /// Provider-owned model execution, catalog, authentication, and usage contract.
 pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     fn descriptor(&self) -> ProviderDescriptor;
+
+    fn wire_api(&self) -> ProviderWireApi {
+        ProviderWireApi::Responses
+    }
 
     /// Stable cache identity for provider-owned model catalog data.
     fn model_catalog_identity(&self) -> ProviderResult<String> {

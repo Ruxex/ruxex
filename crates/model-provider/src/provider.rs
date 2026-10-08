@@ -54,6 +54,7 @@ use crate::contract::ProviderDescriptor;
 use crate::contract::ProviderUsage;
 use crate::contract::ProviderUnauthorizedRecovery;
 use crate::contract::ProviderUsageResult;
+use crate::contract::ProviderWireApi;
 use crate::contract::RemoteCompactionSupport;
 use crate::models_endpoint::ModelsEndpoint;
 
@@ -205,6 +206,13 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         match self.info().wire_api {
             WireApi::Responses => ProviderApi::Responses,
             WireApi::Chat => ProviderApi::Chat(Arc::new(StandardChatCompletionApi)),
+        }
+    }
+
+    fn wire_api(&self) -> ProviderWireApi {
+        match self.info().wire_api {
+            WireApi::Responses => ProviderWireApi::Responses,
+            WireApi::Chat => ProviderWireApi::Chat,
         }
     }
 
@@ -617,6 +625,10 @@ where
         ProviderRuntime::descriptor(self)
     }
 
+    fn wire_api(&self) -> ProviderWireApi {
+        ProviderRuntime::wire_api(self)
+    }
+
     fn capabilities(&self) -> ProviderCapabilities {
         let mut capabilities = ProviderRuntime::capabilities(self);
         capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
@@ -814,6 +826,10 @@ struct RuntimeProviderContractAdapter {
 impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
     fn descriptor(&self) -> ProviderDescriptor {
         self.runtime.descriptor()
+    }
+
+    fn wire_api(&self) -> ProviderWireApi {
+        self.runtime.wire_api()
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
@@ -1096,6 +1112,7 @@ impl ProviderRuntime for ConfiguredModelProvider {
         ProviderCapabilities {
             history_notes: self.info.is_responses_provider(),
             standalone_web_search: self.info.supports_standalone_web_search,
+            websocket: self.info.supports_websockets,
             remote_compaction,
             ..ProviderCapabilities::default()
         }

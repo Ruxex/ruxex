@@ -53,6 +53,11 @@ Responses の 401 認証回復を監査した。HTTP と WebSocket の両方が�
 回復開始判定・メッセージ・回復処理は `ModelProvider` の中立契約へ移す。WebSocket 接続・継続状態・telemetry
 の wire boundary は別スライスとして保持する。
 
+core の `ProviderRuntime::api`、`ModelProviderInfo::wire_api`、`supports_websockets` 参照を監査した。
+これらは transport 実装そのものではなく、core が Chat/Responses と WebSocket の選択を行うための provider
+能力情報であるため、`ModelProvider` の `wire_api` と `websocket` capability へ移行する。Responses WebSocket
+の接続・継続 payload・エラー mapping は具体的な provider transport として別途保持する。
+
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
 ## 調査範囲と検証

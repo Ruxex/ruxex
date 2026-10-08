@@ -113,12 +113,12 @@ use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
 use crate::responses_metadata::GenexResponsesMetadata;
-use genex_model_provider::ProviderApi;
 use genex_model_provider::ProviderAuthScope;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ResponsesConnectionKey;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderRuntime;
+use genex_model_provider::ProviderWireApi;
 use genex_model_provider::provider_contract as build_provider_contract;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
@@ -783,7 +783,7 @@ impl ModelClient {
     ///
     /// WebSocket use is controlled by provider capability and session-scoped fallback state.
     pub fn responses_websocket_enabled(&self) -> bool {
-        if !self.state.provider.info().supports_websockets
+        if !self.state.provider_contract.capabilities().websocket
             || self.state.disable_websockets.load(Ordering::Relaxed)
         {
             return false;
@@ -1749,8 +1749,8 @@ impl ModelClientSession {
         responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
-        match self.client.state.provider.api() {
-            ProviderApi::Responses => {
+        match self.client.state.provider_contract.wire_api() {
+            ProviderWireApi::Responses => {
                 if self.client.responses_websocket_enabled() {
                     let request_trace = current_span_w3c_trace_context();
                     match self
@@ -1787,7 +1787,7 @@ impl ModelClientSession {
                 )
                 .await
             }
-            ProviderApi::Chat(_) => {
+            ProviderWireApi::Chat => {
                 self.stream_chat_completions(
                     prompt,
                     model_info,
