@@ -5808,11 +5808,9 @@ pub(crate) fn thread_from_stored_thread(
             .map(|entered_at| entered_at.timestamp()),
         project_id: thread.project_id,
         history_mode: thread.history_mode.into(),
-        model_provider: if thread.model_provider.is_empty() {
-            fallback_provider.to_string()
-        } else {
-            thread.model_provider
-        },
+        // Persisted provider values are historical metadata only. The mounted provider is the
+        // sole runtime provider and is also the provider clients must use for future turns.
+        model_provider: fallback_provider.to_string(),
         model: thread.model,
         reasoning_effort: thread.reasoning_effort,
         created_at: thread.created_at.timestamp(),

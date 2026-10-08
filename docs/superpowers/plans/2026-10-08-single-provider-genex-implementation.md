@@ -35,6 +35,7 @@
 - AppServer account/model-provider APIs currently retain their protocol shapes, but expose only the configured provider; provider switching requests are rejected with guidance to start another AppServer instance.
 - Runtime resume and AgentControl no longer restore or select a provider from persisted thread metadata; the mounted provider is authoritative.
 - Thread listing accepts omitted/empty/current-provider filters only and rejects requests for another provider; historical provider fields remain read-compatible during the persistence migration.
+- Stored-thread responses now expose the mounted provider so clients cannot restore a historical provider into their local session state.
 - Remaining work is to migrate credentials, remove the retained persistence fields after the rollout/state audit, and finish host surfaces.
 
 ### Task 1: Add the provider descriptor contract
