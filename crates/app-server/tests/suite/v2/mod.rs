@@ -46,7 +46,7 @@ mod mcp_server_status;
 mod misalignment_policy;
 mod model_list;
 mod model_provider_capabilities_read;
-mod model_provider_list;
+mod model_provider_read;
 #[path = "model_provider_enforcement_tests.rs"]
 mod model_provider_enforcement;
 mod multi_agent_v2_developer_instructions;

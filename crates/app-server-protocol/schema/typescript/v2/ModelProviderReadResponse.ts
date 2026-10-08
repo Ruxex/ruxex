@@ -4,4 +4,4 @@
 import type { ProviderAuthStatus } from "../ProviderAuthStatus";
 import type { ModelProviderAuthField } from "./ModelProviderAuthField";
 
-export type ModelProviderListEntry = { id: string, name: string, authStatus: ProviderAuthStatus, authFields: Array<ModelProviderAuthField>, };
+export type ModelProviderReadResponse = { id: string, name: string, authStatus: ProviderAuthStatus, authFields: Array<ModelProviderAuthField>, };

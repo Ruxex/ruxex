@@ -20,32 +20,6 @@
       ],
       "type": "object"
     },
-    "ModelProviderListEntry": {
-      "properties": {
-        "authFields": {
-          "items": {
-            "$ref": "#/definitions/ModelProviderAuthField"
-          },
-          "type": "array"
-        },
-        "authStatus": {
-          "$ref": "#/definitions/ProviderAuthStatus"
-        },
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "authFields",
-        "authStatus",
-        "id",
-        "name"
-      ],
-      "type": "object"
-    },
     "ProviderAuthStatus": {
       "description": "Authentication state for the currently selected model provider.",
       "oneOf": [
@@ -74,16 +48,28 @@
     }
   },
   "properties": {
-    "providers": {
+    "authFields": {
       "items": {
-        "$ref": "#/definitions/ModelProviderListEntry"
+        "$ref": "#/definitions/ModelProviderAuthField"
       },
       "type": "array"
+    },
+    "authStatus": {
+      "$ref": "#/definitions/ProviderAuthStatus"
+    },
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
     }
   },
   "required": [
-    "providers"
+    "authFields",
+    "authStatus",
+    "id",
+    "name"
   ],
-  "title": "ModelProviderListResponse",
+  "title": "ModelProviderReadResponse",
   "type": "object"
 }

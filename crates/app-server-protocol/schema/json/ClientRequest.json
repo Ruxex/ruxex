@@ -1551,7 +1551,7 @@
     "ModelProviderCapabilitiesReadParams": {
       "type": "object"
     },
-    "ModelProviderListParams": {
+    "ModelProviderReadParams": {
       "type": "object"
     },
     "MultiAgentMode": {
@@ -5991,13 +5991,13 @@
         },
         "method": {
           "enum": [
-            "modelProvider/list"
+            "modelProvider/read"
           ],
-          "title": "ModelProvider/listRequestMethod",
+          "title": "ModelProvider/readRequestMethod",
           "type": "string"
         },
         "params": {
-          "$ref": "#/definitions/ModelProviderListParams"
+          "$ref": "#/definitions/ModelProviderReadParams"
         }
       },
       "required": [
@@ -6005,7 +6005,7 @@
         "method",
         "params"
       ],
-      "title": "ModelProvider/listRequest",
+      "title": "ModelProvider/readRequest",
       "type": "object"
     },
     {

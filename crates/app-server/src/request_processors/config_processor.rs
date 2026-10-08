@@ -28,8 +28,7 @@ use genex_app_server_protocol::JSONRPCErrorError;
 use genex_app_server_protocol::ManagedHooksRequirements;
 use genex_app_server_protocol::ModelProviderAuthField;
 use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-use genex_app_server_protocol::ModelProviderListEntry;
-use genex_app_server_protocol::ModelProviderListResponse;
+use genex_app_server_protocol::ModelProviderReadResponse;
 use genex_app_server_protocol::ModelsRequirements;
 use genex_app_server_protocol::NetworkDomainPermission;
 use genex_app_server_protocol::NetworkRequirements;
@@ -171,9 +170,9 @@ impl ConfigRequestProcessor {
         })
     }
 
-    pub(crate) async fn model_provider_list(
+    pub(crate) async fn model_provider_read(
         &self,
-    ) -> Result<ModelProviderListResponse, JSONRPCErrorError> {
+    ) -> Result<ModelProviderReadResponse, JSONRPCErrorError> {
         let _config = self.load_latest_config(/*fallback_cwd*/ None).await?;
         let provider_runtime = self.thread_manager.model_provider();
         let descriptor = provider_runtime.descriptor();
@@ -181,7 +180,9 @@ impl ConfigRequestProcessor {
             .account_state()
             .map_err(|err| invalid_request(err.to_string()))?
             .auth_status;
-        let providers = vec![ModelProviderListEntry {
+        Ok(ModelProviderReadResponse {
+            id: descriptor.provider_kind,
+            name: provider_runtime.info().name.clone(),
             auth_status,
             auth_fields: provider_runtime
                 .auth_fields()
@@ -192,11 +193,7 @@ impl ConfigRequestProcessor {
                     secret: field.secret,
                 })
                 .collect(),
-            id: descriptor.provider_kind,
-            name: provider_runtime.info().name.clone(),
-        }];
-
-        Ok(ModelProviderListResponse { providers })
+        })
     }
 
     pub(crate) async fn handle_config_mutation(&self) {

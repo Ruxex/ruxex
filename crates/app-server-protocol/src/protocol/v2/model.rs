@@ -51,13 +51,16 @@ pub struct ModelProviderCapabilitiesReadResponse {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
-pub struct ModelProviderListParams {}
+pub struct ModelProviderReadParams {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
-pub struct ModelProviderListResponse {
-    pub providers: Vec<ModelProviderListEntry>,
+pub struct ModelProviderReadResponse {
+    pub id: String,
+    pub name: String,
+    pub auth_status: ProviderAuthStatus,
+    pub auth_fields: Vec<ModelProviderAuthField>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
@@ -67,16 +70,6 @@ pub struct ModelProviderAuthField {
     pub id: String,
     pub label: String,
     pub secret: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct ModelProviderListEntry {
-    pub id: String,
-    pub name: String,
-    pub auth_status: ProviderAuthStatus,
-    pub auth_fields: Vec<ModelProviderAuthField>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema, TS)]

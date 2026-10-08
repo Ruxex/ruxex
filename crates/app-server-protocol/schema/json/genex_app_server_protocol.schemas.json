@@ -1551,13 +1551,13 @@
             },
             "method": {
               "enum": [
-                "modelProvider/list"
+                "modelProvider/read"
               ],
-              "title": "ModelProvider/listRequestMethod",
+              "title": "ModelProvider/readRequestMethod",
               "type": "string"
             },
             "params": {
-              "$ref": "#/definitions/v2/ModelProviderListParams"
+              "$ref": "#/definitions/v2/ModelProviderReadParams"
             }
           },
           "required": [
@@ -1565,7 +1565,7 @@
             "method",
             "params"
           ],
-          "title": "ModelProvider/listRequest",
+          "title": "ModelProvider/readRequest",
           "type": "object"
         },
         {
@@ -10777,7 +10777,13 @@
         "title": "ModelProviderCapabilitiesReadResponse",
         "type": "object"
       },
-      "ModelProviderListEntry": {
+      "ModelProviderReadParams": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ModelProviderReadParams",
+        "type": "object"
+      },
+      "ModelProviderReadResponse": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
           "authFields": {
             "items": {
@@ -10801,27 +10807,7 @@
           "id",
           "name"
         ],
-        "type": "object"
-      },
-      "ModelProviderListParams": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "ModelProviderListParams",
-        "type": "object"
-      },
-      "ModelProviderListResponse": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "properties": {
-          "providers": {
-            "items": {
-              "$ref": "#/definitions/v2/ModelProviderListEntry"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "providers"
-        ],
-        "title": "ModelProviderListResponse",
+        "title": "ModelProviderReadResponse",
         "type": "object"
       },
       "ModelRerouteReason": {

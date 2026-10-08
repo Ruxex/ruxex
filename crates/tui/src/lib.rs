@@ -1008,17 +1008,17 @@ async fn run_ratatui_app(
     // Folder consent runs after the picker resolves the actual destination.
     let should_show_trust_screen_flag = false;
 
-    let provider_list = startup_draft
+    let provider = startup_draft
         .run_until(
             &mut tui,
             app_server
                 .as_mut()
-                .expect("app server should exist before model provider selection")
-                .model_provider_list(),
+                .expect("app server should exist before model provider status")
+                .model_provider_read(),
         )
         .await;
-    let provider_list = match provider_list {
-        Ok(Ok(provider_list)) => provider_list,
+    let provider = match provider {
+        Ok(Ok(provider)) => provider,
         Ok(Err(err)) => {
             shutdown_startup_session(app_server.take(), &mut terminal_restore_guard).await;
             return Err(err);
@@ -1028,9 +1028,6 @@ async fn run_ratatui_app(
             return Err(err.into());
         }
     };
-    let provider = provider_list.providers.into_iter().next().ok_or_else(|| {
-        color_eyre::eyre::eyre!("modelProvider/list returned no mounted provider")
-    })?;
     let provider_auth_fields = provider.auth_fields;
 
     let startup_model_provider = initial_config.model_provider_id.clone();

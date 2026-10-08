@@ -48,6 +48,7 @@
 - `StateRuntime` no longer stores or consults a provider identity; the retained initialization parameter is compatibility-only while state metadata construction is provider-neutral.
 - Rollout configuration and local thread-store configuration no longer carry a provider ID. Metadata building, rollout backfill/reconciliation, and thread listing/resume no longer accept provider-only arguments.
 - Persisted `ThreadSettingsSnapshot.model_provider_id` is removed; old rollout event objects remain readable because the field is ignored during deserialization, while `SessionConfiguredEvent.model_provider_id` remains only as current-provider client status.
+- The provider status endpoint is singular: `modelProvider/list` and its array response were replaced with `modelProvider/read`, which returns the mounted provider and its authentication fields directly.
 
 ### Task 1: Add the provider descriptor contract
 

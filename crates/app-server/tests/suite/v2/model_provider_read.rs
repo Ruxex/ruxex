@@ -9,7 +9,7 @@ use tokio::time::timeout;
 const DEFAULT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
 #[tokio::test]
-async fn lists_the_mounted_provider_and_auth_state() -> Result<()> {
+async fn reads_the_mounted_provider_and_auth_state() -> Result<()> {
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new("http://127.0.0.1:1/v1")
         .with_model_provider("provider_a")
@@ -23,17 +23,12 @@ async fn lists_the_mounted_provider_and_auth_state() -> Result<()> {
         .await?;
 
     let request_id = app_server
-        .send_request("modelProvider/list", Some(serde_json::json!({})))
+        .send_request("modelProvider/read", Some(serde_json::json!({})))
         .await?;
     let received: Value = timeout(DEFAULT_TIMEOUT, app_server.read_response(request_id)).await??;
 
-    let providers = received["providers"]
-        .as_array()
-        .expect("providers should be an array");
-    assert_eq!(providers.len(), 1);
-    let provider_a = &providers[0];
-    assert_eq!(provider_a["id"], "provider_a");
-    assert_eq!(provider_a["name"], "Provider A");
-    assert_eq!(provider_a["authStatus"], "unauthenticated");
+    assert_eq!(received["id"], "provider_a");
+    assert_eq!(received["name"], "Provider A");
+    assert_eq!(received["authStatus"], "unauthenticated");
     Ok(())
 }

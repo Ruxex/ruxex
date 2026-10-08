@@ -938,10 +938,10 @@ client_request_definitions! {
         serialization: None,
         response: v2::ModelProviderCapabilitiesReadResponse,
     },
-    ModelProviderList => "modelProvider/list" {
-        params: v2::ModelProviderListParams,
+    ModelProviderRead => "modelProvider/read" {
+        params: v2::ModelProviderReadParams,
         serialization: None,
-        response: v2::ModelProviderListResponse,
+        response: v2::ModelProviderReadResponse,
     },
     PermissionProfileList => "permissionProfile/list" {
         params: v2::PermissionProfileListParams,
