@@ -290,7 +290,6 @@ impl SessionConfiguration {
     ) -> ThreadSettingsSnapshot {
         ThreadSettingsSnapshot {
             model: self.step_settings.collaboration_mode.model().to_string(),
-            model_provider_id: self.original_config_do_not_use.model_provider_id.clone(),
             service_tier: self.step_settings.service_tier.clone(),
             approval_policy: self.step_settings.approval_policy.value(),
             permission_profile: self.materialized_permission_profile(environment_selections),

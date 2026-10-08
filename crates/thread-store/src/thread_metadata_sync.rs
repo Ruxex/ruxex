@@ -628,7 +628,6 @@ mod tests {
                 thread_settings: ThreadSettingsSnapshot {
                     disabled_plugin_ids: Vec::new(),
                     model: "example-model".to_string(),
-                    model_provider_id: "updated-provider".to_string(),
                     service_tier: None,
                     approval_policy: AskForApproval::Never,
                     permission_profile: permission_profile.clone(),

@@ -1947,7 +1947,7 @@ async fn seed_thread_metadata(
         chrono::Utc::now(),
         SessionSource::Cli,
     );
-    runtime.upsert_thread(&builder.build("test-provider")).await
+    runtime.upsert_thread(&builder.build()).await
 }
 
 #[derive(Debug, Default)]
