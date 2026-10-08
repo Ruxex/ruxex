@@ -904,9 +904,6 @@ impl RolloutRecorder {
                     agent_path: source.get_agent_path().map(Into::into),
                     source: *source,
                     thread_source,
-                    // Provider identity is scoped by the mounted data root. Keep reading this
-                    // optional field for old rollouts, but do not add it to new rollouts.
-                    model_provider: None,
                     base_instructions: Some(base_instructions),
                     dynamic_tools: if dynamic_tools.is_empty() {
                         None
@@ -2051,7 +2048,7 @@ async fn resume_candidate_matches_cwd(
     rollout_path: &Path,
     cached_cwd: Option<&Path>,
     cwd: &Path,
-    default_provider: &str,
+    _default_provider: &str,
 ) -> bool {
     if cached_cwd.is_some_and(|session_cwd| cwd_matches(session_cwd, cwd)) {
         return true;
@@ -2075,7 +2072,7 @@ async fn resume_candidate_matches_cwd(
         return cwd_matches(latest_turn_context_cwd.as_path(), cwd);
     }
 
-    metadata::extract_metadata_from_rollout(rollout_path, default_provider)
+    metadata::extract_metadata_from_rollout(rollout_path)
         .await
         .is_ok_and(|outcome| cwd_matches(outcome.metadata.cwd.as_path(), cwd))
 }

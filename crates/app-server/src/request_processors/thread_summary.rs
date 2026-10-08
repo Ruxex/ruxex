@@ -59,10 +59,7 @@ pub(crate) async fn read_summary_from_rollout(
     } else {
         Some(session_meta.timestamp.clone())
     };
-    let model_provider = session_meta
-        .model_provider
-        .clone()
-        .unwrap_or_else(|| fallback_provider.to_string());
+    let model_provider = fallback_provider.to_string();
     let git_info = git.as_ref().map(map_git_info);
     let updated_at = updated_at.or_else(|| timestamp.clone());
 
@@ -105,10 +102,7 @@ fn extract_conversation_summary(
         Some(session_meta.timestamp.clone())
     };
     let conversation_id = session_meta.id;
-    let model_provider = session_meta
-        .model_provider
-        .clone()
-        .unwrap_or_else(|| fallback_provider.to_string());
+    let model_provider = fallback_provider.to_string();
     let git_info = git.map(map_git_info);
     let updated_at = updated_at.or_else(|| timestamp.clone());
 

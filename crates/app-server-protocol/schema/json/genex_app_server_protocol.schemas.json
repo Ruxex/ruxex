@@ -10779,9 +10779,6 @@
       },
       "ModelProviderListEntry": {
         "properties": {
-          "active": {
-            "type": "boolean"
-          },
           "authFields": {
             "items": {
               "$ref": "#/definitions/v2/ModelProviderAuthField"
@@ -10799,7 +10796,6 @@
           }
         },
         "required": [
-          "active",
           "authFields",
           "authStatus",
           "id",
@@ -10815,12 +10811,6 @@
       "ModelProviderListResponse": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
-          "activeProviderId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "providers": {
             "items": {
               "$ref": "#/definitions/v2/ModelProviderListEntry"

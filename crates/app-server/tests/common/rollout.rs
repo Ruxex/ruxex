@@ -233,7 +233,7 @@ fn create_fake_rollout_with_source_and_parent_thread_id(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    model_provider: Option<&str>,
+    _model_provider: Option<&str>,
     git_info: Option<GitInfo>,
     source: SessionSource,
     thread_source: Option<ThreadSource>,
@@ -268,7 +268,6 @@ fn create_fake_rollout_with_source_and_parent_thread_id(
         agent_path: None,
         agent_nickname: None,
         agent_role: None,
-        model_provider: model_provider.map(str::to_string),
         base_instructions: None,
         dynamic_tools: None,
         selected_capability_roots: Vec::new(),
@@ -328,7 +327,7 @@ pub fn create_fake_rollout_with_text_elements(
     meta_rfc3339: &str,
     preview: &str,
     text_elements: Vec<serde_json::Value>,
-    model_provider: Option<&str>,
+    _model_provider: Option<&str>,
     git_info: Option<GitInfo>,
 ) -> Result<String> {
     let uuid = Uuid::new_v4();
@@ -361,7 +360,6 @@ pub fn create_fake_rollout_with_text_elements(
         agent_path: None,
         agent_nickname: None,
         agent_role: None,
-        model_provider: model_provider.map(str::to_string),
         base_instructions: None,
         dynamic_tools: None,
         selected_capability_roots: Vec::new(),

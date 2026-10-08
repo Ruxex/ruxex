@@ -204,7 +204,6 @@ async fn state_db_init_backfills_before_returning() -> anyhow::Result<()> {
             agent_path: None,
             agent_nickname: None,
             agent_role: None,
-            model_provider: None,
             base_instructions: None,
             dynamic_tools: None,
             selected_capability_roots: Vec::new(),
@@ -491,7 +490,6 @@ async fn recorder_materializes_on_flush_with_pending_items() -> std::io::Result<
     };
     assert_eq!(session_meta.meta.session_id, session_id);
     assert_eq!(session_meta.meta.history_mode, ThreadHistoryMode::Paginated);
-    assert_eq!(session_meta.meta.model_provider, None);
     assert_eq!(
         session_meta
             .meta

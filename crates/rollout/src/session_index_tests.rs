@@ -50,7 +50,6 @@ fn write_rollout_with_source_and_provider(
                 agent_path: None,
                 agent_nickname: None,
                 agent_role: None,
-                model_provider: Some(model_provider.to_string()),
                 base_instructions: None,
                 dynamic_tools: None,
                 selected_capability_roots: Vec::new(),

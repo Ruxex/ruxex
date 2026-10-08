@@ -129,7 +129,6 @@ fn write_rollout(
             originator: "genex".to_string(),
             cli_version: "0.0.0".to_string(),
             source,
-            model_provider: Some(config.model_provider_id.clone()),
             history_mode,
             ..Default::default()
         },

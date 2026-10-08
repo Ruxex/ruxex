@@ -36,14 +36,15 @@
 - Runtime resume and AgentControl no longer restore or select a provider from persisted thread metadata; the mounted provider is authoritative.
 - App-server `thread/list` no longer exposes a provider filter; listing is always scoped to the mounted provider. Lower thread-store/rollout filter parameters remain under the final persistence audit.
 - `thread/start`, `thread/resume`, and `thread/fork` no longer accept provider request overrides; TUI/CLI producers and AppServer override/mismatch consumers use the mounted provider implicitly. Response provider status remains available.
-- Lower thread-store/state/rollout provider list filters and named-session provider allowlists are removed; historical rollout `SessionMeta.model_provider` remains read-only compatibility data for the subsequent persisted-field audit.
+- Lower thread-store/state/rollout provider list filters and named-session provider allowlists are removed; historical rollout `SessionMeta.model_provider` is no longer a protocol field and old JSONL keys are ignored by serde.
 - Thread-store live metadata, stored-thread projections, and metadata patches no longer carry provider routing fields; historical rollout `SessionMeta.model_provider` is deserialized but ignored, while API responses continue to report the mounted provider.
 - Stored-thread responses now expose the mounted provider so clients cannot restore a historical provider into their local session state.
 - New rollout session metadata no longer writes `model_provider`; optional deserialization remains for historical JSONL and state backfill.
 - SQLite state migration `0002` removes `threads.model_provider` and `idx_threads_provider`; state metadata and runtime SQL no longer persist or filter threads by provider. Historical rollout values remain read-only migration input.
 - Provider-switching host surfaces are removed: CLI `login switch`, TUI provider selection/switching, `Config::switch_model_provider`, and app-server `account/switch` plus generated schema artifacts. The configured provider is used directly; another provider requires another AppServer/data root.
 - CredentialManager no longer persists or applies `active_provider`, rejects login/delete operations for a different configured provider, and treats logout as deletion of the configured provider's credentials; file, keyring, ephemeral, and legacy-read storage remain.
-- Remaining work is to remove the retained historical persistence fields after the rollout/state audit and finish the final host-surface and provider-neutral contract audit.
+- Historical provider fields have now been removed from live thread/state projections and from the `SessionMeta` protocol type; old JSONL keeps loading because unknown fields are ignored. Remaining work is the final host-surface and provider-neutral contract audit.
+- The mounted-provider list response no longer exposes `activeProviderId` or per-entry `active` selection state; it reports the single mounted provider and its auth fields.
 
 ### Task 1: Add the provider descriptor contract
 

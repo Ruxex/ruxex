@@ -494,7 +494,7 @@ pub async fn find_rollout_path_by_id(
 pub async fn reconcile_rollout(
     context: Option<&genex_state::StateRuntime>,
     rollout_path: &Path,
-    default_provider: &str,
+    _default_provider: &str,
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
     archived_only: Option<bool>,
@@ -506,7 +506,6 @@ pub async fn reconcile_rollout(
         apply_rollout_items(
             Some(ctx),
             rollout_path,
-            default_provider,
             builder,
             items,
             "reconcile_rollout",
@@ -515,17 +514,16 @@ pub async fn reconcile_rollout(
         .await;
         return;
     }
-    let outcome =
-        match metadata::extract_metadata_from_rollout(rollout_path, default_provider).await {
-            Ok(outcome) => outcome,
-            Err(err) => {
-                warn!(
-                    "state db reconcile_rollout extraction failed {}: {err}",
-                    rollout_path.display()
-                );
-                return;
-            }
-        };
+    let outcome = match metadata::extract_metadata_from_rollout(rollout_path).await {
+        Ok(outcome) => outcome,
+        Err(err) => {
+            warn!(
+                "state db reconcile_rollout extraction failed {}: {err}",
+                rollout_path.display()
+            );
+            return;
+        }
+    };
     let mut metadata = outcome.metadata;
     metadata.cwd = normalize_cwd_for_state_db(&metadata.cwd);
     let existing_metadata = ctx.get_thread(metadata.id).await.ok().flatten();
@@ -615,15 +613,10 @@ pub async fn read_repair_rollout_path(
     if !saw_existing_metadata {
         warn!("state db discrepancy during read_repair_rollout_path: upsert_needed (slow path)");
     }
-    let default_provider = crate::list::read_session_meta_line(rollout_path)
-        .await
-        .ok()
-        .and_then(|meta| meta.meta.model_provider)
-        .unwrap_or_default();
     reconcile_rollout(
         Some(ctx),
         rollout_path,
-        default_provider.as_str(),
+        "",
         /*builder*/ None,
         &[],
         archived_only,
@@ -636,7 +629,6 @@ pub async fn read_repair_rollout_path(
 pub async fn apply_rollout_items(
     context: Option<&genex_state::StateRuntime>,
     rollout_path: &Path,
-    _default_provider: &str,
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
     stage: &str,

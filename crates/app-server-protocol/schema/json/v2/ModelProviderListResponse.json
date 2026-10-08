@@ -22,9 +22,6 @@
     },
     "ModelProviderListEntry": {
       "properties": {
-        "active": {
-          "type": "boolean"
-        },
         "authFields": {
           "items": {
             "$ref": "#/definitions/ModelProviderAuthField"
@@ -42,7 +39,6 @@
         }
       },
       "required": [
-        "active",
         "authFields",
         "authStatus",
         "id",
@@ -78,12 +74,6 @@
     }
   },
   "properties": {
-    "activeProviderId": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "providers": {
       "items": {
         "$ref": "#/definitions/ModelProviderListEntry"

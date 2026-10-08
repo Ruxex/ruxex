@@ -1329,7 +1329,6 @@ mod tests {
                         originator: "test".to_string(),
                         cli_version: "test".to_string(),
                         source: SessionSource::Cli,
-                        model_provider: Some("test-provider".to_string()),
                         ..Default::default()
                     },
                     git: None,

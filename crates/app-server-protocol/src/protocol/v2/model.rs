@@ -57,7 +57,6 @@ pub struct ModelProviderListParams {}
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct ModelProviderListResponse {
-    pub active_provider_id: Option<String>,
     pub providers: Vec<ModelProviderListEntry>,
 }
 
@@ -76,7 +75,6 @@ pub struct ModelProviderAuthField {
 pub struct ModelProviderListEntry {
     pub id: String,
     pub name: String,
-    pub active: bool,
     pub auth_status: ProviderAuthStatus,
     pub auth_fields: Vec<ModelProviderAuthField>,
 }

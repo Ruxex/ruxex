@@ -174,10 +174,9 @@ async fn reconcile_rollout_preserves_existing_explicit_title() -> anyhow::Result
     )
     .await?;
 
-    let mut metadata =
-        metadata::extract_metadata_from_rollout(rollout_path.as_path(), "test-provider")
-            .await?
-            .metadata;
+    let mut metadata = metadata::extract_metadata_from_rollout(rollout_path.as_path())
+        .await?
+        .metadata;
     assert_eq!(metadata.title, "Hey");
     assert_eq!(metadata.first_user_message.as_deref(), Some("Hey"));
     metadata.title = "math".to_string();
@@ -226,10 +225,9 @@ async fn filesystem_repair_preserves_existing_rollout_path() -> anyhow::Result<(
         "test-provider".to_string(),
     )
     .await?;
-    let active_metadata =
-        metadata::extract_metadata_from_rollout(active_rollout_path.as_path(), "test-provider")
-            .await?
-            .metadata;
+    let active_metadata = metadata::extract_metadata_from_rollout(active_rollout_path.as_path())
+        .await?
+        .metadata;
     runtime.upsert_thread(&active_metadata).await?;
     let active_metadata = runtime
         .get_thread(thread_id)
@@ -291,7 +289,6 @@ fn write_rollout_with_user_message(
                     agent_nickname: None,
                     agent_role: None,
                     agent_path: None,
-                    model_provider: Some("test-provider".to_string()),
                     base_instructions: None,
                     dynamic_tools: None,
                     selected_capability_roots: Vec::new(),

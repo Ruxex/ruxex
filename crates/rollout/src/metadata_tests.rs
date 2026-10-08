@@ -132,7 +132,6 @@ async fn extract_metadata_from_rollout_uses_session_meta() {
         agent_path: None,
         agent_nickname: None,
         agent_role: None,
-        model_provider: Some("provider".to_string()),
         base_instructions: None,
         dynamic_tools: None,
         selected_capability_roots: Vec::new(),
@@ -155,7 +154,7 @@ async fn extract_metadata_from_rollout_uses_session_meta() {
     let mut file = File::create(&path).expect("create rollout");
     writeln!(file, "{json}").expect("write rollout");
 
-    let outcome = extract_metadata_from_rollout(&path, "provider")
+    let outcome = extract_metadata_from_rollout(&path)
         .await
         .expect("extract");
 
@@ -199,7 +198,7 @@ async fn extract_metadata_from_rollout_rejects_unknown_history_mode() {
     writeln!(file, "{rollout_line}").expect("write rollout");
 
     assert!(
-        extract_metadata_from_rollout(&path, "provider")
+        extract_metadata_from_rollout(&path)
             .await
             .is_err()
     );
@@ -339,7 +338,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
     .await
     .expect("initialize runtime");
     let thread_id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
-    let mut existing = extract_metadata_from_rollout(&rollout_path, "test-provider")
+    let mut existing = extract_metadata_from_rollout(&rollout_path)
         .await
         .expect("extract")
         .metadata;
@@ -449,7 +448,6 @@ fn write_rollout_in_sessions_with_cwd(
         agent_path: None,
         agent_nickname: None,
         agent_role: None,
-        model_provider: Some("test-provider".to_string()),
         base_instructions: None,
         dynamic_tools: None,
         selected_capability_roots: Vec::new(),

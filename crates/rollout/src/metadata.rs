@@ -133,7 +133,6 @@ pub fn forked_from_ordinal_exclusive(
 
 pub async fn extract_metadata_from_rollout(
     rollout_path: &Path,
-    default_provider: &str,
 ) -> anyhow::Result<ExtractionOutcome> {
     let (items, _thread_id, parse_errors) =
         RolloutRecorder::load_rollout_items(rollout_path).await?;
@@ -149,9 +148,9 @@ pub async fn extract_metadata_from_rollout(
             rollout_path.display()
         )
     })?;
-    let mut metadata = builder.build(default_provider);
+    let mut metadata = builder.build("");
     for item in &items {
-        apply_rollout_item(&mut metadata, item, default_provider);
+        apply_rollout_item(&mut metadata, item, "");
     }
     if let Some(updated_at) = file_modified_time_utc(rollout_path).await {
         metadata.updated_at = updated_at;
@@ -166,12 +165,12 @@ pub async fn extract_metadata_from_rollout(
 pub(crate) async fn backfill_sessions(
     runtime: &genex_state::StateRuntime,
     genex_home: &Path,
-    default_provider: &str,
+    _default_provider: &str,
 ) {
     backfill_sessions_with_lease(
         runtime,
         genex_home,
-        default_provider,
+        _default_provider,
         BACKFILL_LEASE_SECONDS,
     )
     .await;
@@ -180,7 +179,7 @@ pub(crate) async fn backfill_sessions(
 pub(crate) async fn backfill_sessions_with_lease(
     runtime: &genex_state::StateRuntime,
     genex_home: &Path,
-    default_provider: &str,
+    _default_provider: &str,
     backfill_lease_seconds: i64,
 ) {
     let metric_client = genex_otel::global();
@@ -278,7 +277,7 @@ pub(crate) async fn backfill_sessions_with_lease(
     for batch in rollout_paths.chunks(BACKFILL_BATCH_SIZE) {
         for rollout in batch {
             stats.scanned = stats.scanned.saturating_add(1);
-            match extract_metadata_from_rollout(&rollout.path, default_provider).await {
+            match extract_metadata_from_rollout(&rollout.path).await {
                 Ok(outcome) => {
                     if outcome.parse_errors > 0
                         && let Some(ref metric_client) = metric_client

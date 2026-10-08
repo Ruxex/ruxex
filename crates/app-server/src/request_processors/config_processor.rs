@@ -182,7 +182,6 @@ impl ConfigRequestProcessor {
             .map_err(|err| invalid_request(err.to_string()))?
             .auth_status;
         let providers = vec![ModelProviderListEntry {
-            active: true,
             auth_status,
             auth_fields: provider_runtime
                 .auth_fields()
@@ -197,10 +196,7 @@ impl ConfigRequestProcessor {
             name: provider_runtime.info().name.clone(),
         }];
 
-        Ok(ModelProviderListResponse {
-            active_provider_id: Some(providers[0].id.clone()),
-            providers,
-        })
+        Ok(ModelProviderListResponse { providers })
     }
 
     pub(crate) async fn handle_config_mutation(&self) {
