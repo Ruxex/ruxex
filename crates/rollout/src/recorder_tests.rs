@@ -491,6 +491,7 @@ async fn recorder_materializes_on_flush_with_pending_items() -> std::io::Result<
     };
     assert_eq!(session_meta.meta.session_id, session_id);
     assert_eq!(session_meta.meta.history_mode, ThreadHistoryMode::Paginated);
+    assert_eq!(session_meta.meta.model_provider, None);
     assert_eq!(
         session_meta
             .meta

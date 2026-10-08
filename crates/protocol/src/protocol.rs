@@ -2647,6 +2647,9 @@ pub struct SessionMeta {
     /// Optional canonical agent path assigned to an AgentControl-spawned sub-agent.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub agent_path: Option<String>,
+    /// Historical provider metadata retained only so older rollouts remain readable.
+    /// New rollouts leave this unset because the provider is scoped by the mounted data root.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub model_provider: Option<String>,
     /// base_instructions for the session. This *should* always be present when creating a new session,
     /// but may be missing for older sessions. If not present, fall back to rendering the base_instructions
