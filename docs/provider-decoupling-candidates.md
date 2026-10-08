@@ -33,6 +33,9 @@ AppServer の provider-neutral contract は `MessageProcessor` の生成境界�
 hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
 Responses wire 判定、websocket/SSE、auth recovery、request/response event mapping は、依然として
 provider-specific runtime transport を必要とするため、この変更では保持した。
+`ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。旧 constructor は
+テスト等の移行途中の caller 向けに adapter を作る互換境界として残し、AppServer の production session は
+`new_with_provider_contract` を利用する。
 
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 

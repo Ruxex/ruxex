@@ -1559,8 +1559,9 @@ impl Session {
                 thread_store: Arc::clone(&thread_store),
                 attestation_provider: attestation_provider.clone(),
                 time_provider,
-                model_client: ModelClient::new_with_provider(
+                model_client: ModelClient::new_with_provider_contract(
                     Arc::clone(&session_configuration.provider),
+                    Arc::clone(&session_configuration.provider_contract),
                     thread_id,
                     session_configuration.session_source.clone(),
                     session_configuration.originator.clone(),

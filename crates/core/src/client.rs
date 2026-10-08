@@ -125,7 +125,9 @@ use genex_model_provider::ProviderApi;
 use genex_model_provider::ProviderAuthScope;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ResponsesConnectionKey;
+use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderRuntime;
+use genex_model_provider::provider_contract as build_provider_contract;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_protocol::error::GenexErr;
@@ -173,6 +175,7 @@ fn session_telemetry_for_request(
 struct ModelClientState {
     thread_id: ThreadId,
     provider: SharedProviderRuntime,
+    provider_contract: SharedModelProvider,
     session_source: SessionSource,
     originator: String,
     model_verbosity: Option<VerbosityConfig>,
@@ -424,11 +427,45 @@ impl ModelClient {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         http_client_factory: HttpClientFactory,
     ) -> Self {
+        Self::new_with_provider_contract(
+            model_provider.clone(),
+            build_provider_contract(model_provider),
+            thread_id,
+            session_source,
+            originator,
+            model_verbosity,
+            content_item_kinds_enabled,
+            enable_request_compression,
+            include_timing_metrics,
+            beta_features_header,
+            concurrent_reasoning_summaries_enabled,
+            attestation_provider,
+            http_client_factory,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_with_provider_contract(
+        model_provider: SharedProviderRuntime,
+        provider_contract: SharedModelProvider,
+        thread_id: ThreadId,
+        session_source: SessionSource,
+        originator: String,
+        model_verbosity: Option<VerbosityConfig>,
+        content_item_kinds_enabled: bool,
+        enable_request_compression: bool,
+        include_timing_metrics: bool,
+        beta_features_header: Option<String>,
+        concurrent_reasoning_summaries_enabled: bool,
+        attestation_provider: Option<Arc<dyn AttestationProvider>>,
+        http_client_factory: HttpClientFactory,
+    ) -> Self {
         let include_attestation = model_provider.supports_attestation();
         Self {
             state: Arc::new(ModelClientState {
                 thread_id,
                 provider: model_provider,
+                provider_contract,
                 session_source,
                 originator,
                 model_verbosity,
@@ -652,7 +689,7 @@ impl ModelClient {
                 &Uuid::NAMESPACE_OID,
                 self.state.thread_id.to_string().as_bytes(),
             );
-            let tools = if self.state.provider.capabilities().namespace_tools {
+            let tools = if self.state.provider_contract.capabilities().namespace_tools {
                 create_tools_json_for_responses_lite(&prompt.tools)?
             } else {
                 create_tools_json_for_responses_api(&prompt.tools)?
