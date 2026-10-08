@@ -2,6 +2,15 @@
 
 この文書は、[provider 固有機能の段階的な分離計画](provider-decoupling-plan.md) に対する 2026-09-27 時点の追加調査結果を記録する。
 
+## 単一Provider runtimeの最終境界監査 (2026-10-09)
+
+History/Notes 拡張の `Config.model_provider.is_responses_provider()` 参照を監査した。
+拡張のバックエンド呼び出しは共有 `ModelProvider` の endpoint/auth を既に利用しており、
+provider 設定型を直接見る必要はない。一方、対応可否は外部 History/Notes backend の
+provider capability で決まるため、`ProviderCapabilities.history_notes` へ移行する。
+外部の `/backend-api/codex/...` route と `x-provider-*` header は OpenAI backend 契約として
+別境界で保持する。この判断は `docs/pre-release-compatibility-inventory.md` にも記録した。
+
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
 ## 調査範囲と検証

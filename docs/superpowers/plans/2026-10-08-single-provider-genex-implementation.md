@@ -46,6 +46,7 @@
 - Historical provider fields have now been removed from live thread/state projections and from the `SessionMeta` protocol type; old JSONL keeps loading because unknown fields are ignored. Remaining work is the final host-surface and provider-neutral contract audit.
 - The mounted-provider list response no longer exposes `activeProviderId` or per-entry `active` selection state; it reports the single mounted provider and its auth fields.
 - App-server account login/delete requests no longer carry a provider target; account operations always use the mounted provider, while response-side provider identity remains available for status display.
+- History/Notes extension gating now uses a provider-owned capability instead of inspecting provider configuration internals; the external backend route and headers remain retained.
 - `StateRuntime` no longer stores or consults a provider identity; the retained initialization parameter is compatibility-only while state metadata construction is provider-neutral.
 - Rollout configuration and local thread-store configuration no longer carry a provider ID. Metadata building, rollout backfill/reconciliation, and thread listing/resume no longer accept provider-only arguments.
 - Persisted `ThreadSettingsSnapshot.model_provider_id` is removed; old rollout event objects remain readable because the field is ignored during deserialization, while `SessionConfiguredEvent.model_provider_id` remains only as current-provider client status.

@@ -62,6 +62,8 @@ pub struct ProviderCapabilities {
     pub namespace_tools: bool,
     pub web_search: bool,
     pub external_web_access: bool,
+    /// Whether the provider exposes the managed History/Notes backend.
+    pub history_notes: bool,
     pub remote_compaction: RemoteCompactionSupport,
 }
 
@@ -101,6 +103,7 @@ impl Default for ProviderCapabilities {
             namespace_tools: true,
             web_search: true,
             external_web_access: true,
+            history_notes: false,
             remote_compaction: RemoteCompactionSupport::Unsupported,
         }
     }
@@ -413,6 +416,7 @@ impl ModelProvider for ConfiguredModelProvider {
         };
 
         ProviderCapabilities {
+            history_notes: self.info.is_responses_provider(),
             remote_compaction,
             ..ProviderCapabilities::default()
         }
@@ -597,6 +601,16 @@ mod tests {
         assert!(capabilities.streaming);
         assert!(!capabilities.usage);
         assert!(!capabilities.interactive_login);
+    }
+
+    #[test]
+    fn responses_provider_declares_history_notes_capability() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_responses_provider(None),
+            /*credential_manager*/ None,
+        );
+
+        assert!(provider.capabilities().history_notes);
     }
 
     #[test]
