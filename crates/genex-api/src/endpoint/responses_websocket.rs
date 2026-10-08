@@ -232,6 +232,22 @@ impl ResponsesWebsocketConnection {
         connection_reused: bool,
         turn_state: Option<Arc<OnceLock<String>>>,
     ) -> Result<ResponseStream, ApiError> {
+        let payload = serde_json::to_value(request)
+            .map_err(|err| ApiError::Stream(format!("failed to encode websocket request: {err}")))?;
+        self.stream_request_json(payload, connection_reused, turn_state)
+            .await
+    }
+
+    /// Streams a serialized provider WebSocket request.
+    ///
+    /// This is the provider-boundary entry point used by `genex-model-provider`; keeping the
+    /// JSON payload here means the host does not need to depend on Responses request types.
+    pub async fn stream_request_json(
+        &self,
+        request: Value,
+        connection_reused: bool,
+        turn_state: Option<Arc<OnceLock<String>>>,
+    ) -> Result<ResponseStream, ApiError> {
         let (tx_event, rx_event) =
             mpsc::channel::<std::result::Result<ResponseEvent, ApiError>>(1600);
         let stream = Arc::clone(&self.stream);
@@ -239,32 +255,9 @@ impl ResponsesWebsocketConnection {
         let server_reasoning_included = self.server_reasoning_included;
         let server_model = self.server_model.clone();
         let telemetry = self.telemetry.clone();
-        let ResponsesWsRequest::ResponseCreate(ws_request) = &request;
-        let client_metadata = ws_request.client_metadata.as_ref();
-        let timing_log_context = ResponsesWebsocketTimingLogContext {
-            model: ws_request.model.to_string(),
-            session_id: client_metadata
-                .and_then(|metadata| metadata.get(SESSION_ID_CLIENT_METADATA_KEY))
-                .cloned(),
-            thread_id: client_metadata
-                .and_then(|metadata| metadata.get(THREAD_ID_CLIENT_METADATA_KEY))
-                .cloned(),
-            turn_id: client_metadata
-                .and_then(|metadata| metadata.get(TURN_ID_CLIENT_METADATA_KEY))
-                .cloned(),
-            traceparent: client_metadata
-                .and_then(|metadata| {
-                    metadata.get(WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY)
-                })
-                .cloned(),
-            previous_response_id: ws_request.previous_response_id.clone(),
-            request_start_ms: client_metadata
-                .and_then(|metadata| metadata.get(WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY))
-                .cloned(),
-            warmup: ws_request.generate == Some(false),
-            connection_reused,
-        };
-        let request_text = serialize_websocket_request(&request)?;
+        let timing_log_context = websocket_timing_log_context(&request, connection_reused);
+        let request_text = serde_json::to_string(&request)
+            .map_err(|err| ApiError::Stream(format!("failed to encode websocket request: {err}")))?;
 
         let current_span = Span::current();
         tokio::spawn(
@@ -879,6 +872,43 @@ async fn send_websocket_request(
     Ok(())
 }
 
+fn websocket_timing_log_context(
+    request: &Value,
+    connection_reused: bool,
+) -> ResponsesWebsocketTimingLogContext {
+    let object = request.as_object();
+    let client_metadata = object
+        .and_then(|object| object.get("client_metadata"))
+        .and_then(Value::as_object);
+    let string_field = |name: &str| {
+        object
+            .and_then(|object| object.get(name))
+            .and_then(Value::as_str)
+            .map(str::to_string)
+    };
+    let metadata_field = |name: &str| {
+        client_metadata
+            .and_then(|metadata| metadata.get(name))
+            .and_then(Value::as_str)
+            .map(str::to_string)
+    };
+    ResponsesWebsocketTimingLogContext {
+        model: string_field("model").unwrap_or_default(),
+        session_id: metadata_field(SESSION_ID_CLIENT_METADATA_KEY),
+        thread_id: metadata_field(THREAD_ID_CLIENT_METADATA_KEY),
+        turn_id: metadata_field(TURN_ID_CLIENT_METADATA_KEY),
+        traceparent: metadata_field(WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY),
+        previous_response_id: string_field("previous_response_id"),
+        request_start_ms: metadata_field(WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY),
+        warmup: object
+            .and_then(|object| object.get("generate"))
+            .and_then(Value::as_bool)
+            == Some(false),
+        connection_reused,
+    }
+}
+
+#[cfg(test)]
 fn serialize_websocket_request(request: &ResponsesWsRequest<'_>) -> Result<String, ApiError> {
     serde_json::to_string(request)
         .map_err(|err| ApiError::Stream(format!("failed to encode websocket request: {err}")))

@@ -129,6 +129,8 @@ pub enum ProviderError {
     Transient(String),
     /// A connection or streaming failure.
     Transport(String),
+    /// The provider requires the host to fall back from WebSocket transport.
+    UpgradeRequired,
     /// A provider-specific failure without a more precise common classification.
     Provider(String),
 }
@@ -143,6 +145,7 @@ impl fmt::Display for ProviderError {
             | Self::Transient(message)
             | Self::Transport(message)
             | Self::Provider(message) => f.write_str(message),
+            Self::UpgradeRequired => f.write_str("provider requires a different transport"),
             Self::RateLimited { .. } => f.write_str("provider rate limit reached"),
         }
     }
@@ -154,6 +157,55 @@ pub type ProviderResult<T> = Result<T, ProviderError>;
 pub type ProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 pub type ProviderChatStream = Pin<Box<dyn Stream<Item = ProviderResult<ProviderChatEvent>> + Send>>;
 pub type SharedModelProvider = Arc<dyn ModelProvider>;
+
+/// Provider-neutral telemetry event emitted by a WebSocket transport.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ProviderWebsocketEvent {
+    Message(Value),
+    Ignored,
+    Closed,
+    Error(ProviderError),
+}
+
+/// Host telemetry sink for provider-owned WebSocket transport.
+pub trait ProviderWebsocketTelemetry: Send + Sync {
+    fn on_request(
+        &self,
+        duration: Duration,
+        error: Option<&ProviderError>,
+        connection_reused: bool,
+    );
+
+    fn on_event(&self, event: ProviderWebsocketEvent, duration: Duration);
+}
+
+/// Input to a provider-owned WebSocket connection.
+pub struct ProviderWebsocketConnectRequest {
+    pub http_client_factory: HttpClientFactory,
+    pub extra_headers: HeaderMap,
+    pub default_headers: HeaderMap,
+    pub telemetry: Option<Arc<dyn ProviderWebsocketTelemetry>>,
+}
+
+/// A serialized provider wire request sent over a WebSocket connection.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProviderWebsocketRequest {
+    pub payload: Value,
+    pub connection_reused: bool,
+    pub turn_state: Option<Arc<OnceLock<String>>>,
+}
+
+/// Provider-neutral handle for a connected WebSocket.
+pub trait ProviderWebsocketConnection: fmt::Debug + Send + Sync {
+    fn is_closed(&self) -> ProviderFuture<'_, ProviderResult<bool>>;
+
+    fn stream_request(
+        &self,
+        request: ProviderWebsocketRequest,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;
+}
+
+pub type SharedProviderWebsocketConnection = Arc<dyn ProviderWebsocketConnection>;
 
 /// Current provider authentication state. Credential values are deliberately absent.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -319,6 +371,14 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
 
     fn websocket_connect_timeout(&self) -> Duration {
         Duration::from_secs(10)
+    }
+
+    fn connect_websocket(
+        &self,
+        request: ProviderWebsocketConnectRequest,
+    ) -> ProviderFuture<'_, ProviderResult<SharedProviderWebsocketConnection>> {
+        let _ = request;
+        Box::pin(async { Err(ProviderError::Unsupported) })
     }
 
     /// Stable cache identity for provider-owned model catalog data.

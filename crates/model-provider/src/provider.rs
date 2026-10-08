@@ -12,6 +12,8 @@ use genex_api::ChatClient;
 use genex_api::ChatRequestInput;
 use genex_api::Provider;
 use genex_api::ResponsesClient;
+use genex_api::ResponsesWebsocketClient;
+use genex_api::ResponsesWebsocketConnection;
 use genex_api::SearchClient;
 use genex_api::SearchCommands;
 use genex_api::SearchInput;
@@ -20,6 +22,7 @@ use genex_api::SearchSettings;
 use genex_api::SharedAuthProvider;
 use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
+use genex_api::WebsocketTelemetry;
 use genex_api::is_azure_responses_provider;
 use genex_http_client::HttpTransport;
 use genex_http_client::RequestBody;
@@ -39,6 +42,8 @@ use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
 use genex_protocol::protocol::RateLimitSnapshot;
+use serde_json::Value;
+use tokio_tungstenite::tungstenite::Message;
 
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
@@ -56,6 +61,10 @@ use crate::contract::ProviderUsage;
 use crate::contract::ProviderUnauthorizedRecovery;
 use crate::contract::ProviderUsageResult;
 use crate::contract::ProviderWireApi;
+use crate::contract::ProviderWebsocketConnectRequest;
+use crate::contract::ProviderWebsocketEvent;
+use crate::contract::ProviderWebsocketRequest;
+use crate::contract::SharedProviderWebsocketConnection;
 use crate::contract::RemoteCompactionSupport;
 use crate::models_endpoint::ModelsEndpoint;
 
@@ -137,6 +146,10 @@ fn map_api_error_to_provider_error(error: ApiError) -> crate::contract::Provider
             if status == http::StatusCode::UNAUTHORIZED => {
             crate::contract::ProviderError::Unauthorized
         }
+        ApiError::Transport(TransportError::Http { status, .. })
+            if status == http::StatusCode::UPGRADE_REQUIRED => {
+            crate::contract::ProviderError::UpgradeRequired
+        }
         ApiError::InvalidRequest { message } => {
             crate::contract::ProviderError::InvalidRequest(message)
         }
@@ -151,6 +164,7 @@ fn map_api_error_to_provider_error(error: ApiError) -> crate::contract::Provider
         ApiError::ServerOverloaded => {
             crate::contract::ProviderError::Transient("server overloaded".to_string())
         }
+        ApiError::Transport(error) => map_transport_error_to_provider_error(error),
         other => crate::contract::ProviderError::Provider(other.to_string()),
     }
 }
@@ -173,6 +187,123 @@ fn message_or_default(message: String) -> String {
         "provider request failed".to_string()
     } else {
         message
+    }
+}
+
+fn classify_api_error(error: &ApiError) -> crate::contract::ProviderError {
+    match error {
+        ApiError::Transport(TransportError::Http { status, .. })
+            if *status == http::StatusCode::UNAUTHORIZED => {
+            crate::contract::ProviderError::Unauthorized
+        }
+        ApiError::Transport(TransportError::Http { status, .. })
+            if *status == http::StatusCode::UPGRADE_REQUIRED => {
+            crate::contract::ProviderError::UpgradeRequired
+        }
+        ApiError::InvalidRequest { message } => {
+            crate::contract::ProviderError::InvalidRequest(message.clone())
+        }
+        ApiError::RateLimitExceeded { delay, .. } => {
+            crate::contract::ProviderError::RateLimited {
+                retry_after_seconds: delay.map(|delay| delay.as_secs()),
+            }
+        }
+        ApiError::Retryable { message, .. } => {
+            crate::contract::ProviderError::Transient(message_or_default(message.clone()))
+        }
+        ApiError::ServerOverloaded => {
+            crate::contract::ProviderError::Transient("server overloaded".to_string())
+        }
+        ApiError::Transport(TransportError::Timeout) => {
+            crate::contract::ProviderError::Transient("provider request timed out".to_string())
+        }
+        ApiError::Transport(error) => {
+            crate::contract::ProviderError::Transport(error.to_string())
+        }
+        other => crate::contract::ProviderError::Provider(other.to_string()),
+    }
+}
+
+struct ProviderWebsocketTelemetryAdapter {
+    telemetry: Arc<dyn crate::contract::ProviderWebsocketTelemetry>,
+}
+
+impl WebsocketTelemetry for ProviderWebsocketTelemetryAdapter {
+    fn on_ws_request(&self, duration: Duration, error: Option<&ApiError>, connection_reused: bool) {
+        let error = error.map(classify_api_error);
+        self.telemetry
+            .on_request(duration, error.as_ref(), connection_reused);
+    }
+
+    fn on_ws_event(
+        &self,
+        result: &std::result::Result<
+            Option<std::result::Result<Message, tokio_tungstenite::tungstenite::Error>>,
+            ApiError,
+        >,
+        duration: Duration,
+    ) {
+        let event = match result {
+            Ok(Some(Ok(Message::Text(text)))) => serde_json::from_str::<Value>(text.as_ref())
+                .map(ProviderWebsocketEvent::Message)
+                .unwrap_or_else(|_| {
+                    ProviderWebsocketEvent::Message(Value::String(text.to_string()))
+                }),
+            Ok(Some(Ok(Message::Ping(_)))) | Ok(Some(Ok(Message::Pong(_)))) => {
+                ProviderWebsocketEvent::Ignored
+            }
+            Ok(Some(Ok(Message::Binary(_))))
+            | Ok(Some(Ok(Message::Close(_))))
+            | Ok(Some(Ok(Message::Frame(_)))) => ProviderWebsocketEvent::Error(
+                crate::contract::ProviderError::Transport(
+                    "unexpected websocket message".to_string(),
+                ),
+            ),
+            Ok(Some(Err(error))) => {
+                ProviderWebsocketEvent::Error(crate::contract::ProviderError::Transport(
+                    error.to_string(),
+                ))
+            }
+            Ok(None) => ProviderWebsocketEvent::Closed,
+            Err(error) => ProviderWebsocketEvent::Error(classify_api_error(error)),
+        };
+        self.telemetry.on_event(event, duration);
+    }
+}
+
+#[derive(Debug)]
+struct RuntimeWebsocketConnection {
+    connection: ResponsesWebsocketConnection,
+}
+
+impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection {
+    fn is_closed(
+        &self,
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
+        Box::pin(async move { Ok(self.connection.is_closed().await) })
+    }
+
+    fn stream_request(
+        &self,
+        request: ProviderWebsocketRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+    > {
+        Box::pin(async move {
+            let stream = self
+                .connection
+                .stream_request_json(
+                    request.payload,
+                    request.connection_reused,
+                    request.turn_state,
+                )
+                .await
+                .map_err(map_api_error_to_provider_error)?;
+            Ok(Box::pin(stream.map(|event| {
+                event.map_err(map_api_error_to_provider_error)
+            })) as crate::contract::ProviderChatStream)
+        })
     }
 }
 
@@ -219,6 +350,41 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
 
     fn websocket_connect_timeout(&self) -> Duration {
         self.info().websocket_connect_timeout()
+    }
+
+    fn connect_websocket(
+        &self,
+        request: ProviderWebsocketConnectRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<SharedProviderWebsocketConnection>,
+    > {
+        Box::pin(async move {
+            let api_provider = self
+                .api_provider()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let api_auth = self
+                .api_auth()
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let telemetry = request.telemetry.map(|telemetry| {
+                Arc::new(ProviderWebsocketTelemetryAdapter { telemetry })
+                    as Arc<dyn WebsocketTelemetry>
+            });
+            let connection = ResponsesWebsocketClient::new(api_provider, api_auth)
+                .connect(
+                    &request.http_client_factory,
+                    request.extra_headers,
+                    request.default_headers,
+                    None,
+                    telemetry,
+                )
+                .await
+                .map_err(map_api_error_to_provider_error)?;
+            Ok(Arc::new(RuntimeWebsocketConnection { connection })
+                as SharedProviderWebsocketConnection)
+        })
     }
 
     /// Streams a provider-owned request through the provider-neutral contract.
@@ -638,6 +804,16 @@ where
         ProviderRuntime::websocket_connect_timeout(self)
     }
 
+    fn connect_websocket(
+        &self,
+        request: ProviderWebsocketConnectRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<SharedProviderWebsocketConnection>,
+    > {
+        ProviderRuntime::connect_websocket(self, request)
+    }
+
     fn capabilities(&self) -> ProviderCapabilities {
         let mut capabilities = ProviderRuntime::capabilities(self);
         capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
@@ -843,6 +1019,16 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 
     fn websocket_connect_timeout(&self) -> Duration {
         self.runtime.websocket_connect_timeout()
+    }
+
+    fn connect_websocket(
+        &self,
+        request: ProviderWebsocketConnectRequest,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<SharedProviderWebsocketConnection>,
+    > {
+        ProviderRuntime::connect_websocket(self.runtime.as_ref(), request)
     }
 
     fn capabilities(&self) -> ProviderCapabilities {

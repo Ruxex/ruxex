@@ -41,22 +41,28 @@ hosted/standalone Web Search、namespace tools の capability 判定を `Provide
 standalone Web Search の request/response transport と History/Notes backend transport も契約経由へ移す。
 拡張は provider-neutral な入力と外部機能固有の context/header を組み立て、endpoint 解決、認証、HTTP
 transport は provider adapter が所有する。
-Responses wire 判定、WebSocket、auth recovery、request/response event mapping は、依然として
-provider-specific runtime transport を必要とするため、この変更では保持した。
+Responses wire 判定、auth recovery、request/response event mapping は契約へ移行した。
 `ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。旧 constructor は
 テスト等の移行途中の caller 向けに adapter を作る互換境界として残し、AppServer の production session は
 `new_with_provider_contract` を利用する。
 
+Responses WebSocket の接続・継続を監査した。接続先解決、認証ヘッダー、idle timeout、socket pump、wire JSON の
+送受信、Responses event の正規化は `genex-api` の provider transport がproducerであり、coreのconsumerは
+socketの再利用判定、継続用payload、turn state、正規化済みevent stream、fallback/auth recovery、telemetry
+である。したがって `ModelProvider` に接続・stream・closed判定・正規化event・classified error の契約を追加し、
+既存 Responses 実装を runtime adapter に閉じ込める。coreの継続判定とturn state管理はprovider-neutralなため保持し、
+WebSocket capabilityを持たないProviderの既定値は `Unsupported` とする。
+
 Responses の 401 認証回復を監査した。HTTP と WebSocket の両方が同じ回復手順を呼び出しており、現在は
 `ProviderRuntime::auth_recovery_messages` / `recover_from_unauthorized` を core が直接参照している。
 回復の開始・完了通知と credential-manager fallback は core の consumer として保持しつつ、プロバイダ固有の
-回復開始判定・メッセージ・回復処理は `ModelProvider` の中立契約へ移す。WebSocket 接続・継続状態・telemetry
-の wire boundary は別スライスとして保持する。
+回復開始判定・メッセージ・回復処理は `ModelProvider` の中立契約へ移した。継続状態とturn stateのポリシーは
+coreに残し、WebSocketの接続・wire処理・telemetryはProvider契約へ移した。
 
 core の `ProviderRuntime::api`、`ModelProviderInfo::wire_api`、`supports_websockets` 参照を監査した。
 これらは transport 実装そのものではなく、core が Chat/Responses と WebSocket の選択を行うための provider
-能力情報であるため、`ModelProvider` の `wire_api` と `websocket` capability へ移行する。Responses WebSocket
-の接続・継続 payload・エラー mapping は具体的な provider transport として別途保持する。
+能力情報であるため、`ModelProvider` の `wire_api` と `websocket` capability へ移行した。Responses WebSocketの
+接続・継続payload送信・エラーmapping・transport telemetryもProvider契約へ移し、coreは継続判定とturn stateを保持する。
 
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
