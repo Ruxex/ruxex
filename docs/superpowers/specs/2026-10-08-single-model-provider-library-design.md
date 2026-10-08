@@ -91,6 +91,7 @@ pub struct ProviderCapabilities {
     pub usage: bool,
     pub interactive_login: bool,
     pub web_search: bool,
+    pub standalone_web_search: bool,
 }
 ```
 

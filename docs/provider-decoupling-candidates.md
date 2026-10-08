@@ -11,6 +11,10 @@ provider capability で決まるため、`ProviderCapabilities.history_notes` �
 外部の `/backend-api/codex/...` route と `x-provider-*` header は OpenAI backend 契約として
 別境界で保持する。この判断は `docs/pre-release-compatibility-inventory.md` にも記録した。
 
+同じ監査で、Web Search 拡張の `ModelProviderInfo.supports_standalone_web_search` 参照も確認した。
+実行時の共有 Provider がすでに拡張へ注入されているため、`ProviderCapabilities.standalone_web_search`
+へ移行し、拡張から設定内部型への依存を除去する。Web Search のモード設定と外部 wire 契約は保持する。
+
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
 ## 調査範囲と検証

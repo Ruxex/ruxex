@@ -20,7 +20,6 @@ use genex_extension_api::ToolContributor;
 #[cfg(test)]
 use genex_login::CredentialManager;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::config_types::WebSearchContextSize;
 use genex_protocol::config_types::WebSearchMode;
 
@@ -37,22 +36,25 @@ struct WebSearchExtensionConfig {
     settings: SearchSettings,
 }
 
-impl From<&Config> for WebSearchExtensionConfig {
-    fn from(config: &Config) -> Self {
+impl WebSearchExtensionConfig {
+    fn from_config(config: &Config, provider: &SharedModelProvider) -> Self {
         let web_search_mode = config.web_search_mode.value();
         Self {
             // Core selects this executor per turn using the feature flag or model metadata.
-            available: standalone_web_search_available(&config.model_provider, web_search_mode),
+            available: standalone_web_search_available(
+                provider.capabilities().standalone_web_search,
+                web_search_mode,
+            ),
             settings: search_settings(config, web_search_mode),
         }
     }
 }
 
 fn standalone_web_search_available(
-    provider: &ModelProviderInfo,
+    provider_supports_web_search: bool,
     web_search_mode: WebSearchMode,
 ) -> bool {
-    provider.supports_standalone_web_search && web_search_mode != WebSearchMode::Disabled
+    provider_supports_web_search && web_search_mode != WebSearchMode::Disabled
 }
 
 fn search_settings(config: &Config, web_search_mode: WebSearchMode) -> SearchSettings {
@@ -102,7 +104,7 @@ impl ThreadLifecycleContributor<Config> for WebSearchExtension {
         Box::pin(async move {
             input
                 .thread_store
-                .insert(WebSearchExtensionConfig::from(input.config));
+                .insert(WebSearchExtensionConfig::from_config(input.config, &self.provider));
         })
     }
 }
@@ -115,7 +117,7 @@ impl ConfigContributor<Config> for WebSearchExtension {
         _previous_config: &Config,
         new_config: &Config,
     ) {
-        thread_store.insert(WebSearchExtensionConfig::from(new_config));
+        thread_store.insert(WebSearchExtensionConfig::from_config(new_config, &self.provider));
     }
 }
 
@@ -237,21 +239,15 @@ mod tests {
     #[test]
     fn standalone_web_search_requires_provider_opt_in() {
         assert!(!standalone_web_search_available(
-            &ModelProviderInfo::create_responses_provider(/*base_url*/ None),
+            false,
             WebSearchMode::Live,
         ));
         assert!(standalone_web_search_available(
-            &ModelProviderInfo {
-                supports_standalone_web_search: true,
-                ..ModelProviderInfo::default()
-            },
+            true,
             WebSearchMode::Live,
         ));
         assert!(!standalone_web_search_available(
-            &ModelProviderInfo {
-                supports_standalone_web_search: true,
-                ..ModelProviderInfo::default()
-            },
+            true,
             WebSearchMode::Disabled,
         ));
     }

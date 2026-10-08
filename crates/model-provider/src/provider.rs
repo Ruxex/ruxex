@@ -61,6 +61,8 @@ pub struct ProviderCapabilities {
     pub interactive_login: bool,
     pub namespace_tools: bool,
     pub web_search: bool,
+    /// Whether the provider exposes a standalone web-search backend.
+    pub standalone_web_search: bool,
     pub external_web_access: bool,
     /// Whether the provider exposes the managed History/Notes backend.
     pub history_notes: bool,
@@ -102,6 +104,7 @@ impl Default for ProviderCapabilities {
             interactive_login: false,
             namespace_tools: true,
             web_search: true,
+            standalone_web_search: false,
             external_web_access: true,
             history_notes: false,
             remote_compaction: RemoteCompactionSupport::Unsupported,
@@ -417,6 +420,7 @@ impl ModelProvider for ConfiguredModelProvider {
 
         ProviderCapabilities {
             history_notes: self.info.is_responses_provider(),
+            standalone_web_search: self.info.supports_standalone_web_search,
             remote_compaction,
             ..ProviderCapabilities::default()
         }
@@ -611,6 +615,19 @@ mod tests {
         );
 
         assert!(provider.capabilities().history_notes);
+    }
+
+    #[test]
+    fn configured_provider_reports_standalone_web_search_capability() {
+        let provider = create_model_provider(
+            ModelProviderInfo {
+                supports_standalone_web_search: true,
+                ..ModelProviderInfo::default()
+            },
+            /*credential_manager*/ None,
+        );
+
+        assert!(provider.capabilities().standalone_web_search);
     }
 
     #[test]
