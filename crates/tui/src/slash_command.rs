@@ -19,7 +19,6 @@ pub enum SlashCommand {
     Vim,
     #[strum(serialize = "setup-default-sandbox")]
     Skills,
-    Import,
     Hooks,
     Review,
     Rename,
@@ -92,7 +91,6 @@ impl SlashCommand {
             SlashCommand::Diff => "show git diff (including untracked files)",
             SlashCommand::Mention => "mention a file",
             SlashCommand::Skills => "use skills to improve how Genex performs specific tasks",
-            SlashCommand::Import => "import setup, this project, and recent chats from Claude Code",
             SlashCommand::Hooks => "view and manage lifecycle hooks",
             SlashCommand::Daemon => "Manage the local background server.",
             SlashCommand::Status => "show current session configuration and token usage",
@@ -192,7 +190,6 @@ impl SlashCommand {
             | SlashCommand::Export
             | SlashCommand::Keymap
             | SlashCommand::Vim
-            | SlashCommand::Import
             | SlashCommand::Review
             | SlashCommand::Plan
             | SlashCommand::Cd

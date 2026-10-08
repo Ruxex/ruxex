@@ -5,7 +5,6 @@ use super::ThreadBufferedEvent;
 use super::app_server_event_targets::ServerNotificationThreadTarget;
 use super::app_server_event_targets::server_notification_thread_target;
 use super::app_server_event_targets::server_request_thread_id;
-use crate::app_command::AppCommand;
 use crate::app_event::AppEvent;
 use crate::app_server_session::AppServerSession;
 use crate::app_server_session::status_account_display_from_auth_mode;
@@ -230,26 +229,6 @@ impl App {
             }
             ServerNotification::AccountLoginCompleted(notification) if notification.success => {
                 app_server_client.refresh_models(self.app_event_tx.clone());
-            }
-            ServerNotification::ExternalAgentConfigImportCompleted(notification) => {
-                let should_report_completion =
-                    app_server_client.consume_external_agent_config_import_completion();
-                if let Err(err) = self.refresh_in_memory_config_from_disk().await {
-                    tracing::warn!(
-                        error = %err,
-                        "failed to refresh config after external agent config import"
-                    );
-                }
-                let cwd = self.chat_widget.config_ref().cwd.to_path_buf();
-                self.chat_widget.refresh_plugin_mentions();
-                self.chat_widget.submit_op(AppCommand::reload_user_config());
-                self.fetch_plugins_list(app_server_client, cwd);
-                if should_report_completion {
-                    self.chat_widget.add_plain_history_lines(
-                        crate::external_agent_config_migration::flow::external_agent_config_migration_finished_lines(notification),
-                    );
-                }
-                return;
             }
             _ => {}
         }

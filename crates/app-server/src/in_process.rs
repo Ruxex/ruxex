@@ -111,7 +111,6 @@ fn server_notification_requires_delivery(notification: &ServerNotification) -> b
             | ServerNotification::ThreadQueueChanged(_)
             | ServerNotification::ThreadSettingsUpdated(_)
             | ServerNotification::ThreadAttachmentUpdated(_)
-            | ServerNotification::ExternalAgentConfigImportCompleted(_)
             | ServerNotification::ItemCompleted(ItemCompletedNotification {
                 item: ThreadItem::AgentMessage {
                     delivery: Some(AgentMessageDelivery::Async),
@@ -781,7 +780,6 @@ mod tests {
     use super::*;
     use genex_app_server_protocol::ClientInfo;
     use genex_app_server_protocol::ConfigRequirementsReadResponse;
-    use genex_app_server_protocol::ExternalAgentConfigImportCompletedNotification;
     use genex_app_server_protocol::SessionSource as ApiSessionSource;
     use genex_app_server_protocol::ThreadAttachmentOperation;
     use genex_app_server_protocol::ThreadAttachmentUpdatedNotification;
@@ -1004,14 +1002,6 @@ mod tests {
             &ServerNotification::ThreadQueueChanged(ThreadQueueChangedNotification {
                 thread_id: "thread-1".to_string(),
             })
-        ));
-        assert!(server_notification_requires_delivery(
-            &ServerNotification::ExternalAgentConfigImportCompleted(
-                ExternalAgentConfigImportCompletedNotification {
-                    import_id: "import".to_string(),
-                    item_type_results: Vec::new(),
-                },
-            )
         ));
         assert!(server_notification_requires_delivery(
             &ServerNotification::ThreadAttachmentUpdated(ThreadAttachmentUpdatedNotification {

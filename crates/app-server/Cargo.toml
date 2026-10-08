@@ -44,7 +44,6 @@ genex-diagnostics = { workspace = true }
 genex-home = { workspace = true }
 genex-exec-server = { workspace = true }
 genex-extension-api = { workspace = true }
-genex-external-agent-migration = { workspace = true }
 genex-features = { workspace = true }
 genex-goal-extension = { workspace = true }
 genex-git-utils = { workspace = true }

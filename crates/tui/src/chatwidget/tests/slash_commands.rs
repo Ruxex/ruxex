@@ -2482,20 +2482,6 @@ async fn slash_resume_opens_picker_while_mcp_startup_is_running() {
 }
 
 #[tokio::test]
-async fn slash_import_opens_claude_code_import_picker() {
-    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-
-    chat.dispatch_command(SlashCommand::Import);
-
-    assert_matches!(
-        rx.try_recv(),
-        Ok(AppEvent::OpenExternalAgentConfigMigration)
-    );
-}
-
-
-
-#[tokio::test]
 async fn slash_resume_with_arg_requests_named_session_while_mcp_startup_is_running() {
     let (mut chat, mut rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.bottom_pane.set_task_running(/*running*/ true);

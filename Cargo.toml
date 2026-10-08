@@ -54,7 +54,6 @@ members = [
     "crates/ext/queue",
     "crates/ext/skills",
     "crates/ext/web-search",
-    "crates/external-agent-migration",
     "crates/keyring-store",
     "crates/file-search",
     "crates/file-watcher",
@@ -174,7 +173,6 @@ genex-extension-api = { path = "crates/ext/extension-api" }
 genex-extension-items = { path = "crates/ext/items" }
 genex-goal-extension = { path = "crates/ext/goal" }
 genex-history-notes-extension = { path = "crates/ext/history-notes" }
-genex-external-agent-migration = { path = "crates/external-agent-migration" }
 genex-experimental-api-macros = { path = "crates/genex-experimental-api-macros" }
 genex-features = { path = "crates/features" }
 genex-install-context = { path = "crates/install-context" }
