@@ -4,6 +4,7 @@ use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_models_manager::manager::ModelCatalogSource;
 use genex_protocol::error::Result as CoreResult;
 
+use crate::contract::ListModelsRequest;
 use crate::contract::SharedModelProvider;
 use crate::provider::SharedProviderRuntime;
 use crate::provider::provider_contract;
@@ -11,23 +12,16 @@ use crate::provider::provider_contract;
 /// Adapts a runtime provider to the manager-facing catalog source abstraction.
 #[derive(Clone, Debug)]
 pub struct ProviderModelCatalogSource {
-    provider: SharedProviderRuntime,
     provider_contract: SharedModelProvider,
 }
 
 impl ProviderModelCatalogSource {
     pub fn new(provider: SharedProviderRuntime) -> Self {
-        Self::new_with_provider_contract(provider.clone(), provider_contract(provider))
+        Self::new_with_provider_contract(provider_contract(provider))
     }
 
-    pub fn new_with_provider_contract(
-        provider: SharedProviderRuntime,
-        provider_contract: SharedModelProvider,
-    ) -> Self {
-        Self {
-            provider_contract,
-            provider,
-        }
+    pub fn new_with_provider_contract(provider_contract: SharedModelProvider) -> Self {
+        Self { provider_contract }
     }
 }
 
@@ -60,9 +54,17 @@ impl ModelCatalogSource for ProviderModelCatalogSource {
         http_client_factory: HttpClientFactory,
     ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(async move {
-            self.provider
-                .list_models(client_version, http_client_factory)
+            let catalog = self
+                .provider_contract
+                .list_models(ListModelsRequest::new(client_version, http_client_factory))
                 .await
+                .map_err(|error| genex_protocol::error::GenexErr::Fatal(error.to_string()))?;
+
+            Ok(ModelCatalogSnapshot {
+                catalog: catalog.catalog,
+                identity: catalog.identity,
+                etag: catalog.etag,
+            })
         })
     }
 }

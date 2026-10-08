@@ -452,7 +452,6 @@ pub fn build_models_manager_with_provider_contract(
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
         Arc::new(ProviderModelCatalogSource::new_with_provider_contract(
-            provider.clone(),
             provider_contract.clone(),
         )),
         provider.credential_manager(),

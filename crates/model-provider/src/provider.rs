@@ -396,12 +396,23 @@ where
 
     fn list_models(
         &self,
-        _request: crate::contract::ListModelsRequest,
+        request: crate::contract::ListModelsRequest,
     ) -> crate::contract::ProviderFuture<
         '_,
-        crate::contract::ProviderResult<genex_protocol::model_types::ModelCatalog>,
+        crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
     > {
-        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+        let client_version = request.client_version;
+        let http_client_factory = request.http_client_factory;
+        Box::pin(async move {
+            ProviderRuntime::list_models(self, &client_version, http_client_factory)
+                .await
+                .map(|snapshot| crate::contract::ProviderModelCatalog {
+                    catalog: snapshot.catalog,
+                    identity: snapshot.identity,
+                    etag: snapshot.etag,
+                })
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
     }
 
     fn auth_state(&self) -> crate::contract::ProviderAuthState {
@@ -548,12 +559,23 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 
     fn list_models(
         &self,
-        _request: crate::contract::ListModelsRequest,
+        request: crate::contract::ListModelsRequest,
     ) -> crate::contract::ProviderFuture<
         '_,
-        crate::contract::ProviderResult<genex_protocol::model_types::ModelCatalog>,
+        crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
     > {
-        Box::pin(async { Err(crate::contract::ProviderError::Unsupported) })
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            runtime
+                .list_models(&request.client_version, request.http_client_factory)
+                .await
+                .map(|snapshot| crate::contract::ProviderModelCatalog {
+                    catalog: snapshot.catalog,
+                    identity: snapshot.identity,
+                    etag: snapshot.etag,
+                })
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
     }
 
     fn auth_state(&self) -> crate::contract::ProviderAuthState {

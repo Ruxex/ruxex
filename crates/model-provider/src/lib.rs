@@ -45,6 +45,7 @@ pub use contract::ProviderChatStream;
 pub use contract::ProviderDescriptor;
 pub use contract::ProviderError;
 pub use contract::ProviderFuture;
+pub use contract::ProviderModelCatalog;
 pub use contract::ProviderResult;
 pub use contract::ProviderUsage;
 pub use contract::ProviderUsageResult;

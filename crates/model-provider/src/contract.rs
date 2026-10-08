@@ -11,6 +11,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use futures::Stream;
+use genex_http_client::HttpClientFactory;
 use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
@@ -89,6 +90,14 @@ pub enum ProviderUsage {
 }
 
 pub type ProviderUsageResult = Result<ProviderUsage, ProviderError>;
+
+/// Provider-neutral model catalog together with cache validation metadata.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderModelCatalog {
+    pub catalog: ModelCatalog,
+    pub identity: String,
+    pub etag: Option<String>,
+}
 
 /// Provider-neutral error classes exposed to a Genex host.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -174,6 +183,16 @@ pub struct ProviderAccountState {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ListModelsRequest {
     pub client_version: String,
+    pub http_client_factory: HttpClientFactory,
+}
+
+impl ListModelsRequest {
+    pub fn new(client_version: impl Into<String>, http_client_factory: HttpClientFactory) -> Self {
+        Self {
+            client_version: client_version.into(),
+            http_client_factory,
+        }
+    }
 }
 
 /// Input to a provider usage operation.
@@ -218,7 +237,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     fn list_models(
         &self,
         request: ListModelsRequest,
-    ) -> ProviderFuture<'_, ProviderResult<ModelCatalog>>;
+    ) -> ProviderFuture<'_, ProviderResult<ProviderModelCatalog>>;
 
     fn auth_state(&self) -> ProviderAuthState;
 
@@ -264,7 +283,7 @@ mod tests {
         fn list_models(
             &self,
             _request: ListModelsRequest,
-        ) -> ProviderFuture<'_, ProviderResult<ModelCatalog>> {
+        ) -> ProviderFuture<'_, ProviderResult<ProviderModelCatalog>> {
             Box::pin(async { Err(ProviderError::Unsupported) })
         }
 

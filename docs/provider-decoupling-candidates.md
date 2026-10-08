@@ -28,6 +28,8 @@ AppServer の provider-neutral contract は `MessageProcessor` の生成境界�
 これにより capability・auth・account の参照は AppServer 内で同じ契約インスタンスを共有する。モデル実行、
 モデルカタログの HTTP fetch、モデル実行、拡張バックエンドの transport は、まだ内部 `ProviderRuntime` の移行対象として残す。
 モデルカタログの cache identity と capability 判定は同じ契約ハンドルを共有する。
+モデル列挙の呼び出し自体は `ModelProvider::list_models` へ移し、既存の HTTP fetch は runtime adapter 内で
+provider-neutral な catalog/identity/ETag snapshot へ変換する。
 
 さらに `SessionConfiguration` から `TurnContext` まで同じ contract handle を引き継ぎ、compaction、
 hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
@@ -638,5 +640,5 @@ the old adapter contract.
 
 | Area | Producer/consumer audit | Decision | Verification |
 |---|---|---|---|
-| Public `ModelProvider` trait and shared handle | `genex-model-provider` produces the configured and Cloudflare runtime implementations; core Chat/session, models-manager, app-server account/capability handlers, CLI auth, Web Search, and History/Notes consume the shared handle. Account/config handlers, CLI auth, extension capability gates, and model-catalog identity/predicates now consume the provider-neutral adapter; core execution, extension backend calls, and catalog HTTP fetch still consume the runtime transport adapter. | `migrate-in-place`: split a provider-neutral public contract from the internal runtime adapter; retain the adapter only until execution, catalog transport, and extension backend consumers use neutral types | Cross-crate trait/method audit; provider adapter lifecycle/catalog capability tests; focused and full `just check --tests`; `just check` |
+| Public `ModelProvider` trait and shared handle | `genex-model-provider` produces the configured and Cloudflare runtime implementations; core Chat/session, models-manager, app-server account/capability handlers, CLI auth, Web Search, and History/Notes consume the shared handle. Account/config handlers, CLI auth, extension capability gates, and model-catalog metadata and list operation now consume the provider-neutral adapter; core execution, extension backend calls, and provider-owned catalog HTTP implementation remain behind the runtime adapter. | `migrate-in-place`: split a provider-neutral public contract from the internal runtime adapter; retain the adapter only until execution, catalog transport, and extension backend consumers use neutral types | Cross-crate trait/method audit; provider adapter lifecycle/catalog capability tests; focused and full `just check --tests`; `just check` |
 | Build-time default data-root name | `genex-utils-home-dir::find_genex_home` produces the fallback `~/.genex` path used by core, CLI, app-server, executor, and MCP startup paths; `GENEX_HOME` is the existing runtime override. The fallback directory name is repository-owned and is not an external protocol or persisted field. | `migrate-in-place`: make the fallback directory name configurable through `GENEX_DEFAULT_HOME_DIR_NAME` at build time; retain runtime `GENEX_HOME` precedence and `.genex` as the default value | Home-directory producer/consumer audit; focused `just check --tests`; `just check` |
