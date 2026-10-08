@@ -15,6 +15,10 @@ provider capability で決まるため、`ProviderCapabilities.history_notes` �
 実行時の共有 Provider がすでに拡張へ注入されているため、`ProviderCapabilities.standalone_web_search`
 へ移行し、拡張から設定内部型への依存を除去する。Web Search のモード設定と外部 wire 契約は保持する。
 
+AppServer のアカウント操作は、単一Provider化後も `CredentialManager` に直接 provider ID を渡していた。
+login/delete/logout を `ModelProvider` の中立ライフサイクルメソッドへ移し、Provider が自身の認証ストアを
+所有する境界に揃えた。外部認証の制約、共有 auth snapshot、変更通知は AppServer の既存 consumer として保持する。
+
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
 ## 調査範囲と検証

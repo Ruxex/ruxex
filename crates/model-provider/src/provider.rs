@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
@@ -13,6 +14,7 @@ use genex_api::is_azure_responses_provider;
 use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
+use genex_login::ProviderAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::ProviderAuthField;
 use genex_model_provider_info::WireApi;
@@ -131,6 +133,43 @@ pub enum ProviderUsage {
 }
 
 pub type ProviderUsageResult = std::result::Result<ProviderUsage, ProviderAccountError>;
+
+/// Provider-neutral credentials supplied by a host login flow.
+#[derive(Clone, PartialEq, Eq)]
+pub struct ProviderLoginRequest {
+    pub api_key: String,
+    pub credentials: BTreeMap<String, String>,
+}
+
+impl ProviderLoginRequest {
+    pub fn new(api_key: impl Into<String>, credentials: BTreeMap<String, String>) -> Self {
+        Self {
+            api_key: api_key.into(),
+            credentials,
+        }
+    }
+}
+
+/// Error classification for provider-owned credential lifecycle operations.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ProviderAuthError {
+    Unavailable,
+    Failed(String),
+}
+
+impl fmt::Display for ProviderAuthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Unavailable => f.write_str("provider credential lifecycle is unavailable"),
+            Self::Failed(message) => f.write_str(message),
+        }
+    }
+}
+
+impl std::error::Error for ProviderAuthError {}
+
+pub type ProviderAuthResult = std::result::Result<(), ProviderAuthError>;
+pub type ProviderDeleteResult = std::result::Result<bool, ProviderAuthError>;
 
 /// Outcome of a provider-owned attempt to recover from an authentication failure.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -284,6 +323,57 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
 
     /// Returns the current app-visible account state for this provider.
     fn account_state(&self) -> ProviderAccountResult;
+
+    /// Saves credentials for this mounted provider.
+    fn login(&self, request: ProviderLoginRequest) -> ModelProviderFuture<'_, ProviderAuthResult> {
+        Box::pin(async move {
+            let Some(credential_manager) = self.credential_manager() else {
+                return Err(ProviderAuthError::Unavailable);
+            };
+            let provider_id = self
+                .provider_id()
+                .unwrap_or(self.info().name.as_str())
+                .to_owned();
+            credential_manager
+                .login(
+                    &provider_id,
+                    ProviderAuth::api_key_with_credentials(request.api_key, request.credentials),
+                )
+                .await
+                .map_err(|err| ProviderAuthError::Failed(err.to_string()))
+        })
+    }
+
+    /// Removes persisted and in-memory credentials for this mounted provider.
+    fn delete(&self) -> ModelProviderFuture<'_, ProviderDeleteResult> {
+        Box::pin(async move {
+            let Some(credential_manager) = self.credential_manager() else {
+                return Err(ProviderAuthError::Unavailable);
+            };
+            let provider_id = self
+                .provider_id()
+                .unwrap_or(self.info().name.as_str())
+                .to_owned();
+            credential_manager
+                .delete(&provider_id)
+                .await
+                .map_err(|err| ProviderAuthError::Failed(err.to_string()))
+        })
+    }
+
+    /// Logs out from this mounted provider.
+    fn logout(&self) -> ModelProviderFuture<'_, ProviderAuthResult> {
+        Box::pin(async move {
+            let Some(credential_manager) = self.credential_manager() else {
+                return Err(ProviderAuthError::Unavailable);
+            };
+            credential_manager
+                .logout()
+                .await
+                .map(|_| ())
+                .map_err(|err| ProviderAuthError::Failed(err.to_string()))
+        })
+    }
 
     /// Returns provider-owned usage data when the provider exposes such a capability.
     fn usage(&self) -> ModelProviderFuture<'_, ProviderUsageResult> {
@@ -628,6 +718,18 @@ mod tests {
         );
 
         assert!(provider.capabilities().standalone_web_search);
+    }
+
+    #[tokio::test]
+    async fn provider_exposes_neutral_login_lifecycle() {
+        let provider = create_model_provider(
+            ModelProviderInfo::default(),
+            /*credential_manager*/ None,
+        );
+
+        let request = ProviderLoginRequest::new("api-key", std::collections::BTreeMap::new());
+        let result = provider.login(request).await;
+        assert!(matches!(result, Err(ProviderAuthError::Unavailable)));
     }
 
     #[test]

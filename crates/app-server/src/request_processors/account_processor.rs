@@ -5,7 +5,7 @@ use genex_app_server_protocol::Account;
 use genex_app_server_protocol::AccountDeleteParams;
 use genex_app_server_protocol::AccountDeleteResponse;
 use genex_app_server_protocol::GetAccountResponse;
-use genex_login::ProviderAuth;
+use genex_model_provider::ProviderLoginRequest;
 
 enum RefreshTokenRequestOutcome {
     NotAttemptedOrSucceeded,
@@ -18,7 +18,6 @@ pub(crate) struct AccountRequestProcessor {
     credential_manager: Arc<CredentialManager>,
     thread_manager: Arc<ThreadManager>,
     outgoing: Arc<OutgoingMessageSender>,
-    config: Arc<Config>,
     config_manager: ConfigManager,
 }
 
@@ -27,14 +26,12 @@ impl AccountRequestProcessor {
         credential_manager: Arc<CredentialManager>,
         thread_manager: Arc<ThreadManager>,
         outgoing: Arc<OutgoingMessageSender>,
-        config: Arc<Config>,
         config_manager: ConfigManager,
     ) -> Self {
         let processor = Self {
             credential_manager,
             thread_manager,
             outgoing,
-            config,
             config_manager,
         };
         let startup = processor.clone();
@@ -68,10 +65,9 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
         _params: AccountDeleteParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        let provider_id = self.config.model_provider_id.as_str();
-        let result = self
-            .credential_manager
-            .delete(provider_id)
+        let provider = self.thread_manager.model_provider();
+        let result = provider
+            .delete()
             .await
             .map(|deleted| AccountDeleteResponse { deleted })
             .map_err(|err| internal_error(format!("failed to delete provider credentials: {err}")));
@@ -231,11 +227,9 @@ impl AccountRequestProcessor {
             ));
         }
 
-        self.credential_manager
-            .login(
-                self.config.model_provider_id.as_str(),
-                ProviderAuth::api_key_with_credentials(api_key, credentials.clone()),
-            )
+        self.thread_manager
+            .model_provider()
+            .login(ProviderLoginRequest::new(api_key, credentials.clone()))
             .await
             .map_err(|err| internal_error(format!("failed to save api key: {err}")))
     }
@@ -327,7 +321,7 @@ impl AccountRequestProcessor {
     }
 
     async fn logout_common(&self) -> std::result::Result<Option<AuthMode>, JSONRPCErrorError> {
-        match self.credential_manager.logout().await {
+        match self.thread_manager.model_provider().logout().await {
             Ok(_) => {}
             Err(err) => {
                 return Err(internal_error(format!("logout failed: {err}")));

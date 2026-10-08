@@ -374,7 +374,6 @@ impl MessageProcessor {
             credential_manager.clone(),
             Arc::clone(&thread_manager),
             outgoing.clone(),
-            Arc::clone(&config),
             config_manager.clone(),
         );
         let catalog_processor = CatalogRequestProcessor::new(
