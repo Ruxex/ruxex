@@ -77,7 +77,6 @@ const LOG_PARTITION_ROW_LIMIT: i64 = 1_000;
 #[derive(Clone)]
 pub struct StateRuntime {
     sqlite: SqliteConfig,
-    default_provider: String,
     pool: Arc<sqlx::SqlitePool>,
     logs_pool: Arc<sqlx::SqlitePool>,
     thread_goals: GoalStore,
@@ -87,28 +86,27 @@ pub struct StateRuntime {
 }
 
 impl StateRuntime {
-    /// Initialize the state runtime using the provided SQLite configuration and default provider.
+    /// Initialize the state runtime using the provided SQLite configuration.
     ///
     /// This opens (and migrates) the SQLite databases under the configured
     /// `sqlite_home`.
     /// Logs and paginated thread history live in dedicated files to reduce
     /// lock contention with the rest of the state store.
-    pub async fn init(sqlite: SqliteConfig, default_provider: String) -> anyhow::Result<Arc<Self>> {
-        Self::init_inner(sqlite, default_provider, /*telemetry_override*/ None).await
+    pub async fn init(sqlite: SqliteConfig, _default_provider: String) -> anyhow::Result<Arc<Self>> {
+        Self::init_inner(sqlite, /*telemetry_override*/ None).await
     }
 
     #[cfg(test)]
     pub(crate) async fn init_with_telemetry_for_tests(
         sqlite: SqliteConfig,
-        default_provider: String,
+        _default_provider: String,
         telemetry_override: &dyn DbTelemetry,
     ) -> anyhow::Result<Arc<Self>> {
-        Self::init_inner(sqlite, default_provider, Some(telemetry_override)).await
+        Self::init_inner(sqlite, Some(telemetry_override)).await
     }
 
     async fn init_inner(
         sqlite: SqliteConfig,
-        default_provider: String,
         telemetry_override: Option<&dyn DbTelemetry>,
     ) -> anyhow::Result<Arc<Self>> {
         tokio::fs::create_dir_all(sqlite.home()).await?;
@@ -219,7 +217,6 @@ impl StateRuntime {
             pool,
             logs_pool,
             sqlite,
-            default_provider,
             thread_updated_at_millis: Arc::new(AtomicI64::new(thread_updated_at_millis)),
             thread_recency_at_millis: Arc::new(AtomicI64::new(thread_recency_at_millis)),
         });

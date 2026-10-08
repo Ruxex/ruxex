@@ -45,6 +45,7 @@
 - CredentialManager no longer persists or applies `active_provider`, rejects login/delete operations for a different configured provider, and treats logout as deletion of the configured provider's credentials; file, keyring, ephemeral, and legacy-read storage remain.
 - Historical provider fields have now been removed from live thread/state projections and from the `SessionMeta` protocol type; old JSONL keeps loading because unknown fields are ignored. Remaining work is the final host-surface and provider-neutral contract audit.
 - The mounted-provider list response no longer exposes `activeProviderId` or per-entry `active` selection state; it reports the single mounted provider and its auth fields.
+- `StateRuntime` no longer stores or consults a provider identity; the retained initialization parameter is compatibility-only while state metadata construction is provider-neutral.
 
 ### Task 1: Add the provider descriptor contract
 
