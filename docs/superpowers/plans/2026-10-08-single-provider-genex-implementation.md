@@ -47,6 +47,7 @@
 - The mounted-provider list response no longer exposes `activeProviderId` or per-entry `active` selection state; it reports the single mounted provider and its auth fields.
 - App-server account login/delete requests no longer carry a provider target; account operations always use the mounted provider, while response-side provider identity remains available for status display.
 - AppServer account credential changes now call provider-neutral `ModelProvider::login/delete/logout` methods; the mounted Provider owns the configured credential target.
+- CLI logout/delete now construct the configured Provider and use the same credential lifecycle methods as AppServer.
 - History/Notes extension gating now uses a provider-owned capability instead of inspecting provider configuration internals; the external backend route and headers remain retained.
 - Web Search extension gating now uses a provider-owned capability instead of inspecting provider configuration internals.
 - `StateRuntime` no longer stores or consults a provider identity; the retained initialization parameter is compatibility-only while state metadata construction is provider-neutral.

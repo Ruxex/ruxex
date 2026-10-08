@@ -2,6 +2,7 @@
 
 use genex_core::config::Config;
 use genex_login::CredentialManager;
+use genex_model_provider::create_model_provider;
 use genex_utils_cli::CliConfigOverrides;
 use std::sync::Arc;
 
@@ -40,7 +41,8 @@ pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    let logged_out = match manager.logout().await {
+    let provider = create_model_provider(config.model_provider.clone(), Some(Arc::clone(&manager)));
+    let logged_out = match provider.logout().await {
         Ok(logged_out) => logged_out,
         Err(err) => {
             eprintln!("Error logging out: {err}");
@@ -65,7 +67,8 @@ pub async fn run_login_delete(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    match manager.delete(&config.model_provider_id).await {
+    let provider = create_model_provider(config.model_provider.clone(), Some(manager));
+    match provider.delete().await {
         Ok(true) => eprintln!(
             "Deleted credentials for model provider `{}`",
             config.model_provider_id

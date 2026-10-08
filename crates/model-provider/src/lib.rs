@@ -55,6 +55,7 @@ pub use provider::ProviderUsage;
 pub use provider::ProviderUsageResult;
 pub use provider::ProviderDeleteResult;
 pub use provider::ProviderLoginRequest;
+pub use provider::ProviderLogoutResult;
 pub use provider::RemoteCompactionSupport;
 pub use provider::SharedModelProvider;
 pub use provider::create_model_provider;

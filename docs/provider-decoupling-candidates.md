@@ -19,6 +19,10 @@ AppServer のアカウント操作は、単一Provider化後も `CredentialManag
 login/delete/logout を `ModelProvider` の中立ライフサイクルメソッドへ移し、Provider が自身の認証ストアを
 所有する境界に揃えた。外部認証の制約、共有 auth snapshot、変更通知は AppServer の既存 consumer として保持する。
 
+CLI の logout/delete も同じ producer/consumer 監査を行い、設定済み Provider を構築して同じ lifecycle
+メソッドを呼ぶようにした。CLI はホスト境界として provider の選択を行うが、実行時に別 Provider を切り替える
+操作は持たない。
+
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
 ## 調査範囲と検証

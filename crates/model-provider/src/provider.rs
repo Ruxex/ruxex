@@ -170,6 +170,7 @@ impl std::error::Error for ProviderAuthError {}
 
 pub type ProviderAuthResult = std::result::Result<(), ProviderAuthError>;
 pub type ProviderDeleteResult = std::result::Result<bool, ProviderAuthError>;
+pub type ProviderLogoutResult = std::result::Result<bool, ProviderAuthError>;
 
 /// Outcome of a provider-owned attempt to recover from an authentication failure.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -362,7 +363,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     }
 
     /// Logs out from this mounted provider.
-    fn logout(&self) -> ModelProviderFuture<'_, ProviderAuthResult> {
+    fn logout(&self) -> ModelProviderFuture<'_, ProviderLogoutResult> {
         Box::pin(async move {
             let Some(credential_manager) = self.credential_manager() else {
                 return Err(ProviderAuthError::Unavailable);
@@ -370,7 +371,6 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
             credential_manager
                 .logout()
                 .await
-                .map(|_| ())
                 .map_err(|err| ProviderAuthError::Failed(err.to_string()))
         })
     }
@@ -730,6 +730,9 @@ mod tests {
         let request = ProviderLoginRequest::new("api-key", std::collections::BTreeMap::new());
         let result = provider.login(request).await;
         assert!(matches!(result, Err(ProviderAuthError::Unavailable)));
+
+        let logout_result: ProviderLogoutResult = provider.logout().await;
+        assert!(matches!(logout_result, Err(ProviderAuthError::Unavailable)));
     }
 
     #[test]
