@@ -51,6 +51,14 @@ pub enum RemoteCompactionSupport {
 /// that the active provider marks unsupported here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ProviderCapabilities {
+    /// Whether the provider can enumerate or otherwise expose its model catalog.
+    pub model_listing: bool,
+    /// Whether the provider can return a streamed chat/response result.
+    pub streaming: bool,
+    /// Whether the provider exposes a usage or quota operation.
+    pub usage: bool,
+    /// Whether the provider exposes an interactive login flow.
+    pub interactive_login: bool,
     pub namespace_tools: bool,
     pub web_search: bool,
     pub external_web_access: bool,
@@ -86,6 +94,10 @@ pub const CURRENT_PROVIDER_PROTOCOL_VERSION: &str = "1";
 impl Default for ProviderCapabilities {
     fn default() -> Self {
         Self {
+            model_listing: true,
+            streaming: true,
+            usage: false,
+            interactive_login: false,
             namespace_tools: true,
             web_search: true,
             external_web_access: true,
@@ -577,6 +589,20 @@ mod tests {
                 provider_protocol_version: CURRENT_PROVIDER_PROTOCOL_VERSION.to_string(),
             }
         );
+    }
+
+    #[test]
+    fn provider_capabilities_report_common_operation_support() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_responses_provider(None),
+            /*credential_manager*/ None,
+        );
+
+        let capabilities = provider.capabilities();
+        assert!(capabilities.model_listing);
+        assert!(capabilities.streaming);
+        assert!(!capabilities.usage);
+        assert!(!capabilities.interactive_login);
     }
 
     #[test]
