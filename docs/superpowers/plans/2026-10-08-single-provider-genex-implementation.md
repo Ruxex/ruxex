@@ -53,6 +53,8 @@
 - Session `ModelClient` instances now receive the `ThreadManager`'s shared Provider handle instead of recreating a provider from thread/client configuration.
 - Provider-constructing `ModelClient` constructors were removed; callers must inject the runtime's shared Provider handle.
 - AppServer now constructs the runtime Provider at its host boundary and injects that shared handle into `MessageProcessor`; request processing no longer reconstructs a Provider from configuration.
+- Provider construction no longer accepts a separate provider-ID selector; the resolved single `ModelProviderInfo.id` is the only runtime credential/descriptor identity source.
+- Web Search and History Notes extensions receive the same mounted Provider handle instead of rebuilding one from per-thread configuration snapshots.
 - Configuration construction now parses one `[model_provider]` definition (with an optional stable `id`) and resolves it to an explicit `ResolvedModelProvider` singleton before the runtime `Config` is built; no provider map crosses the runtime boundary.
 - Configuration fixtures, CLI override paths, and the generated config schema now use the singular provider definition; provider switching requires another runtime/data root.
 - Profile and session-thread configuration no longer emit Provider selection or Provider-definition fields; Provider settings remain outside per-thread configuration.

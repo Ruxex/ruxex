@@ -50,7 +50,6 @@ use genex_login::default_client::originator;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::create_model_provider;
-use genex_model_provider::create_model_provider_for_id;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
@@ -428,11 +427,7 @@ pub fn build_model_provider(
     config: &Config,
     credential_manager: Arc<CredentialManager>,
 ) -> SharedModelProvider {
-    create_model_provider_for_id(
-        config.model_provider_id.clone(),
-        config.model_provider.clone(),
-        Some(credential_manager),
-    )
+    create_model_provider(config.model_provider.clone(), Some(credential_manager))
 }
 
 pub fn build_models_manager_with_provider(

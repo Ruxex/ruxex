@@ -398,6 +398,9 @@ pub fn resolve_model_provider(
         return Err("model_provider.id must not be empty".to_string());
     }
 
+    let mut provider_info = provider_info;
+    provider_info.id = Some(provider_id.clone());
+
     Ok(ResolvedModelProvider {
         id: provider_id,
         info: provider_info,

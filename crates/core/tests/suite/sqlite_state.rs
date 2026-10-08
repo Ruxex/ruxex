@@ -29,7 +29,6 @@ use genex_protocol::protocol::ThreadSettingsOverrides;
 use genex_protocol::protocol::UserMessageEvent;
 use genex_protocol::user_input::UserInput;
 use genex_thread_store::ThreadMetadataPatch;
-use genex_web_search_extension::install as install_web_search_extension;
 use core_test_support::responses;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;

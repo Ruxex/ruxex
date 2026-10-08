@@ -15,7 +15,7 @@ use genex_extension_api::ToolCall;
 use genex_extension_api::ToolContributor;
 use genex_extension_api::ToolExecutor;
 use genex_login::CredentialManager;
-use genex_model_provider::create_model_provider_for_id;
+use genex_model_provider::SharedModelProvider;
 use genex_protocol::AgentPath;
 use genex_utils_output_truncation::TruncationPolicy;
 use serde_json::json;
@@ -29,6 +29,7 @@ const MAX_THREAD_HINT_BYTES: usize = 4_000;
 
 struct HistoryNotesExtension {
     credential_manager: Arc<CredentialManager>,
+    provider: SharedModelProvider,
 }
 
 struct HistoryNotesExtensionConfig {
@@ -49,11 +50,7 @@ impl HistoryNotesExtension {
             && self.credential_manager.current_auth_uses_managed_auth()
         {
             thread_store.insert(HistoryNotesExtensionConfig {
-                backend: HistoryNotesBackend::new(create_model_provider_for_id(
-                    config.model_provider_id.clone(),
-                    config.model_provider.clone(),
-                    Some(self.credential_manager.clone()),
-                )),
+                backend: HistoryNotesBackend::new(self.provider.clone()),
             });
         } else {
             thread_store.remove::<HistoryNotesExtensionConfig>();
@@ -167,8 +164,12 @@ impl ToolContributor for HistoryNotesExtension {
 pub fn install(
     registry: &mut ExtensionRegistryBuilder<Config>,
     credential_manager: Arc<CredentialManager>,
+    provider: SharedModelProvider,
 ) {
-    let extension = Arc::new(HistoryNotesExtension { credential_manager });
+    let extension = Arc::new(HistoryNotesExtension {
+        credential_manager,
+        provider,
+    });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());
     registry.prompt_contributor(extension.clone());

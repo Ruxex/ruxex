@@ -22,6 +22,7 @@ use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
+use genex_model_provider::create_model_provider;
 use genex_model_provider_info::WireApi;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
@@ -83,8 +84,12 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
     );
     let credential_manager =
         CredentialManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
+    let provider = create_model_provider(
+        config.model_provider.clone(),
+        Some(Arc::clone(&credential_manager)),
+    );
     let mut builder = ExtensionRegistryBuilder::<Config>::new();
-    install(&mut builder, credential_manager);
+    install(&mut builder, credential_manager, provider);
     let registry = builder.build();
     let session_store = ExtensionData::new("session-123");
     let thread_store = ExtensionData::new("thread-123");
@@ -379,7 +384,12 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
     )] {
         config.model_provider = provider;
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
-        install(&mut builder, CredentialManager::from_auth_for_testing(auth));
+        let credential_manager = CredentialManager::from_auth_for_testing(auth);
+        let model_provider = create_model_provider(
+            config.model_provider.clone(),
+            Some(Arc::clone(&credential_manager)),
+        );
+        install(&mut builder, credential_manager, model_provider);
         let registry = builder.build();
         let session_store = ExtensionData::new("session-123");
         let thread_store = ExtensionData::new("thread-123");

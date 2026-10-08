@@ -54,4 +54,3 @@ pub use provider::ProviderUsageResult;
 pub use provider::RemoteCompactionSupport;
 pub use provider::SharedModelProvider;
 pub use provider::create_model_provider;
-pub use provider::create_model_provider_for_id;

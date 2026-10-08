@@ -11,6 +11,8 @@ use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
+use genex_model_provider::create_model_provider;
+use genex_model_provider_info::ModelProviderInfo;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -57,10 +59,16 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
     )
     .await;
     let auth = GenexAuth::Headers(AuthHeaders::new(HeaderMap::new()));
+    let credential_manager = CredentialManager::from_auth_for_testing(auth.clone());
+    let provider = create_model_provider(
+        ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri()))),
+        Some(Arc::clone(&credential_manager)),
+    );
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     install(
         &mut extensions,
-        CredentialManager::from_auth_for_testing(auth.clone()),
+        credential_manager,
+        provider,
     );
     let test = test_genex()
         .with_auth(auth)

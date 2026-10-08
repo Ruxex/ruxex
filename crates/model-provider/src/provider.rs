@@ -353,16 +353,8 @@ pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
 ) -> SharedModelProvider {
-    create_model_provider_internal(None, provider_info, credential_manager)
-}
-
-/// Creates a model provider with an explicit configured provider ID.
-pub fn create_model_provider_for_id(
-    provider_id: impl Into<String>,
-    provider_info: ModelProviderInfo,
-    credential_manager: Option<Arc<CredentialManager>>,
-) -> SharedModelProvider {
-    create_model_provider_internal(Some(provider_id.into()), provider_info, credential_manager)
+    let provider_id = provider_info.id.clone();
+    create_model_provider_internal(provider_id, provider_info, credential_manager)
 }
 
 fn create_model_provider_internal(
@@ -556,9 +548,11 @@ mod tests {
 
     #[test]
     fn provider_descriptor_uses_explicit_provider_id_and_round_trips() {
-        let provider = create_model_provider_for_id(
-            "account-a",
-            ModelProviderInfo::create_responses_provider(None),
+        let provider = create_model_provider(
+            ModelProviderInfo {
+                id: Some("account-a".to_string()),
+                ..ModelProviderInfo::create_responses_provider(None)
+            },
             /*credential_manager*/ None,
         );
 
@@ -778,14 +772,18 @@ mod tests {
             .await
             .expect("provider A login");
 
-        let provider_a = create_model_provider_for_id(
-            "provider-a",
-            ModelProviderInfo::create_responses_provider(None),
+        let provider_a = create_model_provider(
+            ModelProviderInfo {
+                id: Some("provider-a".to_string()),
+                ..ModelProviderInfo::create_responses_provider(None)
+            },
             Some(Arc::clone(&credential_manager)),
         );
-        let provider_b = create_model_provider_for_id(
-            "provider-b",
-            ModelProviderInfo::create_responses_provider(None),
+        let provider_b = create_model_provider(
+            ModelProviderInfo {
+                id: Some("provider-b".to_string()),
+                ..ModelProviderInfo::create_responses_provider(None)
+            },
             Some(credential_manager),
         );
 

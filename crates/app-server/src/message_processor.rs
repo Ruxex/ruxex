@@ -312,6 +312,7 @@ impl MessageProcessor {
                 thread_extensions(ThreadExtensionDependencies {
                     event_sink: Arc::clone(&extension_event_sink),
                     credential_manager: credential_manager.clone(),
+                    provider: Arc::clone(&provider),
                     state_db: state_db.clone(),
                     thread_manager: thread_manager.clone(),
                     goal_service: Arc::clone(&goal_service),

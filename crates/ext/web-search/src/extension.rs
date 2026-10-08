@@ -17,8 +17,9 @@ use genex_extension_api::ThreadLifecycleContributor;
 use genex_extension_api::ThreadOriginator;
 use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
+#[cfg(test)]
 use genex_login::CredentialManager;
-use genex_model_provider::create_model_provider_for_id;
+use genex_model_provider::SharedModelProvider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::config_types::WebSearchContextSize;
 use genex_protocol::config_types::WebSearchMode;
@@ -27,14 +28,12 @@ use crate::tool::WebSearchTool;
 
 #[derive(Clone)]
 struct WebSearchExtension {
-    credential_manager: Arc<CredentialManager>,
+    provider: SharedModelProvider,
 }
 
 #[derive(Clone)]
 struct WebSearchExtensionConfig {
     available: bool,
-    provider_id: String,
-    provider: ModelProviderInfo,
     settings: SearchSettings,
 }
 
@@ -44,8 +43,6 @@ impl From<&Config> for WebSearchExtensionConfig {
         Self {
             // Core selects this executor per turn using the feature flag or model metadata.
             available: standalone_web_search_available(&config.model_provider, web_search_mode),
-            provider_id: config.model_provider_id.clone(),
-            provider: config.model_provider.clone(),
             settings: search_settings(config, web_search_mode),
         }
     }
@@ -139,11 +136,7 @@ impl ToolContributor for WebSearchExtension {
 
         vec![Arc::new(WebSearchTool {
             session_id: session_store.level_id().to_string(),
-            provider: create_model_provider_for_id(
-                config.provider_id.clone(),
-                config.provider.clone(),
-                Some(self.credential_manager.clone()),
-            ),
+            provider: self.provider.clone(),
             settings: config.settings.clone(),
             originator: thread_store
                 .get::<ThreadOriginator>()
@@ -154,9 +147,9 @@ impl ToolContributor for WebSearchExtension {
 
 pub fn install(
     registry: &mut ExtensionRegistryBuilder<Config>,
-    credential_manager: Arc<CredentialManager>,
+    provider: SharedModelProvider,
 ) {
-    let extension = Arc::new(WebSearchExtension { credential_manager });
+    let extension = Arc::new(WebSearchExtension { provider });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());
     registry.tool_contributor(extension);
@@ -168,6 +161,7 @@ mod tests {
     use genex_extension_api::ExtensionRegistryBuilder;
     use genex_extension_api::ToolName;
     use genex_login::GenexAuth;
+    use genex_model_provider::create_model_provider;
     use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
 
@@ -182,6 +176,7 @@ mod tests {
     use genex_api::ExternalWebAccess;
     use genex_api::ExternalWebAccessMode;
     use genex_protocol::config_types::WebSearchMode;
+    use std::sync::Arc;
 
     #[test]
     fn external_web_access_preserves_legacy_values_until_indexed() {
@@ -205,20 +200,24 @@ mod tests {
     #[test]
     fn installed_extension_contributes_web_run_when_enabled() {
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
+        let credential_manager =
+            CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("dummy"));
+        let provider = create_model_provider(
+            ModelProviderInfo {
+                supports_standalone_web_search: true,
+                ..ModelProviderInfo::default()
+            },
+            Some(Arc::clone(&credential_manager)),
+        );
         install(
             &mut builder,
-            CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("dummy")),
+            provider,
         );
         let registry = builder.build();
         let session_store = ExtensionData::new("session");
         let thread_store = ExtensionData::new("11111111-1111-4111-8111-111111111111");
         thread_store.insert(WebSearchExtensionConfig {
             available: true,
-            provider_id: "test".to_string(),
-            provider: ModelProviderInfo {
-                supports_standalone_web_search: true,
-                ..ModelProviderInfo::default()
-            },
             settings: Default::default(),
         });
 

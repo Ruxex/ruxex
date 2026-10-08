@@ -230,7 +230,11 @@ fn test_resolve_model_provider_uses_builtin_default() {
         .expect("built-in provider should resolve");
 
     assert_eq!(resolved.id, CLOUDFLARE_PROVIDER_ID);
-    assert_eq!(resolved.info, ModelProviderInfo::create_cloudflare_provider());
+    assert_eq!(resolved.info.id.as_deref(), Some(CLOUDFLARE_PROVIDER_ID));
+    assert_eq!(
+        resolved.info.name,
+        ModelProviderInfo::create_cloudflare_provider().name
+    );
 }
 
 #[test]
