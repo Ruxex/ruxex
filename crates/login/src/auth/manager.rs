@@ -1928,6 +1928,18 @@ impl CredentialManager {
             .and_then(|provider_id| provider_id.clone())
     }
 
+    /// Returns whether storage contains an explicit provider selection.
+    pub fn has_persisted_provider_selection(&self) -> bool {
+        load_auth_dot_json(
+            &self.genex_home,
+            self.auth_credentials_store_mode,
+            self.keyring_backend_kind,
+        )
+        .ok()
+        .flatten()
+        .is_some_and(|auth| auth.selection_configured())
+    }
+
     /// Log out by clearing active provider selection while retaining credentials.
     pub async fn logout(&self) -> std::io::Result<bool> {
         self.ensure_logout_allowed()?;
@@ -2145,7 +2157,10 @@ mod tests {
         let serialized =
             std::fs::read_to_string(home.path().join("auth.json")).expect("read migrated auth");
         assert!(serialized.contains("providers"));
-        assert!(!serialized.contains("\"auth_mode\""));
+        let serialized_json: serde_json::Value =
+            serde_json::from_str(&serialized).expect("migrated auth should be valid JSON");
+        assert!(serialized_json["providers"]["provider-a"]["auth_mode"].is_string());
+        assert!(serialized_json.get("auth_mode").is_none());
         assert_eq!(
             load_auth_dot_json(home.path(), mode, keyring)
                 .expect("load migrated auth")

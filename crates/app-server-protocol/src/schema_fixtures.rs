@@ -12,6 +12,7 @@ use crate::export::trim_trailing_line_whitespace;
 use crate::precomputed_exports::PrecomputedExports;
 use crate::protocol::common::visit_client_response_types;
 use crate::protocol::common::visit_server_response_types;
+use crate::protocol::v2::McpServerRefreshParams;
 use anyhow::Context;
 use anyhow::Result;
 use serde_json::Map;
@@ -61,6 +62,10 @@ pub fn generate_typescript_schema_fixture_subtree_for_tests() -> Result<BTreeMap
     let mut seen = HashSet::new();
 
     collect_typescript_fixture_file::<ClientRequest>(&mut files, &mut seen)?;
+    // `ClientRequest` references this type through a manual namespace-qualified
+    // TypeScript override, so ts-rs cannot discover it through Rust type
+    // traversal alone.
+    collect_typescript_fixture_file::<McpServerRefreshParams>(&mut files, &mut seen)?;
     collect_typescript_fixture_file::<ClientResponse>(&mut files, &mut seen)?;
     visit_typescript_fixture_dependencies(&mut files, &mut seen, |visitor| {
         visit_client_response_types(visitor);

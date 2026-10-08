@@ -28,15 +28,15 @@ fn typescript_schema_fixtures_match_generated() -> Result<()> {
         .context("generated ClientResponse.ts should exist")?;
     let client_response = String::from_utf8_lossy(client_response);
     anyhow::ensure!(
-        client_response.contains("method: \"thread/list\""),
+        client_response.contains("\"method\": \"thread/list\""),
         "ClientResponse.ts should contain the thread/list response variant"
     );
     anyhow::ensure!(
-        client_response.contains("method: \"turn/start\""),
+        client_response.contains("\"method\": \"turn/start\""),
         "ClientResponse.ts should contain the turn/start response variant"
     );
     anyhow::ensure!(
-        !client_response.contains("method: \"environment/info\""),
+        !client_response.contains("\"method\": \"environment/info\""),
         "stable ClientResponse.ts should omit experimental response variants"
     );
     let generated_index = String::from_utf8_lossy(

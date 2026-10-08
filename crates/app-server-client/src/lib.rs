@@ -1376,7 +1376,9 @@ mod tests {
                 JSONRPCMessage::Response(JSONRPCResponse {
                     id: request.id,
                     result: serde_json::json!({
+                        "providerId": "mock_provider",
                         "account": null,
+                        "authStatus": "notRequired",
                         "requiresAuth": false,
                         "padding": padding,
                     }),

@@ -163,6 +163,14 @@ pub(crate) async fn provider_auth(
             None => fallback_auth,
         };
     }
+    if credential_manager
+        .is_some_and(|credential_manager| credential_manager.current_auth_uses_managed_auth())
+    {
+        return match credential_manager {
+            Some(credential_manager) => credential_manager.auth().await,
+            None => fallback_auth,
+        };
+    }
     if let (Some(credential_manager), Some(provider_id)) = (credential_manager, provider_id) {
         return credential_manager.auth_for_provider(provider_id).await;
     }

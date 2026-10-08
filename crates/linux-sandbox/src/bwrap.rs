@@ -2142,9 +2142,11 @@ mod tests {
                 PathBuf::from("/.git"),
                 PathBuf::from("/.agents"),
                 PathBuf::from("/.genex"),
+                PathBuf::from("/.aws"),
                 PathBuf::from("/dev/.git"),
                 PathBuf::from("/dev/.agents"),
                 PathBuf::from("/dev/.genex"),
+                PathBuf::from("/dev/.aws"),
             ]
         );
         let daemon_directory =
@@ -2196,6 +2198,12 @@ mod tests {
                 "/.genex".to_string(),
                 "--remount-ro".to_string(),
                 "/.genex".to_string(),
+                "--perms".to_string(),
+                "555".to_string(),
+                "--tmpfs".to_string(),
+                "/.aws".to_string(),
+                "--remount-ro".to_string(),
+                "/.aws".to_string(),
                 "--ro-bind".to_string(),
                 path_to_string(&synthetic_mount_registry_root()),
                 path_to_string(&synthetic_mount_registry_root()),
@@ -2224,6 +2232,12 @@ mod tests {
                 "/dev/.genex".to_string(),
                 "--remount-ro".to_string(),
                 "/dev/.genex".to_string(),
+                "--perms".to_string(),
+                "555".to_string(),
+                "--tmpfs".to_string(),
+                "/dev/.aws".to_string(),
+                "--remount-ro".to_string(),
+                "/dev/.aws".to_string(),
             ]
         );
     }

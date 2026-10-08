@@ -278,6 +278,26 @@ impl Serialize for AuthDotJson {
     }
 }
 
+#[derive(Default)]
+enum ActiveProviderField {
+    #[default]
+    Absent,
+    Null,
+    Value(String),
+}
+
+impl<'de> Deserialize<'de> for ActiveProviderField {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(match Option::<String>::deserialize(deserializer)? {
+            Some(provider_id) => Self::Value(provider_id),
+            None => Self::Null,
+        })
+    }
+}
+
 impl<'de> Deserialize<'de> for AuthDotJson {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -288,7 +308,7 @@ impl<'de> Deserialize<'de> for AuthDotJson {
             #[serde(default)]
             providers: BTreeMap<String, ProviderAuth>,
             #[serde(default)]
-            active_provider: Option<Option<String>>,
+            active_provider: ActiveProviderField,
             #[serde(default)]
             auth_mode: Option<String>,
             #[serde(default)]
@@ -296,8 +316,11 @@ impl<'de> Deserialize<'de> for AuthDotJson {
         }
 
         let wire = Wire::deserialize(deserializer)?;
-        let selection_configured = wire.active_provider.is_some();
-        let active_provider = wire.active_provider.flatten();
+        let (selection_configured, active_provider) = match wire.active_provider {
+            ActiveProviderField::Absent => (false, None),
+            ActiveProviderField::Null => (true, None),
+            ActiveProviderField::Value(provider_id) => (true, Some(provider_id)),
+        };
         let (auth_mode, invalid_auth_mode, raw_auth_mode) = parse_auth_mode(wire.auth_mode);
         let legacy = if wire.providers.is_empty() && !selection_configured {
             (auth_mode.is_some() || wire.api_key.is_some() || invalid_auth_mode).then_some(

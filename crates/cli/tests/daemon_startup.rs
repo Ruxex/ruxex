@@ -45,7 +45,7 @@ async fn daemon_startup(command: &str) -> Result<()> {
     )?;
     fs::write(
         home.path().join("auth.json"),
-        r#"{"PROVIDER_API_KEY":"daemon-startup-test","tokens":null,"last_refresh":null}"#,
+        r#"{"providers":{"my-provider":{"auth_mode":"apiKey","api_key":"daemon-startup-test"}},"active_provider":"my-provider"}"#,
     )?;
     let mut env = std::env::vars().collect::<std::collections::HashMap<_, _>>();
     for key in [

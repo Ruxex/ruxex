@@ -78,7 +78,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                 let result = match request.method.as_str() {
                     "initialize" => json!({"userAgent": "reconnect-pty"}),
                     "account/read" => {
-                        json!({"account": {"type": "apiKey"}, "requiresAuth": false})
+                        json!({"providerId": "provider", "account": {"type": "apiKey"}, "authStatus": "notRequired", "requiresAuth": false})
                     }
                     "model/list" => json!({"data": [], "nextCursor": null}),
                     "config/read" => {

@@ -262,7 +262,10 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
     owner.allow_local_binding = false;
     assert_eq!(
         restricted.environment_policy(),
-        EnvironmentNetworkPolicy::from_config(&owner, /*managed_allowed_domains_only*/ false)
+        EnvironmentNetworkPolicy {
+            requires_proxy: true,
+            ..EnvironmentNetworkPolicy::from_config(&owner, /*managed_allowed_domains_only*/ false)
+        }
     );
     let external = PermissionProfile::External {
         network: NetworkSandboxPolicy::Enabled,
@@ -272,6 +275,7 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
     assert_eq!(
         external_rootless.environment_policy(),
         EnvironmentNetworkPolicy {
+            requires_proxy: true,
             managed_allowed_domains_only: true,
             ..owner_policy.clone()
         }
