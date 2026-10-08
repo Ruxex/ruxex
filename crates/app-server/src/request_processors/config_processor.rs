@@ -115,7 +115,7 @@ impl ConfigRequestProcessor {
             .map_err(map_error)?;
         let requirements = map_requirements_to_api(
             requirements,
-            self.thread_manager.auth_manager().allowed_login_methods(),
+            self.thread_manager.credential_manager().allowed_login_methods(),
         );
 
         Ok(ConfigRequirementsReadResponse { requirements })
@@ -162,7 +162,7 @@ impl ConfigRequestProcessor {
         let provider = create_model_provider_for_id(
             config.model_provider_id,
             config.model_provider,
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
         let capabilities = provider.capabilities();
         Ok(ModelProviderCapabilitiesReadResponse {

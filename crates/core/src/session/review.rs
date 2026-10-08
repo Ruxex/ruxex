@@ -35,7 +35,7 @@ pub(super) async fn spawn_review_thread(
 
     let review_prompt = resolved.prompt.clone();
     let provider = parent_turn_context.provider.clone();
-    let auth_manager = parent_turn_context.auth_manager.clone();
+    let credential_manager = parent_turn_context.credential_manager.clone();
     let model_info = (**parent_turn_context.model_info()).clone();
     let mut selected = parent_turn_context.initial_settings.selected().clone();
     let reasoning_effort = selected.collaboration_mode.reasoning_effort();
@@ -55,7 +55,7 @@ pub(super) async fn spawn_review_thread(
         );
     }
 
-    let auth_manager_for_context = auth_manager.clone();
+    let credential_manager_for_context = credential_manager.clone();
     let provider_for_context = provider.clone();
     let session_source = parent_turn_context.session_source.clone();
     let (forked_from_thread_id, thread_source, service_tier) = {
@@ -115,7 +115,7 @@ pub(super) async fn spawn_review_thread(
         use_model_token_budget_defaults: per_turn_config.features.enabled(Feature::TokenBudget)
             && !super::token_budget::has_explicit_settings(&per_turn_config),
         config: per_turn_config,
-        auth_manager: auth_manager_for_context,
+        credential_manager: credential_manager_for_context,
         initial_settings: Arc::clone(&step_settings),
         disabled_plugin_ids: parent_turn_context.disabled_plugin_ids.clone(),
         current_settings: ArcSwap::from(step_settings),

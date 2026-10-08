@@ -123,7 +123,7 @@ async fn start_review_conversation(
     sub_agent_config.model = Some(ctx.model_info().slug.clone());
     (run_genex_thread_one_shot(
         sub_agent_config,
-        Arc::clone(&session.services.auth_manager),
+        Arc::clone(&session.services.credential_manager),
         Arc::clone(&session.services.models_manager),
         input,
         Arc::clone(&session),

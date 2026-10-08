@@ -42,10 +42,10 @@ pub(crate) async fn start_authorization(
     callback_id: &str,
     client_registration: McpOAuthClientRegistration,
 ) -> Result<PreparedOAuthLogin> {
-    let mut auth_manager =
+    let mut credential_manager =
         AuthorizationManager::new_with_oauth_http_client(server_url, http_client).await?;
-    auth_manager.set_allow_missing_issuer(true);
-    let metadata = auth_manager.resolve_metadata().await?.metadata;
+    credential_manager.set_allow_missing_issuer(true);
+    let metadata = credential_manager.resolve_metadata().await?.metadata;
     validate_authorization_server_endpoints(&metadata)?;
     let authorization_server_issuer = metadata.issuer.clone();
     let callback_mode = callback_mode(&metadata)?;
@@ -109,7 +109,7 @@ pub(crate) async fn start_authorization(
         McpOAuthClientRegistration::Dcr => None,
     };
 
-    auth_manager.set_metadata(metadata);
+    credential_manager.set_metadata(metadata);
     let mut request = AuthorizationRequest::new(redirect_uri.clone())
         .with_scopes(scopes.iter().copied())
         .with_client_name("Genex");
@@ -119,9 +119,9 @@ pub(crate) async fn start_authorization(
         // https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/
         request = request.with_client_metadata_url(client_metadata_url);
     }
-    let session = AuthorizationSession::new(auth_manager, request)
+    let session = AuthorizationSession::new(credential_manager, request)
         .await
-        .map_err(|(_auth_manager, error)| error)?;
+        .map_err(|(_credential_manager, error)| error)?;
 
     Ok(PreparedOAuthLogin {
         oauth_state: OAuthState::Session(session),

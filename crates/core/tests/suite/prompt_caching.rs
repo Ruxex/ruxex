@@ -154,7 +154,7 @@ async fn prompt_tools_are_consistent_across_requests(
         .instructions_template = Some(MODEL_BASE_INSTRUCTIONS.to_string());
     // Supply model instructions without making them an explicit config catalog override.
     let models_manager = Arc::new(StaticModelsManager::new(
-        /*auth_manager*/ None,
+        /*credential_manager*/ None,
         ModelCatalog {
             models: vec![model],
         },

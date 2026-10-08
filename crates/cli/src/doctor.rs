@@ -48,7 +48,7 @@ use genex_install_context::InstallContext;
 use genex_install_context::InstallMethod;
 use genex_install_context::StandalonePlatform;
 use genex_login::AuthDotJson;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GENEX_API_KEY_ENV_VAR;
 use genex_login::GenexAuth;
 use genex_login::default_client::create_client_without_request_logging;
@@ -364,9 +364,9 @@ async fn build_report(
     }));
     match &config_result {
         Ok(config) => {
-            let auth_manager_result =
-                AuthManager::shared_from_config(config, /*enable_api_key_env*/ true).await;
-            let auth_manager = auth_manager_result.as_ref().ok().cloned();
+            let credential_manager_result =
+                CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await;
+            let credential_manager = credential_manager_result.as_ref().ok().cloned();
             let reachability_plan = provider_reachability_plan(config);
             #[cfg(target_os = "macos")]
             let reachability_url = reachability_plan
@@ -398,7 +398,7 @@ async fn build_report(
                     })
                 },
                 async {
-                    run_sync_check("auth", progress.clone(), || match &auth_manager_result {
+                    run_sync_check("auth", progress.clone(), || match &credential_manager_result {
                         Ok(_) => auth_check(config),
                         Err(error) => DoctorCheck::new(
                             "auth.load",
@@ -419,7 +419,7 @@ async fn build_report(
                 run_async_check(
                     "websocket",
                     progress.clone(),
-                    websocket_reachability_check(config, auth_manager),
+                    websocket_reachability_check(config, credential_manager),
                 ),
                 run_async_check("MCP", progress.clone(), mcp_check(config)),
                 async {
@@ -2054,7 +2054,7 @@ fn is_rollout_file(path: &Path) -> bool {
 
 async fn websocket_reachability_check(
     config: &Config,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 ) -> DoctorCheck {
     let provider = &config.model_provider;
     let mut details = vec![
@@ -2083,7 +2083,7 @@ async fn websocket_reachability_check(
     let runtime_provider = create_model_provider_for_id(
         config.model_provider_id.clone(),
         provider.clone(),
-        auth_manager,
+        credential_manager,
     );
     let auth = runtime_provider.auth().await;
     details.push(format!(

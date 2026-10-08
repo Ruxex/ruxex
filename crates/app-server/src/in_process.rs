@@ -85,7 +85,7 @@ use genex_core::check_execpolicy_for_warnings;
 use genex_core::config::Config;
 use genex_core::resolve_installation_id;
 use genex_exec_server::EnvironmentManager;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_protocol::protocol::SessionSource;
 pub use genex_rollout::StateDbHandle;
 pub use genex_state::log_db::LogDbLayer;
@@ -414,8 +414,8 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
     args.config.auth_config().validate()?;
     let channel_capacity = args.channel_capacity.max(1);
     let installation_id = resolve_installation_id(&args.config.genex_home).await?;
-    let auth_manager =
-        AuthManager::shared_from_config(args.config.as_ref(), args.enable_api_key_env)
+    let credential_manager =
+        CredentialManager::shared_from_config(args.config.as_ref(), args.enable_api_key_env)
             .await
             .map_err(IoError::other)?;
     let (client_tx, mut client_rx) = mpsc::channel::<InProcessClientMessage>(channel_capacity);
@@ -470,9 +470,9 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
                 config_warnings: args.config_warnings,
                 session_source: args.session_source,
                 user_verification: Arc::new(crate::user_verification::Service::new(Arc::clone(
-                    &auth_manager,
+                    &credential_manager,
                 ))),
-                auth_manager,
+                credential_manager,
                 installation_id,
                 code_mode_session_provider: None,
                 plugin_startup_tasks: Some(PluginStartupConfig::Current),

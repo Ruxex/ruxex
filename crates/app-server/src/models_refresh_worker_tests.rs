@@ -89,7 +89,7 @@ async fn refreshes_immediately_periodically_and_stops_when_dropped() {
     let models_manager: SharedModelsManager = Arc::new(RemoteModelsManager::new(
         genex_home.path().to_path_buf(),
         endpoint.clone(),
-        /*auth_manager*/ None,
+        /*credential_manager*/ None,
     ));
     let worker = spawn_with_interval(
         &models_manager,

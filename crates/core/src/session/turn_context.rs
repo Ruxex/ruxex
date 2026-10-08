@@ -283,7 +283,7 @@ pub struct TurnContext {
     pub(crate) configured_token_budget: Option<TokenBudgetConfig>,
     /// Captured once so later steps do not re-read config layers to detect user preferences.
     pub(crate) use_model_token_budget_defaults: bool,
-    pub(crate) auth_manager: Option<Arc<AuthManager>>,
+    pub(crate) credential_manager: Option<Arc<CredentialManager>>,
     /// Frozen settings used to construct this context. Legacy turn consumers
     /// keep this view even when later steps use different settings.
     pub(crate) initial_settings: Arc<ResolvedStepSettings>,
@@ -551,7 +551,7 @@ impl TurnContext {
             config: Arc::new(config),
             configured_token_budget: self.configured_token_budget.clone(),
             use_model_token_budget_defaults: self.use_model_token_budget_defaults,
-            auth_manager: self.auth_manager.clone(),
+            credential_manager: self.credential_manager.clone(),
             initial_settings: Arc::clone(&step_settings),
             disabled_plugin_ids: self.disabled_plugin_ids.clone(),
             current_settings: ArcSwap::from(step_settings),
@@ -765,7 +765,7 @@ impl Session {
     pub(crate) fn make_turn_context(
         thread_id: ThreadId,
         session_id: SessionId,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
         session_telemetry: &SessionTelemetry,
         provider: SharedModelProvider,
         session_configuration: &SessionConfiguration,
@@ -836,7 +836,7 @@ impl Session {
             config: per_turn_config,
             configured_token_budget,
             use_model_token_budget_defaults,
-            auth_manager,
+            credential_manager,
             initial_settings: Arc::clone(&step_settings),
             disabled_plugin_ids: session_configuration.disabled_plugin_ids.clone(),
             current_settings: ArcSwap::from(step_settings),
@@ -1041,7 +1041,7 @@ impl Session {
         let mut turn_context: TurnContext = Self::make_turn_context(
             self.thread_id(),
             self.session_id(),
-            Some(Arc::clone(&self.services.auth_manager)),
+            Some(Arc::clone(&self.services.credential_manager)),
             &self.services.session_telemetry,
             session_configuration.provider.clone(),
             &session_configuration,

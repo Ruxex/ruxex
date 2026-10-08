@@ -18,7 +18,7 @@ enum RefreshTokenRequestOutcome {
 
 #[derive(Clone)]
 pub(crate) struct AccountRequestProcessor {
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
     thread_manager: Arc<ThreadManager>,
     outgoing: Arc<OutgoingMessageSender>,
     config: Arc<Config>,
@@ -27,14 +27,14 @@ pub(crate) struct AccountRequestProcessor {
 
 impl AccountRequestProcessor {
     pub(crate) fn new(
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         thread_manager: Arc<ThreadManager>,
         outgoing: Arc<OutgoingMessageSender>,
         config: Arc<Config>,
         config_manager: ConfigManager,
     ) -> Self {
         let processor = Self {
-            auth_manager,
+            credential_manager,
             thread_manager,
             outgoing,
             config,
@@ -82,11 +82,11 @@ impl AccountRequestProcessor {
         params: AccountDeleteParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
         let result = self
-            .auth_manager
+            .credential_manager
             .delete(&params.provider_id)
             .await
             .map(|deleted| {
-                if self.auth_manager.active_provider_id().is_none() {
+                if self.credential_manager.active_provider_id().is_none() {
                     self.config_manager.set_active_model_provider_id(None);
                 }
                 AccountDeleteResponse { deleted }
@@ -127,7 +127,7 @@ impl AccountRequestProcessor {
         let provider = create_model_provider_for_id(
             config.model_provider_id.clone(),
             config.model_provider.clone(),
-            Some(Arc::clone(&self.auth_manager)),
+            Some(Arc::clone(&self.credential_manager)),
         );
         let account_state = provider
             .account_state()
@@ -156,13 +156,13 @@ impl AccountRequestProcessor {
     pub(crate) async fn cancel_active_login(&self) {}
 
     pub(crate) fn clear_external_auth(&self) {
-        self.auth_manager.clear_external_auth();
+        self.credential_manager.clear_external_auth();
     }
 
     fn current_account_updated_notification(&self) -> AccountUpdatedNotification {
         AccountUpdatedNotification {
             auth_mode: self
-                .auth_manager
+                .credential_manager
                 .auth_cached()
                 .as_ref()
                 .map(GenexAuth::api_auth_mode)
@@ -246,12 +246,12 @@ impl AccountRequestProcessor {
         api_key: &str,
         provider_id: Option<&str>,
     ) -> std::result::Result<(), JSONRPCErrorError> {
-        if self.auth_manager.has_external_auth() {
+        if self.credential_manager.has_external_auth() {
             return Err(self.external_auth_active_error());
         }
 
         if !self
-            .auth_manager
+            .credential_manager
             .is_login_method_allowed(ForcedLoginMethod::Api)
         {
             return Err(invalid_request(
@@ -267,7 +267,7 @@ impl AccountRequestProcessor {
                 "model provider `{provider_id}` is not configured"
             )));
         }
-        self.auth_manager
+        self.credential_manager
             .login(provider_id, ProviderAuth::api_key(api_key))
             .await
             .map_err(|err| internal_error(format!("failed to save api key: {err}")))
@@ -288,7 +288,7 @@ impl AccountRequestProcessor {
 
         if logged_in {
             self.config_manager
-                .set_active_model_provider_id(self.auth_manager.active_provider_id());
+                .set_active_model_provider_id(self.credential_manager.active_provider_id());
             self.send_login_success_notifications(/*login_id*/ None)
                 .await;
         }
@@ -309,7 +309,7 @@ impl AccountRequestProcessor {
             .await
             .map_err(|err| internal_error(format!("failed to load model providers: {err}")))?;
         config
-            .switch_model_provider(&self.auth_manager, provider_id)
+            .switch_model_provider(&self.credential_manager, provider_id)
             .await
             .map_err(|err| invalid_request(format!("cannot switch model provider: {err}")))?;
         self.config_manager
@@ -340,7 +340,7 @@ impl AccountRequestProcessor {
         &self,
         mut payload: AccountLoginCompletedNotification,
     ) {
-        let auth_changes = self.auth_manager.auth_change_state_receiver();
+        let auth_changes = self.credential_manager.auth_change_state_receiver();
         let owner_generation = auth_changes.borrow().owner_generation;
         if payload.success
             && let Err(error) = self
@@ -356,7 +356,7 @@ impl AccountRequestProcessor {
             Self::maybe_refresh_plugin_caches_for_current_config(
                 &self.config_manager,
                 &self.thread_manager,
-                self.auth_manager.auth_cached(),
+                self.credential_manager.auth_cached(),
             )
             .await;
         }
@@ -385,7 +385,7 @@ impl AccountRequestProcessor {
     }
 
     async fn logout_common(&self) -> std::result::Result<Option<AuthMode>, JSONRPCErrorError> {
-        match self.auth_manager.logout().await {
+        match self.credential_manager.logout().await {
             Ok(_) => {}
             Err(err) => {
                 return Err(internal_error(format!("logout failed: {err}")));
@@ -396,13 +396,13 @@ impl AccountRequestProcessor {
         Self::maybe_refresh_plugin_caches_for_current_config(
             &self.config_manager,
             &self.thread_manager,
-            self.auth_manager.auth_cached(),
+            self.credential_manager.auth_cached(),
         )
         .await;
 
         // Reflect the current auth method after logout (likely None).
         Ok(self
-            .auth_manager
+            .credential_manager
             .auth_cached()
             .as_ref()
             .map(GenexAuth::api_auth_mode)
@@ -433,10 +433,10 @@ impl AccountRequestProcessor {
     }
 
     async fn refresh_token_if_requested(&self, do_refresh: bool) -> RefreshTokenRequestOutcome {
-        if self.auth_manager.has_external_auth() {
+        if self.credential_manager.has_external_auth() {
             return RefreshTokenRequestOutcome::NotAttemptedOrSucceeded;
         }
-        if do_refresh && let Err(err) = self.auth_manager.refresh_token().await {
+        if do_refresh && let Err(err) = self.credential_manager.refresh_token().await {
             let failed_reason = err.failed_reason();
             if failed_reason.is_none() {
                 tracing::warn!("failed to refresh token while getting account: {err}");

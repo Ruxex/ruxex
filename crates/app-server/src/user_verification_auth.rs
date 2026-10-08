@@ -1,6 +1,6 @@
 //! Cancels device ceremonies when cached authentication changes.
 
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 
 use super::*;
 
@@ -34,9 +34,9 @@ impl OutgoingMessageSender {
             .retain(|_, entry| entry.verification_owner != Some(connection_id));
     }
 
-    pub(crate) fn watch_user_verification_auth(self: &Arc<Self>, auth_manager: Arc<AuthManager>) {
-        let mut changes = auth_manager.auth_change_receiver();
-        if self.verification_auth.set(auth_manager).is_err() {
+    pub(crate) fn watch_user_verification_auth(self: &Arc<Self>, credential_manager: Arc<CredentialManager>) {
+        let mut changes = credential_manager.auth_change_receiver();
+        if self.verification_auth.set(credential_manager).is_err() {
             return;
         }
         let outgoing = Arc::downgrade(self);

@@ -58,7 +58,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
-    assert!(managed.thread_manager.auth_manager().reload().await);
+    assert!(managed.thread_manager.credential_manager().reload().await);
     let manager = managed.thread_manager.get_models_manager();
     let bundled = test_models_response()?.models;
     assert_eq!(manager.get_remote_models().await, bundled);

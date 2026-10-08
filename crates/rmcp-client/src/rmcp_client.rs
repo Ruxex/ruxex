@@ -1559,7 +1559,7 @@ async fn create_oauth_transport_and_runtime(
         ),
         manager,
     );
-    let auth_manager = auth_client.auth_manager.clone();
+    let credential_manager = auth_client.auth_manager.clone();
 
     let transport = StreamableHttpClientTransport::with_client(
         auth_client,
@@ -1575,13 +1575,13 @@ async fn create_oauth_transport_and_runtime(
 
     let runtime = match coordinated_store {
         Some(store) => OAuthRuntime::Coordinated {
-            auth_manager,
+            credential_manager,
             store,
         },
         None => OAuthRuntime::Legacy(OAuthPersistor::new(
             server_name.to_string(),
             url.to_string(),
-            auth_manager,
+            credential_manager,
             credential_store,
             Some(initial_tokens),
         )),

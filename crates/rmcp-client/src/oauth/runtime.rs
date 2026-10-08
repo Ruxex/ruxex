@@ -21,7 +21,7 @@ use super::token_needs_refresh;
 pub(crate) enum OAuthRuntime {
     Legacy(OAuthPersistor),
     Coordinated {
-        auth_manager: Arc<Mutex<AuthorizationManager>>,
+        credential_manager: Arc<Mutex<AuthorizationManager>>,
         store: OAuthCredentialStore,
     },
 }
@@ -35,7 +35,7 @@ impl OAuthRuntime {
         match self {
             Self::Legacy(persistor) => persistor.refresh_if_needed().await,
             Self::Coordinated {
-                auth_manager,
+                credential_manager,
                 store,
             } => {
                 let expires_at = store
@@ -45,10 +45,10 @@ impl OAuthRuntime {
                 if !token_needs_refresh(expires_at) {
                     return Ok(());
                 }
-                let auth_manager = Arc::clone(auth_manager);
+                let credential_manager = Arc::clone(credential_manager);
                 let store = store.clone();
                 tokio::spawn(async move {
-                    let mut manager = auth_manager.lock().await;
+                    let mut manager = credential_manager.lock().await;
                     let result = store.refresh_if_needed(&mut manager).await;
                     if result.is_err() {
                         // Keep the summary in the owned task without logging credential/provider data.

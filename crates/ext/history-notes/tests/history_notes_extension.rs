@@ -20,7 +20,7 @@ use genex_extension_api::ToolName;
 use genex_extension_api::ToolPayload;
 use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::WireApi;
 use genex_protocol::AgentPath;
@@ -82,10 +82,10 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         "x-provider-actor-authorization",
         HeaderValue::from_static("actor-biscuit"),
     );
-    let auth_manager =
-        AuthManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
+    let credential_manager =
+        CredentialManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
     let mut builder = ExtensionRegistryBuilder::<Config>::new();
-    install(&mut builder, auth_manager);
+    install(&mut builder, credential_manager);
     let registry = builder.build();
     let session_store = ExtensionData::new("session-123");
     let thread_store = ExtensionData::new("thread-123");
@@ -380,7 +380,7 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
     )] {
         config.model_provider = provider;
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
-        install(&mut builder, AuthManager::from_auth_for_testing(auth));
+        install(&mut builder, CredentialManager::from_auth_for_testing(auth));
         let registry = builder.build();
         let session_store = ExtensionData::new("session-123");
         let thread_store = ExtensionData::new("thread-123");

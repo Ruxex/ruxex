@@ -13,7 +13,7 @@ use genex_api::map_api_error;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_login::AuthEnvTelemetry;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::collect_auth_env_telemetry;
 use genex_login::default_client::create_client_for_route_async;
@@ -48,7 +48,7 @@ pub(crate) enum ModelsEndpointAuthMode {
 pub(crate) struct ModelsEndpoint {
     provider_id: Option<String>,
     provider_info: ModelProviderInfo,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
     transport_builder: Arc<dyn ModelsTransportBuilder>,
     auth_mode: ModelsEndpointAuthMode,
 }
@@ -56,42 +56,42 @@ pub(crate) struct ModelsEndpoint {
 impl ModelsEndpoint {
     pub(crate) fn new(
         provider_info: ModelProviderInfo,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
-        Self::new_for_provider(None, provider_info, auth_manager)
+        Self::new_for_provider(None, provider_info, credential_manager)
     }
 
     pub(crate) fn new_for_provider(
         provider_id: Option<String>,
         provider_info: ModelProviderInfo,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
         Self::new_with_provider_auth_mode(
             provider_id,
             provider_info,
-            auth_manager,
+            credential_manager,
             ModelsEndpointAuthMode::ConfiguredProvider,
         )
     }
 
     pub(crate) fn new_with_auth_mode(
         provider_info: ModelProviderInfo,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
         auth_mode: ModelsEndpointAuthMode,
     ) -> Self {
-        Self::new_with_provider_auth_mode(None, provider_info, auth_manager, auth_mode)
+        Self::new_with_provider_auth_mode(None, provider_info, credential_manager, auth_mode)
     }
 
     pub(crate) fn new_with_provider_auth_mode(
         provider_id: Option<String>,
         provider_info: ModelProviderInfo,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
         auth_mode: ModelsEndpointAuthMode,
     ) -> Self {
         Self {
             provider_id,
             provider_info,
-            auth_manager,
+            credential_manager,
             transport_builder: Arc::new(RouteAwareModelsTransportBuilder),
             auth_mode,
         }
@@ -99,7 +99,7 @@ impl ModelsEndpoint {
 
     async fn auth(&self) -> Option<GenexAuth> {
         provider_auth(
-            self.auth_manager.as_ref(),
+            self.credential_manager.as_ref(),
             None,
             &self.provider_info,
             self.provider_id.as_deref(),
@@ -162,9 +162,9 @@ impl ModelsEndpoint {
 
     fn auth_env(&self) -> AuthEnvTelemetry {
         let api_key_env_enabled = self
-            .auth_manager
+            .credential_manager
             .as_ref()
-            .is_some_and(|auth_manager| auth_manager.api_key_env_enabled());
+            .is_some_and(|credential_manager| credential_manager.api_key_env_enabled());
         collect_auth_env_telemetry(&self.provider_info, api_key_env_enabled)
     }
 }
@@ -177,7 +177,7 @@ impl ModelCatalogSource for ModelsEndpoint {
 
     fn identity(&self) -> Option<String> {
         let auth = self
-            .auth_manager
+            .credential_manager
             .as_ref()
             .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
         crate::models_identity::identity(
@@ -378,7 +378,7 @@ mod tests {
     fn command_auth_provider_reports_command_auth_without_cached_auth() {
         let endpoint = ModelsEndpoint::new(
             provider_info_with_command_auth(),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert!(endpoint.has_command_auth());
@@ -388,7 +388,7 @@ mod tests {
     fn provider_without_command_auth_reports_no_command_auth() {
         let endpoint = ModelsEndpoint::new(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert!(!endpoint.has_command_auth());
@@ -411,7 +411,7 @@ mod tests {
         let endpoint = ModelsEndpoint {
             provider_id: None,
             provider_info: ModelProviderInfo::create_responses_provider(Some(server.uri())),
-            auth_manager: None,
+            credential_manager: None,
             transport_builder: Arc::new(RecordingTransportBuilder {
                 observed_request: Arc::clone(&observed_request),
             }),
@@ -458,7 +458,7 @@ mod tests {
         let endpoint = ModelsEndpoint {
             provider_id: None,
             provider_info,
-            auth_manager: None,
+            credential_manager: None,
             transport_builder: Arc::new(RecordingTransportBuilder {
                 observed_request: Arc::new(Mutex::new(None)),
             }),
@@ -511,7 +511,7 @@ mod tests {
         use genex_models_manager::manager::RemoteModelsManager;
 
         let server = MockServer::start().await;
-        let auth = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("initial"));
+        let auth = CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("initial"));
         auth.set_external_auth(Arc::new(RotatingAuth(std::sync::atomic::AtomicUsize::new(
             0,
         ))))

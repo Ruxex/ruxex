@@ -1,6 +1,6 @@
 use genex_core_plugins::PluginsManager;
 use genex_core_plugins::store::PluginStore;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_plugin::PluginId;
 use genex_protocol::protocol::Product;
@@ -56,7 +56,7 @@ enabled = false
     let plugins_manager = PluginsManager::new_with_options(
         genex_home.path().to_path_buf(),
         Some(Product::Codex),
-        AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key")),
+        CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key")),
         skills_service.clone(),
     );
     let plugin_outcome = plugins_manager.plugins_for_config(&plugins_input).await;

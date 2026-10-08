@@ -33,7 +33,7 @@ use crate::cloud_config;
 use crate::plugin_cmd::JsonMarketplaceSource;
 use crate::plugin_cmd::configured_marketplace_snapshot_issues;
 use crate::plugin_cmd::configured_marketplace_sources;
-use crate::plugin_cmd::load_cli_auth_manager;
+use crate::plugin_cmd::load_cli_credential_manager;
 
 #[derive(Debug, Parser)]
 #[command(bin_name = "genex plugin marketplace")]
@@ -315,7 +315,7 @@ impl JsonMarketplaceAddOutput {
 }
 
 async fn run_list(config: Config, args: ListMarketplaceArgs) -> Result<()> {
-    let manager = plugins_manager_for_config(&config, load_cli_auth_manager(&config).await?);
+    let manager = plugins_manager_for_config(&config, load_cli_credential_manager(&config).await?);
     let plugins_input = config.plugins_config_input();
     let marketplace_listing = manager
         .discover_marketplaces_for_config(&plugins_input, &[])
@@ -477,7 +477,7 @@ async fn run_upgrade(
         marketplace_name,
         json,
     } = args;
-    let manager = plugins_manager_for_config(&config, load_cli_auth_manager(&config).await?);
+    let manager = plugins_manager_for_config(&config, load_cli_credential_manager(&config).await?);
     let plugins_input = config.plugins_config_input();
     let runtime = tokio::runtime::Handle::current();
     let reload_config: genex_core_plugins::ConfigLayerReload = std::sync::Arc::new(move || {

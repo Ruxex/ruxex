@@ -19,7 +19,7 @@ use genex_core_plugins::marketplace::MarketplacePluginAuthPolicy;
 use genex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
 use genex_core_plugins::marketplace::MarketplacePluginSource;
 use genex_core_plugins::marketplace::find_marketplace_manifest_path;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_plugin::PluginId;
 use genex_plugin::validate_plugin_segment;
 use genex_utils_cli::CliConfigOverrides;
@@ -591,10 +591,10 @@ async fn load_plugin_command_context(
         .await
         .context("failed to load configuration")?;
     let plugins_input = config.plugins_config_input();
-    let auth_manager = load_cli_auth_manager(&config).await?;
+    let credential_manager = load_cli_credential_manager(&config).await?;
     let manager = Arc::new(plugins_manager_for_config(
         &config,
-        Arc::clone(&auth_manager),
+        Arc::clone(&credential_manager),
     ));
     Ok(PluginCommandContext {
         genex_home: genex_home.to_path_buf(),
@@ -603,8 +603,8 @@ async fn load_plugin_command_context(
     })
 }
 
-pub(crate) async fn load_cli_auth_manager(config: &Config) -> Result<Arc<AuthManager>> {
-    Ok(AuthManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
+pub(crate) async fn load_cli_credential_manager(config: &Config) -> Result<Arc<CredentialManager>> {
+    Ok(CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
 }
 
 struct PluginSelection {

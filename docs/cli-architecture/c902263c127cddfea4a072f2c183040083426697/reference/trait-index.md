@@ -133,7 +133,7 @@
 - 可視性: `pub`
 - 役割: スキーマ/API 生成時に実験的な利用を示すプロトコル型/メソッドのマーカー。
 
-### `AuthManagerConfig`
+### `CredentialManagerConfig`
 
 - 定義: `genex-login`、[`src/auth/manager.rs:1223`](../../../../crates/login/src/auth/manager.rs#L1223)
 - 可視性: `pub`

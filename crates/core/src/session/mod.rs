@@ -73,7 +73,7 @@ use genex_features::unstable_features_warning_event;
 use genex_history::RolloutItem;
 use genex_hooks::Hooks;
 use genex_hooks::HooksConfig;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::auth_env_telemetry::collect_auth_env_telemetry;
 use genex_mcp::McpResourceClient;
@@ -406,7 +406,7 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) allow_provider_model_fallback: bool,
     pub(crate) instructions: SessionInstructions,
     pub(crate) installation_id: String,
-    pub(crate) auth_manager: Arc<AuthManager>,
+    pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) models_manager: SharedModelsManager,
     pub(crate) git_root_discovery: Arc<GitRootDiscovery>,
     pub(crate) environment_manager: Arc<EnvironmentManager>,
@@ -508,7 +508,7 @@ impl Session {
             allow_provider_model_fallback,
             instructions,
             installation_id,
-            auth_manager,
+            credential_manager,
             models_manager,
             git_root_discovery,
             environment_manager,
@@ -631,7 +631,7 @@ impl Session {
         let model_info = models_manager
             .get_model_info(model.as_str(), &config.to_models_manager_config())
             .await;
-        let auth = auth_manager.auth_cached();
+        let auth = credential_manager.auth_cached();
         // Forked subagents keep their parent's activation with the copied history.
         // Fresh children restore configured preferences before applying startup defaults.
         let inherits_token_budget = matches!(&conversation_history, InitialHistory::Forked(_))
@@ -745,7 +745,7 @@ impl Session {
             provider: create_model_provider_for_id(
                 config.model_provider_id.clone(),
                 config.model_provider.clone(),
-                Some(Arc::clone(&auth_manager)),
+                Some(Arc::clone(&credential_manager)),
             ),
             step_settings: Arc::new(StepSettings {
                 collaboration_mode,
@@ -793,7 +793,7 @@ impl Session {
             config.clone(),
             instructions,
             installation_id,
-            auth_manager.clone(),
+            credential_manager.clone(),
             models_manager.clone(),
             git_root_discovery,
             model_info,

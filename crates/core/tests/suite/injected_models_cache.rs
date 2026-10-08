@@ -19,7 +19,7 @@ use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use genex_http_client::HttpClientFactory;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::ModelProvider;
 use genex_model_provider::ProviderModelCatalogSource;
@@ -189,7 +189,7 @@ fn models_manager(
     Arc::new(RemoteModelsManager::new_with_cache(
         cache,
         endpoint,
-        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
     ))
@@ -306,7 +306,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     let server = wiremock::MockServer::start().await;
     let home = Arc::new(TempDir::new()?);
     let initial_auth = GenexAuth::from_api_key("test-api-key");
-    let auth = AuthManager::from_auth_for_testing_with_home(
+    let auth = CredentialManager::from_auth_for_testing_with_home(
         initial_auth.clone(),
         home.path().to_path_buf(),
     );
@@ -323,7 +323,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     let manager = build_models_manager_with_cache(
         cache.clone(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-        provider.auth_manager(),
+        provider.credential_manager(),
         /*config_model_catalog*/ None,
     );
     let mut old_model = remote_model("legacy-model");
@@ -382,7 +382,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         }))?,
     )?;
     auth.reload().await;
-    test.thread_manager.auth_manager().reload().await;
+    test.thread_manager.credential_manager().reload().await;
 
     let mut new_model = remote_model("legacy-model");
     new_model.default_reasoning_summary = ReasoningSummary::Detailed;

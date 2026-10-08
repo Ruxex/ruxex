@@ -4,7 +4,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::UserInstructionsProvider;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
@@ -32,7 +32,7 @@ pub async fn build_prompt_input(
 ) -> GenexResult<Vec<ResponseItem>> {
     config.ephemeral = true;
 
-    let auth_manager = AuthManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+    let credential_manager = CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
         .await
         .map_err(|err| GenexErr::Fatal(err.to_string()))?;
 
@@ -45,8 +45,8 @@ pub async fn build_prompt_input(
     let installation_id = resolve_installation_id(&config.genex_home).await?;
     let thread_manager = ThreadManager::new(
         &config,
-        Arc::clone(&auth_manager),
-        crate::thread_manager::build_models_manager(&config, Arc::clone(&auth_manager)),
+        Arc::clone(&credential_manager),
+        crate::thread_manager::build_models_manager(&config, Arc::clone(&credential_manager)),
         SessionSource::Exec,
         Arc::new(
             EnvironmentManager::from_genex_home(

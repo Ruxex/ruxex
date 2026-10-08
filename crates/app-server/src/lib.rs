@@ -9,7 +9,7 @@ use genex_config::NoopThreadConfigLoader;
 use genex_core::config::Config;
 use genex_core::config::UnsupportedUntrustedApprovalPolicyError;
 use genex_core::resolve_installation_id;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 #[cfg(debug_assertions)]
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_cli::CliConfigOverrides;
@@ -541,14 +541,14 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
-    let auth_manager = AuthManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+    let credential_manager = CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
         .await
         .map_err(std::io::Error::other)?;
-    if let Some(provider_id) = auth_manager.active_provider_id()
+    if let Some(provider_id) = credential_manager.active_provider_id()
         && config.model_providers.contains_key(&provider_id)
     {
         config = config
-            .switch_model_provider(&auth_manager, &provider_id)
+            .switch_model_provider(&credential_manager, &provider_id)
             .await?;
         config_manager.set_active_model_provider_id(Some(provider_id));
     }
@@ -753,7 +753,7 @@ pub async fn run_main_with_transport_options(
         otel,
         otel_logger_reload_handle,
         config_manager.clone(),
-        Arc::clone(&auth_manager),
+        Arc::clone(&credential_manager),
         default_metrics_enabled,
         transport_shutdown_token.clone(),
     );
@@ -815,7 +815,7 @@ pub async fn run_main_with_transport_options(
 
     let recovery_file = daemon_recovery_file_path(&config.genex_home);
     let processor_handle = tokio::spawn({
-        let auth_manager = Arc::clone(&auth_manager);
+        let credential_manager = Arc::clone(&credential_manager);
         let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));
         let outbound_control_tx = outbound_control_tx;
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
@@ -829,9 +829,9 @@ pub async fn run_main_with_transport_options(
             config_warnings,
             session_source,
             user_verification: Arc::new(crate::user_verification::Service::new(Arc::clone(
-                &auth_manager,
+                &credential_manager,
             ))),
-            auth_manager,
+            credential_manager,
             installation_id,
             code_mode_session_provider,
             plugin_startup_tasks: matches!(

@@ -980,9 +980,9 @@ async fn capture_current_model_fallback_step_context(
     cancellation_token: &CancellationToken,
 ) -> GenexResult<Option<Arc<StepContext>>> {
     let uses_managed_auth = turn_context
-        .auth_manager
+        .credential_manager
         .as_deref()
-        .is_some_and(genex_login::AuthManager::current_auth_uses_managed_auth);
+        .is_some_and(genex_login::CredentialManager::current_auth_uses_managed_auth);
     if !uses_managed_auth
         || !turn_context.provider.info().is_responses_provider()
         || previous_model == turn_context.model_info().slug
@@ -1287,7 +1287,7 @@ pub(crate) async fn prepare_tool_recommendations(
 ) -> PreparedToolRecommendations {
     let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
     let auth = if tool_suggest_is_enabled {
-        sess.services.auth_manager.auth().await
+        sess.services.credential_manager.auth().await
     } else {
         None
     };

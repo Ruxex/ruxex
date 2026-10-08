@@ -622,14 +622,14 @@ impl TestGenexBuilder {
                     config.genex_home.clone(),
                 ))
             });
-        let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
+        let credential_manager = genex_core::test_support::credential_manager_from_auth_with_home(
             auth.clone(),
             config.genex_home.to_path_buf(),
         );
         let models_manager = self
             .models_manager
             .clone()
-            .unwrap_or_else(|| genex_core::build_models_manager(&config, auth_manager.clone()));
+            .unwrap_or_else(|| genex_core::build_models_manager(&config, credential_manager.clone()));
         let code_mode_host_program = self
             .code_mode_host_program
             .take()
@@ -638,7 +638,7 @@ impl TestGenexBuilder {
             let extensions = self.extensions.to_builder();
             let thread_manager = ThreadManager::new(
                 &config,
-                auth_manager.clone(),
+                credential_manager.clone(),
                 models_manager,
                 SessionSource::Exec,
                 Arc::clone(&environment_manager),
@@ -668,7 +668,7 @@ impl TestGenexBuilder {
 
         let new_conversation = match (resume_from, user_shell_override) {
             (Some(path), Some(user_shell_override)) => {
-                let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
+                let credential_manager = genex_core::test_support::credential_manager_from_auth_with_home(
                     auth,
                     config.genex_home.to_path_buf(),
                 );
@@ -677,7 +677,7 @@ impl TestGenexBuilder {
                         thread_manager.as_ref(),
                         config.clone(),
                         path,
-                        auth_manager,
+                        credential_manager,
                         user_shell_override,
                         false,
                     ),
@@ -685,14 +685,14 @@ impl TestGenexBuilder {
                 .await?
             }
             (Some(path), None) => {
-                let auth_manager = genex_core::test_support::auth_manager_from_auth_with_home(
+                let credential_manager = genex_core::test_support::credential_manager_from_auth_with_home(
                     auth,
                     config.genex_home.to_path_buf(),
                 );
                 Box::pin(thread_manager.resume_thread_from_rollout(
                     config.clone(),
                     path,
-                    auth_manager,
+                    credential_manager,
                     /*parent_trace*/ None,
                     client_mcp_extensions(),
                 ))

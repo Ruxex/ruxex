@@ -56,7 +56,7 @@ use genex_config::set_user_plugin_enabled;
 use genex_config::skill_config_rules_from_stack;
 use genex_config::types::PluginConfig;
 use genex_hooks::plugin_hook_declarations;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_plugin::PluginCapabilitySummary;
 use genex_plugin::PluginId;
 use genex_plugin::PluginIdError;
@@ -270,7 +270,7 @@ pub struct PluginsManager {
     skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     tool_suggest_metadata_cache: ToolSuggestMetadataCache,
     restriction_product: Option<Product>,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
 }
 
 #[derive(Clone)]
@@ -334,13 +334,13 @@ impl PluginLoadCacheKey {
 impl PluginsManager {
     pub fn new(
         genex_home: PathBuf,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
         Self::new_with_options(
             genex_home,
             Some(Product::Codex),
-            auth_manager,
+            credential_manager,
             skill_root_loader,
         )
     }
@@ -348,7 +348,7 @@ impl PluginsManager {
     pub fn new_with_options(
         genex_home: PathBuf,
         restriction_product: Option<Product>,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
         // Product restrictions are enforced at marketplace admission time for a given GENEX_HOME:
@@ -374,12 +374,12 @@ impl PluginsManager {
             skill_root_loader,
             tool_suggest_metadata_cache: ToolSuggestMetadataCache::new(),
             restriction_product,
-            auth_manager,
+            credential_manager,
         }
     }
 
     pub fn auth_mode(&self) -> Option<AuthMode> {
-        self.auth_manager.get_api_auth_mode()
+        self.credential_manager.get_api_auth_mode()
     }
 
     fn restriction_product_matches(&self, products: Option<&[Product]>) -> bool {

@@ -2,7 +2,7 @@
 //! Owner revisions invalidate queued work even before transport closure is delivered.
 
 use genex_login::AuthChangeState;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use std::io;
 use tokio::sync::watch;
 
@@ -13,8 +13,8 @@ pub struct ConnectionAuth {
 }
 
 impl ConnectionAuth {
-    pub(crate) fn capture(auth_manager: &AuthManager) -> Self {
-        let changes = auth_manager.auth_change_state_receiver();
+    pub(crate) fn capture(credential_manager: &CredentialManager) -> Self {
+        let changes = credential_manager.auth_change_state_receiver();
         let owner_generation = changes.borrow().owner_generation;
         Self::new(changes, owner_generation)
     }

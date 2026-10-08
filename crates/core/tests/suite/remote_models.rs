@@ -186,7 +186,7 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
     };
     let manager = genex_core::test_support::models_manager_with_provider(
         genex_home.path().to_path_buf(),
-        genex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1049,7 +1049,7 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
     };
     let manager = genex_core::test_support::models_manager_with_provider(
         genex_home.path().to_path_buf(),
-        genex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1115,7 +1115,7 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
     };
     let manager = genex_core::test_support::models_manager_with_provider(
         genex_home.path().to_path_buf(),
-        genex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1167,7 +1167,7 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
     };
     let manager = genex_core::test_support::models_manager_with_provider(
         genex_home.path().to_path_buf(),
-        genex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1216,7 +1216,7 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
     };
     let manager = genex_core::test_support::models_manager_with_provider(
         genex_home.path().to_path_buf(),
-        genex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1263,7 +1263,7 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
     };
     let manager = genex_core::test_support::models_manager_with_provider(
         genex_home.path().to_path_buf(),
-        genex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1335,7 +1335,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     };
     let manager = genex_core::test_support::models_manager_with_provider(
         genex_home.path().to_path_buf(),
-        genex_core::test_support::auth_manager_from_auth(auth),
+        genex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 

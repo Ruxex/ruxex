@@ -12,7 +12,7 @@ use genex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
 use genex_core::test_support::with_parent_turn;
 use genex_features::Feature;
 use genex_http_client::OutboundProxyPolicy;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::WireApi;
@@ -110,7 +110,7 @@ fn assert_request_trace_matches(body: &serde_json::Value, expected_trace: &W3cTr
 
 struct WebsocketTestHarness {
     genex_home: TempDir,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
     client: ModelClient,
     outbound_proxy_policy: OutboundProxyPolicy,
     session_id: SessionId,
@@ -923,7 +923,7 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
                     genex_login::AuthKeyringBackendKind::default(),
                 )
                 .unwrap();
-                harness.auth_manager.reload().await;
+                harness.credential_manager.reload().await;
             }
             if index == 5 || (index == 3 && new_turn_on_switch) {
                 drop(client_session);
@@ -2756,14 +2756,14 @@ async fn websocket_harness_with_provider_options_and_auth(
     let model_info = genex_core::test_support::construct_model_info_offline(MODEL, &config);
     let thread_id = ThreadId::new();
     let session_id = SessionId::new();
-    let client_auth_manager = auth.map(|auth| {
-        genex_core::test_support::auth_manager_from_auth_with_home(
+    let client_credential_manager = auth.map(|auth| {
+        genex_core::test_support::credential_manager_from_auth_with_home(
             auth,
             genex_home.path().to_path_buf(),
         )
     });
-    let auth_manager = client_auth_manager.clone().unwrap_or_else(|| {
-        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("Test API Key"))
+    let credential_manager = client_credential_manager.clone().unwrap_or_else(|| {
+        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("Test API Key"))
     });
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(
@@ -2777,7 +2777,7 @@ async fn websocket_harness_with_provider_options_and_auth(
         model_info.slug.as_str(),
         /*account_id*/ None,
         Some("test@test.com".to_string()),
-        auth_manager.auth_mode().map(TelemetryAuthMode::from),
+        credential_manager.auth_mode().map(TelemetryAuthMode::from),
         "test_originator".to_string(),
         /*log_user_prompts*/ false,
         "test".to_string(),
@@ -2787,7 +2787,7 @@ async fn websocket_harness_with_provider_options_and_auth(
     let effort = None;
     let summary = ReasoningSummary::Auto;
     let client = ModelClient::new(
-        client_auth_manager,
+        client_credential_manager,
         thread_id,
         provider.clone(),
         SessionSource::Exec,
@@ -2807,7 +2807,7 @@ async fn websocket_harness_with_provider_options_and_auth(
 
     WebsocketTestHarness {
         genex_home,
-        auth_manager,
+        credential_manager,
         client,
         outbound_proxy_policy,
         session_id,

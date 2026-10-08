@@ -68,7 +68,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalService;
 use genex_home::GenexHomeUserInstructionsProvider;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_protocol::ThreadId;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::SessionSource;
@@ -231,7 +231,7 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) state_db: Option<StateDbHandle>,
     pub(crate) config_warnings: Vec<ConfigWarningNotification>,
     pub(crate) session_source: SessionSource,
-    pub(crate) auth_manager: Arc<AuthManager>,
+    pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) user_verification: Arc<crate::user_verification::Service>,
     pub(crate) installation_id: String,
     pub(crate) code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>>,
@@ -253,14 +253,14 @@ impl MessageProcessor {
             state_db,
             config_warnings,
             session_source,
-            auth_manager,
+            credential_manager,
             user_verification,
             installation_id,
             code_mode_session_provider,
             plugin_startup_tasks,
         } = args;
         let thread_state_manager = ThreadStateManager::new();
-        outgoing.watch_user_verification_auth(Arc::clone(&auth_manager));
+        outgoing.watch_user_verification_auth(Arc::clone(&credential_manager));
         // The thread store is intentionally process-scoped. Config reloads can
         // affect per-thread behavior, but they must not move newly started,
         // resumed, or forked threads to a different persistence backend/root.
@@ -298,13 +298,13 @@ impl MessageProcessor {
             });
             let manager = ThreadManager::new(
                 config.as_ref(),
-                auth_manager.clone(),
-                genex_core::build_models_manager(config.as_ref(), auth_manager.clone()),
+                credential_manager.clone(),
+                genex_core::build_models_manager(config.as_ref(), credential_manager.clone()),
                 session_source,
                 environment_manager,
                 thread_extensions(ThreadExtensionDependencies {
                     event_sink: Arc::clone(&extension_event_sink),
-                    auth_manager: auth_manager.clone(),
+                    credential_manager: credential_manager.clone(),
                     state_db: state_db.clone(),
                     thread_manager: thread_manager.clone(),
                     goal_service: Arc::clone(&goal_service),
@@ -338,7 +338,7 @@ impl MessageProcessor {
         let models_refresh_worker =
             crate::models_refresh_worker::spawn(&models_manager, config.http_client_factory());
         let turn_cost_worker =
-            TurnCostWorker::spawn(Arc::clone(&config), Arc::clone(&auth_manager));
+            TurnCostWorker::spawn(Arc::clone(&config), Arc::clone(&credential_manager));
         let skills_watcher = SkillsWatcher::new(
             thread_manager.skills_service(),
             &config.genex_home,
@@ -363,7 +363,7 @@ impl MessageProcessor {
                 request_serialization_queues.clone(),
             );
         let account_processor = AccountRequestProcessor::new(
-            auth_manager.clone(),
+            credential_manager.clone(),
             Arc::clone(&thread_manager),
             outgoing.clone(),
             Arc::clone(&config),
@@ -405,7 +405,7 @@ impl MessageProcessor {
             config_manager.clone(),
         );
         let plugin_processor = PluginRequestProcessor::new(
-            auth_manager.clone(),
+            credential_manager.clone(),
             Arc::clone(&thread_manager),
             outgoing.clone(),
             config_manager.clone(),
@@ -434,7 +434,7 @@ impl MessageProcessor {
             Arc::clone(&thread_list_state_permit),
         );
         let thread_processor = ThreadRequestProcessor::new(
-            auth_manager.clone(),
+            credential_manager.clone(),
             Arc::clone(&thread_manager),
             outgoing.clone(),
             arg0_paths.clone(),
@@ -453,7 +453,7 @@ impl MessageProcessor {
             config_warnings,
         );
         let turn_processor = TurnRequestProcessor::new(
-            auth_manager,
+            credential_manager,
             Arc::clone(&thread_manager),
             outgoing.clone(),
             Arc::clone(&config),

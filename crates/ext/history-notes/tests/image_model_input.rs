@@ -9,7 +9,7 @@ use genex_core::config::TokenBudgetConfig;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_history_notes_extension::install;
 use genex_login::AuthHeaders;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
@@ -60,7 +60,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     install(
         &mut extensions,
-        AuthManager::from_auth_for_testing(auth.clone()),
+        CredentialManager::from_auth_for_testing(auth.clone()),
     );
     let test = test_genex()
         .with_auth(auth)

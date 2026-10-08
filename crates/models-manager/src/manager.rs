@@ -6,7 +6,7 @@ use crate::config::ModelsManagerConfig;
 use crate::model_info;
 use chrono::Utc;
 use genex_http_client::HttpClientFactory;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::CollaborationModeMask;
 use genex_protocol::error::Result as CoreResult;
@@ -151,7 +151,7 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
     fn try_get_remote_models(&self) -> Result<Vec<ModelInfo>, TryLockError>;
 
     /// Return the auth manager used for picker filtering.
-    fn auth_manager(&self) -> Option<&AuthManager>;
+    fn credential_manager(&self) -> Option<&CredentialManager>;
 
     /// Build picker-ready presets from the active catalog snapshot.
     fn build_available_models(&self, mut remote_models: Vec<ModelInfo>) -> Vec<ModelPreset> {
@@ -159,8 +159,8 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
 
         let mut presets: Vec<ModelPreset> = remote_models.into_iter().map(Into::into).collect();
         let uses_managed_auth = self
-            .auth_manager()
-            .is_some_and(AuthManager::current_auth_uses_managed_auth);
+            .credential_manager()
+            .is_some_and(CredentialManager::current_auth_uses_managed_auth);
         presets = ModelPreset::filter_by_auth(presets, uses_managed_auth);
 
         ModelPreset::mark_default_by_picker_visibility(&mut presets);
@@ -248,15 +248,15 @@ pub type SharedModelsManager = Arc<dyn ModelsManager>;
 pub fn build_models_manager(
     genex_home: PathBuf,
     catalog_source: Arc<dyn ModelCatalogSource>,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
     config_model_catalog: Option<ModelCatalog>,
 ) -> SharedModelsManager {
     match config_model_catalog {
-        Some(model_catalog) => Arc::new(StaticModelsManager::new(auth_manager, model_catalog)),
+        Some(model_catalog) => Arc::new(StaticModelsManager::new(credential_manager, model_catalog)),
         None => Arc::new(RemoteModelsManager::new(
             genex_home,
             catalog_source,
-            auth_manager,
+            credential_manager,
         )),
     }
 }
@@ -264,14 +264,14 @@ pub fn build_models_manager(
 /// Builds a model manager without persistent caching.
 pub fn build_models_manager_without_cache(
     catalog_source: Arc<dyn ModelCatalogSource>,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
     config_model_catalog: Option<ModelCatalog>,
 ) -> SharedModelsManager {
     match config_model_catalog {
-        Some(model_catalog) => Arc::new(StaticModelsManager::new(auth_manager, model_catalog)),
+        Some(model_catalog) => Arc::new(StaticModelsManager::new(credential_manager, model_catalog)),
         None => Arc::new(RemoteModelsManager::new_without_cache(
             catalog_source,
-            auth_manager,
+            credential_manager,
         )),
     }
 }
@@ -280,15 +280,15 @@ pub fn build_models_manager_without_cache(
 pub fn build_models_manager_with_cache(
     cache: Arc<dyn ModelsCache>,
     catalog_source: Arc<dyn ModelCatalogSource>,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
     config_model_catalog: Option<ModelCatalog>,
 ) -> SharedModelsManager {
     match config_model_catalog {
-        Some(model_catalog) => Arc::new(StaticModelsManager::new(auth_manager, model_catalog)),
+        Some(model_catalog) => Arc::new(StaticModelsManager::new(credential_manager, model_catalog)),
         None => Arc::new(RemoteModelsManager::new_with_cache(
             cache,
             catalog_source,
-            auth_manager,
+            credential_manager,
         )),
     }
 }
@@ -300,14 +300,14 @@ pub struct RemoteModelsManager {
     cache: Option<Arc<dyn ModelsCache>>,
     catalog_source: SharedModelCatalogSource,
     api_key_model_discovery_enabled: AtomicBool,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 }
 
 /// Static model manager backed by an authoritative in-process catalog.
 #[derive(Debug)]
 pub struct StaticModelsManager {
     remote_models: Vec<ModelInfo>,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 }
 
 impl RemoteModelsManager {
@@ -315,7 +315,7 @@ impl RemoteModelsManager {
     pub fn new(
         genex_home: PathBuf,
         catalog_source: Arc<dyn ModelCatalogSource>,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
         let cache_path = genex_home.join(MODEL_CACHE_FILE);
         Self::new_with_optional_cache(
@@ -324,16 +324,16 @@ impl RemoteModelsManager {
                 DEFAULT_MODEL_CACHE_TTL,
             ))),
             catalog_source,
-            auth_manager,
+            credential_manager,
         )
     }
 
     /// Construct a remote model manager with caching disabled.
     pub fn new_without_cache(
         catalog_source: Arc<dyn ModelCatalogSource>,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
-        Self::new_with_optional_cache(/*cache*/ None, catalog_source, auth_manager)
+        Self::new_with_optional_cache(/*cache*/ None, catalog_source, credential_manager)
     }
 
     /// Constructs a remote model manager with a caller-provided cache.
@@ -343,15 +343,15 @@ impl RemoteModelsManager {
     pub fn new_with_cache(
         cache: Arc<dyn ModelsCache>,
         catalog_source: Arc<dyn ModelCatalogSource>,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
-        Self::new_with_optional_cache(Some(cache), catalog_source, auth_manager)
+        Self::new_with_optional_cache(Some(cache), catalog_source, credential_manager)
     }
 
     fn new_with_optional_cache(
         cache: Option<Arc<dyn ModelsCache>>,
         catalog_source: Arc<dyn ModelCatalogSource>,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
         Self {
             remote_models: RwLock::new(ModelsCacheEntry {
@@ -364,17 +364,17 @@ impl RemoteModelsManager {
             cache,
             api_key_model_discovery_enabled: AtomicBool::new(false),
             catalog_source,
-            auth_manager,
+            credential_manager,
         }
     }
 }
 
 impl StaticModelsManager {
     /// Construct a static model manager from an authoritative catalog.
-    pub fn new(auth_manager: Option<Arc<AuthManager>>, model_catalog: ModelCatalog) -> Self {
+    pub fn new(credential_manager: Option<Arc<CredentialManager>>, model_catalog: ModelCatalog) -> Self {
         Self {
             remote_models: model_catalog.models,
-            auth_manager,
+            credential_manager,
         }
     }
 }
@@ -419,8 +419,8 @@ impl ModelsManager for RemoteModelsManager {
         )
     }
 
-    fn auth_manager(&self) -> Option<&AuthManager> {
-        self.auth_manager.as_deref()
+    fn credential_manager(&self) -> Option<&CredentialManager> {
+        self.credential_manager.as_deref()
     }
 
     fn list_collaboration_modes(&self) -> Vec<CollaborationModeMask> {
@@ -555,9 +555,9 @@ impl RemoteModelsManager {
         self.catalog_source.supports_api_key_models()
             && !self.catalog_source.has_command_auth()
             && self
-                .auth_manager
+                .credential_manager
                 .as_ref()
-                .is_some_and(|auth_manager| auth_manager.auth_mode() == Some(AuthMode::ApiKey))
+                .is_some_and(|credential_manager| credential_manager.auth_mode() == Some(AuthMode::ApiKey))
     }
 
     async fn should_refresh_models(&self) -> bool {
@@ -675,8 +675,8 @@ impl ModelsManager for StaticModelsManager {
         Ok(self.remote_models.clone())
     }
 
-    fn auth_manager(&self) -> Option<&AuthManager> {
-        self.auth_manager.as_deref()
+    fn credential_manager(&self) -> Option<&CredentialManager> {
+        self.credential_manager.as_deref()
     }
 
     fn list_collaboration_modes(&self) -> Vec<CollaborationModeMask> {

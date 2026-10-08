@@ -17,7 +17,7 @@ use genex_extension_api::ThreadLifecycleContributor;
 use genex_extension_api::ThreadOriginator;
 use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_model_provider::create_model_provider_for_id;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::config_types::WebSearchContextSize;
@@ -27,7 +27,7 @@ use crate::tool::WebSearchTool;
 
 #[derive(Clone)]
 struct WebSearchExtension {
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
 }
 
 #[derive(Clone)]
@@ -142,7 +142,7 @@ impl ToolContributor for WebSearchExtension {
             provider: create_model_provider_for_id(
                 config.provider_id.clone(),
                 config.provider.clone(),
-                Some(self.auth_manager.clone()),
+                Some(self.credential_manager.clone()),
             ),
             settings: config.settings.clone(),
             originator: thread_store
@@ -152,8 +152,8 @@ impl ToolContributor for WebSearchExtension {
     }
 }
 
-pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, auth_manager: Arc<AuthManager>) {
-    let extension = Arc::new(WebSearchExtension { auth_manager });
+pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, credential_manager: Arc<CredentialManager>) {
+    let extension = Arc::new(WebSearchExtension { credential_manager });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());
     registry.tool_contributor(extension);
@@ -168,7 +168,7 @@ mod tests {
     use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
 
-    use super::AuthManager;
+    use super::CredentialManager;
     use super::Config;
     use super::WebSearchExtensionConfig;
     use super::external_web_access_for_mode;
@@ -204,7 +204,7 @@ mod tests {
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
         install(
             &mut builder,
-            AuthManager::from_auth_for_testing(GenexAuth::from_api_key("dummy")),
+            CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("dummy")),
         );
         let registry = builder.build();
         let session_store = ExtensionData::new("session");

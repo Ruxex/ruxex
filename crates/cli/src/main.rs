@@ -74,7 +74,7 @@ use genex_features::FEATURES;
 use genex_features::Stage;
 use genex_features::is_known_feature_key;
 use genex_home::GenexHomeUserInstructionsProvider;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_protocol::protocol::AskForApproval;
 use genex_protocol::user_input::UserInput;
@@ -1799,9 +1799,9 @@ async fn run_debug_models_command(
         .cli_overrides(cli_overrides)
         .build()
         .await?;
-    let auth_manager =
-        AuthManager::shared_from_config(&config, /*enable_api_key_env*/ true).await?;
-    let models_manager = build_models_manager(&config, auth_manager);
+    let credential_manager =
+        CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ true).await?;
+    let models_manager = build_models_manager(&config, credential_manager);
     let catalog = models_manager
         .raw_model_catalog(
             RefreshStrategy::OnlineIfUncached,

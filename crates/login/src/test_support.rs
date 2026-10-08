@@ -3,7 +3,7 @@
 //! Production code should receive an [`AuthRouteConfig`](crate::AuthRouteConfig) adapted from the
 //! application's resolved HTTP client factory instead of depending on this module.
 
-use crate::AuthManager;
+use crate::CredentialManager;
 use crate::AuthRouteConfig;
 use crate::GenexAuth;
 use genex_http_client::HttpClientFactory;
@@ -11,8 +11,8 @@ use genex_http_client::OutboundProxyPolicy;
 use std::sync::Arc;
 
 /// Creates an authentication manager with optional credentials for cross-crate tests.
-pub fn auth_manager_from_optional_auth(auth: Option<GenexAuth>) -> Arc<AuthManager> {
-    AuthManager::from_optional_auth_for_testing(auth)
+pub fn credential_manager_from_optional_auth(auth: Option<GenexAuth>) -> Arc<CredentialManager> {
+    CredentialManager::from_optional_auth_for_testing(auth)
 }
 
 /// Returns auth routing that preserves the transport's built-in proxy behavior.

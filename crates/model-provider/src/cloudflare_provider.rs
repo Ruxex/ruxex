@@ -9,7 +9,7 @@ use genex_api::StandardChatCompletionApi;
 use genex_api::map_api_error;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::default_client::create_client_for_route_async;
 use genex_model_provider_info::CLOUDFLARE_ACCOUNT_ID_ENV_VAR;
@@ -45,19 +45,19 @@ const CLOUDFLARE_MAX_MODEL_PAGES: usize = 100;
 pub(crate) struct CloudflareModelProvider {
     provider_id: Option<String>,
     info: ModelProviderInfo,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 }
 
 impl CloudflareModelProvider {
     pub(crate) fn new(
         provider_id: Option<String>,
         info: ModelProviderInfo,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
         Self {
             provider_id,
             info,
-            auth_manager,
+            credential_manager,
         }
     }
 
@@ -89,7 +89,7 @@ impl CloudflareModelProvider {
 
     fn model_identity(&self) -> Option<String> {
         let auth = self
-            .auth_manager
+            .credential_manager
             .as_ref()
             .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
         let provider_info = self.models_info().ok()?;
@@ -173,8 +173,8 @@ impl ModelProvider for CloudflareModelProvider {
         })
     }
 
-    fn auth_manager(&self) -> Option<Arc<AuthManager>> {
-        self.auth_manager.clone()
+    fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
+        self.credential_manager.clone()
     }
 
     fn provider_id(&self) -> Option<&str> {
@@ -184,7 +184,7 @@ impl ModelProvider for CloudflareModelProvider {
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
             provider_auth(
-                self.auth_manager.as_ref(),
+                self.credential_manager.as_ref(),
                 None,
                 &self.info,
                 self.provider_id(),

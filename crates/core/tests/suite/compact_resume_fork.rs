@@ -684,13 +684,13 @@ async fn resume_conversation(
     config: &Config,
     path: std::path::PathBuf,
 ) -> Arc<GenexThread> {
-    let auth_manager = genex_core::test_support::auth_manager_from_auth(
+    let credential_manager = genex_core::test_support::credential_manager_from_auth(
         genex_login::GenexAuth::from_api_key("dummy"),
     );
     Box::pin(manager.resume_thread_from_rollout(
         config.clone(),
         path,
-        auth_manager,
+        credential_manager,
         /*parent_trace*/ None,
         ClientMcpExtensions::default(),
     ))

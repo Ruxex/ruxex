@@ -63,7 +63,7 @@ use genex_api::create_text_param_for_request;
 use genex_api::response_create_client_metadata;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::RefreshTokenError;
 use genex_login::UnauthorizedRecovery;
@@ -415,7 +415,7 @@ impl ModelClient {
     /// HTTP client factory must come from the effective session configuration so every transport
     /// observes the resolved outbound proxy policy.
     pub fn new(
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
         thread_id: ThreadId,
         provider_info: ModelProviderInfo,
         session_source: SessionSource,
@@ -431,7 +431,7 @@ impl ModelClient {
     ) -> Self {
         Self::new_with_provider_id(
             None,
-            auth_manager,
+            credential_manager,
             thread_id,
             provider_info,
             session_source,
@@ -450,7 +450,7 @@ impl ModelClient {
     /// Creates a session-scoped model client with provider-scoped credentials.
     pub fn new_with_provider_id(
         provider_id: Option<String>,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
         thread_id: ThreadId,
         provider_info: ModelProviderInfo,
         session_source: SessionSource,
@@ -466,9 +466,9 @@ impl ModelClient {
     ) -> Self {
         let model_provider = match provider_id {
             Some(provider_id) => {
-                create_model_provider_for_id(provider_id, provider_info, auth_manager)
+                create_model_provider_for_id(provider_id, provider_info, credential_manager)
             }
-            None => create_model_provider(provider_info, auth_manager),
+            None => create_model_provider(provider_info, credential_manager),
         };
         let include_attestation = model_provider.supports_attestation();
         Self {
@@ -556,12 +556,12 @@ impl ModelClient {
         }
     }
 
-    pub(crate) fn auth_manager(&self) -> Option<Arc<AuthManager>> {
-        self.state.provider.auth_manager()
+    pub(crate) fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
+        self.state.provider.credential_manager()
     }
 
     fn auth_owner_generation(&self) -> Option<u64> {
-        self.auth_manager().map(|manager| {
+        self.credential_manager().map(|manager| {
             manager
                 .auth_change_state_receiver()
                 .borrow()
@@ -836,7 +836,7 @@ impl ModelClient {
         let auth_changes = self
             .state
             .provider
-            .auth_manager()
+            .credential_manager()
             .map(|manager| manager.auth_change_receiver());
         loop {
             let revision = auth_changes.as_ref().map(|changes| *changes.borrow());
@@ -1299,10 +1299,10 @@ impl ModelClientSession {
         }
 
         let tools = create_tools_json_for_chat_completions_api(&prompt.tools)?;
-        let auth_manager = self.client.state.provider.auth_manager();
-        let mut auth_recovery = auth_manager
+        let credential_manager = self.client.state.provider.credential_manager();
+        let mut auth_recovery = credential_manager
             .as_ref()
-            .map(AuthManager::unauthorized_recovery);
+            .map(CredentialManager::unauthorized_recovery);
         let mut provider_auth_recovery_attempted = false;
         let mut pending_retry = PendingUnauthorizedRetry::default();
 
@@ -1421,10 +1421,10 @@ impl ModelClientSession {
         responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
-        let auth_manager = self.client.state.provider.auth_manager();
-        let mut auth_recovery = auth_manager
+        let credential_manager = self.client.state.provider.credential_manager();
+        let mut auth_recovery = credential_manager
             .as_ref()
-            .map(AuthManager::unauthorized_recovery);
+            .map(CredentialManager::unauthorized_recovery);
         let mut provider_auth_recovery_attempted = false;
         let mut pending_retry = PendingUnauthorizedRetry::default();
         loop {
@@ -1575,11 +1575,11 @@ impl ModelClientSession {
         inference_trace: &InferenceTraceContext,
     ) -> Result<WebsocketStreamOutcome> {
         let provider = Arc::clone(&self.client.state.provider);
-        let auth_manager = provider.auth_manager();
+        let credential_manager = provider.credential_manager();
 
-        let mut auth_recovery = auth_manager
+        let mut auth_recovery = credential_manager
             .as_ref()
-            .map(AuthManager::unauthorized_recovery);
+            .map(CredentialManager::unauthorized_recovery);
         let mut provider_auth_recovery_attempted = false;
         let mut pending_retry = PendingUnauthorizedRetry::default();
         loop {
@@ -2360,7 +2360,7 @@ async fn handle_unauthorized(
             recovery.step_name(),
             Some(recovery.unavailable_reason()),
         ),
-        None => ("none", "none", Some("auth_manager_missing")),
+        None => ("none", "none", Some("credential_manager_missing")),
     };
     session_telemetry.record_auth_recovery(
         mode,

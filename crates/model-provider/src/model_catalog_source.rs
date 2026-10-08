@@ -23,7 +23,7 @@ impl ModelCatalogSource for ProviderModelCatalogSource {
     fn identity(&self) -> Option<String> {
         let auth = self
             .provider
-            .auth_manager()
+            .credential_manager()
             .and_then(|manager| manager.auth_cached());
         models_identity::identity(
             self.provider.provider_id(),

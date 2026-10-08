@@ -11,7 +11,7 @@ use genex_api::SseTelemetry;
 use genex_api::StandardChatCompletionApi;
 use genex_api::StreamResponse;
 use genex_http_client::HttpClientFactory;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::ModelCatalogSnapshot;
@@ -36,19 +36,19 @@ use super::provider::ProviderApi;
 pub(crate) struct MyModelProvider {
     provider_id: Option<String>,
     info: ModelProviderInfo,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 }
 
 impl MyModelProvider {
     pub(crate) fn new(
         provider_id: Option<String>,
         info: ModelProviderInfo,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
         Self {
             provider_id,
             info,
-            auth_manager,
+            credential_manager,
         }
     }
 }
@@ -117,7 +117,7 @@ impl ModelProvider for MyModelProvider {
         let endpoint = ModelsEndpoint::new_with_provider_auth_mode(
             self.provider_id.clone(),
             self.info.clone(),
-            self.auth_manager.clone(),
+            self.credential_manager.clone(),
             ModelsEndpointAuthMode::MyProvider,
         );
         Box::pin(async move {
@@ -127,8 +127,8 @@ impl ModelProvider for MyModelProvider {
         })
     }
 
-    fn auth_manager(&self) -> Option<Arc<AuthManager>> {
-        self.auth_manager.clone()
+    fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
+        self.credential_manager.clone()
     }
 
     fn provider_id(&self) -> Option<&str> {
@@ -138,7 +138,7 @@ impl ModelProvider for MyModelProvider {
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
             provider_auth(
-                self.auth_manager.as_ref(),
+                self.credential_manager.as_ref(),
                 None,
                 &self.info,
                 self.provider_id(),
@@ -149,13 +149,13 @@ impl ModelProvider for MyModelProvider {
 
     fn account_state(&self) -> ProviderAccountResult {
         let auth = self
-            .auth_manager
+            .credential_manager
             .as_ref()
-            .and_then(|auth_manager| cached_provider_auth(auth_manager, self.provider_id()));
+            .and_then(|credential_manager| cached_provider_auth(credential_manager, self.provider_id()));
         let auth_invalid = auth.as_ref().is_some_and(|auth| {
-            self.auth_manager
+            self.credential_manager
                 .as_ref()
-                .is_some_and(|auth_manager| auth_manager.refresh_failure_for_auth(auth).is_some())
+                .is_some_and(|credential_manager| credential_manager.refresh_failure_for_auth(auth).is_some())
         });
         let account = if self.info.requires_auth {
             auth.filter(|_| !auth_invalid)
@@ -187,8 +187,8 @@ impl ModelProvider for MyModelProvider {
                 .unwrap_or(self.info.name.as_str())
                 .to_string(),
             account,
-            account_id: self.auth_manager.as_ref().and_then(|auth_manager| {
-                cached_provider_auth(auth_manager, self.provider_id())
+            account_id: self.credential_manager.as_ref().and_then(|credential_manager| {
+                cached_provider_auth(credential_manager, self.provider_id())
                     .and_then(|auth| auth.get_account_id())
             }),
             display_name: None,
@@ -259,16 +259,16 @@ mod tests {
 
         let mut provider_info = ModelProviderInfo::create_my_provider();
         provider_info.base_url = Some(server.uri());
-        let auth_manager =
-            AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
+        let credential_manager =
+            CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("test-api-key"));
         let provider = Arc::new(MyModelProvider::new(
             None,
             provider_info,
-            Some(auth_manager),
+            Some(credential_manager),
         ));
         let manager = genex_models_manager::manager::build_models_manager_without_cache(
             Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-            provider.auth_manager(),
+            provider.credential_manager(),
             /*config_model_catalog*/ None,
         );
         manager.set_api_key_model_discovery_enabled(true);
@@ -312,8 +312,8 @@ mod tests {
             requires_auth: true,
             ..ModelProviderInfo::create_my_provider()
         };
-        let auth_manager = AuthManager::from_auth_for_testing(GenexAuth::from_api_key("test-key"));
-        let provider = MyModelProvider::new(None, provider_info, Some(auth_manager));
+        let credential_manager = CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("test-key"));
+        let provider = MyModelProvider::new(None, provider_info, Some(credential_manager));
 
         assert_eq!(
             provider.account_state(),

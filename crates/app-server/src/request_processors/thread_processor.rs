@@ -422,7 +422,7 @@ fn validate_dynamic_tools(tools: &[DynamicToolSpec]) -> Result<(), String> {
 
 #[derive(Clone)]
 pub(crate) struct ThreadRequestProcessor {
-    pub(super) auth_manager: Arc<AuthManager>,
+    pub(super) credential_manager: Arc<CredentialManager>,
     pub(super) thread_manager: Arc<ThreadManager>,
     pub(super) outgoing: Arc<OutgoingMessageSender>,
     pub(super) arg0_paths: Arg0DispatchPaths,
@@ -462,7 +462,7 @@ enum RunningThreadResumeResult {
 impl ThreadRequestProcessor {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         thread_manager: Arc<ThreadManager>,
         outgoing: Arc<OutgoingMessageSender>,
         arg0_paths: Arg0DispatchPaths,
@@ -481,7 +481,7 @@ impl ThreadRequestProcessor {
         initial_config_warnings: Vec<ConfigWarningNotification>,
     ) -> Self {
         Self {
-            auth_manager,
+            credential_manager,
             thread_manager,
             outgoing,
             arg0_paths,
@@ -2147,7 +2147,7 @@ impl ThreadRequestProcessor {
             .resume_thread_with_history(
                 config,
                 thread_history,
-                self.auth_manager.clone(),
+                self.credential_manager.clone(),
                 self.request_trace_context(request_id).await,
                 client_mcp_extensions,
             )
@@ -3782,7 +3782,7 @@ impl ThreadRequestProcessor {
             .resume_thread_with_history(
                 config,
                 thread_history,
-                self.auth_manager.clone(),
+                self.credential_manager.clone(),
                 match target {
                     ThreadResumeTarget::Client(request_id) => {
                         self.request_trace_context(request_id).await

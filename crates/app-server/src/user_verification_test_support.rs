@@ -105,7 +105,7 @@ impl native::UserVerificationProvider for BlockingProvider {
 pub(super) struct Harness {
     pub(super) processor: Arc<MessageProcessor>,
     pub(super) session: Arc<ConnectionSessionState>,
-    pub(super) auth: Arc<AuthManager>,
+    pub(super) auth: Arc<CredentialManager>,
     pub(super) service: Arc<Service>,
     pub(super) provider: Arc<BlockingProvider>,
     pub(super) outgoing: Arc<OutgoingMessageSender>,
@@ -123,14 +123,14 @@ impl Harness {
                 .build()
                 .await?,
         );
-        let auth = AuthManager::from_auth_for_testing_with_home(
+        let auth = CredentialManager::from_auth_for_testing_with_home(
             GenexAuth::Headers(AuthHeaders::new(HeaderMap::new()).with_account_id("account-1")),
             home.path().into(),
         );
         let provider = Arc::new(BlockingProvider::default());
         let factory_provider = Arc::clone(&provider);
         let service = Arc::new(Service {
-            auth_manager: Arc::clone(&auth),
+            credential_manager: Arc::clone(&auth),
             provider: Arc::new(move |_| factory_provider.clone()),
             platform_supported: true,
             device_supported: supported,
@@ -156,7 +156,7 @@ impl Harness {
             state_db: None,
             config_warnings: Vec::new(),
             session_source: SessionSource::Cli,
-            auth_manager: Arc::clone(&auth),
+            credential_manager: Arc::clone(&auth),
             user_verification: Arc::clone(&service),
             installation_id: "11111111-1111-4111-8111-111111111111".into(),
             code_mode_session_provider: None,

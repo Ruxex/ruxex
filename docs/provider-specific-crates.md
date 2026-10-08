@@ -153,7 +153,7 @@ Feedback の削除で確認したように、provider 固有性はクレート�
 ### ChatGPT 認証 / Agent Identity
 
 - **根拠:** `crates/agent-identity/src/lib.rs` の issuer、JWKS/auth URL、environment、JWT claims は ChatGPT/Codex backend に固定されており、現行の非 provider identity consumer は確認できない。`genex-login` はこの機能と、workload identity・汎用 credential storage を混在させていた。Bedrock 専用経路は 2026-10-05 に分離削除済みである。
-- **対象:** `codex-agent-identity` 全体候補、`genex-login` の ChatGPT OAuth/device/access-token/AuthManager branch、ChatGPT login protocol/UI、app-server/TUI の ChatGPT auth token types と consumer、ChatGPT 専用 config/headers。
+- **対象:** `codex-agent-identity` 全体候補、`genex-login` の ChatGPT OAuth/device/access-token/CredentialManager branch、ChatGPT login protocol/UI、app-server/TUI の ChatGPT auth token types と consumer、ChatGPT 専用 config/headers。
 - **非対象:** workload identity、external bearer、汎用 keyring/credential storage、provider-neutral な auth state と他 provider の credential flow。Bedrock access key は別 capability として削除済み。
 - **推奨:** **Agent Identity はクレート全体削除を先に検証し、login は分割削除**。依存元がなくなった場合のみ `codex-agent-identity` を workspace から外す。
 - **難易度・リスク:** 非常に高。ChatGPT login の削除を理由に、非 provider の認証や credential storage を削除しないこと。
@@ -273,7 +273,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 ### 15. `genex-login`
 
 - **根拠:** ChatGPT OAuth/device code、provider API key、Codex backend token を実装する一方、credential storage、keyring、認証状態管理は汎用責務である。
-- **機能:** login server/device flow、token refresh、API key、keyring/storage、AuthManager。
+- **機能:** login server/device flow、token refresh、API key、keyring/storage、CredentialManager。
 - **内部依存先:** `genex-config`、`genex-http-client`、`genex-keyring-store`、`genex-model-provider-info`、`genex-otel`、`genex-protocol`、`genex-secrets`、`genex-terminal-detection`、`genex-utils-template`。`codex-agent-identity` と `codex-workload-identity` は削除済み。
 - **依存元:** 直接 26、推移 56。CLI/TUI/app-server/core と大半の hosted integration が直接利用する。
 - **到達経路:** `codex login status` と `codex logout`、TUI onboarding、app-server account API、model request auth。CLI からの ChatGPT OAuth、device auth、provider API key、access token の各 login 経路は削除済み。

@@ -8,7 +8,7 @@ use crate::cache::ModelsCacheFuture;
 use chrono::Utc;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_protocol::model_types::ModelAccessPrograms;
 use genex_protocol::model_types::ModelCatalog;
@@ -259,7 +259,7 @@ fn provider_manager_for_tests(
     provider_manager_for_tests_with_auth(
         genex_home,
         catalog_source,
-        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
     )
@@ -268,9 +268,9 @@ fn provider_manager_for_tests(
 fn provider_manager_for_tests_with_auth(
     genex_home: std::path::PathBuf,
     catalog_source: Arc<dyn ModelCatalogSource>,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 ) -> RemoteModelsManager {
-    let manager = RemoteModelsManager::new(genex_home, catalog_source, auth_manager);
+    let manager = RemoteModelsManager::new(genex_home, catalog_source, credential_manager);
     manager.set_api_key_model_discovery_enabled(true);
     manager
 }
@@ -291,7 +291,7 @@ where
 }
 
 fn static_manager_for_tests(model_catalog: ModelCatalog) -> StaticModelsManager {
-    StaticModelsManager::new(/*auth_manager*/ None, model_catalog)
+    StaticModelsManager::new(/*credential_manager*/ None, model_catalog)
 }
 
 #[tokio::test]
@@ -302,7 +302,7 @@ async fn shared_factory_uses_static_catalog_without_remote_fetch() {
     };
     let manager = build_models_manager_without_cache(
         source.clone(),
-        /*auth_manager*/ None,
+        /*credential_manager*/ None,
         Some(catalog.clone()),
     );
 
@@ -320,7 +320,7 @@ async fn shared_factory_uses_remote_catalog_source_without_static_catalog() {
     let source = TestModelCatalogSource::new(vec![vec![model.clone()]]);
     let manager = build_models_manager_without_cache(
         source.clone(),
-        /*auth_manager*/ None,
+        /*credential_manager*/ None,
         /*config_model_catalog*/ None,
     );
 
@@ -611,7 +611,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
     let manager = provider_manager_for_tests_with_auth(
         genex_home.path().to_path_buf(),
         endpoint.clone(),
-        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
     );
@@ -820,7 +820,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
             Duration::ZERO,
         )),
         endpoint.clone(),
-        Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
             "test-api-key",
         ))),
     );
@@ -872,7 +872,7 @@ async fn refresh_available_models_skips_network_without_auth() {
     let manager = provider_manager_for_tests_with_auth(
         genex_home.path().to_path_buf(),
         endpoint.clone(),
-        /*auth_manager*/ None,
+        /*credential_manager*/ None,
     );
 
     manager

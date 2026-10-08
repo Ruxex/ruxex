@@ -3,7 +3,7 @@
 ## フロー
 
 ```text
-Config + AuthManager
+Config + CredentialManager
   -> モデルプロバイダー設定
   -> genex-model-provider::create_model_provider
   -> ModelProvider の機能オブジェクト

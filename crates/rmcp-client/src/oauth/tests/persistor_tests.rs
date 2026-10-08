@@ -816,7 +816,7 @@ async fn coordinated_provider_timeout_excludes_lock_wait() -> Result<()> {
     let (_env, server, initial) = test_context().await?;
     mount_delayed_refresh(&server, "late-access-token").await;
     save_oauth_tokens_to_file(&initial)?;
-    let (auth_manager, _) = coordinated_manager_for(&initial).await?;
+    let (credential_manager, _) = coordinated_manager_for(&initial).await?;
     let held_lock =
         RefreshCredentialLock::acquire_for_server(&initial.server_name, &initial.url).await?;
     let (contended_tx, contended_rx) = mpsc::channel();
@@ -824,7 +824,7 @@ async fn coordinated_provider_timeout_excludes_lock_wait() -> Result<()> {
         tracing::subscriber::set_default(LockContentionSubscriber { contended_tx });
     let mut refresh = tokio::spawn(
         PROACTIVE_REFRESH_TIMEOUT.scope(Duration::from_millis(/*millis*/ 50), async move {
-            auth_manager.lock().await.get_access_token().await
+            credential_manager.lock().await.get_access_token().await
         }),
     );
     wait_for_lock_contention(contended_rx, /*expected_count*/ 1).await?;
@@ -857,9 +857,9 @@ async fn runtime_for(
     Ok(match mode {
         crate::McpOAuthRefreshMode::Legacy => OAuthRuntime::Legacy(persistor_for(tokens).await?),
         crate::McpOAuthRefreshMode::Coordinated => {
-            let (auth_manager, store) = coordinated_manager_for(tokens).await?;
+            let (credential_manager, store) = coordinated_manager_for(tokens).await?;
             OAuthRuntime::Coordinated {
-                auth_manager,
+                credential_manager,
                 store,
             }
         }

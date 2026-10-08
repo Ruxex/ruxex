@@ -12,7 +12,7 @@ use genex_extension_api::LoadedUserInstructions;
 use genex_extension_api::UserInstructionsProvider;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
@@ -65,12 +65,12 @@ pub fn set_deterministic_process_ids(enabled: bool) {
     unified_exec::set_deterministic_process_ids_for_tests(enabled);
 }
 
-pub fn auth_manager_from_auth(auth: GenexAuth) -> Arc<AuthManager> {
-    AuthManager::from_auth_for_testing(auth)
+pub fn credential_manager_from_auth(auth: GenexAuth) -> Arc<CredentialManager> {
+    CredentialManager::from_auth_for_testing(auth)
 }
 
-pub fn auth_manager_from_auth_with_home(auth: GenexAuth, genex_home: PathBuf) -> Arc<AuthManager> {
-    AuthManager::from_auth_for_testing_with_home(auth, genex_home)
+pub fn credential_manager_from_auth_with_home(auth: GenexAuth, genex_home: PathBuf) -> Arc<CredentialManager> {
+    CredentialManager::from_auth_for_testing_with_home(auth, genex_home)
 }
 
 pub fn with_code_mode_host_program(
@@ -107,7 +107,7 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
     thread_manager: &ThreadManager,
     config: Config,
     rollout_path: PathBuf,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
     user_shell_override: crate::shell::Shell,
     _supports_provider_form_elicitation: bool,
 ) -> genex_protocol::error::Result<crate::NewThread> {
@@ -115,7 +115,7 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
         .resume_thread_from_rollout_with_user_shell_override_for_tests(
             config,
             rollout_path,
-            auth_manager,
+            credential_manager,
             user_shell_override,
             ClientMcpExtensions::new(None),
         )
@@ -124,14 +124,14 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
 
 pub fn models_manager_with_provider(
     genex_home: PathBuf,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
     provider: ModelProviderInfo,
 ) -> SharedModelsManager {
-    let provider = create_model_provider(provider, Some(auth_manager));
+    let provider = create_model_provider(provider, Some(credential_manager));
     build_models_manager(
         genex_home,
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-        provider.auth_manager(),
+        provider.credential_manager(),
         /*config_model_catalog*/ None,
     )
 }

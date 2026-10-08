@@ -4,7 +4,7 @@
 
 **Goal:** Replace the single ChatGPT-style stored login with provider-scoped credentials, provider-aware account/usage status, and explicit `login`, `switch`, `logout`, and `delete` operations.
 
-**Architecture:** Keep `genex-login` as the persistence and credential-state boundary, but evolve its single `AuthDotJson`/`AuthManager` model into provider-scoped records. Reuse the existing configured `model_provider_id` as the effective active-provider selector rather than adding a competing selection source; `CredentialManager` supplies credentials and selection operations through a config-aware adapter. `ModelProvider` remains responsible for translating credentials and exposing provider-specific account/usage capabilities.
+**Architecture:** Keep `genex-login` as the persistence and credential-state boundary, but evolve its single `AuthDotJson`/`CredentialManager` model into provider-scoped records. Reuse the existing configured `model_provider_id` as the effective active-provider selector rather than adding a competing selection source; `CredentialManager` supplies credentials and selection operations through a config-aware adapter. `ModelProvider` remains responsible for translating credentials and exposing provider-specific account/usage capabilities.
 
 **Tech Stack:** Rust, Tokio, serde, keyring/secret storage, `genex-login`, `genex-model-provider`, `genex-models-manager`, `genex-core`, app-server protocol, CLI/TUI, checked-in schema generation.
 
@@ -77,7 +77,7 @@
 - Test: `crates/core/src/config/`
 
 **Interfaces:**
-- Add `CredentialManager` as the provider-scoped public manager. Keep a temporary `AuthManager` compatibility alias only while cross-crate migration is in progress.
+- Make `CredentialManager` the provider-scoped public manager. No compatibility alias is retained because Genex is unreleased and all in-repository consumers are migrated together.
 - Expose operations equivalent to:
   - `login(provider_id, credential)`: persist/update credentials and select the provider;
   - `switch(provider_id)`: select an existing usable provider without mutating credentials;
@@ -87,7 +87,7 @@
 
 - [ ] **Step 1: Separate deactivation from deletion**
 
-  Replace the current `AuthManager::logout` behavior that deletes all auth stores with a deactivation operation. Add an explicit provider deletion operation that calls the provider-scoped storage delete path. Preserve external-auth refresh and unauthorized recovery until their provider ownership is audited.
+  Replace the current `CredentialManager::logout` behavior that deletes all auth stores with a deactivation operation. Add an explicit provider deletion operation that calls the provider-scoped storage delete path. Preserve external-auth refresh and unauthorized recovery until their provider ownership is audited.
 
 - [ ] **Step 2: Add provider-aware change state**
 
@@ -130,7 +130,7 @@
 
 - [ ] **Step 1: Update provider auth resolution**
 
-  Refactor `auth_manager_for_provider` and `resolve_provider_auth` so a configured provider asks for its own stored credential. Preserve unauthenticated providers, environment-key providers, Cloudflare Account ID handling, and My Provider header behavior.
+  Refactor `credential_manager_for_provider` and `resolve_provider_auth` so a configured provider asks for its own stored credential. Preserve unauthenticated providers, environment-key providers, Cloudflare Account ID handling, and My Provider header behavior.
 
 - [ ] **Step 2: Update model listing and catalog identity**
 
@@ -178,7 +178,7 @@
 
 - [ ] **Step 3: Adapt app-server account reads**
 
-  Make `get_account_response` read the active provider's account and usage capability. Remove assumptions that a successful `AuthManager` snapshot means a Genex account exists.
+  Make `get_account_response` read the active provider's account and usage capability. Remove assumptions that a successful `CredentialManager` snapshot means a Genex account exists.
 
 - [ ] **Step 4: Add protocol tests and generate schemas**
 
@@ -250,7 +250,7 @@
 - Replace global “logged in” checks with either active-provider availability or a generic credential revision, depending on the consumer.
 - Preserve security invalidation and connection ownership checks; do not remove them merely because application login is gone.
 
-- [ ] **Step 1: Classify each remaining `AuthManager` consumer**
+- [ ] **Step 1: Classify each remaining `CredentialManager` consumer**
 
   For every production reference, record whether it needs provider credentials, active-provider selection, a generic revision, or no longer has a valid purpose. Add the explicit inventory decision before editing.
 
@@ -258,9 +258,9 @@
 
   Use provider-scoped credential state for model requests and provider account UI. Use a generic credential/owner revision for transport and user-verification security. Remove only dead plugin/startup/managed-auth paths with evidence.
 
-- [ ] **Step 3: Remove compatibility aliases and stale terminology**
+- [x] **Step 3: Remove compatibility aliases and stale terminology**
 
-  Once all consumers are migrated, remove the temporary `AuthManager` alias and ChatGPT-specific managed-auth terminology that no longer describes the Genex architecture.
+  All consumers now use `CredentialManager`; the temporary compatibility alias was removed. ChatGPT-specific managed-auth terminology remains only where it describes an active security/configuration capability.
 
 - [ ] **Step 4: Commit the final consumer audit**
 
@@ -303,7 +303,7 @@
 
 - [ ] **Step 4: Search for stale semantics and inspect the final diff**
 
-  Run `git diff --check` and search for `logged in`, `AuthManager::logout`, `current_auth_uses_managed_auth`, single-provider `AuthDotJson`, and unscoped `GenexAuth` consumers. Every remaining match must have a documented provider, MCP, or security reason.
+  Run `git diff --check` and search for `logged in`, `CredentialManager::logout`, `current_auth_uses_managed_auth`, single-provider `AuthDotJson`, and unscoped `GenexAuth` consumers. Every remaining match must have a documented provider, MCP, or security reason.
 
 - [ ] **Step 5: Commit the verified result**
 

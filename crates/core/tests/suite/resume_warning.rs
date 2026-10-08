@@ -108,8 +108,8 @@ async fn emits_warning_when_resumed_model_differs() {
         GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
-    let auth_manager =
-        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("test"));
+    let credential_manager =
+        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("test"));
 
     // Act: resume the conversation.
     let NewThread {
@@ -119,7 +119,7 @@ async fn emits_warning_when_resumed_model_differs() {
         .resume_thread_with_history(
             config.clone(),
             initial_history,
-            auth_manager,
+            credential_manager,
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )

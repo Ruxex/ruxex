@@ -22,7 +22,7 @@ async fn catalog_deadline_returns_request_timeout() {
         .await;
     let endpoint = ModelsEndpoint::new(
         ModelProviderInfo::create_responses_provider(Some(server.uri())),
-        /*auth_manager*/ None,
+        /*credential_manager*/ None,
     );
 
     let error = endpoint

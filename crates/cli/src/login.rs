@@ -1,18 +1,18 @@
 //! CLI authentication status and logout commands.
 
 use genex_core::config::Config;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::list_provider_ids;
 use genex_utils_cli::CliConfigOverrides;
 use std::sync::Arc;
 
-async fn load_cli_auth_manager(config: &Config) -> anyhow::Result<Arc<AuthManager>> {
-    Ok(AuthManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
+async fn load_cli_credential_manager(config: &Config) -> anyhow::Result<Arc<CredentialManager>> {
+    Ok(CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
 }
 
 pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let manager = match load_cli_auth_manager(&config).await {
+    let manager = match load_cli_credential_manager(&config).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error checking login status: {err}");
@@ -54,7 +54,7 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
 
 pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let manager = match load_cli_auth_manager(&config).await {
+    let manager = match load_cli_credential_manager(&config).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error logging out: {err}");
@@ -79,7 +79,7 @@ pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
 
 pub async fn run_login_switch(cli_config_overrides: CliConfigOverrides, provider_id: String) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let manager = match load_cli_auth_manager(&config).await {
+    let manager = match load_cli_credential_manager(&config).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error loading credentials: {err}");
@@ -98,7 +98,7 @@ pub async fn run_login_switch(cli_config_overrides: CliConfigOverrides, provider
 
 pub async fn run_login_delete(cli_config_overrides: CliConfigOverrides, provider_id: String) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let manager = match load_cli_auth_manager(&config).await {
+    let manager = match load_cli_credential_manager(&config).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error loading credentials: {err}");

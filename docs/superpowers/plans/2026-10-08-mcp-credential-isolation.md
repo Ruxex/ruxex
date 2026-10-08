@@ -4,7 +4,7 @@
 
 **Goal:** Make MCP credential resolution and lifecycle independent from model-provider credentials and the Genex login manager.
 
-**Architecture:** MCP will consume only server configuration, MCP environment credentials, and the existing MCP OAuth stores. The MCP runtime will no longer carry `GenexAuth`, `AuthManager`, or model-provider auth-change state. The existing MCP-specific credential refresh and connection identity logic remains the source of reconnect behavior.
+**Architecture:** MCP will consume only server configuration, MCP environment credentials, and the existing MCP OAuth stores. The MCP runtime will no longer carry `GenexAuth`, `CredentialManager`, or model-provider auth-change state. The existing MCP-specific credential refresh and connection identity logic remains the source of reconnect behavior.
 
 **Tech Stack:** Rust, Tokio, `genex-mcp`, `genex-rmcp-client`, `genex-core`, `genex-cli`, app-server MCP processors, checked-in protocol/config generation.
 
@@ -121,7 +121,7 @@
 
 - [ ] **Step 2: Remove or relocate the watcher**
 
-  Implement the decision from Step 1. Do not pass `AuthManager::auth_change_state_receiver()` into MCP. If a new MCP revision is required, make it originate from MCP OAuth/config changes rather than model-provider login changes.
+  Implement the decision from Step 1. Do not pass `CredentialManager::auth_change_state_receiver()` into MCP. If a new MCP revision is required, make it originate from MCP OAuth/config changes rather than model-provider login changes.
 
 - [ ] **Step 3: Update tests and capability declarations**
 
@@ -195,7 +195,7 @@
 
 - [ ] **Step 3: Inspect generated and source diffs**
 
-  Run `git diff --check`, inspect generated changes, and search for remaining `runtime_auth_provider`, `current_auth_matches`, `effective_mcp_servers(..., auth)`, and `AuthManager` references in `genex-mcp` and MCP session code. Any remaining match must have an explicit retention reason.
+  Run `git diff --check`, inspect generated changes, and search for remaining `runtime_auth_provider`, `current_auth_matches`, `effective_mcp_servers(..., auth)`, and `CredentialManager` references in `genex-mcp` and MCP session code. Any remaining match must have an explicit retention reason.
 
 - [ ] **Step 4: Commit the verified result**
 

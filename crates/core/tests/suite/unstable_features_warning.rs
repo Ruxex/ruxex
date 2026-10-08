@@ -39,8 +39,8 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
-    let auth_manager =
-        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("test"));
+    let credential_manager =
+        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,
@@ -49,7 +49,7 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         .resume_thread_with_history(
             config.clone(),
             InitialHistory::New,
-            auth_manager,
+            credential_manager,
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )
@@ -89,8 +89,8 @@ async fn suppresses_warning_when_configured() {
         GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
-    let auth_manager =
-        genex_core::test_support::auth_manager_from_auth(GenexAuth::from_api_key("test"));
+    let credential_manager =
+        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,
@@ -99,7 +99,7 @@ async fn suppresses_warning_when_configured() {
         .resume_thread_with_history(
             config.clone(),
             InitialHistory::New,
-            auth_manager,
+            credential_manager,
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )

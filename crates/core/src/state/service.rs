@@ -27,7 +27,7 @@ use genex_extension_api::ExtensionData;
 use genex_extension_api::ExtensionDataInit;
 use genex_extension_api::ExtensionRegistry;
 use genex_hooks::Hooks;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_mcp::McpRuntime;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_otel::SessionTelemetry;
@@ -58,7 +58,7 @@ pub(crate) struct SessionServices {
     pub(crate) user_shell: Arc<crate::shell::Shell>,
     pub(crate) show_raw_agent_reasoning: bool,
     pub(crate) exec_policy: Arc<ExecPolicyManager>,
-    pub(crate) auth_manager: Arc<AuthManager>,
+    pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) models_manager: SharedModelsManager,
     pub(crate) git_root_discovery: Arc<GitRootDiscovery>,
     pub(crate) session_telemetry: SessionTelemetry,

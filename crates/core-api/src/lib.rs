@@ -79,7 +79,7 @@ pub use genex_features::Features;
 pub use genex_history::InitialHistory;
 pub use genex_home::GenexHomeUserInstructionsProvider;
 pub use genex_login::AuthHeaders;
-pub use genex_login::AuthManager;
+pub use genex_login::CredentialManager;
 pub use genex_login::ExternalAuth;
 pub use genex_login::ExternalAuthFuture;
 pub use genex_login::ExternalAuthRefreshContext;

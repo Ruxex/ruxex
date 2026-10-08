@@ -1,6 +1,6 @@
 use crate::OTEL_SERVICE_NAME;
 use crate::config_manager::ConfigManager;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_otel::OtelProvider;
 use std::sync::Arc;
 use std::time::Duration;
@@ -45,14 +45,14 @@ pub(crate) fn spawn<S>(
     mut provider: Option<OtelProvider>,
     logger_reload_handle: reload::Handle<OtelExportLayer<S>, S>,
     config_manager: ConfigManager,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
     default_metrics_enabled: bool,
     shutdown_token: CancellationToken,
 ) -> JoinHandle<()>
 where
     S: Subscriber + for<'span> LookupSpan<'span> + Send + Sync + 'static,
 {
-    let mut auth_changes = auth_manager.auth_change_receiver();
+    let mut auth_changes = credential_manager.auth_change_receiver();
 
     tokio::spawn(async move {
         loop {

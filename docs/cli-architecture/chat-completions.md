@@ -35,7 +35,7 @@ Responses API のデフォルト経路とは分離されており、`wire_api` �
 | tool output | 対応 | `FunctionCallOutput` を `role: "tool"` と `tool_call_id` に変換する。テキストと画像の output content part を扱う |
 | reasoning | 部分対応 | `delta.reasoning` または `message.reasoning` の文字列・`text`・`content` を reasoning event に変換する。Chat Completions 標準の reasoning 契約を定義するものではない |
 | 複数ターンの履歴 | 対応 | assistant message、function call、tool output を Chat Completions の message 列へ変換する。連続する tool call は一つの assistant message にまとめる |
-| 認証復旧 | 対応 | Chat 経路でも共通の auth manager による unauthorized recovery を利用し、必要な場合にリクエストを再試行する |
+| 認証復旧 | 対応 | Chat 経路でも共通の credential manager による unauthorized recovery を利用し、必要な場合にリクエストを再試行する |
 | リクエスト/SSE テレメトリ | 対応 | `/chat/completions` の route、HTTP request、SSE poll、認証リトライを既存の telemetry/inference trace に接続する |
 
 ### ツール定義とツール履歴の境界

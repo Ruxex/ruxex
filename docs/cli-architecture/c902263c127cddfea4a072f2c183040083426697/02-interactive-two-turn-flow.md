@@ -95,7 +95,7 @@ TUI は設定に応じて、次のいずれかの app-server に接続します�
 
 いずれも TUI から見れば、`initialize` / `initialized` のプロトコルで接続する同じ窓口です。embedded の場合も、app-server の処理を経由するため、TUI が直接すべての Core API を呼ぶ構造ではありません。
 
-app-server の初期化では、設定の妥当性を確認し、`AuthManager`、`MessageProcessor`、`ThreadManager`、モデル管理、スキル監視、MCP・プラグイン関連のプロセッサを構築します。
+app-server の初期化では、設定の妥当性を確認し、`CredentialManager`、`MessageProcessor`、`ThreadManager`、モデル管理、スキル監視、MCP・プラグイン関連のプロセッサを構築します。
 
 ## 2. 起動時の認証: 「ログイン」と「リクエスト認証」は別
 
@@ -103,7 +103,7 @@ app-server の初期化では、設定の妥当性を確認し、`AuthManager`�
 
 ### 2.1 ローカルの認証状態を読む
 
-app-server / Core は `AuthManager` を作り、ログイン済みか、どの認証方式を使うかを参照できる状態にします。この段階では、通常はまだモデル API を呼びません。
+app-server / Core は `CredentialManager` を作り、ログイン済みか、どの認証方式を使うかを参照できる状態にします。この段階では、通常はまだモデル API を呼びません。
 
 保存先は設定と環境に依存しますが、代表例は次のとおりです。
 
@@ -123,7 +123,7 @@ TUI の初期表示では `account/read` が送られます。続いて `model/l
 
 ### 2.3 モデルリクエストの直前に認証ヘッダーを作る
 
-実際のモデルリクエスト時には、`genex-api` の `AuthProvider` が現在の provider 設定と `AuthManager` の状態から、リクエスト用の認証情報を作ります。
+実際のモデルリクエスト時には、`genex-api` の `AuthProvider` が現在の provider 設定と `CredentialManager` の状態から、リクエスト用の認証情報を作ります。
 
 ```text
 保存済み認証状態

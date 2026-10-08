@@ -64,25 +64,25 @@ pub enum RefreshTokenError {
     Transient(#[from] std::io::Error),
 }
 
-/// Error returned when constructing an [`AuthManager`] from resolved configuration.
+/// Error returned when constructing an [`CredentialManager`] from resolved configuration.
 #[derive(Debug, Error)]
 #[error(transparent)]
-pub struct AuthManagerInitializationError(AuthManagerInitializationErrorSource);
+pub struct CredentialManagerInitializationError(CredentialManagerInitializationErrorSource);
 
 #[derive(Debug, Error)]
-enum AuthManagerInitializationErrorSource {
+enum CredentialManagerInitializationErrorSource {
     #[error(transparent)]
     InitialAuth(RefreshTokenError),
 }
 
-impl From<RefreshTokenError> for AuthManagerInitializationError {
+impl From<RefreshTokenError> for CredentialManagerInitializationError {
     fn from(error: RefreshTokenError) -> Self {
-        Self(AuthManagerInitializationErrorSource::InitialAuth(error))
+        Self(CredentialManagerInitializationErrorSource::InitialAuth(error))
     }
 }
 
-impl From<AuthManagerInitializationError> for std::io::Error {
-    fn from(error: AuthManagerInitializationError) -> Self {
+impl From<CredentialManagerInitializationError> for std::io::Error {
+    fn from(error: CredentialManagerInitializationError) -> Self {
         Self::other(error)
     }
 }
@@ -98,7 +98,7 @@ pub struct ExternalAuthRefreshContext {
     pub previous_account_id: Option<String>,
 }
 
-/// Pluggable auth provider used by `AuthManager` for externally managed auth flows.
+/// Pluggable auth provider used by `CredentialManager` for externally managed auth flows.
 ///
 /// Implementations own the current auth value and any source-specific refresh mechanism.
 pub trait ExternalAuth: Send + Sync {
@@ -319,7 +319,7 @@ pub fn save_auth(
 
 /// Load the raw stored auth payload without applying environment overrides.
 ///
-/// Returns `None` when no credentials are stored. Prefer `AuthManager` for
+/// Returns `None` when no credentials are stored. Prefer `CredentialManager` for
 /// ordinary production reads; this helper is for tests and write-side
 /// maintenance that must inspect the exact payload in storage.
 pub fn load_auth_dot_json(
@@ -643,7 +643,7 @@ fn validate_auth_restrictions(
 
 /// Enforces configured login restrictions using auth-owned HTTP settings.
 pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<()> {
-    // Managed-only restrictions are enforced by AuthManager.
+    // Managed-only restrictions are enforced by CredentialManager.
     if config.forced_login_method.is_none() && config.forced_managed_workspace_id.is_none() {
         return Ok(());
     }
@@ -896,7 +896,7 @@ enum UnauthorizedRecoveryMode {
 // configured provider to refresh and caching the returned auth through the same
 // path used by other auth sources.
 pub struct UnauthorizedRecovery {
-    manager: Arc<AuthManager>,
+    manager: Arc<CredentialManager>,
     step: UnauthorizedRecoveryStep,
     expected_account_id: Option<String>,
     mode: UnauthorizedRecoveryMode,
@@ -914,7 +914,7 @@ impl UnauthorizedRecoveryStepResult {
 }
 
 impl UnauthorizedRecovery {
-    fn new(manager: Arc<AuthManager>) -> Self {
+    fn new(manager: Arc<CredentialManager>) -> Self {
         let cached_auth = manager.auth_cached();
         let expected_account_id = cached_auth.as_ref().and_then(GenexAuth::get_account_id);
         let mode = if manager.has_external_auth() {
@@ -1066,7 +1066,7 @@ impl UnauthorizedRecovery {
 /// External modifications to `auth.json` will NOT be observed until
 /// `reload()` is called explicitly. This matches the design goal of avoiding
 /// different parts of the program seeing inconsistent auth data mid‑run.
-pub struct AuthManager {
+pub struct CredentialManager {
     genex_home: PathBuf,
     model_provider_id: RwLock<Option<String>>,
     inner: RwLock<CachedAuth>,
@@ -1084,16 +1084,13 @@ pub struct AuthManager {
     auth_route_config: AuthRouteConfig,
 }
 
-/// Provider-scoped name for the shared credential manager.
-pub type CredentialManager = AuthManager;
-
-/// Configuration view required to construct a shared [`AuthManager`].
+/// Configuration view required to construct a shared [`CredentialManager`].
 ///
 /// Implementations should return the auth-related config values for the
 /// already-resolved runtime configuration. The primary implementation is
 /// `genex_core::config::Config`, but this trait keeps `genex-login` independent
 /// from `genex-core`.
-pub trait AuthManagerConfig {
+pub trait CredentialManagerConfig {
     /// Returns the Genex home directory used for auth storage.
     fn genex_home(&self) -> PathBuf;
 
@@ -1122,9 +1119,9 @@ pub trait AuthManagerConfig {
     fn auth_route_config(&self) -> AuthRouteConfig;
 }
 
-impl Debug for AuthManager {
+impl Debug for CredentialManager {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AuthManager")
+        f.debug_struct("CredentialManager")
             .field("genex_home", &self.genex_home)
             .field("inner", &self.inner)
             .field("enable_api_key_env", &self.enable_api_key_env)
@@ -1146,7 +1143,7 @@ impl Debug for AuthManager {
     }
 }
 
-impl AuthManager {
+impl CredentialManager {
     /// Create a new manager loading the initial auth using the provided
     /// preferred auth method. Errors loading auth are swallowed; `auth()` will
     /// simply return `None` in that case so callers can treat it as an
@@ -1228,12 +1225,12 @@ impl AuthManager {
         }
     }
 
-    /// Create an AuthManager with a specific GenexAuth, for testing only.
+    /// Create an CredentialManager with a specific GenexAuth, for testing only.
     pub fn from_auth_for_testing(auth: GenexAuth) -> Arc<Self> {
         Self::from_optional_auth_for_testing(Some(auth))
     }
 
-    /// Create an AuthManager with an optional GenexAuth, for testing only.
+    /// Create an CredentialManager with an optional GenexAuth, for testing only.
     pub(crate) fn from_optional_auth_for_testing(auth: Option<GenexAuth>) -> Arc<Self> {
         let cached = CachedAuth {
             auth,
@@ -1260,7 +1257,7 @@ impl AuthManager {
         })
     }
 
-    /// Create an AuthManager with a specific GenexAuth and genex home, for testing only.
+    /// Create an CredentialManager with a specific GenexAuth and genex home, for testing only.
     pub fn from_auth_for_testing_with_home(auth: GenexAuth, genex_home: PathBuf) -> Arc<Self> {
         let cached = CachedAuth {
             auth: Some(auth),
@@ -1541,7 +1538,7 @@ impl AuthManager {
     fn set_cached_auth(&self, new_auth: Option<GenexAuth>) -> bool {
         if let Ok(mut guard) = self.inner.write() {
             let previous = guard.auth.as_ref();
-            let changed = !AuthManager::auths_equal(previous, new_auth.as_ref());
+            let changed = !CredentialManager::auths_equal(previous, new_auth.as_ref());
             let auth_changed_for_refresh =
                 !Self::auths_equal_for_refresh(previous, new_auth.as_ref());
             let owner_changed =
@@ -1667,16 +1664,16 @@ impl AuthManager {
 
     /// Builds a shared manager from the resolved authentication configuration.
     pub async fn shared_from_config(
-        config: &impl AuthManagerConfig,
+        config: &impl CredentialManagerConfig,
         enable_api_key_env: bool,
-    ) -> Result<Arc<Self>, AuthManagerInitializationError> {
+    ) -> Result<Arc<Self>, CredentialManagerInitializationError> {
         Self::shared_from_auth_config(auth_config_from(config), enable_api_key_env).await
     }
 
     pub async fn shared_from_auth_config(
         auth_config: AuthConfig,
         enable_api_key_env: bool,
-    ) -> Result<Arc<Self>, AuthManagerInitializationError> {
+    ) -> Result<Arc<Self>, CredentialManagerInitializationError> {
         Ok(Arc::new(
             Self::new_from_auth_config(auth_config, enable_api_key_env).await,
         ))
@@ -2041,7 +2038,7 @@ impl AuthManager {
     }
 }
 
-fn auth_config_from(config: &impl AuthManagerConfig) -> AuthConfig {
+fn auth_config_from(config: &impl CredentialManagerConfig) -> AuthConfig {
     AuthConfig {
         genex_home: config.genex_home(),
         model_provider_id: config.model_provider_id(),
@@ -2214,7 +2211,7 @@ mod tests {
     #[tokio::test]
     async fn provider_credential_lifecycle_preserves_records_across_selection_changes() {
         let (home, mode, keyring) = file_store();
-        let manager = AuthManager::new_from_auth_config(
+        let manager = CredentialManager::new_from_auth_config(
             AuthConfig {
                 genex_home: home.path().to_path_buf(),
                 model_provider_id: None,

@@ -660,7 +660,7 @@ impl OauthLoginFlow {
             oauth_state,
             authorization_server_issuer,
             redirect_uri,
-        } = if let Some((oauth_client_id, (auth_manager, metadata))) =
+        } = if let Some((oauth_client_id, (credential_manager, metadata))) =
             oauth_client_id.zip(registered_authorization)
         {
             let redirect_uri = if is_enterprise_idp {
@@ -675,7 +675,7 @@ impl OauthLoginFlow {
                 append_callback_id_to_redirect_uri(&redirect_uri, &callback_id)?
             };
             start_authorization(
-                auth_manager,
+                credential_manager,
                 metadata,
                 &scope_refs,
                 &redirect_uri,
@@ -830,16 +830,16 @@ async fn resolve_authorization_manager(
     if matches!(purpose, OAuthLoginPurpose::EnterpriseIdp) {
         return resolve_enterprise_authorization_manager(server_url, http_client).await;
     }
-    let mut auth_manager =
+    let mut credential_manager =
         AuthorizationManager::new_with_oauth_http_client(server_url, http_client).await?;
-    auth_manager.set_allow_missing_issuer(true);
-    let metadata = auth_manager.resolve_metadata().await?.metadata;
+    credential_manager.set_allow_missing_issuer(true);
+    let metadata = credential_manager.resolve_metadata().await?.metadata;
     validate_authorization_server_endpoints(&metadata)?;
-    Ok((auth_manager, metadata))
+    Ok((credential_manager, metadata))
 }
 
 async fn start_authorization(
-    mut auth_manager: AuthorizationManager,
+    mut credential_manager: AuthorizationManager,
     metadata: AuthorizationMetadata,
     scopes: &[&str],
     redirect_uri: &str,
@@ -850,11 +850,11 @@ async fn start_authorization(
     let strict_enterprise_idp = matches!(purpose, OAuthLoginPurpose::EnterpriseIdp);
     let authorization_server_issuer = metadata.issuer.clone();
     validate_callback_redirect(redirect_uri, callback_id, callback_mode(&metadata)?)?;
-    auth_manager.set_metadata(metadata);
+    credential_manager.set_metadata(metadata);
     let client_config = OAuthClientConfig::new(oauth_client_id, redirect_uri)
         .with_scopes(scopes.iter().map(|scope| (*scope).to_string()).collect());
-    auth_manager.configure_client(client_config)?;
-    let auth_url = auth_manager.get_authorization_url(scopes).await?;
+    credential_manager.configure_client(client_config)?;
+    let auth_url = credential_manager.get_authorization_url(scopes).await?;
     let auth_url = if strict_enterprise_idp {
         enterprise_authorization_url(&auth_url)?
     } else {
@@ -863,7 +863,7 @@ async fn start_authorization(
 
     Ok(PreparedOAuthLogin {
         oauth_state: OAuthState::Session(AuthorizationSession::for_scope_upgrade(
-            auth_manager,
+            credential_manager,
             auth_url,
             redirect_uri,
         )),
@@ -1124,7 +1124,7 @@ mod tests {
         for (scopes, expected_scope) in [(&[][..], None), (&["read"][..], Some("read"))] {
             let (base_url, registration_requests) = spawn_oauth_metadata_server().await;
             let redirect_uri = "http://127.0.0.1:43123/callback/configured-client";
-            let (auth_manager, metadata) = resolve_authorization_manager(
+            let (credential_manager, metadata) = resolve_authorization_manager(
                 &format!("{base_url}/mcp"),
                 Arc::new(OAuthHttpClientAdapter::new(
                     Arc::new(RouteAwareHttpClient::new(HttpClientFactory::new(
@@ -1138,7 +1138,7 @@ mod tests {
             .await
             .expect("resolve pre-registered OAuth metadata");
             let prepared = start_authorization(
-                auth_manager,
+                credential_manager,
                 metadata,
                 scopes,
                 redirect_uri,
@@ -1233,7 +1233,7 @@ mod tests {
             } else {
                 "http://127.0.0.1/callback/test-callback"
             };
-            let (auth_manager, metadata) = resolve_authorization_manager(
+            let (credential_manager, metadata) = resolve_authorization_manager(
                 &format!("{issuer}/mcp"),
                 Arc::new(OAuthHttpClientAdapter::new(
                     Arc::new(RouteAwareHttpClient::new(HttpClientFactory::new(
@@ -1247,7 +1247,7 @@ mod tests {
             .await
             .expect("resolve issuer-aware authorization metadata");
             let prepared = start_authorization(
-                auth_manager,
+                credential_manager,
                 metadata,
                 &[],
                 redirect_uri,

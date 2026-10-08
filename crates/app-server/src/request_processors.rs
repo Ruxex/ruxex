@@ -251,7 +251,7 @@ use genex_exec_server::LOCAL_ENVIRONMENT_ID;
 use genex_exec_server::LOCAL_FS;
 use genex_features::Feature;
 use genex_git_utils::resolve_root_git_project_for_trust;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_mcp::McpRuntimeContext;
 use genex_mcp::McpServerStatusSnapshot;

@@ -28,9 +28,9 @@ fn tui_runtime_source_does_not_depend_on_manager_escape_hatches() {
         .expect("chatwidget source file should have a parent");
     let sources = rust_sources_under(src_dir);
     let forbidden = [
-        "AuthManager",
+        "CredentialManager",
         "ThreadManager",
-        "auth_manager(",
+        "credential_manager(",
         "thread_manager(",
     ];
 

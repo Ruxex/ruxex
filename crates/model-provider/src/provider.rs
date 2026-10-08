@@ -11,7 +11,7 @@ use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
 use genex_api::is_azure_responses_provider;
 use genex_http_client::HttpClientFactory;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::WireApi;
@@ -24,7 +24,7 @@ use genex_protocol::protocol::RateLimitSnapshot;
 
 use crate::auth::ProviderAuthScope;
 use crate::auth::ResolvedProviderAuth;
-use crate::auth::auth_manager_for_provider;
+use crate::auth::credential_manager_for_provider;
 use crate::auth::cached_provider_auth;
 use crate::auth::provider_auth;
 use crate::auth::resolve_provider_auth;
@@ -157,7 +157,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         let endpoint = ModelsEndpoint::new_for_provider(
             self.provider_id().map(str::to_owned),
             self.info().clone(),
-            self.auth_manager(),
+            self.credential_manager(),
         );
         Box::pin(async move {
             endpoint
@@ -187,7 +187,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
     /// resolve provider-specific auth only through `ModelProvider`. We first need
     /// to think through whether Genex should have a unified provider-specific auth
     /// manager throughout the codebase; that is a larger refactor than this change.
-    fn auth_manager(&self) -> Option<Arc<AuthManager>>;
+    fn credential_manager(&self) -> Option<Arc<CredentialManager>>;
 
     /// Returns the configured provider ID used for provider-scoped credentials.
     fn provider_id(&self) -> Option<&str> {
@@ -270,7 +270,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
             }
             let auth = self.auth().await;
             resolve_provider_auth_for_scope(
-                self.auth_manager(),
+                self.credential_manager(),
                 auth.as_ref(),
                 self.info(),
                 self.provider_id(),
@@ -296,38 +296,38 @@ fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
 /// Creates the default runtime model provider for configured provider metadata.
 pub fn create_model_provider(
     provider_info: ModelProviderInfo,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 ) -> SharedModelProvider {
-    create_model_provider_internal(None, provider_info, auth_manager)
+    create_model_provider_internal(None, provider_info, credential_manager)
 }
 
 /// Creates a model provider with an explicit configured provider ID.
 pub fn create_model_provider_for_id(
     provider_id: impl Into<String>,
     provider_info: ModelProviderInfo,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 ) -> SharedModelProvider {
-    create_model_provider_internal(Some(provider_id.into()), provider_info, auth_manager)
+    create_model_provider_internal(Some(provider_id.into()), provider_info, credential_manager)
 }
 
 fn create_model_provider_internal(
     provider_id: Option<String>,
     provider_info: ModelProviderInfo,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 ) -> SharedModelProvider {
     match provider_info.name.as_str() {
         genex_model_provider_info::MY_PROVIDER_NAME => Arc::new(MyModelProvider::new(
             provider_id,
             provider_info,
-            auth_manager,
+            credential_manager,
         )),
         genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => Arc::new(
-            CloudflareModelProvider::new(provider_id, provider_info, auth_manager),
+            CloudflareModelProvider::new(provider_id, provider_info, credential_manager),
         ),
         _ => Arc::new(ConfiguredModelProvider::new(
             provider_id,
             provider_info,
-            auth_manager,
+            credential_manager,
         )),
     }
 }
@@ -337,20 +337,20 @@ fn create_model_provider_internal(
 struct ConfiguredModelProvider {
     provider_id: Option<String>,
     info: ModelProviderInfo,
-    auth_manager: Option<Arc<AuthManager>>,
+    credential_manager: Option<Arc<CredentialManager>>,
 }
 
 impl ConfiguredModelProvider {
     fn new(
         provider_id: Option<String>,
         provider_info: ModelProviderInfo,
-        auth_manager: Option<Arc<AuthManager>>,
+        credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
-        let auth_manager = auth_manager_for_provider(auth_manager, &provider_info);
+        let credential_manager = credential_manager_for_provider(credential_manager, &provider_info);
         Self {
             provider_id,
             info: provider_info,
-            auth_manager,
+            credential_manager,
         }
     }
 }
@@ -375,8 +375,8 @@ impl ModelProvider for ConfiguredModelProvider {
         }
     }
 
-    fn auth_manager(&self) -> Option<Arc<AuthManager>> {
-        self.auth_manager.clone()
+    fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
+        self.credential_manager.clone()
     }
 
     fn provider_id(&self) -> Option<&str> {
@@ -390,7 +390,7 @@ impl ModelProvider for ConfiguredModelProvider {
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
         Box::pin(async move {
             provider_auth(
-                self.auth_manager.as_ref(),
+                self.credential_manager.as_ref(),
                 None,
                 &self.info,
                 self.provider_id(),
@@ -401,13 +401,13 @@ impl ModelProvider for ConfiguredModelProvider {
 
     fn account_state(&self) -> ProviderAccountResult {
         let auth = self
-            .auth_manager
+            .credential_manager
             .as_ref()
-            .and_then(|auth_manager| cached_provider_auth(auth_manager, self.provider_id()));
+            .and_then(|credential_manager| cached_provider_auth(credential_manager, self.provider_id()));
         let auth_invalid = auth.as_ref().is_some_and(|auth| {
-            self.auth_manager
+            self.credential_manager
                 .as_ref()
-                .is_some_and(|auth_manager| auth_manager.refresh_failure_for_auth(auth).is_some())
+                .is_some_and(|credential_manager| credential_manager.refresh_failure_for_auth(auth).is_some())
         });
         let account = if self.info.requires_auth {
             auth.filter(|_| !auth_invalid)
@@ -439,8 +439,8 @@ impl ModelProvider for ConfiguredModelProvider {
                 .unwrap_or(self.info.name.as_str())
                 .to_string(),
             account,
-            account_id: self.auth_manager.as_ref().and_then(|auth_manager| {
-                cached_provider_auth(auth_manager, self.provider_id())
+            account_id: self.credential_manager.as_ref().and_then(|credential_manager| {
+                cached_provider_auth(credential_manager, self.provider_id())
                     .and_then(|auth| auth.get_account_id())
             }),
             display_name: None,
@@ -481,7 +481,7 @@ mod tests {
     fn my_provider_selects_chat_runtime_api() {
         let provider = create_model_provider(
             ModelProviderInfo::create_my_provider(),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert!(matches!(provider.api(), ProviderApi::Chat(_)));
@@ -491,7 +491,7 @@ mod tests {
     fn my_provider_factory_reports_unauthenticated_requires_auth() {
         let provider = create_model_provider(
             ModelProviderInfo::create_my_provider(),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert_eq!(
@@ -512,7 +512,7 @@ mod tests {
     fn cloudflare_provider_selects_chat_runtime_api() {
         let provider = create_model_provider(
             ModelProviderInfo::create_cloudflare_provider(),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert!(matches!(provider.api(), ProviderApi::Chat(_)));
@@ -523,7 +523,7 @@ mod tests {
         let mut info = ModelProviderInfo::create_cloudflare_provider();
         info.base_url = Some("https://example.test".to_string());
         info.env_key = None;
-        let provider = create_model_provider(info, /*auth_manager*/ None);
+        let provider = create_model_provider(info, /*credential_manager*/ None);
         let source = ProviderModelCatalogSource::new(provider);
 
         assert!(!source.supports_api_key_models());
@@ -555,7 +555,7 @@ mod tests {
         let mut info = ModelProviderInfo::create_cloudflare_provider();
         info.base_url = Some(server.uri());
         info.env_key = None;
-        let provider = create_model_provider(info, /*auth_manager*/ None);
+        let provider = create_model_provider(info, /*credential_manager*/ None);
         let catalog = provider
             .list_models(
                 "test-client",
@@ -579,7 +579,7 @@ mod tests {
     fn responses_provider_keeps_concrete_runtime_api() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(None),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert!(matches!(provider.api(), ProviderApi::Responses));
@@ -659,7 +659,7 @@ mod tests {
                 "http://localhost:11434/v1",
                 WireApi::Responses,
             ),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         let auth = provider
@@ -678,7 +678,7 @@ mod tests {
                 base_url: Some("https://example.com".to_string()),
                 ..ModelProviderInfo::default()
             },
-            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+            Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "test-key",
             ))),
         );
@@ -696,8 +696,8 @@ mod tests {
     #[tokio::test]
     async fn provider_auth_does_not_fall_back_to_another_provider() {
         let home = tempfile::tempdir().expect("temporary auth home");
-        let auth_manager = Arc::new(
-            AuthManager::new(
+        let credential_manager = Arc::new(
+            CredentialManager::new(
                 home.path().to_path_buf(),
                 false,
                 genex_login::AuthCredentialsStoreMode::File,
@@ -710,7 +710,7 @@ mod tests {
             )
             .await,
         );
-        auth_manager
+        credential_manager
             .login("provider-a", genex_login::ProviderAuth::api_key("a-secret"))
             .await
             .expect("provider A login");
@@ -718,12 +718,12 @@ mod tests {
         let provider_a = create_model_provider_for_id(
             "provider-a",
             ModelProviderInfo::create_responses_provider(None),
-            Some(Arc::clone(&auth_manager)),
+            Some(Arc::clone(&credential_manager)),
         );
         let provider_b = create_model_provider_for_id(
             "provider-b",
             ModelProviderInfo::create_responses_provider(None),
-            Some(auth_manager),
+            Some(credential_manager),
         );
 
         assert_eq!(
@@ -750,7 +750,7 @@ mod tests {
     fn responses_provider_enables_remote_compaction() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert_eq!(
@@ -792,7 +792,7 @@ mod tests {
         ];
 
         for (provider_info, expected) in cases {
-            let provider = create_model_provider(provider_info, /*auth_manager*/ None);
+            let provider = create_model_provider(provider_info, /*credential_manager*/ None);
             assert_eq!(provider.capabilities().remote_compaction, expected);
         }
     }
@@ -801,7 +801,7 @@ mod tests {
     async fn configured_provider_runtime_base_url_uses_configured_base_url() {
         let provider = create_model_provider(
             provider_for("https://example.test/v1".to_string()),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert_eq!(
@@ -814,24 +814,24 @@ mod tests {
     }
 
     #[test]
-    fn create_model_provider_builds_command_auth_manager_without_base_manager() {
+    fn create_model_provider_builds_command_credential_manager_without_base_manager() {
         let provider = create_model_provider(
             provider_info_with_command_auth(),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
-        let auth_manager = provider
-            .auth_manager()
+        let credential_manager = provider
+            .credential_manager()
             .expect("command auth provider should have an auth manager");
 
-        assert!(auth_manager.has_external_auth());
+        assert!(credential_manager.has_external_auth());
     }
 
     #[test]
     fn responses_provider_returns_unauthenticated_provider_account_state() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert_eq!(
@@ -852,7 +852,7 @@ mod tests {
     fn responses_provider_returns_api_key_account_state() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
-            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+            Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "provider-api-key",
             ))),
         );
@@ -875,7 +875,7 @@ mod tests {
     async fn configured_provider_usage_is_unsupported_by_default() {
         let provider = create_model_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert_eq!(provider.usage().await, Ok(ProviderUsage::Unsupported));
@@ -891,7 +891,7 @@ mod tests {
                 requires_auth: false,
                 ..Default::default()
             },
-            /*auth_manager*/ None,
+            /*credential_manager*/ None,
         );
 
         assert_eq!(
@@ -931,7 +931,7 @@ mod tests {
         provider_info.experimental_bearer_token = Some("provider-token".into());
         let provider = create_model_provider(
             provider_info,
-            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+            Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "ambient-api-key",
             ))),
         );
@@ -939,7 +939,7 @@ mod tests {
         let manager = build_models_manager(
             test_genex_home(),
             Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-            provider.auth_manager(),
+            provider.credential_manager(),
             /*config_model_catalog*/ None,
         );
         let catalog = manager

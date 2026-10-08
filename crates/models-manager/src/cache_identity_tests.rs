@@ -19,7 +19,7 @@ async fn mismatched_and_legacy_cache_entries_fetch_the_current_catalog() {
         let manager = RemoteModelsManager::new_with_cache(
             cache.clone(),
             endpoint.clone(),
-            Some(AuthManager::from_auth_for_testing(GenexAuth::from_api_key(
+            Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
                 "test-api-key",
             ))),
         );

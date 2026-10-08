@@ -1,7 +1,7 @@
 //! Turn-cost collection is hosted-provider specific and intentionally disabled.
 
 use genex_core::config::Config;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_otel::SessionTelemetry;
 use genex_protocol::ThreadId;
 use genex_protocol::protocol::Event;
@@ -13,7 +13,7 @@ pub(crate) struct TurnCostWorker;
 pub(crate) struct TurnCostWorkerHandle;
 
 impl TurnCostWorker {
-    pub(crate) fn spawn(_config: Arc<Config>, _auth_manager: Arc<AuthManager>) -> Option<Self> {
+    pub(crate) fn spawn(_config: Arc<Config>, _credential_manager: Arc<CredentialManager>) -> Option<Self> {
         None
     }
 

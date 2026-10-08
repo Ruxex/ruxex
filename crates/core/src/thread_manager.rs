@@ -43,7 +43,7 @@ use genex_features::Feature;
 use genex_history::InitialHistory;
 use genex_history::ResumedHistory;
 use genex_history::RolloutItem;
-use genex_login::AuthManager;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
@@ -236,7 +236,7 @@ pub struct ThreadManager {
 #[derive(Clone)]
 pub struct InternalSessionParent {
     pub(crate) thread_id: ThreadId,
-    pub(crate) auth_manager: Arc<AuthManager>,
+    pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) agent_control: AgentControl,
     pub(crate) originator: String,
     pub(crate) inherited_instructions: Option<SessionInstructions>,
@@ -308,7 +308,7 @@ impl StartThreadOptions {
 struct ThreadSpawnRequest {
     startup: Option<Arc<crate::session::startup::SessionStartup>>,
     options: StartThreadOptions,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
     agent_control: AgentControl,
     parent_thread_id: Option<ThreadId>,
     parent_originator: Option<String>,
@@ -323,13 +323,13 @@ struct ThreadSpawnRequest {
 impl ThreadSpawnRequest {
     fn new(
         options: StartThreadOptions,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         agent_control: AgentControl,
     ) -> Self {
         Self {
             startup: None,
             options,
-            auth_manager,
+            credential_manager,
             agent_control,
             parent_thread_id: None,
             parent_originator: None,
@@ -392,7 +392,7 @@ pub(crate) struct ThreadManagerState {
     threads: Arc<RwLock<HashMap<ThreadId, Arc<GenexThread>>>>,
     thread_created_tx: broadcast::Sender<ThreadId>,
     thread_id_generator: ThreadIdGenerator,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
     models_manager: SharedModelsManager,
     git_root_discovery: Arc<GitRootDiscovery>,
     environment_manager: Arc<EnvironmentManager>,
@@ -416,17 +416,17 @@ pub(crate) struct ThreadManagerState {
 
 pub fn build_models_manager(
     config: &Config,
-    auth_manager: Arc<AuthManager>,
+    credential_manager: Arc<CredentialManager>,
 ) -> SharedModelsManager {
     let provider = create_model_provider_for_id(
         config.model_provider_id.clone(),
         config.model_provider.clone(),
-        Some(auth_manager),
+        Some(credential_manager),
     );
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-        provider.auth_manager(),
+        provider.credential_manager(),
         config.model_catalog.clone(),
     );
     // MyProvider's API is the source of truth for the user's model catalog; keep discovery
@@ -484,7 +484,7 @@ impl ThreadManager {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         config: &Config,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         models_manager: SharedModelsManager,
         session_source: SessionSource,
         environment_manager: Arc<EnvironmentManager>,
@@ -508,7 +508,7 @@ impl ThreadManager {
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
             genex_home.to_path_buf(),
             restriction_product,
-            Arc::clone(&auth_manager),
+            Arc::clone(&credential_manager),
             skills_service.clone(),
         ));
         let mcp_manager = Arc::new(McpManager::new_with_extensions(
@@ -543,7 +543,7 @@ impl ThreadManager {
                 agent_graph_store,
                 attestation_provider,
                 external_time_provider,
-                auth_manager,
+                credential_manager,
                 session_source,
                 installation_id,
                 ops_log: should_use_test_thread_manager_behavior()
@@ -591,7 +591,7 @@ impl ThreadManager {
         self
     }
 
-    /// Construct with a dummy AuthManager containing the provided GenexAuth.
+    /// Construct with a dummy CredentialManager containing the provided GenexAuth.
     /// Used for integration tests: should not be used by ordinary business logic.
     pub(crate) fn with_models_provider_for_tests(
         auth: GenexAuth,
@@ -614,7 +614,7 @@ impl ThreadManager {
         manager
     }
 
-    /// Construct with a dummy AuthManager containing the provided GenexAuth and genex home.
+    /// Construct with a dummy CredentialManager containing the provided GenexAuth and genex home.
     /// Used for integration tests: should not be used by ordinary business logic.
     pub(crate) fn with_models_provider_and_home_for_tests(
         auth: GenexAuth,
@@ -639,7 +639,7 @@ impl ThreadManager {
         state_db: Option<StateDbHandle>,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
-        let auth_manager = AuthManager::from_auth_for_testing(auth);
+        let credential_manager = CredentialManager::from_auth_for_testing(auth);
         let installation_id = uuid::Uuid::new_v4().to_string();
         let absolute_genex_home = match AbsolutePathBuf::from_absolute_path_checked(&genex_home) {
             Ok(genex_home) => genex_home,
@@ -655,7 +655,7 @@ impl ThreadManager {
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
             genex_home.clone(),
             restriction_product,
-            Arc::clone(&auth_manager),
+            Arc::clone(&credential_manager),
             skills_service.clone(),
         ));
         let mcp_manager = Arc::new(McpManager::new(Arc::clone(&plugins_manager)));
@@ -676,11 +676,11 @@ impl ThreadManager {
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
                 models_manager: {
-                    let provider = create_model_provider(provider, Some(auth_manager.clone()));
+                    let provider = create_model_provider(provider, Some(credential_manager.clone()));
                     build_catalog_models_manager(
                         genex_home,
                         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-                        provider.auth_manager(),
+                        provider.credential_manager(),
                         /*config_model_catalog*/ None,
                     )
                 },
@@ -700,7 +700,7 @@ impl ThreadManager {
                 agent_graph_store,
                 attestation_provider: None,
                 external_time_provider: None,
-                auth_manager,
+                credential_manager,
                 session_source: SessionSource::Exec,
                 installation_id,
                 ops_log: should_use_test_thread_manager_behavior()
@@ -714,8 +714,8 @@ impl ThreadManager {
         self.state.session_source.clone()
     }
 
-    pub fn auth_manager(&self) -> Arc<AuthManager> {
-        self.state.auth_manager.clone()
+    pub fn credential_manager(&self) -> Arc<CredentialManager> {
+        self.state.credential_manager.clone()
     }
 
     pub fn skills_service(&self) -> Arc<HostSkillsService> {
@@ -1039,7 +1039,7 @@ impl ThreadManager {
         options.initial_history = history;
         options.internal_parent = Some(InternalSessionParent {
             thread_id: parent_thread_id,
-            auth_manager: Arc::clone(&parent.session.services.auth_manager),
+            credential_manager: Arc::clone(&parent.session.services.credential_manager),
             agent_control: parent.session.services.agent_control.clone(),
             originator: parent.config_snapshot().await.originator,
             inherited_instructions,
@@ -1080,7 +1080,7 @@ impl ThreadManager {
         }
         let mut request = if let Some(parent) = parent {
             let mut request =
-                ThreadSpawnRequest::new(options, parent.auth_manager, parent.agent_control);
+                ThreadSpawnRequest::new(options, parent.credential_manager, parent.agent_control);
             request.parent_thread_id = Some(parent.thread_id);
             request.parent_originator = Some(parent.originator);
             request.inherited_instructions = parent.inherited_instructions;
@@ -1090,7 +1090,7 @@ impl ThreadManager {
             let agent_control = self.agent_control_for_config(&options.config);
             let mut request = ThreadSpawnRequest::new(
                 options,
-                Arc::clone(&self.state.auth_manager),
+                Arc::clone(&self.state.credential_manager),
                 agent_control,
             );
             request.forked_from_thread_id = forked_from_thread_id;
@@ -1141,7 +1141,7 @@ impl ThreadManager {
         &self,
         config: Config,
         rollout_path: PathBuf,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
     ) -> GenexResult<NewThread> {
@@ -1149,7 +1149,7 @@ impl ThreadManager {
         Box::pin(self.resume_thread_with_history(
             config,
             initial_history,
-            auth_manager,
+            credential_manager,
             parent_trace,
             client_mcp_extensions,
         ))
@@ -1194,7 +1194,7 @@ impl ThreadManager {
         &self,
         config: Config,
         initial_history: InitialHistory,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
     ) -> GenexResult<NewThread> {
@@ -1212,7 +1212,7 @@ impl ThreadManager {
         };
         Box::pin(self.state.spawn_thread(ThreadSpawnRequest::new(
             options,
-            auth_manager,
+            credential_manager,
             agent_control,
         )))
         .await
@@ -1230,7 +1230,7 @@ impl ThreadManager {
             ..StartThreadOptions::new(config)
         };
         let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.state.auth_manager), agent_control);
+            ThreadSpawnRequest::new(options, Arc::clone(&self.state.credential_manager), agent_control);
         request.user_shell_override = Some(user_shell_override);
         Box::pin(self.state.spawn_thread(request)).await
     }
@@ -1239,7 +1239,7 @@ impl ThreadManager {
         &self,
         config: Config,
         rollout_path: PathBuf,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         user_shell_override: crate::shell::Shell,
         client_mcp_extensions: ClientMcpExtensions,
     ) -> GenexResult<NewThread> {
@@ -1255,7 +1255,7 @@ impl ThreadManager {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        let mut request = ThreadSpawnRequest::new(options, auth_manager, agent_control);
+        let mut request = ThreadSpawnRequest::new(options, credential_manager, agent_control);
         request.user_shell_override = Some(user_shell_override);
         Box::pin(self.state.spawn_thread(request)).await
     }
@@ -1492,7 +1492,7 @@ impl ThreadManager {
         options.initial_history = fork_history_from_snapshot(snapshot, history, interrupted_marker);
         let agent_control = self.agent_control_for_config(&options.config);
         let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.state.auth_manager), agent_control);
+            ThreadSpawnRequest::new(options, Arc::clone(&self.state.credential_manager), agent_control);
         request.forked_from_thread_id = source_thread_id;
         request.fork_persistence = fork_persistence;
         request.inherited_instructions = Some(instructions);
@@ -1844,7 +1844,7 @@ impl ThreadManagerState {
             ..StartThreadOptions::new(config)
         };
         let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.auth_manager), agent_control);
+            ThreadSpawnRequest::new(options, Arc::clone(&self.credential_manager), agent_control);
         request.parent_thread_id = parent_thread_id;
         request.forked_from_thread_id = forked_from_thread_id;
         request.inherited_environments = inherited_environments;
@@ -1887,7 +1887,7 @@ impl ThreadManagerState {
             ..StartThreadOptions::new(config)
         };
         let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.auth_manager), agent_control);
+            ThreadSpawnRequest::new(options, Arc::clone(&self.credential_manager), agent_control);
         request.parent_thread_id = parent_thread_id;
         request.inherited_environments = inherited_environments;
         request.inherited_instructions = inherited_instructions;
@@ -1923,7 +1923,7 @@ impl ThreadManagerState {
             ..StartThreadOptions::new(config)
         };
         let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.auth_manager), agent_control);
+            ThreadSpawnRequest::new(options, Arc::clone(&self.credential_manager), agent_control);
         request.parent_thread_id = parent_thread_id;
         request.forked_from_thread_id = forked_from_thread_id;
         request.inherited_environments = inherited_environments;
@@ -1949,7 +1949,7 @@ impl ThreadManagerState {
         let ThreadSpawnRequest {
             startup,
             options,
-            auth_manager,
+            credential_manager,
             agent_control,
             parent_thread_id,
             parent_originator,
@@ -2106,7 +2106,7 @@ impl ThreadManagerState {
             allow_provider_model_fallback,
             instructions,
             installation_id: self.installation_id.clone(),
-            auth_manager,
+            credential_manager,
             models_manager: Arc::clone(&self.models_manager),
             git_root_discovery: Arc::clone(&self.git_root_discovery),
             environment_manager: Arc::clone(&self.environment_manager),

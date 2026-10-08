@@ -701,7 +701,7 @@ impl Session {
         config: Arc<Config>,
         instructions: SessionInstructions,
         installation_id: String,
-        auth_manager: Arc<AuthManager>,
+        credential_manager: Arc<CredentialManager>,
         models_manager: SharedModelsManager,
         git_root_discovery: Arc<GitRootDiscovery>,
         model_info: ModelInfo,
@@ -1029,7 +1029,7 @@ impl Session {
             session_init.ephemeral = config.ephemeral,
         ));
 
-        let auth_manager_clone = Arc::clone(&auth_manager);
+        let credential_manager_clone = Arc::clone(&credential_manager);
         let config_for_mcp = Arc::clone(&config);
         let mcp_manager_for_mcp = Arc::clone(&mcp_manager);
         let mcp_thread_init_for_startup = &mcp_thread_init;
@@ -1043,7 +1043,7 @@ impl Session {
             .map(|cwd| cwd.to_path_buf())
             .unwrap_or_else(|| session_configuration.cwd().to_path_buf());
         let auth_and_mcp_fut = async move {
-            let auth = auth_manager_clone.auth().await;
+            let auth = credential_manager_clone.auth().await;
             let mcp_projection = mcp_manager_for_mcp
                 .runtime_config_for_step(
                     &config_for_mcp,
@@ -1155,7 +1155,7 @@ impl Session {
             let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();
             let auth_env_telemetry = collect_auth_env_telemetry(
                 session_configuration.provider.info(),
-                auth_manager.api_key_env_enabled(),
+                credential_manager.api_key_env_enabled(),
             );
             let mut session_telemetry = SessionTelemetry::new(
                 thread_id,
@@ -1531,7 +1531,7 @@ impl Session {
                 user_shell: Arc::new(default_shell),
                 show_raw_agent_reasoning: config.show_raw_agent_reasoning,
                 exec_policy,
-                auth_manager: Arc::clone(&auth_manager),
+                credential_manager: Arc::clone(&credential_manager),
                 session_telemetry,
                 models_manager: Arc::clone(&models_manager),
                 git_root_discovery,
@@ -1561,7 +1561,7 @@ impl Session {
                 time_provider,
                 model_client: ModelClient::new_with_provider_id(
                     Some(config.model_provider_id.clone()),
-                    Some(Arc::clone(&auth_manager)),
+                    Some(Arc::clone(&credential_manager)),
                     thread_id,
                     session_configuration.provider.info().clone(),
                     session_configuration.session_source.clone(),

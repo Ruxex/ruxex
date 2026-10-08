@@ -13,7 +13,7 @@ operations, and manages MCP credentials independently.
 
 - `CredentialManager`: provider-scoped credential persistence and state
   management. This is the conceptual successor to the useful parts of
-  `AuthManager`.
+  `CredentialManager`.
 - `ModelProvider`: a configured model backend. It resolves provider-specific
   credentials and exposes model, account, and usage capabilities.
 - `active provider`: the model provider currently selected for chat and other
@@ -157,7 +157,7 @@ not selected instead of presenting an unauthenticated Genex account.
    own OAuth and credential behavior.
 2. Introduce provider-scoped credential records and active-provider state while
    preserving existing persistence backends.
-3. Narrow `AuthManager` toward `CredentialManager` responsibilities and remove
+3. Narrow `CredentialManager` toward `CredentialManager` responsibilities and remove
    ChatGPT-specific managed-auth terminology.
 4. Move provider validation, account information, and usage retrieval behind
    `ModelProvider` capabilities.

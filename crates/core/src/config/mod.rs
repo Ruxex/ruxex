@@ -71,7 +71,7 @@ use genex_git_utils::resolve_root_git_project_for_trust;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_install_context::InstallContext;
-use genex_login::AuthManagerConfig;
+use genex_login::CredentialManagerConfig;
 use genex_login::AuthRouteConfig;
 use genex_login::CredentialManager;
 use genex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
@@ -1231,7 +1231,7 @@ pub struct TerminalResizeReflowConfig {
     pub max_rows: TerminalResizeReflowMaxRows,
 }
 
-impl AuthManagerConfig for Config {
+impl CredentialManagerConfig for Config {
     fn genex_home(&self) -> PathBuf {
         self.genex_home.to_path_buf()
     }
