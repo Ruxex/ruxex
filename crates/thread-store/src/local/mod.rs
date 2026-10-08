@@ -1295,7 +1295,6 @@ mod tests {
             metadata.created_at.to_rfc3339(),
             "2025-01-03T17:00:00+00:00"
         );
-        assert_eq!(metadata.model_provider, "test-provider");
         assert_eq!(
             metadata.first_user_message.as_deref(),
             Some("Hello from user")
@@ -1349,7 +1348,6 @@ mod tests {
             metadata.created_at.to_rfc3339(),
             "2025-01-03T17:30:00+00:00"
         );
-        assert_eq!(metadata.model_provider, "test-provider");
         assert_eq!(
             metadata.first_user_message.as_deref(),
             Some("Hello from user")

@@ -37,6 +37,7 @@
 - Thread listing accepts omitted/empty/current-provider filters only and rejects requests for another provider; historical provider fields remain read-compatible during the persistence migration.
 - Stored-thread responses now expose the mounted provider so clients cannot restore a historical provider into their local session state.
 - New rollout session metadata no longer writes `model_provider`; optional deserialization remains for historical JSONL and state backfill.
+- SQLite state migration `0002` removes `threads.model_provider` and `idx_threads_provider`; state metadata and runtime SQL no longer persist or filter threads by provider. Historical rollout values remain read-only migration input.
 - Remaining work is to migrate credentials, remove the retained persistence fields after the rollout/state audit, and finish host surfaces.
 
 ### Task 1: Add the provider descriptor contract

@@ -301,10 +301,6 @@ fn parity_check_from_scan_and_rows(
             duplicate_db_paths.len()
         ),
         format!(
-            "rollout DB model providers: {}",
-            count_summary(rows.iter().map(|row| row.model_provider.as_str()))
-        ),
-        format!(
             "rollout DB sources: {}",
             count_summary(rows.iter().map(|row| source_category(&row.source)))
         ),

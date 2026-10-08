@@ -205,9 +205,6 @@ async fn apply_metadata_update(
             if let Some(title) = patch.title {
                 metadata.title = title;
             }
-            if let Some(model_provider) = patch.model_provider {
-                metadata.model_provider = model_provider;
-            }
             if let Some(model) = patch.model {
                 metadata.model = Some(model);
             }

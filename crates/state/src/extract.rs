@@ -15,7 +15,7 @@ use serde_json::Value;
 pub fn apply_rollout_item(
     metadata: &mut ThreadMetadata,
     item: &RolloutItem,
-    default_provider: &str,
+    _default_provider: &str,
 ) {
     match item {
         RolloutItem::SessionMeta(meta_line) => apply_session_meta_from_item(metadata, meta_line),
@@ -28,9 +28,6 @@ pub fn apply_rollout_item(
         RolloutItem::WorldState(_) => {}
         RolloutItem::RetainedContext(_) | RolloutItem::SecurityRiskScore(_) => {}
         RolloutItem::TokenUsageRecord(_) => {}
-    }
-    if metadata.model_provider.is_empty() {
-        metadata.model_provider = default_provider.to_string();
     }
 }
 
@@ -77,9 +74,6 @@ fn apply_session_meta_from_item(metadata: &mut ThreadMetadata, meta_line: &Sessi
     metadata.agent_nickname = meta_line.meta.agent_nickname.clone();
     metadata.agent_role = meta_line.meta.agent_role.clone();
     metadata.agent_path = meta_line.meta.agent_path.clone();
-    if let Some(provider) = meta_line.meta.model_provider.as_deref() {
-        metadata.model_provider = provider.to_string();
-    }
     if !meta_line.meta.cli_version.is_empty() {
         metadata.cli_version = meta_line.meta.cli_version.clone();
     }
@@ -128,7 +122,6 @@ fn apply_event_msg(metadata: &mut ThreadMetadata, event: &EventMsg) {
         EventMsg::ThreadSettingsApplied(event) => {
             let settings = &event.thread_settings;
             metadata.model = Some(settings.model.clone());
-            metadata.model_provider = settings.model_provider_id.clone();
             metadata.reasoning_effort = settings.reasoning_effort.clone();
             metadata.cwd = settings.cwd.clone().into_path_buf();
             metadata.sandbox_policy =
@@ -628,7 +621,6 @@ mod tests {
         apply_rollout_item(&mut metadata, &item, "test-provider");
 
         assert_eq!(metadata.model.as_deref(), Some("example-model"));
-        assert_eq!(metadata.model_provider, "updated-provider");
         assert_eq!(metadata.reasoning_effort, Some(ReasoningEffort::Ultra));
         assert_eq!(metadata.cwd, cwd);
         assert_eq!(metadata.approval_mode, "never");
@@ -700,7 +692,6 @@ mod tests {
             agent_path: None,
             agent_nickname: None,
             agent_role: None,
-            model_provider: "provider".to_string(),
             model: None,
             reasoning_effort: None,
             cwd: PathBuf::from("/tmp"),

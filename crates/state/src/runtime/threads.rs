@@ -22,7 +22,6 @@ SELECT
     threads.agent_nickname,
     threads.agent_role,
     threads.agent_path,
-    threads.model_provider,
     threads.model,
     threads.reasoning_effort,
     threads.cwd,
@@ -590,7 +589,6 @@ INSERT INTO threads (
     agent_nickname,
     agent_role,
     agent_path,
-    model_provider,
     model,
     reasoning_effort,
     cwd,
@@ -613,7 +611,7 @@ INSERT INTO threads (
     project_id,
     daybreak_enabled
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
@@ -642,7 +640,6 @@ ON CONFLICT(id) DO NOTHING
         .bind(metadata.agent_nickname.as_deref())
         .bind(metadata.agent_role.as_deref())
         .bind(metadata.agent_path.as_deref())
-        .bind(metadata.model_provider.as_str())
         .bind(metadata.model.as_deref())
         .bind(
             metadata
@@ -873,7 +870,6 @@ INSERT INTO threads (
     agent_nickname,
     agent_role,
     agent_path,
-    model_provider,
     model,
     reasoning_effort,
     cwd,
@@ -896,7 +892,7 @@ INSERT INTO threads (
     project_id,
     daybreak_enabled
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
@@ -917,7 +913,6 @@ ON CONFLICT(id) DO UPDATE SET
     agent_nickname = excluded.agent_nickname,
     agent_role = excluded.agent_role,
     agent_path = excluded.agent_path,
-    model_provider = excluded.model_provider,
     model = excluded.model,
     reasoning_effort = excluded.reasoning_effort,
     cwd = excluded.cwd,
@@ -955,7 +950,6 @@ ON CONFLICT(id) DO UPDATE SET
         .bind(metadata.agent_nickname.as_deref())
         .bind(metadata.agent_role.as_deref())
         .bind(metadata.agent_path.as_deref())
-        .bind(metadata.model_provider.as_str())
         .bind(metadata.model.as_deref())
         .bind(
             metadata
@@ -1240,7 +1234,6 @@ SELECT
     threads.agent_nickname,
     threads.agent_role,
     threads.agent_path,
-    threads.model_provider,
     threads.model,
     threads.reasoning_effort,
     threads.cwd,
@@ -1317,7 +1310,7 @@ fn push_thread_filters_with_preview<'a>(
     let ThreadFilterOptions {
         archived_only,
         allowed_sources,
-        model_providers,
+        model_providers: _,
         cwd_filters,
         section,
         project_id,
@@ -1360,16 +1353,6 @@ fn push_thread_filters_with_preview<'a>(
         let mut separated = builder.separated(", ");
         for source in allowed_sources {
             separated.push_bind(source);
-        }
-        separated.push_unseparated(")");
-    }
-    if let Some(model_providers) = model_providers
-        && !model_providers.is_empty()
-    {
-        builder.push(" AND threads.model_provider IN (");
-        let mut separated = builder.separated(", ");
-        for provider in model_providers {
-            separated.push_bind(provider);
         }
         separated.push_unseparated(")");
     }

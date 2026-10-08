@@ -1,5 +1,3 @@
-use genex_utils_absolute_path::test_support::PathExt;
-use pretty_assertions::assert_eq;
 use super::GOALS_MIGRATOR;
 use super::LOGS_MIGRATOR;
 use super::QUEUE_MIGRATOR;
@@ -7,11 +5,20 @@ use super::STATE_MIGRATOR;
 use super::THREAD_HISTORY_MIGRATOR;
 use crate::PINNED_THREAD_SECTION_ID;
 use crate::PINNED_THREAD_SECTION_NAME;
+use genex_utils_absolute_path::test_support::PathExt;
+use pretty_assertions::assert_eq;
 
 #[test]
 fn all_database_migrators_are_single_version_baselines() {
+    assert_eq!(
+        STATE_MIGRATOR
+            .migrations
+            .iter()
+            .map(|migration| migration.version)
+            .collect::<Vec<_>>(),
+        vec![1, 2]
+    );
     for migrator in [
-        &STATE_MIGRATOR,
         &LOGS_MIGRATOR,
         &GOALS_MIGRATOR,
         &QUEUE_MIGRATOR,
@@ -90,7 +97,6 @@ async fn state_baseline_contains_current_schema_and_seed_data() {
             "idx_threads_pinned_recency_at_ms",
             "idx_threads_project_id",
             "idx_threads_project_recency",
-            "idx_threads_provider",
             "idx_threads_recency_at_ms",
             "idx_threads_section_position",
             "idx_threads_section_recency_at_ms",
@@ -102,6 +108,14 @@ async fn state_baseline_contains_current_schema_and_seed_data() {
             "idx_threads_visible_updated_at_ms",
         ]
     );
+
+    let thread_columns = sqlx::query_scalar::<_, String>(
+        "SELECT name FROM pragma_table_info('threads') WHERE name = 'model_provider'",
+    )
+    .fetch_all(&pool)
+    .await
+    .expect("thread columns should load");
+    assert!(thread_columns.is_empty());
 
     let triggers = sqlx::query_scalar::<_, String>(
         "SELECT name FROM sqlite_master WHERE type = 'trigger' ORDER BY name",
@@ -171,14 +185,13 @@ async fn state_baseline_triggers_derived_timestamps_and_recency() {
         .expect("state baseline should apply");
 
     sqlx::query(
-        "INSERT INTO threads (id, rollout_path, created_at, updated_at, source, model_provider, cwd, title, sandbox_policy, approval_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO threads (id, rollout_path, created_at, updated_at, source, cwd, title, sandbox_policy, approval_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind("thread-1")
     .bind("rollout.jsonl")
     .bind(1_700_000_000_i64)
     .bind(1_700_000_100_i64)
     .bind("cli")
-    .bind("provider")
     .bind("/tmp")
     .bind("")
     .bind("read-only")
@@ -194,7 +207,15 @@ async fn state_baseline_triggers_derived_timestamps_and_recency() {
     .fetch_one(&pool)
     .await
     .expect("derived timestamps should load");
-    assert_eq!(timestamps, (1_700_000_000_000, 1_700_000_100_000, 1_700_000_100, 1_700_000_100_000));
+    assert_eq!(
+        timestamps,
+        (
+            1_700_000_000_000,
+            1_700_000_100_000,
+            1_700_000_100,
+            1_700_000_100_000
+        )
+    );
 
     sqlx::query("UPDATE threads SET created_at = ?, updated_at = ? WHERE id = ?")
         .bind(1_700_000_200_i64)
@@ -256,7 +277,10 @@ async fn auxiliary_baselines_preserve_current_schema_contracts() {
     .fetch_all(&goals_pool)
     .await
     .expect("goal tables should load");
-    assert_eq!(goal_tables, vec!["thread_goal_continuation_deferrals", "thread_goals"]);
+    assert_eq!(
+        goal_tables,
+        vec!["thread_goal_continuation_deferrals", "thread_goals"]
+    );
     goals_pool.close().await;
 
     let queue_pool = sqlite

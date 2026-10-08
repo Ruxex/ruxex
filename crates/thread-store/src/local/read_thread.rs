@@ -306,11 +306,7 @@ pub(super) fn stored_thread_from_state_metadata(
         parent_thread_id,
         preview,
         name,
-        model_provider: if metadata.model_provider.is_empty() {
-            store.config.default_model_provider_id.clone()
-        } else {
-            metadata.model_provider
-        },
+        model_provider: store.config.default_model_provider_id.clone(),
         model: metadata.model,
         reasoning_effort: metadata.reasoning_effort,
         created_at: metadata.created_at,

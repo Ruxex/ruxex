@@ -42,7 +42,6 @@ async fn pending_thread_metadata_is_consumed_by_first_metadata_update() {
         .expect("sqlite metadata read")
         .expect("sqlite metadata");
     assert_eq!(metadata.model.as_deref(), Some("staged-model"));
-    assert_eq!(metadata.model_provider, "test-provider");
     assert_eq!(metadata.source, "exec");
     assert_eq!(
         metadata.cwd.canonicalize().expect("canonical metadata cwd"),

@@ -145,8 +145,6 @@ pub struct ThreadMetadata {
     pub agent_role: Option<String>,
     /// Optional canonical agent path assigned to an AgentControl-spawned sub-agent.
     pub agent_path: Option<String>,
-    /// The model provider identifier.
-    pub model_provider: String,
     /// The latest observed model for the thread.
     pub model: Option<String>,
     /// The latest observed reasoning effort for the thread.
@@ -270,7 +268,7 @@ impl ThreadMetadataBuilder {
     }
 
     /// Build canonical thread metadata, filling missing values from defaults.
-    pub fn build(&self, default_provider: &str) -> ThreadMetadata {
+    pub fn build(&self, _default_provider: &str) -> ThreadMetadata {
         let source = crate::extract::enum_to_string(&self.source);
         let sandbox_policy = crate::extract::enum_to_string(&self.sandbox_policy);
         let approval_mode = crate::extract::enum_to_string(&self.approval_mode);
@@ -299,10 +297,6 @@ impl ThreadMetadataBuilder {
                 .agent_path
                 .clone()
                 .or_else(|| self.source.get_agent_path().map(Into::into)),
-            model_provider: self
-                .model_provider
-                .clone()
-                .unwrap_or_else(|| default_provider.to_string()),
             model: None,
             reasoning_effort: None,
             cwd: self.cwd.clone(),
@@ -388,9 +382,6 @@ impl ThreadMetadata {
         if self.agent_path != other.agent_path {
             diffs.push("agent_path");
         }
-        if self.model_provider != other.model_provider {
-            diffs.push("model_provider");
-        }
         if self.model != other.model {
             diffs.push("model");
         }
@@ -473,7 +464,6 @@ pub(crate) struct ThreadRow {
     agent_nickname: Option<String>,
     agent_role: Option<String>,
     agent_path: Option<String>,
-    model_provider: String,
     model: Option<String>,
     reasoning_effort: Option<String>,
     cwd: String,
@@ -513,7 +503,6 @@ impl ThreadRow {
             agent_nickname: row.try_get("agent_nickname")?,
             agent_role: row.try_get("agent_role")?,
             agent_path: row.try_get("agent_path")?,
-            model_provider: row.try_get("model_provider")?,
             model: row.try_get("model")?,
             reasoning_effort: row.try_get("reasoning_effort")?,
             cwd: row.try_get("cwd")?,
@@ -557,7 +546,6 @@ impl TryFrom<ThreadRow> for ThreadMetadata {
             agent_nickname,
             agent_role,
             agent_path,
-            model_provider,
             model,
             reasoning_effort,
             cwd,
@@ -615,7 +603,6 @@ impl TryFrom<ThreadRow> for ThreadMetadata {
             agent_nickname,
             agent_role,
             agent_path,
-            model_provider,
             model,
             reasoning_effort: reasoning_effort
                 .and_then(|value| value.parse::<ReasoningEffort>().ok()),
@@ -726,7 +713,6 @@ mod tests {
             agent_nickname: None,
             agent_role: None,
             agent_path: None,
-            model_provider: "provider".to_string(),
             model: Some("example-model".to_string()),
             reasoning_effort: reasoning_effort.map(str::to_string),
             cwd: "/tmp/workspace".to_string(),
@@ -767,7 +753,6 @@ mod tests {
             agent_nickname: None,
             agent_role: None,
             agent_path: None,
-            model_provider: "provider".to_string(),
             model: Some("example-model".to_string()),
             reasoning_effort,
             cwd: PathBuf::from("/tmp/workspace"),

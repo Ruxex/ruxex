@@ -2055,7 +2055,7 @@ fn thread_item_from_state_metadata(
         parent_thread_id,
         agent_nickname: item.agent_nickname,
         agent_role: item.agent_role,
-        model_provider: Some(item.model_provider),
+        model_provider: None,
         model: item.model,
         reasoning_effort: item.reasoning_effort,
         cli_version: Some(item.cli_version),
