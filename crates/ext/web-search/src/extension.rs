@@ -19,7 +19,9 @@ use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
 #[cfg(test)]
 use genex_login::CredentialManager;
+use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderRuntime;
+use genex_model_provider::provider_contract;
 use genex_protocol::config_types::WebSearchContextSize;
 use genex_protocol::config_types::WebSearchMode;
 
@@ -28,6 +30,7 @@ use crate::tool::WebSearchTool;
 #[derive(Clone)]
 struct WebSearchExtension {
     provider: SharedProviderRuntime,
+    provider_contract: SharedModelProvider,
 }
 
 #[derive(Clone)]
@@ -37,7 +40,7 @@ struct WebSearchExtensionConfig {
 }
 
 impl WebSearchExtensionConfig {
-    fn from_config(config: &Config, provider: &SharedProviderRuntime) -> Self {
+    fn from_config(config: &Config, provider: &SharedModelProvider) -> Self {
         let web_search_mode = config.web_search_mode.value();
         Self {
             // Core selects this executor per turn using the feature flag or model metadata.
@@ -104,7 +107,10 @@ impl ThreadLifecycleContributor<Config> for WebSearchExtension {
         Box::pin(async move {
             input
                 .thread_store
-                .insert(WebSearchExtensionConfig::from_config(input.config, &self.provider));
+                .insert(WebSearchExtensionConfig::from_config(
+                    input.config,
+                    &self.provider_contract,
+                ));
         })
     }
 }
@@ -117,7 +123,10 @@ impl ConfigContributor<Config> for WebSearchExtension {
         _previous_config: &Config,
         new_config: &Config,
     ) {
-        thread_store.insert(WebSearchExtensionConfig::from_config(new_config, &self.provider));
+        thread_store.insert(WebSearchExtensionConfig::from_config(
+            new_config,
+            &self.provider_contract,
+        ));
     }
 }
 
@@ -147,11 +156,11 @@ impl ToolContributor for WebSearchExtension {
     }
 }
 
-pub fn install(
-    registry: &mut ExtensionRegistryBuilder<Config>,
-    provider: SharedProviderRuntime,
-) {
-    let extension = Arc::new(WebSearchExtension { provider });
+pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: SharedProviderRuntime) {
+    let extension = Arc::new(WebSearchExtension {
+        provider_contract: provider_contract(provider.clone()),
+        provider,
+    });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());
     registry.tool_contributor(extension);
@@ -211,10 +220,7 @@ mod tests {
             },
             Some(Arc::clone(&credential_manager)),
         );
-        install(
-            &mut builder,
-            provider,
-        );
+        install(&mut builder, provider);
         let registry = builder.build();
         let session_store = ExtensionData::new("session");
         let thread_store = ExtensionData::new("11111111-1111-4111-8111-111111111111");
@@ -238,14 +244,8 @@ mod tests {
 
     #[test]
     fn standalone_web_search_requires_provider_opt_in() {
-        assert!(!standalone_web_search_available(
-            false,
-            WebSearchMode::Live,
-        ));
-        assert!(standalone_web_search_available(
-            true,
-            WebSearchMode::Live,
-        ));
+        assert!(!standalone_web_search_available(false, WebSearchMode::Live,));
+        assert!(standalone_web_search_available(true, WebSearchMode::Live,));
         assert!(!standalone_web_search_available(
             true,
             WebSearchMode::Disabled,
