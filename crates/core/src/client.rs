@@ -899,7 +899,10 @@ impl ModelClient {
             auth_context.clone(),
             request_route_telemetry,
         );
-        let websocket_connect_timeout = self.state.provider.info().websocket_connect_timeout();
+        let websocket_connect_timeout = self
+            .state
+            .provider_contract
+            .websocket_connect_timeout();
         let start = Instant::now();
         let result = match tokio::time::timeout(
             websocket_connect_timeout,

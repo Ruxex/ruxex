@@ -317,6 +317,10 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
         ProviderWireApi::Responses
     }
 
+    fn websocket_connect_timeout(&self) -> Duration {
+        Duration::from_secs(10)
+    }
+
     /// Stable cache identity for provider-owned model catalog data.
     fn model_catalog_identity(&self) -> ProviderResult<String> {
         Ok(self.descriptor().provider_kind)

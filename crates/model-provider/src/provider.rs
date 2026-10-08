@@ -3,6 +3,7 @@ use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
+use std::time::Duration;
 
 use futures::StreamExt;
 use genex_api::ApiError;
@@ -214,6 +215,10 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             WireApi::Responses => ProviderWireApi::Responses,
             WireApi::Chat => ProviderWireApi::Chat,
         }
+    }
+
+    fn websocket_connect_timeout(&self) -> Duration {
+        self.info().websocket_connect_timeout()
     }
 
     /// Streams a provider-owned request through the provider-neutral contract.
@@ -629,6 +634,10 @@ where
         ProviderRuntime::wire_api(self)
     }
 
+    fn websocket_connect_timeout(&self) -> Duration {
+        ProviderRuntime::websocket_connect_timeout(self)
+    }
+
     fn capabilities(&self) -> ProviderCapabilities {
         let mut capabilities = ProviderRuntime::capabilities(self);
         capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
@@ -830,6 +839,10 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 
     fn wire_api(&self) -> ProviderWireApi {
         self.runtime.wire_api()
+    }
+
+    fn websocket_connect_timeout(&self) -> Duration {
+        self.runtime.websocket_connect_timeout()
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
