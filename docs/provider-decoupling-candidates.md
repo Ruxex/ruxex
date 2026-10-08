@@ -47,6 +47,12 @@ provider-specific runtime transport を必要とするため、この変更で�
 テスト等の移行途中の caller 向けに adapter を作る互換境界として残し、AppServer の production session は
 `new_with_provider_contract` を利用する。
 
+Responses の 401 認証回復を監査した。HTTP と WebSocket の両方が同じ回復手順を呼び出しており、現在は
+`ProviderRuntime::auth_recovery_messages` / `recover_from_unauthorized` を core が直接参照している。
+回復の開始・完了通知と credential-manager fallback は core の consumer として保持しつつ、プロバイダ固有の
+回復開始判定・メッセージ・回復処理は `ModelProvider` の中立契約へ移す。WebSocket 接続・継続状態・telemetry
+の wire boundary は別スライスとして保持する。
+
 ここに記載した項目は **削除・保持・移行の決定ではない**。個別の producer/consumer 監査、別バイナリからの到達性、動的登録、生成物、外部利用の確認を行った後、[pre-release compatibility inventory](pre-release-compatibility-inventory.md) に `remove`、`retain`、または `migrate-in-place` として記録する。
 
 ## 調査範囲と検証

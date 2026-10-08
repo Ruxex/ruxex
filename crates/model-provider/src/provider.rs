@@ -48,9 +48,11 @@ use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
 use crate::cloudflare_provider::CloudflareModelProvider;
 use crate::contract::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use crate::contract::ProviderAuthRecoveryMessages;
 use crate::contract::ProviderCapabilities;
 use crate::contract::ProviderDescriptor;
 use crate::contract::ProviderUsage;
+use crate::contract::ProviderUnauthorizedRecovery;
 use crate::contract::ProviderUsageResult;
 use crate::contract::RemoteCompactionSupport;
 use crate::models_endpoint::ModelsEndpoint;
@@ -103,22 +105,6 @@ impl std::error::Error for ProviderAuthError {}
 pub type ProviderAuthResult = std::result::Result<(), ProviderAuthError>;
 pub type ProviderDeleteResult = std::result::Result<bool, ProviderAuthError>;
 pub type ProviderLogoutResult = std::result::Result<bool, ProviderAuthError>;
-
-/// Outcome of a provider-owned attempt to recover from an authentication failure.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProviderUnauthorizedRecovery {
-    /// The provider has no provider-specific authentication recovery configured.
-    NotConfigured,
-    /// The provider recovered its authentication state and the request can be retried.
-    Recovered,
-}
-
-/// User-facing lifecycle messages for provider-owned authentication recovery.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ProviderAuthRecoveryMessages {
-    pub started: &'static str,
-    pub succeeded: &'static str,
-}
 
 /// Error returned when a provider cannot construct its app-visible account state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -682,6 +668,24 @@ where
         ProviderRuntime::backend(self, request)
     }
 
+    fn auth_recovery_messages(&self) -> Option<crate::contract::ProviderAuthRecoveryMessages> {
+        ProviderRuntime::auth_recovery_messages(self)
+    }
+
+    fn recover_from_unauthorized(
+        &self,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderUnauthorizedRecovery>,
+    > {
+        let runtime = self;
+        Box::pin(async move {
+            ProviderRuntime::recover_from_unauthorized(runtime)
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
+    }
+
     fn list_models(
         &self,
         request: crate::contract::ListModelsRequest,
@@ -866,6 +870,24 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
     > {
         let runtime = self.runtime.clone();
         Box::pin(async move { ProviderRuntime::backend(runtime.as_ref(), request).await })
+    }
+
+    fn auth_recovery_messages(&self) -> Option<crate::contract::ProviderAuthRecoveryMessages> {
+        self.runtime.auth_recovery_messages()
+    }
+
+    fn recover_from_unauthorized(
+        &self,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderUnauthorizedRecovery>,
+    > {
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            ProviderRuntime::recover_from_unauthorized(runtime.as_ref())
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
     }
 
     fn list_models(

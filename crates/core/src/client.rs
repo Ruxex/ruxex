@@ -1413,6 +1413,7 @@ impl ModelClientSession {
                     &mut provider_auth_recovery_attempted,
                     session_telemetry,
                     &self.client.state.provider,
+                    &self.client.state.provider_contract,
                     self.client.event_sender.as_ref(),
                     responses_metadata.turn_id.as_deref(),
                 )
@@ -1524,6 +1525,7 @@ impl ModelClientSession {
                             &mut provider_auth_recovery_attempted,
                             session_telemetry,
                             &provider,
+                            &self.client.state.provider_contract,
                             self.client.event_sender.as_ref(),
                             responses_metadata.turn_id.as_deref(),
                         )
@@ -2100,7 +2102,7 @@ struct WebsocketConnectParams<'a> {
 fn emit_auth_recovery_event(
     event_sender: Option<&Sender<ProtocolEvent>>,
     turn_id: Option<&str>,
-    provider: &SharedProviderRuntime,
+    provider_name: &str,
     message: &str,
     event: fn(AuthRecoveryEvent) -> EventMsg,
 ) {
@@ -2108,7 +2110,7 @@ fn emit_auth_recovery_event(
         let _ = sender.try_send(ProtocolEvent {
             id: turn_id.to_string(),
             msg: event(AuthRecoveryEvent {
-                provider: provider.info().name.clone(),
+                provider: provider_name.to_string(),
                 message: message.to_string(),
             }),
         });
@@ -2121,29 +2123,30 @@ async fn handle_unauthorized(
     provider_auth_recovery_attempted: &mut bool,
     session_telemetry: &SessionTelemetry,
     provider: &SharedProviderRuntime,
+    provider_contract: &SharedModelProvider,
     event_sender: Option<&Sender<ProtocolEvent>>,
     turn_id: Option<&str>,
 ) -> Result<UnauthorizedRecoveryExecution> {
     let debug = extract_response_debug_context(&transport);
     if !*provider_auth_recovery_attempted {
         *provider_auth_recovery_attempted = true;
-        let messages = provider.auth_recovery_messages();
+        let messages = provider_contract.auth_recovery_messages();
         if let Some(messages) = messages {
             emit_auth_recovery_event(
                 event_sender,
                 turn_id,
-                provider,
+                &provider_contract.descriptor().provider_kind,
                 messages.started,
                 EventMsg::AuthRecoveryStarted,
             );
         }
-        match provider.recover_from_unauthorized().await {
+        match provider_contract.recover_from_unauthorized().await {
             Ok(ProviderUnauthorizedRecovery::Recovered) => {
                 if let Some(messages) = messages {
                     emit_auth_recovery_event(
                         event_sender,
                         turn_id,
-                        provider,
+                        &provider_contract.descriptor().provider_kind,
                         messages.succeeded,
                         EventMsg::AuthRecoveryCompleted,
                     );
@@ -2156,6 +2159,7 @@ async fn handle_unauthorized(
             Ok(ProviderUnauthorizedRecovery::NotConfigured) => {}
             Err(error) => {
                 let original = provider.map_api_error(ApiError::Transport(transport));
+                let error = provider_recovery_error_to_genex_error(error);
                 warn!(
                     error = %error,
                     original_error = %original,
@@ -2234,6 +2238,21 @@ async fn handle_unauthorized(
     );
 
     Err(provider.map_api_error(ApiError::Transport(transport)))
+}
+
+fn provider_recovery_error_to_genex_error(
+    error: genex_model_provider::ProviderError,
+) -> GenexErr {
+    match error {
+        genex_model_provider::ProviderError::Transient(message)
+        | genex_model_provider::ProviderError::Transport(message) => {
+            GenexErr::Io(std::io::Error::other(message))
+        }
+        genex_model_provider::ProviderError::RateLimited { .. } => {
+            GenexErr::Io(std::io::Error::other("provider rate limit reached"))
+        }
+        other => GenexErr::Fatal(other.to_string()),
+    }
 }
 
 fn api_error_http_status(error: &ApiError) -> Option<u16> {

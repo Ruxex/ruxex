@@ -162,6 +162,22 @@ pub struct ProviderAuthField {
     pub secret: bool,
 }
 
+/// Outcome of a provider-owned attempt to recover from an authentication failure.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProviderUnauthorizedRecovery {
+    /// The provider has no provider-specific authentication recovery configured.
+    NotConfigured,
+    /// The provider recovered its authentication state and the request can be retried.
+    Recovered,
+}
+
+/// User-facing lifecycle messages for provider-owned authentication recovery.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ProviderAuthRecoveryMessages {
+    pub started: &'static str,
+    pub succeeded: &'static str,
+}
+
 impl ProviderAuthField {
     pub fn new(id: impl Into<String>, label: impl Into<String>, secret: bool) -> Self {
         Self {
@@ -311,6 +327,16 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     ) -> ProviderFuture<'_, ProviderResult<ProviderBackendResponse>> {
         let _ = request;
         Box::pin(async { Err(ProviderError::Unsupported) })
+    }
+
+    fn auth_recovery_messages(&self) -> Option<ProviderAuthRecoveryMessages> {
+        None
+    }
+
+    fn recover_from_unauthorized(
+        &self,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderUnauthorizedRecovery>> {
+        Box::pin(async { Ok(ProviderUnauthorizedRecovery::NotConfigured) })
     }
 
     fn list_models(
