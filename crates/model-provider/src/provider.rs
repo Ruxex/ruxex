@@ -352,6 +352,10 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         self.info().websocket_connect_timeout()
     }
 
+    fn stream_max_retries(&self) -> u64 {
+        self.info().stream_max_retries()
+    }
+
     fn connect_websocket(
         &self,
         request: ProviderWebsocketConnectRequest,
@@ -804,6 +808,10 @@ where
         ProviderRuntime::websocket_connect_timeout(self)
     }
 
+    fn stream_max_retries(&self) -> u64 {
+        ProviderRuntime::stream_max_retries(self)
+    }
+
     fn connect_websocket(
         &self,
         request: ProviderWebsocketConnectRequest,
@@ -1019,6 +1027,10 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 
     fn websocket_connect_timeout(&self) -> Duration {
         self.runtime.websocket_connect_timeout()
+    }
+
+    fn stream_max_retries(&self) -> u64 {
+        self.runtime.stream_max_retries()
     }
 
     fn connect_websocket(

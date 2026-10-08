@@ -1137,8 +1137,8 @@ impl ModelClientSession {
         level = "info",
         skip_all,
         fields(
-            provider = %self.client.state.provider.info().name,
-            wire_api = %self.client.state.provider.info().wire_api,
+            provider = %self.client.state.provider_contract.descriptor().provider_kind,
+            wire_api = ?self.client.state.provider_contract.wire_api(),
             transport = "responses_websocket",
             api.path = "/responses",
             turn.has_metadata_header = params.responses_metadata.has_turn_metadata()
@@ -1295,7 +1295,7 @@ impl ModelClientSession {
         skip_all,
         fields(
             model = %model_info.slug,
-            wire_api = %self.client.state.provider.info().wire_api,
+            wire_api = ?self.client.state.provider_contract.wire_api(),
             transport = "responses_http",
             http.method = "POST",
             api.path = tracing::field::Empty,
@@ -1435,7 +1435,7 @@ impl ModelClientSession {
         skip_all,
         fields(
             model = %model_info.slug,
-            wire_api = %self.client.state.provider.info().wire_api,
+            wire_api = ?self.client.state.provider_contract.wire_api(),
             transport = "responses_websocket",
             api.path = tracing::field::Empty,
             turn.has_metadata_header = responses_metadata.has_turn_metadata(),

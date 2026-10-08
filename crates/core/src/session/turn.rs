@@ -69,6 +69,7 @@ use genex_file_system::FindUpErrorPolicy;
 use genex_file_system::find_nearest_ancestor_with_markers;
 use genex_login::GenexAuth;
 use genex_model_provider::RemoteCompactionSupport;
+use genex_model_provider::ProviderWireApi;
 use genex_protocol::ResponseItemId;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::config_types::ModeKind;
@@ -984,7 +985,10 @@ async fn capture_current_model_fallback_step_context(
         .as_deref()
         .is_some_and(genex_login::CredentialManager::current_auth_uses_managed_auth);
     if !uses_managed_auth
-        || !turn_context.provider.info().is_responses_provider()
+        || !matches!(
+            turn_context.provider_contract.wire_api(),
+            ProviderWireApi::Responses
+        )
         || previous_model == turn_context.model_info().slug
     {
         return Ok(None);
@@ -1206,7 +1210,7 @@ async fn run_sampling_request(
         Arc::clone(&step_context),
         Arc::clone(&turn_diff_tracker),
     );
-    let max_retries = turn_context.provider.info().stream_max_retries();
+    let max_retries = turn_context.provider_contract.stream_max_retries();
     let mut retry_state = ResponsesStreamRetryState::default();
     let mut initial_input = Some(input);
     let mut original_input = None;
@@ -1864,13 +1868,20 @@ async fn try_run_sampling_request(
     let inference_trace = sess.services.rollout_thread_trace.inference_trace_context(
         turn_context.sub_id.as_str(),
         step_context.settings.model_info.slug.as_str(),
-        turn_context.provider.info().name.as_str(),
+        turn_context
+            .provider_contract
+            .descriptor()
+            .provider_kind
+            .as_str(),
     );
     let uses_sequential_cutoff_reasoning_summaries = turn_context
         .config
         .features
         .enabled(Feature::ConcurrentReasoningSummaries)
-        && turn_context.provider.info().is_responses_provider();
+        && matches!(
+            turn_context.provider_contract.wire_api(),
+            ProviderWireApi::Responses
+        );
     let mut stream = client_session
         .stream(
             prompt,

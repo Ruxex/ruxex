@@ -373,6 +373,11 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
         Duration::from_secs(10)
     }
 
+    /// Maximum number of provider stream reconnection attempts for a turn.
+    fn stream_max_retries(&self) -> u64 {
+        5
+    }
+
     fn connect_websocket(
         &self,
         request: ProviderWebsocketConnectRequest,
