@@ -161,7 +161,6 @@ impl ConfigManager {
             .as_ref()
             .and_then(|providers| providers.get(&current.model_provider_id))
             .cloned();
-        let required_provider = required_provider;
         let definition_changed = required_provider
             .as_ref()
             .is_some_and(|provider| provider != &current.model_provider);

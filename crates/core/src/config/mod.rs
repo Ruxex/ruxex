@@ -793,9 +793,6 @@ pub struct Config {
     /// How long to wait for optional MCP servers while building the initial tool catalog.
     pub mcp_optional_startup_grace: Duration,
 
-    /// Combined provider map (defaults plus user-defined providers).
-    pub model_providers: HashMap<String, ModelProviderInfo>,
-
     /// Maximum total bytes of project instruction content across all selected environments.
     pub project_doc_max_bytes: usize,
 
@@ -3872,7 +3869,6 @@ impl Config {
                 .mcp_optional_startup_grace_ms
                 .map(Duration::from_millis)
                 .unwrap_or(DEFAULT_OPTIONAL_MCP_STARTUP_GRACE),
-            model_providers,
             project_doc_max_bytes: cfg.project_doc_max_bytes.unwrap_or(AGENTS_MD_MAX_BYTES),
             project_doc_fallback_filenames: cfg
                 .project_doc_fallback_filenames

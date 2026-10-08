@@ -129,11 +129,6 @@ X-Managed = "required"
             std::fs::write(home.join("config.toml"), local_config).expect("write local config");
         })
         .with_cloud_config_bundle(managed.clone())
-        .with_config(|config| {
-            // The fixture normally replaces the selected provider with its mock provider.
-            // Restore the provider entry selected by the real requirements-aware loader.
-            config.model_provider = config.model_providers[&config.model_provider_id].clone();
-        })
         .build_with_auto_env(&local)
         .await?;
 
