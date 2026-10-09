@@ -90,19 +90,18 @@ use genex_model_provider::ProviderReasoningContext;
 use genex_model_provider::ProviderReasoningSummaryDelivery;
 use genex_model_provider::ProviderRequestAuth;
 use genex_model_provider::ProviderRequestCompression;
+use genex_model_provider::ProviderRequestFormat;
+use genex_model_provider::ProviderStreamConnectRequest;
+use genex_model_provider::ProviderStreamContinuation;
+use genex_model_provider::ProviderStreamEvent;
 use genex_model_provider::ProviderStreamOptions;
+use genex_model_provider::ProviderStreamOutcome;
+use genex_model_provider::ProviderStreamRequest;
+use genex_model_provider::ProviderStreamTelemetry;
 use genex_model_provider::ProviderUnauthorizedRecovery;
-use genex_model_provider::ProviderWebsocketConnectRequest;
-use genex_model_provider::ProviderWebsocketEvent;
-use genex_model_provider::ProviderWebsocketPayloadRequest;
-use genex_model_provider::ProviderWebsocketRequest;
-use genex_model_provider::ProviderWebsocketTelemetry;
-use genex_model_provider::ProviderWireApi;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::SharedProviderWebsocketConnection;
+use genex_model_provider::SharedProviderStreamSession;
 use genex_model_provider::build_provider_text_controls;
-#[cfg(test)]
-use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 
@@ -114,14 +113,9 @@ pub const X_GENEX_PARENT_THREAD_ID_HEADER: &str = "x-genex-parent-thread-id";
 pub const X_GENEX_WINDOW_ID_HEADER: &str = "x-genex-window-id";
 pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
     "x-responsesapi-include-timing-metrics";
-const X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
-    "x-genex-ws-stream-request-start-ms";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
     "ws_request_header_x_provider_internal_genex_responses_lite";
 const X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER: &str = "x-provider-internal-genex-responses-lite";
-#[cfg(test)]
-pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
-    Duration::from_millis(DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS);
 
 fn session_telemetry_for_request(
     session_telemetry: &SessionTelemetry,
@@ -170,23 +164,12 @@ struct CurrentClientSetup {
     credential_snapshot: genex_model_provider::SharedProviderCredentialSnapshot,
 }
 
-#[derive(Clone, Copy)]
-struct RequestRouteTelemetry {
-    endpoint: &'static str,
-}
-
 struct ResponsesTransportOptions {
     session_id: Option<String>,
     thread_id: Option<String>,
     extra_headers: ApiHeaderMap,
     compression: ProviderRequestCompression,
     turn_state: Option<Arc<OnceLock<String>>>,
-}
-
-impl RequestRouteTelemetry {
-    fn for_endpoint(endpoint: &'static str) -> Self {
-        Self { endpoint }
-    }
 }
 
 /// A session-scoped client for model-provider API calls.
@@ -259,15 +242,13 @@ struct WebsocketContinuation {
 
 #[derive(Debug, Default)]
 struct WebsocketSession {
-    connection: Option<SharedProviderWebsocketConnection>,
-    responses_headers: ApiHeaderMap,
+    stream_session: Option<SharedProviderStreamSession>,
     /// Owner of the cached state, including before a connection is opened.
     auth_owner_generation: Option<u64>,
     connection_key: Option<ProviderConnectionKey>,
     last_request: Option<genex_model_provider::ChatRequest>,
     last_response_rx: Option<oneshot::Receiver<LastResponse>>,
     last_response_from_untraced_warmup: bool,
-    connection_reused: StdMutex<bool>,
     continuation_reset_reason: Option<&'static str>,
 }
 
@@ -372,20 +353,6 @@ impl WebsocketSession {
             continuation_reset_reason,
             ..Default::default()
         };
-    }
-
-    fn set_connection_reused(&self, connection_reused: bool) {
-        *self
-            .connection_reused
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = connection_reused;
-    }
-
-    fn connection_reused(&self) -> bool {
-        *self
-            .connection_reused
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 }
 
@@ -635,8 +602,10 @@ impl ModelClient {
         responses_metadata: &GenexResponsesMetadata,
     ) -> Result<genex_model_provider::ChatRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
-        let is_responses_provider =
-            matches!(self.state.provider.wire_api(), ProviderWireApi::Responses);
+        let is_responses_provider = matches!(
+            self.state.provider.request_format(),
+            ProviderRequestFormat::Responses
+        );
         let (instructions, tools): (String, Vec<serde_json::Value>) =
             if model_info.use_responses_lite {
                 // These prompt-only items are rebuilt on every request. Hash their visible payloads
@@ -741,6 +710,7 @@ impl ModelClient {
                 extra_headers: std::collections::BTreeMap::new(),
                 compression: genex_model_provider::ProviderRequestCompression::None,
                 turn_state: None,
+                connection_key: None,
                 credential_snapshot: None,
             },
         };
@@ -837,70 +807,6 @@ impl ModelClient {
 
     pub(crate) async fn prewarm_auth(&self) -> Result<()> {
         self.current_client_setup().await.map(|_| ())
-    }
-
-    /// Opens a websocket connection using the same header and telemetry wiring as normal turns.
-    ///
-    /// Both startup prewarm and in-turn `needs_new` reconnects call this path so handshake
-    /// behavior remains consistent across both flows.
-    #[allow(clippy::too_many_arguments)]
-    async fn connect_websocket(
-        &self,
-        session_telemetry: &SessionTelemetry,
-        responses_metadata: &GenexResponsesMetadata,
-        auth_context: AuthRequestTelemetryContext,
-        request_route_telemetry: RequestRouteTelemetry,
-        responses_headers: &ApiHeaderMap,
-        credential_snapshot: genex_model_provider::SharedProviderCredentialSnapshot,
-    ) -> genex_model_provider::ProviderResult<SharedProviderWebsocketConnection> {
-        let mut headers = self.build_websocket_headers(responses_metadata).await;
-        headers.extend(responses_headers.clone());
-        let websocket_telemetry = ModelClientSession::build_websocket_telemetry(
-            session_telemetry,
-            auth_context.clone(),
-            request_route_telemetry,
-        );
-        let websocket_connect_timeout = self.state.provider.websocket_connect_timeout();
-        let start = Instant::now();
-        let result =
-            match tokio::time::timeout(
-                websocket_connect_timeout,
-                self.state
-                    .provider
-                    .connect_websocket(ProviderWebsocketConnectRequest {
-                        session_id: Some(self.responses_session_id(responses_metadata)),
-                        thread_id: Some(responses_metadata.thread_id.to_string()),
-                        extra_headers: neutral_headers(headers),
-                        default_headers: neutral_headers(
-                            genex_login::default_client::default_headers(),
-                        ),
-                        credential_snapshot: Some(credential_snapshot),
-                        telemetry: Some(websocket_telemetry),
-                    }),
-            )
-            .await
-            {
-                Ok(result) => result,
-                Err(_) => Err(ProviderError::Transient(
-                    "provider websocket connection timed out".to_string(),
-                )),
-            };
-        let error_message = result.as_ref().err().map(ToString::to_string);
-        session_telemetry.record_websocket_connect(
-            start.elapsed(),
-            None,
-            error_message.as_deref(),
-            auth_context.auth_header_attached,
-            auth_context.auth_header_name,
-            auth_context.retry_after_unauthorized,
-            auth_context.recovery_mode,
-            auth_context.recovery_phase,
-            request_route_telemetry.endpoint,
-            /*connection_reused*/ false,
-            None,
-            None,
-        );
-        result
     }
 
     /// Builds websocket handshake headers for both prewarm and turn-time reconnect.
@@ -1072,114 +978,73 @@ impl ModelClientSession {
             ))
         })?;
         let connection_key = client_setup.connection_key.clone();
-        if self.websocket_session.connection.is_some()
+        if self.websocket_session.stream_session.is_some()
             && self.websocket_session.connection_key.as_ref() == Some(&connection_key)
         {
             return Ok(());
         }
         self.websocket_session.reset(Some("other"));
-        let auth_context = AuthRequestTelemetryContext::new(
+        let mut websocket_metadata = responses_metadata.clone();
+        websocket_metadata.routing_hint = self.client.build_routing_hint_header(
             &client_setup.auth,
-            PendingUnauthorizedRetry::default(),
+            &model_info.slug,
+            model_info.service_tier_for_request(None).as_deref(),
         );
-        let responses_headers = self
+        let mut websocket_headers = self
             .client
-            .responses_headers(&client_setup.auth, &model_info.slug);
-        self.websocket_connection(WebsocketConnectParams {
-            session_telemetry,
-            connection_key,
-            auth_owner_generation: client_setup.auth_owner_generation,
-            responses_metadata,
-            auth_context,
-            request_route_telemetry: RequestRouteTelemetry::for_endpoint("/responses"),
-            responses_headers: &responses_headers,
+            .build_websocket_headers(&websocket_metadata)
+            .await;
+        websocket_headers.extend(
+            self.client
+                .responses_headers(&client_setup.auth, &model_info.slug),
+        );
+        let telemetry = Self::build_stream_telemetry(session_telemetry);
+        let stream_session = self
+            .client
+            .state
+            .provider
+            .open_stream_session()
+            .await
+            .map_err(provider_error_to_genex_error)?;
+        let connect_request = ProviderStreamConnectRequest {
+            session_id: Some(self.client.responses_session_id(responses_metadata)),
+            thread_id: Some(responses_metadata.thread_id.to_string()),
+            extra_headers: neutral_headers(websocket_headers),
+            default_headers: neutral_headers(genex_login::default_client::default_headers()),
+            connection_key: connection_key.clone(),
             credential_snapshot: client_setup.credential_snapshot.clone(),
-        })
+            telemetry: Some(telemetry),
+        };
+        let start = Instant::now();
+        let result = tokio::time::timeout(
+            self.client.state.provider.websocket_connect_timeout(),
+            stream_session.preconnect(connect_request),
+        )
         .await
-        .map_err(provider_error_to_genex_error)?;
+        .map_err(|_| ProviderError::Transient("provider websocket connection timed out".into()))
+        .map_err(provider_error_to_genex_error)?
+        .map_err(provider_error_to_genex_error);
+        let error_message = result.as_ref().err().map(ToString::to_string);
+        session_telemetry.record_websocket_connect(
+            start.elapsed(),
+            None,
+            error_message.as_deref(),
+            client_setup.auth.auth_header_attached,
+            client_setup.auth.auth_header_name,
+            false,
+            None,
+            None,
+            "/responses",
+            false,
+            None,
+            None,
+        );
+        result?;
+        self.websocket_session.stream_session = Some(stream_session);
+        self.websocket_session.connection_key = Some(connection_key);
+        self.websocket_session.auth_owner_generation = client_setup.auth_owner_generation;
         Ok(())
     }
-    /// Returns a websocket connection for this turn.
-    #[instrument(
-        name = "model_client.websocket_connection",
-        level = "info",
-        skip_all,
-        fields(
-            provider = %self.client.state.provider.descriptor().provider_kind,
-            wire_api = ?self.client.state.provider.wire_api(),
-            transport = "responses_websocket",
-            api.path = "/responses",
-            turn.has_metadata_header = params.responses_metadata.has_turn_metadata()
-        )
-    )]
-    async fn websocket_connection(
-        &mut self,
-        params: WebsocketConnectParams<'_>,
-    ) -> genex_model_provider::ProviderResult<&SharedProviderWebsocketConnection> {
-        let WebsocketConnectParams {
-            session_telemetry,
-            connection_key,
-            auth_owner_generation,
-            responses_metadata,
-            auth_context,
-            request_route_telemetry,
-            responses_headers,
-            credential_snapshot,
-        } = params;
-        let reset_reason = match self.websocket_session.connection.as_ref() {
-            Some(_)
-                if self.websocket_session.responses_headers != *responses_headers
-                    || self.websocket_session.connection_key.as_ref() != Some(&connection_key) =>
-            {
-                Some("other")
-            }
-            Some(conn) => match conn.is_closed().await {
-                Ok(true) => Some("connection_closed"),
-                Ok(false) => None,
-                Err(_) => Some("connection_error"),
-            },
-            None => None,
-        };
-        let needs_new = self.websocket_session.connection.is_none() || reset_reason.is_some();
-        // Resolving an external auth provider can change ownership during client setup.
-        let owner_changed = self.websocket_session.auth_owner_generation != auth_owner_generation;
-        if owner_changed {
-            self.turn_state = Arc::new(OnceLock::new());
-        }
-
-        if needs_new || owner_changed {
-            self.websocket_session.reset(if owner_changed {
-                Some("other")
-            } else {
-                reset_reason
-            });
-            let new_conn = self
-                .client
-                .connect_websocket(
-                    session_telemetry,
-                    responses_metadata,
-                    auth_context,
-                    request_route_telemetry,
-                    responses_headers,
-                    credential_snapshot,
-                )
-                .await?;
-            self.websocket_session.connection = Some(new_conn);
-            self.websocket_session.responses_headers = responses_headers.clone();
-            self.websocket_session.auth_owner_generation = auth_owner_generation;
-            self.websocket_session.connection_key = Some(connection_key);
-            self.websocket_session
-                .set_connection_reused(/*connection_reused*/ false);
-        } else {
-            self.websocket_session
-                .set_connection_reused(/*connection_reused*/ true);
-        }
-
-        self.websocket_session.connection.as_ref().ok_or_else(|| {
-            ProviderError::Transport("websocket connection is unavailable".to_string())
-        })
-    }
-
     fn responses_request_compression(
         &self,
         auth: &ProviderRequestAuth,
@@ -1187,8 +1052,8 @@ impl ModelClientSession {
         if self.client.state.enable_request_compression
             && auth.managed_auth
             && matches!(
-                self.client.state.provider.wire_api(),
-                ProviderWireApi::Responses
+                self.client.state.provider.request_format(),
+                ProviderRequestFormat::Responses
             )
         {
             ProviderRequestCompression::Zstd
@@ -1246,6 +1111,7 @@ impl ModelClientSession {
                 extra_headers: std::collections::BTreeMap::new(),
                 compression: genex_model_provider::ProviderRequestCompression::None,
                 turn_state: None,
+                connection_key: None,
                 credential_snapshot: Some(client_setup.credential_snapshot.clone()),
             },
         };
@@ -1276,7 +1142,7 @@ impl ModelClientSession {
         skip_all,
         fields(
             model = %model_info.slug,
-            wire_api = ?self.client.state.provider.wire_api(),
+            request_format = ?self.client.state.provider.request_format(),
             transport = "responses_http",
             http.method = "POST",
             api.path = tracing::field::Empty,
@@ -1345,6 +1211,7 @@ impl ModelClientSession {
                     extra_headers: neutral_headers(options.extra_headers),
                     compression: options.compression,
                     turn_state: options.turn_state,
+                    connection_key: Some(client_setup.connection_key.clone()),
                     credential_snapshot: Some(client_setup.credential_snapshot.clone()),
                 },
                 ..request
@@ -1386,7 +1253,6 @@ impl ModelClientSession {
         skip_all,
         fields(
             model = %model_info.slug,
-            wire_api = ?self.client.state.provider.wire_api(),
             transport = "responses_websocket",
             api.path = tracing::field::Empty,
             turn.has_metadata_header = responses_metadata.has_turn_metadata(),
@@ -1408,15 +1274,12 @@ impl ModelClientSession {
     ) -> Result<WebsocketStreamOutcome> {
         let provider = Arc::clone(&self.client.state.provider);
         let mut provider_auth_recovery_attempted = false;
-        let mut pending_retry = PendingUnauthorizedRetry::default();
         loop {
             let client_setup = self.client_setup().await?;
             let responses_headers = self
                 .client
                 .responses_headers(&client_setup.auth, &model_info.slug);
             tracing::Span::current().record("api.path", "/responses");
-            let request_auth_context =
-                AuthRequestTelemetryContext::new(&client_setup.auth, pending_retry);
             let mut request = self.client.build_responses_request(
                 prompt,
                 model_info,
@@ -1426,51 +1289,29 @@ impl ModelClientSession {
                 responses_metadata,
             )?;
             ModelClient::filter_tool_result_metadata(&mut request.input);
+            if self.websocket_session.connection_key.as_ref() != Some(&client_setup.connection_key)
+            {
+                self.websocket_session.reset(Some("other"));
+                self.websocket_session.connection_key = Some(client_setup.connection_key.clone());
+            }
             let mut websocket_metadata = responses_metadata.clone();
             websocket_metadata.routing_hint = self.client.build_routing_hint_header(
                 &client_setup.auth,
                 &request.model,
                 request.service_tier.as_deref(),
             );
+            let mut websocket_headers = self
+                .client
+                .build_websocket_headers(&websocket_metadata)
+                .await;
+            websocket_headers.extend(responses_headers.clone());
             let request_session_telemetry = if warmup {
                 // `generate=false` prewarm is connection setup, not an inference request.
                 session_telemetry.clone()
             } else {
                 session_telemetry_for_request(session_telemetry, &request)
             };
-            match self
-                .websocket_connection(WebsocketConnectParams {
-                    session_telemetry,
-                    connection_key: client_setup.connection_key.clone(),
-                    auth_owner_generation: client_setup.auth_owner_generation,
-                    responses_metadata: &websocket_metadata,
-                    auth_context: request_auth_context,
-                    request_route_telemetry: RequestRouteTelemetry::for_endpoint("/responses"),
-                    responses_headers: &responses_headers,
-                    credential_snapshot: client_setup.credential_snapshot.clone(),
-                })
-                .await
-            {
-                Ok(_) => {}
-                Err(ProviderError::UpgradeRequired) => {
-                    return Ok(WebsocketStreamOutcome::FallbackToHttp);
-                }
-                Err(ProviderError::Unauthorized) => {
-                    pending_retry = PendingUnauthorizedRetry::from_recovery(
-                        handle_unauthorized(
-                            ProviderError::Unauthorized,
-                            &mut provider_auth_recovery_attempted,
-                            session_telemetry,
-                            &provider,
-                            self.client.event_sender.as_ref(),
-                            responses_metadata.turn_id.as_deref(),
-                        )
-                        .await?,
-                    );
-                    continue;
-                }
-                Err(err) => return Err(provider_error_to_genex_error(err)),
-            }
+            let stream_telemetry = Self::build_stream_telemetry(session_telemetry);
 
             // Measure the complete logical request, not only the websocket delta.
             let mut client_metadata = self
@@ -1552,27 +1393,35 @@ impl ModelClientSession {
                     tracestate.to_string(),
                 );
             }
-            let mut websocket_payload = provider
-                .build_websocket_payload(ProviderWebsocketPayloadRequest {
-                    request: request.clone(),
-                    previous_response_id,
-                    input: incremental_items
-                        .as_deref()
-                        .unwrap_or(&request.input)
-                        .to_vec(),
-                    generate: if warmup { Some(false) } else { None },
-                    client_metadata: (!client_metadata.is_empty()).then_some(client_metadata),
-                })
-                .map_err(provider_error_to_genex_error)?;
-            stamp_ws_stream_request_start_ms(&mut websocket_payload);
+            request.transport = genex_model_provider::ChatTransportOptions {
+                session_id: Some(self.client.responses_session_id(responses_metadata)),
+                thread_id: Some(responses_metadata.thread_id.to_string()),
+                extra_headers: neutral_headers(websocket_headers),
+                compression: ProviderRequestCompression::None,
+                turn_state: Some(Arc::clone(&self.turn_state)),
+                connection_key: Some(client_setup.connection_key.clone()),
+                credential_snapshot: Some(client_setup.credential_snapshot.clone()),
+            };
             if !previous_response_id_from_untraced_warmup {
-                inference_trace_attempt.record_started(&websocket_payload);
+                inference_trace_attempt.record_started(&request);
             }
 
-            let websocket_connection =
-                self.websocket_session.connection.as_ref().ok_or_else(|| {
-                    GenexErr::Fatal("websocket connection is unavailable".to_string())
-                })?;
+            let stream_session = if let Some(stream_session) =
+                self.websocket_session.stream_session.clone()
+            {
+                stream_session
+            } else {
+                let stream_session = match provider.open_stream_session().await {
+                    Ok(stream_session) => stream_session,
+                    Err(ProviderError::Unsupported) => {
+                        return Ok(WebsocketStreamOutcome::FallbackToHttp);
+                    }
+                    Err(error) => return Err(provider_error_to_genex_error(error)),
+                };
+                self.websocket_session.stream_session = Some(stream_session.clone());
+                self.websocket_session.connection_key = Some(client_setup.connection_key.clone());
+                stream_session
+            };
             request_session_telemetry.counter(
                 WEBSOCKET_CONTINUATION_COUNT_METRIC,
                 /*inc*/ 1,
@@ -1582,13 +1431,26 @@ impl ModelClientSession {
                     ("phase", if warmup { "warmup" } else { "generation" }),
                 ],
             );
-            let stream_result = websocket_connection
-                .stream_request(ProviderWebsocketRequest {
-                    payload: websocket_payload,
-                    connection_reused: self.websocket_session.connection_reused(),
-                    turn_state: Some(Arc::clone(&self.turn_state)),
-                })
-                .await;
+            let stream_result =
+                stream_session
+                    .stream_request(ProviderStreamRequest {
+                        request: request.clone(),
+                        continuation: Some(ProviderStreamContinuation {
+                            previous_response_id,
+                            input: incremental_items
+                                .as_deref()
+                                .unwrap_or(&request.input)
+                                .to_vec(),
+                            generate: if warmup { Some(false) } else { None },
+                            client_metadata: (!client_metadata.is_empty())
+                                .then_some(client_metadata),
+                        }),
+                        default_headers: neutral_headers(
+                            genex_login::default_client::default_headers(),
+                        ),
+                        telemetry: Some(stream_telemetry),
+                    })
+                    .await;
             if let Some(original_item_ids) = original_item_ids {
                 for (item, original_item_id) in request.input.iter_mut().zip(original_item_ids) {
                     item.set_id(original_item_id);
@@ -1596,12 +1458,31 @@ impl ModelClientSession {
             }
             self.websocket_session.last_request = Some(request);
             self.websocket_session.last_response_from_untraced_warmup = warmup;
-            let stream_result = stream_result.map_err(|err| {
-                let err = provider_error_to_genex_error(err);
-                inference_trace_attempt.record_failed(&err, None, /*output_items*/ &[]);
-                err
-            })?;
-            let api_stream = stream_result;
+            let api_stream = match stream_result {
+                Ok(ProviderStreamOutcome::Stream(stream)) => stream,
+                Ok(ProviderStreamOutcome::FallbackToHttp)
+                | Err(ProviderError::UpgradeRequired)
+                | Err(ProviderError::Unsupported) => {
+                    return Ok(WebsocketStreamOutcome::FallbackToHttp);
+                }
+                Err(ProviderError::Unauthorized) => {
+                    let _ = handle_unauthorized(
+                        ProviderError::Unauthorized,
+                        &mut provider_auth_recovery_attempted,
+                        session_telemetry,
+                        &provider,
+                        self.client.event_sender.as_ref(),
+                        responses_metadata.turn_id.as_deref(),
+                    )
+                    .await?;
+                    continue;
+                }
+                Err(error) => {
+                    let error = provider_error_to_genex_error(error);
+                    inference_trace_attempt.record_failed(&error, None, /*output_items*/ &[]);
+                    return Err(error);
+                }
+            };
             let (stream, last_request_rx) = map_response_events(
                 None,
                 api_stream,
@@ -1613,19 +1494,13 @@ impl ModelClientSession {
         }
     }
 
-    /// Builds telemetry for the Responses API WebSocket transport.
-    fn build_websocket_telemetry(
+    /// Builds telemetry for the provider-owned persistent stream transport.
+    fn build_stream_telemetry(
         session_telemetry: &SessionTelemetry,
-        auth_context: AuthRequestTelemetryContext,
-        request_route_telemetry: RequestRouteTelemetry,
-    ) -> Arc<dyn ProviderWebsocketTelemetry> {
-        let telemetry = Arc::new(ApiTelemetry::new(
-            session_telemetry.clone(),
-            auth_context,
-            request_route_telemetry,
-        ));
-        let websocket_telemetry: Arc<dyn ProviderWebsocketTelemetry> = telemetry;
-        websocket_telemetry
+    ) -> Arc<dyn ProviderStreamTelemetry> {
+        let telemetry = Arc::new(ApiTelemetry::new(session_telemetry.clone()));
+        let stream_telemetry: Arc<dyn ProviderStreamTelemetry> = telemetry;
+        stream_telemetry
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1701,8 +1576,8 @@ impl ModelClientSession {
         responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
-        match self.client.state.provider.wire_api() {
-            ProviderWireApi::Responses => {
+        match self.client.state.provider.request_format() {
+            ProviderRequestFormat::Responses => {
                 if self.client.responses_websocket_enabled() {
                     let request_trace = current_span_w3c_trace_context();
                     match self
@@ -1739,7 +1614,7 @@ impl ModelClientSession {
                 )
                 .await
             }
-            ProviderWireApi::Chat => {
+            ProviderRequestFormat::Chat => {
                 self.stream_chat_completions(
                     prompt,
                     model_info,
@@ -1768,24 +1643,6 @@ impl ModelClientSession {
             .force_http_fallback(session_telemetry, model_info);
         self.websocket_session = WebsocketSession::default();
         activated
-    }
-}
-
-/// Stamp a provider-owned websocket payload with the current time.
-///
-/// Meant to be called just before sending the request over the socket, to capture realistic
-/// transport timing.
-fn stamp_ws_stream_request_start_ms(request: &mut serde_json::Value) {
-    if let Some(object) = request.as_object_mut() {
-        let metadata = object
-            .entry("client_metadata")
-            .or_insert_with(|| serde_json::json!({}));
-        if let Some(metadata) = metadata.as_object_mut() {
-            metadata.insert(
-                X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY.to_string(),
-                serde_json::Value::String(crate::turn_timing::now_unix_timestamp_ms().to_string()),
-            );
-        }
     }
 }
 
@@ -2068,60 +1925,6 @@ where
 ///
 /// When refresh succeeds, the caller should retry the API call; otherwise
 /// the mapped `GenexErr` is returned to the caller.
-#[derive(Clone, Copy, Debug)]
-struct UnauthorizedRecoveryExecution {
-    mode: &'static str,
-    phase: &'static str,
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-struct PendingUnauthorizedRetry {
-    retry_after_unauthorized: bool,
-    recovery_mode: Option<&'static str>,
-    recovery_phase: Option<&'static str>,
-}
-
-impl PendingUnauthorizedRetry {
-    fn from_recovery(recovery: UnauthorizedRecoveryExecution) -> Self {
-        Self {
-            retry_after_unauthorized: true,
-            recovery_mode: Some(recovery.mode),
-            recovery_phase: Some(recovery.phase),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Default)]
-struct AuthRequestTelemetryContext {
-    auth_header_attached: bool,
-    auth_header_name: Option<&'static str>,
-    retry_after_unauthorized: bool,
-    recovery_mode: Option<&'static str>,
-    recovery_phase: Option<&'static str>,
-}
-
-impl AuthRequestTelemetryContext {
-    fn new(auth: &ProviderRequestAuth, retry: PendingUnauthorizedRetry) -> Self {
-        Self {
-            auth_header_attached: auth.auth_header_attached,
-            auth_header_name: auth.auth_header_name,
-            retry_after_unauthorized: retry.retry_after_unauthorized,
-            recovery_mode: retry.recovery_mode,
-            recovery_phase: retry.recovery_phase,
-        }
-    }
-}
-
-struct WebsocketConnectParams<'a> {
-    session_telemetry: &'a SessionTelemetry,
-    connection_key: ProviderConnectionKey,
-    auth_owner_generation: Option<u64>,
-    responses_metadata: &'a GenexResponsesMetadata,
-    auth_context: AuthRequestTelemetryContext,
-    request_route_telemetry: RequestRouteTelemetry,
-    responses_headers: &'a ApiHeaderMap,
-    credential_snapshot: genex_model_provider::SharedProviderCredentialSnapshot,
-}
 
 fn emit_auth_recovery_event(
     event_sender: Option<&Sender<ProtocolEvent>>,
@@ -2148,7 +1951,7 @@ async fn handle_unauthorized(
     provider: &SharedModelProvider,
     event_sender: Option<&Sender<ProtocolEvent>>,
     turn_id: Option<&str>,
-) -> Result<UnauthorizedRecoveryExecution> {
+) -> Result<()> {
     if !*provider_auth_recovery_attempted {
         *provider_auth_recovery_attempted = true;
         let messages = provider.auth_recovery_messages();
@@ -2172,10 +1975,7 @@ async fn handle_unauthorized(
                         EventMsg::AuthRecoveryCompleted,
                     );
                 }
-                return Ok(UnauthorizedRecoveryExecution {
-                    mode: "provider",
-                    phase: "provider_refresh",
-                });
+                return Ok(());
             }
             Ok(ProviderUnauthorizedRecovery::NotConfigured) => {}
             Err(error) => {
@@ -2220,25 +2020,15 @@ fn provider_error_to_genex_error(error: ProviderError) -> GenexErr {
 
 struct ApiTelemetry {
     session_telemetry: SessionTelemetry,
-    auth_context: AuthRequestTelemetryContext,
-    request_route_telemetry: RequestRouteTelemetry,
 }
 
 impl ApiTelemetry {
-    fn new(
-        session_telemetry: SessionTelemetry,
-        auth_context: AuthRequestTelemetryContext,
-        request_route_telemetry: RequestRouteTelemetry,
-    ) -> Self {
-        Self {
-            session_telemetry,
-            auth_context,
-            request_route_telemetry,
-        }
+    fn new(session_telemetry: SessionTelemetry) -> Self {
+        Self { session_telemetry }
     }
 }
 
-impl ProviderWebsocketTelemetry for ApiTelemetry {
+impl ProviderStreamTelemetry for ApiTelemetry {
     fn on_request(
         &self,
         duration: Duration,
@@ -2253,14 +2043,14 @@ impl ProviderWebsocketTelemetry for ApiTelemetry {
         );
     }
 
-    fn on_event(&self, event: ProviderWebsocketEvent, duration: Duration) {
+    fn on_event(&self, event: ProviderStreamEvent, duration: Duration) {
         let result = match event {
-            ProviderWebsocketEvent::Message(payload) => {
+            ProviderStreamEvent::Message(payload) => {
                 Ok(Some(Ok(Message::Text(payload.to_string().into()))))
             }
-            ProviderWebsocketEvent::Error(error) => Err(ApiError::Stream(error.to_string())),
-            ProviderWebsocketEvent::Closed => Ok(None),
-            ProviderWebsocketEvent::Ignored => return,
+            ProviderStreamEvent::Error(error) => Err(ApiError::Stream(error.to_string())),
+            ProviderStreamEvent::Closed => Ok(None),
+            ProviderStreamEvent::Ignored => return,
         };
         self.session_telemetry
             .record_websocket_event(&result, duration);

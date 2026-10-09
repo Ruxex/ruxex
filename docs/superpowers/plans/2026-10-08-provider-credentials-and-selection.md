@@ -5,6 +5,11 @@
 > Genex now mounts one built-in provider per runtime/AppServer; provider selection,
 > switching, and per-thread provider metadata are removed. The active design is
 > [`2026-10-08-single-model-provider-library-design.md`](../specs/2026-10-08-single-model-provider-library-design.md).
+>
+> The checklist below is archival historical material. Its unchecked items are intentionally not
+> evidence of unfinished work and must not be resumed; the completed singleton work and remaining
+> residuals are tracked in the active design and
+> [`2026-10-10-finish-provider-singleton-residuals.md`](2026-10-10-finish-provider-singleton-residuals.md).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

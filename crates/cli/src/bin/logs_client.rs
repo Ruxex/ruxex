@@ -5,6 +5,7 @@ use anyhow::Context;
 use chrono::DateTime;
 use clap::Parser;
 use clap::ValueEnum;
+use genex_app_server::runtime::mount_provider_home_for_config;
 use genex_core::config::ConfigBuilder;
 use genex_state::LogQuery;
 use genex_state::LogRow;
@@ -144,6 +145,8 @@ async fn resolve_sqlite_config(args: &Args) -> anyhow::Result<SqliteConfig> {
         config_builder = config_builder.genex_home(genex_home.clone());
     }
     let config = config_builder.build().await?;
+    mount_provider_home_for_config(&config)
+        .context("failed to mount provider data root before opening logs database")?;
     Ok(config.sqlite_config().clone())
 }
 
@@ -438,6 +441,25 @@ mod tests {
             .expect("resolve SQLite config");
 
         assert_eq!(sqlite.logs_db_path(), db_path);
+    }
+
+    #[tokio::test]
+    async fn home_derived_db_requires_provider_marker() {
+        let genex_home = tempfile::tempdir().expect("create Genex home");
+        std::fs::write(genex_home.path().join("state.sqlite"), b"existing state")
+            .expect("write existing state marker");
+        let args = Args::try_parse_from([
+            OsString::from("genex-state-logs"),
+            OsString::from("--genex-home"),
+            genex_home.path().as_os_str().to_owned(),
+        ])
+        .expect("parse arguments");
+
+        let error = resolve_sqlite_config(&args)
+            .await
+            .expect_err("existing home without marker must be rejected");
+
+        assert!(error.to_string().contains("genex-home.json"));
     }
 
     /// Direct database selection must preserve native path bytes.

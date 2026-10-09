@@ -22,7 +22,6 @@ use genex_core_plugins::PluginInstallRequest;
 use genex_core_plugins::PluginMarketplaceContext;
 use genex_core_plugins::PluginReadRequest;
 use genex_core_plugins::marketplace::MarketplacePluginSource;
-use genex_login::CredentialManager;
 use std::sync::Arc;
 
 mod local;
@@ -31,9 +30,7 @@ mod search;
 
 #[derive(Clone)]
 pub(crate) struct PluginRequestProcessor {
-    credential_manager: Arc<CredentialManager>,
     thread_manager: Arc<ThreadManager>,
-    outgoing: Arc<OutgoingMessageSender>,
     config_manager: ConfigManager,
     on_effective_plugins_changed:
         Arc<dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync>,
@@ -51,18 +48,14 @@ impl PluginRequestProcessor {
     }
 
     pub(crate) fn new(
-        credential_manager: Arc<CredentialManager>,
         thread_manager: Arc<ThreadManager>,
-        outgoing: Arc<OutgoingMessageSender>,
         config_manager: ConfigManager,
         on_effective_plugins_changed: Arc<
             dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync,
         >,
     ) -> Self {
         Self {
-            credential_manager,
             thread_manager,
-            outgoing,
             config_manager,
             on_effective_plugins_changed,
         }

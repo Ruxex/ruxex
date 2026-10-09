@@ -1,11 +1,9 @@
 pub mod daemon_recovery;
 /// Only managed app-server launches accept the local socket shutdown request.
 pub const DAEMON_SHUTDOWN_SOCKET_ENV: &str = "GENEX_DAEMON_SHUTDOWN_SOCKET";
-mod connection_auth;
 mod outgoing_message;
 mod transport;
 
-pub use connection_auth::ConnectionAuth;
 pub use outgoing_message::ConnectionId;
 pub use outgoing_message::OutgoingError;
 pub use outgoing_message::OutgoingMessage;

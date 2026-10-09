@@ -1,5 +1,6 @@
 use anyhow::Context;
 use anyhow::Result;
+use genex_app_server::runtime::mount_provider_home_for_config;
 use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
@@ -21,6 +22,13 @@ pub(crate) async fn load_config(
     .build()
     .await
     .context("failed to load configuration")
+}
+
+/// Validate the provider-scoped data root before a CLI command opens provider credentials.
+pub(crate) fn mount_provider_home(config: &Config) -> Result<()> {
+    mount_provider_home_for_config(config)
+        .map(|_| ())
+        .context("failed to mount provider data root")
 }
 
 pub(crate) async fn config_builder(

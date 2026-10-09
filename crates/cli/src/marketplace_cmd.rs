@@ -171,6 +171,7 @@ impl MarketplaceCli {
         )
         .await?;
         let config = builder.clone().build().await?;
+        cloud_config::mount_provider_home(&config)?;
 
         match subcommand {
             MarketplaceSubcommand::Add(args) => run_add(config, args).await?,

@@ -53,7 +53,7 @@ use genex_login::default_client::create_client_without_request_logging;
 use genex_login::default_client::default_headers;
 use genex_login::load_auth_dot_json;
 use genex_model_provider::ProviderError;
-use genex_model_provider::ProviderWebsocketConnectRequest;
+use genex_model_provider::ProviderStreamConnectRequest;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::AskForApproval;
 use genex_terminal_detection::Multiplexer;
@@ -2045,46 +2045,37 @@ async fn websocket_reachability_check(
         }
     ));
     details.push("endpoint: provider-owned Responses WebSocket".to_string());
+    let stream_session = match runtime_provider.open_stream_session().await {
+        Ok(session) => session,
+        Err(err) => {
+            return websocket_probe_warning(
+                "Responses WebSocket failed; HTTPS fallback may still work",
+                details,
+                websocket_provider_error_detail(&err),
+            );
+        }
+    };
     match tokio::time::timeout(
         provider.websocket_connect_timeout(),
-        runtime_provider.connect_websocket(ProviderWebsocketConnectRequest {
+        stream_session.preconnect(ProviderStreamConnectRequest {
             session_id: None,
             thread_id: None,
             extra_headers: BTreeMap::new(),
             default_headers: neutral_headers(default_headers()),
-            credential_snapshot: Some(snapshot.credential_snapshot.clone()),
+            connection_key: snapshot.connection_key,
+            credential_snapshot: snapshot.credential_snapshot.clone(),
             telemetry: None,
         }),
     )
     .await
     {
-        Ok(Ok(connection)) => match connection.is_closed().await {
-            Ok(true) => {
-                details.push("connection state: closed immediately after handshake".to_string());
-                return DoctorCheck::new(
-                    "network.websocket_reachability",
-                    "websocket",
-                    CheckStatus::Warning,
-                    "Responses WebSocket closed immediately after handshake",
-                )
-                .details(details)
-                .remediation(
-                    "Check proxy, VPN, firewall, DNS, custom CA, and WebSocket policy support.",
-                );
-            }
-            Ok(false) => DoctorCheck::new(
-                "network.websocket_reachability",
-                "websocket",
-                CheckStatus::Ok,
-                "Responses WebSocket handshake succeeded",
-            )
-            .details(details),
-            Err(err) => websocket_probe_warning(
-                "Responses WebSocket failed; HTTPS fallback may still work",
-                details,
-                websocket_provider_error_detail(&err),
-            ),
-        },
+        Ok(Ok(())) => DoctorCheck::new(
+            "network.websocket_reachability",
+            "websocket",
+            CheckStatus::Ok,
+            "Responses WebSocket handshake succeeded",
+        )
+        .details(details),
         Ok(Err(err)) => websocket_probe_warning(
             "Responses WebSocket failed; HTTPS fallback may still work",
             details,

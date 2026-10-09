@@ -754,6 +754,19 @@ the old adapter contract.
 | `ProviderRuntime::credential_manager` adapter accessor | Model catalog and adapter-owned unauthorized recovery still consume the provider-scoped manager. Core no longer uses this accessor to validate or route an injected provider. | `retain` adapter-internal compatibility boundary; do not expose it through `ModelProvider` consumers | Adapter call-site audit; explicit retain decision; `just check --tests`; `just check` |
 | `scripts/mock_responses_websocket_server.py` profile/provider registry example | The active local WebSocket harness printed a plural provider registry and profile selector, which no longer describes the single-provider config surface. | `migrate-in-place`: print a singular `[model_provider]` plus top-level model settings and Genex startup command; preserve the Responses WebSocket wire fixture | Python syntax check; exact stale-config search; `git diff --check` |
 
+### Residual closure implemented (2026-10-10)
+
+The following findings were identified after the 2026-10-09 completion note. Their producer/consumer
+audits, explicit decisions, implementation changes, and verification are now recorded in the
+matching compatibility-inventory entries:
+
+| Candidate | Evidence | Decision |
+|---|---|---|
+| MCP/Marketplace credential startup | `McpCli::run` and `MarketplaceCli::run` construct credential-backed managers without the provider-home mount used by normal runtime/plugin startup. | `migrate-in-place`: share the CLI provider-home validation helper before credential construction. |
+| Standalone logs diagnostic home | `crates/cli/src/bin/logs_client.rs` opens SQLite directly from `--genex-home`; direct `--db` is a separate explicit diagnostic override. | `migrate-in-place` for home-derived DBs; `retain` explicit external DB override. |
+| Core low-level streaming transport | `crates/core/src/client.rs` consumes `ProviderWireApi` and `ProviderWebsocket*` operations and chooses the provider wire path. | `migrate-in-place`: add a neutral provider-owned streaming session and remove low-level transport references from Core. |
+| Dead connection-auth and processor credential wiring | `ConnectionAuth` has no active producer; plugin/turn processor credential fields have no runtime reads. | `remove` after producer/consumer audit; retain generic auth-change security paths. |
+
 ### Final residual audit (2026-10-09)
 
 The earlier completion note claimed that every local startup path validated the provider marker before

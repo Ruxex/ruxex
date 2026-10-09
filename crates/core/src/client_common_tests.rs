@@ -127,6 +127,7 @@ fn chat_request(
             extra_headers: std::collections::BTreeMap::new(),
             compression: genex_model_provider::ProviderRequestCompression::None,
             turn_state: None,
+            connection_key: None,
             credential_snapshot: None,
         },
     }

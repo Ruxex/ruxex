@@ -230,6 +230,7 @@ impl McpCli {
         match subcommand {
             McpSubcommand::List(args) => {
                 let config = cloud_config::load_config(&config_overrides, loader_overrides).await?;
+                cloud_config::mount_provider_home(&config)?;
                 run_list(&config, args).await?;
             }
             McpSubcommand::Get(args) => {
@@ -244,10 +245,12 @@ impl McpCli {
             }
             McpSubcommand::Login(args) => {
                 let config = cloud_config::load_config(&config_overrides, loader_overrides).await?;
+                cloud_config::mount_provider_home(&config)?;
                 run_login(&config, args).await?;
             }
             McpSubcommand::Logout(args) => {
                 let config = cloud_config::load_config(&config_overrides, loader_overrides).await?;
+                cloud_config::mount_provider_home(&config)?;
                 run_logout(&config, args).await?;
             }
         }

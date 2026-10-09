@@ -46,6 +46,7 @@ use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
 use genex_protocol::protocol::RateLimitSnapshot;
 use serde_json::Value;
+use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::Message;
 
 use crate::auth::cached_provider_auth;
@@ -61,7 +62,14 @@ use crate::contract::ProviderConnectionKey;
 use crate::contract::ProviderCredentialSnapshot;
 use crate::contract::ProviderDescriptor;
 use crate::contract::ProviderRequestAuth;
+use crate::contract::ProviderRequestFormat;
 use crate::contract::ProviderRequestSnapshot;
+use crate::contract::ProviderStreamConnectRequest;
+use crate::contract::ProviderStreamEvent;
+use crate::contract::ProviderStreamOutcome;
+use crate::contract::ProviderStreamRequest;
+use crate::contract::ProviderStreamSession;
+use crate::contract::ProviderStreamTelemetry;
 use crate::contract::ProviderUnauthorizedRecovery;
 use crate::contract::ProviderUsage;
 use crate::contract::ProviderUsageResult;
@@ -72,6 +80,7 @@ use crate::contract::ProviderWebsocketRequest;
 use crate::contract::ProviderWireApi;
 use crate::contract::RemoteCompactionSupport;
 use crate::contract::SharedProviderCredentialSnapshot;
+use crate::contract::SharedProviderStreamSession;
 use crate::contract::SharedProviderWebsocketConnection;
 use crate::contract::headers_to_http;
 use crate::models_endpoint::ModelsEndpoint;
@@ -331,6 +340,166 @@ impl WebsocketTelemetry for ProviderWebsocketTelemetryAdapter {
 #[derive(Debug)]
 struct RuntimeWebsocketConnection {
     connection: ResponsesWebsocketConnection,
+}
+
+struct StreamTelemetryAdapter {
+    telemetry: Arc<dyn ProviderStreamTelemetry>,
+}
+
+impl crate::contract::ProviderWebsocketTelemetry for StreamTelemetryAdapter {
+    fn on_request(
+        &self,
+        duration: Duration,
+        error: Option<&crate::contract::ProviderError>,
+        connection_reused: bool,
+    ) {
+        self.telemetry
+            .on_request(duration, error, connection_reused);
+    }
+
+    fn on_event(&self, event: ProviderWebsocketEvent, duration: Duration) {
+        let event = match event {
+            ProviderWebsocketEvent::Message(value) => ProviderStreamEvent::Message(value),
+            ProviderWebsocketEvent::Ignored => ProviderStreamEvent::Ignored,
+            ProviderWebsocketEvent::Closed => ProviderStreamEvent::Closed,
+            ProviderWebsocketEvent::Error(error) => ProviderStreamEvent::Error(error),
+        };
+        self.telemetry.on_event(event, duration);
+    }
+}
+
+#[derive(Debug, Default)]
+struct RuntimeStreamSessionState {
+    connection: Option<SharedProviderWebsocketConnection>,
+    connection_key: Option<ProviderConnectionKey>,
+    extra_headers: BTreeMap<String, String>,
+}
+
+/// Provider-owned persistent streaming state. Core only sees the neutral session interface.
+#[derive(Debug)]
+struct RuntimeStreamSession {
+    runtime: SharedProviderRuntime,
+    state: Mutex<RuntimeStreamSessionState>,
+}
+
+impl RuntimeStreamSession {
+    fn new(runtime: SharedProviderRuntime) -> Self {
+        Self {
+            runtime,
+            state: Mutex::new(RuntimeStreamSessionState::default()),
+        }
+    }
+
+    async fn ensure_connection(
+        &self,
+        request: &ProviderStreamConnectRequest,
+        telemetry: Option<Arc<dyn ProviderStreamTelemetry>>,
+    ) -> crate::contract::ProviderResult<(SharedProviderWebsocketConnection, bool)> {
+        let mut state = self.state.lock().await;
+        if let Some(connection) = state.connection.clone() {
+            let same_route = state.connection_key.as_ref() == Some(&request.connection_key)
+                && state.extra_headers == request.extra_headers;
+            let closed = connection.is_closed().await.unwrap_or(true);
+            if same_route && !closed {
+                return Ok((connection, true));
+            }
+        }
+
+        let telemetry = telemetry.map(|telemetry| {
+            Arc::new(StreamTelemetryAdapter { telemetry })
+                as Arc<dyn crate::contract::ProviderWebsocketTelemetry>
+        });
+        let connection = ProviderRuntime::connect_websocket(
+            self.runtime.as_ref(),
+            ProviderWebsocketConnectRequest {
+                session_id: request.session_id.clone(),
+                thread_id: request.thread_id.clone(),
+                extra_headers: request.extra_headers.clone(),
+                default_headers: request.default_headers.clone(),
+                credential_snapshot: Some(Arc::clone(&request.credential_snapshot)),
+                telemetry,
+            },
+        )
+        .await?;
+        state.connection = Some(Arc::clone(&connection));
+        state.connection_key = Some(request.connection_key.clone());
+        state.extra_headers = request.extra_headers.clone();
+        Ok((connection, false))
+    }
+}
+
+impl ProviderStreamSession for RuntimeStreamSession {
+    fn preconnect(
+        &self,
+        request: ProviderStreamConnectRequest,
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+        Box::pin(async move {
+            self.ensure_connection(&request, request.telemetry.clone())
+                .await
+                .map(|_| ())
+        })
+    }
+
+    fn stream_request(
+        &self,
+        request: ProviderStreamRequest,
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderStreamOutcome>>
+    {
+        Box::pin(async move {
+            if ProviderRuntime::wire_api(self.runtime.as_ref()) != ProviderWireApi::Responses {
+                return Ok(ProviderStreamOutcome::FallbackToHttp);
+            }
+
+            let transport = &request.request.transport;
+            let connection_key = transport.connection_key.clone().ok_or_else(|| {
+                crate::contract::ProviderError::InvalidRequest(
+                    "provider stream request is missing a connection key".to_string(),
+                )
+            })?;
+            let credential_snapshot = transport
+                .credential_snapshot
+                .clone()
+                .ok_or_else(|| crate::contract::ProviderError::Unauthenticated)?;
+            let connect_request = ProviderStreamConnectRequest {
+                session_id: transport.session_id.clone(),
+                thread_id: transport.thread_id.clone(),
+                extra_headers: transport.extra_headers.clone(),
+                default_headers: request.default_headers.clone(),
+                connection_key,
+                credential_snapshot,
+                telemetry: request.telemetry.clone(),
+            };
+            let (connection, connection_reused) = self
+                .ensure_connection(&connect_request, request.telemetry.clone())
+                .await?;
+            let continuation = request.continuation.unwrap_or_else(|| {
+                crate::contract::ProviderStreamContinuation {
+                    previous_response_id: None,
+                    input: request.request.input.clone(),
+                    generate: None,
+                    client_metadata: None,
+                }
+            });
+            let payload = ProviderRuntime::build_websocket_payload(
+                self.runtime.as_ref(),
+                ProviderWebsocketPayloadRequest {
+                    request: request.request.clone(),
+                    previous_response_id: continuation.previous_response_id,
+                    input: continuation.input,
+                    generate: continuation.generate,
+                    client_metadata: continuation.client_metadata,
+                },
+            )?;
+            let stream = connection
+                .stream_request(ProviderWebsocketRequest {
+                    payload,
+                    connection_reused,
+                    turn_state: request.request.transport.turn_state.clone(),
+                })
+                .await?;
+            Ok(ProviderStreamOutcome::Stream(stream))
+        })
+    }
 }
 
 #[derive(Clone)]
@@ -985,8 +1154,11 @@ where
         })
     }
 
-    fn wire_api(&self) -> ProviderWireApi {
-        ProviderRuntime::wire_api(self)
+    fn request_format(&self) -> ProviderRequestFormat {
+        match ProviderRuntime::wire_api(self) {
+            ProviderWireApi::Responses => ProviderRequestFormat::Responses,
+            ProviderWireApi::Chat => ProviderRequestFormat::Chat,
+        }
     }
 
     fn websocket_connect_timeout(&self) -> Duration {
@@ -995,23 +1167,6 @@ where
 
     fn stream_max_retries(&self) -> u64 {
         ProviderRuntime::stream_max_retries(self)
-    }
-
-    fn connect_websocket(
-        &self,
-        request: ProviderWebsocketConnectRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<SharedProviderWebsocketConnection>,
-    > {
-        ProviderRuntime::connect_websocket(self, request)
-    }
-
-    fn build_websocket_payload(
-        &self,
-        request: ProviderWebsocketPayloadRequest,
-    ) -> crate::contract::ProviderResult<Value> {
-        ProviderRuntime::build_websocket_payload(self, request)
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
@@ -1213,8 +1368,11 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
         self.runtime.descriptor()
     }
 
-    fn wire_api(&self) -> ProviderWireApi {
-        self.runtime.wire_api()
+    fn request_format(&self) -> ProviderRequestFormat {
+        match self.runtime.wire_api() {
+            ProviderWireApi::Responses => ProviderRequestFormat::Responses,
+            ProviderWireApi::Chat => ProviderRequestFormat::Chat,
+        }
     }
 
     fn websocket_connect_timeout(&self) -> Duration {
@@ -1223,23 +1381,6 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 
     fn stream_max_retries(&self) -> u64 {
         self.runtime.stream_max_retries()
-    }
-
-    fn connect_websocket(
-        &self,
-        request: ProviderWebsocketConnectRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<SharedProviderWebsocketConnection>,
-    > {
-        ProviderRuntime::connect_websocket(self.runtime.as_ref(), request)
-    }
-
-    fn build_websocket_payload(
-        &self,
-        request: ProviderWebsocketPayloadRequest,
-    ) -> crate::contract::ProviderResult<Value> {
-        ProviderRuntime::build_websocket_payload(self.runtime.as_ref(), request)
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
@@ -1278,6 +1419,23 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
     > {
         let runtime = self.runtime.clone();
         Box::pin(async move { ProviderRuntime::chat(runtime.as_ref(), request).await })
+    }
+
+    fn open_stream_session(
+        &self,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<SharedProviderStreamSession>,
+    > {
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            if ProviderRuntime::wire_api(runtime.as_ref()) != ProviderWireApi::Responses
+                || !ProviderRuntime::capabilities(runtime.as_ref()).websocket
+            {
+                return Err(crate::contract::ProviderError::Unsupported);
+            }
+            Ok(Arc::new(RuntimeStreamSession::new(runtime)) as SharedProviderStreamSession)
+        })
     }
 
     fn search(

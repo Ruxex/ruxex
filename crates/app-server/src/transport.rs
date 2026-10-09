@@ -39,14 +39,12 @@ pub(crate) struct ConnectionState {
 impl ConnectionState {
     pub(crate) fn new(
         origin: ConnectionOrigin,
-        auth: Option<genex_app_server_transport::ConnectionAuth>,
         outbound_initialized: Arc<AtomicBool>,
         outbound_experimental_api_enabled: Arc<AtomicBool>,
         outbound_opted_out_notification_methods: Arc<RwLock<HashSet<String>>>,
     ) -> Self {
         let mut session = ConnectionSessionState::new(origin);
-        let mut rpc_gate = crate::connection_rpc_gate::ConnectionRpcGate::new();
-        rpc_gate.auth = auth;
+        let rpc_gate = crate::connection_rpc_gate::ConnectionRpcGate::new();
         session.rpc_gate = Arc::new(rpc_gate);
         Self {
             origin,

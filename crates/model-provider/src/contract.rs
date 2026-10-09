@@ -75,9 +75,16 @@ impl Default for ProviderCapabilities {
     }
 }
 
-/// Provider wire protocol selected by the mounted provider.
+/// Provider request format selected by the mounted provider.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProviderWireApi {
+pub enum ProviderRequestFormat {
+    Responses,
+    Chat,
+}
+
+/// Internal adapter-only representation of the legacy runtime wire implementation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ProviderWireApi {
     Responses,
     Chat,
 }
@@ -180,9 +187,30 @@ pub(crate) fn headers_to_http(headers: BTreeMap<String, String>) -> ProviderResu
     Ok(result)
 }
 
+/// Provider-neutral telemetry event emitted by a provider-owned streaming transport.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ProviderStreamEvent {
+    Message(Value),
+    Ignored,
+    Closed,
+    Error(ProviderError),
+}
+
+/// Host telemetry sink for provider-owned streaming transport.
+pub trait ProviderStreamTelemetry: Send + Sync {
+    fn on_request(
+        &self,
+        duration: Duration,
+        error: Option<&ProviderError>,
+        connection_reused: bool,
+    );
+
+    fn on_event(&self, event: ProviderStreamEvent, duration: Duration);
+}
+
 /// Provider-neutral telemetry event emitted by a WebSocket transport.
 #[derive(Debug, Clone, PartialEq)]
-pub enum ProviderWebsocketEvent {
+pub(crate) enum ProviderWebsocketEvent {
     Message(Value),
     Ignored,
     Closed,
@@ -190,7 +218,7 @@ pub enum ProviderWebsocketEvent {
 }
 
 /// Host telemetry sink for provider-owned WebSocket transport.
-pub trait ProviderWebsocketTelemetry: Send + Sync {
+pub(crate) trait ProviderWebsocketTelemetry: Send + Sync {
     fn on_request(
         &self,
         duration: Duration,
@@ -202,7 +230,7 @@ pub trait ProviderWebsocketTelemetry: Send + Sync {
 }
 
 /// Input to a provider-owned WebSocket connection.
-pub struct ProviderWebsocketConnectRequest {
+pub(crate) struct ProviderWebsocketConnectRequest {
     pub session_id: Option<String>,
     pub thread_id: Option<String>,
     pub extra_headers: BTreeMap<String, String>,
@@ -214,14 +242,14 @@ pub struct ProviderWebsocketConnectRequest {
 
 /// A serialized provider wire request sent over a WebSocket connection.
 #[derive(Debug, Clone, PartialEq)]
-pub struct ProviderWebsocketRequest {
+pub(crate) struct ProviderWebsocketRequest {
     pub payload: Value,
     pub connection_reused: bool,
     pub turn_state: Option<Arc<OnceLock<String>>>,
 }
 
 /// Provider-neutral handle for a connected WebSocket.
-pub trait ProviderWebsocketConnection: fmt::Debug + Send + Sync {
+pub(crate) trait ProviderWebsocketConnection: fmt::Debug + Send + Sync {
     fn is_closed(&self) -> ProviderFuture<'_, ProviderResult<bool>>;
 
     fn stream_request(
@@ -230,7 +258,7 @@ pub trait ProviderWebsocketConnection: fmt::Debug + Send + Sync {
     ) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;
 }
 
-pub type SharedProviderWebsocketConnection = Arc<dyn ProviderWebsocketConnection>;
+pub(crate) type SharedProviderWebsocketConnection = Arc<dyn ProviderWebsocketConnection>;
 
 /// Current provider authentication state. Credential values are deliberately absent.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -293,6 +321,7 @@ pub struct ChatTransportOptions {
     pub extra_headers: BTreeMap<String, String>,
     pub compression: ProviderRequestCompression,
     pub turn_state: Option<Arc<OnceLock<String>>>,
+    pub connection_key: Option<ProviderConnectionKey>,
     /// Opaque credentials captured when the owning turn was admitted.
     pub credential_snapshot: Option<SharedProviderCredentialSnapshot>,
 }
@@ -303,6 +332,7 @@ impl PartialEq for ChatTransportOptions {
             && self.thread_id == other.thread_id
             && self.extra_headers == other.extra_headers
             && self.compression == other.compression
+            && self.connection_key == other.connection_key
             && self.turn_state == other.turn_state
     }
 }
@@ -501,7 +531,7 @@ pub struct ProviderStreamOptions {
 
 /// Input used by the provider adapter to construct a WebSocket wire request.
 #[derive(Debug, Clone, PartialEq)]
-pub struct ProviderWebsocketPayloadRequest {
+pub(crate) struct ProviderWebsocketPayloadRequest {
     pub request: ChatRequest,
     pub previous_response_id: Option<String>,
     pub input: Vec<ResponseItem>,
@@ -604,6 +634,57 @@ pub enum ProviderChatEvent {
     ModelsEtag(String),
 }
 
+/// Neutral connection setup for a provider-owned streaming session.
+#[derive(Clone)]
+pub struct ProviderStreamConnectRequest {
+    pub session_id: Option<String>,
+    pub thread_id: Option<String>,
+    pub extra_headers: BTreeMap<String, String>,
+    pub default_headers: BTreeMap<String, String>,
+    pub connection_key: ProviderConnectionKey,
+    pub credential_snapshot: SharedProviderCredentialSnapshot,
+    pub telemetry: Option<Arc<dyn ProviderStreamTelemetry>>,
+}
+
+/// Neutral continuation state passed to a provider-owned streaming session.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProviderStreamContinuation {
+    pub previous_response_id: Option<String>,
+    pub input: Vec<ResponseItem>,
+    pub generate: Option<bool>,
+    pub client_metadata: Option<BTreeMap<String, String>>,
+}
+
+/// Neutral model-stream request. Wire payload construction remains inside the provider adapter.
+#[derive(Clone)]
+pub struct ProviderStreamRequest {
+    pub request: ChatRequest,
+    pub continuation: Option<ProviderStreamContinuation>,
+    pub default_headers: BTreeMap<String, String>,
+    pub telemetry: Option<Arc<dyn ProviderStreamTelemetry>>,
+}
+
+/// Result of a provider-owned persistent stream attempt.
+pub enum ProviderStreamOutcome {
+    Stream(ProviderChatStream),
+    FallbackToHttp,
+}
+
+/// Provider-owned streaming session. Implementations own connection reuse and wire payloads.
+pub trait ProviderStreamSession: fmt::Debug + Send + Sync {
+    fn preconnect(
+        &self,
+        request: ProviderStreamConnectRequest,
+    ) -> ProviderFuture<'_, ProviderResult<()>>;
+
+    fn stream_request(
+        &self,
+        request: ProviderStreamRequest,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderStreamOutcome>>;
+}
+
+pub type SharedProviderStreamSession = Arc<dyn ProviderStreamSession>;
+
 impl From<genex_api::ResponseEvent> for ProviderChatEvent {
     fn from(event: genex_api::ResponseEvent) -> Self {
         match event {
@@ -682,8 +763,8 @@ impl From<genex_api::ResponseEvent> for ProviderChatEvent {
 pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     fn descriptor(&self) -> ProviderDescriptor;
 
-    fn wire_api(&self) -> ProviderWireApi {
-        ProviderWireApi::Responses
+    fn request_format(&self) -> ProviderRequestFormat {
+        ProviderRequestFormat::Responses
     }
 
     fn websocket_connect_timeout(&self) -> Duration {
@@ -693,23 +774,6 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     /// Maximum number of provider stream reconnection attempts for a turn.
     fn stream_max_retries(&self) -> u64 {
         5
-    }
-
-    fn connect_websocket(
-        &self,
-        request: ProviderWebsocketConnectRequest,
-    ) -> ProviderFuture<'_, ProviderResult<SharedProviderWebsocketConnection>> {
-        let _ = request;
-        Box::pin(async { Err(ProviderError::Unsupported) })
-    }
-
-    /// Builds a provider-owned WebSocket payload from normalized continuation state.
-    fn build_websocket_payload(
-        &self,
-        request: ProviderWebsocketPayloadRequest,
-    ) -> ProviderResult<Value> {
-        let _ = request;
-        Err(ProviderError::Unsupported)
     }
 
     /// Stable cache identity for provider-owned model catalog data.
@@ -725,6 +789,13 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     }
 
     fn chat(&self, request: ChatRequest) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;
+
+    /// Opens a provider-owned persistent streaming session when supported.
+    fn open_stream_session(
+        &self,
+    ) -> ProviderFuture<'_, ProviderResult<SharedProviderStreamSession>> {
+        Box::pin(async { Err(ProviderError::Unsupported) })
+    }
 
     fn search(
         &self,
@@ -939,6 +1010,15 @@ mod tests {
         ));
     }
 
+    #[tokio::test]
+    async fn unsupported_stream_session_is_explicit() {
+        let error = FakeProvider
+            .open_stream_session()
+            .await
+            .expect_err("fake provider should not silently provide streaming transport");
+        assert!(matches!(error, ProviderError::Unsupported));
+    }
+
     #[test]
     fn provider_stream_events_are_owned_by_the_provider_contract() {
         let event = ProviderChatEvent::OutputTextDelta("delta".to_string());
@@ -956,6 +1036,7 @@ mod tests {
             extra_headers: headers.clone(),
             compression: ProviderRequestCompression::None,
             turn_state: None,
+            connection_key: None,
             credential_snapshot: None,
         };
         let _search = ProviderSearchRequest {

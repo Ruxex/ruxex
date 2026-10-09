@@ -1,9 +1,7 @@
 //! Controls RPC admission and draining for each connection.
-//! Auth ownership changes reject queued work while started handlers finish cleanup.
+//! Closing the gate rejects queued work while started handlers finish cleanup.
 
 use std::future::Future;
-
-use genex_app_server_transport::ConnectionAuth;
 
 use tokio::sync::Mutex;
 use tokio_util::task::TaskTracker;
@@ -14,7 +12,6 @@ use tokio_util::task::TaskTracker;
 /// handlers that already acquired a token to finish.
 #[derive(Debug)]
 pub(crate) struct ConnectionRpcGate {
-    pub(crate) auth: Option<ConnectionAuth>,
     accepting: Mutex<bool>,
     tasks: TaskTracker,
 }
@@ -23,7 +20,6 @@ impl ConnectionRpcGate {
     pub(crate) fn new() -> Self {
         let accepting = true;
         Self {
-            auth: None,
             accepting: Mutex::new(accepting),
             tasks: TaskTracker::new(),
         }
@@ -46,7 +42,7 @@ impl ConnectionRpcGate {
     }
 
     pub(crate) fn is_closed(&self) -> bool {
-        self.tasks.is_closed() || self.auth.as_ref().is_some_and(|auth| !auth.is_current())
+        self.tasks.is_closed()
     }
 
     pub(crate) async fn close(&self) {

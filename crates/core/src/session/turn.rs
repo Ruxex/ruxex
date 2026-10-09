@@ -67,8 +67,8 @@ use genex_extension_api::TurnInputEnvironment;
 use genex_features::Feature;
 use genex_file_system::FindUpErrorPolicy;
 use genex_file_system::find_nearest_ancestor_with_markers;
+use genex_model_provider::ProviderRequestFormat;
 use genex_model_provider::ProviderRequestSnapshot;
-use genex_model_provider::ProviderWireApi;
 use genex_model_provider::RemoteCompactionSupport;
 use genex_protocol::ResponseItemId;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
@@ -988,7 +988,10 @@ async fn capture_current_model_fallback_step_context(
         .as_ref()
         .is_some_and(provider_request_uses_managed_auth);
     if !uses_managed_auth
-        || !matches!(turn_context.provider.wire_api(), ProviderWireApi::Responses)
+        || !matches!(
+            turn_context.provider.request_format(),
+            ProviderRequestFormat::Responses
+        )
         || previous_model == turn_context.model_info().slug
     {
         return Ok(None);
@@ -1856,7 +1859,10 @@ async fn try_run_sampling_request(
         .config
         .features
         .enabled(Feature::ConcurrentReasoningSummaries)
-        && matches!(turn_context.provider.wire_api(), ProviderWireApi::Responses);
+        && matches!(
+            turn_context.provider.request_format(),
+            ProviderRequestFormat::Responses
+        );
     let mut stream = client_session
         .stream(
             prompt,

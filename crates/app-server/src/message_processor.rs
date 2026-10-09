@@ -413,9 +413,7 @@ impl MessageProcessor {
             config_manager.clone(),
         );
         let plugin_processor = PluginRequestProcessor::new(
-            credential_manager.clone(),
             Arc::clone(&thread_manager),
-            outgoing.clone(),
             config_manager.clone(),
             on_effective_plugins_changed,
         );
@@ -459,7 +457,6 @@ impl MessageProcessor {
             config_warnings,
         );
         let turn_processor = TurnRequestProcessor::new(
-            credential_manager,
             Arc::clone(&thread_manager),
             outgoing.clone(),
             Arc::clone(&config),
