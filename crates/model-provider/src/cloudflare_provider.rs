@@ -49,6 +49,7 @@ pub(crate) struct CloudflareModelProvider {
     provider_id: Option<String>,
     info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
+    http_client_factory: HttpClientFactory,
 }
 
 impl CloudflareModelProvider {
@@ -56,11 +57,13 @@ impl CloudflareModelProvider {
         provider_id: Option<String>,
         info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
+        http_client_factory: HttpClientFactory,
     ) -> Self {
         Self {
             provider_id,
             info,
             credential_manager,
+            http_client_factory,
         }
     }
 
@@ -146,6 +149,10 @@ impl CloudflareModelProvider {
 }
 
 impl ProviderRuntime for CloudflareModelProvider {
+    fn http_client_factory(&self) -> HttpClientFactory {
+        self.http_client_factory.clone()
+    }
+
     fn info(&self) -> &ModelProviderInfo {
         &self.info
     }

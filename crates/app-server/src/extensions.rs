@@ -18,7 +18,6 @@ use genex_extension_api::ExtensionWarning;
 use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalExtensionConfig;
 use genex_goal_extension::GoalService;
-use genex_http_client::HttpClientFactory;
 use genex_login::CredentialManager;
 use genex_model_provider::SharedModelProvider;
 use genex_protocol::ThreadId;
@@ -36,7 +35,6 @@ pub(crate) struct ThreadExtensionDependencies {
     pub(crate) event_sink: Arc<dyn ExtensionEventSink>,
     pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) provider: SharedModelProvider,
-    pub(crate) http_client_factory: HttpClientFactory,
     pub(crate) state_db: Option<StateDbHandle>,
     pub(crate) thread_manager: Weak<ThreadManager>,
     pub(crate) goal_service: Arc<GoalService>,
@@ -54,7 +52,6 @@ pub(crate) fn thread_extensions(
         event_sink,
         credential_manager,
         provider,
-        http_client_factory,
         state_db,
         thread_manager,
         goal_service,
@@ -70,12 +67,7 @@ pub(crate) fn thread_extensions(
     if let Some(queue_service) = queue_service {
         genex_queue_extension::install(&mut builder, queue_service);
     }
-    genex_history_notes_extension::install(
-        &mut builder,
-        credential_manager,
-        provider.clone(),
-        http_client_factory.clone(),
-    );
+    genex_history_notes_extension::install(&mut builder, credential_manager, provider.clone());
     if let Some(state_db) = state_db {
         genex_goal_extension::install_with_backend(
             &mut builder,
@@ -91,7 +83,7 @@ pub(crate) fn thread_extensions(
     }
     genex_mcp_extension::install(&mut builder);
     genex_mcp_extension::install_executor_plugins(&mut builder, environment_manager);
-    genex_web_search_extension::install(&mut builder, provider, http_client_factory);
+    genex_web_search_extension::install(&mut builder, provider);
     let skill_providers = genex_skills_extension::SkillProviders::new()
         .with_executor_provider(executor_skill_provider)
         .with_host_provider(Arc::new(genex_skills_extension::HostSkillProvider::new()));

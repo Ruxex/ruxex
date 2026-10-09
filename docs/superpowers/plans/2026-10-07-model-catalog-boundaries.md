@@ -75,7 +75,7 @@
 - Test: `crates/model-provider/src/provider.rs`, `my_provider.rs`, and `cloudflare_provider.rs`
 
 **Interfaces:**
-- `ModelProvider::list_models(&self, client_version: &str, http_client_factory: HttpClientFactory) -> ModelProviderFuture<'_, CoreResult<ModelCatalogSnapshot>>`.
+- `ModelProvider::list_models(&self, request: ListModelsRequest) -> ModelProviderFuture<'_, ProviderResult<ProviderModelCatalog>>`; the injected provider owns its HTTP factory.
 - `ModelProvider` no longer declares `models_manager`, `models_manager_without_cache`, or `models_manager_with_cache`.
 - `ProviderModelCatalogSource` implements `ModelCatalogSource` by delegating to `SharedModelProvider`.
 

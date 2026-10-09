@@ -1940,19 +1940,14 @@ async fn try_run_sampling_request(
             }
         };
 
+        let telemetry_event = crate::client::provider_event_to_telemetry_event(&event);
         sess.services
             .session_telemetry
-            .record_responses(&handle_responses, &event);
+            .record_responses(&handle_responses, &telemetry_event);
         record_turn_ttft_metric(&turn_context, &event).await;
 
         match event {
-            ResponseEvent::Created { response_id } => {
-                if let Some(response_id) = response_id {
-                    turn_context
-                        .extension_data
-                        .insert(genex_api::ResponseId(response_id));
-                }
-            }
+            ResponseEvent::Created { response_id: _ } => {}
             ResponseEvent::OutputItemDone(mut item) => {
                 assign_missing_streamed_response_item_id(&mut item, active_item.as_ref());
                 if let Some((_, mut consumer)) = active_tool_argument_diff_consumer.take()

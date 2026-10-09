@@ -479,6 +479,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
         configured_app_server_runtime(
             args.config.model_provider.clone(),
             Arc::clone(&configured_credential_manager),
+            args.config.http_client_factory(),
         )
     });
     let credential_manager = runtime

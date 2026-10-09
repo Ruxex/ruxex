@@ -17,7 +17,6 @@ use genex_extension_api::ThreadLifecycleContributor;
 use genex_extension_api::ThreadOriginator;
 use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
-use genex_http_client::HttpClientFactory;
 #[cfg(test)]
 use genex_login::CredentialManager;
 use genex_model_provider::SharedModelProvider;
@@ -29,7 +28,6 @@ use crate::tool::WebSearchTool;
 #[derive(Clone)]
 struct WebSearchExtension {
     provider: SharedModelProvider,
-    http_client_factory: HttpClientFactory,
 }
 
 #[derive(Clone)]
@@ -147,7 +145,6 @@ impl ToolContributor for WebSearchExtension {
         vec![Arc::new(WebSearchTool {
             session_id: session_store.level_id().to_string(),
             provider: self.provider.clone(),
-            http_client_factory: self.http_client_factory.clone(),
             settings: config.settings.clone(),
             originator: thread_store
                 .get::<ThreadOriginator>()
@@ -156,15 +153,8 @@ impl ToolContributor for WebSearchExtension {
     }
 }
 
-pub fn install(
-    registry: &mut ExtensionRegistryBuilder<Config>,
-    provider: SharedModelProvider,
-    http_client_factory: HttpClientFactory,
-) {
-    let extension = Arc::new(WebSearchExtension {
-        provider,
-        http_client_factory,
-    });
+pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: SharedModelProvider) {
+    let extension = Arc::new(WebSearchExtension { provider });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());
     registry.tool_contributor(extension);
@@ -175,8 +165,6 @@ mod tests {
     use genex_extension_api::ExtensionData;
     use genex_extension_api::ExtensionRegistryBuilder;
     use genex_extension_api::ToolName;
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
     use genex_login::GenexAuth;
     use genex_model_provider::create_model_provider;
     use genex_model_provider::provider_contract;
@@ -227,11 +215,7 @@ mod tests {
             },
             Some(Arc::clone(&credential_manager)),
         );
-        install(
-            &mut builder,
-            provider_contract(provider),
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        );
+        install(&mut builder, provider_contract(provider));
         let registry = builder.build();
         let session_store = ExtensionData::new("session");
         let thread_store = ExtensionData::new("11111111-1111-4111-8111-111111111111");

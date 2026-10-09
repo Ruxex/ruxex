@@ -1,21 +1,12 @@
-use genex_api::ProviderVerbosity;
-use genex_api::ResponsesApiRequest;
-use genex_api::TextControls;
-use genex_api::create_text_param_for_request;
+use super::*;
+use genex_model_provider::ProviderResponsesRequest;
+use genex_model_provider::build_provider_text_controls;
 use genex_models_manager::model_info::model_info_from_slug;
 use genex_protocol::config_types::ServiceTier;
 use genex_protocol::models::FunctionCallOutputPayload;
 use genex_protocol::models::ImageDetail;
 use genex_protocol::models::ImageReference;
 use pretty_assertions::assert_eq;
-use serde_json::value::RawValue;
-use std::sync::Arc;
-
-use super::*;
-
-fn empty_tools() -> Arc<RawValue> {
-    Arc::from(RawValue::from_string("[]".to_string()).expect("valid tool JSON"))
-}
 
 fn prompt_with_image_outputs(detail: Option<ImageDetail>) -> Prompt {
     Prompt {
@@ -110,11 +101,11 @@ fn request_copies_project_image_details_for_receiving_model(
 #[test]
 fn serializes_text_verbosity_when_set() {
     let input: Vec<ResponseItem> = vec![];
-    let req = ResponsesApiRequest {
+    let req = ProviderResponsesRequest {
         model: "legacy-model".to_string(),
         instructions: "i".to_string(),
         input,
-        tools: Some(empty_tools().into()),
+        tools: Some(serde_json::json!([])),
         tool_choice: "auto".to_string(),
         parallel_tool_calls: true,
         reasoning: None,
@@ -124,10 +115,11 @@ fn serializes_text_verbosity_when_set() {
         include: vec![],
         prompt_cache_key: None,
         service_tier: None,
-        text: Some(TextControls {
-            verbosity: Some(ProviderVerbosity::Low),
-            format: None,
-        }),
+        text: build_provider_text_controls(
+            Some(genex_protocol::config_types::Verbosity::Low),
+            &None,
+            false,
+        ),
         client_metadata: None,
         access_programs: None,
     };
@@ -151,18 +143,11 @@ fn serializes_text_schema_with_strict_format() {
         },
         "required": ["answer"],
     });
-    let text_controls = create_text_param_for_request(
-        /*verbosity*/ None,
-        &Some(schema.clone()),
-        /*output_schema_strict*/ true,
-    )
-    .expect("text controls");
-
-    let req = ResponsesApiRequest {
+    let req = ProviderResponsesRequest {
         model: "legacy-model".to_string(),
         instructions: "i".to_string(),
         input,
-        tools: Some(empty_tools().into()),
+        tools: Some(serde_json::json!([])),
         tool_choice: "auto".to_string(),
         parallel_tool_calls: true,
         reasoning: None,
@@ -172,7 +157,7 @@ fn serializes_text_schema_with_strict_format() {
         include: vec![],
         prompt_cache_key: None,
         service_tier: None,
-        text: Some(text_controls),
+        text: build_provider_text_controls(None, &Some(schema.clone()), true),
         client_metadata: None,
         access_programs: None,
     };
@@ -205,26 +190,42 @@ fn serializes_text_schema_with_non_strict_format() {
         "required": ["answer"],
         "additionalProperties": false
     });
-    let text_controls = create_text_param_for_request(
-        /*verbosity*/ None,
-        &Some(schema.clone()),
-        /*output_schema_strict*/ false,
-    )
-    .expect("text controls");
-
-    let format = text_controls.format.expect("format field");
-    assert!(!format.strict);
-    assert_eq!(format.schema, schema);
+    let req = ProviderResponsesRequest {
+        model: "legacy-model".to_string(),
+        instructions: "i".to_string(),
+        input: vec![],
+        tools: Some(serde_json::json!([])),
+        tool_choice: "auto".to_string(),
+        parallel_tool_calls: true,
+        reasoning: None,
+        store: false,
+        stream: true,
+        stream_options: None,
+        include: vec![],
+        prompt_cache_key: None,
+        service_tier: None,
+        text: build_provider_text_controls(None, &Some(schema.clone()), false),
+        client_metadata: None,
+        access_programs: None,
+    };
+    let format = serde_json::to_value(req)
+        .expect("json")
+        .get("text")
+        .and_then(|text| text.get("format"))
+        .cloned()
+        .expect("format field");
+    assert_eq!(format.get("strict"), Some(&serde_json::Value::Bool(false)));
+    assert_eq!(format.get("schema"), Some(&schema));
 }
 
 #[test]
 fn omits_text_when_not_set() {
     let input: Vec<ResponseItem> = vec![];
-    let req = ResponsesApiRequest {
+    let req = ProviderResponsesRequest {
         model: "legacy-model".to_string(),
         instructions: "i".to_string(),
         input,
-        tools: Some(empty_tools().into()),
+        tools: Some(serde_json::json!([])),
         tool_choice: "auto".to_string(),
         parallel_tool_calls: true,
         reasoning: None,
@@ -245,11 +246,11 @@ fn omits_text_when_not_set() {
 
 #[test]
 fn serializes_flex_service_tier_when_set() {
-    let req = ResponsesApiRequest {
+    let req = ProviderResponsesRequest {
         model: "legacy-model".to_string(),
         instructions: "i".to_string(),
         input: vec![],
-        tools: Some(empty_tools().into()),
+        tools: Some(serde_json::json!([])),
         tool_choice: "auto".to_string(),
         parallel_tool_calls: true,
         reasoning: None,

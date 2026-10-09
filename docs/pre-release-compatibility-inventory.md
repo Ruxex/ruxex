@@ -11,6 +11,18 @@ Related references: [design spec](superpowers/specs/2026-09-19-remove-pre-releas
 [provider-specific crate/capability audit](provider-specific-crates.md), and
 [Hawk result analysis](hawk-codex-cli-result-analysis.md).
 
+## Single-provider boundary follow-up (2026-10-09)
+
+| Surface | Producer / consumer audit | Decision |
+|---|---|---|
+| `ProviderTransportContext` and public request transport fields | `model-provider` contract producers in Core, model catalog, Web Search, History/Notes, and CLI doctor; runtime provider adapter consumed the concrete `HttpClientFactory` | `migrate-in-place`: remove the HTTP implementation type from the public contract and inject the factory into the mounted provider runtime; preserve outbound routing behavior |
+| Core Responses request and WebSocket wire construction | `core::client` produced `ResponsesApiRequest`, `ResponseCreateWsRequest`, and `ResponsesWsRequest`; `model-provider`/`genex-api` consumed the serialized payload and external OpenAI wire fields | `migrate-in-place`: keep Core continuation/telemetry policy, move provider wire payload construction into the adapter; retain external URLs, fields, headers, and model identifiers |
+| Provider authentication versus generic credentials | provider auth snapshot/lifecycle is consumed by Core/AppServer; `CredentialManager` is also consumed by MCP OAuth, plugin credentials, verification, and generic external-auth paths | `migrate-in-place` provider auth to `SharedModelProvider`; `retain` `CredentialManager` for host-owned generic security/auth consumers; never persist provider credentials in threads/rollouts |
+| Daemon startup ordering | `app-server/lib.rs` independently mounted the home, loaded credentials, and built the runtime; `runtime.rs` already provided the common ordered helper | `migrate-in-place`: use the common helper so marker validation precedes credentials and state initialization |
+| `crates/core/src/cyber_access_program.rs` no-op adapter helper | The only callers were Core Responses request builders, but the helper filtered every program out and never produced the external field. The provider-neutral request retains the field for the adapter contract; the unreachable helper has no active consumer or behavior. | `remove` the dead Core helper; retain the request field for externally audited wire compatibility |
+| `genex_api::ResponseId` extension-data insert | `core::session::turn` was the only producer and no workspace consumer read the value; it was not persisted or sent over an external protocol. | `remove` the dead provider-adapter-specific insert |
+| Core-to-OTel `genex_api::ResponseEvent` conversion | Core model execution consumes `ProviderChatEvent`; `genex-otel::SessionTelemetry::record_responses` is the existing consumer of the telemetry event shape. No request or wire routing depends on this conversion. | `retain` only this internal telemetry adapter; keep provider request/stream contracts provider-neutral |
+
 ## Decision categories
 
 - `remove`: exists only to read, write, migrate, replay, or describe an

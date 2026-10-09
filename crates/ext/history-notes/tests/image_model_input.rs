@@ -8,8 +8,6 @@ use genex_core::config::Config;
 use genex_core::config::TokenBudgetConfig;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_history_notes_extension::install;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
@@ -72,7 +70,6 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
         &mut extensions,
         credential_manager,
         provider_contract(provider),
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
     );
     let test = test_genex()
         .with_auth(auth)

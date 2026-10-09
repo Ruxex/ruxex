@@ -13,11 +13,12 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use futures::Stream;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
 use genex_protocol::ResponseUsageMetadata;
 use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::Verbosity;
 use genex_protocol::model_types::ModelCatalog;
+use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::ModelVerification;
 use genex_protocol::protocol::RateLimitSnapshot;
@@ -201,37 +202,11 @@ pub trait ProviderWebsocketTelemetry: Send + Sync {
 
 /// Input to a provider-owned WebSocket connection.
 pub struct ProviderWebsocketConnectRequest {
-    pub transport: ProviderTransportContext,
+    pub session_id: Option<String>,
+    pub thread_id: Option<String>,
     pub extra_headers: BTreeMap<String, String>,
     pub default_headers: BTreeMap<String, String>,
     pub telemetry: Option<Arc<dyn ProviderWebsocketTelemetry>>,
-}
-
-/// Opaque outbound transport owned by the mounted provider adapter.
-///
-/// The concrete HTTP client factory is intentionally private so request contracts cannot couple
-/// Core or extensions to the provider's HTTP implementation.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ProviderTransportContext {
-    http_client_factory: HttpClientFactory,
-}
-
-impl ProviderTransportContext {
-    pub fn from_http_client_factory(http_client_factory: HttpClientFactory) -> Self {
-        Self {
-            http_client_factory,
-        }
-    }
-
-    pub(crate) fn http_client_factory(&self) -> &HttpClientFactory {
-        &self.http_client_factory
-    }
-}
-
-impl Default for ProviderTransportContext {
-    fn default() -> Self {
-        Self::from_http_client_factory(HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault))
-    }
 }
 
 /// A serialized provider wire request sent over a WebSocket connection.
@@ -350,14 +325,12 @@ pub struct ProviderAccountState {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ListModelsRequest {
     pub client_version: String,
-    pub transport: ProviderTransportContext,
 }
 
 impl ListModelsRequest {
-    pub fn new(client_version: impl Into<String>, transport: ProviderTransportContext) -> Self {
+    pub fn new(client_version: impl Into<String>) -> Self {
         Self {
             client_version: client_version.into(),
-            transport,
         }
     }
 }
@@ -378,8 +351,136 @@ pub struct ChatRequest {
     pub metadata: BTreeMap<String, Value>,
     pub conversation_id: Option<String>,
     pub session_source: Option<SessionSource>,
-    pub payload: Option<Value>,
+    pub payload: Option<ProviderResponsesRequest>,
     pub transport: ChatTransportOptions,
+}
+
+/// Provider-neutral representation of the normalized Responses request.
+///
+/// The adapter owns serialization and endpoint selection. Core uses this value only for
+/// continuation comparison and turn telemetry; it never constructs a provider wire struct.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct ProviderResponsesRequest {
+    pub model: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub instructions: String,
+    pub input: Vec<ResponseItem>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tools: Option<Value>,
+    pub tool_choice: String,
+    pub parallel_tool_calls: bool,
+    pub reasoning: Option<ProviderReasoning>,
+    pub store: bool,
+    pub stream: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream_options: Option<ProviderStreamOptions>,
+    pub include: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service_tier: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_cache_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text: Option<ProviderTextControls>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_metadata: Option<BTreeMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub access_programs: Option<Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct ProviderTextControls {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verbosity: Option<Verbosity>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<ProviderTextFormat>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct ProviderTextFormat {
+    pub r#type: ProviderTextFormatType,
+    pub strict: bool,
+    pub schema: Value,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProviderTextFormatType {
+    JsonSchema,
+}
+
+pub fn build_provider_text_controls(
+    verbosity: Option<Verbosity>,
+    output_schema: &Option<Value>,
+    output_schema_strict: bool,
+) -> Option<ProviderTextControls> {
+    if verbosity.is_none() && output_schema.is_none() {
+        return None;
+    }
+
+    Some(ProviderTextControls {
+        verbosity,
+        format: output_schema.as_ref().map(|schema| ProviderTextFormat {
+            r#type: ProviderTextFormatType::JsonSchema,
+            strict: output_schema_strict,
+            schema: schema.clone(),
+            name: "genex_output_schema".to_string(),
+        }),
+    })
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProviderReasoning {
+    pub effort: Option<ReasoningEffort>,
+    pub summary: Option<ReasoningSummary>,
+    pub context: Option<ProviderReasoningContext>,
+}
+
+impl serde::Serialize for ProviderReasoning {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeMap;
+        let mut map = serializer.serialize_map(None)?;
+        if let Some(effort) = &self.effort {
+            map.serialize_entry("effort", effort.as_str())?;
+        }
+        if let Some(summary) = &self.summary {
+            map.serialize_entry("summary", summary)?;
+        }
+        if let Some(context) = &self.context {
+            map.serialize_entry("context", context)?;
+        }
+        map.end()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProviderReasoningContext {
+    AllTurns,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProviderReasoningSummaryDelivery {
+    SequentialCutoff,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub struct ProviderStreamOptions {
+    pub reasoning_summary_delivery: ProviderReasoningSummaryDelivery,
+}
+
+/// Input used by the provider adapter to construct a WebSocket wire request.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProviderWebsocketPayloadRequest {
+    pub request: ProviderResponsesRequest,
+    pub previous_response_id: Option<String>,
+    pub input: Vec<ResponseItem>,
+    pub generate: Option<bool>,
+    pub client_metadata: Option<BTreeMap<String, String>>,
 }
 
 /// Host-owned transport context passed to a provider operation.
@@ -388,7 +489,6 @@ pub struct ChatRequest {
 /// policy and request-scoped routing state without exposing its client implementation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChatTransportOptions {
-    pub transport: ProviderTransportContext,
     pub session_id: Option<String>,
     pub thread_id: Option<String>,
     pub extra_headers: BTreeMap<String, String>,
@@ -411,7 +511,6 @@ pub struct ProviderSearchRequest {
     pub commands: Value,
     pub settings: Value,
     pub max_output_tokens: Option<u64>,
-    pub transport: ProviderTransportContext,
     pub extra_headers: BTreeMap<String, String>,
 }
 
@@ -432,7 +531,6 @@ pub struct ProviderBackendRequest {
     pub body: Value,
     pub headers: BTreeMap<String, String>,
     pub timeout: Duration,
-    pub transport: ProviderTransportContext,
 }
 
 /// JSON response returned by a provider-owned backend operation.
@@ -592,6 +690,15 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
         Box::pin(async { Err(ProviderError::Unsupported) })
     }
 
+    /// Builds a provider-owned WebSocket payload from normalized continuation state.
+    fn build_websocket_payload(
+        &self,
+        request: ProviderWebsocketPayloadRequest,
+    ) -> ProviderResult<Value> {
+        let _ = request;
+        Err(ProviderError::Unsupported)
+    }
+
     /// Stable cache identity for provider-owned model catalog data.
     fn model_catalog_identity(&self) -> ProviderResult<String> {
         Ok(self.descriptor().provider_kind)
@@ -639,9 +746,9 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
 
     fn auth_state(&self) -> ProviderAuthState;
 
-    fn auth_environment(&self, host_api_key_env_enabled: bool) -> ProviderAuthEnvironment {
+    fn auth_environment(&self) -> ProviderAuthEnvironment {
         ProviderAuthEnvironment {
-            host_api_key_env_enabled,
+            host_api_key_env_enabled: false,
             ..ProviderAuthEnvironment::default()
         }
     }
@@ -785,9 +892,9 @@ mod tests {
 
     #[test]
     fn fake_provider_exposes_neutral_auth_environment_metadata() {
-        let environment = FakeProvider.auth_environment(true);
+        let environment = FakeProvider.auth_environment();
 
-        assert!(environment.host_api_key_env_enabled);
+        assert!(!environment.host_api_key_env_enabled);
         assert!(!environment.host_api_key_env_present);
         assert!(!environment.provider_env_key_configured);
         assert_eq!(environment.provider_env_key_present, None);
@@ -821,7 +928,6 @@ mod tests {
         headers.insert("x-test-header".to_string(), "value".to_string());
 
         let _chat = ChatTransportOptions {
-            transport: ProviderTransportContext::default(),
             session_id: Some("session".to_string()),
             thread_id: Some("thread".to_string()),
             extra_headers: headers.clone(),
@@ -835,7 +941,6 @@ mod tests {
             commands: serde_json::json!({}),
             settings: serde_json::json!({}),
             max_output_tokens: None,
-            transport: ProviderTransportContext::default(),
             extra_headers: headers.clone(),
         };
         let _backend = ProviderBackendRequest {
@@ -843,11 +948,11 @@ mod tests {
             body: serde_json::json!({}),
             headers,
             timeout: Duration::from_secs(1),
-            transport: ProviderTransportContext::default(),
         };
-        let _models = ListModelsRequest::new("client", ProviderTransportContext::default());
+        let _models = ListModelsRequest::new("client");
         let _websocket = ProviderWebsocketConnectRequest {
-            transport: ProviderTransportContext::default(),
+            session_id: None,
+            thread_id: None,
             extra_headers: BTreeMap::new(),
             default_headers: BTreeMap::new(),
             telemetry: None,

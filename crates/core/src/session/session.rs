@@ -1156,9 +1156,7 @@ impl Session {
             let originator = session_configuration.originator.clone();
             let terminal_type = user_agent();
             let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();
-            let auth_environment = session_configuration
-                .provider
-                .auth_environment(credential_manager.api_key_env_enabled());
+            let auth_environment = session_configuration.provider.auth_environment();
             let auth_env_telemetry = AuthEnvTelemetryMetadata {
                 genex_api_key_env_present: auth_environment.host_api_key_env_present,
                 genex_api_key_env_enabled: auth_environment.host_api_key_env_enabled,
@@ -1584,7 +1582,6 @@ impl Session {
                         .features
                         .enabled(Feature::ConcurrentReasoningSummaries),
                     attestation_provider,
-                    config.http_client_factory(),
                 )
                 .with_restored_history(matches!(
                     &initial_history,

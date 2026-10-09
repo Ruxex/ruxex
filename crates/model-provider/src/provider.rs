@@ -28,6 +28,7 @@ use genex_api::is_azure_responses_provider;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::HttpTransport;
+use genex_http_client::OutboundProxyPolicy;
 use genex_http_client::RequestBody;
 use genex_login::CredentialManager;
 use genex_login::GENEX_API_KEY_ENV_VAR;
@@ -63,11 +64,13 @@ use crate::contract::ProviderConnectionKey;
 use crate::contract::ProviderDescriptor;
 use crate::contract::ProviderRequestAuth;
 use crate::contract::ProviderRequestSnapshot;
+use crate::contract::ProviderResponsesRequest;
 use crate::contract::ProviderUnauthorizedRecovery;
 use crate::contract::ProviderUsage;
 use crate::contract::ProviderUsageResult;
 use crate::contract::ProviderWebsocketConnectRequest;
 use crate::contract::ProviderWebsocketEvent;
+use crate::contract::ProviderWebsocketPayloadRequest;
 use crate::contract::ProviderWebsocketRequest;
 use crate::contract::ProviderWireApi;
 use crate::contract::RemoteCompactionSupport;
@@ -320,6 +323,11 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
 
+    /// Returns the host-selected outbound transport owned by this provider runtime.
+    fn http_client_factory(&self) -> HttpClientFactory {
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault)
+    }
+
     /// Returns the stable provider identity used to validate a data-root mount.
     fn descriptor(&self) -> ProviderDescriptor {
         ProviderDescriptor::new(
@@ -338,10 +346,12 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     }
 
     /// Returns non-secret environment metadata for host-owned telemetry.
-    fn auth_environment(&self, host_api_key_env_enabled: bool) -> ProviderAuthEnvironment {
+    fn auth_environment(&self) -> ProviderAuthEnvironment {
         ProviderAuthEnvironment {
             host_api_key_env_present: environment_variable_present(GENEX_API_KEY_ENV_VAR),
-            host_api_key_env_enabled,
+            host_api_key_env_enabled: self
+                .credential_manager()
+                .is_some_and(|manager| manager.api_key_env_enabled()),
             provider_env_key_configured: self.info().env_key.is_some(),
             provider_env_key_present: self
                 .info()
@@ -381,6 +391,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         '_,
         crate::contract::ProviderResult<SharedProviderWebsocketConnection>,
     > {
+        let http_client_factory = self.http_client_factory();
         Box::pin(async move {
             let api_provider = self
                 .api_provider()
@@ -394,10 +405,15 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 Arc::new(ProviderWebsocketTelemetryAdapter { telemetry })
                     as Arc<dyn WebsocketTelemetry>
             });
+            let mut extra_headers = headers_to_http(request.extra_headers)?;
+            extra_headers.extend(genex_api::build_session_headers(
+                request.session_id,
+                request.thread_id,
+            ));
             let connection = ResponsesWebsocketClient::new(api_provider, api_auth)
                 .connect(
-                    request.transport.http_client_factory(),
-                    headers_to_http(request.extra_headers)?,
+                    &http_client_factory,
+                    extra_headers,
                     headers_to_http(request.default_headers)?,
                     None,
                     telemetry,
@@ -407,6 +423,50 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             Ok(Arc::new(RuntimeWebsocketConnection { connection })
                 as SharedProviderWebsocketConnection)
         })
+    }
+
+    fn build_websocket_payload(
+        &self,
+        request: ProviderWebsocketPayloadRequest,
+    ) -> crate::contract::ProviderResult<Value> {
+        let mut payload = serde_json::to_value(&request.request).map_err(|error| {
+            crate::contract::ProviderError::InvalidRequest(format!(
+                "failed to encode provider websocket request: {error}"
+            ))
+        })?;
+        let object = payload.as_object_mut().ok_or_else(|| {
+            crate::contract::ProviderError::InvalidRequest(
+                "provider websocket request must be an object".to_string(),
+            )
+        })?;
+        object.insert(
+            "type".to_string(),
+            Value::String("response.create".to_string()),
+        );
+        object.insert(
+            "input".to_string(),
+            serde_json::to_value(request.input).map_err(|error| {
+                crate::contract::ProviderError::InvalidRequest(error.to_string())
+            })?,
+        );
+        if let Some(previous_response_id) = request.previous_response_id {
+            object.insert(
+                "previous_response_id".to_string(),
+                Value::String(previous_response_id),
+            );
+        }
+        if let Some(generate) = request.generate {
+            object.insert("generate".to_string(), Value::Bool(generate));
+        }
+        if let Some(client_metadata) = request.client_metadata {
+            object.insert(
+                "client_metadata".to_string(),
+                serde_json::to_value(client_metadata).map_err(|error| {
+                    crate::contract::ProviderError::InvalidRequest(error.to_string())
+                })?,
+            );
+        }
+        Ok(payload)
     }
 
     /// Streams a provider-owned request through the provider-neutral contract.
@@ -421,6 +481,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         '_,
         crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
     > {
+        let http_client_factory = self.http_client_factory();
         Box::pin(async move {
             let api_provider = self
                 .api_provider()
@@ -433,7 +494,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             match self.api() {
                 ProviderApi::Chat(chat_api) => {
                     let client = create_client_for_route(
-                        request.transport.transport.http_client_factory(),
+                        &http_client_factory,
                         &api_provider.url_for_path("/chat/completions"),
                         ClientRouteClass::Api,
                         ClientRedirectPolicy::Default,
@@ -467,13 +528,13 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         as crate::contract::ProviderChatStream)
                 }
                 ProviderApi::Responses => {
-                    let payload = request.payload.ok_or_else(|| {
+                    let payload: ProviderResponsesRequest = request.payload.ok_or_else(|| {
                         crate::contract::ProviderError::InvalidRequest(
                             "Responses provider chat request is missing payload".to_string(),
                         )
                     })?;
                     let client = create_client_for_route(
-                        request.transport.transport.http_client_factory(),
+                        &http_client_factory,
                         &api_provider.url_for_path("/responses"),
                         ClientRouteClass::Api,
                         ClientRedirectPolicy::Default,
@@ -503,6 +564,9 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                             );
                         }
                     }
+                    let payload = serde_json::to_value(payload).map_err(|error| {
+                        crate::contract::ProviderError::InvalidRequest(error.to_string())
+                    })?;
                     let stream = ResponsesClient::new(transport, api_provider, api_auth)
                         .stream(payload, headers, compression, request.transport.turn_state)
                         .await
@@ -525,6 +589,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         '_,
         crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
     > {
+        let http_client_factory = self.http_client_factory();
         Box::pin(async move {
             let api_provider = self
                 .api_provider()
@@ -535,7 +600,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 .await
                 .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
             let client = create_client_for_route(
-                request.transport.http_client_factory(),
+                &http_client_factory,
                 &api_provider.url_for_path("alpha/search"),
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
@@ -585,6 +650,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         '_,
         crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
     > {
+        let http_client_factory = self.http_client_factory();
         Box::pin(async move {
             let api_provider = self
                 .api_provider()
@@ -595,7 +661,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 .await
                 .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
             let client = create_client_for_route(
-                request.transport.http_client_factory(),
+                &http_client_factory,
                 &api_provider.url_for_path(&request.path),
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
@@ -911,6 +977,13 @@ where
         ProviderRuntime::connect_websocket(self, request)
     }
 
+    fn build_websocket_payload(
+        &self,
+        request: ProviderWebsocketPayloadRequest,
+    ) -> crate::contract::ProviderResult<Value> {
+        ProviderRuntime::build_websocket_payload(self, request)
+    }
+
     fn capabilities(&self) -> ProviderCapabilities {
         let mut capabilities = ProviderRuntime::capabilities(self);
         capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
@@ -988,7 +1061,7 @@ where
         crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
     > {
         let client_version = request.client_version;
-        let http_client_factory = request.transport.http_client_factory().clone();
+        let http_client_factory = ProviderRuntime::http_client_factory(self);
         Box::pin(async move {
             ProviderRuntime::list_models(self, &client_version, http_client_factory)
                 .await
@@ -1132,6 +1205,13 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
         ProviderRuntime::connect_websocket(self.runtime.as_ref(), request)
     }
 
+    fn build_websocket_payload(
+        &self,
+        request: ProviderWebsocketPayloadRequest,
+    ) -> crate::contract::ProviderResult<Value> {
+        ProviderRuntime::build_websocket_payload(self.runtime.as_ref(), request)
+    }
+
     fn capabilities(&self) -> ProviderCapabilities {
         let mut capabilities = self.runtime.capabilities();
         capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
@@ -1142,8 +1222,8 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
         capabilities
     }
 
-    fn auth_environment(&self, host_api_key_env_enabled: bool) -> ProviderAuthEnvironment {
-        self.runtime.auth_environment(host_api_key_env_enabled)
+    fn auth_environment(&self) -> ProviderAuthEnvironment {
+        self.runtime.auth_environment()
     }
 
     fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
@@ -1222,7 +1302,7 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
             runtime
                 .list_models(
                     &request.client_version,
-                    request.transport.http_client_factory().clone(),
+                    ProviderRuntime::http_client_factory(runtime.as_ref()),
                 )
                 .await
                 .map(|snapshot| crate::contract::ProviderModelCatalog {
@@ -1379,23 +1459,48 @@ pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
 ) -> SharedProviderRuntime {
+    create_model_provider_with_http_client_factory(
+        provider_info,
+        credential_manager,
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+    )
+}
+
+/// Creates the configured provider with the host-selected outbound transport.
+pub fn create_model_provider_with_http_client_factory(
+    provider_info: ModelProviderInfo,
+    credential_manager: Option<Arc<CredentialManager>>,
+    http_client_factory: HttpClientFactory,
+) -> SharedProviderRuntime {
     let provider_id = provider_info.id.clone();
-    create_model_provider_internal(provider_id, provider_info, credential_manager)
+    create_model_provider_internal(
+        provider_id,
+        provider_info,
+        credential_manager,
+        http_client_factory,
+    )
 }
 
 fn create_model_provider_internal(
     provider_id: Option<String>,
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
+    http_client_factory: HttpClientFactory,
 ) -> SharedProviderRuntime {
     match provider_info.name.as_str() {
-        genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => Arc::new(
-            CloudflareModelProvider::new(provider_id, provider_info, credential_manager),
-        ),
+        genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => {
+            Arc::new(CloudflareModelProvider::new(
+                provider_id,
+                provider_info,
+                credential_manager,
+                http_client_factory,
+            ))
+        }
         _ => Arc::new(ConfiguredModelProvider::new(
             provider_id,
             provider_info,
             credential_manager,
+            http_client_factory,
         )),
     }
 }
@@ -1406,6 +1511,7 @@ struct ConfiguredModelProvider {
     provider_id: Option<String>,
     info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
+    http_client_factory: HttpClientFactory,
 }
 
 impl ConfiguredModelProvider {
@@ -1413,6 +1519,7 @@ impl ConfiguredModelProvider {
         provider_id: Option<String>,
         provider_info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
+        http_client_factory: HttpClientFactory,
     ) -> Self {
         let credential_manager =
             credential_manager_for_provider(credential_manager, &provider_info);
@@ -1420,11 +1527,16 @@ impl ConfiguredModelProvider {
             provider_id,
             info: provider_info,
             credential_manager,
+            http_client_factory,
         }
     }
 }
 
 impl ProviderRuntime for ConfiguredModelProvider {
+    fn http_client_factory(&self) -> HttpClientFactory {
+        self.http_client_factory.clone()
+    }
+
     fn info(&self) -> &ModelProviderInfo {
         &self.info
     }
@@ -1757,7 +1869,7 @@ mod tests {
             info, /*credential_manager*/ None,
         ));
 
-        let environment = provider.auth_environment(false);
+        let environment = provider.auth_environment();
 
         assert!(!environment.host_api_key_env_enabled);
         assert!(environment.provider_env_key_configured);

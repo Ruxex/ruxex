@@ -4,7 +4,33 @@
 
 ## 単一Provider runtimeの最終境界監査 (2026-10-09)
 
+### 追加監査: 実装記録との不一致
+
+前節の完了記述後に production source を再走査したところ、次の3項目は「解消済み」とは言えない
+ため、実装前に decision を固定する。
+
+- `crates/model-provider/src/contract.rs` の `ProviderTransportContext` は公開コンストラクタと
+  `HttpClientFactory` フィールドを持ち、Core・model catalog・Web Search・History/Notes・doctor が
+  生成していた。producer は各 request caller、consumer は runtime adapter である。外部 wire 契約は
+ 変えず、HTTP factory を injected provider の内部状態へ移す **migrate-in-place** とする。
+- `crates/core/src/client.rs` は `ResponsesApiRequest`、`ResponseCreateWsRequest`、
+  `ResponsesWsRequest` を直接生成し、`genex_api` の payload/header 型を provider request に渡していた。
+  producer は Core の turn/continuation 処理、consumer は Responses adapter である。Core は中立 request
+  と continuation key だけを扱い、wire payload は adapter が生成する **migrate-in-place** とする。
+- `CredentialManager` は provider credentials と MCP OAuth、plugin credentials、verification、
+  generic external auth を兼ねるため、一括削除はしない。provider auth の producer/consumer は
+  `SharedModelProvider` の snapshot/lifecycle に **migrate-in-place** し、host-owned generic credential
+  consumers は **retain** する。
+- `crates/app-server/src/lib.rs` の daemon startup は mount、credential load、runtime construction を
+  重複実装していた。startup producer は daemon、common consumer は `runtime.rs` helper であるため、
+  helper に **migrate-in-place** する。
+
 ### 残事項の実装結果
+
+追加監査で `crates/core/src/cyber_access_program.rs` も確認した。この helper は全ての入力を
+`false` で filter するため実行時に `access_programs` を生成せず、Core の唯一の producer である
+Responses HTTP/WebSocket request 組み立てからも到達しない。外部 wire field 自体は provider-neutral
+request に保持するが、到達不能な Core helper は producer/consumer 不在として **remove** とする。
 
 AppServer の host 境界を再監査し、daemon・in-process・CLI credential lifecycle・TUI・Exec・
 fork/worktree・debug・doctor・plugin の provider-home 初期化を共通 helper に統一した。
@@ -72,14 +98,19 @@ provider-neutral な catalog/identity/ETag snapshot へ変換する。
 fixture に限定され、local startup の `runtime: None` と marker より前の state/credential 初期化は残っていない。
 Chat Completions の実行も `ModelProvider::chat` 経由へ移し、request construction と SSE stream の生成を
 runtime adapter に閉じ込めた。Responses HTTP も同じ契約経由で `ResponsesClient` を呼び出す形へ移し、
-core は移行途中の payload/header 組み立てとprovider-neutralなturn continuation stateだけを担う。
+core は provider-neutral な正規化 request、header context、turn continuation stateだけを担う。
 Responses WebSocket、auth recovery、wire transportはProvider契約へ移行済みである。
+同じ再走査で `genex_api::ResponseId` の唯一の producer（`session/turn.rs`）には consumer がなく、
+実行時の共有 state や外部契約に影響しないため、この dead extension-data insert は **remove** とした。
+なお `genex_api::ResponseEvent` への変換は `genex-otel` の既存 telemetry consumer が要求する
+内部観測境界として `client.rs::provider_event_to_telemetry_event` に限定して保持する。
 
 さらに `SessionConfiguration` から `TurnContext` まで同じ contract handle を引き継ぎ、compaction、
 hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
 standalone Web Search の request/response transport と History/Notes backend transport も契約経由へ移す。
 拡張は provider-neutral な入力と外部機能固有の context/header を組み立て、endpoint 解決、認証、HTTP
-transport は provider adapter が所有する。
+transport は provider adapter が所有する。History/Notes と Web Search の拡張自身は HTTP factory を
+保持せず、注入された provider の transport を利用する。
 Responses wire 判定、auth recovery、request/response event mapping は契約へ移行した。
 `ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。AppServer の
 production session とテスト caller はともに `new_with_provider` を利用し、旧 runtime/contract の

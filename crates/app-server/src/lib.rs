@@ -9,8 +9,6 @@ use genex_config::NoopThreadConfigLoader;
 use genex_core::config::Config;
 use genex_core::config::UnsupportedUntrustedApprovalPolicyError;
 use genex_core::resolve_installation_id;
-use genex_login::CredentialManager;
-use genex_model_provider::mount_provider_home;
 #[cfg(debug_assertions)]
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_cli::CliConfigOverrides;
@@ -32,7 +30,7 @@ use crate::outgoing_message::OutgoingEnvelope;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
-use crate::runtime::configured_provider_descriptor;
+use crate::runtime::configured_app_server_runtime_from_config;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::ConnectionOrigin;
 use crate::transport::ConnectionState;
@@ -545,25 +543,13 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
-    let provider_descriptor = configured_provider_descriptor(&config.model_provider);
-    mount_provider_home(&config.genex_home, &provider_descriptor).map_err(|err| {
-        std::io::Error::new(
-            ErrorKind::InvalidData,
-            format!("failed to mount provider data root: {err}"),
-        )
-    })?;
-    let configured_credential_manager =
-        CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+    let runtime =
+        configured_app_server_runtime_from_config(&config, /*enable_api_key_env*/ false)
             .await
             .map_err(std::io::Error::other)?;
-    let runtime = runtime::AppServerRuntimeBuilder::from_provider_info(
-        config.model_provider.clone(),
-        Some(Arc::clone(&configured_credential_manager)),
-    )
-    .build();
     let credential_manager = runtime
         .credential_manager()
-        .unwrap_or(configured_credential_manager);
+        .ok_or_else(|| std::io::Error::other("configured runtime has no credential manager"))?;
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),

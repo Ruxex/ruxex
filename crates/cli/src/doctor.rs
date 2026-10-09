@@ -53,7 +53,6 @@ use genex_login::default_client::create_client_without_request_logging;
 use genex_login::default_client::default_headers;
 use genex_login::load_auth_dot_json;
 use genex_model_provider::ProviderError;
-use genex_model_provider::ProviderTransportContext;
 use genex_model_provider::ProviderWebsocketConnectRequest;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::AskForApproval;
@@ -2017,10 +2016,14 @@ async fn websocket_reachability_check(
         provider.websocket_connect_timeout().as_millis()
     ));
 
-    let runtime_provider =
-        AppServerRuntimeBuilder::from_provider_info(provider.clone(), credential_manager)
-            .build()
-            .provider();
+    let http_client_factory = config.http_client_factory();
+    let runtime_provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
+        provider.clone(),
+        credential_manager,
+        http_client_factory.clone(),
+    )
+    .build()
+    .provider();
     let snapshot = match runtime_provider.request_snapshot().await {
         Ok(snapshot) => snapshot,
         Err(err) => {
@@ -2042,11 +2045,11 @@ async fn websocket_reachability_check(
         }
     ));
     details.push("endpoint: provider-owned Responses WebSocket".to_string());
-    let http_client_factory = config.http_client_factory();
     match tokio::time::timeout(
         provider.websocket_connect_timeout(),
         runtime_provider.connect_websocket(ProviderWebsocketConnectRequest {
-            transport: ProviderTransportContext::from_http_client_factory(http_client_factory),
+            session_id: None,
+            thread_id: None,
             extra_headers: BTreeMap::new(),
             default_headers: neutral_headers(default_headers()),
             telemetry: None,

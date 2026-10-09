@@ -5,7 +5,6 @@ use genex_models_manager::manager::ModelCatalogSource;
 use genex_protocol::error::Result as CoreResult;
 
 use crate::contract::ListModelsRequest;
-use crate::contract::ProviderTransportContext;
 use crate::contract::SharedModelProvider;
 
 /// Adapts a runtime provider to the manager-facing catalog source abstraction.
@@ -44,15 +43,12 @@ impl ModelCatalogSource for ProviderModelCatalogSource {
     fn list_models<'a>(
         &'a self,
         client_version: &'a str,
-        http_client_factory: HttpClientFactory,
+        _http_client_factory: HttpClientFactory,
     ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(async move {
             let catalog = self
                 .provider
-                .list_models(ListModelsRequest::new(
-                    client_version,
-                    ProviderTransportContext::from_http_client_factory(http_client_factory),
-                ))
+                .list_models(ListModelsRequest::new(client_version))
                 .await
                 .map_err(|error| genex_protocol::error::GenexErr::Fatal(error.to_string()))?;
 

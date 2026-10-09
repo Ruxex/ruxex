@@ -19,8 +19,6 @@ use genex_extension_api::ToolExecutor;
 use genex_extension_api::ToolName;
 use genex_extension_api::ToolPayload;
 use genex_history_notes_extension::install;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
 use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
@@ -96,7 +94,6 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         &mut builder,
         credential_manager,
         provider_contract(provider),
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
     );
     let registry = builder.build();
     let session_store = ExtensionData::new("session-123");
@@ -401,7 +398,6 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
             &mut builder,
             credential_manager,
             provider_contract(model_provider),
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
         );
         let registry = builder.build();
         let session_store = ExtensionData::new("session-123");

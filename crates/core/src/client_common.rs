@@ -1,5 +1,5 @@
 use futures::Stream;
-pub use genex_api::ResponseEvent;
+pub use genex_model_provider::ProviderChatEvent as ResponseEvent;
 use genex_protocol::error::Result;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::models::BaseInstructions;

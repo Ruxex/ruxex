@@ -24,10 +24,13 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    let provider =
-        AppServerRuntimeBuilder::from_provider_info(config.model_provider.clone(), Some(manager))
-            .build()
-            .provider();
+    let provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
+        config.model_provider.clone(),
+        Some(manager),
+        config.http_client_factory(),
+    )
+    .build()
+    .provider();
     let authenticated = provider.auth_state().status == ProviderAuthStatus::Authenticated;
     eprintln!(
         "{}: {}",
@@ -50,9 +53,10 @@ pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    let provider = AppServerRuntimeBuilder::from_provider_info(
+    let provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
         config.model_provider.clone(),
         Some(Arc::clone(&manager)),
+        config.http_client_factory(),
     )
     .build()
     .provider();
@@ -82,10 +86,13 @@ pub async fn run_login_delete(cli_config_overrides: CliConfigOverrides) -> ! {
             std::process::exit(1);
         }
     };
-    let provider =
-        AppServerRuntimeBuilder::from_provider_info(config.model_provider.clone(), Some(manager))
-            .build()
-            .provider();
+    let provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
+        config.model_provider.clone(),
+        Some(manager),
+        config.http_client_factory(),
+    )
+    .build()
+    .provider();
     match provider.delete().await {
         Ok(true) => eprintln!(
             "Deleted credentials for model provider `{}`",

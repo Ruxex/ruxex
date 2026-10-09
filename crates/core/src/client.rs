@@ -35,29 +35,12 @@ use std::sync::atomic::Ordering;
 use crate::GenexResponsesHeaders;
 use async_channel::Sender;
 use genex_api::ApiError;
-use genex_api::Compression;
-use genex_api::Reasoning;
-use genex_api::ReasoningContext;
-use genex_api::RequestTelemetry;
-use genex_api::ResponseCreateWsRequest;
-use genex_api::ResponsesApiRequest;
-use genex_api::ResponsesOptions as ApiResponsesOptions;
-use genex_api::ResponsesWsRequest;
-use genex_api::SseTelemetry;
-use genex_api::StreamOptions;
-use genex_api::TransportError;
-use genex_api::build_session_headers;
-use genex_api::create_text_param_for_request;
-use genex_api::response_create_client_metadata;
-use genex_http_client::HttpClientFactory;
 use genex_login::default_client::add_originator_header;
 use genex_otel::SessionTelemetry;
 use genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
 use genex_otel::current_span_w3c_trace_context;
 use genex_protocol::ResponseItemId;
 
-use eventsource_stream::Event;
-use eventsource_stream::EventStreamError;
 use futures::StreamExt;
 use genex_protocol::ThreadId;
 use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
@@ -78,7 +61,6 @@ use genex_tools::create_tools_json_for_responses_lite;
 use genex_tools::create_tools_raw_json_for_responses_api;
 use http::HeaderMap as ApiHeaderMap;
 use http::HeaderValue;
-use http::StatusCode;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::sync::mpsc;
@@ -99,27 +81,31 @@ use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
 use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
-use crate::cyber_access_program;
 use crate::responses_metadata::GenexResponsesMetadata;
 use genex_model_provider::ProviderChatEvent;
 use genex_model_provider::ProviderConnectionKey;
 use genex_model_provider::ProviderError;
+use genex_model_provider::ProviderReasoning;
+use genex_model_provider::ProviderReasoningContext;
+use genex_model_provider::ProviderReasoningSummaryDelivery;
 use genex_model_provider::ProviderRequestAuth;
-use genex_model_provider::ProviderTransportContext;
+use genex_model_provider::ProviderRequestCompression;
+use genex_model_provider::ProviderResponsesRequest;
+use genex_model_provider::ProviderStreamOptions;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ProviderWebsocketConnectRequest;
 use genex_model_provider::ProviderWebsocketEvent;
+use genex_model_provider::ProviderWebsocketPayloadRequest;
 use genex_model_provider::ProviderWebsocketRequest;
 use genex_model_provider::ProviderWebsocketTelemetry;
 use genex_model_provider::ProviderWireApi;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderWebsocketConnection;
+use genex_model_provider::build_provider_text_controls;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
-use genex_response_debug_context::extract_response_debug_context;
-use genex_response_debug_context::telemetry_transport_error_message;
 
 pub const X_GENEX_INSTALLATION_ID_HEADER: &str = "x-genex-installation-id";
 pub const X_GENEX_ROUTING_HINT_HEADER: &str = "x-genex-routing-hint";
@@ -140,15 +126,15 @@ pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
 
 fn session_telemetry_for_request(
     session_telemetry: &SessionTelemetry,
-    request: &ResponsesApiRequest,
+    request: &ProviderResponsesRequest,
 ) -> SessionTelemetry {
-    session_telemetry.clone().with_inference_request(
-        request.service_tier.as_deref(),
-        request
-            .reasoning
-            .as_ref()
-            .and_then(|reasoning| reasoning.effort.as_ref()),
-    )
+    let effort = request
+        .reasoning
+        .as_ref()
+        .and_then(|reasoning| reasoning.effort.as_ref());
+    session_telemetry
+        .clone()
+        .with_inference_request(request.service_tier.as_deref(), effort)
 }
 
 /// Session-scoped state shared by all [`ModelClient`] clones.
@@ -189,6 +175,14 @@ struct RequestRouteTelemetry {
     endpoint: &'static str,
 }
 
+struct ResponsesTransportOptions {
+    session_id: Option<String>,
+    thread_id: Option<String>,
+    extra_headers: ApiHeaderMap,
+    compression: ProviderRequestCompression,
+    turn_state: Option<Arc<OnceLock<String>>>,
+}
+
 impl RequestRouteTelemetry {
     fn for_endpoint(endpoint: &'static str) -> Self {
         Self { endpoint }
@@ -212,7 +206,6 @@ pub struct ModelClient {
     prompt_cache_key_override: Option<String>,
     genex_responses_headers: Option<Arc<GenexResponsesHeaders>>,
     event_sender: Option<Sender<ProtocolEvent>>,
-    http_client_factory: HttpClientFactory,
     restored_history: bool,
 }
 
@@ -271,7 +264,7 @@ struct WebsocketSession {
     /// Owner of the cached state, including before a connection is opened.
     auth_owner_generation: Option<u64>,
     connection_key: Option<ProviderConnectionKey>,
-    last_request: Option<ResponsesApiRequest>,
+    last_request: Option<ProviderResponsesRequest>,
     last_response_rx: Option<oneshot::Receiver<LastResponse>>,
     last_response_from_untraced_warmup: bool,
     connection_reused: StdMutex<bool>,
@@ -283,10 +276,10 @@ struct WebsocketSession {
 // Access programs are authorized per response, including continuations, without replaying input.
 // Keep the destructuring exhaustive so new request fields require an explicit reuse decision.
 fn responses_request_properties_match(
-    previous: &ResponsesApiRequest,
-    current: &ResponsesApiRequest,
+    previous: &ProviderResponsesRequest,
+    current: &ProviderResponsesRequest,
 ) -> bool {
-    let ResponsesApiRequest {
+    let ProviderResponsesRequest {
         model: previous_model,
         instructions: previous_instructions,
         input: _,
@@ -304,7 +297,7 @@ fn responses_request_properties_match(
         client_metadata: _,
         access_programs: _,
     } = previous;
-    let ResponsesApiRequest {
+    let ProviderResponsesRequest {
         model: current_model,
         instructions: current_instructions,
         input: _,
@@ -412,7 +405,6 @@ impl ModelClient {
         beta_features_header: Option<String>,
         concurrent_reasoning_summaries_enabled: bool,
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
-        http_client_factory: HttpClientFactory,
     ) -> Self {
         Self::new_with_provider_inner(
             model_provider,
@@ -426,7 +418,6 @@ impl ModelClient {
             beta_features_header,
             concurrent_reasoning_summaries_enabled,
             attestation_provider,
-            http_client_factory,
         )
     }
 
@@ -443,7 +434,6 @@ impl ModelClient {
         beta_features_header: Option<String>,
         concurrent_reasoning_summaries_enabled: bool,
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
-        http_client_factory: HttpClientFactory,
     ) -> Self {
         let include_attestation = model_provider.supports_attestation();
         Self {
@@ -466,7 +456,6 @@ impl ModelClient {
             prompt_cache_key_override: None,
             genex_responses_headers: None,
             event_sender: None,
-            http_client_factory,
             restored_history: false,
         }
     }
@@ -612,8 +601,8 @@ impl ModelClient {
         model_info: &ModelInfo,
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
-    ) -> Reasoning {
-        Reasoning {
+    ) -> ProviderReasoning {
+        ProviderReasoning {
             effort: effort
                 .or_else(|| model_info.default_reasoning_level.clone())
                 .map(|effort| model_info.resolve_reasoning_effort(effort)),
@@ -624,7 +613,7 @@ impl ModelClient {
             // which is currently `current_turn`.
             context: model_info
                 .use_responses_lite
-                .then_some(ReasoningContext::AllTurns),
+                .then_some(ProviderReasoningContext::AllTurns),
         }
     }
 
@@ -636,48 +625,50 @@ impl ModelClient {
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
         responses_metadata: &GenexResponsesMetadata,
-    ) -> Result<ResponsesApiRequest> {
+    ) -> Result<ProviderResponsesRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
         let is_responses_provider =
             matches!(self.state.provider.wire_api(), ProviderWireApi::Responses);
-        let (instructions, tools) = if model_info.use_responses_lite {
-            // These prompt-only items are rebuilt on every request. Hash their visible payloads
-            // within the thread so retries and resumed sessions preserve their identity.
-            let prefix_namespace = Uuid::new_v5(
-                &Uuid::NAMESPACE_OID,
-                self.state.thread_id.to_string().as_bytes(),
-            );
-            let tools = if self.state.provider.capabilities().namespace_tools {
-                create_tools_json_for_responses_lite(&prompt.tools)?
+        let (instructions, tools): (String, Option<serde_json::Value>) =
+            if model_info.use_responses_lite {
+                // These prompt-only items are rebuilt on every request. Hash their visible payloads
+                // within the thread so retries and resumed sessions preserve their identity.
+                let prefix_namespace = Uuid::new_v5(
+                    &Uuid::NAMESPACE_OID,
+                    self.state.thread_id.to_string().as_bytes(),
+                );
+                let tools = if self.state.provider.capabilities().namespace_tools {
+                    create_tools_json_for_responses_lite(&prompt.tools)?
+                } else {
+                    create_tools_json_for_responses_api(&prompt.tools)?
+                };
+                let mut prefix = vec![ResponseItem::AdditionalTools {
+                    id: Some(ResponseItemId::with_suffix(
+                        "at",
+                        Uuid::new_v5(&prefix_namespace, &serde_json::to_vec(&tools)?),
+                    )),
+                    role: "developer".to_string(),
+                    tools,
+                }];
+                if !prompt.base_instructions.text.is_empty() {
+                    let mut instructions = ContextualUserFragment::into(BaseInstructionsFragment(
+                        prompt.base_instructions.text.clone(),
+                    ));
+                    instructions.set_id(Some(ResponseItemId::with_suffix(
+                        "msg",
+                        Uuid::new_v5(&prefix_namespace, prompt.base_instructions.text.as_bytes()),
+                    )));
+                    prefix.push(instructions);
+                }
+                input.splice(0..0, prefix);
+                (String::new(), None)
             } else {
-                create_tools_json_for_responses_api(&prompt.tools)?
-            };
-            let mut prefix = vec![ResponseItem::AdditionalTools {
-                id: Some(ResponseItemId::with_suffix(
-                    "at",
-                    Uuid::new_v5(&prefix_namespace, &serde_json::to_vec(&tools)?),
-                )),
-                role: "developer".to_string(),
-                tools,
-            }];
-            if !prompt.base_instructions.text.is_empty() {
-                let mut instructions = ContextualUserFragment::into(BaseInstructionsFragment(
+                let raw_tools = create_tools_raw_json_for_responses_api(&prompt.tools)?;
+                (
                     prompt.base_instructions.text.clone(),
-                ));
-                instructions.set_id(Some(ResponseItemId::with_suffix(
-                    "msg",
-                    Uuid::new_v5(&prefix_namespace, prompt.base_instructions.text.as_bytes()),
-                )));
-                prefix.push(instructions);
-            }
-            input.splice(0..0, prefix);
-            (String::new(), None)
-        } else {
-            (
-                prompt.base_instructions.text.clone(),
-                Some(create_tools_raw_json_for_responses_api(&prompt.tools)?.into()),
-            )
-        };
+                    Some(serde_json::from_str::<serde_json::Value>(raw_tools.get())?),
+                )
+            };
         if !is_responses_provider {
             for item in &mut input {
                 item.clear_internal_chat_message_metadata_passthrough();
@@ -694,8 +685,8 @@ impl ModelClient {
         let stream_options = (self.state.concurrent_reasoning_summaries_enabled
             && is_responses_provider
             && reasoning.summary.is_some())
-        .then_some(StreamOptions {
-            reasoning_summary_delivery: genex_api::ReasoningSummaryDelivery::SequentialCutoff,
+        .then_some(ProviderStreamOptions {
+            reasoning_summary_delivery: ProviderReasoningSummaryDelivery::SequentialCutoff,
         });
         let include = vec!["reasoning.encrypted_content".to_string()];
         let verbosity = if model_info.support_verbosity {
@@ -709,14 +700,14 @@ impl ModelClient {
             }
             None
         };
-        let text = create_text_param_for_request(
+        let text = build_provider_text_controls(
             verbosity,
             &prompt.output_schema,
             prompt.output_schema_strict,
         );
         let prompt_cache_key = Some(self.prompt_cache_key(responses_metadata));
         let service_tier = model_info.service_tier_for_request(service_tier);
-        let request = ResponsesApiRequest {
+        let request = ProviderResponsesRequest {
             model: model_info.slug.clone(),
             instructions,
             input,
@@ -731,7 +722,7 @@ impl ModelClient {
             service_tier,
             prompt_cache_key,
             text,
-            client_metadata: Some(responses_metadata.client_metadata()),
+            client_metadata: Some(responses_metadata.client_metadata().into_iter().collect()),
             access_programs: None,
         };
         Ok(request)
@@ -856,9 +847,8 @@ impl ModelClient {
                 self.state
                     .provider
                     .connect_websocket(ProviderWebsocketConnectRequest {
-                        transport: ProviderTransportContext::from_http_client_factory(
-                            self.http_client_factory.clone(),
-                        ),
+                        session_id: Some(self.responses_session_id(responses_metadata)),
+                        thread_id: Some(responses_metadata.thread_id.to_string()),
                         extra_headers: neutral_headers(headers),
                         default_headers: neutral_headers(
                             genex_login::default_client::default_headers(),
@@ -904,10 +894,6 @@ impl ModelClient {
         if let Ok(header_value) = HeaderValue::from_str(&responses_metadata.thread_id) {
             headers.insert("x-client-request-id", header_value);
         }
-        headers.extend(build_session_headers(
-            Some(self.responses_session_id(responses_metadata)),
-            Some(responses_metadata.thread_id.to_string()),
-        ));
         headers.extend(self.build_responses_compatibility_headers(responses_metadata));
         if let Some(routing_hint) = &responses_metadata.routing_hint {
             headers.insert(X_GENEX_ROUTING_HINT_HEADER, routing_hint.clone());
@@ -951,10 +937,10 @@ impl ModelClientSession {
     async fn build_responses_options(
         &self,
         responses_metadata: &GenexResponsesMetadata,
-        compression: Compression,
+        compression: ProviderRequestCompression,
         use_responses_lite: bool,
-    ) -> ApiResponsesOptions {
-        ApiResponsesOptions {
+    ) -> ResponsesTransportOptions {
+        ResponsesTransportOptions {
             session_id: Some(self.client.responses_session_id(responses_metadata)),
             thread_id: Some(responses_metadata.thread_id.to_string()),
             extra_headers: {
@@ -984,7 +970,7 @@ impl ModelClientSession {
     /// are treated as part of the baseline so we do not resend them.
     fn get_incremental_items(
         &self,
-        request: &ResponsesApiRequest,
+        request: &ProviderResponsesRequest,
         last_response: &LastResponse,
     ) -> Option<Vec<ResponseItem>> {
         let previous_request = self.websocket_session.last_request.as_ref()?;
@@ -1029,7 +1015,7 @@ impl ModelClientSession {
 
     fn prepare_websocket_request(
         &mut self,
-        request: &ResponsesApiRequest,
+        request: &ProviderResponsesRequest,
     ) -> Option<WebsocketContinuation> {
         let last_response = self.get_last_response()?;
         let items = self.get_incremental_items(request, &last_response)?;
@@ -1054,12 +1040,12 @@ impl ModelClientSession {
         model_info: &ModelInfo,
         session_telemetry: &SessionTelemetry,
         responses_metadata: &GenexResponsesMetadata,
-    ) -> std::result::Result<(), ApiError> {
+    ) -> Result<()> {
         if !self.client.responses_websocket_enabled() {
             return Ok(());
         }
         let client_setup = self.client_setup().await.map_err(|err| {
-            ApiError::Stream(format!(
+            GenexErr::Fatal(format!(
                 "failed to build websocket prewarm client setup: {err}"
             ))
         })?;
@@ -1087,7 +1073,7 @@ impl ModelClientSession {
             responses_headers: &responses_headers,
         })
         .await
-        .map_err(provider_error_to_api_error)?;
+        .map_err(provider_error_to_genex_error)?;
         Ok(())
     }
     /// Returns a websocket connection for this turn.
@@ -1169,7 +1155,10 @@ impl ModelClientSession {
         })
     }
 
-    fn responses_request_compression(&self, auth: &ProviderRequestAuth) -> Compression {
+    fn responses_request_compression(
+        &self,
+        auth: &ProviderRequestAuth,
+    ) -> ProviderRequestCompression {
         if self.client.state.enable_request_compression
             && auth.managed_auth
             && matches!(
@@ -1177,9 +1166,9 @@ impl ModelClientSession {
                 ProviderWireApi::Responses
             )
         {
-            Compression::Zstd
+            ProviderRequestCompression::Zstd
         } else {
-            Compression::None
+            ProviderRequestCompression::None
         }
     }
 
@@ -1216,9 +1205,6 @@ impl ModelClientSession {
             session_source: Some(self.client.state.session_source.clone()),
             payload: None,
             transport: genex_model_provider::ChatTransportOptions {
-                transport: ProviderTransportContext::from_http_client_factory(
-                    self.client.http_client_factory.clone(),
-                ),
                 session_id: None,
                 thread_id: None,
                 extra_headers: std::collections::BTreeMap::new(),
@@ -1233,7 +1219,7 @@ impl ModelClientSession {
             .chat(request)
             .await
             .map_err(|error| GenexErr::Fatal(error.to_string()))?;
-        let api_stream = provider_stream.map(|event| event.map(provider_event_to_response_event));
+        let api_stream = provider_stream;
         let (stream, _) = map_response_events(
             None,
             api_stream,
@@ -1305,8 +1291,6 @@ impl ModelClientSession {
                     .extra_headers
                     .insert(X_GENEX_ROUTING_HINT_HEADER, header_value);
             }
-            request.access_programs =
-                cyber_access_program::for_program(prompt.cyber_access_program);
             self.client
                 .prepare_response_items_for_request(&mut request.input);
             let request_session_telemetry =
@@ -1315,9 +1299,6 @@ impl ModelClientSession {
             let inference_trace_attempt = inference_trace.start_attempt();
             inference_trace_attempt.add_request_headers(&mut options.extra_headers);
             inference_trace_attempt.record_started(&request);
-            let payload = serde_json::to_value(&request).map_err(|error| {
-                GenexErr::Fatal(format!("failed to encode responses request: {error}"))
-            })?;
             let provider_request = genex_model_provider::ChatRequest {
                 model: request.model.clone(),
                 instructions: Some(request.instructions.clone()),
@@ -1326,26 +1307,19 @@ impl ModelClientSession {
                 metadata: std::collections::BTreeMap::new(),
                 conversation_id: Some(self.client.responses_session_id(responses_metadata)),
                 session_source: Some(self.client.state.session_source.clone()),
-                payload: Some(payload),
+                payload: Some(request.clone()),
                 transport: genex_model_provider::ChatTransportOptions {
-                    transport: ProviderTransportContext::from_http_client_factory(
-                        self.client.http_client_factory.clone(),
-                    ),
                     session_id: options.session_id.clone(),
                     thread_id: options.thread_id.clone(),
                     extra_headers: neutral_headers(options.extra_headers),
-                    compression: match options.compression {
-                        Compression::None => genex_model_provider::ProviderRequestCompression::None,
-                        Compression::Zstd => genex_model_provider::ProviderRequestCompression::Zstd,
-                    },
+                    compression: options.compression,
                     turn_state: options.turn_state,
                 },
             };
             let provider_result = self.client.state.provider.chat(provider_request).await;
             match provider_result {
                 Ok(provider_stream) => {
-                    let api_stream =
-                        provider_stream.map(|event| event.map(provider_event_to_response_event));
+                    let api_stream = provider_stream;
                     let (stream, _) = map_response_events(
                         None,
                         api_stream,
@@ -1355,14 +1329,8 @@ impl ModelClientSession {
                     return Ok(stream);
                 }
                 Err(genex_model_provider::ProviderError::Unauthorized) => {
-                    let transport = TransportError::Http {
-                        status: StatusCode::UNAUTHORIZED,
-                        url: None,
-                        headers: None,
-                        body: None,
-                    };
                     let _recovery = handle_unauthorized(
-                        transport,
+                        ProviderError::Unauthorized,
                         &mut provider_auth_recovery_attempted,
                         session_telemetry,
                         &self.client.state.provider,
@@ -1425,8 +1393,6 @@ impl ModelClientSession {
                 responses_metadata,
             )?;
             ModelClient::filter_tool_result_metadata(&mut request.input);
-            request.access_programs =
-                cyber_access_program::for_program(prompt.cyber_access_program);
             let mut websocket_metadata = responses_metadata.clone();
             websocket_metadata.routing_hint = self.client.build_routing_hint_header(
                 &client_setup.auth,
@@ -1456,15 +1422,9 @@ impl ModelClientSession {
                     return Ok(WebsocketStreamOutcome::FallbackToHttp);
                 }
                 Err(ProviderError::Unauthorized) => {
-                    let unauthorized_transport = TransportError::Http {
-                        status: StatusCode::UNAUTHORIZED,
-                        url: None,
-                        headers: None,
-                        body: None,
-                    };
                     pending_retry = PendingUnauthorizedRetry::from_recovery(
                         handle_unauthorized(
-                            unauthorized_transport,
+                            ProviderError::Unauthorized,
                             &mut provider_auth_recovery_attempted,
                             session_telemetry,
                             &provider,
@@ -1537,20 +1497,42 @@ impl ModelClientSession {
                     .prepare_response_items_for_request(&mut request.input);
                 Some(original_item_ids)
             };
-            let ws_payload = ResponseCreateWsRequest {
-                previous_response_id,
-                input: incremental_items.as_deref().unwrap_or(&request.input),
-                generate: if warmup { Some(false) } else { None },
-                client_metadata: response_create_client_metadata(
-                    Some(client_metadata),
-                    request_trace.as_ref(),
-                ),
-                ..ResponseCreateWsRequest::from(&request)
-            };
-            let mut ws_request = ResponsesWsRequest::ResponseCreate(ws_payload);
-            stamp_ws_stream_request_start_ms(&mut ws_request);
+            let mut client_metadata = client_metadata
+                .into_iter()
+                .collect::<std::collections::BTreeMap<_, _>>();
+            if let Some(traceparent) = request_trace
+                .as_ref()
+                .and_then(|trace| trace.traceparent.as_deref())
+            {
+                client_metadata.insert(
+                    "ws_request_header_traceparent".to_string(),
+                    traceparent.to_string(),
+                );
+            }
+            if let Some(tracestate) = request_trace
+                .as_ref()
+                .and_then(|trace| trace.tracestate.as_deref())
+            {
+                client_metadata.insert(
+                    "ws_request_header_tracestate".to_string(),
+                    tracestate.to_string(),
+                );
+            }
+            let mut websocket_payload = provider
+                .build_websocket_payload(ProviderWebsocketPayloadRequest {
+                    request: request.clone(),
+                    previous_response_id,
+                    input: incremental_items
+                        .as_deref()
+                        .unwrap_or(&request.input)
+                        .to_vec(),
+                    generate: if warmup { Some(false) } else { None },
+                    client_metadata: (!client_metadata.is_empty()).then_some(client_metadata),
+                })
+                .map_err(provider_error_to_genex_error)?;
+            stamp_ws_stream_request_start_ms(&mut websocket_payload);
             if !previous_response_id_from_untraced_warmup {
-                inference_trace_attempt.record_started(&ws_request);
+                inference_trace_attempt.record_started(&websocket_payload);
             }
 
             let websocket_connection =
@@ -1566,9 +1548,6 @@ impl ModelClientSession {
                     ("phase", if warmup { "warmup" } else { "generation" }),
                 ],
             );
-            let websocket_payload = serde_json::to_value(&ws_request).map_err(|err| {
-                GenexErr::Fatal(format!("failed to encode websocket request: {err}"))
-            })?;
             let stream_result = websocket_connection
                 .stream_request(ProviderWebsocketRequest {
                     payload: websocket_payload,
@@ -1588,7 +1567,7 @@ impl ModelClientSession {
                 inference_trace_attempt.record_failed(&err, None, /*output_items*/ &[]);
                 err
             })?;
-            let api_stream = stream_result.map(|event| event.map(provider_event_to_response_event));
+            let api_stream = stream_result;
             let (stream, last_request_rx) = map_response_events(
                 None,
                 api_stream,
@@ -1758,19 +1737,22 @@ impl ModelClientSession {
     }
 }
 
-/// Stamp a ResponsesWsRequest with the current time.
+/// Stamp a provider-owned websocket payload with the current time.
 ///
 /// Meant to be called just before sending the request over the socket, to capture realistic
 /// transport timing.
-fn stamp_ws_stream_request_start_ms(request: &mut ResponsesWsRequest<'_>) {
-    let ResponsesWsRequest::ResponseCreate(payload) = request;
-    payload
-        .client_metadata
-        .get_or_insert_with(HashMap::new)
-        .insert(
-            X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY.to_string(),
-            crate::turn_timing::now_unix_timestamp_ms().to_string(),
-        );
+fn stamp_ws_stream_request_start_ms(request: &mut serde_json::Value) {
+    if let Some(object) = request.as_object_mut() {
+        let metadata = object
+            .entry("client_metadata")
+            .or_insert_with(|| serde_json::json!({}));
+        if let Some(metadata) = metadata.as_object_mut() {
+            metadata.insert(
+                X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY.to_string(),
+                serde_json::Value::String(crate::turn_timing::now_unix_timestamp_ms().to_string()),
+            );
+        }
+    }
 }
 
 fn neutral_headers(headers: ApiHeaderMap) -> std::collections::BTreeMap<String, String> {
@@ -1822,75 +1804,91 @@ fn add_responses_lite_header(headers: &mut ApiHeaderMap, use_responses_lite: boo
 const RESPONSE_STREAM_CHANNEL_CAPACITY: usize = 1600;
 const STREAM_DROPPED_REASON: &str = "response stream dropped before provider terminal event";
 
-fn provider_event_to_response_event(event: ProviderChatEvent) -> ResponseEvent {
+pub(crate) fn provider_event_to_telemetry_event(
+    event: &ProviderChatEvent,
+) -> genex_api::ResponseEvent {
     match event {
-        ProviderChatEvent::Created { response_id } => ResponseEvent::Created { response_id },
+        ProviderChatEvent::Created { response_id } => genex_api::ResponseEvent::Created {
+            response_id: response_id.clone(),
+        },
         ProviderChatEvent::SafetyBuffering(buffering) => {
-            ResponseEvent::SafetyBuffering(genex_api::SafetyBuffering {
-                use_cases: buffering.use_cases,
-                reasons: buffering.reasons,
+            genex_api::ResponseEvent::SafetyBuffering(genex_api::SafetyBuffering {
+                use_cases: buffering.use_cases.clone(),
+                reasons: buffering.reasons.clone(),
                 show_buffering_ui: buffering.show_buffering_ui,
-                faster_model: buffering.faster_model,
+                faster_model: buffering.faster_model.clone(),
             })
         }
-        ProviderChatEvent::OutputItemDone(item) => ResponseEvent::OutputItemDone(item),
-        ProviderChatEvent::OutputItemAdded(item) => ResponseEvent::OutputItemAdded(item),
-        ProviderChatEvent::ServerModel(model) => ResponseEvent::ServerModel(model),
+        ProviderChatEvent::OutputItemDone(item) => {
+            genex_api::ResponseEvent::OutputItemDone(item.clone())
+        }
+        ProviderChatEvent::OutputItemAdded(item) => {
+            genex_api::ResponseEvent::OutputItemAdded(item.clone())
+        }
+        ProviderChatEvent::ServerModel(model) => {
+            genex_api::ResponseEvent::ServerModel(model.clone())
+        }
         ProviderChatEvent::ModelVerifications(verifications) => {
-            ResponseEvent::ModelVerifications(verifications)
+            genex_api::ResponseEvent::ModelVerifications(verifications.clone())
         }
         ProviderChatEvent::ServerReasoningIncluded(included) => {
-            ResponseEvent::ServerReasoningIncluded(included)
+            genex_api::ResponseEvent::ServerReasoningIncluded(*included)
         }
         ProviderChatEvent::Completed {
             response_id,
             token_usage,
             usage_metadata,
             end_turn,
-        } => ResponseEvent::Completed {
-            response_id,
-            token_usage,
-            usage_metadata,
-            end_turn,
+        } => genex_api::ResponseEvent::Completed {
+            response_id: response_id.clone(),
+            token_usage: token_usage.clone(),
+            usage_metadata: usage_metadata.clone(),
+            end_turn: *end_turn,
         },
-        ProviderChatEvent::OutputTextDelta(delta) => ResponseEvent::OutputTextDelta(delta),
+        ProviderChatEvent::OutputTextDelta(delta) => {
+            genex_api::ResponseEvent::OutputTextDelta(delta.clone())
+        }
         ProviderChatEvent::ToolCallInputDelta {
             item_id,
             call_id,
             delta,
-        } => ResponseEvent::ToolCallInputDelta {
-            item_id,
-            call_id,
-            delta,
+        } => genex_api::ResponseEvent::ToolCallInputDelta {
+            item_id: item_id.clone(),
+            call_id: call_id.clone(),
+            delta: delta.clone(),
         },
         ProviderChatEvent::ReasoningSummaryDelta {
             delta,
             summary_index,
-        } => ResponseEvent::ReasoningSummaryDelta {
-            delta,
-            summary_index,
+        } => genex_api::ResponseEvent::ReasoningSummaryDelta {
+            delta: delta.clone(),
+            summary_index: *summary_index,
         },
         ProviderChatEvent::ReasoningSummaryDone {
             item_id,
             text,
             summary_index,
-        } => ResponseEvent::ReasoningSummaryDone {
-            item_id,
-            text,
-            summary_index,
+        } => genex_api::ResponseEvent::ReasoningSummaryDone {
+            item_id: item_id.clone(),
+            text: text.clone(),
+            summary_index: *summary_index,
         },
         ProviderChatEvent::ReasoningContentDelta {
             delta,
             content_index,
-        } => ResponseEvent::ReasoningContentDelta {
-            delta,
-            content_index,
+        } => genex_api::ResponseEvent::ReasoningContentDelta {
+            delta: delta.clone(),
+            content_index: *content_index,
         },
         ProviderChatEvent::ReasoningSummaryPartAdded { summary_index } => {
-            ResponseEvent::ReasoningSummaryPartAdded { summary_index }
+            genex_api::ResponseEvent::ReasoningSummaryPartAdded {
+                summary_index: *summary_index,
+            }
         }
-        ProviderChatEvent::RateLimits(snapshot) => ResponseEvent::RateLimits(snapshot),
-        ProviderChatEvent::ModelsEtag(etag) => ResponseEvent::ModelsEtag(etag),
+        ProviderChatEvent::RateLimits(snapshot) => {
+            genex_api::ResponseEvent::RateLimits(snapshot.clone())
+        }
+        ProviderChatEvent::ModelsEtag(etag) => genex_api::ResponseEvent::ModelsEtag(etag.clone()),
     }
 }
 
@@ -2109,7 +2107,7 @@ fn emit_auth_recovery_event(
 }
 
 async fn handle_unauthorized(
-    transport: TransportError,
+    error: ProviderError,
     provider_auth_recovery_attempted: &mut bool,
     session_telemetry: &SessionTelemetry,
     provider: &SharedModelProvider,
@@ -2165,7 +2163,7 @@ async fn handle_unauthorized(
         /*auth_state_changed*/ None,
     );
 
-    Err(GenexErr::Fatal(transport.to_string()))
+    Err(GenexErr::Fatal(error.to_string()))
 }
 
 fn provider_recovery_error_to_genex_error(error: genex_model_provider::ProviderError) -> GenexErr {
@@ -2185,18 +2183,6 @@ fn provider_error_to_genex_error(error: ProviderError) -> GenexErr {
     provider_recovery_error_to_genex_error(error)
 }
 
-fn provider_error_to_api_error(error: ProviderError) -> ApiError {
-    match error {
-        ProviderError::UpgradeRequired => ApiError::Transport(TransportError::Http {
-            status: StatusCode::UPGRADE_REQUIRED,
-            url: None,
-            headers: None,
-            body: None,
-        }),
-        other => ApiError::Stream(other.to_string()),
-    }
-}
-
 struct ApiTelemetry {
     session_telemetry: SessionTelemetry,
     auth_context: AuthRequestTelemetryContext,
@@ -2214,49 +2200,6 @@ impl ApiTelemetry {
             auth_context,
             request_route_telemetry,
         }
-    }
-}
-
-impl RequestTelemetry for ApiTelemetry {
-    fn on_request(
-        &self,
-        attempt: u64,
-        status: Option<StatusCode>,
-        error: Option<&TransportError>,
-        duration: Duration,
-    ) {
-        let error_message = error.map(telemetry_transport_error_message);
-        let status = status.map(|s| s.as_u16());
-        let debug = error
-            .map(extract_response_debug_context)
-            .unwrap_or_default();
-        self.session_telemetry.record_api_request(
-            attempt,
-            status,
-            error_message.as_deref(),
-            duration,
-            self.auth_context.auth_header_attached,
-            self.auth_context.auth_header_name,
-            self.auth_context.retry_after_unauthorized,
-            self.auth_context.recovery_mode,
-            self.auth_context.recovery_phase,
-            self.request_route_telemetry.endpoint,
-            debug.request_id.as_deref(),
-            debug.cf_ray.as_deref(),
-        );
-    }
-}
-
-impl SseTelemetry for ApiTelemetry {
-    fn on_sse_poll(
-        &self,
-        result: &std::result::Result<
-            Option<std::result::Result<Event, EventStreamError<TransportError>>>,
-            tokio::time::error::Elapsed,
-        >,
-        duration: Duration,
-    ) {
-        self.session_telemetry.log_sse_event(result, duration);
     }
 }
 

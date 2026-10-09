@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use genex_http_client::HttpClientFactory;
 use genex_model_provider::ProviderBackendRequest;
-use genex_model_provider::ProviderTransportContext;
 use genex_model_provider::SharedModelProvider;
 use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderValue;
@@ -17,18 +15,11 @@ const OPERATION_ERROR_PREFIX: &str = "Unable to perform operation:";
 #[derive(Clone)]
 pub(crate) struct HistoryNotesBackend {
     provider: SharedModelProvider,
-    http_client_factory: HttpClientFactory,
 }
 
 impl HistoryNotesBackend {
-    pub(crate) fn new(
-        provider: SharedModelProvider,
-        http_client_factory: HttpClientFactory,
-    ) -> Self {
-        Self {
-            provider,
-            http_client_factory,
-        }
+    pub(crate) fn new(provider: SharedModelProvider) -> Self {
+        Self { provider }
     }
 
     pub(crate) async fn call(
@@ -90,9 +81,6 @@ impl HistoryNotesBackend {
                 body: arguments,
                 headers,
                 timeout: HISTORY_NOTES_BACKEND_TIMEOUT,
-                transport: ProviderTransportContext::from_http_client_factory(
-                    self.http_client_factory.clone(),
-                ),
             })
             .await
             .map_err(|error| match error {

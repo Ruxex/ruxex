@@ -4,13 +4,15 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use genex_core::config::Config;
+use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use genex_login::CredentialManager;
 use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use genex_model_provider::ProviderDescriptor;
 use genex_model_provider::ProviderHomeError;
 use genex_model_provider::ProviderHomeMarker;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::create_model_provider;
+use genex_model_provider::create_model_provider_with_http_client_factory;
 use genex_model_provider::mount_provider_home;
 use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
@@ -63,11 +65,14 @@ pub async fn configured_app_server_runtime_from_config(
     let credential_manager = CredentialManager::shared_from_config(config, enable_api_key_env)
         .await
         .context("failed to load provider credentials")?;
-    Ok(AppServerRuntimeBuilder::from_provider_info(
-        config.model_provider.clone(),
-        Some(credential_manager),
+    Ok(
+        AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
+            config.model_provider.clone(),
+            Some(credential_manager),
+            config.http_client_factory(),
+        )
+        .build(),
     )
-    .build())
 }
 
 impl AppServerRuntimeBuilder {
@@ -88,9 +93,23 @@ impl AppServerRuntimeBuilder {
         provider_info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
     ) -> Self {
-        let provider = provider_contract(create_model_provider(
+        Self::from_provider_info_with_http_client_factory(
             provider_info,
             credential_manager.clone(),
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        )
+    }
+
+    /// Starts building a configured runtime with the host's outbound transport policy.
+    pub fn from_provider_info_with_http_client_factory(
+        provider_info: ModelProviderInfo,
+        credential_manager: Option<Arc<CredentialManager>>,
+        http_client_factory: HttpClientFactory,
+    ) -> Self {
+        let provider = provider_contract(create_model_provider_with_http_client_factory(
+            provider_info,
+            credential_manager.clone(),
+            http_client_factory,
         ));
         Self {
             provider,
@@ -118,8 +137,14 @@ impl AppServerRuntimeBuilder {
 pub(crate) fn configured_app_server_runtime(
     provider_info: ModelProviderInfo,
     credential_manager: Arc<CredentialManager>,
+    http_client_factory: HttpClientFactory,
 ) -> AppServerRuntime {
-    AppServerRuntimeBuilder::from_provider_info(provider_info, Some(credential_manager)).build()
+    AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
+        provider_info,
+        Some(credential_manager),
+        http_client_factory,
+    )
+    .build()
 }
 
 pub(crate) fn configured_provider_descriptor(

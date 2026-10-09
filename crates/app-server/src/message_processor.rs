@@ -314,7 +314,6 @@ impl MessageProcessor {
                     event_sink: Arc::clone(&extension_event_sink),
                     credential_manager: credential_manager.clone(),
                     provider: provider.clone(),
-                    http_client_factory: config.http_client_factory(),
                     state_db: state_db.clone(),
                     thread_manager: thread_manager.clone(),
                     goal_service: Arc::clone(&goal_service),

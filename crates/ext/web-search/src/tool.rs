@@ -16,10 +16,8 @@ use genex_extension_api::parse_tool_input_schema_without_compaction;
 use genex_extension_items::ExtensionItem;
 use genex_extension_items::web_search::WebSearchAction;
 use genex_extension_items::web_search::WebSearchItem;
-use genex_http_client::HttpClientFactory;
 use genex_login::default_client::add_originator_header;
 use genex_model_provider::ProviderSearchRequest;
-use genex_model_provider::ProviderTransportContext;
 use genex_model_provider::SharedModelProvider;
 use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
 use genex_protocol::protocol::EventMsg;
@@ -45,7 +43,6 @@ const RESULTS_PAYLOAD_BYTES_METRIC: &str = "genex.web_search.results.payload_byt
 pub(crate) struct WebSearchTool {
     pub(crate) session_id: String,
     pub(crate) provider: SharedModelProvider,
-    pub(crate) http_client_factory: HttpClientFactory,
     pub(crate) settings: SearchSettings,
     pub(crate) originator: Option<String>,
 }
@@ -112,9 +109,6 @@ impl WebSearchTool {
                 .map_err(|err| FunctionCallError::Fatal(err.to_string()))?,
             max_output_tokens: Some(
                 u64::try_from(call.truncation_policy.token_budget()).unwrap_or(u64::MAX),
-            ),
-            transport: ProviderTransportContext::from_http_client_factory(
-                self.http_client_factory.clone(),
             ),
             extra_headers: neutral_headers(search_request_headers(
                 self.originator.as_deref(),
