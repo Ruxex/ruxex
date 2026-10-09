@@ -4,9 +4,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::UserInstructionsProvider;
-use genex_login::CredentialManager;
-use genex_model_provider::create_model_provider;
-use genex_model_provider::provider_contract;
+use genex_model_provider::SharedModelProvider;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
 use genex_protocol::models::ResponseItem;
@@ -27,6 +25,7 @@ use crate::thread_manager::thread_store_from_config;
 #[doc(hidden)]
 pub async fn build_prompt_input(
     mut config: Config,
+    provider: SharedModelProvider,
     input: Vec<UserInput>,
     state_db: Option<StateDbHandle>,
     extensions: Arc<ExtensionRegistry<Config>>,
@@ -34,10 +33,9 @@ pub async fn build_prompt_input(
 ) -> GenexResult<Vec<ResponseItem>> {
     config.ephemeral = true;
 
-    let credential_manager =
-        CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
-            .await
-            .map_err(|err| GenexErr::Fatal(err.to_string()))?;
+    let credential_manager = provider.credential_manager().ok_or_else(|| {
+        GenexErr::Fatal("prompt debug requires a provider-owned credential manager".to_string())
+    })?;
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
         config.genex_self_exe.clone(),
@@ -46,10 +44,6 @@ pub async fn build_prompt_input(
 
     let thread_store = thread_store_from_config(&config, state_db.clone());
     let installation_id = resolve_installation_id(&config.genex_home).await?;
-    let provider = provider_contract(create_model_provider(
-        config.model_provider.clone(),
-        Some(Arc::clone(&credential_manager)),
-    ));
     let thread_manager = ThreadManager::new(
         &config,
         Arc::clone(&credential_manager),

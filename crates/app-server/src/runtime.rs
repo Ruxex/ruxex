@@ -2,11 +2,16 @@
 
 use std::sync::Arc;
 
+use anyhow::Context;
+use genex_core::config::Config;
 use genex_login::CredentialManager;
 use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use genex_model_provider::ProviderDescriptor;
+use genex_model_provider::ProviderHomeError;
+use genex_model_provider::ProviderHomeMarker;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::mount_provider_home;
 use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 
@@ -35,6 +40,32 @@ impl AppServerRuntime {
 /// Constructs the shared provider/runtime state used by an AppServer.
 pub struct AppServerRuntimeBuilder {
     provider: SharedModelProvider,
+}
+
+/// Mounts the provider-scoped data root for a configured host provider.
+///
+/// This must run before the caller opens SQLite, sessions, caches, or credentials.
+pub fn mount_provider_home_for_config(
+    config: &Config,
+) -> Result<ProviderHomeMarker, ProviderHomeError> {
+    let descriptor = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
+    mount_provider_home(&config.genex_home, &descriptor)
+}
+
+/// Mounts the provider home and constructs the single runtime owned by a local host.
+pub async fn configured_app_server_runtime_from_config(
+    config: &Config,
+    enable_api_key_env: bool,
+) -> anyhow::Result<AppServerRuntime> {
+    mount_provider_home_for_config(config).context("failed to mount provider data root")?;
+    let credential_manager = CredentialManager::shared_from_config(config, enable_api_key_env)
+        .await
+        .context("failed to load provider credentials")?;
+    Ok(AppServerRuntimeBuilder::from_provider_info(
+        config.model_provider.clone(),
+        Some(credential_manager),
+    )
+    .build())
 }
 
 impl AppServerRuntimeBuilder {
@@ -106,5 +137,45 @@ mod tests {
             runtime.provider_descriptor(),
             runtime.provider().descriptor()
         );
+    }
+
+    #[tokio::test]
+    async fn config_home_mount_uses_the_configured_provider_descriptor() {
+        let temp = tempfile::tempdir().expect("temporary provider home");
+        let config = genex_core::config::ConfigBuilder::default()
+            .genex_home(temp.path().to_path_buf())
+            .build()
+            .await
+            .expect("config should build");
+        let expected = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
+
+        let marker =
+            mount_provider_home_for_config(&config).expect("configured provider home should mount");
+
+        assert_eq!(marker.provider_kind, expected.provider_kind);
+        assert_eq!(
+            marker.provider_protocol_version,
+            expected.provider_protocol_version
+        );
+    }
+
+    #[tokio::test]
+    async fn config_home_mount_rejects_a_mismatched_provider_marker() {
+        let temp = tempfile::tempdir().expect("temporary provider home");
+        let config = genex_core::config::ConfigBuilder::default()
+            .genex_home(temp.path().to_path_buf())
+            .build()
+            .await
+            .expect("config should build");
+        mount_provider_home(
+            temp.path(),
+            &ProviderDescriptor::new("different-provider", CURRENT_PROVIDER_PROTOCOL_VERSION),
+        )
+        .expect("fixture marker should be written");
+
+        assert!(matches!(
+            mount_provider_home_for_config(&config),
+            Err(ProviderHomeError::DescriptorMismatch { .. })
+        ));
     }
 }

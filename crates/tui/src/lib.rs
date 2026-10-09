@@ -29,13 +29,13 @@ use app_server_session::ThreadParamsMode;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 use genex_app_server_client::AppServerClient;
-use genex_app_server_client::AppServerRuntimeBuilder;
 use genex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 use genex_app_server_client::InProcessAppServerClient;
 use genex_app_server_client::InProcessClientStartArgs;
 use genex_app_server_client::RemoteAppServerClient;
 use genex_app_server_client::RemoteAppServerConnectArgs;
 pub use genex_app_server_client::RemoteAppServerEndpoint;
+use genex_app_server_client::configured_app_server_runtime_from_config;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::ConfigWarningNotification;
 use genex_app_server_protocol::GetAccountResponse;
@@ -56,7 +56,6 @@ use genex_features::Feature;
 use genex_login::default_client::originator;
 use genex_login::default_client::set_default_client_residency_requirement;
 use genex_login::enforce_login_restrictions;
-use genex_model_provider::mount_provider_home;
 use genex_protocol::ThreadId;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::AltScreenMode;
@@ -294,9 +293,7 @@ async fn init_state_db_for_app_server_target(
 ) -> std::io::Result<Option<StateDbHandle>> {
     match app_server_target {
         AppServerTarget::Embedded => {
-            let provider_descriptor =
-                AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
-            mount_provider_home(&config.genex_home, &provider_descriptor).map_err(|err| {
+            genex_app_server_client::mount_provider_home_for_config(config).map_err(|err| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
                     format!("failed to mount provider data root: {err}"),
@@ -573,6 +570,11 @@ where
             range: None,
         })
         .collect();
+    let runtime = configured_app_server_runtime_from_config(&config, false)
+        .await
+        .map_err(|err| {
+            color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
+        })?;
     let client = start_client(InProcessClientStartArgs {
         arg0_paths,
         config: Arc::new(config),
@@ -586,7 +588,7 @@ where
         session_source: serde_json::from_value(serde_json::json!("cli"))
             .unwrap_or_else(|err| panic!("cli session source should deserialize: {err}")),
         enable_api_key_env: false,
-        runtime: None,
+        runtime: Some(runtime),
         client_name: "genex-tui".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,

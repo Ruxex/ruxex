@@ -48,7 +48,7 @@ pub use genex_core::TurnInputRequest;
 pub use genex_core::TurnInputSubmission;
 pub use genex_core::TurnStartOptions;
 pub use genex_core::WaitForEnvironmentToolConfig;
-pub use genex_core::build_models_manager;
+pub use genex_core::build_models_manager_with_provider;
 pub use genex_core::config::Config;
 pub use genex_core::config::Constrained;
 pub use genex_core::config::ExtraConfig;

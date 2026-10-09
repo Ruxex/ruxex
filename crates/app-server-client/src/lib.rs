@@ -35,6 +35,8 @@ pub use genex_app_server::in_process::InProcessServerEvent;
 use genex_app_server::in_process::InProcessStartArgs;
 use genex_app_server::in_process::LogDbLayer;
 pub use genex_app_server::in_process::StateDbHandle;
+pub use genex_app_server::runtime::configured_app_server_runtime_from_config;
+pub use genex_app_server::runtime::mount_provider_home_for_config;
 use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::ClientNotification;
 use genex_app_server_protocol::ClientRequest;

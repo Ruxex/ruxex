@@ -6,8 +6,8 @@
 
 ### 残事項の実装結果
 
-AppServer の host 境界を再監査し、daemon・in-process・CLI credential lifecycle・TUI の
-provider-home 初期化・doctor の provider construction を `AppServerRuntimeBuilder` に統一した。
+AppServer の host 境界を再監査し、daemon・in-process・CLI credential lifecycle・TUI・Exec・
+fork/worktree・debug・doctor・plugin の provider-home 初期化を共通 helper に統一した。
 `AppServerRuntime` は `SharedModelProvider` を1つだけ保持し、`provider_runtime` と
 `provider_contract` の二重 accessor は廃止した。設定からの provider construction は
 `from_provider_info` に限定し、別 provider は別 runtime/data root で起動する。
@@ -52,6 +52,24 @@ AppServer の provider-neutral contract は `MessageProcessor` の生成境界�
 モデルカタログの cache identity と capability 判定は同じ契約ハンドルを共有する。
 モデル列挙の呼び出し自体は `ModelProvider::list_models` へ移し、既存の HTTP fetch は runtime adapter 内で
 provider-neutral な catalog/identity/ETag snapshot へ変換する。
+
+### 残事項の追加監査と解消 (2026-10-09)
+
+上記の完了記述後に、実際の到達経路を production source から再確認した結果、次の候補を別 wave として記録し、
+同じ wave で解消した。
+
+- `crates/exec/src/lib.rs::run_exec` と `crates/exec/src/worktree.rs::fork_source` は、
+  `InProcessClientStartArgs.runtime` が `None` のまま `genex_core::init_state_db` を先に呼ぶ。
+  marker 検証が SQLite 後になるため、**migrate-in-place** とし、runtime helper を先に呼ぶよう変更した。
+- `crates/cli/src/main.rs` の `debug models`、`crates/core/src/prompt_debug.rs`、
+  `crates/core/src/thread_manager.rs` の provider construction helper は、補助経路から
+  provider を再生成する producer である。CLI host で runtime を構築し、core は provider handle
+  を消費する形へ **migrate-in-place** とし、core の provider construction helper を削除した。
+- `crates/cli/src/doctor.rs` と `crates/cli/src/plugin_cmd.rs` は marker 検証前に
+  `CredentialManager` を読む。資格情報保護のため **migrate-in-place** とし、mount 後に読むよう変更した。
+
+実装後の production 再走査では、直接 provider construction は host runtime helper と test-only
+fixture に限定され、local startup の `runtime: None` と marker より前の state/credential 初期化は残っていない。
 Chat Completions の実行も `ModelProvider::chat` 経由へ移し、request construction と SSE stream の生成を
 runtime adapter に閉じ込めた。Responses HTTP も同じ契約経由で `ResponsesClient` を呼び出す形へ移し、
 core は移行途中の payload/header 組み立てとprovider-neutralなturn continuation stateだけを担う。

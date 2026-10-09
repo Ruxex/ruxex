@@ -1717,6 +1717,7 @@ dependencies = [
  "genex-hooks",
  "genex-http-client",
  "genex-login",
+ "genex-model-provider",
  "genex-model-provider-info",
  "genex-models-manager",
  "genex-protocol",

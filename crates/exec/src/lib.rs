@@ -59,6 +59,7 @@ use genex_app_server_client::InProcessAppServerClient;
 use genex_app_server_client::InProcessClientStartArgs;
 use genex_app_server_client::InProcessServerEvent;
 use genex_app_server_client::TypedRequestError;
+use genex_app_server_client::configured_app_server_runtime_from_config;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::ConfigWarningNotification;
 use genex_app_server_protocol::JSONRPCErrorError;
@@ -573,6 +574,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
     );
+    let runtime = configured_app_server_runtime_from_config(&config, true).await?;
     let state_db = genex_core::init_state_db(&config).await;
     let environment_manager = if run_loader_overrides.ignore_user_config {
         EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory())
@@ -597,7 +599,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         config_warnings,
         session_source: SessionSource::Exec,
         enable_api_key_env: true,
-        runtime: None,
+        runtime: Some(runtime),
         client_name: "genex_exec".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,

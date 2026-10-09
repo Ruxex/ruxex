@@ -463,10 +463,18 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
     })?;
     let channel_capacity = args.channel_capacity.max(1);
     let installation_id = resolve_installation_id(&args.config.genex_home).await?;
-    let configured_credential_manager =
-        CredentialManager::shared_from_config(args.config.as_ref(), args.enable_api_key_env)
-            .await
-            .map_err(IoError::other)?;
+    let configured_credential_manager = match args
+        .runtime
+        .as_ref()
+        .and_then(AppServerRuntime::credential_manager)
+    {
+        Some(credential_manager) => credential_manager,
+        None => {
+            CredentialManager::shared_from_config(args.config.as_ref(), args.enable_api_key_env)
+                .await
+                .map_err(IoError::other)?
+        }
+    };
     let runtime = args.runtime.unwrap_or_else(|| {
         configured_app_server_runtime(
             args.config.model_provider.clone(),

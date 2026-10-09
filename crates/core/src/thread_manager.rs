@@ -416,24 +416,6 @@ pub(crate) struct ThreadManagerState {
     ops_log: Option<SharedCapturedOps>,
 }
 
-pub fn build_models_manager(
-    config: &Config,
-    credential_manager: Arc<CredentialManager>,
-) -> SharedModelsManager {
-    let provider = build_model_provider(config, credential_manager);
-    build_models_manager_with_provider(config, provider)
-}
-
-pub fn build_model_provider(
-    config: &Config,
-    credential_manager: Arc<CredentialManager>,
-) -> SharedModelProvider {
-    provider_contract(create_model_provider(
-        config.model_provider.clone(),
-        Some(credential_manager),
-    ))
-}
-
 pub fn build_models_manager_with_provider(
     config: &Config,
     provider: SharedModelProvider,

@@ -2,6 +2,7 @@
 //! The temporary app-server never starts a thread or executes a turn.
 
 use super::*;
+use genex_app_server_client::configured_app_server_runtime_from_config;
 
 pub(super) async fn fork_source(
     args: &mut crate::cli::ForkArgs,
@@ -11,6 +12,7 @@ pub(super) async fn fork_source(
     loader_overrides: &LoaderOverrides,
     strict_config: bool,
 ) -> anyhow::Result<std::path::PathBuf> {
+    let runtime = configured_app_server_runtime_from_config(config, true).await?;
     let state_db = genex_core::init_state_db(config).await;
     let environment_manager = EnvironmentManager::from_genex_home(
         config.genex_home.clone(),
@@ -36,7 +38,7 @@ pub(super) async fn fork_source(
         config_warnings: Vec::new(),
         session_source: SessionSource::Exec,
         enable_api_key_env: true,
-        runtime: None,
+        runtime: Some(runtime),
         client_name: "genex_exec".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,

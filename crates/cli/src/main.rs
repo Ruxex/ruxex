@@ -3,6 +3,7 @@ use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::Shell;
 use clap_complete::generate;
+use genex_app_server::runtime::configured_app_server_runtime_from_config;
 use genex_app_server_daemon::BootstrapOptions as AppServerBootstrapOptions;
 use genex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
 use genex_arg0::Arg0DispatchPaths;
@@ -59,7 +60,7 @@ use doctor::DoctorCommand;
 use state_db_recovery as local_state_db;
 
 use genex_config::LoaderOverrides;
-use genex_core::build_models_manager;
+use genex_core::build_models_manager_with_provider;
 use genex_core::config::Config;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
@@ -70,7 +71,6 @@ use genex_features::FEATURES;
 use genex_features::Stage;
 use genex_features::is_known_feature_key;
 use genex_home::GenexHomeUserInstructionsProvider;
-use genex_login::CredentialManager;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_protocol::protocol::AskForApproval;
 use genex_protocol::user_input::UserInput;
@@ -1595,6 +1595,7 @@ async fn run_debug_prompt_input_command(
         .loader_overrides(loader_overrides)
         .build()
         .await?;
+    let runtime = configured_app_server_runtime_from_config(&config, false).await?;
 
     let mut input = shared
         .images
@@ -1626,6 +1627,7 @@ async fn run_debug_prompt_input_command(
     });
     let prompt_input = genex_core::build_prompt_input(
         config,
+        runtime.provider(),
         input,
         /*state_db*/ None,
         Arc::new(extensions.build()),
@@ -1648,9 +1650,8 @@ async fn run_debug_models_command(
         .cli_overrides(cli_overrides)
         .build()
         .await?;
-    let credential_manager =
-        CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ true).await?;
-    let models_manager = build_models_manager(&config, credential_manager);
+    let runtime = configured_app_server_runtime_from_config(&config, true).await?;
+    let models_manager = build_models_manager_with_provider(&config, runtime.provider());
     let catalog = models_manager
         .raw_model_catalog(
             RefreshStrategy::OnlineIfUncached,

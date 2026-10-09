@@ -25,6 +25,7 @@ genex-home = { workspace = true }
 genex-features = { workspace = true }
 genex-hooks = { workspace = true }
 genex-login = { workspace = true }
+genex-model-provider = { workspace = true }
 genex-model-provider-info = { workspace = true }
 genex-models-manager = { workspace = true }
 genex-protocol = { workspace = true }

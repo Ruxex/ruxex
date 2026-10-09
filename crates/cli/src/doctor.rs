@@ -32,6 +32,7 @@ use genex_api::ApiError;
 use genex_api::ResponsesWebsocketClient;
 use genex_api::is_azure_responses_provider;
 use genex_app_server::AppServerRuntimeBuilder;
+use genex_app_server::runtime::mount_provider_home_for_config;
 use genex_arg0::Arg0DispatchPaths;
 use genex_config::types::McpServerConfig;
 use genex_config::types::McpServerTransportConfig;
@@ -362,8 +363,14 @@ async fn build_report(
     }));
     match &config_result {
         Ok(config) => {
-            let credential_manager_result =
-                CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await;
+            let credential_manager_result = match mount_provider_home_for_config(config) {
+                Ok(_) => {
+                    CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true)
+                        .await
+                        .map_err(|err| err.to_string())
+                }
+                Err(err) => Err(format!("failed to mount provider data root: {err}")),
+            };
             let credential_manager = credential_manager_result.as_ref().ok().cloned();
             let reachability_plan = provider_reachability_plan(config);
             #[cfg(target_os = "macos")]

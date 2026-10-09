@@ -2,6 +2,7 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
 use clap::Parser;
+use genex_app_server::runtime::mount_provider_home_for_config;
 use genex_core::config::Config;
 use genex_core::config::find_genex_home;
 use genex_core::plugins_manager_for_config;
@@ -590,6 +591,7 @@ async fn load_plugin_command_context(
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
+    mount_provider_home_for_config(&config).context("failed to mount provider data root")?;
     let plugins_input = config.plugins_config_input();
     let credential_manager = load_cli_credential_manager(&config).await?;
     let manager = Arc::new(plugins_manager_for_config(

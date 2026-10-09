@@ -1,16 +1,19 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use core_test_support::responses::strip_metadata;
+use core_test_support::responses::strip_response_item_id;
 use genex_core::build_prompt_input;
 use genex_core::config::ConfigBuilder;
 use genex_core::config::ConfigOverrides;
 use genex_extension_api::ExtensionRegistryBuilder;
 use genex_home::GenexHomeUserInstructionsProvider;
+use genex_login::CredentialManager;
+use genex_model_provider::create_model_provider;
+use genex_model_provider::provider_contract;
 use genex_protocol::models::ContentItem;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::user_input::UserInput;
-use core_test_support::responses::strip_metadata;
-use core_test_support::responses::strip_response_item_id;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -33,8 +36,14 @@ async fn build_prompt_input_includes_context_and_user_message() -> Result<()> {
     let user_instructions_provider = Arc::new(GenexHomeUserInstructionsProvider::new(
         config.genex_home.clone(),
     ));
+    let credential_manager = CredentialManager::shared_from_config(&config, false).await?;
+    let provider = provider_contract(create_model_provider(
+        config.model_provider.clone(),
+        Some(credential_manager),
+    ));
     let input = build_prompt_input(
         config,
+        provider,
         vec![UserInput::Text {
             text: "hello from debug prompt".to_string(),
             text_elements: Vec::new(),
