@@ -7517,16 +7517,60 @@
     "ModelProviderCapabilitiesReadResponse": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
+        "apiKeyModelDiscovery": {
+          "type": "boolean"
+        },
+        "commandAuth": {
+          "type": "boolean"
+        },
+        "externalWebAccess": {
+          "type": "boolean"
+        },
+        "historyNotes": {
+          "type": "boolean"
+        },
+        "interactiveLogin": {
+          "type": "boolean"
+        },
+        "modelListing": {
+          "type": "boolean"
+        },
         "namespaceTools": {
+          "type": "boolean"
+        },
+        "remoteCompaction": {
+          "$ref": "#/definitions/RemoteCompactionSupport"
+        },
+        "standaloneWebSearch": {
+          "type": "boolean"
+        },
+        "streaming": {
+          "type": "boolean"
+        },
+        "usage": {
           "type": "boolean"
         },
         "webSearch": {
           "type": "boolean"
+        },
+        "websocket": {
+          "type": "boolean"
         }
       },
       "required": [
+        "apiKeyModelDiscovery",
+        "commandAuth",
+        "externalWebAccess",
+        "historyNotes",
+        "interactiveLogin",
+        "modelListing",
         "namespaceTools",
-        "webSearch"
+        "remoteCompaction",
+        "standaloneWebSearch",
+        "streaming",
+        "usage",
+        "webSearch",
+        "websocket"
       ],
       "title": "ModelProviderCapabilitiesReadResponse",
       "type": "object"
@@ -9568,6 +9612,13 @@
       ],
       "title": "ReasoningTextDeltaNotification",
       "type": "object"
+    },
+    "RemoteCompactionSupport": {
+      "enum": [
+        "unsupported",
+        "v2"
+      ],
+      "type": "string"
     },
     "RequestId": {
       "anyOf": [

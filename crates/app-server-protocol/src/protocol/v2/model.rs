@@ -43,9 +43,28 @@ pub struct ModelProviderCapabilitiesReadParams {}
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
+pub enum RemoteCompactionSupport {
+    Unsupported,
+    V2,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
 pub struct ModelProviderCapabilitiesReadResponse {
+    pub model_listing: bool,
+    pub api_key_model_discovery: bool,
+    pub command_auth: bool,
+    pub streaming: bool,
+    pub websocket: bool,
+    pub usage: bool,
+    pub interactive_login: bool,
     pub namespace_tools: bool,
     pub web_search: bool,
+    pub standalone_web_search: bool,
+    pub external_web_access: bool,
+    pub history_notes: bool,
+    pub remote_compaction: RemoteCompactionSupport,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema, TS)]

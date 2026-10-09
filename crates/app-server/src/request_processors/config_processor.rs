@@ -28,6 +28,7 @@ use genex_app_server_protocol::JSONRPCErrorError;
 use genex_app_server_protocol::ManagedHooksRequirements;
 use genex_app_server_protocol::ModelProviderAuthField;
 use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use genex_app_server_protocol::RemoteCompactionSupport;
 use genex_app_server_protocol::ModelProviderReadResponse;
 use genex_app_server_protocol::ModelsRequirements;
 use genex_app_server_protocol::NetworkDomainPermission;
@@ -165,8 +166,24 @@ impl ConfigRequestProcessor {
         let provider = self.thread_manager.model_provider();
         let capabilities = provider.capabilities();
         Ok(ModelProviderCapabilitiesReadResponse {
+            model_listing: capabilities.model_listing,
+            api_key_model_discovery: capabilities.api_key_model_discovery,
+            command_auth: capabilities.command_auth,
+            streaming: capabilities.streaming,
+            websocket: capabilities.websocket,
+            usage: capabilities.usage,
+            interactive_login: capabilities.interactive_login,
             namespace_tools: capabilities.namespace_tools,
             web_search: capabilities.web_search,
+            standalone_web_search: capabilities.standalone_web_search,
+            external_web_access: capabilities.external_web_access,
+            history_notes: capabilities.history_notes,
+            remote_compaction: match capabilities.remote_compaction {
+                genex_model_provider::RemoteCompactionSupport::Unsupported => {
+                    RemoteCompactionSupport::Unsupported
+                }
+                genex_model_provider::RemoteCompactionSupport::V2 => RemoteCompactionSupport::V2,
+            },
         })
     }
 
