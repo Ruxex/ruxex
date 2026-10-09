@@ -420,7 +420,6 @@ fn session_configured_event(model: &str) -> ThreadSessionState {
         fork_parent_title: None,
         thread_name: None,
         model: model.to_string(),
-        model_provider_id: "test-provider".to_string(),
         service_tier: None,
         approval_policy: AskForApproval::Never,
         approvals_reviewer: genex_protocol::config_types::ApprovalsReviewer::User,

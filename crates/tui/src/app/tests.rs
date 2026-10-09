@@ -1958,7 +1958,6 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
             originator: "genex-tui-test".to_string(),
             cli_version: "0.0.0".to_string(),
             source: RolloutSessionSource::Cli,
-            model_provider: Some(app.config.model_provider_id.clone()),
             multi_agent_version: Some(MultiAgentVersion::V2),
             ..SessionMeta::default()
         };
@@ -1995,7 +1994,6 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
                     agent_nickname: Some(format!("child-{index}")),
                     agent_role: Some("worker".to_string()),
                 }),
-                model_provider: Some(app.config.model_provider_id.clone()),
                 multi_agent_version: Some(multi_agent_version),
                 ..SessionMeta::default()
             };
@@ -3611,7 +3609,6 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
                 project_id: None,
                 daybreak_enabled: None,
                 history_mode: Default::default(),
-                model_provider: "agent-provider".to_string(),
                 model: Some("model-agent".to_string()),
                 reasoning_effort: None,
                 created_at: 1,
@@ -3648,7 +3645,6 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
     assert_eq!(session.windows_sandbox_host, WindowsSandboxHost::Remote);
     assert_eq!(session.thread_name, Some("agent thread".to_string()));
     assert_eq!(session.model, "model-agent");
-    assert_eq!(session.model_provider_id, "agent-provider");
     assert_eq!(session.approval_policy, primary_session.approval_policy);
     assert_eq!(session.cwd.as_path(), test_path_buf("/tmp/agent").as_path());
     assert_eq!(
@@ -3716,7 +3712,6 @@ async fn inactive_thread_started_notification_preserves_primary_model_when_path_
                 project_id: None,
                 daybreak_enabled: None,
                 history_mode: Default::default(),
-                model_provider: "agent-provider".to_string(),
                 model: None,
                 reasoning_effort: None,
                 created_at: 1,
@@ -4588,7 +4583,6 @@ async fn render_clear_ui_header_after_long_transcript_for_snapshot() -> String {
             fork_parent_title: None,
             thread_name: None,
             model: "model-test".to_string(),
-            model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
             approvals_reviewer: ApprovalsReviewer::User,
@@ -5074,7 +5068,6 @@ fn test_thread_session(thread_id: ThreadId, cwd: PathBuf) -> ThreadSessionState 
         fork_parent_title: None,
         thread_name: None,
         model: "model-test".to_string(),
-        model_provider_id: "test-provider".to_string(),
         service_tier: None,
         approval_policy: AskForApproval::Never,
         approvals_reviewer: ApprovalsReviewer::User,
@@ -5695,7 +5688,6 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
             fork_parent_title: None,
             thread_name: None,
             model: "model-test".to_string(),
-            model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
             approvals_reviewer: ApprovalsReviewer::User,
@@ -5766,7 +5758,6 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
             fork_parent_title: None,
             thread_name: None,
             model: "model-test".to_string(),
-            model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
             approvals_reviewer: ApprovalsReviewer::User,
@@ -6820,7 +6811,6 @@ async fn new_session_requests_shutdown_for_previous_conversation() {
             fork_parent_title: None,
             thread_name: None,
             model: "model-test".to_string(),
-            model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
             approvals_reviewer: ApprovalsReviewer::User,
@@ -7498,7 +7488,6 @@ async fn inactive_thread_settings_notification_updates_cached_collaboration_mode
                 genex_app_server_protocol::ActivePermissionProfile::read_only(),
             ),
             model: "model-plan".to_string(),
-            model_provider: "provider".to_string(),
             service_tier: None,
             effort: collaboration_mode.settings.reasoning_effort.clone(),
             summary: None,
@@ -7557,7 +7546,6 @@ async fn clear_only_ui_reset_preserves_chat_session_state() {
             fork_parent_title: None,
             thread_name: Some("keep me".to_string()),
             model: "model-test".to_string(),
-            model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
             approvals_reviewer: ApprovalsReviewer::User,

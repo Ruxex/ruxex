@@ -142,7 +142,6 @@ async fn thread_read_returns_summary_without_turns() -> Result<()> {
 
     assert_eq!(thread.id, conversation_id);
     assert_eq!(thread.preview, preview);
-    assert_eq!(thread.model_provider, "mock_provider");
     assert!(!thread.ephemeral, "stored rollouts should not be ephemeral");
     assert!(thread.path.as_ref().expect("thread path").is_absolute());
     assert_eq!(thread.cwd, test_absolute_path("/"));
@@ -569,7 +568,6 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
         LocalThreadStoreConfig {
             genex_home: genex_home.path().to_path_buf(),
             sqlite,
-            default_model_provider_id: "mock_provider".to_string(),
         },
         Some(state_db),
     );
@@ -1613,7 +1611,6 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
         LocalThreadStoreConfig {
             genex_home: genex_home.path().to_path_buf(),
             sqlite,
-            default_model_provider_id: "mock_provider".to_string(),
         },
         Some(state_db),
     );

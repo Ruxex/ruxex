@@ -83,11 +83,11 @@ fn is_exec_policy_config_warning(notification: &JSONRPCNotification) -> bool {
 async fn start_thread_with_model(
     mcp: &mut TestAppServer,
     model: &str,
-    allow_provider_model_fallback: bool,
+    allow_model_fallback: bool,
 ) -> Result<ThreadStartResponse> {
     mcp.start_thread(ThreadStartParams {
         model: Some(model.to_string()),
-        allow_provider_model_fallback,
+        allow_model_fallback,
         ..Default::default()
     })
     .await
@@ -210,7 +210,7 @@ async fn thread_start_provider_model_fallback_ignores_dynamic_catalog() -> Resul
     let response = start_thread_with_model(
         &mut mcp,
         "unlisted-dynamic-model",
-        /*allow_provider_model_fallback*/ true,
+        /*allow_model_fallback*/ true,
     )
     .await?;
 
@@ -254,11 +254,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
     )
     .await??;
     let resp_result = resp.result.clone();
-    let ThreadStartResponse {
-        thread,
-        model_provider,
-        ..
-    } = to_response::<ThreadStartResponse>(resp)?;
+    let ThreadStartResponse { thread, .. } = to_response::<ThreadStartResponse>(resp)?;
     assert!(
         !thread.session_id.is_empty(),
         "session id should not be empty"
@@ -268,7 +264,6 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
         thread.preview.is_empty(),
         "new threads should start with an empty preview"
     );
-    assert_eq!(model_provider, "mock_provider");
     assert_eq!(
         (thread.model.as_deref(), thread.reasoning_effort.clone()),
         (Some("example-model-2"), Some(ReasoningEffort::High))

@@ -8,7 +8,7 @@ Chat Completions 経路の、現行ソースに基づく実装マップです。
 ## 全体フロー
 
 ```text
-model_providers.<name>.wire_api = "chat"
+[model_provider].wire_api = "chat"
   -> genex-core::ModelClient::stream_chat_completions
   -> ChatRequestBuilder
   -> ChatClient::stream

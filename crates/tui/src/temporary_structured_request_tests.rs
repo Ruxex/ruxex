@@ -84,12 +84,10 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
     assert_eq!(
         (
             response.active_permission_profile.map(|profile| profile.id),
-            response.model_provider,
             response.thread.ephemeral,
         ),
         (
             Some("title-restricted".to_string()),
-            config.model_provider_id,
             true,
         )
     );

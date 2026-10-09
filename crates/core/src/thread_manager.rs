@@ -257,7 +257,7 @@ pub struct StartThreadOptions {
     /// and reuses the existing provider without loading it; normal model-request
     /// boundaries load its latest instructions.
     pub thread_instructions_provider: Option<Arc<dyn ThreadInstructionsProvider>>,
-    pub allow_provider_model_fallback: bool,
+    pub allow_model_fallback: bool,
     pub initial_history: InitialHistory,
     /// Parent captured for `start_thread`, including a parent not in the live registry.
     pub internal_parent: Option<InternalSessionParent>,
@@ -285,7 +285,7 @@ impl StartThreadOptions {
         Self {
             config,
             thread_instructions_provider: None,
-            allow_provider_model_fallback: false,
+            allow_model_fallback: false,
             initial_history: InitialHistory::New,
             internal_parent: None,
             history_mode: None,
@@ -702,10 +702,7 @@ impl ThreadManager {
             state_db.clone(),
         ));
         let agent_graph_store = local_agent_graph_store_from_state_db(state_db.as_ref());
-        let provider = create_model_provider(
-            provider,
-            Some(credential_manager.clone()),
-        );
+        let provider = create_model_provider(provider, Some(credential_manager.clone()));
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),
@@ -2018,7 +2015,7 @@ impl ThreadManagerState {
         let StartThreadOptions {
             mut config,
             thread_instructions_provider,
-            allow_provider_model_fallback,
+            allow_model_fallback,
             initial_history,
             internal_parent: _,
             history_mode,
@@ -2158,7 +2155,7 @@ impl ThreadManagerState {
         let (session, io) = Session::spawn(SessionSpawnArgs {
             startup,
             config,
-            allow_provider_model_fallback,
+            allow_model_fallback,
             instructions,
             installation_id: self.installation_id.clone(),
             credential_manager,

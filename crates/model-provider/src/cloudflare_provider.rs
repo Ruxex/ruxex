@@ -199,14 +199,9 @@ impl ProviderRuntime for CloudflareModelProvider {
     }
 
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
-        Box::pin(async move {
-            provider_auth(
-                self.credential_manager.as_ref(),
-                None,
-                &self.info,
-            )
-            .await
-        })
+        Box::pin(
+            async move { provider_auth(self.credential_manager.as_ref(), None, &self.info).await },
+        )
     }
 
     fn account_state(&self) -> ProviderAccountResult {
@@ -240,10 +235,6 @@ impl ProviderRuntime for CloudflareModelProvider {
             self.effective_info(self.chat_base_url()?)
                 .to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))
         })
-    }
-
-    fn runtime_base_url(&self) -> ModelProviderFuture<'_, CoreResult<Option<String>>> {
-        Box::pin(async move { Ok(Some(self.chat_base_url()?)) })
     }
 
     fn api_auth(&self) -> ModelProviderFuture<'_, CoreResult<SharedAuthProvider>> {

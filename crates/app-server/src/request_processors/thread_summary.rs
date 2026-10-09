@@ -6,10 +6,7 @@ use chrono::Utc;
 use genex_protocol::config_types::MultiAgentMode;
 
 #[cfg(test)]
-pub(crate) async fn read_summary_from_rollout(
-    path: &Path,
-    fallback_provider: &str,
-) -> std::io::Result<ConversationSummary> {
+pub(crate) async fn read_summary_from_rollout(path: &Path) -> std::io::Result<ConversationSummary> {
     let head = read_head_for_summary(path).await?;
 
     let Some(first) = head.first() else {
@@ -48,7 +45,6 @@ pub(crate) async fn read_summary_from_rollout(
         &head,
         &session_meta,
         git.as_ref(),
-        fallback_provider,
         updated_at.clone(),
     ) {
         return Ok(summary);
@@ -59,7 +55,6 @@ pub(crate) async fn read_summary_from_rollout(
     } else {
         Some(session_meta.timestamp.clone())
     };
-    let model_provider = fallback_provider.to_string();
     let git_info = git.as_ref().map(map_git_info);
     let updated_at = updated_at.or_else(|| timestamp.clone());
 
@@ -69,7 +64,6 @@ pub(crate) async fn read_summary_from_rollout(
         updated_at,
         path: path.to_path_buf(),
         preview: String::new(),
-        model_provider,
         cwd: session_meta.cwd,
         cli_version: session_meta.cli_version,
         source: session_meta.source,
@@ -83,7 +77,6 @@ fn extract_conversation_summary(
     head: &[serde_json::Value],
     session_meta: &SessionMeta,
     git: Option<&CoreGitInfo>,
-    fallback_provider: &str,
     updated_at: Option<String>,
 ) -> Option<ConversationSummary> {
     let preview = head
@@ -102,7 +95,6 @@ fn extract_conversation_summary(
         Some(session_meta.timestamp.clone())
     };
     let conversation_id = session_meta.id;
-    let model_provider = fallback_provider.to_string();
     let git_info = git.map(map_git_info);
     let updated_at = updated_at.or_else(|| timestamp.clone());
 
@@ -112,7 +104,6 @@ fn extract_conversation_summary(
         updated_at,
         path,
         preview: preview.to_string(),
-        model_provider,
         cwd: session_meta.cwd.clone(),
         cli_version: session_meta.cli_version.clone(),
         source: session_meta.source.clone(),
@@ -178,7 +169,6 @@ pub(crate) fn thread_settings_from_config_snapshot(
             config_snapshot.active_permission_profile.clone(),
         ),
         model: config_snapshot.model.clone(),
-        model_provider: config_snapshot.model_provider_id.clone(),
         service_tier: config_snapshot.service_tier.clone(),
         effort: config_snapshot.reasoning_effort.clone(),
         summary: config_snapshot.reasoning_summary,
@@ -225,7 +215,6 @@ pub(crate) fn summary_to_thread(
         preview,
         timestamp,
         updated_at,
-        model_provider,
         cwd,
         cli_version,
         source,
@@ -265,7 +254,6 @@ pub(crate) fn summary_to_thread(
         section_entered_at: None,
         project_id: None,
         history_mode: ThreadHistoryMode::Paginated,
-        model_provider,
         created_at: created_at.map(|dt| dt.timestamp()).unwrap_or(0),
         model: None,
         reasoning_effort: None,

@@ -579,6 +579,7 @@ pub struct Config {
     pub model_auto_compact_token_limit_scope: AutoCompactTokenLimitScope,
 
     /// Stable identifier for the single provider mounted by this runtime.
+    /// This is host/runtime status, never a thread or turn selector.
     pub model_provider_id: String,
 
     /// Info needed to make an API request to the model.

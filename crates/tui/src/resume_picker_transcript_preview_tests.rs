@@ -343,7 +343,6 @@ async fn transcript_preview_for_history_mode(
             request_id: RequestId::String(String::from("preview-thread-start")),
             params: ThreadStartParams {
                 model: Some(String::from("mock-model")),
-                model_provider: Some(String::from("mock_provider")),
                 cwd: Some(genex_home.path().display().to_string()),
                 history_mode: Some(history_mode),
                 ..Default::default()

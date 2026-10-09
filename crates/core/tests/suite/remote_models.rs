@@ -1271,7 +1271,7 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
         Duration::from_secs(7),
         manager.get_default_model(
             &None,
-            /*allow_provider_model_fallback*/ false,
+            /*allow_model_fallback*/ false,
             RefreshStrategy::OnlineIfUncached,
             genex_core::test_support::default_http_client_factory(),
         ),
@@ -1341,7 +1341,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     let selected = manager
         .get_default_model(
             &None,
-            /*allow_provider_model_fallback*/ false,
+            /*allow_model_fallback*/ false,
             RefreshStrategy::OnlineIfUncached,
             genex_core::test_support::default_http_client_factory(),
         )

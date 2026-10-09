@@ -89,11 +89,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         Some(Arc::clone(&credential_manager)),
     );
     let mut builder = ExtensionRegistryBuilder::<Config>::new();
-    install(
-        &mut builder,
-        credential_manager,
-        provider,
-    );
+    install(&mut builder, credential_manager, provider);
     let registry = builder.build();
     let session_store = ExtensionData::new("session-123");
     let thread_store = ExtensionData::new("thread-123");
@@ -393,11 +389,7 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
             config.model_provider.clone(),
             Some(Arc::clone(&credential_manager)),
         );
-        install(
-            &mut builder,
-            credential_manager,
-            model_provider,
-        );
+        install(&mut builder, credential_manager, model_provider);
         let registry = builder.build();
         let session_store = ExtensionData::new("session-123");
         let thread_store = ExtensionData::new("thread-123");

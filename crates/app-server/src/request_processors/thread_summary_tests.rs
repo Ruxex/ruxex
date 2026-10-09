@@ -46,7 +46,6 @@ fn extract_conversation_summary_prefers_plain_user_messages() -> Result<()> {
         &head,
         &session_meta,
         /*git*/ None,
-        "test-provider",
         timestamp.clone(),
     )
     .expect("summary");
@@ -57,7 +56,6 @@ fn extract_conversation_summary_prefers_plain_user_messages() -> Result<()> {
         updated_at: timestamp,
         path,
         preview: "Count to 5".to_string(),
-        model_provider: "test-provider".to_string(),
         cwd: PathBuf::from("/"),
         cli_version: "0.0.0".to_string(),
         source: genex_protocol::protocol::SessionSource::VSCode,

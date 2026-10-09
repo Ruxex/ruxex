@@ -2052,6 +2052,7 @@ async fn websocket_reachability_check(
             thread_id: None,
             extra_headers: BTreeMap::new(),
             default_headers: neutral_headers(default_headers()),
+            credential_snapshot: Some(snapshot.credential_snapshot.clone()),
             telemetry: None,
         }),
     )

@@ -397,7 +397,7 @@ async fn static_manager_preserves_supported_requested_model_when_fallback_is_all
     let model = manager
         .get_default_model(
             &requested_model,
-            /*allow_provider_model_fallback*/ true,
+            /*allow_model_fallback*/ true,
             RefreshStrategy::Offline,
             DEFAULT_HTTP_CLIENT_FACTORY,
         )
@@ -419,7 +419,7 @@ async fn static_manager_falls_back_from_unsupported_requested_model_when_allowed
     let model = manager
         .get_default_model(
             &requested_model,
-            /*allow_provider_model_fallback*/ true,
+            /*allow_model_fallback*/ true,
             RefreshStrategy::Offline,
             DEFAULT_HTTP_CLIENT_FACTORY,
         )
@@ -442,7 +442,7 @@ async fn static_manager_preserves_unsupported_requested_model_when_fallback_is_d
     let model = manager
         .get_default_model(
             &requested_model,
-            /*allow_provider_model_fallback*/ false,
+            /*allow_model_fallback*/ false,
             RefreshStrategy::Offline,
             DEFAULT_HTTP_CLIENT_FACTORY,
         )
@@ -459,7 +459,7 @@ async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_
     let model = manager
         .get_default_model(
             &requested_model,
-            /*allow_provider_model_fallback*/ true,
+            /*allow_model_fallback*/ true,
             RefreshStrategy::Offline,
             DEFAULT_HTTP_CLIENT_FACTORY,
         )
@@ -478,7 +478,7 @@ async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
     let model = manager
         .get_default_model(
             &requested_model,
-            /*allow_provider_model_fallback*/ true,
+            /*allow_model_fallback*/ true,
             RefreshStrategy::Online,
             DEFAULT_HTTP_CLIENT_FACTORY,
         )

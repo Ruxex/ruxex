@@ -12392,7 +12392,7 @@
         "type": "string"
       },
       "ProviderAuthStatus": {
-        "description": "Authentication state for the currently selected model provider.",
+        "description": "Authentication state for the mounted model provider.",
         "oneOf": [
           {
             "description": "The provider has usable credentials.",
@@ -15062,10 +15062,6 @@
               "null"
             ]
           },
-          "modelProvider": {
-            "description": "Mounted provider reported by the AppServer (for example, 'provider'). This is status only; it is not a persisted or per-thread selection.",
-            "type": "string"
-          },
           "name": {
             "description": "Optional user-facing thread title.",
             "type": [
@@ -15195,7 +15191,6 @@
           "cwd",
           "ephemeral",
           "id",
-          "modelProvider",
           "preview",
           "projectId",
           "sessionId",
@@ -15653,10 +15648,6 @@
           "model": {
             "type": "string"
           },
-          "modelProvider": {
-            "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
-            "type": "string"
-          },
           "reasoningEffort": {
             "anyOf": [
               {
@@ -15689,7 +15680,6 @@
           "approvalPolicy",
           "cwd",
           "model",
-          "modelProvider",
           "sandbox",
           "thread"
         ],
@@ -17352,10 +17342,6 @@
           "model": {
             "type": "string"
           },
-          "modelProvider": {
-            "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
-            "type": "string"
-          },
           "reasoningEffort": {
             "anyOf": [
               {
@@ -17396,7 +17382,6 @@
           "approvalPolicy",
           "cwd",
           "model",
-          "modelProvider",
           "sandbox",
           "thread"
         ],
@@ -17791,10 +17776,6 @@
           "model": {
             "type": "string"
           },
-          "modelProvider": {
-            "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
-            "type": "string"
-          },
           "sandboxPolicy": {
             "$ref": "#/definitions/v2/SandboxPolicy"
           },
@@ -17820,7 +17801,6 @@
           "collaborationMode",
           "cwd",
           "model",
-          "modelProvider",
           "sandboxPolicy"
         ],
         "type": "object"
@@ -18026,10 +18006,6 @@
           "model": {
             "type": "string"
           },
-          "modelProvider": {
-            "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
-            "type": "string"
-          },
           "reasoningEffort": {
             "anyOf": [
               {
@@ -18062,7 +18038,6 @@
           "approvalPolicy",
           "cwd",
           "model",
-          "modelProvider",
           "sandbox",
           "thread"
         ],

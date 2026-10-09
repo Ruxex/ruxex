@@ -167,6 +167,7 @@ struct CurrentClientSetup {
     auth: ProviderRequestAuth,
     auth_owner_generation: Option<u64>,
     connection_key: ProviderConnectionKey,
+    credential_snapshot: genex_model_provider::SharedProviderCredentialSnapshot,
 }
 
 #[derive(Clone, Copy)]
@@ -740,6 +741,7 @@ impl ModelClient {
                 extra_headers: std::collections::BTreeMap::new(),
                 compression: genex_model_provider::ProviderRequestCompression::None,
                 turn_state: None,
+                credential_snapshot: None,
             },
         };
         Ok(request)
@@ -800,6 +802,7 @@ impl ModelClient {
             auth_owner_generation: snapshot.auth.owner_generation,
             auth: snapshot.auth,
             connection_key: snapshot.connection_key,
+            credential_snapshot: snapshot.credential_snapshot,
         })
     }
 
@@ -848,6 +851,7 @@ impl ModelClient {
         auth_context: AuthRequestTelemetryContext,
         request_route_telemetry: RequestRouteTelemetry,
         responses_headers: &ApiHeaderMap,
+        credential_snapshot: genex_model_provider::SharedProviderCredentialSnapshot,
     ) -> genex_model_provider::ProviderResult<SharedProviderWebsocketConnection> {
         let mut headers = self.build_websocket_headers(responses_metadata).await;
         headers.extend(responses_headers.clone());
@@ -870,6 +874,7 @@ impl ModelClient {
                         default_headers: neutral_headers(
                             genex_login::default_client::default_headers(),
                         ),
+                        credential_snapshot: Some(credential_snapshot),
                         telemetry: Some(websocket_telemetry),
                     }),
             )
@@ -1088,6 +1093,7 @@ impl ModelClientSession {
             auth_context,
             request_route_telemetry: RequestRouteTelemetry::for_endpoint("/responses"),
             responses_headers: &responses_headers,
+            credential_snapshot: client_setup.credential_snapshot.clone(),
         })
         .await
         .map_err(provider_error_to_genex_error)?;
@@ -1118,6 +1124,7 @@ impl ModelClientSession {
             auth_context,
             request_route_telemetry,
             responses_headers,
+            credential_snapshot,
         } = params;
         let reset_reason = match self.websocket_session.connection.as_ref() {
             Some(_)
@@ -1154,6 +1161,7 @@ impl ModelClientSession {
                     auth_context,
                     request_route_telemetry,
                     responses_headers,
+                    credential_snapshot,
                 )
                 .await?;
             self.websocket_session.connection = Some(new_conn);
@@ -1204,7 +1212,7 @@ impl ModelClientSession {
     ) -> Result<ResponseStream> {
         // Admit the turn before constructing the provider request. The provider owns the
         // private credential snapshot; this neutral setup remains fixed for the session.
-        let _client_setup = self.client_setup().await?;
+        let client_setup = self.client_setup().await?;
         if prompt.output_schema.is_some() {
             return Err(genex_protocol::error::GenexErr::UnsupportedOperation(
                 "output_schema is not supported for Chat Completions API".to_string(),
@@ -1238,6 +1246,7 @@ impl ModelClientSession {
                 extra_headers: std::collections::BTreeMap::new(),
                 compression: genex_model_provider::ProviderRequestCompression::None,
                 turn_state: None,
+                credential_snapshot: Some(client_setup.credential_snapshot.clone()),
             },
         };
         let provider_stream = self
@@ -1336,6 +1345,7 @@ impl ModelClientSession {
                     extra_headers: neutral_headers(options.extra_headers),
                     compression: options.compression,
                     turn_state: options.turn_state,
+                    credential_snapshot: Some(client_setup.credential_snapshot.clone()),
                 },
                 ..request
             };
@@ -1437,6 +1447,7 @@ impl ModelClientSession {
                     auth_context: request_auth_context,
                     request_route_telemetry: RequestRouteTelemetry::for_endpoint("/responses"),
                     responses_headers: &responses_headers,
+                    credential_snapshot: client_setup.credential_snapshot.clone(),
                 })
                 .await
             {
@@ -2109,6 +2120,7 @@ struct WebsocketConnectParams<'a> {
     auth_context: AuthRequestTelemetryContext,
     request_route_telemetry: RequestRouteTelemetry,
     responses_headers: &'a ApiHeaderMap,
+    credential_snapshot: genex_model_provider::SharedProviderCredentialSnapshot,
 }
 
 fn emit_auth_recovery_event(

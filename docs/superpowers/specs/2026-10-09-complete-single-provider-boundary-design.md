@@ -44,7 +44,7 @@ usage/auth/rate-limit stateはProvider-neutralな`ProviderAuthStatus`、`Provide
 
 ### 4. Persistence and documentation
 
-SQLiteのProvider routing column削除済み状態を維持する。APIの`model_provider`/`provider_id`はmounted-provider status responseに限り保持し、request selector・thread settings mutation・永続routingには使わない。TUI session logはProvider routing fieldsを出力しない。
+SQLiteのProvider routing column削除済み状態を維持する。`provider_id` は専用のmounted-provider/account status responseに限り保持し、Thread/ThreadSettings/ThreadStart/Resume/Fork response、request selector、thread settings mutation、永続routingには使わない。TUI session logはProvider routing fieldsを出力しない。
 
 互換性台帳には各残存項目の`remove`、`retain`、`migrate-in-place`とproducer/consumer根拠を記録する。完了した実装計画のcheckbox、候補キュー、仕様書の状態を同期する。
 

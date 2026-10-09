@@ -2493,7 +2493,6 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
 
     assert_eq!(thread.id, conversation_id);
     assert_eq!(thread.preview, preview);
-    assert_eq!(thread.model_provider, "mock_provider");
     assert!(thread.path.as_ref().expect("thread path").is_absolute());
     assert_eq!(thread.cwd.as_path(), cwd.as_path());
     assert_eq!(cwd, test_absolute_path("/"));
@@ -5704,13 +5703,9 @@ async fn thread_resume_supports_history_and_overrides() -> Result<()> {
             ..Default::default()
         })
         .await?;
-    let ThreadResumeResponse {
-        thread: resumed,
-        model_provider,
-        ..
-    } = timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(resume_id)).await??;
+    let ThreadResumeResponse { thread: resumed, .. } =
+        timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(resume_id)).await??;
     assert!(!resumed.id.is_empty());
-    assert_eq!(model_provider, "mock_provider");
     assert_eq!(resumed.preview, history_text);
     assert_eq!(resumed.status, ThreadStatus::Idle);
 

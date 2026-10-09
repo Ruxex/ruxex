@@ -79,7 +79,7 @@ pub(crate) async fn run_genex_thread_interactive(
     let (session, io) = Session::spawn(SessionSpawnArgs {
         startup: None,
         config,
-        allow_provider_model_fallback: false,
+        allow_model_fallback: false,
         instructions,
         installation_id: parent_session.installation_id.clone(),
         credential_manager,

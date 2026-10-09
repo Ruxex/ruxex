@@ -1,6 +1,8 @@
 # Finish Single-Provider Boundary Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **状態 (2026-10-09): 完了確認済み。** この計画の実装項目は単一Provider境界の監査・実装波で完了し、残差は `2026-10-09-close-single-provider-residuals.md` と互換性台帳に記録しています。以下のチェックリストは完了記録です。
 
 **Goal:** 完了ゲートに残る公開 adapter、capability protocol、認証 provider ID、互換性文書、Remote TUI 境界を単一 provider 設計に揃える。
 
@@ -41,11 +43,11 @@
 - Produces public `create_model_provider*` functions returning `SharedModelProvider`.
 - Keeps `ProviderRuntime`, `ProviderApi`, `SharedProviderRuntime`, and `provider_contract` private to the adapter crate.
 
-- [ ] Write a compile-level test/use site assigning the factory result directly to `SharedModelProvider`.
-- [ ] Run `just check --tests` and confirm the old return type/API causes the intended compile failure.
-- [ ] Change the factory to return the provider-neutral shared handle and update consumers to remove adapter wrapping.
-- [ ] Remove legacy adapter re-exports and keep concrete adapter internals crate-private.
-- [ ] Run `just check --tests` and verify all workspace test targets compile.
+- [x] Write a compile-level test/use site assigning the factory result directly to `SharedModelProvider`.
+- [x] Run `just check --tests` and confirm the old return type/API causes the intended compile failure.
+- [x] Change the factory to return the provider-neutral shared handle and update consumers to remove adapter wrapping.
+- [x] Remove legacy adapter re-exports and keep concrete adapter internals crate-private.
+- [x] Run `just check --tests` and verify all workspace test targets compile.
 
 ### Task 2: Complete capability protocol
 
@@ -58,10 +60,10 @@
 **Interfaces:**
 - `ModelProviderCapabilitiesReadResponse` mirrors all provider-neutral capability fields, including explicit remote-compaction support.
 
-- [ ] Add a protocol-level construction/use that requires every capability field.
-- [ ] Run `just check --tests` and observe the missing-field failure.
-- [ ] Add the full response mapping with explicit unsupported values and update generated schemas through `just generate`.
-- [ ] Run `just check --tests` and `just generate`; inspect generated diff.
+- [x] Add a protocol-level construction/use that requires every capability field.
+- [x] Run `just check --tests` and observe the missing-field failure.
+- [x] Add the full response mapping with explicit unsupported values and update generated schemas through `just generate`.
+- [x] Run `just check --tests` and `just generate`; inspect generated diff.
 
 ### Task 3: Single-provider credential API
 
@@ -78,10 +80,10 @@
 - `CredentialManager::{auth,login,delete,logout}` operate on the mounted provider context.
 - Provider identity remains only in descriptor/marker validation and does not route credential records.
 
-- [ ] Add/update tests asserting flat auth helpers have no provider-keyed operation and mismatched provider targeting is impossible at the API boundary.
-- [ ] Run `just check --tests` and observe failures from the old signatures/callers.
-- [ ] Remove provider-targeting arguments and selection-shaped manager methods; update provider adapter calls.
-- [ ] Run `just check --tests` and verify auth lifecycle consumers compile.
+- [x] Add/update tests asserting flat auth helpers have no provider-keyed operation and mismatched provider targeting is impossible at the API boundary.
+- [x] Run `just check --tests` and observe failures from the old signatures/callers.
+- [x] Remove provider-targeting arguments and selection-shaped manager methods; update provider adapter calls.
+- [x] Run `just check --tests` and verify auth lifecycle consumers compile.
 
 ### Task 4: Documentation and Remote TUI boundary
 
@@ -95,15 +97,15 @@
 - Compatibility inventory records current `remove`/`retain`/`migrate-in-place` decisions without obsolete provider-switch claims.
 - Remote TUI explicitly documents that local state is client-owned and provider-home marker validation belongs to the owning AppServer.
 
-- [ ] Add a focused assertion/comment fixture for the Remote target ownership rule.
-- [ ] Run the repository checks to establish the documentation/code expectation.
-- [ ] Synchronize stale audit rows and add the Remote ownership explanation without changing the deliberate remote behavior.
-- [ ] Run `just check`, `just check --tests`, `just generate`, `git diff --check`, and inspect all changes.
+- [x] Add a focused assertion/comment fixture for the Remote target ownership rule.
+- [x] Run the repository checks to establish the documentation/code expectation.
+- [x] Synchronize stale audit rows and add the Remote ownership explanation without changing the deliberate remote behavior.
+- [x] Run `just check`, `just check --tests`, `just generate`, `git diff --check`, and inspect all changes.
 
 ### Task 5: Final audit, commit, and push
 
-- [ ] Re-run exact provider-selection, provider-keyed-auth, and generated-schema searches.
-- [ ] Verify marker ordering and thread/rollout provider persistence invariants.
-- [ ] Run all required checks with the repository memory scope.
-- [ ] Commit the complete change on `main`.
-- [ ] Push `main` to `origin` and verify the remote tip.
+- [x] Re-run exact provider-selection, provider-keyed-auth, and generated-schema searches.
+- [x] Verify marker ordering and thread/rollout provider persistence invariants.
+- [x] Run all required checks with the repository memory scope.
+- [x] Commit the complete change on `main`.
+- [x] Push `main` to `origin` and verify the remote tip.

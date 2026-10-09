@@ -226,9 +226,6 @@ pub struct Thread {
     /// Persisted thread history contract selected when this thread was created.
     #[serde(default)]
     pub history_mode: ThreadHistoryMode,
-    /// Mounted provider reported by the AppServer (for example, 'provider').
-    /// This is status only; it is not a persisted or per-thread selection.
-    pub model_provider: String,
     /// Current configured model when loaded, otherwise the latest persisted model.
     /// Null when unavailable. This is not per-turn execution telemetry.
     pub model: Option<String>,
@@ -303,7 +300,6 @@ struct ThreadCompatibility {
     project_id: Option<String>,
     #[serde(default)]
     history_mode: ThreadHistoryMode,
-    model_provider: String,
     model: Option<String>,
     reasoning_effort: Option<ReasoningEffort>,
     created_at: i64,
@@ -344,7 +340,6 @@ impl<'de> Deserialize<'de> for Thread {
             section_entered_at: thread.section_entered_at,
             project_id: thread.project_id,
             history_mode: thread.history_mode,
-            model_provider: thread.model_provider,
             model: thread.model,
             reasoning_effort: thread.reasoning_effort,
             created_at: thread.created_at,

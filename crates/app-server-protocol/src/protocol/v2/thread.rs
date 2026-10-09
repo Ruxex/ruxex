@@ -59,11 +59,11 @@ pub enum ThreadStartSource {
 pub struct ThreadStartParams {
     #[ts(optional = nullable)]
     pub model: Option<String>,
-    /// Allow a provider with an authoritative static model catalog to replace an unavailable
+    /// Allow the mounted provider's authoritative static model catalog to replace an unavailable
     /// requested model with its default.
-    #[experimental("thread/start.allowProviderModelFallback")]
+    #[experimental("thread/start.allowModelFallback")]
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub allow_provider_model_fallback: bool,
+    pub allow_model_fallback: bool,
     #[serde(
         default,
         deserialize_with = "crate::protocol::serde_helpers::deserialize_double_option",
@@ -162,9 +162,6 @@ pub struct ThreadStartParams {
 pub struct ThreadStartResponse {
     pub thread: Thread,
     pub model: String,
-    /// Mounted provider reported by the AppServer. This is status only; it is
-    /// not a per-thread provider selection.
-    pub model_provider: String,
     pub service_tier: Option<String>,
     /// Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
     #[serde(default)]
@@ -280,9 +277,6 @@ pub struct ThreadSettings {
     pub sandbox_policy: SandboxPolicy,
     pub active_permission_profile: Option<ActivePermissionProfile>,
     pub model: String,
-    /// Mounted provider reported by the AppServer. This is status only; it is
-    /// not a per-thread provider selection.
-    pub model_provider: String,
     pub service_tier: Option<String>,
     pub effort: Option<ReasoningEffort>,
     pub summary: Option<ReasoningSummary>,
@@ -398,9 +392,6 @@ pub struct ThreadResumeParams {
 pub struct ThreadResumeResponse {
     pub thread: Thread,
     pub model: String,
-    /// Mounted provider reported by the AppServer. This is status only; it is
-    /// not a per-thread provider selection.
-    pub model_provider: String,
     pub service_tier: Option<String>,
     /// Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
     #[serde(default)]
@@ -592,9 +583,6 @@ pub struct ThreadForkParams {
 pub struct ThreadForkResponse {
     pub thread: Thread,
     pub model: String,
-    /// Mounted provider reported by the AppServer. This is status only; it is
-    /// not a per-thread provider selection.
-    pub model_provider: String,
     pub service_tier: Option<String>,
     /// Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
     #[serde(default)]

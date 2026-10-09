@@ -5712,7 +5712,7 @@
           "$ref": "#/definitions/ModelProviderInfo"
         }
       ],
-      "description": "The single provider configuration mounted by this Genex runtime."
+      "description": "Connection settings for the single built-in provider mounted by this Genex runtime. This does not select a provider implementation or a per-thread provider."
     },
     "model_reasoning_effort": {
       "$ref": "#/definitions/ReasoningEffort"

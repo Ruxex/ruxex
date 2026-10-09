@@ -1066,7 +1066,7 @@ impl ThreadRequestProcessor {
     ) -> Result<(), JSONRPCErrorError> {
         let ThreadStartParams {
             model,
-            allow_provider_model_fallback,
+            allow_model_fallback,
             service_tier,
             cwd,
             runtime_workspace_roots,
@@ -1174,7 +1174,7 @@ impl ThreadRequestProcessor {
                 daybreak_enabled,
                 environments,
                 service_name,
-                allow_provider_model_fallback,
+                allow_model_fallback,
                 experimental_raw_events,
                 request_trace,
                 initial_config_warnings,
@@ -1256,7 +1256,7 @@ impl ThreadRequestProcessor {
         daybreak_enabled: Option<bool>,
         environment_selections: Option<Vec<TurnEnvironmentSelection>>,
         service_name: Option<String>,
-        allow_provider_model_fallback: bool,
+        allow_model_fallback: bool,
         experimental_raw_events: bool,
         request_trace: Option<W3cTraceContext>,
         initial_config_warnings: Arc<Vec<ConfigWarningNotification>>,
@@ -1412,7 +1412,7 @@ impl ThreadRequestProcessor {
         let new_thread = listener_task_context
             .thread_manager
             .start_thread(StartThreadOptions {
-                allow_provider_model_fallback,
+                allow_model_fallback,
                 initial_history: match session_start_source
                     .unwrap_or(genex_app_server_protocol::ThreadStartSource::Startup)
                 {
@@ -1535,7 +1535,6 @@ impl ThreadRequestProcessor {
             thread: thread.clone(),
             disabled_plugin_ids: config_snapshot.disabled_plugin_ids,
             model: config_snapshot.model,
-            model_provider: config_snapshot.model_provider_id,
             service_tier: config_snapshot.service_tier,
             cwd,
             runtime_workspace_roots: config_snapshot.workspace_roots,
@@ -1903,11 +1902,7 @@ impl ThreadRequestProcessor {
             }
             updated_thread
         };
-        let (mut thread, _) = thread_from_stored_thread(
-            updated_thread,
-            self.config.model_provider_id.as_str(),
-            &self.config.cwd,
-        );
+        let (mut thread, _) = thread_from_stored_thread(updated_thread, &self.config.cwd);
         if let Ok(loaded_thread) = self.thread_manager.get_thread(thread_uuid).await {
             thread.session_id = loaded_thread.session_configured().session_id.to_string();
             let config_snapshot = loaded_thread.config_snapshot().await;
@@ -1957,14 +1952,12 @@ impl ThreadRequestProcessor {
         let thread_id = ThreadId::from_string(&params.thread_id)
             .map_err(|err| invalid_request(format!("invalid session id: {err}")))?;
 
-        let fallback_provider = self.config.model_provider_id.clone();
         let stored_thread = self
             .thread_store
             .unarchive_thread(StoreArchiveThreadParams { thread_id })
             .await
             .map_err(|err| thread_store_mutation_error("unarchive", err))?;
-        let (mut thread, _) =
-            thread_from_stored_thread(stored_thread, fallback_provider.as_str(), &self.config.cwd);
+        let (mut thread, _) = thread_from_stored_thread(stored_thread, &self.config.cwd);
 
         if let Ok(loaded_thread) = self.thread_manager.get_thread(thread_id).await {
             let config_snapshot = loaded_thread.config_snapshot().await;
@@ -2443,14 +2436,8 @@ impl ThreadRequestProcessor {
             thread_backwards_cursor_for_sort_key(thread, store_sort_key, sort_direction)
         });
         let mut data = Vec::with_capacity(stored_threads.len());
-        let fallback_provider = self.config.model_provider_id.clone();
-
         for stored_thread in stored_threads {
-            let (thread, _) = thread_from_stored_thread(
-                stored_thread,
-                fallback_provider.as_str(),
-                &self.config.cwd,
-            );
+            let (thread, _) = thread_from_stored_thread(stored_thread, &self.config.cwd);
             data.push(thread);
         }
 
@@ -2561,14 +2548,9 @@ impl ThreadRequestProcessor {
                 store_sort_direction,
             )
         });
-        let fallback_provider = self.config.model_provider_id.clone();
         let mut data = Vec::with_capacity(search_results.len());
         for result in search_results {
-            let (thread, _) = thread_from_stored_thread(
-                result.thread,
-                fallback_provider.as_str(),
-                &self.config.cwd,
-            );
+            let (thread, _) = thread_from_stored_thread(result.thread, &self.config.cwd);
             data.push(ThreadSearchResult {
                 thread,
                 snippet: result.snippet,
@@ -2752,7 +2734,6 @@ impl ThreadRequestProcessor {
         thread_id: ThreadId,
         include_turns: bool,
     ) -> Result<Option<Thread>, ThreadReadViewError> {
-        let fallback_provider = self.config.model_provider_id.as_str();
         if include_turns {
             let Some(stored_thread) = self
                 .read_stored_thread_for_read(thread_id, /*include_history*/ false)
@@ -2761,8 +2742,7 @@ impl ThreadRequestProcessor {
                 return Ok(None);
             };
             if matches!(stored_thread.history_mode, ThreadHistoryMode::Paginated) {
-                let (mut thread, _) =
-                    thread_from_stored_thread(stored_thread, fallback_provider, &self.config.cwd);
+                let (mut thread, _) = thread_from_stored_thread(stored_thread, &self.config.cwd);
                 thread.turns = self
                     .paginated_thread_full_turns(thread_id)
                     .await
@@ -2776,8 +2756,7 @@ impl ThreadRequestProcessor {
         else {
             return Ok(None);
         };
-        let (mut thread, history) =
-            thread_from_stored_thread(stored_thread, fallback_provider, &self.config.cwd);
+        let (mut thread, history) = thread_from_stored_thread(stored_thread, &self.config.cwd);
         if include_turns && let Some(history) = history {
             thread.turns = build_legacy_api_turns_from_rollout_items(&history.items);
         }
@@ -3952,7 +3931,6 @@ impl ThreadRequestProcessor {
                     thread,
                     disabled_plugin_ids: config_snapshot.disabled_plugin_ids,
                     model: session_configured.model,
-                    model_provider: config_snapshot.model_provider_id.clone(),
                     service_tier: session_configured.service_tier,
                     cwd: session_configured.cwd,
                     runtime_workspace_roots: config_snapshot.workspace_roots,
@@ -4212,11 +4190,8 @@ impl ThreadRequestProcessor {
             )
             .await?;
 
-            let mut thread_summary = self.stored_thread_to_api_thread(
-                source_thread,
-                config_snapshot.model_provider_id.as_str(),
-                /*include_turns*/ false,
-            );
+            let mut thread_summary =
+                self.stored_thread_to_api_thread(source_thread, /*include_turns*/ false);
             thread_summary.session_id = existing_thread.session_configured().session_id.to_string();
             thread_summary.thread_source = config_snapshot.thread_source.clone().map(Into::into);
             apply_live_thread_settings(&mut thread_summary, &config_snapshot);
@@ -4466,11 +4441,9 @@ impl ThreadRequestProcessor {
     fn stored_thread_to_api_thread(
         &self,
         stored_thread: StoredThread,
-        fallback_provider: &str,
         include_turns: bool,
     ) -> Thread {
-        let (mut thread, history) =
-            thread_from_stored_thread(stored_thread, fallback_provider, &self.config.cwd);
+        let (mut thread, history) = thread_from_stored_thread(stored_thread, &self.config.cwd);
         if include_turns && let Some(history) = history {
             populate_thread_turns_from_history(
                 &mut thread,
@@ -4513,7 +4486,6 @@ impl ThreadRequestProcessor {
         );
         let thread = match thread_history {
             InitialHistory::Resumed(resumed) => {
-                let fallback_provider = config_snapshot.model_provider_id.as_str();
                 if let Some(stored_thread) = resume_source_thread {
                     let stored_thread =
                         if let Some(rollout_path) = stored_thread.rollout_path.clone() {
@@ -4541,12 +4513,7 @@ impl ThreadRequestProcessor {
                                     ..stored_thread
                                 })
                         };
-                    Ok(thread_from_stored_thread(
-                        stored_thread,
-                        fallback_provider,
-                        &self.config.cwd,
-                    )
-                    .0)
+                    Ok(thread_from_stored_thread(stored_thread, &self.config.cwd).0)
                 } else {
                     match self
                         .thread_store
@@ -4557,12 +4524,9 @@ impl ThreadRequestProcessor {
                         })
                         .await
                     {
-                        Ok(stored_thread) => Ok(thread_from_stored_thread(
-                            stored_thread,
-                            fallback_provider,
-                            &self.config.cwd,
-                        )
-                        .0),
+                        Ok(stored_thread) => {
+                            Ok(thread_from_stored_thread(stored_thread, &self.config.cwd).0)
+                        }
                         Err(read_err) => {
                             Err(format!("failed to read thread from store: {read_err}"))
                         }
@@ -4840,7 +4804,6 @@ impl ThreadRequestProcessor {
             .map_err(|err| config_load_error(&err))?;
         let goals_enabled = config.features.enabled(Feature::Goals);
 
-        let fallback_model_provider = config.model_provider_id.clone();
         let parent_trace = self.request_trace_context(&request_id).await;
         let thread_source = thread_source.map(Into::into);
 
@@ -5028,11 +4991,7 @@ impl ThreadRequestProcessor {
             let stored_thread = self
                 .read_stored_thread_for_new_fork(thread_id, include_turns && !paginated_source)
                 .await?;
-            let (mut thread, history) = thread_from_stored_thread(
-                stored_thread,
-                fallback_model_provider.as_str(),
-                &self.config.cwd,
-            );
+            let (mut thread, history) = thread_from_stored_thread(stored_thread, &self.config.cwd);
             if include_turns && let Some(history) = history.as_ref() {
                 populate_thread_turns_from_history(
                     &mut thread,
@@ -5105,7 +5064,6 @@ impl ThreadRequestProcessor {
             thread: thread.clone(),
             disabled_plugin_ids: config_snapshot.disabled_plugin_ids,
             model: session_configured.model,
-            model_provider: config_snapshot.model_provider_id.clone(),
             service_tier: session_configured.service_tier,
             cwd: session_configured.cwd,
             runtime_workspace_roots: config_snapshot.workspace_roots,
@@ -5718,7 +5676,6 @@ fn set_thread_name_from_title(thread: &mut Thread, title: String) {
 
 pub(crate) fn thread_from_stored_thread(
     thread: StoredThread,
-    fallback_provider: &str,
     fallback_cwd: &AbsolutePathBuf,
 ) -> (Thread, Option<genex_thread_store::StoredThreadHistory>) {
     let path = thread.rollout_path;
@@ -5765,9 +5722,6 @@ pub(crate) fn thread_from_stored_thread(
             .map(|entered_at| entered_at.timestamp()),
         project_id: thread.project_id,
         history_mode: thread.history_mode.into(),
-        // Persisted provider values are historical metadata only. The mounted provider is the
-        // sole runtime provider and is also the provider clients must use for future turns.
-        model_provider: fallback_provider.to_string(),
         model: thread.model,
         reasoning_effort: thread.reasoning_effort,
         created_at: thread.created_at.timestamp(),
@@ -5832,7 +5786,6 @@ fn build_thread_from_snapshot(
         section_entered_at: None,
         project_id: None,
         history_mode: config_snapshot.history_mode.into(),
-        model_provider: config_snapshot.model_provider_id.clone(),
         model: Some(config_snapshot.model.clone()),
         reasoning_effort: config_snapshot.reasoning_effort.clone(),
         created_at: now,

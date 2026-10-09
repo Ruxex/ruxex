@@ -130,10 +130,7 @@ pub fn models_manager_with_provider(
     credential_manager: Arc<CredentialManager>,
     provider: ModelProviderInfo,
 ) -> SharedModelsManager {
-    let provider = create_model_provider(
-        provider,
-        Some(credential_manager.clone()),
-    );
+    let provider = create_model_provider(provider, Some(credential_manager.clone()));
     build_models_manager(
         genex_home,
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),

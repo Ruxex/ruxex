@@ -1761,10 +1761,7 @@ mod tests {
         )
         .expect("replace credentials");
 
-        assert!(
-            delete_auth_credentials(home.path(), mode, keyring)
-                .expect("delete credentials")
-        );
+        assert!(delete_auth_credentials(home.path(), mode, keyring).expect("delete credentials"));
         assert!(
             load_auth_credentials(home.path(), mode, keyring)
                 .expect("load deleted credentials")

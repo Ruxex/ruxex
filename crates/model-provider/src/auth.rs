@@ -12,21 +12,6 @@ use http::HeaderMap;
 
 use crate::bearer_auth_provider::BearerAuthProvider;
 
-#[derive(Clone, Copy, Debug, Default)]
-pub struct ProviderAuthScope;
-
-/// Provider auth resolved for a request, plus metadata describing the effective auth.
-#[derive(Clone)]
-pub struct ResolvedProviderAuth {
-    pub auth: SharedAuthProvider,
-}
-
-impl ResolvedProviderAuth {
-    pub(crate) fn new(auth: SharedAuthProvider) -> Self {
-        Self { auth }
-    }
-}
-
 #[derive(Clone, Debug)]
 struct HeaderAuthProvider {
     auth: AuthHeaders,
@@ -124,26 +109,6 @@ pub(crate) fn resolve_provider_auth(
     Ok(unauthenticated_auth_provider())
 }
 
-pub(crate) async fn resolve_provider_auth_for_scope(
-    credential_manager: Option<Arc<CredentialManager>>,
-    auth: Option<&GenexAuth>,
-    provider: &ModelProviderInfo,
-    scope: ProviderAuthScope,
-) -> genex_protocol::error::Result<ResolvedProviderAuth> {
-    let auth = if provider.auth.is_some() {
-        match credential_manager {
-            Some(credential_manager) => credential_manager.auth().await,
-            None => auth.cloned(),
-        }
-    } else if let Some(credential_manager) = credential_manager {
-        credential_manager.auth().await
-    } else {
-        auth.cloned()
-    };
-    let _ = scope;
-    resolve_provider_auth(auth.as_ref(), provider).map(ResolvedProviderAuth::new)
-}
-
 pub(crate) async fn provider_auth(
     credential_manager: Option<&Arc<CredentialManager>>,
     fallback_auth: Option<GenexAuth>,
@@ -169,9 +134,7 @@ pub(crate) async fn provider_auth(
     }
 }
 
-pub(crate) fn cached_provider_auth(
-    credential_manager: &CredentialManager,
-) -> Option<GenexAuth> {
+pub(crate) fn cached_provider_auth(credential_manager: &CredentialManager) -> Option<GenexAuth> {
     credential_manager.auth_cached()
 }
 

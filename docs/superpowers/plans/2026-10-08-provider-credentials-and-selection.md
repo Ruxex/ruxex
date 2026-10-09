@@ -1,4 +1,10 @@
-# Provider Credentials and Selection Implementation Plan
+# Provider Credentials and Selection Implementation Plan (Historical / Retired)
+
+> **Historical note (2026-10-09):** This plan described the former multi-provider
+> credential and selection model. It is retired and is not an implementation target.
+> Genex now mounts one built-in provider per runtime/AppServer; provider selection,
+> switching, and per-thread provider metadata are removed. The active design is
+> [`2026-10-08-single-model-provider-library-design.md`](../specs/2026-10-08-single-model-provider-library-design.md).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

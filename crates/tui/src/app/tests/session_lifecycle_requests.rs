@@ -642,7 +642,6 @@ fn create_history_rollout(
         "2026-01-02T00-00-00",
         "2026-01-02T00:00:00Z",
         preview,
-        Some(config.model_provider_id.as_str()),
         /*git_info*/ None,
     )
     .map_err(|err| color_eyre::eyre::eyre!("failed to create history rollout: {err}"))?;

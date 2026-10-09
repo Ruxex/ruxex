@@ -25,8 +25,6 @@ impl ResponsesConnectionKey {
     }
 }
 
-pub use auth::ProviderAuthScope;
-pub use auth::ResolvedProviderAuth;
 pub use auth::auth_provider_from_auth;
 pub use auth::auth_provider_from_credential_manager;
 pub use auth::unauthenticated_auth_provider;
@@ -48,6 +46,7 @@ pub use contract::ProviderCapabilities;
 pub use contract::ProviderChatEvent;
 pub use contract::ProviderChatStream;
 pub use contract::ProviderConnectionKey;
+pub use contract::ProviderCredentialSnapshot;
 pub use contract::ProviderDescriptor;
 pub use contract::ProviderError;
 pub use contract::ProviderFuture;
@@ -78,6 +77,7 @@ pub use contract::ProviderWebsocketTelemetry;
 pub use contract::ProviderWireApi;
 pub use contract::RemoteCompactionSupport;
 pub use contract::SharedModelProvider;
+pub use contract::SharedProviderCredentialSnapshot;
 pub use contract::SharedProviderWebsocketConnection;
 pub use contract::UsageRequest;
 pub use contract::build_provider_text_controls;

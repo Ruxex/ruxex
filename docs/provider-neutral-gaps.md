@@ -121,7 +121,7 @@ Responses API の `input_image.detail` で定義される `auto`、`low`、`high
 
 ## G-7: 非 Responses wire API の現行スコープとbackend依存機能
 
-現在の provider abstraction には `ModelProvider`、provider capability、任意の `model_providers` 設定がある。Amazon Bedrock 実装は 2026-10-05 の capability 削除で除去済みである。一方、core の model client と request metadata は主に次を前提にしている。
+現在の provider abstraction には `ModelProvider`、provider capability、任意の単一 `model_provider` 接続設定がある。プロバイダ実装の選択や切替を行う `model_providers` レジストリは歴史的で廃止済みである。Amazon Bedrock 実装は 2026-10-05 の capability 削除で除去済みである。一方、core の model client と request metadata は主に次を前提にしている。
 
 - Responses API の request/item/event 形式
 - Responses HTTP と Responses WebSocket

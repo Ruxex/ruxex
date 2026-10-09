@@ -32,7 +32,6 @@ pub(crate) struct ThreadSessionState {
     pub(crate) fork_parent_title: Option<String>,
     pub(crate) thread_name: Option<String>,
     pub(crate) model: String,
-    pub(crate) model_provider_id: String,
     pub(crate) service_tier: Option<String>,
     pub(crate) approval_policy: AskForApproval,
     /// Permission snapshot used by TUI display surfaces. Legacy app-server

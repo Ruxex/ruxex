@@ -4,6 +4,7 @@
 //! provider-neutral. Provider-specific HTTP, credentials, wire payloads, and error details stay
 //! inside the adapter implementation.
 
+use std::any::Any;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::future::Future;
@@ -206,6 +207,8 @@ pub struct ProviderWebsocketConnectRequest {
     pub thread_id: Option<String>,
     pub extra_headers: BTreeMap<String, String>,
     pub default_headers: BTreeMap<String, String>,
+    /// Opaque credentials captured when the owning turn was admitted.
+    pub credential_snapshot: Option<SharedProviderCredentialSnapshot>,
     pub telemetry: Option<Arc<dyn ProviderWebsocketTelemetry>>,
 }
 
@@ -256,12 +259,55 @@ pub struct ProviderConnectionKey {
     pub auth_revision: Option<u64>,
 }
 
+/// Opaque provider-owned credentials captured for one request or turn.
+///
+/// Hosts can carry this handle across the provider-neutral boundary but cannot inspect or
+/// persist its contents. Provider adapters downcast it only inside their own crate.
+pub trait ProviderCredentialSnapshot: fmt::Debug + Send + Sync {
+    fn as_any(&self) -> &dyn Any;
+}
+
+pub type SharedProviderCredentialSnapshot = Arc<dyn ProviderCredentialSnapshot>;
+
 /// Provider-owned request admission and connection-reuse snapshot.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ProviderRequestSnapshot {
     pub auth: ProviderRequestAuth,
     pub connection_key: ProviderConnectionKey,
+    pub credential_snapshot: SharedProviderCredentialSnapshot,
 }
+
+impl PartialEq for ProviderRequestSnapshot {
+    fn eq(&self, other: &Self) -> bool {
+        self.auth == other.auth && self.connection_key == other.connection_key
+    }
+}
+
+impl Eq for ProviderRequestSnapshot {}
+
+/// Provider-neutral transport options for one chat request.
+#[derive(Debug, Clone)]
+pub struct ChatTransportOptions {
+    pub session_id: Option<String>,
+    pub thread_id: Option<String>,
+    pub extra_headers: BTreeMap<String, String>,
+    pub compression: ProviderRequestCompression,
+    pub turn_state: Option<Arc<OnceLock<String>>>,
+    /// Opaque credentials captured when the owning turn was admitted.
+    pub credential_snapshot: Option<SharedProviderCredentialSnapshot>,
+}
+
+impl PartialEq for ChatTransportOptions {
+    fn eq(&self, other: &Self) -> bool {
+        self.session_id == other.session_id
+            && self.thread_id == other.thread_id
+            && self.extra_headers == other.extra_headers
+            && self.compression == other.compression
+            && self.turn_state == other.turn_state
+    }
+}
+
+impl Eq for ChatTransportOptions {}
 
 /// Non-secret environment metadata exposed by the mounted provider for host telemetry.
 ///
@@ -461,19 +507,6 @@ pub struct ProviderWebsocketPayloadRequest {
     pub input: Vec<ResponseItem>,
     pub generate: Option<bool>,
     pub client_metadata: Option<BTreeMap<String, String>>,
-}
-
-/// Host-owned transport context passed to a provider operation.
-///
-/// The provider chooses the endpoint and wire protocol; the host supplies outbound networking
-/// policy and request-scoped routing state without exposing its client implementation.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChatTransportOptions {
-    pub session_id: Option<String>,
-    pub thread_id: Option<String>,
-    pub extra_headers: BTreeMap<String, String>,
-    pub compression: ProviderRequestCompression,
-    pub turn_state: Option<Arc<OnceLock<String>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -756,6 +789,15 @@ mod tests {
     use super::*;
 
     #[derive(Debug)]
+    struct FakeCredentialSnapshot;
+
+    impl ProviderCredentialSnapshot for FakeCredentialSnapshot {
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+    }
+
+    #[derive(Debug)]
     struct FakeProvider;
 
     impl ModelProvider for FakeProvider {
@@ -804,6 +846,7 @@ mod tests {
                         provider_kind: "fake".to_string(),
                         auth_revision: None,
                     },
+                    credential_snapshot: Arc::new(FakeCredentialSnapshot),
                 })
             })
         }
@@ -913,6 +956,7 @@ mod tests {
             extra_headers: headers.clone(),
             compression: ProviderRequestCompression::None,
             turn_state: None,
+            credential_snapshot: None,
         };
         let _search = ProviderSearchRequest {
             id: "search".to_string(),
@@ -935,6 +979,7 @@ mod tests {
             thread_id: None,
             extra_headers: BTreeMap::new(),
             default_headers: BTreeMap::new(),
+            credential_snapshot: None,
             telemetry: None,
         };
     }

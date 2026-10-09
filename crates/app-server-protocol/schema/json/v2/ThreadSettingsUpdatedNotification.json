@@ -324,10 +324,6 @@
         "model": {
           "type": "string"
         },
-        "modelProvider": {
-          "description": "Mounted provider reported by the AppServer. This is status only; it is not a per-thread provider selection.",
-          "type": "string"
-        },
         "sandboxPolicy": {
           "$ref": "#/definitions/SandboxPolicy"
         },
@@ -353,7 +349,6 @@
         "collaborationMode",
         "cwd",
         "model",
-        "modelProvider",
         "sandboxPolicy"
       ],
       "type": "object"

@@ -223,13 +223,13 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
     // todo(aibrahim): should be visible to core only and sent on session_configured event
     /// Get the model identifier to use, refreshing according to the specified strategy.
     ///
-    /// If `model` is provided, preserves it unless the implementation supports and the policy
-    /// allows provider fallback. Otherwise selects the default based on auth mode and available
+    /// If `model` is provided, preserves it unless the caller allows model fallback within the
+    /// mounted provider's authoritative catalog. Otherwise selects the default from available
     /// models.
     fn get_default_model<'a>(
         &'a self,
         model: &'a Option<String>,
-        allow_provider_model_fallback: bool,
+        allow_model_fallback: bool,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
     ) -> ModelsManagerFuture<'a, String> {
@@ -246,7 +246,7 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
             .instrument(tracing::info_span!(
                 "get_default_model",
                 model.provided = model.is_some(),
-                allow_provider_model_fallback,
+                allow_model_fallback,
                 refresh_strategy = %refresh_strategy
             )),
         )
@@ -699,7 +699,7 @@ impl ModelsManager for StaticModelsManager {
     fn get_default_model<'a>(
         &'a self,
         model: &'a Option<String>,
-        allow_provider_model_fallback: bool,
+        allow_model_fallback: bool,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
     ) -> ModelsManagerFuture<'a, String> {
@@ -710,7 +710,7 @@ impl ModelsManager for StaticModelsManager {
                     .await;
                 let requested_model = model.as_deref();
 
-                if allow_provider_model_fallback {
+                if allow_model_fallback {
                     if requested_model_is_available(requested_model, &available_models)
                         && let Some(requested_model) = requested_model
                     {
@@ -726,7 +726,7 @@ impl ModelsManager for StaticModelsManager {
             .instrument(tracing::info_span!(
                 "get_default_model",
                 model.provided = model.is_some(),
-                allow_provider_model_fallback,
+                allow_model_fallback,
                 refresh_strategy = %refresh_strategy
             )),
         )

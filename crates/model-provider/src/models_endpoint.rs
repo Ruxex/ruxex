@@ -69,12 +69,7 @@ impl ModelsEndpoint {
     }
 
     async fn auth(&self) -> Option<GenexAuth> {
-        provider_auth(
-            self.credential_manager.as_ref(),
-            None,
-            &self.provider_info,
-        )
-        .await
+        provider_auth(self.credential_manager.as_ref(), None, &self.provider_info).await
     }
 
     pub(crate) async fn list_models(

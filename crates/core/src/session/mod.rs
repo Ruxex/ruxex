@@ -399,7 +399,7 @@ pub(crate) enum ForkPersistence {
 pub(crate) struct SessionSpawnArgs {
     pub(crate) startup: Option<Arc<startup::SessionStartup>>,
     pub(crate) config: Config,
-    pub(crate) allow_provider_model_fallback: bool,
+    pub(crate) allow_model_fallback: bool,
     pub(crate) instructions: SessionInstructions,
     pub(crate) installation_id: String,
     pub(crate) credential_manager: Arc<CredentialManager>,
@@ -502,7 +502,7 @@ impl Session {
         let SessionSpawnArgs {
             startup,
             config,
-            allow_provider_model_fallback,
+            allow_model_fallback,
             instructions,
             installation_id,
             credential_manager,
@@ -605,12 +605,12 @@ impl Session {
         let model = models_manager
             .get_default_model(
                 &config.model,
-                allow_provider_model_fallback,
+                allow_model_fallback,
                 refresh_strategy,
                 config.http_client_factory(),
             )
             .await;
-        if allow_provider_model_fallback
+        if allow_model_fallback
             && let Some(requested_model) = config.model.as_ref()
             && model != *requested_model
         {
@@ -618,7 +618,7 @@ impl Session {
                 model_provider = %config.model_provider_id,
                 requested_model,
                 fallback_model = %model,
-                "replaced unavailable requested model with provider default"
+                "replaced unavailable requested model with mounted provider default"
             );
         }
 

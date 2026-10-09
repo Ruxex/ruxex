@@ -220,7 +220,6 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             (
                 &starts[0]["cwd"],
                 &starts[0]["model"],
-                &starts[0]["modelProvider"],
                 &starts[0]["config"]["model_reasoning_effort"],
                 &starts[0]["serviceTier"],
             ),
@@ -231,13 +230,6 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
                     serde_json::json!(cwd)
                 },
                 &serde_json::json!(expected_model),
-                &if mode.starts_with("remote") {
-                    serde_json::Value::Null
-                } else if mode == "local" && !explicit_cwd {
-                    serde_json::json!("ollama")
-                } else {
-                    serde_json::json!("provider")
-                },
                 &serde_json::json!("high"),
                 &serde_json::json!(if mode == "local" && explicit_cwd {
                     "flex"

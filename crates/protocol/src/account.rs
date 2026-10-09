@@ -49,7 +49,7 @@ pub enum ProviderAccount {
     ApiKey,
 }
 
-/// Authentication state for the currently selected model provider.
+/// Authentication state for the mounted model provider.
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(rename_all = "camelCase")]

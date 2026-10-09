@@ -2411,10 +2411,23 @@ pub(crate) fn get_last_assistant_message_from_turn<'a>(
 
 #[cfg(test)]
 mod tests {
+    use std::any::Any;
+    use std::sync::Arc;
+
     use super::provider_request_uses_managed_auth;
     use genex_model_provider::ProviderConnectionKey;
+    use genex_model_provider::ProviderCredentialSnapshot;
     use genex_model_provider::ProviderRequestAuth;
     use genex_model_provider::ProviderRequestSnapshot;
+
+    #[derive(Debug)]
+    struct TestCredentialSnapshot;
+
+    impl ProviderCredentialSnapshot for TestCredentialSnapshot {
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+    }
 
     #[test]
     fn managed_auth_gate_uses_only_the_provider_snapshot() {
@@ -2431,6 +2444,7 @@ mod tests {
                 provider_kind: "fake".to_string(),
                 auth_revision: Some(1),
             },
+            credential_snapshot: Arc::new(TestCredentialSnapshot),
         };
 
         assert!(provider_request_uses_managed_auth(&snapshot));

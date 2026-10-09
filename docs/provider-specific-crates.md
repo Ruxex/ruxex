@@ -299,7 +299,7 @@ protocol slice として扱う。generic image input、local media、`view_image
 - **内部依存先:** `genex-api`、`genex-protocol`、absolute-path/redacted-string utility。
 - **依存元:** 直接 16、推移 60。provider 以外の Responses-compatible な custom provider も利用する。
 - **到達経路:** config と model provider を介して全 model request と各 UI に到達する。
-- **影響:** `model_provider`、`model_providers.*`、`PROVIDER_API_KEY`、provider organization/project headers、Responses API transport、設定/単体テスト。専用 README はない。
+- **影響:** 単一の `model_provider`、`PROVIDER_API_KEY`、provider organization/project headers、Responses API transport、設定/単体テスト。歴史的な `model_providers.*` レジストリと選択経路は廃止済み。専用 README はない。
 - **推奨:** **汎用化**。provider registry と provider built-in definition を分離する。クレート自体は削除対象にしない。
 - **難易度・リスク:** 非常に高。provider 固有値だけを外し、他 provider の設定互換性を保つ必要がある。
 

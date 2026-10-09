@@ -62,7 +62,7 @@ async fn reconnect_reconciles_offscreen_pending_profile_before_restoring_permiss
             let id = request.params.as_ref().and_then(|params| params["threadId"].as_str());
             let thread = |id: ThreadId| json!({
                 "id": id, "sessionId": id, "preview": "task", "ephemeral": false,
-                "modelProvider": "test-provider", "createdAt": 1, "updatedAt": 2,
+                "createdAt": 1, "updatedAt": 2,
                 "status": {"type": "idle"}, "cwd": cwd, "cliVersion": "0.0.0",
                 "source": "cli", "turns": []
             });
@@ -70,7 +70,7 @@ async fn reconnect_reconciles_offscreen_pending_profile_before_restoring_permiss
                 "thread/resume" => {
                     let pending = id == Some(primary.to_string().as_str());
                     json!({"result": {"thread": thread(if pending { primary } else { displayed }),
-                        "model": "model-test", "modelProvider": "test-provider", "cwd": cwd,
+                        "model": "model-test", "cwd": cwd,
                         "approvalPolicy": if pending { "on-request" } else { "never" },
                         "approvalsReviewer": "user",
                         "sandbox": {"type": if pending { "readOnly" } else { "dangerFullAccess" }},

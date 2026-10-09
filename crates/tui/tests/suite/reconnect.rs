@@ -32,7 +32,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
         let id = "00000000-0000-0000-0000-000000000001";
         let thread = json!({
             "id": id, "sessionId": id, "preview": "", "ephemeral": false,
-            "modelProvider": "provider", "createdAt": 1, "updatedAt": 2,
+            "createdAt": 1, "updatedAt": 2,
             "status": {"type": "active", "activeFlags": []}, "cwd": server_cwd,
             "cliVersion": "0.0.0", "source": "cli", "turns": [{"id": "running", "items": [], "status": "inProgress", "error": null}]
         });
@@ -88,7 +88,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                     }
                     "configRequirements/read" => json!({"requirements": null}),
                     "thread/start" | "thread/resume" => {
-                        json!({"thread": thread, "model": "provider-model-d", "modelProvider": "provider",
+                        json!({"thread": thread, "model": "provider-model-d",
                             "cwd": server_cwd, "approvalPolicy": "never", "approvalsReviewer": "user",
                             "sandbox": {"type": "readOnly"}, "reasoningEffort": null})
                     }

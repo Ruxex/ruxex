@@ -158,19 +158,17 @@ async def _serve(port: int) -> int:
     sys.stdout.write(f"""Add this to your config.toml:
 
 
-[model_providers.localapi_ws]
+[model_provider]
 base_url = "{ws_uri}/v1"
 name = "localapi_ws"
 wire_api = "responses_websocket"
 env_key = "PROVIDER_API_KEY_STAGING"
 
-[profiles.localapi_ws]
 model = "example-model"
-model_provider = "localapi_ws"
 model_reasoning_effort = "medium"
 
 
-start codex with `codex --profile localapi_ws`
+start genex with `genex --model example-model`
 """)
     sys.stdout.flush()
 

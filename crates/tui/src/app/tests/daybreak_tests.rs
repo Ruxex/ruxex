@@ -28,7 +28,6 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
     let server = Box::pin(crate::start_embedded_app_server_for_picker(&app.config)).await?;
     let thread_id = ThreadId::new();
     let mut session = test_thread_session(thread_id, app.config.cwd.to_path_buf());
-    session.model_provider_id = "provider".to_string();
     app.enqueue_primary_thread_session(session, Vec::new())
         .await?;
     for (status, enrolled, model, replace_account, expected) in [

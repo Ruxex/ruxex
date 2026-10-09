@@ -115,9 +115,6 @@ impl App {
                 if let Some(thread) = thread {
                     thread.cwd.clone_from(&settings.thread_settings.cwd);
                     thread.model = Some(settings.thread_settings.model.clone());
-                    thread
-                        .model_provider
-                        .clone_from(&settings.thread_settings.model_provider);
                 }
             }
             _ => return,

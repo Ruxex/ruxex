@@ -134,7 +134,8 @@ pub struct OrchestratorFeatureToml {
 pub struct ConfigToml {
     /// Optional override of model selection.
     pub model: Option<String>,
-    /// The single provider configuration mounted by this Genex runtime.
+    /// Connection settings for the single built-in provider mounted by this Genex runtime.
+    /// This does not select a provider implementation or a per-thread provider.
     pub model_provider: Option<ModelProviderInfo>,
 
     /// Size of the context window for the model, in tokens.

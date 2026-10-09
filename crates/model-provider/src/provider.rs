@@ -48,19 +48,17 @@ use genex_protocol::protocol::RateLimitSnapshot;
 use serde_json::Value;
 use tokio_tungstenite::tungstenite::Message;
 
-use crate::auth::ProviderAuthScope;
-use crate::auth::ResolvedProviderAuth;
 use crate::auth::cached_provider_auth;
 use crate::auth::credential_manager_for_provider;
 use crate::auth::provider_auth;
 use crate::auth::resolve_provider_auth;
-use crate::auth::resolve_provider_auth_for_scope;
 use crate::cloudflare_provider::CloudflareModelProvider;
 use crate::contract::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use crate::contract::ProviderAuthEnvironment;
 use crate::contract::ProviderAuthRecoveryMessages;
 use crate::contract::ProviderCapabilities;
 use crate::contract::ProviderConnectionKey;
+use crate::contract::ProviderCredentialSnapshot;
 use crate::contract::ProviderDescriptor;
 use crate::contract::ProviderRequestAuth;
 use crate::contract::ProviderRequestSnapshot;
@@ -73,6 +71,7 @@ use crate::contract::ProviderWebsocketPayloadRequest;
 use crate::contract::ProviderWebsocketRequest;
 use crate::contract::ProviderWireApi;
 use crate::contract::RemoteCompactionSupport;
+use crate::contract::SharedProviderCredentialSnapshot;
 use crate::contract::SharedProviderWebsocketConnection;
 use crate::contract::headers_to_http;
 use crate::models_endpoint::ModelsEndpoint;
@@ -138,7 +137,8 @@ impl fmt::Display for ProviderAccountError {
 
 impl std::error::Error for ProviderAccountError {}
 
-pub(crate) type ProviderAccountResult = std::result::Result<ProviderAccountState, ProviderAccountError>;
+pub(crate) type ProviderAccountResult =
+    std::result::Result<ProviderAccountState, ProviderAccountError>;
 
 /// Runtime API selected for model execution.
 #[derive(Clone)]
@@ -333,6 +333,45 @@ struct RuntimeWebsocketConnection {
     connection: ResponsesWebsocketConnection,
 }
 
+#[derive(Clone)]
+struct RuntimeCredentialSnapshot {
+    provider: Provider,
+    auth: SharedAuthProvider,
+}
+
+impl fmt::Debug for RuntimeCredentialSnapshot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RuntimeCredentialSnapshot")
+            .field("provider", &self.provider.name)
+            .finish_non_exhaustive()
+    }
+}
+
+impl ProviderCredentialSnapshot for RuntimeCredentialSnapshot {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+fn runtime_credentials(
+    snapshot: Option<&SharedProviderCredentialSnapshot>,
+) -> crate::contract::ProviderResult<(Provider, SharedAuthProvider)> {
+    let snapshot = snapshot.ok_or_else(|| {
+        crate::contract::ProviderError::Provider(
+            "provider request is missing its credential snapshot".to_string(),
+        )
+    })?;
+    let snapshot = snapshot
+        .as_any()
+        .downcast_ref::<RuntimeCredentialSnapshot>()
+        .ok_or_else(|| {
+            crate::contract::ProviderError::Provider(
+                "provider request credential snapshot belongs to another provider".to_string(),
+            )
+        })?;
+    Ok((snapshot.provider.clone(), Arc::clone(&snapshot.auth)))
+}
+
 impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection {
     fn is_closed(
         &self,
@@ -445,14 +484,8 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
-            let api_provider = self
-                .api_provider()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
-            let api_auth = self
-                .api_auth()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let (api_provider, api_auth) =
+                runtime_credentials(request.credential_snapshot.as_ref())?;
             let telemetry = request.telemetry.map(|telemetry| {
                 Arc::new(ProviderWebsocketTelemetryAdapter { telemetry })
                     as Arc<dyn WebsocketTelemetry>
@@ -536,14 +569,8 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
-            let api_provider = self
-                .api_provider()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
-            let api_auth = self
-                .api_auth()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let (api_provider, api_auth) =
+                runtime_credentials(request.transport.credential_snapshot.as_ref())?;
             match self.api() {
                 ProviderApi::Chat(chat_api) => {
                     let client = create_client_for_route(
@@ -777,28 +804,16 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         false
     }
 
-    /// Returns the provider-scoped auth manager, when this provider uses one.
+    /// Returns the provider-scoped auth manager for adapter-internal operations.
     ///
-    /// TODO(celia-oai): Make auth manager access internal to this crate so callers
-    /// resolve provider-specific auth only through `ModelProvider`. We first need
-    /// to think through whether Genex should have a unified provider-specific auth
-    /// manager throughout the codebase; that is a larger refactor than this change.
+    /// Core must use the provider-neutral auth lifecycle and request snapshot instead.
+    /// The adapter retains this narrow accessor because its legacy model-catalog and
+    /// unauthorized-recovery implementations still consume the provider-owned manager.
     fn credential_manager(&self) -> Option<Arc<CredentialManager>>;
 
     /// Returns the configured provider ID used for provider-scoped credentials.
     fn provider_id(&self) -> Option<&str> {
         None
-    }
-
-    /// Returns whether this transport failure can be recovered by provider-scoped authentication.
-    ///
-    /// The default preserves existing unauthorized-response handling. Providers with other
-    /// authentication failure shapes may recognize additional response or request-signing errors.
-    fn is_recoverable_auth_error(&self, error: &TransportError) -> bool {
-        matches!(
-            error,
-            TransportError::Http { status, .. } if *status == http::StatusCode::UNAUTHORIZED
-        )
     }
 
     /// Returns lifecycle messages when provider-owned authentication recovery is active.
@@ -843,7 +858,10 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 return Err(ProviderAuthError::Unavailable);
             };
             credential_manager
-                .login(ProviderAuth::api_key_with_credentials(request.api_key, request.credentials))
+                .login(ProviderAuth::api_key_with_credentials(
+                    request.api_key,
+                    request.credentials,
+                ))
                 .await
                 .map_err(|err| ProviderAuthError::Failed(err.to_string()))
         })
@@ -880,11 +898,6 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         Box::pin(async { Ok(ProviderUsage::Unsupported) })
     }
 
-    /// Maps an API client error into the provider's user-facing error representation.
-    fn map_api_error(&self, error: ApiError) -> GenexErr {
-        genex_api::map_api_error(error)
-    }
-
     /// Returns provider configuration adapted for the API client.
     fn api_provider(&self) -> ModelProviderFuture<'_, genex_protocol::error::Result<Provider>> {
         Box::pin(async move {
@@ -892,13 +905,6 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             self.info()
                 .to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))
         })
-    }
-
-    /// Returns the provider base URL that will be used at request time.
-    fn runtime_base_url(
-        &self,
-    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<Option<String>>> {
-        Box::pin(async { Ok(self.info().base_url.clone()) })
     }
 
     /// Returns the auth provider used to attach request credentials.
@@ -911,30 +917,13 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         })
     }
 
-    /// Returns request credentials, optionally scoped to a Genex session task.
-    fn api_auth_for_scope(
-        &self,
-        scope: ProviderAuthScope,
-    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<ResolvedProviderAuth>> {
-        Box::pin(async move {
-            if !provider_uses_stored_auth_path(self.info()) {
-                return self.api_auth().await.map(ResolvedProviderAuth::new);
-            }
-            let auth = self.auth().await;
-            resolve_provider_auth_for_scope(
-                self.credential_manager(),
-                auth.as_ref(),
-                self.info(),
-                scope,
-            )
-            .await
-        })
-    }
-
     fn request_snapshot(&self) -> ModelProviderFuture<'_, CoreResult<ProviderRequestSnapshot>> {
         Box::pin(async move {
             let auth = self.auth().await;
-            let api_auth = self.api_auth().await?;
+            let api_provider = self
+                .info()
+                .to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))?;
+            let api_auth = resolve_provider_auth(auth.as_ref(), self.info())?;
             let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
             let (revision, owner_generation) = self
                 .credential_manager()
@@ -960,6 +949,10 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                     provider_kind: self.descriptor().provider_kind,
                     auth_revision: revision,
                 },
+                credential_snapshot: Arc::new(RuntimeCredentialSnapshot {
+                    provider: api_provider,
+                    auth: api_auth,
+                }),
             })
         })
     }
@@ -1485,12 +1478,6 @@ pub(crate) type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Se
 /// Shared runtime model provider handle.
 pub(crate) type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
 
-fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
-    provider.env_key.is_none()
-        && provider.experimental_bearer_token.is_none()
-        && provider.auth.is_none()
-}
-
 /// Creates the provider-neutral model provider for configured provider metadata.
 pub fn create_model_provider(
     provider_info: ModelProviderInfo,
@@ -1516,6 +1503,7 @@ pub fn create_model_provider_with_http_client_factory(
     ))
 }
 
+#[cfg(test)]
 fn create_runtime_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
@@ -1632,23 +1620,16 @@ impl ProviderRuntime for ConfiguredModelProvider {
     }
 
     fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
-        Box::pin(async move {
-            provider_auth(
-                self.credential_manager.as_ref(),
-                None,
-                &self.info,
-            )
-            .await
-        })
+        Box::pin(
+            async move { provider_auth(self.credential_manager.as_ref(), None, &self.info).await },
+        )
     }
 
     fn account_state(&self) -> ProviderAccountResult {
         let auth = self
             .credential_manager
             .as_ref()
-            .and_then(|credential_manager| {
-                cached_provider_auth(credential_manager)
-            });
+            .and_then(|credential_manager| cached_provider_auth(credential_manager));
         let auth_invalid = auth.as_ref().is_some_and(|auth| {
             self.credential_manager
                 .as_ref()
@@ -1683,8 +1664,7 @@ impl ProviderRuntime for ConfiguredModelProvider {
                 .credential_manager
                 .as_ref()
                 .and_then(|credential_manager| {
-                    cached_provider_auth(credential_manager)
-                        .and_then(|auth| auth.get_account_id())
+                    cached_provider_auth(credential_manager).and_then(|auth| auth.get_account_id())
                 }),
             display_name: None,
             auth_status,
@@ -1700,7 +1680,6 @@ mod tests {
     use genex_http_client::HttpClientFactory;
     use genex_http_client::OutboundProxyPolicy;
     use genex_model_provider_info::WireApi;
-    use genex_model_provider_info::create_responses_provider_with_base_url;
     use genex_models_manager::manager::ModelCatalogSource;
     use genex_models_manager::manager::RefreshStrategy;
     use genex_models_manager::manager::build_models_manager;
@@ -1725,6 +1704,31 @@ mod tests {
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
+    }
+
+    #[derive(Debug)]
+    struct ForeignCredentialSnapshot;
+
+    impl ProviderCredentialSnapshot for ForeignCredentialSnapshot {
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
+        }
+    }
+
+    #[test]
+    fn runtime_credentials_require_the_adapter_owned_snapshot() {
+        assert!(matches!(
+            runtime_credentials(None),
+            Err(crate::contract::ProviderError::Provider(message))
+                if message.contains("missing its credential snapshot")
+        ));
+
+        let foreign: SharedProviderCredentialSnapshot = Arc::new(ForeignCredentialSnapshot);
+        assert!(matches!(
+            runtime_credentials(Some(&foreign)),
+            Err(crate::contract::ProviderError::Provider(message))
+                if message.contains("belongs to another provider")
+        ));
     }
 
     #[test]
@@ -1862,7 +1866,10 @@ mod tests {
         assert!(matches!(result, Err(crate::ProviderError::Unsupported)));
 
         let logout_result = provider.logout().await;
-        assert!(matches!(logout_result, Err(crate::ProviderError::Unsupported)));
+        assert!(matches!(
+            logout_result,
+            Err(crate::ProviderError::Unsupported)
+        ));
     }
 
     #[test]
@@ -1933,9 +1940,7 @@ mod tests {
     fn provider_contract_exposes_auth_environment_without_provider_info() {
         let mut info = ModelProviderInfo::create_responses_provider(None);
         info.env_key = Some("GENEX_TEST_PROVIDER_KEY".to_string());
-        let provider = create_model_provider(
-            info, /*credential_manager*/ None,
-        );
+        let provider = create_model_provider(info, /*credential_manager*/ None);
 
         let environment = provider.auth_environment();
 
@@ -2008,24 +2013,6 @@ mod tests {
             "experimental_supported_tools": [],
         }))
         .expect("valid model")
-    }
-
-    #[tokio::test]
-    async fn scoped_auth_ignores_scope_for_non_responses_provider() {
-        let provider = create_runtime_provider(
-            create_responses_provider_with_base_url(
-                "http://localhost:11434/v1",
-                WireApi::Responses,
-            ),
-            /*credential_manager*/ None,
-        );
-
-        let auth = provider
-            .api_auth_for_scope(ProviderAuthScope)
-            .await
-            .expect("auth should resolve");
-
-        assert!(auth.auth.to_auth_headers().is_empty());
     }
 
     #[tokio::test]
@@ -2136,22 +2123,6 @@ mod tests {
             let provider = create_model_provider(provider_info, /*credential_manager*/ None);
             assert_eq!(provider.capabilities().remote_compaction, expected);
         }
-    }
-
-    #[tokio::test]
-    async fn configured_provider_runtime_base_url_uses_configured_base_url() {
-        let provider = create_runtime_provider(
-            provider_for("https://example.test/v1".to_string()),
-            /*credential_manager*/ None,
-        );
-
-        assert_eq!(
-            provider
-                .runtime_base_url()
-                .await
-                .expect("runtime base URL should resolve"),
-            Some("https://example.test/v1".to_string())
-        );
     }
 
     #[test]

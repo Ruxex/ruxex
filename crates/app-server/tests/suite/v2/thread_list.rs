@@ -385,7 +385,6 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
     assert_eq!(data1.len(), 2);
     for thread in &data1 {
         assert_eq!(thread.preview, "Hello");
-        assert_eq!(thread.model_provider, "mock_provider");
         assert!(thread.created_at > 0);
         assert_eq!(thread.updated_at, thread.created_at);
         assert_eq!(thread.cwd, test_absolute_path("/"));
@@ -412,7 +411,6 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
     assert!(data2.len() <= 2);
     for thread in &data2 {
         assert_eq!(thread.preview, "Hello");
-        assert_eq!(thread.model_provider, "mock_provider");
         assert!(thread.created_at > 0);
         assert_eq!(thread.updated_at, thread.created_at);
         assert_eq!(thread.cwd, test_absolute_path("/"));

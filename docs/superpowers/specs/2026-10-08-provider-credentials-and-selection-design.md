@@ -1,4 +1,11 @@
-# Provider Credentials and Selection Design
+# Provider Credentials and Selection Design (Historical / Retired)
+
+> **Historical note (2026-10-09):** This design described multi-provider
+> credentials and active-provider selection. It is retained for historical
+> context only; the implemented Genex architecture mounts one built-in
+> provider per runtime/AppServer and does not support provider switching or
+> per-thread provider metadata. See the current single-provider design for
+> the active contract.
 
 ## Goal
 

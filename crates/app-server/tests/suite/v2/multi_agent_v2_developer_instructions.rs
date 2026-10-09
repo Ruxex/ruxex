@@ -698,7 +698,6 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
         assert_eq!(baseline.thread.status, ThreadStatus::Idle);
         assert_eq!(baseline.thread.can_accept_direct_input, Some(false));
         assert_eq!(baseline.thread.agent_role.as_deref(), agent_type);
-        assert_eq!(baseline.model_provider, "mock_provider");
         assert!(matches!(&baseline.sandbox, SandboxPolicy::ReadOnly { .. }));
         assert_eq!(baseline.reasoning_effort, Some(ReasoningEffort::Low));
 
@@ -963,7 +962,6 @@ features.shell_tool = false
             response.thread.source,
             response.thread.status,
             response.thread.can_accept_direct_input,
-            response.model_provider,
             response.sandbox,
             response.approval_policy,
             response.approvals_reviewer,

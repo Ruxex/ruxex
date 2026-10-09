@@ -42,10 +42,6 @@ projectId: string | null, /**
  * Persisted thread history contract selected when this thread was created.
  */
 historyMode: ThreadHistoryMode, /**
- * Mounted provider reported by the AppServer (for example, 'provider').
- * This is status only; it is not a persisted or per-thread selection.
- */
-modelProvider: string, /**
  * Current configured model when loaded, otherwise the latest persisted model.
  * Null when unavailable. This is not per-turn execution telemetry.
  */

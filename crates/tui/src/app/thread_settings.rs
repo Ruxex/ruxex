@@ -174,10 +174,6 @@ fn apply_thread_settings_to_session(session: &mut ThreadSessionState, settings: 
         session.model = settings.model.clone();
         session.reasoning_effort = settings.effort.clone();
     }
-    // This is a read-only status reported by the mounted AppServer. It must not
-    // be copied into the client Config because the runtime has no provider
-    // selection operation.
-    session.model_provider_id = settings.model_provider.clone();
     session.service_tier = settings.service_tier.clone();
     session.approval_policy = settings.approval_policy;
     session.permission_profile = PermissionProfile::from_legacy_sandbox_policy_for_cwd(
