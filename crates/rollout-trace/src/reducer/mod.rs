@@ -210,7 +210,6 @@ impl TraceReducer {
                 thread_id,
                 genex_turn_id,
                 model,
-                provider_name,
                 request_payload,
             } => {
                 self.start_inference_call(
@@ -221,7 +220,6 @@ impl TraceReducer {
                         thread_id,
                         genex_turn_id,
                         model,
-                        provider_name,
                         request_payload,
                     },
                 )?;
@@ -388,7 +386,6 @@ impl TraceReducer {
                 thread_id,
                 genex_turn_id,
                 model,
-                provider_name,
                 request_payload,
             } => {
                 self.start_compaction_request(
@@ -400,7 +397,6 @@ impl TraceReducer {
                         thread_id,
                         genex_turn_id,
                         model,
-                        provider_name,
                         request_payload,
                     },
                 )?;

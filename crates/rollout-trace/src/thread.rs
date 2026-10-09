@@ -58,7 +58,6 @@ pub struct ThreadStartedTraceMetadata {
     pub cwd: std::path::PathBuf,
     pub rollout_path: Option<std::path::PathBuf>,
     pub model: String,
-    pub provider_name: String,
     pub approval_policy: String,
     pub sandbox_policy: String,
 }
@@ -358,7 +357,6 @@ impl ThreadTraceContext {
         &self,
         genex_turn_id: impl Into<GenexTurnId>,
         model: impl Into<String>,
-        provider_name: impl Into<String>,
     ) -> InferenceTraceContext {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
             return InferenceTraceContext::disabled();
@@ -368,7 +366,6 @@ impl ThreadTraceContext {
             context.thread_id.clone(),
             genex_turn_id.into(),
             model.into(),
-            provider_name.into(),
         )
     }
 
@@ -383,7 +380,6 @@ impl ThreadTraceContext {
         genex_turn_id: impl Into<GenexTurnId>,
         compaction_id: impl Into<CompactionId>,
         model: impl Into<String>,
-        provider_name: impl Into<String>,
     ) -> CompactionTraceContext {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
             return CompactionTraceContext::disabled();
@@ -394,7 +390,6 @@ impl ThreadTraceContext {
             genex_turn_id.into(),
             compaction_id.into(),
             model.into(),
-            provider_name.into(),
         )
     }
 

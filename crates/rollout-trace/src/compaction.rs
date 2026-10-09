@@ -49,7 +49,6 @@ struct EnabledCompactionTraceContext {
     genex_turn_id: GenexTurnId,
     compaction_id: CompactionId,
     model: String,
-    provider_name: String,
 }
 
 /// One upstream request attempt made while computing a compaction checkpoint.
@@ -101,7 +100,6 @@ impl CompactionTraceContext {
         genex_turn_id: GenexTurnId,
         compaction_id: CompactionId,
         model: String,
-        provider_name: String,
     ) -> Self {
         Self {
             state: CompactionTraceContextState::Enabled(EnabledCompactionTraceContext {
@@ -110,7 +108,6 @@ impl CompactionTraceContext {
                 genex_turn_id,
                 compaction_id,
                 model,
-                provider_name,
             }),
         }
     }
@@ -199,7 +196,6 @@ impl CompactionTraceAttempt {
                 thread_id: attempt.context.thread_id.clone(),
                 genex_turn_id: attempt.context.genex_turn_id.clone(),
                 model: attempt.context.model.clone(),
-                provider_name: attempt.context.provider_name.clone(),
                 request_payload,
             },
         );

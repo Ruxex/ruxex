@@ -36,7 +36,6 @@ fn code_cell_lifecycle_links_nested_tools_waits_and_outputs() -> anyhow::Result<
         thread_id: "thread-root".to_string(),
         genex_turn_id: "turn-1".to_string(),
         model: "model-test".to_string(),
-        provider_name: "test-provider".to_string(),
         request_payload: request,
     })?;
     let response = writer.write_json_payload(
@@ -119,7 +118,6 @@ fn code_cell_lifecycle_links_nested_tools_waits_and_outputs() -> anyhow::Result<
         thread_id: "thread-root".to_string(),
         genex_turn_id: "turn-2".to_string(),
         model: "model-test".to_string(),
-        provider_name: "test-provider".to_string(),
         request_payload: followup,
     })?;
     let wait_request = writer.write_json_payload(
@@ -206,7 +204,6 @@ fn fast_code_cell_lifecycle_waits_for_source_item() -> anyhow::Result<()> {
         thread_id: "thread-root".to_string(),
         genex_turn_id: "turn-1".to_string(),
         model: "model-test".to_string(),
-        provider_name: "test-provider".to_string(),
         request_payload: request,
     })?;
     writer.append_with_context(
@@ -285,7 +282,6 @@ fn cancelled_turn_terminates_unfinished_code_cell() -> anyhow::Result<()> {
         thread_id: "thread-root".to_string(),
         genex_turn_id: "turn-1".to_string(),
         model: "model-test".to_string(),
-        provider_name: "test-provider".to_string(),
         request_payload: request,
     })?;
     let response = writer.write_json_payload(
@@ -365,7 +361,6 @@ fn runtime_code_cell_ids_can_repeat_across_threads() -> anyhow::Result<()> {
             thread_id: thread_id.to_string(),
             genex_turn_id: turn_id.to_string(),
             model: "model-test".to_string(),
-            provider_name: "test-provider".to_string(),
             request_payload: request,
         })?;
         writer.append_with_context(

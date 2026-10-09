@@ -67,7 +67,6 @@ impl TraceReducer {
                     status: ExecutionStatus::Running,
                 },
                 model: started.model,
-                provider_name: started.provider_name,
                 raw_request_payload_id: started.request_payload.raw_payload_id,
                 raw_response_payload_id: None,
             },
@@ -178,6 +177,5 @@ pub(super) struct StartedCompactionRequest {
     pub(super) thread_id: String,
     pub(super) genex_turn_id: String,
     pub(super) model: String,
-    pub(super) provider_name: String,
     pub(super) request_payload: RawPayloadRef,
 }

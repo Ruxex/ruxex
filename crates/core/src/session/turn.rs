@@ -1865,7 +1865,6 @@ async fn try_run_sampling_request(
     let inference_trace = sess.services.rollout_thread_trace.inference_trace_context(
         turn_context.sub_id.as_str(),
         step_context.settings.model_info.slug.as_str(),
-        turn_context.provider.descriptor().provider_kind.as_str(),
     );
     let uses_sequential_cutoff_reasoning_summaries = turn_context
         .config

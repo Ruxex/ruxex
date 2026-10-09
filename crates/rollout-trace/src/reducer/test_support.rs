@@ -131,7 +131,6 @@ pub(crate) fn append_inference_start_for_thread(
         thread_id: thread_id.to_string(),
         genex_turn_id: genex_turn_id.to_string(),
         model: "model-test".to_string(),
-        provider_name: "test-provider".to_string(),
         request_payload,
     })?;
     Ok(())

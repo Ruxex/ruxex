@@ -164,7 +164,6 @@ pub struct InferenceCall {
     pub genex_turn_id: GenexTurnId,
     pub execution: ExecutionWindow,
     pub model: String,
-    pub provider_name: String,
     /// Responses API response id, used by follow-up `previous_response_id` requests.
     pub response_id: Option<String>,
     /// Request id returned by HTTP/proxy/engine infrastructure.

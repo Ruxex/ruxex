@@ -50,7 +50,6 @@ struct EnabledInferenceTraceContext {
     thread_id: AgentThreadId,
     genex_turn_id: GenexTurnId,
     model: String,
-    provider_name: String,
 }
 
 /// One concrete upstream request attempt.
@@ -105,7 +104,6 @@ impl InferenceTraceContext {
         thread_id: AgentThreadId,
         genex_turn_id: GenexTurnId,
         model: String,
-        provider_name: String,
     ) -> Self {
         Self {
             state: InferenceTraceContextState::Enabled(EnabledInferenceTraceContext {
@@ -113,7 +111,6 @@ impl InferenceTraceContext {
                 thread_id,
                 genex_turn_id,
                 model,
-                provider_name,
             }),
         }
     }
@@ -190,7 +187,6 @@ impl InferenceTraceAttempt {
                 thread_id: attempt.context.thread_id.clone(),
                 genex_turn_id: attempt.context.genex_turn_id.clone(),
                 model: attempt.context.model.clone(),
-                provider_name: attempt.context.provider_name.clone(),
                 request_payload,
             },
         );
@@ -425,7 +421,6 @@ mod tests {
             "thread-root".to_string(),
             "turn-1".to_string(),
             "model-test".to_string(),
-            "test-provider".to_string(),
         );
         let attempt = context.start_attempt();
         let mut headers = HeaderMap::new();
@@ -463,7 +458,6 @@ mod tests {
             "thread-root".to_string(),
             "turn-1".to_string(),
             "model-test".to_string(),
-            "test-provider".to_string(),
         );
 
         let attempt = context.start_attempt();

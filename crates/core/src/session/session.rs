@@ -1095,7 +1095,6 @@ impl Session {
                 cwd: session_configuration.cwd().to_path_buf(),
                 rollout_path: rollout_path.clone(),
                 model: session_configuration.step_settings.collaboration_mode.model().to_string(),
-                provider_name: config.model_provider_id.clone(),
                 approval_policy: session_configuration.step_settings.approval_policy.value().to_string(),
                 sandbox_policy: format!(
                     "{:?}",

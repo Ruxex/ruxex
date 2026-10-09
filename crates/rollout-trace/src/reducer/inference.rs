@@ -24,7 +24,6 @@ pub(super) struct StartedInferenceCall {
     pub(super) thread_id: String,
     pub(super) genex_turn_id: String,
     pub(super) model: String,
-    pub(super) provider_name: String,
     pub(super) request_payload: RawPayloadRef,
 }
 
@@ -91,7 +90,6 @@ impl TraceReducer {
                     status: ExecutionStatus::Running,
                 },
                 model: started.model,
-                provider_name: started.provider_name,
                 response_id: None,
                 upstream_request_id: None,
                 request_item_ids,

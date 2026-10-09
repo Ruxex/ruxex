@@ -213,7 +213,6 @@ mod tests {
             thread_id: "thread-root".to_string(),
             genex_turn_id: "turn-1".to_string(),
             model: "model-test".to_string(),
-            provider_name: "test-provider".to_string(),
             request_payload: inference_request.clone(),
         })?;
         let inference_response = writer.write_json_payload(

@@ -97,7 +97,6 @@ pub enum RawTraceEventPayload {
         thread_id: AgentThreadId,
         genex_turn_id: GenexTurnId,
         model: String,
-        provider_name: String,
         request_payload: RawPayloadRef,
     },
     InferenceCompleted {
@@ -186,7 +185,6 @@ pub enum RawTraceEventPayload {
         thread_id: AgentThreadId,
         genex_turn_id: GenexTurnId,
         model: String,
-        provider_name: String,
         request_payload: RawPayloadRef,
     },
     CompactionRequestCompleted {

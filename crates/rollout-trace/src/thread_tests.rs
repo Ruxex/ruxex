@@ -36,7 +36,6 @@ fn create_in_root_writes_replayable_lifecycle_events() -> anyhow::Result<()> {
             cwd: PathBuf::from("/workspace"),
             rollout_path: Some(PathBuf::from("/tmp/rollout.jsonl")),
             model: "model-test".to_string(),
-            provider_name: "test-provider".to_string(),
             approval_policy: "never".to_string(),
             sandbox_policy: format!("{:?}", SandboxPolicy::DangerFullAccess),
         },
@@ -83,7 +82,6 @@ fn spawned_thread_start_appends_to_root_bundle() -> anyhow::Result<()> {
         cwd: PathBuf::from("/workspace"),
         rollout_path: Some(PathBuf::from("/tmp/child-rollout.jsonl")),
         model: "model-test".to_string(),
-        provider_name: "test-provider".to_string(),
         approval_policy: "never".to_string(),
         sandbox_policy: format!("{:?}", SandboxPolicy::DangerFullAccess),
     });
@@ -128,20 +126,15 @@ fn disabled_thread_context_accepts_trace_calls_without_writing() -> anyhow::Resu
         },
     );
 
-    let inference_trace =
-        thread_trace.inference_trace_context("turn-1", "model-test", "test-provider");
+    let inference_trace = thread_trace.inference_trace_context("turn-1", "model-test");
     let inference_attempt = inference_trace.start_attempt();
     inference_attempt.record_started(&serde_json::json!({ "kind": "inference" }));
     let token_usage: Option<genex_protocol::protocol::TokenUsage> = None;
     inference_attempt.record_completed("response-1", Some("req-1"), &token_usage, &[]);
     inference_attempt.record_failed("inference failed", /*upstream_request_id*/ None, &[]);
 
-    let compaction_trace = thread_trace.compaction_trace_context(
-        "turn-1",
-        "compaction-1",
-        "model-test",
-        "test-provider",
-    );
+    let compaction_trace =
+        thread_trace.compaction_trace_context("turn-1", "compaction-1", "model-test");
     assert!(!compaction_trace.is_enabled());
     let compaction_attempt =
         compaction_trace.start_attempt(&serde_json::json!({ "kind": "compaction" }));
@@ -175,7 +168,7 @@ fn compaction_contexts_share_identity_across_models() -> anyhow::Result<()> {
 
     for model in ["model-previous", "model-selected"] {
         let compaction_trace =
-            thread_trace.compaction_trace_context("turn-1", "compaction-1", model, "test-provider");
+            thread_trace.compaction_trace_context("turn-1", "compaction-1", model);
         assert!(compaction_trace.is_enabled());
         compaction_trace
             .start_attempt(&serde_json::json!({ "model": model }))
@@ -236,7 +229,6 @@ fn minimal_metadata(thread_id: ThreadId) -> ThreadStartedTraceMetadata {
         cwd: PathBuf::from("/workspace"),
         rollout_path: None,
         model: "model-test".to_string(),
-        provider_name: "test-provider".to_string(),
         approval_policy: "never".to_string(),
         sandbox_policy: "danger-full-access".to_string(),
     }
