@@ -42,6 +42,7 @@ use crate::request_processors::read_server_diagnostics;
 use crate::request_serialization::QueuedInitializedRequest;
 use crate::request_serialization::RequestSerializationQueueKey;
 use crate::request_serialization::RequestSerializationQueues;
+use crate::runtime::AppServerRuntime;
 use crate::skills_watcher::SkillsWatcher;
 use crate::thread_state::ConnectionCapabilities;
 use crate::thread_state::ThreadStateManager;
@@ -69,9 +70,6 @@ use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalService;
 use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::CredentialManager;
-use genex_model_provider::SharedModelProvider;
-use genex_model_provider::SharedProviderRuntime;
-use genex_model_provider::provider_contract as build_provider_contract;
 use genex_protocol::ThreadId;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::SessionSource;
@@ -235,7 +233,7 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) config_warnings: Vec<ConfigWarningNotification>,
     pub(crate) session_source: SessionSource,
     pub(crate) credential_manager: Arc<CredentialManager>,
-    pub(crate) provider: SharedProviderRuntime,
+    pub(crate) runtime: AppServerRuntime,
     pub(crate) user_verification: Arc<crate::user_verification::Service>,
     pub(crate) installation_id: String,
     pub(crate) code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>>,
@@ -258,13 +256,14 @@ impl MessageProcessor {
             config_warnings,
             session_source,
             credential_manager,
-            provider,
+            runtime,
             user_verification,
             installation_id,
             code_mode_session_provider,
             plugin_startup_tasks,
         } = args;
-        let provider_contract: SharedModelProvider = build_provider_contract(Arc::clone(&provider));
+        let provider = runtime.provider_runtime();
+        let provider_contract = runtime.provider_contract();
         let thread_state_manager = ThreadStateManager::new();
         outgoing.watch_user_verification_auth(Arc::clone(&credential_manager));
         // The thread store is intentionally process-scoped. Config reloads can

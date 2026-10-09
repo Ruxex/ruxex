@@ -50,6 +50,27 @@ let runtime = Genex::builder()
     .build()?;
 ```
 
+In the current repository, the common provider/runtime construction boundary is exposed as:
+
+```rust
+let app_server_runtime = AppServerRuntimeBuilder::new(provider_runtime)
+    .build()
+;
+let runtime = InProcessAppServerBuilder::new(start_args)
+    .runtime(app_server_runtime)
+    .build()
+    .await?;
+```
+
+`AppServerRuntimeBuilder` is shared by daemon and in-process startup. It derives the public
+provider-neutral contract from the same `SharedProviderRuntime` used by the legacy execution core;
+the adapter is transitional until all core consumers use the broad contract directly.
+`InProcessAppServerBuilder` is only the in-process transport launcher and rejects construction
+without an already-built `AppServerRuntime`. The resulting handle is wrapped by
+`genex-app-server-client` for higher-level request/response helpers. Its lower-level direct startup
+function remains as a compatibility path that creates the configured runtime through the same
+common builder.
+
 1つのGenex runtime/AppServerは、1つの `ModelProvider` だけを所有する。
 Providerの種類を変更するRPC、Provider一覧からの選択、Provider間の自動fallbackは
 Genexコアには持たせない。

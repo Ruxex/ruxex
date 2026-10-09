@@ -63,6 +63,9 @@ use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
+use crate::runtime::AppServerRuntime;
+use crate::runtime::configured_app_server_runtime;
+use crate::runtime::configured_provider_descriptor;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::OutboundConnectionState;
 use crate::transport::route_outgoing_envelope;
@@ -86,7 +89,6 @@ use genex_core::config::Config;
 use genex_core::resolve_installation_id;
 use genex_exec_server::EnvironmentManager;
 use genex_login::CredentialManager;
-use genex_model_provider::create_model_provider;
 use genex_model_provider::mount_provider_home;
 use genex_protocol::protocol::SessionSource;
 pub use genex_rollout::StateDbHandle;
@@ -153,10 +155,44 @@ pub struct InProcessStartArgs {
     pub session_source: SessionSource,
     /// Whether auth loading should honor the `GENEX_API_KEY` environment variable.
     pub enable_api_key_env: bool,
+    /// Shared AppServer runtime injected by the host, when using the public
+    /// builder API. When absent, startup creates one from configuration.
+    pub runtime: Option<AppServerRuntime>,
     /// Initialize params used for initial handshake.
     pub initialize: InitializeParams,
     /// Capacity used for all runtime queues (clamped to at least 1).
     pub channel_capacity: usize,
+}
+
+/// Builder for the in-process AppServer transport over one shared runtime.
+///
+/// The builder belongs to the AppServer runtime boundary. Client crates only
+/// wrap the resulting [`InProcessClientHandle`] with their transport facade.
+pub struct InProcessAppServerBuilder {
+    args: InProcessStartArgs,
+}
+
+impl InProcessAppServerBuilder {
+    pub fn new(args: InProcessStartArgs) -> Self {
+        Self { args }
+    }
+
+    /// Sets the shared AppServer runtime used by this in-process launcher.
+    pub fn runtime(mut self, runtime: AppServerRuntime) -> Self {
+        self.args.runtime = Some(runtime);
+        self
+    }
+
+    /// Builds and initializes the in-process AppServer runtime.
+    pub async fn build(self) -> IoResult<InProcessClientHandle> {
+        if self.args.runtime.is_none() {
+            return Err(IoError::new(
+                ErrorKind::InvalidInput,
+                "an in-process AppServer builder requires an AppServer runtime",
+            ));
+        }
+        start(self.args).await
+    }
 }
 
 /// Event emitted from the app-server to the in-process client.
@@ -414,8 +450,11 @@ async fn run_outbound_router(
 
 async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClientHandle> {
     args.config.auth_config().validate()?;
-    let provider_descriptor =
-        create_model_provider(args.config.model_provider.clone(), None).descriptor();
+    let provider_descriptor = args
+        .runtime
+        .as_ref()
+        .map(AppServerRuntime::provider_descriptor)
+        .unwrap_or_else(|| configured_provider_descriptor(&args.config.model_provider));
     mount_provider_home(&args.config.genex_home, &provider_descriptor).map_err(|err| {
         IoError::new(
             ErrorKind::InvalidData,
@@ -424,14 +463,19 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
     })?;
     let channel_capacity = args.channel_capacity.max(1);
     let installation_id = resolve_installation_id(&args.config.genex_home).await?;
-    let credential_manager =
+    let configured_credential_manager =
         CredentialManager::shared_from_config(args.config.as_ref(), args.enable_api_key_env)
             .await
             .map_err(IoError::other)?;
-    let provider = create_model_provider(
-        args.config.model_provider.clone(),
-        Some(Arc::clone(&credential_manager)),
-    );
+    let runtime = args.runtime.unwrap_or_else(|| {
+        configured_app_server_runtime(
+            args.config.model_provider.clone(),
+            Arc::clone(&configured_credential_manager),
+        )
+    });
+    let credential_manager = runtime
+        .credential_manager()
+        .unwrap_or(configured_credential_manager);
     let (client_tx, mut client_rx) = mpsc::channel::<InProcessClientMessage>(channel_capacity);
     let (event_tx, event_rx) = mpsc::channel::<InProcessServerEvent>(channel_capacity);
 
@@ -487,7 +531,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
                     &credential_manager,
                 ))),
                 credential_manager,
-                provider,
+                runtime,
                 installation_id,
                 code_mode_session_provider: None,
                 plugin_startup_tasks: Some(PluginStartupConfig::Current),
@@ -793,6 +837,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::AppServerRuntimeBuilder;
     use genex_app_server_protocol::ClientInfo;
     use genex_app_server_protocol::ConfigRequirementsReadResponse;
     use genex_app_server_protocol::SessionSource as ApiSessionSource;
@@ -806,6 +851,7 @@ mod tests {
     use genex_app_server_protocol::TurnItemsView;
     use genex_app_server_protocol::TurnStatus;
     use genex_core::config::ConfigBuilder;
+    use genex_model_provider::create_model_provider;
     use pretty_assertions::assert_eq;
     use std::path::Path;
     use tempfile::TempDir;
@@ -848,6 +894,7 @@ mod tests {
             config_warnings: Vec::new(),
             session_source,
             enable_api_key_env: false,
+            runtime: None,
             initialize: InitializeParams {
                 client_info: ClientInfo {
                     name: "genex-in-process-test".to_string(),
@@ -865,6 +912,59 @@ mod tests {
 
     async fn start_test_client(session_source: SessionSource) -> InProcessClientHandle {
         start_test_client_with_capacity(session_source, DEFAULT_IN_PROCESS_CHANNEL_CAPACITY).await
+    }
+
+    #[tokio::test]
+    async fn builder_uses_the_shared_app_server_runtime() {
+        let genex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config(genex_home.path()).await);
+        let state_db = genex_rollout::state_db::try_init(config.as_ref())
+            .await
+            .expect("state db should initialize for in-process test");
+        let runtime = AppServerRuntimeBuilder::new(create_model_provider(
+            config.model_provider.clone(),
+            None,
+        ))
+        .build();
+        let expected_provider = runtime.provider_descriptor().provider_kind.clone();
+        let client = InProcessAppServerBuilder::new(InProcessStartArgs {
+            arg0_paths: Arg0DispatchPaths::default(),
+            config,
+            cli_overrides: Vec::new(),
+            loader_overrides: LoaderOverrides::default(),
+            strict_config: false,
+            thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
+            log_db: None,
+            state_db: Some(state_db),
+            environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
+            config_warnings: Vec::new(),
+            session_source: SessionSource::Cli,
+            enable_api_key_env: false,
+            runtime: Some(runtime),
+            initialize: InitializeParams {
+                client_info: ClientInfo {
+                    name: "genex-in-process-test".to_string(),
+                    title: None,
+                    version: "0.0.0".to_string(),
+                },
+                capabilities: None,
+            },
+            channel_capacity: DEFAULT_IN_PROCESS_CHANNEL_CAPACITY,
+        })
+        .build()
+        .await
+        .expect("in-process app-server builder should start");
+
+        let response = client
+            .request(ClientRequest::ModelProviderRead {
+                request_id: RequestId::Integer(1),
+                params: Default::default(),
+            })
+            .await
+            .expect("model provider read should succeed")
+            .expect("model provider read should return a response");
+        assert_eq!(response["id"], expected_provider);
+        client.shutdown().await.expect("shutdown should complete");
     }
 
     #[tokio::test]

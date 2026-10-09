@@ -2,6 +2,7 @@
 //! Public stdio and WebSocket framing are exercised in the integration suite.
 
 use super::*;
+use crate::AppServerRuntimeBuilder;
 use crate::config_manager::ConfigManager;
 use crate::message_processor::ConnectionSessionState;
 use crate::message_processor::MessageProcessor;
@@ -160,7 +161,7 @@ impl Harness {
             config_warnings: Vec::new(),
             session_source: SessionSource::Cli,
             credential_manager: Arc::clone(&auth),
-            provider: model_provider,
+            runtime: AppServerRuntimeBuilder::new(model_provider).build(),
             user_verification: Arc::clone(&service),
             installation_id: "11111111-1111-4111-8111-111111111111".into(),
             code_mode_session_provider: None,

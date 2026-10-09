@@ -298,6 +298,7 @@ async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
         config_warnings: Vec::new(),
         session_source: SessionSource::Cli,
         enable_api_key_env: false,
+        runtime: None,
         initialize: InitializeParams {
             client_info: ClientInfo {
                 name: "genex-app-server-tests".to_string(),

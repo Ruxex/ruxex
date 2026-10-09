@@ -33,6 +33,7 @@ use crate::outgoing_message::OutgoingEnvelope;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
+use crate::runtime::configured_provider_descriptor;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::ConnectionOrigin;
 use crate::transport::ConnectionState;
@@ -118,6 +119,7 @@ mod outgoing_message;
 mod plugin_config_reload;
 mod request_processors;
 mod request_serialization;
+pub mod runtime;
 mod server_request_error;
 mod skills_watcher;
 mod thread_state;
@@ -132,11 +134,13 @@ pub use crate::code_mode_host::AppServerCodeModeHostArgs;
 pub use crate::code_mode_host::CodeModeHostTransport;
 pub use crate::error_code::INPUT_TOO_LARGE_ERROR_CODE;
 pub use crate::error_code::INVALID_PARAMS_ERROR_CODE;
+pub use crate::runtime::{AppServerRuntime, AppServerRuntimeBuilder};
 pub use crate::transport::AppServerTransport;
 pub use crate::transport::app_server_control_socket_path;
 pub use crate::transport::auth::AppServerWebsocketAuthArgs;
 pub use crate::transport::auth::AppServerWebsocketAuthSettings;
 pub use crate::transport::auth::WebsocketAuthCliMode;
+pub use genex_model_provider::SharedProviderRuntime;
 
 const LOG_FORMAT_ENV_VAR: &str = "LOG_FORMAT";
 const OTEL_SERVICE_NAME: &str = "genex-app-server";
@@ -543,22 +547,25 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
-    let provider_descriptor =
-        create_model_provider(config.model_provider.clone(), None).descriptor();
+    let provider_descriptor = configured_provider_descriptor(&config.model_provider);
     mount_provider_home(&config.genex_home, &provider_descriptor).map_err(|err| {
         std::io::Error::new(
             ErrorKind::InvalidData,
             format!("failed to mount provider data root: {err}"),
         )
     })?;
-    let credential_manager =
+    let configured_credential_manager =
         CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
             .await
             .map_err(std::io::Error::other)?;
-    let provider = create_model_provider(
+    let runtime = runtime::AppServerRuntimeBuilder::new(create_model_provider(
         config.model_provider.clone(),
-        Some(Arc::clone(&credential_manager)),
-    );
+        Some(Arc::clone(&configured_credential_manager)),
+    ))
+    .build();
+    let credential_manager = runtime
+        .credential_manager()
+        .unwrap_or(configured_credential_manager);
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
@@ -839,7 +846,7 @@ pub async fn run_main_with_transport_options(
                 &credential_manager,
             ))),
             credential_manager,
-            provider,
+            runtime,
             installation_id,
             code_mode_session_provider,
             plugin_startup_tasks: matches!(
