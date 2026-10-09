@@ -678,11 +678,28 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         None
     }
 
-    /// Attempts provider-owned authentication recovery before using the auth manager.
+    /// Attempts provider-owned authentication recovery using the mounted auth manager.
+    ///
+    /// The recovery state machine remains inside the provider adapter so Core does not need
+    /// to know which credential source or refresh protocol the provider uses.
     fn recover_from_unauthorized(
         &self,
     ) -> ModelProviderFuture<'_, genex_protocol::error::Result<ProviderUnauthorizedRecovery>> {
-        Box::pin(async { Ok(ProviderUnauthorizedRecovery::NotConfigured) })
+        let credential_manager = self.credential_manager();
+        Box::pin(async move {
+            let Some(credential_manager) = credential_manager else {
+                return Ok(ProviderUnauthorizedRecovery::NotConfigured);
+            };
+            let mut recovery = credential_manager.unauthorized_recovery();
+            if !recovery.has_next() {
+                return Ok(ProviderUnauthorizedRecovery::NotConfigured);
+            }
+            recovery
+                .next()
+                .await
+                .map(|_| ProviderUnauthorizedRecovery::Recovered)
+                .map_err(|error| GenexErr::Fatal(error.to_string()))
+        })
     }
 
     /// Returns the current provider-scoped auth value, if one is configured.

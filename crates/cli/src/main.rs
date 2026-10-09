@@ -1628,6 +1628,9 @@ async fn run_debug_prompt_input_command(
     let prompt_input = genex_core::build_prompt_input(
         config,
         runtime.provider(),
+        runtime
+            .credential_manager()
+            .ok_or_else(|| anyhow::anyhow!("debug prompt runtime has no credential manager"))?,
         input,
         /*state_db*/ None,
         Arc::new(extensions.build()),

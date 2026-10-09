@@ -35,9 +35,7 @@ use std::sync::atomic::Ordering;
 use crate::GenexResponsesHeaders;
 use async_channel::Sender;
 use genex_api::ApiError;
-use genex_api::AuthProvider;
 use genex_api::Compression;
-use genex_api::Provider as ApiProvider;
 use genex_api::Reasoning;
 use genex_api::ReasoningContext;
 use genex_api::RequestTelemetry;
@@ -45,19 +43,13 @@ use genex_api::ResponseCreateWsRequest;
 use genex_api::ResponsesApiRequest;
 use genex_api::ResponsesOptions as ApiResponsesOptions;
 use genex_api::ResponsesWsRequest;
-use genex_api::SharedAuthProvider;
 use genex_api::SseTelemetry;
 use genex_api::StreamOptions;
 use genex_api::TransportError;
-use genex_api::auth_header_telemetry;
 use genex_api::build_session_headers;
 use genex_api::create_text_param_for_request;
 use genex_api::response_create_client_metadata;
 use genex_http_client::HttpClientFactory;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_login::RefreshTokenError;
-use genex_login::UnauthorizedRecovery;
 use genex_login::default_client::add_originator_header;
 use genex_otel::SessionTelemetry;
 use genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
@@ -109,15 +101,16 @@ use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
 use crate::responses_metadata::GenexResponsesMetadata;
-use genex_model_provider::ProviderAuthScope;
+use genex_model_provider::ProviderConnectionKey;
+use genex_model_provider::ProviderChatEvent;
 use genex_model_provider::ProviderError;
+use genex_model_provider::ProviderRequestAuth;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ProviderWebsocketConnectRequest;
 use genex_model_provider::ProviderWebsocketEvent;
 use genex_model_provider::ProviderWebsocketRequest;
 use genex_model_provider::ProviderWebsocketTelemetry;
 use genex_model_provider::ProviderWireApi;
-use genex_model_provider::ResponsesConnectionKey;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderWebsocketConnection;
 use genex_model_provider::ProviderTransportContext;
@@ -126,7 +119,6 @@ use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result;
 use genex_response_debug_context::extract_response_debug_context;
-use genex_response_debug_context::extract_response_debug_context_from_api_error;
 use genex_response_debug_context::telemetry_transport_error_message;
 
 pub const X_GENEX_INSTALLATION_ID_HEADER: &str = "x-genex-installation-id";
@@ -186,11 +178,9 @@ struct ModelClientState {
 /// Keeping this as a single bundle ensures prewarm and normal request paths
 /// share the same auth/provider setup flow.
 struct CurrentClientSetup {
-    auth: Option<GenexAuth>,
+    auth: ProviderRequestAuth,
     auth_owner_generation: Option<u64>,
-    auth_revision: Option<u64>,
-    api_provider: ApiProvider,
-    api_auth: SharedAuthProvider,
+    connection_key: ProviderConnectionKey,
 }
 
 #[derive(Clone, Copy)]
@@ -273,7 +263,7 @@ struct WebsocketSession {
     responses_headers: ApiHeaderMap,
     /// Owner of the cached state, including before a connection is opened.
     auth_owner_generation: Option<u64>,
-    connection_key: Option<ResponsesConnectionKey>,
+    connection_key: Option<ProviderConnectionKey>,
     last_request: Option<ResponsesApiRequest>,
     last_response_rx: Option<oneshot::Receiver<LastResponse>>,
     last_response_from_untraced_warmup: bool,
@@ -520,7 +510,7 @@ impl ModelClient {
     /// This constructor does not perform network I/O itself; the session opens a websocket lazily
     /// when the first stream request is issued.
     pub fn new_session(&self) -> ModelClientSession {
-        let auth_owner_generation = self.auth_owner_generation();
+        let auth_owner_generation = None;
         let mut websocket_session = self.take_cached_websocket_session();
         if websocket_session.auth_owner_generation != auth_owner_generation {
             // Drop the old owner's cache before this turn can establish fresh routing state.
@@ -532,19 +522,6 @@ impl ModelClient {
             websocket_session,
             turn_state: Arc::new(OnceLock::new()),
         }
-    }
-
-    pub(crate) fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
-        self.state.provider.credential_manager()
-    }
-
-    fn auth_owner_generation(&self) -> Option<u64> {
-        self.credential_manager().map(|manager| {
-            manager
-                .auth_change_state_receiver()
-                .borrow()
-                .owner_generation
-        })
     }
 
     fn take_cached_websocket_session(&self) -> WebsocketSession {
@@ -752,7 +729,7 @@ impl ModelClient {
         Ok(request)
     }
 
-    fn filter_tool_result_metadata(input: &mut [ResponseItem], _api_provider: &ApiProvider) {
+    fn filter_tool_result_metadata(input: &mut [ResponseItem]) {
         // Check the resolved destination only when sending, not for local budget estimates.
         // HTTP and WS (including v2 compaction) share this raw-metadata-only filter.
         // Internal tool-result metadata is only accepted by a trusted first-party endpoint.
@@ -794,53 +771,23 @@ impl ModelClient {
     /// This centralizes setup used by both prewarm and normal request paths so they stay in
     /// lockstep when auth/provider resolution changes.
     async fn current_client_setup(&self) -> Result<CurrentClientSetup> {
-        // Capture before resolving credentials so an account switch during setup cannot label
-        // an old connection with the new owner's revision.
-        let auth_owner_generation = self.auth_owner_generation();
-        let auth_changes = self
+        let snapshot = self
             .state
             .provider
-            .credential_manager()
-            .map(|manager| manager.auth_change_receiver());
-        loop {
-            let revision = auth_changes.as_ref().map(|changes| *changes.borrow());
-            let auth = self.state.provider.auth().await;
-            let api_provider = self.state.provider.api_provider().await?;
-            let resolved_auth = self
-                .state
-                .provider
-                .api_auth_for_scope(ProviderAuthScope)
-                .await?;
-            // Command-backed bearer refreshes cannot change workspace routing. Keep the captured
-            // revisions so a refresh during setup still invalidates cached WebSocket state.
-            if self
-                .state
-                .provider
-                .model_provider_info()
-                .is_none_or(|info| info.auth.is_none())
-            {
-                if self.auth_owner_generation() != auth_owner_generation {
-                    return Err(std::io::Error::other(
-                        "account changed while preparing model request",
-                    )
-                    .into());
-                }
-                // Rebuild the entire bundle after a credential-only refresh, including routing.
-                if auth_changes.as_ref().map(|changes| *changes.borrow()) != revision {
-                    continue;
-                }
-            }
-            return Ok(CurrentClientSetup {
-                auth,
-                auth_owner_generation,
-                auth_revision: revision,
-                api_provider,
-                api_auth: resolved_auth.auth,
-            });
+            .request_snapshot()
+            .await
+            .map_err(|error| GenexErr::Fatal(error.to_string()))?;
+        if !snapshot.auth.authenticated {
+            return Err(GenexErr::Fatal("provider is unauthenticated".to_string()));
         }
+        Ok(CurrentClientSetup {
+            auth_owner_generation: snapshot.auth.owner_generation,
+            auth: snapshot.auth,
+            connection_key: snapshot.connection_key,
+        })
     }
 
-    fn responses_headers(&self, auth: Option<&GenexAuth>, model: &str) -> ApiHeaderMap {
+    fn responses_headers(&self, auth: &ProviderRequestAuth, model: &str) -> ApiHeaderMap {
         self.genex_responses_headers
             .as_ref()
             .filter(|config| config.model == model && self.uses_managed_auth(auth))
@@ -848,20 +795,13 @@ impl ModelClient {
             .unwrap_or_default()
     }
 
-    fn uses_managed_auth(&self, auth: Option<&GenexAuth>) -> bool {
-        let Some(provider) = self.state.provider.model_provider_info() else {
-            return false;
-        };
-        auth.is_some_and(GenexAuth::uses_managed_auth)
-            && provider.is_responses_provider()
-            && provider.env_key.is_none()
-            && provider.experimental_bearer_token.is_none()
-            && provider.auth.is_none()
+    fn uses_managed_auth(&self, auth: &ProviderRequestAuth) -> bool {
+        auth.managed_auth
     }
 
     fn build_routing_hint_header(
         &self,
-        auth: Option<&GenexAuth>,
+        auth: &ProviderRequestAuth,
         model: &str,
         service_tier: Option<&str>,
     ) -> Option<HeaderValue> {
@@ -1105,8 +1045,7 @@ impl ModelClientSession {
                 "failed to build websocket prewarm client setup: {err}"
             ))
         })?;
-        let connection_key =
-            ResponsesConnectionKey::new(&client_setup.api_provider, client_setup.auth_revision);
+        let connection_key = client_setup.connection_key.clone();
         if self.websocket_session.connection.is_some()
             && self.websocket_session.connection_key.as_ref() == Some(&connection_key)
         {
@@ -1114,16 +1053,15 @@ impl ModelClientSession {
         }
         self.websocket_session.reset(Some("other"));
         let auth_context = AuthRequestTelemetryContext::new(
-            client_setup.api_auth.as_ref(),
+            &client_setup.auth,
             PendingUnauthorizedRetry::default(),
         );
         let responses_headers = self
             .client
-            .responses_headers(client_setup.auth.as_ref(), &model_info.slug);
+            .responses_headers(&client_setup.auth, &model_info.slug);
         self.websocket_connection(WebsocketConnectParams {
             session_telemetry,
-            api_provider: client_setup.api_provider,
-            auth_revision: client_setup.auth_revision,
+            connection_key,
             auth_owner_generation: client_setup.auth_owner_generation,
             responses_metadata,
             auth_context,
@@ -1153,15 +1091,13 @@ impl ModelClientSession {
     ) -> genex_model_provider::ProviderResult<&SharedProviderWebsocketConnection> {
         let WebsocketConnectParams {
             session_telemetry,
-            api_provider,
-            auth_revision,
+            connection_key,
             auth_owner_generation,
             responses_metadata,
             auth_context,
             request_route_telemetry,
             responses_headers,
         } = params;
-        let connection_key = ResponsesConnectionKey::new(&api_provider, auth_revision);
         let reset_reason = match self.websocket_session.connection.as_ref() {
             Some(_)
                 if self.websocket_session.responses_headers != *responses_headers
@@ -1178,8 +1114,7 @@ impl ModelClientSession {
         };
         let needs_new = self.websocket_session.connection.is_none() || reset_reason.is_some();
         // Resolving an external auth provider can change ownership during client setup.
-        let owner_changed = self.websocket_session.auth_owner_generation != auth_owner_generation
-            || self.client.auth_owner_generation() != auth_owner_generation;
+        let owner_changed = self.websocket_session.auth_owner_generation != auth_owner_generation;
         if owner_changed {
             self.turn_state = Arc::new(OnceLock::new());
         }
@@ -1216,9 +1151,9 @@ impl ModelClientSession {
         })
     }
 
-    fn responses_request_compression(&self, auth: Option<&GenexAuth>) -> Compression {
+    fn responses_request_compression(&self, auth: &ProviderRequestAuth) -> Compression {
         if self.client.state.enable_request_compression
-            && auth.is_some_and(GenexAuth::uses_managed_auth)
+            && auth.managed_auth
             && matches!(
                 self.client.state.provider.wire_api(),
                 ProviderWireApi::Responses
@@ -1277,14 +1212,12 @@ impl ModelClientSession {
             .chat(request)
             .await
             .map_err(|error| GenexErr::Fatal(error.to_string()))?;
-        let api_stream =
-            provider_stream.map(|event| event.map_err(|error| ApiError::Stream(error.to_string())));
+        let api_stream = provider_stream.map(|event| event.map(provider_event_to_response_event));
         let (stream, _) = map_response_events(
             None,
             api_stream,
             session_telemetry.clone(),
             inference_trace.start_attempt(),
-            Arc::clone(&self.client.state.provider),
         );
         Ok(stream)
     }
@@ -1317,18 +1250,14 @@ impl ModelClientSession {
         responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
-        let credential_manager = self.client.state.provider.credential_manager();
-        let mut auth_recovery = credential_manager
-            .as_ref()
-            .map(CredentialManager::unauthorized_recovery);
         let mut provider_auth_recovery_attempted = false;
         loop {
             let client_setup = self.client.current_client_setup().await?;
             let responses_headers = self
                 .client
-                .responses_headers(client_setup.auth.as_ref(), &model_info.slug);
+                .responses_headers(&client_setup.auth, &model_info.slug);
             tracing::Span::current().record("api.path", "/responses");
-            let compression = self.responses_request_compression(client_setup.auth.as_ref());
+            let compression = self.responses_request_compression(&client_setup.auth);
             let mut options = self
                 .build_responses_options(
                     responses_metadata,
@@ -1345,12 +1274,9 @@ impl ModelClientSession {
                 service_tier.clone(),
                 responses_metadata,
             )?;
-            ModelClient::filter_tool_result_metadata(
-                &mut request.input,
-                &client_setup.api_provider,
-            );
+            ModelClient::filter_tool_result_metadata(&mut request.input);
             if let Some(header_value) = self.client.build_routing_hint_header(
-                client_setup.auth.as_ref(),
+                &client_setup.auth,
                 &request.model,
                 request.service_tier.as_deref(),
             ) {
@@ -1397,27 +1323,26 @@ impl ModelClientSession {
             let provider_result = self.client.state.provider.chat(provider_request).await;
             match provider_result {
                 Ok(provider_stream) => {
-                    let api_stream = provider_stream
-                        .map(|event| event.map_err(|error| ApiError::Stream(error.to_string())));
+            let api_stream = provider_stream.map(|event| {
+                event.map(provider_event_to_response_event)
+            });
                     let (stream, _) = map_response_events(
                         None,
                         api_stream,
                         request_session_telemetry,
                         inference_trace_attempt,
-                        Arc::clone(&self.client.state.provider),
                     );
                     return Ok(stream);
                 }
                 Err(genex_model_provider::ProviderError::Unauthorized) => {
                     let transport = TransportError::Http {
                         status: StatusCode::UNAUTHORIZED,
-                        url: Some(client_setup.api_provider.url_for_path("/responses")),
+                        url: None,
                         headers: None,
                         body: None,
                     };
                     let _recovery = handle_unauthorized(
                         transport,
-                        &mut auth_recovery,
                         &mut provider_auth_recovery_attempted,
                         session_telemetry,
                         &self.client.state.provider,
@@ -1461,21 +1386,16 @@ impl ModelClientSession {
         inference_trace: &InferenceTraceContext,
     ) -> Result<WebsocketStreamOutcome> {
         let provider = Arc::clone(&self.client.state.provider);
-        let credential_manager = provider.credential_manager();
-
-        let mut auth_recovery = credential_manager
-            .as_ref()
-            .map(CredentialManager::unauthorized_recovery);
         let mut provider_auth_recovery_attempted = false;
         let mut pending_retry = PendingUnauthorizedRetry::default();
         loop {
             let client_setup = self.client.current_client_setup().await?;
             let responses_headers = self
                 .client
-                .responses_headers(client_setup.auth.as_ref(), &model_info.slug);
+                .responses_headers(&client_setup.auth, &model_info.slug);
             tracing::Span::current().record("api.path", "/responses");
             let request_auth_context =
-                AuthRequestTelemetryContext::new(client_setup.api_auth.as_ref(), pending_retry);
+                AuthRequestTelemetryContext::new(&client_setup.auth, pending_retry);
             let mut request = self.client.build_responses_request(
                 prompt,
                 model_info,
@@ -1484,15 +1404,12 @@ impl ModelClientSession {
                 service_tier.clone(),
                 responses_metadata,
             )?;
-            ModelClient::filter_tool_result_metadata(
-                &mut request.input,
-                &client_setup.api_provider,
-            );
+            ModelClient::filter_tool_result_metadata(&mut request.input);
             request.access_programs =
                 cyber_access_program::for_program(prompt.cyber_access_program);
             let mut websocket_metadata = responses_metadata.clone();
             websocket_metadata.routing_hint = self.client.build_routing_hint_header(
-                client_setup.auth.as_ref(),
+                &client_setup.auth,
                 &request.model,
                 request.service_tier.as_deref(),
             );
@@ -1502,12 +1419,10 @@ impl ModelClientSession {
             } else {
                 session_telemetry_for_request(session_telemetry, &request)
             };
-            let websocket_url = Some(client_setup.api_provider.url_for_path("/responses"));
             match self
                 .websocket_connection(WebsocketConnectParams {
                     session_telemetry,
-                    api_provider: client_setup.api_provider,
-                    auth_revision: client_setup.auth_revision,
+                    connection_key: client_setup.connection_key.clone(),
                     auth_owner_generation: client_setup.auth_owner_generation,
                     responses_metadata: &websocket_metadata,
                     auth_context: request_auth_context,
@@ -1523,14 +1438,13 @@ impl ModelClientSession {
                 Err(ProviderError::Unauthorized) => {
                     let unauthorized_transport = TransportError::Http {
                         status: StatusCode::UNAUTHORIZED,
-                        url: websocket_url,
+                        url: None,
                         headers: None,
                         body: None,
                     };
                     pending_retry = PendingUnauthorizedRetry::from_recovery(
                         handle_unauthorized(
                             unauthorized_transport,
-                            &mut auth_recovery,
                             &mut provider_auth_recovery_attempted,
                             session_telemetry,
                             &provider,
@@ -1541,7 +1455,7 @@ impl ModelClientSession {
                     );
                     continue;
                 }
-                Err(err) => return Err(provider.map_api_error(ApiError::Stream(err.to_string()))),
+                Err(err) => return Err(provider_error_to_genex_error(err)),
             }
 
             // Measure the complete logical request, not only the websocket delta.
@@ -1621,9 +1535,7 @@ impl ModelClientSession {
 
             let websocket_connection =
                 self.websocket_session.connection.as_ref().ok_or_else(|| {
-                    self.client.state.provider.map_api_error(ApiError::Stream(
-                        "websocket connection is unavailable".to_string(),
-                    ))
+                    GenexErr::Fatal("websocket connection is unavailable".to_string())
                 })?;
             request_session_telemetry.counter(
                 WEBSOCKET_CONTINUATION_COUNT_METRIC,
@@ -1652,22 +1564,18 @@ impl ModelClientSession {
             self.websocket_session.last_request = Some(request);
             self.websocket_session.last_response_from_untraced_warmup = warmup;
             let stream_result = stream_result.map_err(|err| {
-                let err = self
-                    .client
-                    .state
-                    .provider
-                    .map_api_error(ApiError::Stream(err.to_string()));
+                let err = provider_error_to_genex_error(err);
                 inference_trace_attempt.record_failed(&err, None, /*output_items*/ &[]);
                 err
             })?;
-            let api_stream = stream_result
-                .map(|event| event.map_err(|error| ApiError::Stream(error.to_string())));
+            let api_stream = stream_result.map(|event| {
+                event.map(provider_event_to_response_event)
+            });
             let (stream, last_request_rx) = map_response_events(
                 None,
                 api_stream,
                 request_session_telemetry,
                 inference_trace_attempt,
-                Arc::clone(&self.client.state.provider),
             );
             self.websocket_session.last_response_rx = Some(last_request_rx);
             return Ok(WebsocketStreamOutcome::Stream(stream));
@@ -1896,15 +1804,86 @@ fn add_responses_lite_header(headers: &mut ApiHeaderMap, use_responses_lite: boo
 const RESPONSE_STREAM_CHANNEL_CAPACITY: usize = 1600;
 const STREAM_DROPPED_REASON: &str = "response stream dropped before provider terminal event";
 
+fn provider_event_to_response_event(event: ProviderChatEvent) -> ResponseEvent {
+    match event {
+        ProviderChatEvent::Created { response_id } => ResponseEvent::Created { response_id },
+        ProviderChatEvent::SafetyBuffering(buffering) => {
+            ResponseEvent::SafetyBuffering(genex_api::SafetyBuffering {
+                use_cases: buffering.use_cases,
+                reasons: buffering.reasons,
+                show_buffering_ui: buffering.show_buffering_ui,
+                faster_model: buffering.faster_model,
+            })
+        }
+        ProviderChatEvent::OutputItemDone(item) => ResponseEvent::OutputItemDone(item),
+        ProviderChatEvent::OutputItemAdded(item) => ResponseEvent::OutputItemAdded(item),
+        ProviderChatEvent::ServerModel(model) => ResponseEvent::ServerModel(model),
+        ProviderChatEvent::ModelVerifications(verifications) => {
+            ResponseEvent::ModelVerifications(verifications)
+        }
+        ProviderChatEvent::ServerReasoningIncluded(included) => {
+            ResponseEvent::ServerReasoningIncluded(included)
+        }
+        ProviderChatEvent::Completed {
+            response_id,
+            token_usage,
+            usage_metadata,
+            end_turn,
+        } => ResponseEvent::Completed {
+            response_id,
+            token_usage,
+            usage_metadata,
+            end_turn,
+        },
+        ProviderChatEvent::OutputTextDelta(delta) => ResponseEvent::OutputTextDelta(delta),
+        ProviderChatEvent::ToolCallInputDelta {
+            item_id,
+            call_id,
+            delta,
+        } => ResponseEvent::ToolCallInputDelta {
+            item_id,
+            call_id,
+            delta,
+        },
+        ProviderChatEvent::ReasoningSummaryDelta {
+            delta,
+            summary_index,
+        } => ResponseEvent::ReasoningSummaryDelta {
+            delta,
+            summary_index,
+        },
+        ProviderChatEvent::ReasoningSummaryDone {
+            item_id,
+            text,
+            summary_index,
+        } => ResponseEvent::ReasoningSummaryDone {
+            item_id,
+            text,
+            summary_index,
+        },
+        ProviderChatEvent::ReasoningContentDelta {
+            delta,
+            content_index,
+        } => ResponseEvent::ReasoningContentDelta {
+            delta,
+            content_index,
+        },
+        ProviderChatEvent::ReasoningSummaryPartAdded { summary_index } => {
+            ResponseEvent::ReasoningSummaryPartAdded { summary_index }
+        }
+        ProviderChatEvent::RateLimits(snapshot) => ResponseEvent::RateLimits(snapshot),
+        ProviderChatEvent::ModelsEtag(etag) => ResponseEvent::ModelsEtag(etag),
+    }
+}
+
 fn map_response_events<S>(
     upstream_request_id: Option<String>,
     api_stream: S,
     session_telemetry: SessionTelemetry,
     inference_trace_attempt: InferenceTraceAttempt,
-    provider: SharedModelProvider,
 ) -> (ResponseStream, oneshot::Receiver<LastResponse>)
 where
-    S: futures::Stream<Item = std::result::Result<ResponseEvent, ApiError>>
+    S: futures::Stream<Item = std::result::Result<ResponseEvent, ProviderError>>
         + Unpin
         + Send
         + 'static,
@@ -2003,11 +1982,7 @@ where
                     }
                 }
                 Err(err) => {
-                    let response_debug_context =
-                        extract_response_debug_context_from_api_error(&err);
-                    let upstream_request_id =
-                        upstream_request_id.or(response_debug_context.request_id.as_deref());
-                    let mapped = provider.map_api_error(err);
+                    let mapped = provider_error_to_genex_error(err);
                     inference_trace_attempt.record_failed(
                         &mapped,
                         upstream_request_id,
@@ -2076,11 +2051,10 @@ struct AuthRequestTelemetryContext {
 }
 
 impl AuthRequestTelemetryContext {
-    fn new(api_auth: &dyn AuthProvider, retry: PendingUnauthorizedRetry) -> Self {
-        let auth_telemetry = auth_header_telemetry(api_auth);
+    fn new(auth: &ProviderRequestAuth, retry: PendingUnauthorizedRetry) -> Self {
         Self {
-            auth_header_attached: auth_telemetry.attached,
-            auth_header_name: auth_telemetry.name,
+            auth_header_attached: auth.auth_header_attached,
+            auth_header_name: auth.auth_header_name,
             retry_after_unauthorized: retry.retry_after_unauthorized,
             recovery_mode: retry.recovery_mode,
             recovery_phase: retry.recovery_phase,
@@ -2090,8 +2064,7 @@ impl AuthRequestTelemetryContext {
 
 struct WebsocketConnectParams<'a> {
     session_telemetry: &'a SessionTelemetry,
-    api_provider: genex_api::Provider,
-    auth_revision: Option<u64>,
+    connection_key: ProviderConnectionKey,
     auth_owner_generation: Option<u64>,
     responses_metadata: &'a GenexResponsesMetadata,
     auth_context: AuthRequestTelemetryContext,
@@ -2119,14 +2092,12 @@ fn emit_auth_recovery_event(
 
 async fn handle_unauthorized(
     transport: TransportError,
-    auth_recovery: &mut Option<UnauthorizedRecovery>,
     provider_auth_recovery_attempted: &mut bool,
     session_telemetry: &SessionTelemetry,
     provider: &SharedModelProvider,
     event_sender: Option<&Sender<ProtocolEvent>>,
     turn_id: Option<&str>,
 ) -> Result<UnauthorizedRecoveryExecution> {
-    let debug = extract_response_debug_context(&transport);
     if !*provider_auth_recovery_attempted {
         *provider_auth_recovery_attempted = true;
         let messages = provider.auth_recovery_messages();
@@ -2157,86 +2128,26 @@ async fn handle_unauthorized(
             }
             Ok(ProviderUnauthorizedRecovery::NotConfigured) => {}
             Err(error) => {
-                let original = provider.map_api_error(ApiError::Transport(transport));
                 let error = provider_recovery_error_to_genex_error(error);
                 warn!(
                     error = %error,
-                    original_error = %original,
                     "provider authentication recovery failed"
                 );
-                return Err(if error.is_retryable() {
-                    original
-                } else {
-                    error
-                });
+                return Err(error);
             }
         }
     }
-
-    if let Some(recovery) = auth_recovery
-        && recovery.has_next()
-    {
-        let mode = recovery.mode_name();
-        let phase = recovery.step_name();
-        return match recovery.next().await {
-            Ok(step_result) => {
-                session_telemetry.record_auth_recovery(
-                    mode,
-                    phase,
-                    "recovery_succeeded",
-                    debug.request_id.as_deref(),
-                    debug.cf_ray.as_deref(),
-                    /*recovery_reason*/ None,
-                    step_result.auth_state_changed(),
-                );
-                Ok(UnauthorizedRecoveryExecution { mode, phase })
-            }
-            Err(RefreshTokenError::Permanent(failed)) => {
-                session_telemetry.record_auth_recovery(
-                    mode,
-                    phase,
-                    "recovery_failed_permanent",
-                    debug.request_id.as_deref(),
-                    debug.cf_ray.as_deref(),
-                    /*recovery_reason*/ None,
-                    /*auth_state_changed*/ None,
-                );
-                Err(GenexErr::RefreshTokenFailed(failed))
-            }
-            Err(RefreshTokenError::Transient(other)) => {
-                session_telemetry.record_auth_recovery(
-                    mode,
-                    phase,
-                    "recovery_failed_transient",
-                    debug.request_id.as_deref(),
-                    debug.cf_ray.as_deref(),
-                    /*recovery_reason*/ None,
-                    /*auth_state_changed*/ None,
-                );
-                Err(GenexErr::Io(other))
-            }
-        };
-    }
-
-    let (mode, phase, recovery_reason) = match auth_recovery.as_ref() {
-        Some(recovery) => (
-            recovery.mode_name(),
-            recovery.step_name(),
-            Some(recovery.unavailable_reason()),
-        ),
-        None => ("none", "none", Some("credential_manager_missing")),
-    };
     session_telemetry.record_auth_recovery(
-        mode,
-        phase,
+        "none",
+        "none",
         "recovery_not_run",
-        debug.request_id.as_deref(),
-        debug.cf_ray.as_deref(),
-        recovery_reason,
+        None,
+        None,
+        Some("provider_recovery_not_configured"),
         /*auth_state_changed*/ None,
     );
 
-    Err(provider.map_api_error(ApiError::Transport(transport)))
+    Err(GenexErr::Fatal(transport.to_string()))
 }
 
 fn provider_recovery_error_to_genex_error(error: genex_model_provider::ProviderError) -> GenexErr {
@@ -2250,6 +2161,10 @@ fn provider_recovery_error_to_genex_error(error: genex_model_provider::ProviderE
         }
         other => GenexErr::Fatal(other.to_string()),
     }
+}
+
+fn provider_error_to_genex_error(error: ProviderError) -> GenexErr {
+    provider_recovery_error_to_genex_error(error)
 }
 
 fn provider_error_to_api_error(error: ProviderError) -> ApiError {

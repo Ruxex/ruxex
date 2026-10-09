@@ -1,10 +1,8 @@
 //! Provider-neutral boundary for Genex hosts and provider implementations.
 //!
-//! The primary request, response, stream, capability, and descriptor surface is
-//! provider-neutral. A small set of compatibility methods bridges the current
-//! adapter-backed auth and transport paths while native provider implementations
-//! are migrated; those methods are kept behind the shared provider handle and
-//! are not used for provider selection.
+//! The request, response, stream, capability, descriptor, authentication, and usage surface is
+//! provider-neutral. Provider-specific HTTP, credentials, wire payloads, and error details stay
+//! inside the adapter implementation.
 
 use std::collections::BTreeMap;
 use std::fmt;

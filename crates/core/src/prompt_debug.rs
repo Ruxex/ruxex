@@ -4,6 +4,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_extension_api::ExtensionRegistry;
 use genex_extension_api::UserInstructionsProvider;
+use genex_login::CredentialManager;
 use genex_model_provider::SharedModelProvider;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as GenexResult;
@@ -26,16 +27,13 @@ use crate::thread_manager::thread_store_from_config;
 pub async fn build_prompt_input(
     mut config: Config,
     provider: SharedModelProvider,
+    credential_manager: Arc<CredentialManager>,
     input: Vec<UserInput>,
     state_db: Option<StateDbHandle>,
     extensions: Arc<ExtensionRegistry<Config>>,
     user_instructions_provider: Arc<dyn UserInstructionsProvider>,
 ) -> GenexResult<Vec<ResponseItem>> {
     config.ephemeral = true;
-
-    let credential_manager = provider.credential_manager().ok_or_else(|| {
-        GenexErr::Fatal("prompt debug requires a provider-owned credential manager".to_string())
-    })?;
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
         config.genex_self_exe.clone(),

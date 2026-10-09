@@ -19,7 +19,6 @@ use std::ffi::OsStr;
 use std::future::Future;
 use std::io::IsTerminal;
 use std::io::Read;
-use std::net::IpAddr;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -28,8 +27,9 @@ use std::time::Instant;
 
 use anyhow::Context;
 use clap::Parser;
-use genex_api::ApiError;
-use genex_api::ResponsesWebsocketClient;
+use genex_model_provider::ProviderError;
+use genex_model_provider::ProviderTransportContext;
+use genex_model_provider::ProviderWebsocketConnectRequest;
 use genex_api::is_azure_responses_provider;
 use genex_app_server::AppServerRuntimeBuilder;
 use genex_app_server::runtime::mount_provider_home_for_config;
@@ -52,7 +52,6 @@ use genex_install_context::StandalonePlatform;
 use genex_login::AuthDotJson;
 use genex_login::CredentialManager;
 use genex_login::GENEX_API_KEY_ENV_VAR;
-use genex_login::GenexAuth;
 use genex_login::default_client::create_client_without_request_logging;
 use genex_login::default_client::default_headers;
 use genex_login::load_auth_dot_json;
@@ -100,7 +99,6 @@ use system::system_check;
 use thread_inventory::thread_inventory_check;
 use title::terminal_title_check;
 
-const WEBSOCKET_IMMEDIATE_CLOSE_GRACE: Duration = Duration::from_millis(250);
 const SLOW_CHECK_PROGRESS_THRESHOLD: Duration = Duration::from_secs(2);
 const SLOW_CHECK_PROGRESS_INTERVAL: Duration = Duration::from_secs(1);
 const PROXY_ENV_VARS: &[&str] = &[
@@ -2023,42 +2021,8 @@ async fn websocket_reachability_check(
         AppServerRuntimeBuilder::from_provider_info(provider.clone(), credential_manager)
             .build()
             .provider();
-    let auth = runtime_provider.auth().await;
-    details.push(format!(
-        "auth mode: {}",
-        auth.as_ref().map(auth_mode_name).unwrap_or("none")
-    ));
-
-    let api_provider = match runtime_provider.api_provider().await {
-        Ok(api_provider) => api_provider,
-        Err(err) => {
-            return websocket_probe_warning(
-                "Responses WebSocket provider setup failed",
-                details,
-                format!("provider setup failed: {err}"),
-            );
-        }
-    };
-    match api_provider.websocket_url_for_path("responses") {
-        Ok(url) => {
-            details.push(format!("endpoint: {url}"));
-            if let Some(host) = url.host_str()
-                && let Some(port) = url.port_or_known_default()
-            {
-                details.extend(dns_address_family_details(host, port).await);
-            }
-        }
-        Err(err) => {
-            return websocket_probe_warning(
-                "Responses WebSocket endpoint could not be built",
-                details,
-                format!("endpoint build failed: {err}"),
-            );
-        }
-    }
-
-    let api_auth = match runtime_provider.api_auth().await {
-        Ok(api_auth) => api_auth,
+    let snapshot = match runtime_provider.request_snapshot().await {
+        Ok(snapshot) => snapshot,
         Err(err) => {
             return websocket_probe_warning(
                 "Responses WebSocket auth could not be resolved",
@@ -2067,26 +2031,32 @@ async fn websocket_reachability_check(
             );
         }
     };
-
-    let client = ResponsesWebsocketClient::new(api_provider, api_auth);
+    details.push(format!(
+        "auth mode: {}",
+        if snapshot.auth.managed_auth {
+            "managed"
+        } else if snapshot.auth.authenticated {
+            "configured"
+        } else {
+            "none"
+        }
+    ));
+    details.push("endpoint: provider-owned Responses WebSocket".to_string());
     let http_client_factory = config.http_client_factory();
     match tokio::time::timeout(
         provider.websocket_connect_timeout(),
-        client.probe_handshake(
-            &http_client_factory,
-            Default::default(),
-            default_headers(),
-            WEBSOCKET_IMMEDIATE_CLOSE_GRACE,
-        ),
+        runtime_provider.connect_websocket(ProviderWebsocketConnectRequest {
+            transport: ProviderTransportContext::from_http_client_factory(http_client_factory),
+            extra_headers: BTreeMap::new(),
+            default_headers: neutral_headers(default_headers()),
+            telemetry: None,
+        }),
     )
     .await
     {
-        Ok(Ok(probe)) => {
-            details.push(format!("handshake result: HTTP {}", probe.status));
-            details.push(format!("reasoning header: {}", probe.reasoning_included));
-            if let Some(close) = probe.immediate_close {
-                details.push(format!("immediate close code: {}", close.code));
-                details.push(format!("immediate close reason: {}", close.reason));
+        Ok(Ok(connection)) => match connection.is_closed().await {
+            Ok(true) => {
+                details.push("connection state: closed immediately after handshake".to_string());
                 return DoctorCheck::new(
                     "network.websocket_reachability",
                     "websocket",
@@ -2096,20 +2066,25 @@ async fn websocket_reachability_check(
                 .details(details)
                 .remediation(
                     "Check proxy, VPN, firewall, DNS, custom CA, and WebSocket policy support.",
-                );
+                )
             }
-            DoctorCheck::new(
+            Ok(false) => DoctorCheck::new(
                 "network.websocket_reachability",
                 "websocket",
                 CheckStatus::Ok,
                 "Responses WebSocket handshake succeeded",
             )
-            .details(details)
+            .details(details),
+            Err(err) => websocket_probe_warning(
+                "Responses WebSocket failed; HTTPS fallback may still work",
+                details,
+                websocket_provider_error_detail(&err),
+            ),
         }
         Ok(Err(err)) => websocket_probe_warning(
             "Responses WebSocket failed; HTTPS fallback may still work",
             details,
-            websocket_error_detail(&err),
+            websocket_provider_error_detail(&err),
         ),
         Err(_) => websocket_probe_warning(
             "Responses WebSocket timed out; HTTPS fallback may still work",
@@ -2135,57 +2110,23 @@ fn websocket_probe_warning(
     .remediation("Check proxy, VPN, firewall, DNS, custom CA, and WebSocket policy support.")
 }
 
-fn websocket_error_detail(err: &ApiError) -> String {
+fn websocket_provider_error_detail(err: &ProviderError) -> String {
     match err {
-        ApiError::Transport(transport) => format!("handshake transport error: {transport}"),
-        ApiError::Api { status, message } => {
-            format!("handshake API error: {status} {message}")
+        ProviderError::Transport(message) => format!("handshake transport error: {message}"),
+        ProviderError::Unauthenticated | ProviderError::Unauthorized => {
+            format!("handshake auth error: {err}")
         }
-        ApiError::Stream(message) => format!("handshake stream error: {message}"),
-        ApiError::ContextWindowExceeded
-        | ApiError::QuotaExceeded
-        | ApiError::Retryable { .. }
-        | ApiError::RateLimitExceeded { .. }
-        | ApiError::RateLimit(_)
-        | ApiError::InvalidRequest { .. }
-        | ApiError::CyberPolicy { .. }
-        | ApiError::MisalignmentPolicyViolation { .. }
-        | ApiError::ServerOverloaded => format!("handshake error: {err}"),
+        _ => format!("handshake error: {err}"),
     }
 }
 
-fn auth_mode_name(auth: &GenexAuth) -> &'static str {
-    match auth.auth_mode() {
-        AuthMode::ApiKey => "api_key",
-        AuthMode::Headers => "headers",
-    }
-}
-
-async fn dns_address_family_details(host: &str, port: u16) -> Vec<String> {
-    match tokio::net::lookup_host((host, port)).await {
-        Ok(addresses) => {
-            let addresses = addresses.collect::<Vec<_>>();
-            let ipv4_count = addresses
-                .iter()
-                .filter(|address| matches!(address.ip(), IpAddr::V4(_)))
-                .count();
-            let ipv6_count = addresses
-                .iter()
-                .filter(|address| matches!(address.ip(), IpAddr::V6(_)))
-                .count();
-            let first_family = addresses
-                .first()
-                .map(|address| match address.ip() {
-                    IpAddr::V4(_) => "IPv4",
-                    IpAddr::V6(_) => "IPv6",
-                })
-                .unwrap_or("none");
-            vec![format!(
-                "DNS: {ipv4_count} IPv4, {ipv6_count} IPv6, first {first_family}"
-            )]
-        }
-        Err(err) => vec![format!("DNS: lookup failed ({err})")],
-    }
+fn neutral_headers(headers: http::HeaderMap) -> BTreeMap<String, String> {
+    headers
+        .iter()
+        .filter_map(|(name, value)| {
+            Some((name.as_str().to_string(), value.to_str().ok()?.to_string()))
+        })
+        .collect()
 }
 
 fn fallback_state_check() -> DoctorCheck {
