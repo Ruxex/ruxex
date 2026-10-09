@@ -11,6 +11,7 @@ use crate::state::ReasoningEffortPin;
 use genex_features::Feature;
 use genex_history::GenexHarnessMetadata;
 use genex_history::ResponseItemEnvelope;
+use genex_model_provider::ProviderWireApi;
 use genex_protocol::model_types::ReasoningEffort;
 use genex_protocol::models::ConfigurationReasoning;
 use genex_protocol::models::ResponseItem;
@@ -132,7 +133,7 @@ impl Session {
     ) -> Option<ReasoningEffort> {
         if !self.enabled(Feature::ReasoningEffortOverride)
             || !settings.model_info.use_responses_lite
-            || !self.provider().await.is_responses_provider()
+            || !matches!(self.provider().await.wire_api(), ProviderWireApi::Responses)
         {
             return None;
         }

@@ -23,6 +23,7 @@ use crate::turn_metadata::ExecutionMetadata;
 use genex_attachment_store::AttachmentStore;
 use genex_extension_api::ExtensionDataInit;
 use genex_model_provider::SharedModelProvider;
+use genex_otel::AuthEnvTelemetryMetadata;
 use genex_prompts::render_model_instructions;
 use genex_protocol::SessionId;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
@@ -91,8 +92,6 @@ pub(crate) struct Session {
 pub(crate) struct SessionConfiguration {
     /// Provider-neutral contract shared by this session and its turns.
     pub(super) provider: SharedModelProvider,
-    /// Host configuration snapshot used for diagnostics and legacy config bridges.
-    pub(super) provider_info: ModelProviderInfo,
 
     /// Desired configured inputs inherited by future turns.
     pub(super) step_settings: Arc<StepSettings>,
@@ -1151,10 +1150,17 @@ impl Session {
             let originator = session_configuration.originator.clone();
             let terminal_type = user_agent();
             let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();
-            let auth_env_telemetry = collect_auth_env_telemetry(
-                &session_configuration.provider_info,
-                credential_manager.api_key_env_enabled(),
-            );
+            let auth_environment = session_configuration
+                .provider
+                .auth_environment(credential_manager.api_key_env_enabled());
+            let auth_env_telemetry = AuthEnvTelemetryMetadata {
+                genex_api_key_env_present: auth_environment.host_api_key_env_present,
+                genex_api_key_env_enabled: auth_environment.host_api_key_env_enabled,
+                provider_env_key_name: auth_environment
+                    .provider_env_key_configured
+                    .then(|| "configured".to_string()),
+                provider_env_key_present: auth_environment.provider_env_key_present,
+            };
             let mut session_telemetry = SessionTelemetry::new(
                 thread_id,
                 session_model.as_str(),
@@ -1167,7 +1173,7 @@ impl Session {
                 terminal_type.clone(),
                 session_configuration.session_source.clone(),
             )
-            .with_auth_env(auth_env_telemetry.to_otel_metadata())
+            .with_auth_env(auth_env_telemetry)
             .with_tool_result_log_config(config.otel.tool_result);
             if let Some(metrics) = thread_extension_data.get::<genex_otel::MetricsClient>() {
                 session_telemetry = session_telemetry.with_metrics(metrics.as_ref().clone());
@@ -1213,8 +1219,9 @@ impl Session {
                     .into_iter()
                     .filter_map(|(name, server)| server.enabled().then_some(name))
                     .collect::<Vec<_>>();
+            let provider_name = session_configuration.provider.descriptor().provider_kind;
             session_telemetry.conversation_starts(
-                config.model_provider.name.as_str(),
+                provider_name.as_str(),
                 session_configuration.step_settings.collaboration_mode.reasoning_effort(),
                 config
                     .model_reasoning_summary

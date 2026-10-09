@@ -135,7 +135,6 @@ fn build_agent_shared_config(turn: &TurnContext) -> Result<Config, String> {
     // Fresh child startup restores configured preferences from the retained snapshot.
     config.token_budget = turn.configured_token_budget.clone();
     config.model = Some(turn.model_info().slug.clone());
-    config.model_provider = turn.config.model_provider.clone();
     config.model_reasoning_effort = turn
         .reasoning_effort()
         .or(turn.model_info().default_reasoning_level.as_ref())

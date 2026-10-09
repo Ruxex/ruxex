@@ -27,14 +27,22 @@
 - `debug models` and `debug prompt-input`: use host-created provider state and retain model-catalog behavior.
 - Doctor/plugin diagnostics: validate the home before reading provider credentials, while preserving read-only behavior.
 
+## Current-state reconciliation
+
+The host-startup, Exec/worktree, TUI, debug, doctor, and plugin changes described by
+Tasks 2–5 landed in commits `7cf858721` and `8d69f4967` before this plan was
+checked off. Their checkboxes below are retained as an audit trail and are now
+marked complete; the remaining work is the Core boundary cleanup and the final
+verification/documentation pass.
+
 ### Task 1: Record the audited decisions
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Modify: `docs/provider-decoupling-candidates.md`
 
-- [ ] Add explicit `migrate-in-place` decisions for the Exec/worktree startup ordering, CLI debug provider construction, and doctor/plugin credential reads, naming their producers and consumers.
-- [ ] Mark the corresponding candidate findings as resolved only after the implementation tasks below are complete.
+- [x] Add explicit `migrate-in-place` decisions for the Exec/worktree startup ordering, CLI debug provider construction, and doctor/plugin credential reads, naming their producers and consumers.
+- [x] Mark the corresponding candidate findings as resolved only after the implementation tasks below are complete.
 
 ### Task 2: Centralize host startup preparation
 
@@ -48,9 +56,9 @@
 - Produce an async configured runtime helper that mounts first, loads credentials second, and constructs `AppServerRuntime` third.
 - Preserve support for injected runtimes without forcing a second credential-manager load.
 
-- [ ] Add failing unit coverage for descriptor-based config mounting and injected-runtime startup behavior.
-- [ ] Implement the shared mount/runtime helpers and make `start_uninitialized` reuse an injected runtime’s credential manager when available.
-- [ ] Run the affected compile-only test target through `just check --tests`.
+- [x] Add failing unit coverage for descriptor-based config mounting and injected-runtime startup behavior.
+- [x] Implement the shared mount/runtime helpers and make `start_uninitialized` reuse an injected runtime’s credential manager when available.
+- [x] Run the affected compile-only test target through `just check --tests`.
 
 ### Task 3: Route Exec, worktree, and TUI through the injected runtime
 
@@ -60,10 +68,10 @@
 - Modify: `crates/tui/src/lib.rs`
 - Test: existing Exec/TUI startup tests plus new marker-order regression coverage where the harness permits
 
-- [ ] Add failing coverage for an incompatible provider home being rejected before local state initialization.
-- [ ] Prepare the configured runtime before `init_state_db` in Exec and fork/worktree paths, and pass it through `InProcessClientStartArgs`.
-- [ ] Prepare and pass the runtime in embedded TUI startup while preserving the existing embedded state initialization behavior.
-- [ ] Run `just check --tests` for the affected crates.
+- [x] Add failing coverage for an incompatible provider home being rejected before local state initialization.
+- [x] Prepare the configured runtime before `init_state_db` in Exec and fork/worktree paths, and pass it through `InProcessClientStartArgs`.
+- [x] Prepare and pass the runtime in embedded TUI startup while preserving the existing embedded state initialization behavior.
+- [x] Run `just check --tests` for the affected crates.
 
 ### Task 4: Remove core provider reconstruction from debug/catalog paths
 
@@ -76,11 +84,11 @@
 - Modify: `crates/core/tests/suite/prompt_debug_tests.rs`
 - Modify: `crates/cli/src/main.rs`
 
-- [ ] Add failing compile/test coverage requiring prompt-debug to receive a provider rather than constructing one.
-- [ ] Change prompt-debug to consume the injected provider and its credential manager.
-- [ ] Remove production `build_model_provider`/`build_models_manager` constructors from core; retain only `build_models_manager_with_provider`.
-- [ ] Construct the host runtime in `debug models` and `debug prompt-input` after provider-home validation, then pass its provider into core.
-- [ ] Run `just check --tests` for core and CLI targets.
+- [x] Add failing compile/test coverage requiring prompt-debug to receive a provider rather than constructing one.
+- [x] Change prompt-debug to consume the injected provider and its credential manager.
+- [x] Remove production `build_model_provider`/`build_models_manager` constructors from core; retain only `build_models_manager_with_provider`.
+- [x] Construct the host runtime in `debug models` and `debug prompt-input` after provider-home validation, then pass its provider into core.
+- [x] Run `just check --tests` for core and CLI targets.
 
 ### Task 5: Protect doctor and plugin credential reads
 
@@ -89,9 +97,9 @@
 - Modify: `crates/cli/src/plugin_cmd.rs`
 - Test: existing doctor/plugin tests and marker failure coverage
 
-- [ ] Add failing coverage for missing/incompatible markers before credential loading in these command paths.
-- [ ] Mount the provider home before `CredentialManager::shared_from_config` and preserve doctor’s read-only semantics.
-- [ ] Run `just check --tests` for CLI targets.
+- [x] Add failing coverage for missing/incompatible markers before credential loading in these command paths.
+- [x] Mount the provider home before `CredentialManager::shared_from_config` and preserve doctor’s read-only semantics.
+- [x] Run `just check --tests` for CLI targets.
 
 ### Task 6: Final audit and verification
 
@@ -99,7 +107,39 @@
 - Modify: `docs/pre-release-compatibility-inventory.md`
 - Modify: `docs/provider-decoupling-candidates.md`
 
-- [ ] Re-scan production Rust for direct provider construction, `runtime: None` in local startup, and credential/state initialization before marker mounting.
-- [ ] Record any intentionally retained adapter/test-only construction as `retain` with evidence.
-- [ ] Run `just check`, `just check --tests`, `git diff --check`, and `git status --short --branch`.
-- [ ] Run `just generate` only if the final diff affects checked-in generated artifacts, then inspect the generated diff.
+- [x] Re-scan production Rust for direct provider construction, `runtime: None` in local startup, and credential/state initialization before marker mounting.
+- [x] Record any intentionally retained adapter/test-only construction as `retain` with evidence.
+- [x] Run `just check`, `just check --tests`, `git diff --check`, and `git status --short --branch`.
+- [x] Confirm that the final diff does not affect checked-in generated artifacts, so `just generate` is not required.
+
+### Task 7: Remove Core provider metadata bridges
+
+**Files:**
+- Modify: `crates/model-provider/src/contract.rs`
+- Modify: `crates/model-provider/src/provider.rs`
+- Modify: `crates/core/src/session/mod.rs`
+- Modify: `crates/core/src/session/session.rs`
+- Modify: `crates/core/src/session/reasoning_effort.rs`
+- Modify: `crates/core/src/session_startup_prewarm.rs`
+- Modify: `crates/core/src/session/token_budget.rs`
+- Modify: `crates/core/src/agent/child_config.rs`
+- Modify: `crates/core/src/genex_delegate.rs`
+- Test: provider-contract and Core compile-only tests
+
+- [x] Add provider-neutral auth-environment metadata to `ModelProvider` and test the configured adapter projection.
+- [x] Remove `SessionConfiguration.provider_info`; use the injected provider descriptor, capabilities, and auth-environment metadata for telemetry and session setup.
+- [x] Remove direct provider auth/config inspection from token-budget activation and delegate WebSocket capability handling.
+- [x] Run the affected compile-only test targets through the repository memory-limited `just check --tests` recipe.
+
+### Task 8: Close the adapter-auth decision and host-only credential fallback
+
+**Files:**
+- Modify: `crates/model-provider/src/provider.rs`
+- Modify: `crates/core/src/prompt_debug.rs`
+- Modify: `crates/cli/src/main.rs`
+- Modify: `docs/pre-release-compatibility-inventory.md`
+
+- [x] Reuse the existing in-process injected-runtime regression coverage for a runtime without an adapter credential manager.
+- [x] Make debug prompt-input fall back to a host-created manager, without rejecting a valid injected provider solely because its adapter has no `CredentialManager`.
+- [x] Keep `ProviderRuntime::credential_manager` adapter-internal where legacy catalog/auth recovery still requires it, and record the explicit `retain` decision and producer/consumer evidence instead of exposing it as a Core contract.
+- [x] Run the affected compile-only test targets.

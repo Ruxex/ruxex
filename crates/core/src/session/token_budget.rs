@@ -5,26 +5,20 @@ use crate::config::TokenBudgetConfig;
 use crate::config::resolve_token_budget_config;
 use crate::context::ContextualUserFragment;
 use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::auth::AuthMode;
 use genex_protocol::model_types::ModelInfo;
 
-fn experimental_context_is_eligible(_auth_mode: AuthMode) -> bool {
-    false
+fn experimental_context_is_eligible(provider_supports_history_notes: bool) -> bool {
+    provider_supports_history_notes
 }
 
 pub(super) fn apply_experimental_context(
     config: &mut Config,
-    auth: Option<&GenexAuth>,
+    provider_supports_history_notes: bool,
     starting_model: &ModelInfo,
 ) -> std::io::Result<()> {
-    let provider = &config.model_provider;
     if !config.features.enabled(Feature::ContextManagement)
         || !starting_model.supports_experimental_context
-        || provider.env_key.is_some()
-        || provider.experimental_bearer_token.is_some()
-        || provider.auth.is_some()
-        || !auth.is_some_and(|auth| experimental_context_is_eligible(auth.auth_mode()))
+        || !experimental_context_is_eligible(provider_supports_history_notes)
         || config.features.enable(Feature::TokenBudget).is_err()
         || !config.features.enabled(Feature::TokenBudget)
     {
@@ -219,12 +213,14 @@ mod tests {
     use super::resolve_token_budget;
     use crate::config::TokenBudgetConfig;
     use genex_models_manager::model_info::model_info_from_slug;
-    use genex_protocol::auth::AuthMode;
 
     #[test]
-    fn experimental_context_is_disabled_without_subscription_auth() {
-        for (auth_mode, expected) in [(AuthMode::Headers, false), (AuthMode::ApiKey, false)] {
-            assert_eq!(experimental_context_is_eligible(auth_mode), expected);
+    fn experimental_context_follows_provider_history_notes_capability() {
+        for (provider_supports_history_notes, expected) in [(true, true), (false, false)] {
+            assert_eq!(
+                experimental_context_is_eligible(provider_supports_history_notes),
+                expected
+            );
         }
     }
 

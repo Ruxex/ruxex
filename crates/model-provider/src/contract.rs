@@ -292,6 +292,19 @@ pub struct ProviderRequestSnapshot {
     pub connection_key: ProviderConnectionKey,
 }
 
+/// Non-secret environment metadata exposed by the mounted provider for host telemetry.
+///
+/// The host must not inspect provider configuration fields to derive this information. The
+/// adapter owns the provider-specific environment name and only returns presence/configuration
+/// booleans.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ProviderAuthEnvironment {
+    pub host_api_key_env_present: bool,
+    pub host_api_key_env_enabled: bool,
+    pub provider_env_key_configured: bool,
+    pub provider_env_key_present: Option<bool>,
+}
+
 /// A provider-owned credential field exposed to a host login form.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderAuthField {
@@ -623,6 +636,13 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
 
     fn auth_state(&self) -> ProviderAuthState;
 
+    fn auth_environment(&self, host_api_key_env_enabled: bool) -> ProviderAuthEnvironment {
+        ProviderAuthEnvironment {
+            host_api_key_env_enabled,
+            ..ProviderAuthEnvironment::default()
+        }
+    }
+
     fn request_snapshot(
         &self,
     ) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>>;
@@ -762,6 +782,16 @@ mod tests {
             provider.auth_state().status,
             ProviderAuthStatus::Unauthenticated
         );
+    }
+
+    #[test]
+    fn fake_provider_exposes_neutral_auth_environment_metadata() {
+        let environment = FakeProvider.auth_environment(true);
+
+        assert!(environment.host_api_key_env_enabled);
+        assert!(!environment.host_api_key_env_present);
+        assert!(!environment.provider_env_key_configured);
+        assert_eq!(environment.provider_env_key_present, None);
     }
 
     #[tokio::test]

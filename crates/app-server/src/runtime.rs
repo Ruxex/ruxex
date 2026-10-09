@@ -188,4 +188,28 @@ mod tests {
             Err(ProviderHomeError::DescriptorMismatch { .. })
         ));
     }
+
+    #[tokio::test]
+    async fn configured_runtime_rejects_mismatched_marker_before_credential_loading() {
+        let temp = tempfile::tempdir().expect("temporary provider home");
+        let config = genex_core::config::ConfigBuilder::default()
+            .genex_home(temp.path().to_path_buf())
+            .build()
+            .await
+            .expect("config should build");
+        std::fs::write(temp.path().join("state.sqlite"), b"existing state")
+            .expect("state fixture should be written");
+        mount_provider_home(
+            temp.path(),
+            &ProviderDescriptor::new("different-provider", CURRENT_PROVIDER_PROTOCOL_VERSION),
+        )
+        .expect("fixture marker should be written");
+
+        let error = match configured_app_server_runtime_from_config(&config, true).await {
+            Ok(_) => panic!("mismatched marker must reject runtime startup"),
+            Err(error) => error,
+        };
+
+        assert!(error.to_string().contains("incompatible marker"));
+    }
 }

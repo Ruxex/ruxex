@@ -64,10 +64,6 @@ pub(crate) async fn run_genex_thread_interactive(
         ));
     }
     config.permissions.approval_policy = Constrained::allow_only(AskForApproval::Never);
-    config.model_provider.supports_websockets &= parent_session
-        .services
-        .model_client
-        .responses_websocket_enabled();
 
     let conversation_history = initial_history.unwrap_or(InitialHistory::New);
     let forked_from_thread_id = conversation_history.forked_from_id();

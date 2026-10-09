@@ -32,6 +32,7 @@ use genex_http_client::RequestBody;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::ProviderAuth;
+use genex_login::GENEX_API_KEY_ENV_VAR;
 use genex_login::default_client::ClientRedirectPolicy;
 use genex_login::default_client::create_client_for_route;
 use genex_model_provider_info::ModelProviderInfo;
@@ -56,6 +57,7 @@ use crate::auth::resolve_provider_auth_for_scope;
 use crate::cloudflare_provider::CloudflareModelProvider;
 use crate::contract::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use crate::contract::ProviderAuthRecoveryMessages;
+use crate::contract::ProviderAuthEnvironment;
 use crate::contract::ProviderCapabilities;
 use crate::contract::ProviderConnectionKey;
 use crate::contract::ProviderDescriptor;
@@ -335,6 +337,20 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             Vec::new()
         } else {
             vec![ProviderAuthField::new("api_key", "API key", true)]
+        }
+    }
+
+    /// Returns non-secret environment metadata for host-owned telemetry.
+    fn auth_environment(&self, host_api_key_env_enabled: bool) -> ProviderAuthEnvironment {
+        ProviderAuthEnvironment {
+            host_api_key_env_present: environment_variable_present(GENEX_API_KEY_ENV_VAR),
+            host_api_key_env_enabled,
+            provider_env_key_configured: self.info().env_key.is_some(),
+            provider_env_key_present: self
+                .info()
+                .env_key
+                .as_deref()
+                .map(environment_variable_present),
         }
     }
 
@@ -1135,6 +1151,10 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
         capabilities
     }
 
+    fn auth_environment(&self, host_api_key_env_enabled: bool) -> ProviderAuthEnvironment {
+        self.runtime.auth_environment(host_api_key_env_enabled)
+    }
+
     fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
         let auth = self
             .runtime
@@ -1342,6 +1362,14 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 /// Creates the provider-neutral view of an existing runtime provider without duplicating state.
 pub fn provider_contract(provider: SharedProviderRuntime) -> crate::contract::SharedModelProvider {
     Arc::new(RuntimeProviderContractAdapter { runtime: provider })
+}
+
+fn environment_variable_present(name: &str) -> bool {
+    match std::env::var(name) {
+        Ok(value) => !value.trim().is_empty(),
+        Err(std::env::VarError::NotUnicode(_)) => true,
+        Err(std::env::VarError::NotPresent) => false,
+    }
 }
 
 pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
@@ -1728,6 +1756,19 @@ mod tests {
         );
 
         assert!(matches!(provider.api(), ProviderApi::Responses));
+    }
+
+    #[test]
+    fn provider_contract_exposes_auth_environment_without_provider_info() {
+        let mut info = ModelProviderInfo::create_responses_provider(None);
+        info.env_key = Some("GENEX_TEST_PROVIDER_KEY".to_string());
+        let provider = provider_contract(create_model_provider(info, /*credential_manager*/ None));
+
+        let environment = provider.auth_environment(false);
+
+        assert!(!environment.host_api_key_env_enabled);
+        assert!(environment.provider_env_key_configured);
+        assert_eq!(environment.provider_env_key_present, Some(false));
     }
 
     fn provider_info_with_command_auth() -> ModelProviderInfo {
