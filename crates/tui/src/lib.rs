@@ -317,6 +317,9 @@ async fn init_state_db_for_app_server_target(
             })?;
             Ok(state_db::get_state_db(config).await)
         }
+        // A remote AppServer owns the provider-scoped home and validates its
+        // marker before opening credentials or provider-owned SQLite. The TUI
+        // may use only its own optional local UI state here.
         AppServerTarget::Remote { .. } => Ok(state_db::get_state_db(config).await),
     }
 }
