@@ -47,28 +47,28 @@
 - Produce `ProviderWebsocketConnectRequest`, `ProviderSearchRequest`, `ProviderBackendRequest`, and `ListModelsRequest` without HTTP concrete types.
 - Keep `ProviderRuntime` as the adapter-internal boundary; `RuntimeProviderContractAdapter` converts neutral requests to internal HTTP/wire requests and owns the configured `HttpClientFactory`.
 
-- [ ] **Step 1: Write failing compile-only contract assertions**
+- [x] **Step 1: Write failing compile-only contract assertions**
 
   Add tests/types that construct every public request with generic headers and no HTTP factory, and assert the adapter still forwards the existing request payload, headers, compression, and model-catalog identity.
 
-- [ ] **Step 2: Run the affected compile-only target and observe the expected failure**
+- [x] **Step 2: Run the affected compile-only target and observe the expected failure**
 
   Run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=4 just check --tests -p genex-model-provider`.
   Expected: the new request construction fails until the contract and adapter are migrated.
 
-- [ ] **Step 3: Replace public HTTP fields with neutral metadata**
+- [x] **Step 3: Replace public HTTP fields with neutral metadata**
 
   Change request structs to use `BTreeMap<String, String>` or equivalent provider-neutral header metadata. Remove `HttpClientFactory` from `ChatTransportOptions`, `ProviderSearchRequest`, `ProviderBackendRequest`, `ProviderWebsocketConnectRequest`, and `ListModelsRequest`.
 
-- [ ] **Step 4: Move transport ownership into the adapter**
+- [x] **Step 4: Move transport ownership into the adapter**
 
   Add the adapter-internal transport context and route all request conversion through it. Preserve the current OpenAI/Cloudflare URL, auth header, compression, and wire payload construction inside `provider.rs`/`cloudflare_provider.rs`.
 
-- [ ] **Step 5: Migrate extension producers**
+- [x] **Step 5: Migrate extension producers**
 
   Convert Web Search and History Notes request construction to the neutral metadata types. No extension may import HTTP header or client factory types solely to satisfy the Provider contract.
 
-- [ ] **Step 6: Run the compile-only target and commit**
+- [x] **Step 6: Run the compile-only target and commit**
 
   Run the same `just check --tests -p genex-model-provider` command and expect success, then commit with `refactor: hide provider transport types behind adapter`.
 
@@ -87,28 +87,28 @@
 - Produce `ProviderRequestAuth`/`ProviderRequestSnapshot` containing only auth telemetry, managed-auth capability, revision, owner generation, and request admission state; credential values remain private.
 - Replace Core-facing compatibility methods (`model_provider_info`, `credential_manager`, `auth`, `api_provider`, `api_auth`, `api_auth_for_scope`, `map_api_error`) with neutral snapshot, connection-key, error, and recovery methods.
 
-- [ ] **Step 1: Add failing lifecycle and event assertions**
+- [x] **Step 1: Add failing lifecycle and event assertions**
 
   Cover: unauthenticated admission returns `ProviderError::Unauthenticated`; logout increments/invalidates the next-turn auth generation without changing an already-created snapshot; the fake provider emits and the host receives every normalized stream event.
 
-- [ ] **Step 2: Run the provider compile-only target and confirm RED**
+- [x] **Step 2: Run the provider compile-only target and confirm RED**
 
   Run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=4 just check --tests -p genex-model-provider`.
   Expected: the new neutral API is missing or incompatible with the existing adapter.
 
-- [ ] **Step 3: Implement neutral event and auth snapshot types**
+- [x] **Step 3: Implement neutral event and auth snapshot types**
 
   Mirror the repository response-event vocabulary using protocol-owned value types, add explicit `Unauthenticated`/`Unauthorized` mapping, and expose only snapshot metadata needed by Core telemetry and turn admission.
 
-- [ ] **Step 4: Move credential recovery into the provider adapter**
+- [x] **Step 4: Move credential recovery into the provider adapter**
 
   Make provider-owned recovery perform its private credential-manager refresh/logout semantics and return the neutral recovery result. Core must not construct `UnauthorizedRecovery`, read credential values, or map API errors from provider internals.
 
-- [ ] **Step 5: Remove the compatibility methods from the public ModelProvider trait**
+- [x] **Step 5: Remove the compatibility methods from the public ModelProvider trait**
 
   Update the adapter and test fake to implement the neutral methods. Keep provider-specific `ProviderRuntime` methods private to `model-provider`.
 
-- [ ] **Step 6: Run provider checks and commit**
+- [x] **Step 6: Run provider checks and commit**
 
   Run `just check --tests -p genex-model-provider`; expect success, then commit with `refactor: make provider auth and stream contract neutral`.
 
@@ -127,28 +127,28 @@
 - `map_response_events` consumes `ProviderChatStream` and maps neutral events to the Core `ResponseEvent` type at one boundary.
 - Core uses `provider.recover_from_unauthorized()` and neutral errors; it does not call `CredentialManager` or `GenexAuth`.
 
-- [ ] **Step 1: Add failing Core compile assertions**
+- [x] **Step 1: Add failing Core compile assertions**
 
   Update the fake provider/client coverage so a provider implementation with no `ModelProviderInfo`, `CredentialManager`, `GenexAuth`, `genex_api::Provider`, or `SharedAuthProvider` access can drive chat setup, model listing, and prompt-debug construction.
 
-- [ ] **Step 2: Run the Core compile-only targets and confirm RED**
+- [x] **Step 2: Run the Core compile-only targets and confirm RED**
 
   Run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=4 just check --tests -p genex-core`.
   Expected: existing Core calls to compatibility methods fail to compile.
 
-- [ ] **Step 3: Refactor setup and WebSocket reuse**
+- [x] **Step 3: Refactor setup and WebSocket reuse**
 
   Use the provider snapshot for auth revision/generation/telemetry and the provider-owned connection key. Remove Core-side provider URL construction and API-provider filtering; keep endpoint paths as neutral telemetry labels only.
 
-- [ ] **Step 4: Refactor HTTP and WebSocket stream paths**
+- [x] **Step 4: Refactor HTTP and WebSocket stream paths**
 
   Pass neutral transport metadata to `ChatRequest`/WebSocket requests, map neutral provider events to Core events, and preserve existing fallback, continuation, timing, tracing, and OpenAI request/response behavior.
 
-- [ ] **Step 5: Refactor unauthorized recovery and prompt-debug/model catalog consumers**
+- [x] **Step 5: Refactor unauthorized recovery and prompt-debug/model catalog consumers**
 
   Route recovery through the injected provider; make prompt-debug and catalog operations consume the same runtime handle without constructing a provider in Core production code. Test-only provider construction remains explicitly classified as retained.
 
-- [ ] **Step 6: Run Core compile-only checks and commit**
+- [x] **Step 6: Run Core compile-only checks and commit**
 
   Run `just check --tests -p genex-core`; expect success, then commit with `refactor: remove core provider compatibility dependencies`.
 
@@ -166,20 +166,20 @@
 - `login`, credential update, and `logout` mutate the shared provider state; new turn admission observes the current neutral auth snapshot.
 - An in-flight `ModelClientSession` retains its start-time snapshot and does not re-read credentials after the turn begins.
 
-- [ ] **Step 1: Add failing lifecycle regression coverage**
+- [x] **Step 1: Add failing lifecycle regression coverage**
 
   Add tests for two clients sharing one AppServer: logout rejects a newly admitted turn, while a turn that captured credentials before logout continues using its snapshot; login makes subsequent turns admissible.
 
-- [ ] **Step 2: Run affected compile-only targets and confirm RED**
+- [x] **Step 2: Run affected compile-only targets and confirm RED**
 
   Run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 just check --tests -p genex-app-server`.
   Expected: the lifecycle test harness fails until admission/snapshot wiring is complete.
 
-- [ ] **Step 3: Implement the smallest admission/snapshot fix**
+- [x] **Step 3: Implement the smallest admission/snapshot fix**
 
   Keep the shared runtime/provider ownership unchanged. Reject only new turns after logout, preserve in-flight request state, and keep auth revision notifications/cache invalidation behavior intact.
 
-- [ ] **Step 4: Run app-server compile-only checks and commit**
+- [x] **Step 4: Run app-server compile-only checks and commit**
 
   Run `just check --tests -p genex-app-server`; expect success, then commit with `test: cover shared provider auth lifecycle`.
 
@@ -199,24 +199,24 @@
 - Cyber refusal and rate-limit notices use neutral capability/status data. Hosted billing/Genex-specific presentation is removed or recorded as a retained external contract only when a current consumer proves it.
 - Session-start logs contain model/session context but no `model_provider_id` or `model_provider_name` routing fields.
 
-- [ ] **Step 1: Add failing TUI tests**
+- [x] **Step 1: Add failing TUI tests**
 
   Assert that unknown and non-default provider IDs have identical behavior when capabilities/status are identical, and assert that a session log header omits provider routing fields.
 
-- [ ] **Step 2: Run the TUI compile-only target and confirm RED**
+- [x] **Step 2: Run the TUI compile-only target and confirm RED**
 
   Run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 just check --tests -p genex-tui`.
   Expected: the new tests fail against literal Provider ID branches and current session-log fields.
 
-- [ ] **Step 3: Replace literal branches with capability/status checks**
+- [x] **Step 3: Replace literal branches with capability/status checks**
 
   Remove `== "provider"`/`!= "provider"` feature gates, keep generic security and rate-limit behavior, and use explicit Provider capability/auth/usage state for optional surfaces.
 
-- [ ] **Step 4: Remove session-log routing metadata and update fixtures**
+- [x] **Step 4: Remove session-log routing metadata and update fixtures**
 
   Stop writing provider selector/name fields; preserve only mounted-provider status where it is an explicitly read-only diagnostic response.
 
-- [ ] **Step 5: Run TUI compile-only checks and commit**
+- [x] **Step 5: Run TUI compile-only checks and commit**
 
   Run `just check --tests -p genex-tui`; expect success, then commit with `refactor: neutralize tui provider surfaces`.
 
@@ -234,23 +234,23 @@
 - Thread/rollout/history/session-log readers never use provider fields for routing or credential lookup.
 - Every changed production match has producer, consumer, and `remove`/`retain`/`migrate-in-place` decision in inventory order.
 
-- [ ] **Step 1: Run the ordered producer/consumer audit**
+- [x] **Step 1: Run the ordered producer/consumer audit**
 
   Scan persisted rollout/thread-history readers, protocol/app-server aliases, CLI/config/import paths, UI/observability/runtime shims, build scaffolding, and dependencies. Record findings before changing any additional code.
 
-- [ ] **Step 2: Add failing migration/reader assertions where a stale routing read remains**
+- [x] **Step 2: Add failing migration/reader assertions where a stale routing read remains**
 
   Add compile-only or migration assertions proving that the obsolete field is absent from new writes and ignored by current readers; do not add a compatibility layer without a current consumer.
 
-- [ ] **Step 3: Apply only audited decisions**
+- [x] **Step 3: Apply only audited decisions**
 
   Remove stale routing/credential persistence, retain platform fallbacks and external OpenAI identifiers, and mark test-only/provider-adapter construction as retained with evidence.
 
-- [ ] **Step 4: Synchronize plan and candidate statuses**
+- [x] **Step 4: Synchronize plan and candidate statuses**
 
   Mark completed checklist items and resolve contradictory candidate text only when the corresponding code and verification are complete. Record remaining provider-specific follow-ups separately rather than hiding them in the rename.
 
-- [ ] **Step 5: Run migration/schema checks and commit**
+- [x] **Step 5: Run migration/schema checks and commit**
 
   Run the affected `just check --tests` target and commit with `docs: synchronize single-provider audit decisions`.
 
@@ -260,22 +260,22 @@
 - Modify: only files required by verification findings
 - Test: repository check targets and generated artifacts if affected
 
-- [ ] **Step 1: Run full production verification**
+- [x] **Step 1: Run full production verification**
 
   Run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 just check`.
 
-- [ ] **Step 2: Compile all Rust test targets**
+- [x] **Step 2: Compile all Rust test targets**
 
   Run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 just check --tests`.
 
-- [ ] **Step 3: Regenerate only when applicable**
+- [x] **Step 3: Regenerate only when applicable**
 
   If protocol/schema/generated files changed, run `systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 just generate` and inspect the complete diff.
 
-- [ ] **Step 4: Run final static audit**
+- [x] **Step 4: Run final static audit**
 
   Verify with `rg` that production Core no longer references Provider-specific compatibility methods, public contract requests contain no HTTP implementation types, TUI has no Provider ID literal feature gate, and thread/rollout/session-log writes contain no routing selector or credentials.
 
-- [ ] **Step 5: Run `git diff --check`, inspect status, and commit any final fixes**
+- [x] **Step 5: Run `git diff --check`, inspect status, and commit any final fixes**
 
   Expected: all required checks pass, generated changes are intentional, and the working tree is clean except for no uncommitted changes.
