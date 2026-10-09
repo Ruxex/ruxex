@@ -743,3 +743,15 @@ the old adapter contract.
 | Chat Completions execution operation | Core `ModelClient` previously built the Chat Completions request and SSE client directly from `ProviderRuntime`. The active Chat wire path now sends a provider-neutral `ChatRequest` through the shared `ModelProvider` handle; the runtime adapter owns provider auth resolution, request construction, and stream creation. | `migrate-in-place`: route Chat Completions through `ModelProvider::chat` | Core/model-provider chat producer-consumer audit; focused `just check --tests`; `just check` |
 | Responses HTTP execution operation | Core `ModelClient` still normalizes the active Responses payload and request headers, but the request now flows through `ModelProvider::chat`; the runtime adapter owns route selection, `ResponsesClient`, session/thread headers, compression, and SSE stream creation. WebSocket execution and auth recovery use their own provider operations; core retains only retry and continuation policy. | `migrate-in-place`: route Responses HTTP, WebSocket, and auth recovery through `ModelProvider`; retain provider-neutral turn-session behavior in core | Core/model-provider Responses producer-consumer audit; focused `just check --tests`; `just check` |
 | Build-time default data-root name | `genex-utils-home-dir::find_genex_home` produces the fallback `~/.genex` path used by core, CLI, app-server, executor, and MCP startup paths; `GENEX_HOME` is the existing runtime override. The fallback directory name is repository-owned and is not an external protocol or persisted field. | `migrate-in-place`: make the fallback directory name configurable through `GENEX_DEFAULT_HOME_DIR_NAME` at build time; retain runtime `GENEX_HOME` precedence and `.genex` as the default value | Home-directory producer/consumer audit; focused `just check --tests`; `just check` |
+
+### Final residual audit (2026-10-09)
+
+The earlier completion note claimed that every local startup path validated the provider marker before
+state access. A final production-path audit found one TUI `LocalDaemon` ordering gap; it is now tracked
+and corrected in the compatibility inventory. Remote TUI state access remains explicitly non-owning and
+is retained as a separate decision rather than treated as local provider-runtime startup.
+
+The remaining provider-named normalized request was not a wire compatibility layer: it was consumed by
+Core continuation/telemetry and the adapter. Its normalized fields are now part of `ChatRequest`, while
+the adapter-only Responses projection preserves the existing fields and serialization. The unused plugin provider ID was removed after its
+producer/consumer search, and the model-catalog convenience constructor is now test-only.

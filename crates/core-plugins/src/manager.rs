@@ -91,19 +91,13 @@ type EffectivePluginsChangedCallback = Arc<dyn Fn(EffectivePluginsChange) + Send
 #[derive(Debug, Clone)]
 pub struct PluginsConfigInput {
     pub config_layer_stack: ConfigLayerStack,
-    pub model_provider_id: String,
     pub plugins_enabled: bool,
 }
 
 impl PluginsConfigInput {
-    pub fn new(
-        config_layer_stack: ConfigLayerStack,
-        model_provider_id: String,
-        plugins_enabled: bool,
-    ) -> Self {
+    pub fn new(config_layer_stack: ConfigLayerStack, plugins_enabled: bool) -> Self {
         Self {
             config_layer_stack,
-            model_provider_id,
             plugins_enabled,
         }
     }

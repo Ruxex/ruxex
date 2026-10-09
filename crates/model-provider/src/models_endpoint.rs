@@ -47,6 +47,7 @@ pub(crate) struct ModelsEndpoint {
 }
 
 impl ModelsEndpoint {
+    #[cfg(test)]
     pub(crate) fn new(
         provider_info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,

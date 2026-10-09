@@ -58,7 +58,6 @@ pub use contract::ProviderReasoningSummaryDelivery;
 pub use contract::ProviderRequestAuth;
 pub use contract::ProviderRequestCompression;
 pub use contract::ProviderRequestSnapshot;
-pub use contract::ProviderResponsesRequest;
 pub use contract::ProviderResult;
 pub use contract::ProviderSafetyBuffering;
 pub use contract::ProviderSearchRequest;

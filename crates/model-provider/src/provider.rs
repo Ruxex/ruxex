@@ -64,7 +64,6 @@ use crate::contract::ProviderConnectionKey;
 use crate::contract::ProviderDescriptor;
 use crate::contract::ProviderRequestAuth;
 use crate::contract::ProviderRequestSnapshot;
-use crate::contract::ProviderResponsesRequest;
 use crate::contract::ProviderUnauthorizedRecovery;
 use crate::contract::ProviderUsage;
 use crate::contract::ProviderUsageResult;
@@ -148,6 +147,59 @@ pub enum ProviderApi {
     Responses,
     /// A provider-specific Chat Completions wire adapter.
     Chat(Arc<dyn ChatCompletionApi>),
+}
+
+/// OpenAI Responses wire payload. Core supplies the neutral [`ChatRequest`]; this adapter-only
+/// projection owns the external field names and serialization shape.
+#[derive(Debug, Clone, serde::Serialize)]
+struct ResponsesPayload {
+    model: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    instructions: String,
+    input: Vec<genex_protocol::models::ResponseItem>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tools: Option<Value>,
+    tool_choice: String,
+    parallel_tool_calls: bool,
+    reasoning: Option<crate::contract::ProviderReasoning>,
+    store: bool,
+    stream: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    stream_options: Option<crate::contract::ProviderStreamOptions>,
+    include: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    service_tier: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    prompt_cache_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    text: Option<crate::contract::ProviderTextControls>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    client_metadata: Option<BTreeMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    access_programs: Option<Value>,
+}
+
+impl From<&crate::contract::ChatRequest> for ResponsesPayload {
+    fn from(request: &crate::contract::ChatRequest) -> Self {
+        Self {
+            model: request.model.clone(),
+            instructions: request.instructions.clone(),
+            input: request.input.clone(),
+            tools: (!request.tools.is_empty()).then(|| Value::Array(request.tools.clone())),
+            tool_choice: request.tool_choice.clone(),
+            parallel_tool_calls: request.parallel_tool_calls,
+            reasoning: request.reasoning.clone(),
+            store: request.store,
+            stream: request.stream,
+            stream_options: request.stream_options,
+            include: request.include.clone(),
+            service_tier: request.service_tier.clone(),
+            prompt_cache_key: request.prompt_cache_key.clone(),
+            text: request.text.clone(),
+            client_metadata: request.client_metadata.clone(),
+            access_programs: request.access_programs.clone(),
+        }
+    }
 }
 
 fn map_api_error_to_provider_error(error: ApiError) -> crate::contract::ProviderError {
@@ -429,11 +481,12 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         &self,
         request: ProviderWebsocketPayloadRequest,
     ) -> crate::contract::ProviderResult<Value> {
-        let mut payload = serde_json::to_value(&request.request).map_err(|error| {
-            crate::contract::ProviderError::InvalidRequest(format!(
-                "failed to encode provider websocket request: {error}"
-            ))
-        })?;
+        let mut payload =
+            serde_json::to_value(ResponsesPayload::from(&request.request)).map_err(|error| {
+                crate::contract::ProviderError::InvalidRequest(format!(
+                    "failed to encode provider websocket request: {error}"
+                ))
+            })?;
         let object = payload.as_object_mut().ok_or_else(|| {
             crate::contract::ProviderError::InvalidRequest(
                 "provider websocket request must be an object".to_string(),
@@ -471,9 +524,9 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
 
     /// Streams a provider-owned request through the provider-neutral contract.
     ///
-    /// The contract currently carries the normalized Chat Completions input and the serialized
-    /// Responses payload. Request construction and HTTP transport are owned here; the remaining
-    /// core-owned boundaries are Responses authentication recovery/continuation and WebSocket.
+    /// The contract carries normalized chat input. Request construction and HTTP transport are
+    /// owned here; the remaining core-owned boundaries are Responses authentication
+    /// recovery/continuation and WebSocket policy.
     fn chat(
         &self,
         request: crate::contract::ChatRequest,
@@ -507,7 +560,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         .build_request(ChatRequestInput {
                             provider: &api_provider,
                             model: &request.model,
-                            instructions: request.instructions.as_deref().unwrap_or_default(),
+                            instructions: &request.instructions,
                             input: &request.input,
                             tools: &request.tools,
                             conversation_id: request.conversation_id,
@@ -528,11 +581,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         as crate::contract::ProviderChatStream)
                 }
                 ProviderApi::Responses => {
-                    let payload: ProviderResponsesRequest = request.payload.ok_or_else(|| {
-                        crate::contract::ProviderError::InvalidRequest(
-                            "Responses provider chat request is missing payload".to_string(),
-                        )
-                    })?;
+                    let payload = ResponsesPayload::from(&request);
                     let client = create_client_for_route(
                         &http_client_factory,
                         &api_provider.url_for_path("/responses"),

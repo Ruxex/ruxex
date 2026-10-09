@@ -1,5 +1,4 @@
 use super::*;
-use genex_model_provider::ProviderResponsesRequest;
 use genex_model_provider::build_provider_text_controls;
 use genex_models_manager::model_info::model_info_from_slug;
 use genex_protocol::config_types::ServiceTier;
@@ -98,14 +97,18 @@ fn request_copies_project_image_details_for_receiving_model(
     assert_eq!(prompt.input, original);
 }
 
-#[test]
-fn serializes_text_verbosity_when_set() {
-    let input: Vec<ResponseItem> = vec![];
-    let req = ProviderResponsesRequest {
+fn chat_request(
+    text: Option<genex_model_provider::ProviderTextControls>,
+    service_tier: Option<String>,
+) -> genex_model_provider::ChatRequest {
+    genex_model_provider::ChatRequest {
         model: "legacy-model".to_string(),
         instructions: "i".to_string(),
-        input,
-        tools: Some(serde_json::json!([])),
+        input: vec![],
+        tools: vec![],
+        metadata: std::collections::BTreeMap::new(),
+        conversation_id: None,
+        session_source: None,
         tool_choice: "auto".to_string(),
         parallel_tool_calls: true,
         reasoning: None,
@@ -113,29 +116,34 @@ fn serializes_text_verbosity_when_set() {
         stream: true,
         stream_options: None,
         include: vec![],
+        service_tier,
         prompt_cache_key: None,
-        service_tier: None,
-        text: build_provider_text_controls(
-            Some(genex_protocol::config_types::Verbosity::Low),
-            &None,
-            false,
-        ),
+        text,
         client_metadata: None,
         access_programs: None,
-    };
-
-    let v = serde_json::to_value(&req).expect("json");
-    assert_eq!(
-        v.get("text")
-            .and_then(|t| t.get("verbosity"))
-            .and_then(|s| s.as_str()),
-        Some("low")
-    );
+        transport: genex_model_provider::ChatTransportOptions {
+            session_id: None,
+            thread_id: None,
+            extra_headers: std::collections::BTreeMap::new(),
+            compression: genex_model_provider::ProviderRequestCompression::None,
+            turn_state: None,
+        },
+    }
 }
 
 #[test]
-fn serializes_text_schema_with_strict_format() {
-    let input: Vec<ResponseItem> = vec![];
+fn builds_text_verbosity_when_set() {
+    let text = build_provider_text_controls(
+        Some(genex_protocol::config_types::Verbosity::Low),
+        &None,
+        false,
+    );
+    let v = serde_json::to_value(&text).expect("json");
+    assert_eq!(v.get("verbosity").and_then(|s| s.as_str()), Some("low"));
+}
+
+#[test]
+fn builds_text_schema_with_strict_format() {
     let schema = serde_json::json!({
         "type": "object",
         "properties": {
@@ -143,27 +151,9 @@ fn serializes_text_schema_with_strict_format() {
         },
         "required": ["answer"],
     });
-    let req = ProviderResponsesRequest {
-        model: "legacy-model".to_string(),
-        instructions: "i".to_string(),
-        input,
-        tools: Some(serde_json::json!([])),
-        tool_choice: "auto".to_string(),
-        parallel_tool_calls: true,
-        reasoning: None,
-        store: false,
-        stream: true,
-        stream_options: None,
-        include: vec![],
-        prompt_cache_key: None,
-        service_tier: None,
-        text: build_provider_text_controls(None, &Some(schema.clone()), true),
-        client_metadata: None,
-        access_programs: None,
-    };
-
-    let v = serde_json::to_value(&req).expect("json");
-    let text = v.get("text").expect("text field");
+    let text = build_provider_text_controls(None, &Some(schema.clone()), true);
+    let v = serde_json::to_value(&text).expect("json");
+    let text = v;
     assert!(text.get("verbosity").is_none());
     let format = text.get("format").expect("format field");
 
@@ -190,28 +180,10 @@ fn serializes_text_schema_with_non_strict_format() {
         "required": ["answer"],
         "additionalProperties": false
     });
-    let req = ProviderResponsesRequest {
-        model: "legacy-model".to_string(),
-        instructions: "i".to_string(),
-        input: vec![],
-        tools: Some(serde_json::json!([])),
-        tool_choice: "auto".to_string(),
-        parallel_tool_calls: true,
-        reasoning: None,
-        store: false,
-        stream: true,
-        stream_options: None,
-        include: vec![],
-        prompt_cache_key: None,
-        service_tier: None,
-        text: build_provider_text_controls(None, &Some(schema.clone()), false),
-        client_metadata: None,
-        access_programs: None,
-    };
-    let format = serde_json::to_value(req)
+    let text = build_provider_text_controls(None, &Some(schema.clone()), false);
+    let format = serde_json::to_value(text)
         .expect("json")
-        .get("text")
-        .and_then(|text| text.get("format"))
+        .get("format")
         .cloned()
         .expect("format field");
     assert_eq!(format.get("strict"), Some(&serde_json::Value::Bool(false)));
@@ -220,54 +192,12 @@ fn serializes_text_schema_with_non_strict_format() {
 
 #[test]
 fn omits_text_when_not_set() {
-    let input: Vec<ResponseItem> = vec![];
-    let req = ProviderResponsesRequest {
-        model: "legacy-model".to_string(),
-        instructions: "i".to_string(),
-        input,
-        tools: Some(serde_json::json!([])),
-        tool_choice: "auto".to_string(),
-        parallel_tool_calls: true,
-        reasoning: None,
-        store: false,
-        stream: true,
-        stream_options: None,
-        include: vec![],
-        prompt_cache_key: None,
-        service_tier: None,
-        text: None,
-        client_metadata: None,
-        access_programs: None,
-    };
-
-    let v = serde_json::to_value(&req).expect("json");
-    assert!(v.get("text").is_none());
+    let req = chat_request(None, None);
+    assert!(req.text.is_none());
 }
 
 #[test]
-fn serializes_flex_service_tier_when_set() {
-    let req = ProviderResponsesRequest {
-        model: "legacy-model".to_string(),
-        instructions: "i".to_string(),
-        input: vec![],
-        tools: Some(serde_json::json!([])),
-        tool_choice: "auto".to_string(),
-        parallel_tool_calls: true,
-        reasoning: None,
-        store: false,
-        stream: true,
-        stream_options: None,
-        include: vec![],
-        prompt_cache_key: None,
-        service_tier: Some(ServiceTier::Flex.to_string()),
-        text: None,
-        client_metadata: None,
-        access_programs: None,
-    };
-
-    let v = serde_json::to_value(&req).expect("json");
-    assert_eq!(
-        v.get("service_tier").and_then(|tier| tier.as_str()),
-        Some("flex")
-    );
+fn preserves_flex_service_tier_when_set() {
+    let req = chat_request(None, Some(ServiceTier::Flex.to_string()));
+    assert_eq!(req.service_tier.as_deref(), Some("flex"));
 }

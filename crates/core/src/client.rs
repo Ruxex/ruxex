@@ -90,7 +90,6 @@ use genex_model_provider::ProviderReasoningContext;
 use genex_model_provider::ProviderReasoningSummaryDelivery;
 use genex_model_provider::ProviderRequestAuth;
 use genex_model_provider::ProviderRequestCompression;
-use genex_model_provider::ProviderResponsesRequest;
 use genex_model_provider::ProviderStreamOptions;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ProviderWebsocketConnectRequest;
@@ -126,7 +125,7 @@ pub(crate) const WEBSOCKET_CONNECT_TIMEOUT: Duration =
 
 fn session_telemetry_for_request(
     session_telemetry: &SessionTelemetry,
-    request: &ProviderResponsesRequest,
+    request: &genex_model_provider::ChatRequest,
 ) -> SessionTelemetry {
     let effort = request
         .reasoning
@@ -264,7 +263,7 @@ struct WebsocketSession {
     /// Owner of the cached state, including before a connection is opened.
     auth_owner_generation: Option<u64>,
     connection_key: Option<ProviderConnectionKey>,
-    last_request: Option<ProviderResponsesRequest>,
+    last_request: Option<genex_model_provider::ChatRequest>,
     last_response_rx: Option<oneshot::Receiver<LastResponse>>,
     last_response_from_untraced_warmup: bool,
     connection_reused: StdMutex<bool>,
@@ -276,14 +275,17 @@ struct WebsocketSession {
 // Access programs are authorized per response, including continuations, without replaying input.
 // Keep the destructuring exhaustive so new request fields require an explicit reuse decision.
 fn responses_request_properties_match(
-    previous: &ProviderResponsesRequest,
-    current: &ProviderResponsesRequest,
+    previous: &genex_model_provider::ChatRequest,
+    current: &genex_model_provider::ChatRequest,
 ) -> bool {
-    let ProviderResponsesRequest {
+    let genex_model_provider::ChatRequest {
         model: previous_model,
         instructions: previous_instructions,
         input: _,
         tools: previous_tools,
+        metadata: _,
+        conversation_id: _,
+        session_source: _,
         tool_choice: previous_tool_choice,
         parallel_tool_calls: previous_parallel_tool_calls,
         reasoning: previous_reasoning,
@@ -296,12 +298,16 @@ fn responses_request_properties_match(
         text: previous_text,
         client_metadata: _,
         access_programs: _,
+        transport: _,
     } = previous;
-    let ProviderResponsesRequest {
+    let genex_model_provider::ChatRequest {
         model: current_model,
         instructions: current_instructions,
         input: _,
         tools: current_tools,
+        metadata: _,
+        conversation_id: _,
+        session_source: _,
         tool_choice: current_tool_choice,
         parallel_tool_calls: current_parallel_tool_calls,
         reasoning: current_reasoning,
@@ -314,6 +320,7 @@ fn responses_request_properties_match(
         text: current_text,
         client_metadata: _,
         access_programs: _,
+        transport: _,
     } = current;
 
     previous_model == current_model
@@ -625,11 +632,11 @@ impl ModelClient {
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
         responses_metadata: &GenexResponsesMetadata,
-    ) -> Result<ProviderResponsesRequest> {
+    ) -> Result<genex_model_provider::ChatRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
         let is_responses_provider =
             matches!(self.state.provider.wire_api(), ProviderWireApi::Responses);
-        let (instructions, tools): (String, Option<serde_json::Value>) =
+        let (instructions, tools): (String, Vec<serde_json::Value>) =
             if model_info.use_responses_lite {
                 // These prompt-only items are rebuilt on every request. Hash their visible payloads
                 // within the thread so retries and resumed sessions preserve their identity.
@@ -661,12 +668,12 @@ impl ModelClient {
                     prefix.push(instructions);
                 }
                 input.splice(0..0, prefix);
-                (String::new(), None)
+                (String::new(), Vec::new())
             } else {
                 let raw_tools = create_tools_raw_json_for_responses_api(&prompt.tools)?;
                 (
                     prompt.base_instructions.text.clone(),
-                    Some(serde_json::from_str::<serde_json::Value>(raw_tools.get())?),
+                    serde_json::from_str::<Vec<serde_json::Value>>(raw_tools.get())?,
                 )
             };
         if !is_responses_provider {
@@ -707,11 +714,14 @@ impl ModelClient {
         );
         let prompt_cache_key = Some(self.prompt_cache_key(responses_metadata));
         let service_tier = model_info.service_tier_for_request(service_tier);
-        let request = ProviderResponsesRequest {
+        let request = genex_model_provider::ChatRequest {
             model: model_info.slug.clone(),
             instructions,
             input,
             tools,
+            metadata: std::collections::BTreeMap::new(),
+            conversation_id: None,
+            session_source: None,
             tool_choice: "auto".to_string(),
             parallel_tool_calls: prompt.parallel_tool_calls && !model_info.use_responses_lite,
             reasoning: Some(reasoning),
@@ -724,6 +734,13 @@ impl ModelClient {
             text,
             client_metadata: Some(responses_metadata.client_metadata().into_iter().collect()),
             access_programs: None,
+            transport: genex_model_provider::ChatTransportOptions {
+                session_id: None,
+                thread_id: None,
+                extra_headers: std::collections::BTreeMap::new(),
+                compression: genex_model_provider::ProviderRequestCompression::None,
+                turn_state: None,
+            },
         };
         Ok(request)
     }
@@ -970,7 +987,7 @@ impl ModelClientSession {
     /// are treated as part of the baseline so we do not resend them.
     fn get_incremental_items(
         &self,
-        request: &ProviderResponsesRequest,
+        request: &genex_model_provider::ChatRequest,
         last_response: &LastResponse,
     ) -> Option<Vec<ResponseItem>> {
         let previous_request = self.websocket_session.last_request.as_ref()?;
@@ -1015,7 +1032,7 @@ impl ModelClientSession {
 
     fn prepare_websocket_request(
         &mut self,
-        request: &ProviderResponsesRequest,
+        request: &genex_model_provider::ChatRequest,
     ) -> Option<WebsocketContinuation> {
         let last_response = self.get_last_response()?;
         let items = self.get_incremental_items(request, &last_response)?;
@@ -1197,13 +1214,24 @@ impl ModelClientSession {
         let tools = create_tools_json_for_chat_completions_api(&prompt.tools)?;
         let request = genex_model_provider::ChatRequest {
             model: model_info.slug.clone(),
-            instructions: Some(prompt.base_instructions.text.clone()),
+            instructions: prompt.base_instructions.text.clone(),
             input: prompt.input.clone(),
             tools,
             metadata: std::collections::BTreeMap::new(),
             conversation_id: Some(responses_metadata.session_id.clone()),
             session_source: Some(self.client.state.session_source.clone()),
-            payload: None,
+            tool_choice: "auto".to_string(),
+            parallel_tool_calls: false,
+            reasoning: None,
+            store: false,
+            stream: true,
+            stream_options: None,
+            include: Vec::new(),
+            service_tier: None,
+            prompt_cache_key: None,
+            text: None,
+            client_metadata: None,
+            access_programs: None,
             transport: genex_model_provider::ChatTransportOptions {
                 session_id: None,
                 thread_id: None,
@@ -1300,14 +1328,8 @@ impl ModelClientSession {
             inference_trace_attempt.add_request_headers(&mut options.extra_headers);
             inference_trace_attempt.record_started(&request);
             let provider_request = genex_model_provider::ChatRequest {
-                model: request.model.clone(),
-                instructions: Some(request.instructions.clone()),
-                input: Vec::new(),
-                tools: Vec::new(),
-                metadata: std::collections::BTreeMap::new(),
                 conversation_id: Some(self.client.responses_session_id(responses_metadata)),
                 session_source: Some(self.client.state.session_source.clone()),
-                payload: Some(request.clone()),
                 transport: genex_model_provider::ChatTransportOptions {
                     session_id: options.session_id.clone(),
                     thread_id: options.thread_id.clone(),
@@ -1315,6 +1337,7 @@ impl ModelClientSession {
                     compression: options.compression,
                     turn_state: options.turn_state,
                 },
+                ..request
             };
             let provider_result = self.client.state.provider.chat(provider_request).await;
             match provider_result {

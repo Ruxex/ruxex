@@ -308,9 +308,16 @@ async fn init_state_db_for_app_server_target(
                 ))
             })
         }
-        AppServerTarget::LocalDaemon { .. } | AppServerTarget::Remote { .. } => {
+        AppServerTarget::LocalDaemon { .. } => {
+            genex_app_server_client::mount_provider_home_for_config(config).map_err(|err| {
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    format!("failed to mount provider data root: {err}"),
+                )
+            })?;
             Ok(state_db::get_state_db(config).await)
         }
+        AppServerTarget::Remote { .. } => Ok(state_db::get_state_db(config).await),
     }
 }
 

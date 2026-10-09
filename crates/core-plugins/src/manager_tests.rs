@@ -84,7 +84,6 @@ fn plugins_config_input_with_requirements(
 ) -> PluginsConfigInput {
     PluginsConfigInput::new(
         config_layer_stack_with_requirements(genex_home, user_config, requirements),
-        String::new(),
         /*plugins_enabled*/ true,
     )
 }
@@ -1116,11 +1115,7 @@ async fn plugin_cache_reuses_effective_configurations() {
         .expect("config layer stack should build")
     };
     let config = |session_config| {
-        PluginsConfigInput::new(
-            stack(session_config),
-            String::new(),
-            /*plugins_enabled*/ true,
-        )
+        PluginsConfigInput::new(stack(session_config), /*plugins_enabled*/ true)
     };
     let manager = test_plugins_manager(genex_home.path().to_path_buf());
 

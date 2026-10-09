@@ -358,14 +358,8 @@ pub(crate) async fn load_plugins_config(genex_home: &Path, cwd: &Path) -> Plugin
     .await
     .expect("config should load");
     let effective_config = config_layer_stack.effective_config();
-    let model_provider_id = effective_config
-        .get("model_provider")
-        .and_then(toml::Value::as_str)
-        .unwrap_or_default()
-        .to_string();
     PluginsConfigInput::new(
         config_layer_stack,
-        model_provider_id,
         feature_enabled(&effective_config, "plugins", /*default_enabled*/ true),
     )
 }

@@ -342,49 +342,29 @@ pub struct UsageRequest {
 }
 
 /// Provider-neutral chat input. Wire request construction remains inside the provider.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct ChatRequest {
     pub model: String,
-    pub instructions: Option<String>,
+    pub instructions: String,
     pub input: Vec<ResponseItem>,
     pub tools: Vec<Value>,
     pub metadata: BTreeMap<String, Value>,
     pub conversation_id: Option<String>,
     pub session_source: Option<SessionSource>,
-    pub payload: Option<ProviderResponsesRequest>,
-    pub transport: ChatTransportOptions,
-}
-
-/// Provider-neutral representation of the normalized Responses request.
-///
-/// The adapter owns serialization and endpoint selection. Core uses this value only for
-/// continuation comparison and turn telemetry; it never constructs a provider wire struct.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
-pub struct ProviderResponsesRequest {
-    pub model: String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    pub instructions: String,
-    pub input: Vec<ResponseItem>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tools: Option<Value>,
     pub tool_choice: String,
     pub parallel_tool_calls: bool,
     pub reasoning: Option<ProviderReasoning>,
     pub store: bool,
     pub stream: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub stream_options: Option<ProviderStreamOptions>,
     pub include: Vec<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub service_tier: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub prompt_cache_key: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<ProviderTextControls>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub client_metadata: Option<BTreeMap<String, String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub access_programs: Option<Value>,
+    #[serde(skip)]
+    pub transport: ChatTransportOptions,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
@@ -476,7 +456,7 @@ pub struct ProviderStreamOptions {
 /// Input used by the provider adapter to construct a WebSocket wire request.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProviderWebsocketPayloadRequest {
-    pub request: ProviderResponsesRequest,
+    pub request: ChatRequest,
     pub previous_response_id: Option<String>,
     pub input: Vec<ResponseItem>,
     pub generate: Option<bool>,

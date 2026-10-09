@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
+use genex_model_provider::PROVIDER_HOME_MARKER_FILE;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -22,6 +23,36 @@ fn daemon_launch_telemetry_records_once_on_connection_or_early_return() {
             vec![(AppServerTarget::Embedded, connected)]
         );
     }
+}
+
+#[tokio::test]
+async fn local_daemon_state_db_rejects_a_mismatched_provider_home_before_opening_sqlite(
+) -> color_eyre::Result<()> {
+    let home = TempDir::new()?;
+    let config = ConfigBuilder::default()
+        .genex_home(home.path().to_path_buf())
+        .build()
+        .await?;
+    genex_app_server_client::mount_provider_home_for_config(&config)?;
+
+    let marker_path = home.path().join(PROVIDER_HOME_MARKER_FILE);
+    let mut marker: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&marker_path)?)?;
+    marker["providerKind"] = serde_json::Value::String("mismatched-provider".to_string());
+    std::fs::write(&marker_path, serde_json::to_vec_pretty(&marker)?)?;
+
+    let target = AppServerTarget::LocalDaemon {
+        endpoint: RemoteAppServerEndpoint::UnixSocket {
+            socket_path: AbsolutePathBuf::from_absolute_path_checked(home.path().join("daemon.sock"))?,
+        },
+        allow_embedded_fallback: false,
+    };
+    let error = init_state_db_for_app_server_target(&config, &target)
+        .await
+        .expect_err("mismatched provider homes must fail before local state access");
+
+    assert!(error.to_string().contains("incompatible marker"));
+    Ok(())
 }
 
 #[cfg(windows)]
