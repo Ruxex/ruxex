@@ -18,10 +18,8 @@ pub(crate) enum Notice {
 }
 
 pub(crate) fn prefetch_notice(config: &Config, server: &AppServerSession, cache: NoticeCache) {
-    if config.model_provider_id != "provider"
-        || server.uses_remote_workspace()
-        || cache.get().is_some()
-    {
+    let _ = config;
+    if server.uses_remote_workspace() || cache.get().is_some() {
         return;
     }
     tokio::spawn(async move {

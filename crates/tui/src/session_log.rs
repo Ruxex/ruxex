@@ -113,8 +113,6 @@ pub(crate) fn maybe_init(config: &Config) {
         "kind": "session_start",
         "cwd": config.cwd,
         "model": config.model,
-        "model_provider_id": config.model_provider_id,
-        "model_provider_name": config.model_provider.name,
     });
     LOGGER.write_json_line(header);
 }
