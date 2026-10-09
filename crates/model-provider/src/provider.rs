@@ -79,7 +79,7 @@ use crate::models_endpoint::ModelsEndpoint;
 
 /// Current app-visible account state for a model provider.
 #[derive(Debug, Clone, PartialEq)]
-pub struct ProviderAccountState {
+pub(crate) struct ProviderAccountState {
     pub provider_id: String,
     pub account: Option<ProviderAccount>,
     pub account_id: Option<String>,
@@ -90,13 +90,13 @@ pub struct ProviderAccountState {
 
 /// Provider-neutral credentials supplied by a host login flow.
 #[derive(Clone, PartialEq, Eq)]
-pub struct ProviderLoginRequest {
+pub(crate) struct ProviderLoginRequest {
     pub api_key: String,
     pub credentials: BTreeMap<String, String>,
 }
 
 impl ProviderLoginRequest {
-    pub fn new(api_key: impl Into<String>, credentials: BTreeMap<String, String>) -> Self {
+    pub(crate) fn new(api_key: impl Into<String>, credentials: BTreeMap<String, String>) -> Self {
         Self {
             api_key: api_key.into(),
             credentials,
@@ -106,7 +106,7 @@ impl ProviderLoginRequest {
 
 /// Error classification for provider-owned credential lifecycle operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ProviderAuthError {
+pub(crate) enum ProviderAuthError {
     Unavailable,
     Failed(String),
 }
@@ -122,13 +122,13 @@ impl fmt::Display for ProviderAuthError {
 
 impl std::error::Error for ProviderAuthError {}
 
-pub type ProviderAuthResult = std::result::Result<(), ProviderAuthError>;
-pub type ProviderDeleteResult = std::result::Result<bool, ProviderAuthError>;
-pub type ProviderLogoutResult = std::result::Result<bool, ProviderAuthError>;
+pub(crate) type ProviderAuthResult = std::result::Result<(), ProviderAuthError>;
+pub(crate) type ProviderDeleteResult = std::result::Result<bool, ProviderAuthError>;
+pub(crate) type ProviderLogoutResult = std::result::Result<bool, ProviderAuthError>;
 
 /// Error returned when a provider cannot construct its app-visible account state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProviderAccountError {}
+pub(crate) enum ProviderAccountError {}
 
 impl fmt::Display for ProviderAccountError {
     fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -138,11 +138,11 @@ impl fmt::Display for ProviderAccountError {
 
 impl std::error::Error for ProviderAccountError {}
 
-pub type ProviderAccountResult = std::result::Result<ProviderAccountState, ProviderAccountError>;
+pub(crate) type ProviderAccountResult = std::result::Result<ProviderAccountState, ProviderAccountError>;
 
 /// Runtime API selected for model execution.
 #[derive(Clone)]
-pub enum ProviderApi {
+pub(crate) enum ProviderApi {
     /// The existing concrete Responses API implementation.
     Responses,
     /// A provider-specific Chat Completions wire adapter.
@@ -371,7 +371,7 @@ impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection
 /// Implementations own provider-specific behavior for a model backend. The
 /// `ModelProviderInfo` returned by `info` is the serialized/configured provider
 /// metadata used by the default provider-compatible implementation.
-pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
+pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
 
@@ -1480,7 +1480,7 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
 }
 
 /// Creates the provider-neutral view of an existing runtime provider without duplicating state.
-pub fn provider_contract(provider: SharedProviderRuntime) -> crate::contract::SharedModelProvider {
+fn provider_contract(provider: SharedProviderRuntime) -> crate::contract::SharedModelProvider {
     Arc::new(RuntimeProviderContractAdapter { runtime: provider })
 }
 
@@ -1492,10 +1492,10 @@ fn environment_variable_present(name: &str) -> bool {
     }
 }
 
-pub type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
+pub(crate) type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// Shared runtime model provider handle.
-pub type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
+pub(crate) type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
 
 fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
     provider.env_key.is_none()
@@ -1503,11 +1503,11 @@ fn provider_uses_stored_auth_path(provider: &ModelProviderInfo) -> bool {
         && provider.auth.is_none()
 }
 
-/// Creates the default runtime model provider for configured provider metadata.
+/// Creates the provider-neutral model provider for configured provider metadata.
 pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
-) -> SharedProviderRuntime {
+) -> crate::contract::SharedModelProvider {
     create_model_provider_with_http_client_factory(
         provider_info,
         credential_manager,
@@ -1517,6 +1517,29 @@ pub fn create_model_provider(
 
 /// Creates the configured provider with the host-selected outbound transport.
 pub fn create_model_provider_with_http_client_factory(
+    provider_info: ModelProviderInfo,
+    credential_manager: Option<Arc<CredentialManager>>,
+    http_client_factory: HttpClientFactory,
+) -> crate::contract::SharedModelProvider {
+    provider_contract(create_runtime_provider_with_http_client_factory(
+        provider_info,
+        credential_manager,
+        http_client_factory,
+    ))
+}
+
+fn create_runtime_provider(
+    provider_info: ModelProviderInfo,
+    credential_manager: Option<Arc<CredentialManager>>,
+) -> SharedProviderRuntime {
+    create_runtime_provider_with_http_client_factory(
+        provider_info,
+        credential_manager,
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+    )
+}
+
+fn create_runtime_provider_with_http_client_factory(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
@@ -1710,8 +1733,16 @@ mod tests {
     use crate::model_catalog_source::ProviderModelCatalogSource;
 
     #[test]
+    fn factory_returns_provider_neutral_contract() {
+        let _provider: crate::contract::SharedModelProvider = create_model_provider(
+            ModelProviderInfo::create_responses_provider(None),
+            /*credential_manager*/ None,
+        );
+    }
+
+    #[test]
     fn cloudflare_provider_selects_chat_runtime_api() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             ModelProviderInfo::create_cloudflare_provider(),
             /*credential_manager*/ None,
         );
@@ -1791,7 +1822,7 @@ mod tests {
 
     #[tokio::test]
     async fn provider_contract_adapts_lifecycle_without_new_provider_state() {
-        let runtime = create_model_provider(
+        let runtime = create_runtime_provider(
             ModelProviderInfo::default(),
             /*credential_manager*/ None,
         );
@@ -1835,12 +1866,16 @@ mod tests {
             /*credential_manager*/ None,
         );
 
-        let request = ProviderLoginRequest::new("api-key", std::collections::BTreeMap::new());
-        let result = provider.login(request).await;
-        assert!(matches!(result, Err(ProviderAuthError::Unavailable)));
+        let result = provider
+            .login(std::collections::BTreeMap::from([(
+                "api_key".to_string(),
+                "api-key".to_string(),
+            )]))
+            .await;
+        assert!(matches!(result, Err(crate::ProviderError::Unsupported)));
 
-        let logout_result: ProviderLogoutResult = provider.logout().await;
-        assert!(matches!(logout_result, Err(ProviderAuthError::Unavailable)));
+        let logout_result = provider.logout().await;
+        assert!(matches!(logout_result, Err(crate::ProviderError::Unsupported)));
     }
 
     #[test]
@@ -1849,7 +1884,7 @@ mod tests {
         info.base_url = Some("https://example.test".to_string());
         info.env_key = None;
         let provider = create_model_provider(info, /*credential_manager*/ None);
-        let source = ProviderModelCatalogSource::new(provider_contract(provider));
+        let source = ProviderModelCatalogSource::new(provider);
 
         assert!(!source.supports_api_key_models());
         assert!(source.supports_remote_models());
@@ -1882,10 +1917,7 @@ mod tests {
         info.env_key = None;
         let provider = create_model_provider(info, /*credential_manager*/ None);
         let catalog = provider
-            .list_models(
-                "test-client",
-                HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            )
+            .list_models(crate::contract::ListModelsRequest::new("test-client"))
             .await
             .expect("Cloudflare provider should list models");
 
@@ -1902,7 +1934,7 @@ mod tests {
 
     #[test]
     fn responses_provider_keeps_concrete_runtime_api() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1914,9 +1946,9 @@ mod tests {
     fn provider_contract_exposes_auth_environment_without_provider_info() {
         let mut info = ModelProviderInfo::create_responses_provider(None);
         info.env_key = Some("GENEX_TEST_PROVIDER_KEY".to_string());
-        let provider = provider_contract(create_model_provider(
+        let provider = create_model_provider(
             info, /*credential_manager*/ None,
-        ));
+        );
 
         let environment = provider.auth_environment();
 
@@ -1993,7 +2025,7 @@ mod tests {
 
     #[tokio::test]
     async fn scoped_auth_ignores_scope_for_non_responses_provider() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             create_responses_provider_with_base_url(
                 "http://localhost:11434/v1",
                 WireApi::Responses,
@@ -2031,14 +2063,14 @@ mod tests {
             .await
             .expect("provider A login");
 
-        let provider_a = create_model_provider(
+        let provider_a = create_runtime_provider(
             ModelProviderInfo {
                 id: Some("provider-a".to_string()),
                 ..ModelProviderInfo::create_responses_provider(None)
             },
             Some(Arc::clone(&credential_manager)),
         );
-        let provider_b = create_model_provider(
+        let provider_b = create_runtime_provider(
             ModelProviderInfo {
                 id: Some("provider-b".to_string()),
                 ..ModelProviderInfo::create_responses_provider(None)
@@ -2119,7 +2151,7 @@ mod tests {
 
     #[tokio::test]
     async fn configured_provider_runtime_base_url_uses_configured_base_url() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             provider_for("https://example.test/v1".to_string()),
             /*credential_manager*/ None,
         );
@@ -2135,7 +2167,7 @@ mod tests {
 
     #[test]
     fn create_model_provider_builds_command_credential_manager_without_base_manager() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             provider_info_with_command_auth(),
             /*credential_manager*/ None,
         );
@@ -2149,7 +2181,7 @@ mod tests {
 
     #[test]
     fn responses_provider_returns_unauthenticated_provider_account_state() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             /*credential_manager*/ None,
         );
@@ -2169,7 +2201,7 @@ mod tests {
 
     #[test]
     fn responses_provider_returns_api_key_account_state() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             Some(CredentialManager::from_auth_for_testing(
                 GenexAuth::from_api_key("provider-api-key"),
@@ -2196,12 +2228,17 @@ mod tests {
             /*credential_manager*/ None,
         );
 
-        assert_eq!(provider.usage().await, Ok(ProviderUsage::Unsupported));
+        assert_eq!(
+            provider
+                .usage(crate::contract::UsageRequest { model: None })
+                .await,
+            Ok(ProviderUsage::Unsupported)
+        );
     }
 
     #[test]
     fn custom_non_responses_provider_returns_no_account_state() {
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             ModelProviderInfo {
                 name: "Custom".to_string(),
                 base_url: Some("http://localhost:1234/v1".to_string()),
@@ -2245,7 +2282,7 @@ mod tests {
 
         let mut provider_info = provider_for(server.uri());
         provider_info.experimental_bearer_token = Some("provider-token".into());
-        let provider = create_model_provider(
+        let provider = create_runtime_provider(
             provider_info,
             Some(CredentialManager::from_auth_for_testing(
                 GenexAuth::from_api_key("ambient-api-key"),

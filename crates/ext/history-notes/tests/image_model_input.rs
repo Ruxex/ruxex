@@ -12,7 +12,6 @@ use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
-use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
@@ -69,7 +68,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
     install(
         &mut extensions,
         credential_manager,
-        provider_contract(provider),
+        provider,
     );
     let test = test_genex()
         .with_auth(auth)

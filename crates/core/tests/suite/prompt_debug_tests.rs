@@ -10,7 +10,6 @@ use genex_extension_api::ExtensionRegistryBuilder;
 use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::CredentialManager;
 use genex_model_provider::create_model_provider;
-use genex_model_provider::provider_contract;
 use genex_protocol::models::ContentItem;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::user_input::UserInput;
@@ -37,10 +36,10 @@ async fn build_prompt_input_includes_context_and_user_message() -> Result<()> {
         config.genex_home.clone(),
     ));
     let credential_manager = CredentialManager::shared_from_config(&config, false).await?;
-    let provider = provider_contract(create_model_provider(
+    let provider = create_model_provider(
         config.model_provider.clone(),
         Some(credential_manager.clone()),
-    ));
+    );
     let input = build_prompt_input(
         config,
         provider,

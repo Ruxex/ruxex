@@ -14,7 +14,6 @@ use genex_model_provider::ProviderHomeMarker;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::create_model_provider_with_http_client_factory;
 use genex_model_provider::mount_provider_home;
-use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 
 /// The single provider contract shared by an AppServer transport and its clients.
@@ -106,11 +105,11 @@ impl AppServerRuntimeBuilder {
         credential_manager: Option<Arc<CredentialManager>>,
         http_client_factory: HttpClientFactory,
     ) -> Self {
-        let provider = provider_contract(create_model_provider_with_http_client_factory(
+        let provider = create_model_provider_with_http_client_factory(
             provider_info,
             credential_manager.clone(),
             http_client_factory,
-        ));
+        );
         Self {
             provider,
             credential_manager,

@@ -23,7 +23,6 @@ use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
-use genex_model_provider::provider_contract;
 use genex_model_provider_info::WireApi;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
@@ -93,7 +92,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
     install(
         &mut builder,
         credential_manager,
-        provider_contract(provider),
+        provider,
     );
     let registry = builder.build();
     let session_store = ExtensionData::new("session-123");
@@ -397,7 +396,7 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
         install(
             &mut builder,
             credential_manager,
-            provider_contract(model_provider),
+            model_provider,
         );
         let registry = builder.build();
         let session_store = ExtensionData::new("session-123");

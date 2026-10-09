@@ -36,7 +36,6 @@ use genex_features::Feature;
 use genex_home::GenexHomeUserInstructionsProvider;
 use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
-use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_models_manager::test_support::test_models_response;
@@ -628,10 +627,10 @@ impl TestGenexBuilder {
             auth.clone(),
             config.genex_home.to_path_buf(),
         );
-        let provider = provider_contract(create_model_provider(
+        let provider = create_model_provider(
             config.model_provider.clone(),
             Some(credential_manager.clone()),
-        ));
+        );
         let models_manager = self.models_manager.clone().unwrap_or_else(|| {
             genex_core::build_models_manager_with_provider(&config, provider.clone())
         });

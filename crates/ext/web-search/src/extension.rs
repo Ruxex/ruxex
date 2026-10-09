@@ -167,7 +167,6 @@ mod tests {
     use genex_extension_api::ToolName;
     use genex_login::GenexAuth;
     use genex_model_provider::create_model_provider;
-    use genex_model_provider::provider_contract;
     use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
 
@@ -215,7 +214,7 @@ mod tests {
             },
             Some(Arc::clone(&credential_manager)),
         );
-        install(&mut builder, provider_contract(provider));
+        install(&mut builder, provider);
         let registry = builder.build();
         let session_store = ExtensionData::new("session");
         let thread_store = ExtensionData::new("11111111-1111-4111-8111-111111111111");

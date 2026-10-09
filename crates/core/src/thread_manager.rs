@@ -50,7 +50,6 @@ use genex_login::default_client::originator;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::create_model_provider;
-use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
@@ -703,10 +702,10 @@ impl ThreadManager {
             state_db.clone(),
         ));
         let agent_graph_store = local_agent_graph_store_from_state_db(state_db.as_ref());
-        let provider = provider_contract(create_model_provider(
+        let provider = create_model_provider(
             provider,
             Some(credential_manager.clone()),
-        ));
+        );
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),
