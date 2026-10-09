@@ -2319,7 +2319,7 @@ source = "{remote_repo_url}"
     };
     assert_eq!(
         manager
-            .list_tool_suggest_discoverable_plugins(&input, /*auth*/ None)
+            .list_tool_suggest_discoverable_plugins(&input)
             .await
             .expect("initial tool-suggest metadata should load"),
         vec![expected.clone()]
@@ -2339,7 +2339,7 @@ source = "{remote_repo_url}"
 
     assert_eq!(
         manager
-            .list_tool_suggest_discoverable_plugins(&input, /*auth*/ None)
+            .list_tool_suggest_discoverable_plugins(&input)
             .await
             .expect("refreshed tool-suggest metadata should load"),
         vec![ToolSuggestDiscoverablePlugin {

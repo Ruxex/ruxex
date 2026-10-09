@@ -2,7 +2,6 @@ use crate::config::Config;
 use genex_config::types::ToolSuggestDiscoverableType;
 use genex_core_plugins::PluginsManager;
 use genex_core_plugins::ToolSuggestPluginDiscoveryInput;
-use genex_login::GenexAuth;
 use genex_tools::DiscoverablePluginInfo;
 use std::collections::HashSet;
 use tracing::instrument;
@@ -11,7 +10,6 @@ use tracing::instrument;
 pub(crate) async fn list_tool_suggest_discoverable_plugins(
     config: &Config,
     plugins_manager: &PluginsManager,
-    auth: Option<&GenexAuth>,
 ) -> anyhow::Result<Vec<DiscoverablePluginInfo>> {
     let input = ToolSuggestPluginDiscoveryInput {
         plugins: config.plugins_config_input(),
@@ -31,7 +29,7 @@ pub(crate) async fn list_tool_suggest_discoverable_plugins(
             .collect::<HashSet<_>>(),
     };
     plugins_manager
-        .list_tool_suggest_discoverable_plugins(&input, auth)
+        .list_tool_suggest_discoverable_plugins(&input)
         .await
         .map(|plugins| {
             plugins

@@ -22,10 +22,13 @@ use crate::state::ActiveTurn;
 use crate::turn_metadata::ExecutionMetadata;
 use genex_attachment_store::AttachmentStore;
 use genex_extension_api::ExtensionDataInit;
+use genex_model_provider::ProviderAuthState;
 use genex_model_provider::SharedModelProvider;
 use genex_otel::AuthEnvTelemetryMetadata;
+use genex_otel::TelemetryAuthMode;
 use genex_prompts::render_model_instructions;
 use genex_protocol::SessionId;
+use genex_protocol::account::ProviderAuthStatus;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
 use genex_protocol::config_types::ShellEnvironmentPolicy;
 use genex_protocol::mcp::ClientMcpExtensions;
@@ -47,6 +50,14 @@ use tokio::sync::Semaphore;
 
 type McpToolApprovalMetadataMap =
     HashMap<(String, String), std::sync::Weak<(Option<McpInvocation>, McpToolApprovalMetadata)>>;
+
+fn telemetry_auth_metadata(
+    provider_auth: &ProviderAuthState,
+) -> (Option<TelemetryAuthMode>, Option<String>) {
+    let auth_mode = matches!(provider_auth.status, ProviderAuthStatus::Authenticated)
+        .then_some(TelemetryAuthMode::ApiKey);
+    (auth_mode, provider_auth.account_id.clone())
+}
 
 /// Context for an initialized model agent
 ///
@@ -1027,7 +1038,6 @@ impl Session {
             session_init.ephemeral = config.ephemeral,
         ));
 
-        let credential_manager_clone = Arc::clone(&credential_manager);
         let config_for_mcp = Arc::clone(&config);
         let mcp_manager_for_mcp = Arc::clone(&mcp_manager);
         let mcp_thread_init_for_startup = &mcp_thread_init;
@@ -1041,7 +1051,6 @@ impl Session {
             .map(|cwd| cwd.to_path_buf())
             .unwrap_or_else(|| session_configuration.cwd().to_path_buf());
         let auth_and_mcp_fut = async move {
-            let auth = credential_manager_clone.auth().await;
             let mcp_projection = mcp_manager_for_mcp
                 .runtime_config_for_step(
                     &config_for_mcp,
@@ -1057,7 +1066,7 @@ impl Session {
                     /*executor_capability_discovery*/ None,
                 )
                 .await;
-            (auth, mcp_projection)
+            mcp_projection
         }
         .instrument(info_span!(
             "session_init.auth_mcp",
@@ -1065,7 +1074,7 @@ impl Session {
         ));
 
         // Join all independent futures.
-        let (thread_persistence_result, state_db_ctx, (auth, mcp_projection)) =
+        let (thread_persistence_result, state_db_ctx, mcp_projection) =
             tokio::join!(thread_persistence_fut, state_db_fut, auth_and_mcp_fut);
 
         let (live_thread, mut live_thread_init) = thread_persistence_result.map_err(|e| {
@@ -1141,11 +1150,8 @@ impl Session {
             ) {
                 post_session_configured_events.push(event);
             }
-            let telemetry_auth = auth.as_ref();
-            let auth_mode = telemetry_auth
-                .map(GenexAuth::auth_mode)
-                .map(TelemetryAuthMode::from);
-            let account_id = telemetry_auth.and_then(GenexAuth::get_account_id);
+            let provider_auth = session_configuration.provider.auth_state();
+            let (auth_mode, account_id) = telemetry_auth_metadata(&provider_auth);
             let account_email = None;
             let originator = session_configuration.originator.clone();
             let terminal_type = user_agent();
@@ -1724,5 +1730,25 @@ impl Session {
                 Err(err)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::telemetry_auth_metadata;
+    use genex_model_provider::ProviderAuthState;
+    use genex_otel::TelemetryAuthMode;
+    use genex_protocol::account::ProviderAuthStatus;
+
+    #[test]
+    fn telemetry_uses_provider_auth_state_without_credentials() {
+        let (auth_mode, account_id) = telemetry_auth_metadata(&ProviderAuthState {
+            status: ProviderAuthStatus::Authenticated,
+            account_id: Some("account-1".to_string()),
+            display_name: Some("Example".to_string()),
+        });
+
+        assert_eq!(auth_mode, Some(TelemetryAuthMode::ApiKey));
+        assert_eq!(account_id.as_deref(), Some("account-1"));
     }
 }

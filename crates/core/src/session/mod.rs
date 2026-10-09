@@ -74,7 +74,6 @@ use genex_history::RolloutItem;
 use genex_hooks::Hooks;
 use genex_hooks::HooksConfig;
 use genex_login::CredentialManager;
-use genex_login::GenexAuth;
 use genex_mcp::McpResourceClient;
 use genex_mcp::McpRuntime;
 use genex_mcp::McpRuntimeContext;
@@ -315,7 +314,6 @@ use genex_mcp::McpConfig;
 use genex_mcp::effective_mcp_servers;
 use genex_otel::SessionTelemetry;
 use genex_otel::THREAD_STARTED_METRIC;
-use genex_otel::TelemetryAuthMode;
 use genex_protocol::ResponseItemId;
 use genex_protocol::approvals::ExecApprovalKind;
 use genex_protocol::config_types::CollaborationMode;
@@ -3456,19 +3454,15 @@ impl Session {
                 .collect::<HashMap<_, _>>();
             extension_data.insert(sandbox_contexts);
         }
-        let (mcp, prepared_recommendations) = async {
-            tokio::join!(
-                self.mcp_runtime_for_step(
-                    turn_context.as_ref(),
-                    &selected_capability_roots,
-                    required_servers,
-                    required_plugins,
-                ),
-                turn::prepare_tool_recommendations(self.as_ref(), turn_context.as_ref()),
+        let mcp = self
+            .mcp_runtime_for_step(
+                turn_context.as_ref(),
+                &selected_capability_roots,
+                required_servers,
+                required_plugins,
             )
-        }
-        .or_cancel(cancellation_token)
-        .await?;
+            .or_cancel(cancellation_token)
+            .await?;
         let mut selected_plugins = self
             .services
             .thread_extension_data
@@ -3489,7 +3483,6 @@ impl Session {
             &environments,
             &mcp,
             &extension_data,
-            prepared_recommendations,
         )
         .or_cancel(cancellation_token)
         .await??;

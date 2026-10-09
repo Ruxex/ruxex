@@ -91,7 +91,6 @@ impl RequestPluginInstallHandler {
             ..
         } = invocation;
         let turn = Arc::clone(&step_context.turn);
-        let mcp = &step_context.mcp;
 
         let arguments = match payload {
             ToolPayload::Function { arguments } => arguments,
@@ -195,10 +194,8 @@ impl RequestPluginInstallHandler {
             .as_ref()
             .is_some_and(|response| response.action == ElicitationAction::Accept);
 
-        let auth = session.services.credential_manager.auth().await;
         let completed = if user_confirmed {
-            verify_request_plugin_install_completed(&session, &turn, mcp, &tool, auth.as_ref())
-                .await
+            verify_request_plugin_install_completed(&session, &tool).await
         } else {
             false
         };
@@ -306,10 +303,7 @@ fn disabled_install_request(tool: &DiscoverableTool) -> ToolSuggestDisabledTool 
 
 async fn verify_request_plugin_install_completed(
     session: &Arc<crate::session::session::Session>,
-    _turn: &crate::session::turn_context::TurnContext,
-    _mcp: &genex_mcp::McpBinding,
     tool: &DiscoverableTool,
-    _auth: Option<&genex_login::GenexAuth>,
 ) -> bool {
     match tool {
         DiscoverableTool::Plugin(plugin) => {

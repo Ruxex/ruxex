@@ -67,7 +67,7 @@ use genex_extension_api::TurnInputEnvironment;
 use genex_features::Feature;
 use genex_file_system::FindUpErrorPolicy;
 use genex_file_system::find_nearest_ancestor_with_markers;
-use genex_login::GenexAuth;
+use genex_model_provider::ProviderRequestSnapshot;
 use genex_model_provider::ProviderWireApi;
 use genex_model_provider::RemoteCompactionSupport;
 use genex_protocol::ResponseItemId;
@@ -981,9 +981,12 @@ async fn capture_current_model_fallback_step_context(
     cancellation_token: &CancellationToken,
 ) -> GenexResult<Option<Arc<StepContext>>> {
     let uses_managed_auth = turn_context
-        .credential_manager
-        .as_deref()
-        .is_some_and(genex_login::CredentialManager::current_auth_uses_managed_auth);
+        .provider
+        .request_snapshot()
+        .await
+        .ok()
+        .as_ref()
+        .is_some_and(provider_request_uses_managed_auth);
     if !uses_managed_auth
         || !matches!(turn_context.provider.wire_api(), ProviderWireApi::Responses)
         || previous_model == turn_context.model_info().slug
@@ -1277,24 +1280,6 @@ async fn run_sampling_request(
     }
 }
 
-pub(crate) struct PreparedToolRecommendations {
-    auth: Option<GenexAuth>,
-}
-
-#[instrument(level = "trace", skip_all)]
-pub(crate) async fn prepare_tool_recommendations(
-    sess: &Session,
-    turn_context: &TurnContext,
-) -> PreparedToolRecommendations {
-    let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
-    let auth = if tool_suggest_is_enabled {
-        sess.services.credential_manager.auth().await
-    } else {
-        None
-    };
-    PreparedToolRecommendations { auth }
-}
-
 #[allow(clippy::too_many_arguments)]
 #[instrument(level = "trace",
     skip_all,
@@ -1310,15 +1295,12 @@ pub(crate) async fn built_tools(
     environments: &TurnEnvironmentSnapshot,
     mcp: &Arc<genex_mcp::McpBinding>,
     step_store: &ExtensionData,
-    prepared_recommendations: PreparedToolRecommendations,
 ) -> GenexResult<Arc<ToolRouter>> {
     let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
-    let PreparedToolRecommendations { auth } = prepared_recommendations;
     let tool_suggest_candidates = if tool_suggest_is_enabled {
         match crate::plugins::list_tool_suggest_discoverable_plugins(
             &turn_context.config,
             sess.services.plugins_manager.as_ref(),
-            auth.as_ref(),
         )
         .await
         {
@@ -1344,6 +1326,10 @@ pub(crate) async fn built_tools(
         step_store,
         tool_suggest_candidates.as_ref(),
     )?))
+}
+
+fn provider_request_uses_managed_auth(snapshot: &ProviderRequestSnapshot) -> bool {
+    snapshot.auth.managed_auth
 }
 
 #[derive(Debug)]
@@ -2426,4 +2412,32 @@ pub(crate) fn get_last_assistant_message_from_turn<'a>(
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::provider_request_uses_managed_auth;
+    use genex_model_provider::ProviderConnectionKey;
+    use genex_model_provider::ProviderRequestAuth;
+    use genex_model_provider::ProviderRequestSnapshot;
+
+    #[test]
+    fn managed_auth_gate_uses_only_the_provider_snapshot() {
+        let snapshot = ProviderRequestSnapshot {
+            auth: ProviderRequestAuth {
+                authenticated: true,
+                managed_auth: true,
+                auth_header_attached: true,
+                auth_header_name: Some("authorization"),
+                revision: Some(1),
+                owner_generation: Some(1),
+            },
+            connection_key: ProviderConnectionKey {
+                provider_kind: "fake".to_string(),
+                auth_revision: Some(1),
+            },
+        };
+
+        assert!(provider_request_uses_managed_auth(&snapshot));
+    }
 }
