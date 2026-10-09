@@ -20,6 +20,7 @@ use genex_http_client::HttpClientFactory;
 use genex_login::default_client::add_originator_header;
 use genex_model_provider::ProviderSearchRequest;
 use genex_model_provider::SharedModelProvider;
+use genex_model_provider::ProviderTransportContext;
 use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::WebSearchBeginEvent;
@@ -112,11 +113,13 @@ impl WebSearchTool {
             max_output_tokens: Some(
                 u64::try_from(call.truncation_policy.token_budget()).unwrap_or(u64::MAX),
             ),
-            http_client_factory: self.http_client_factory.clone(),
-            extra_headers: search_request_headers(
+            transport: ProviderTransportContext::from_http_client_factory(
+                self.http_client_factory.clone(),
+            ),
+            extra_headers: neutral_headers(search_request_headers(
                 self.originator.as_deref(),
                 call.turn_metadata.as_deref(),
-            ),
+            )),
         };
         call.turn_item_emitter
             .emit_started(extension_turn_item(
@@ -191,6 +194,17 @@ fn search_request_headers(originator: Option<&str>, turn_metadata: Option<&str>)
         add_originator_header(&mut headers, originator);
     }
     headers
+}
+
+fn neutral_headers(headers: HeaderMap) -> std::collections::BTreeMap<String, String> {
+    headers
+        .into_iter()
+        .filter_map(|(name, value)| {
+            let name = name?;
+            let value = value.to_str().ok()?.to_string();
+            Some((name.to_string(), value))
+        })
+        .collect()
 }
 
 fn parse_commands(call: &ToolCall<'_>) -> Result<SearchCommands, FunctionCallError> {

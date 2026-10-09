@@ -19,6 +19,7 @@ use genex_api::ApiError;
 use genex_api::Provider;
 use genex_api::SharedAuthProvider;
 use genex_http_client::HttpClientFactory;
+use genex_http_client::OutboundProxyPolicy;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider_info::ModelProviderInfo;
@@ -30,6 +31,8 @@ use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::RateLimitSnapshot;
 use genex_protocol::protocol::SessionSource;
 use http::HeaderMap;
+use http::HeaderName;
+use http::HeaderValue;
 use serde_json::Value;
 
 /// Remote context-compaction protocols supported by a model provider.
@@ -168,6 +171,22 @@ pub type ProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 pub type ProviderChatStream = Pin<Box<dyn Stream<Item = ProviderResult<ProviderChatEvent>> + Send>>;
 pub type SharedModelProvider = Arc<dyn ModelProvider>;
 
+pub(crate) fn headers_to_http(
+    headers: BTreeMap<String, String>,
+) -> ProviderResult<HeaderMap> {
+    let mut result = HeaderMap::new();
+    for (name, value) in headers {
+        let name = HeaderName::from_bytes(name.as_bytes()).map_err(|error| {
+            ProviderError::InvalidRequest(format!("invalid provider header name: {error}"))
+        })?;
+        let value = HeaderValue::from_str(&value).map_err(|error| {
+            ProviderError::InvalidRequest(format!("invalid provider header value: {error}"))
+        })?;
+        result.insert(name, value);
+    }
+    Ok(result)
+}
+
 /// Provider-neutral telemetry event emitted by a WebSocket transport.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ProviderWebsocketEvent {
@@ -191,10 +210,39 @@ pub trait ProviderWebsocketTelemetry: Send + Sync {
 
 /// Input to a provider-owned WebSocket connection.
 pub struct ProviderWebsocketConnectRequest {
-    pub http_client_factory: HttpClientFactory,
-    pub extra_headers: HeaderMap,
-    pub default_headers: HeaderMap,
+    pub transport: ProviderTransportContext,
+    pub extra_headers: BTreeMap<String, String>,
+    pub default_headers: BTreeMap<String, String>,
     pub telemetry: Option<Arc<dyn ProviderWebsocketTelemetry>>,
+}
+
+/// Opaque outbound transport owned by the mounted provider adapter.
+///
+/// The concrete HTTP client factory is intentionally private so request contracts cannot couple
+/// Core or extensions to the provider's HTTP implementation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProviderTransportContext {
+    http_client_factory: HttpClientFactory,
+}
+
+impl ProviderTransportContext {
+    pub fn from_http_client_factory(http_client_factory: HttpClientFactory) -> Self {
+        Self {
+            http_client_factory,
+        }
+    }
+
+    pub(crate) fn http_client_factory(&self) -> &HttpClientFactory {
+        &self.http_client_factory
+    }
+}
+
+impl Default for ProviderTransportContext {
+    fn default() -> Self {
+        Self::from_http_client_factory(HttpClientFactory::new(
+            OutboundProxyPolicy::ReqwestDefault,
+        ))
+    }
 }
 
 /// A serialized provider wire request sent over a WebSocket connection.
@@ -274,14 +322,17 @@ pub struct ProviderAccountState {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ListModelsRequest {
     pub client_version: String,
-    pub http_client_factory: HttpClientFactory,
+    pub transport: ProviderTransportContext,
 }
 
 impl ListModelsRequest {
-    pub fn new(client_version: impl Into<String>, http_client_factory: HttpClientFactory) -> Self {
+    pub fn new(
+        client_version: impl Into<String>,
+        transport: ProviderTransportContext,
+    ) -> Self {
         Self {
             client_version: client_version.into(),
-            http_client_factory,
+            transport,
         }
     }
 }
@@ -312,10 +363,10 @@ pub struct ChatRequest {
 /// policy and request-scoped routing state without exposing its client implementation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChatTransportOptions {
-    pub http_client_factory: HttpClientFactory,
+    pub transport: ProviderTransportContext,
     pub session_id: Option<String>,
     pub thread_id: Option<String>,
-    pub extra_headers: HeaderMap,
+    pub extra_headers: BTreeMap<String, String>,
     pub compression: ProviderRequestCompression,
     pub turn_state: Option<Arc<OnceLock<String>>>,
 }
@@ -335,8 +386,8 @@ pub struct ProviderSearchRequest {
     pub commands: Value,
     pub settings: Value,
     pub max_output_tokens: Option<u64>,
-    pub http_client_factory: HttpClientFactory,
-    pub extra_headers: HeaderMap,
+    pub transport: ProviderTransportContext,
+    pub extra_headers: BTreeMap<String, String>,
 }
 
 /// Provider-neutral standalone web-search result.
@@ -354,9 +405,9 @@ pub struct ProviderSearchResponse {
 pub struct ProviderBackendRequest {
     pub path: String,
     pub body: Value,
-    pub headers: HeaderMap,
+    pub headers: BTreeMap<String, String>,
     pub timeout: Duration,
-    pub http_client_factory: HttpClientFactory,
+    pub transport: ProviderTransportContext,
 }
 
 /// JSON response returned by a provider-owned backend operation.
@@ -609,5 +660,44 @@ mod tests {
             provider.auth_state().status,
             ProviderAuthStatus::Unauthenticated
         );
+    }
+
+    #[test]
+    fn public_provider_requests_use_neutral_transport_metadata() {
+        let mut headers = BTreeMap::new();
+        headers.insert("x-test-header".to_string(), "value".to_string());
+
+        let _chat = ChatTransportOptions {
+            transport: ProviderTransportContext::default(),
+            session_id: Some("session".to_string()),
+            thread_id: Some("thread".to_string()),
+            extra_headers: headers.clone(),
+            compression: ProviderRequestCompression::None,
+            turn_state: None,
+        };
+        let _search = ProviderSearchRequest {
+            id: "search".to_string(),
+            model: "model".to_string(),
+            input: Vec::new(),
+            commands: serde_json::json!({}),
+            settings: serde_json::json!({}),
+            max_output_tokens: None,
+            transport: ProviderTransportContext::default(),
+            extra_headers: headers.clone(),
+        };
+        let _backend = ProviderBackendRequest {
+            path: "backend".to_string(),
+            body: serde_json::json!({}),
+            headers,
+            timeout: Duration::from_secs(1),
+            transport: ProviderTransportContext::default(),
+        };
+        let _models = ListModelsRequest::new("client", ProviderTransportContext::default());
+        let _websocket = ProviderWebsocketConnectRequest {
+            transport: ProviderTransportContext::default(),
+            extra_headers: BTreeMap::new(),
+            default_headers: BTreeMap::new(),
+            telemetry: None,
+        };
     }
 }

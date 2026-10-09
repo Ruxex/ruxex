@@ -3,6 +3,7 @@ use std::time::Duration;
 use genex_http_client::HttpClientFactory;
 use genex_model_provider::ProviderBackendRequest;
 use genex_model_provider::SharedModelProvider;
+use genex_model_provider::ProviderTransportContext;
 use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderValue;
 use serde_json::Value;
@@ -53,14 +54,22 @@ impl HistoryNotesBackend {
             serde_json::to_string(&truncation_policy).map_err(|_| {
                 format!("{OPERATION_ERROR_PREFIX} Could not encode the output truncation policy.")
             })?;
-        let mut headers = http::HeaderMap::new();
+        let header_value = HeaderValue::from_str(&encoded_truncation_policy).map_err(|_| {
+            format!(
+                "{OPERATION_ERROR_PREFIX} Could not construct the output truncation policy header."
+            )
+        })?;
+        let mut headers = std::collections::BTreeMap::new();
         headers.insert(
-            TOOL_OUTPUT_TRUNCATION_POLICY_HEADER,
-            HeaderValue::from_str(&encoded_truncation_policy).map_err(|_| {
-                format!(
-                    "{OPERATION_ERROR_PREFIX} Could not construct the output truncation policy header."
-                )
-            })?,
+            TOOL_OUTPUT_TRUNCATION_POLICY_HEADER.to_string(),
+            header_value
+                .to_str()
+                .map_err(|_| {
+                    format!(
+                        "{OPERATION_ERROR_PREFIX} Could not construct the output truncation policy header."
+                    )
+                })?
+                .to_string(),
         );
         if matches!(
             path,
@@ -70,8 +79,8 @@ impl HistoryNotesBackend {
                 | "alpha/notes/v2/write_file"
         ) {
             headers.insert(
-                ENCRYPTED_TOOL_ARGUMENTS_HEADER,
-                HeaderValue::from_static("true"),
+                ENCRYPTED_TOOL_ARGUMENTS_HEADER.to_string(),
+                "true".to_string(),
             );
         }
         let response = self
@@ -81,7 +90,9 @@ impl HistoryNotesBackend {
                 body: arguments,
                 headers,
                 timeout: HISTORY_NOTES_BACKEND_TIMEOUT,
-                http_client_factory: self.http_client_factory.clone(),
+                transport: ProviderTransportContext::from_http_client_factory(
+                    self.http_client_factory.clone(),
+                ),
             })
             .await
             .map_err(|error| match error {

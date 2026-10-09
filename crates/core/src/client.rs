@@ -120,6 +120,7 @@ use genex_model_provider::ProviderWireApi;
 use genex_model_provider::ResponsesConnectionKey;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderWebsocketConnection;
+use genex_model_provider::ProviderTransportContext;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_protocol::error::GenexErr;
@@ -906,9 +907,13 @@ impl ModelClient {
             self.state
                 .provider
                 .connect_websocket(ProviderWebsocketConnectRequest {
-                    http_client_factory: self.http_client_factory.clone(),
-                    extra_headers: headers,
-                    default_headers: genex_login::default_client::default_headers(),
+                    transport: ProviderTransportContext::from_http_client_factory(
+                        self.http_client_factory.clone(),
+                    ),
+                    extra_headers: neutral_headers(headers),
+                    default_headers: neutral_headers(
+                        genex_login::default_client::default_headers(),
+                    ),
                     telemetry: Some(websocket_telemetry),
                 }),
         )
@@ -1255,10 +1260,12 @@ impl ModelClientSession {
             session_source: Some(self.client.state.session_source.clone()),
             payload: None,
             transport: genex_model_provider::ChatTransportOptions {
-                http_client_factory: self.client.http_client_factory.clone(),
+                transport: ProviderTransportContext::from_http_client_factory(
+                    self.client.http_client_factory.clone(),
+                ),
                 session_id: None,
                 thread_id: None,
-                extra_headers: ApiHeaderMap::new(),
+                extra_headers: std::collections::BTreeMap::new(),
                 compression: genex_model_provider::ProviderRequestCompression::None,
                 turn_state: None,
             },
@@ -1374,10 +1381,12 @@ impl ModelClientSession {
                 session_source: Some(self.client.state.session_source.clone()),
                 payload: Some(payload),
                 transport: genex_model_provider::ChatTransportOptions {
-                    http_client_factory: self.client.http_client_factory.clone(),
+                    transport: ProviderTransportContext::from_http_client_factory(
+                        self.client.http_client_factory.clone(),
+                    ),
                     session_id: options.session_id.clone(),
                     thread_id: options.thread_id.clone(),
-                    extra_headers: options.extra_headers,
+                    extra_headers: neutral_headers(options.extra_headers),
                     compression: match options.compression {
                         Compression::None => genex_model_provider::ProviderRequestCompression::None,
                         Compression::Zstd => genex_model_provider::ProviderRequestCompression::Zstd,
@@ -1836,6 +1845,17 @@ fn stamp_ws_stream_request_start_ms(request: &mut ResponsesWsRequest<'_>) {
             X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY.to_string(),
             crate::turn_timing::now_unix_timestamp_ms().to_string(),
         );
+}
+
+fn neutral_headers(headers: ApiHeaderMap) -> std::collections::BTreeMap<String, String> {
+    headers
+        .into_iter()
+        .filter_map(|(name, value)| {
+            let name = name?;
+            let value = value.to_str().ok()?.to_string();
+            Some((name.to_string(), value))
+        })
+        .collect()
 }
 
 /// Builds the extra headers attached to Responses API requests.

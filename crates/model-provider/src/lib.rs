@@ -52,6 +52,7 @@ pub use contract::ProviderFuture;
 pub use contract::ProviderModelCatalog;
 pub use contract::ProviderResult;
 pub use contract::ProviderRequestCompression;
+pub use contract::ProviderTransportContext;
 pub use contract::ProviderSearchRequest;
 pub use contract::ProviderSearchResponse;
 pub use contract::ProviderUsage;

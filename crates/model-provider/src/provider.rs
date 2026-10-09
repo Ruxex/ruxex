@@ -66,6 +66,7 @@ use crate::contract::ProviderWebsocketRequest;
 use crate::contract::ProviderWireApi;
 use crate::contract::RemoteCompactionSupport;
 use crate::contract::SharedProviderWebsocketConnection;
+use crate::contract::headers_to_http;
 use crate::models_endpoint::ModelsEndpoint;
 
 /// Current app-visible account state for a model provider.
@@ -374,9 +375,9 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             });
             let connection = ResponsesWebsocketClient::new(api_provider, api_auth)
                 .connect(
-                    &request.http_client_factory,
-                    request.extra_headers,
-                    request.default_headers,
+                    request.transport.http_client_factory(),
+                    headers_to_http(request.extra_headers)?,
+                    headers_to_http(request.default_headers)?,
                     None,
                     telemetry,
                 )
@@ -411,7 +412,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             match self.api() {
                 ProviderApi::Chat(chat_api) => {
                     let client = create_client_for_route(
-                        &request.transport.http_client_factory,
+                        request.transport.transport.http_client_factory(),
                         &api_provider.url_for_path("/chat/completions"),
                         ClientRouteClass::Api,
                         ClientRedirectPolicy::Default,
@@ -451,7 +452,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         )
                     })?;
                     let client = create_client_for_route(
-                        &request.transport.http_client_factory,
+                        request.transport.transport.http_client_factory(),
                         &api_provider.url_for_path("/responses"),
                         ClientRouteClass::Api,
                         ClientRedirectPolicy::Default,
@@ -468,7 +469,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                             genex_api::Compression::Zstd
                         }
                     };
-                    let mut headers = request.transport.extra_headers;
+                    let mut headers = headers_to_http(request.transport.extra_headers)?;
                     headers.extend(genex_api::build_session_headers(
                         request.transport.session_id,
                         request.transport.thread_id.clone(),
@@ -513,7 +514,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 .await
                 .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
             let client = create_client_for_route(
-                &request.http_client_factory,
+                request.transport.http_client_factory(),
                 &api_provider.url_for_path("alpha/search"),
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
@@ -541,7 +542,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 api_provider,
                 api_auth,
             )
-            .search(&search_request, request.extra_headers)
+            .search(&search_request, headers_to_http(request.extra_headers)?)
             .await
             .map_err(map_api_error_to_provider_error)?;
             Ok(crate::contract::ProviderSearchResponse {
@@ -573,14 +574,16 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 .await
                 .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
             let client = create_client_for_route(
-                &request.http_client_factory,
+                request.transport.http_client_factory(),
                 &api_provider.url_for_path(&request.path),
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
             )
             .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
             let mut backend_request = api_provider.build_request(http::Method::POST, &request.path);
-            backend_request.headers.extend(request.headers);
+            backend_request
+                .headers
+                .extend(headers_to_http(request.headers)?);
             backend_request.body = Some(RequestBody::Json(request.body));
             backend_request.timeout = Some(request.timeout);
             let backend_request = api_auth
@@ -934,7 +937,7 @@ where
         crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
     > {
         let client_version = request.client_version;
-        let http_client_factory = request.http_client_factory;
+        let http_client_factory = request.transport.http_client_factory().clone();
         Box::pin(async move {
             ProviderRuntime::list_models(self, &client_version, http_client_factory)
                 .await
@@ -1162,7 +1165,10 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
         let runtime = self.runtime.clone();
         Box::pin(async move {
             runtime
-                .list_models(&request.client_version, request.http_client_factory)
+                .list_models(
+                    &request.client_version,
+                    request.transport.http_client_factory().clone(),
+                )
                 .await
                 .map(|snapshot| crate::contract::ProviderModelCatalog {
                     catalog: snapshot.catalog,
