@@ -71,12 +71,7 @@ pub(super) async fn list_threads(
     let mut items = page
         .items
         .into_iter()
-        .filter_map(|item| {
-            stored_thread_from_rollout_item(
-                item,
-                params.archived,
-            )
-        })
+        .filter_map(|item| stored_thread_from_rollout_item(item, params.archived))
         .collect::<Vec<_>>();
 
     let thread_history_modes = items
@@ -404,9 +399,9 @@ mod tests {
         let rollout_path = home.path().join("rollout-title-search.jsonl");
         fs::write(&rollout_path, "").expect("placeholder rollout file");
 
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
@@ -471,11 +466,9 @@ mod tests {
         let rollout_path = home.path().join("rollout-paginated-name-search.jsonl");
         fs::write(&rollout_path, "").expect("placeholder rollout file");
 
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         runtime
             .mark_backfill_complete(/*last_watermark*/ None)
@@ -646,11 +639,9 @@ mod tests {
     async fn section_listing_uses_sqlite_metadata_without_reading_rollouts() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let state = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("initialize state");
+        let state = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("initialize state");
         let store = LocalThreadStore::new(config, Some(state.clone()));
         let mut thread_ids = Vec::new();
         let mut first_rollout_path = None;

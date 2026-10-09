@@ -260,13 +260,8 @@ impl<'a> RolloutFileVisitor for FilesByCreatedAtVisitor<'a> {
             .await
             .unwrap_or(None)
             .and_then(format_rfc3339);
-        if let Some(item) = build_thread_item(
-            path,
-            self.allowed_sources,
-            self.cwd_filters,
-            updated_at,
-        )
-        .await
+        if let Some(item) =
+            build_thread_item(path, self.allowed_sources, self.cwd_filters, updated_at).await
         {
             self.items.push(item);
         }
@@ -453,24 +448,10 @@ async fn traverse_flat_paths(
 ) -> io::Result<ThreadsPage> {
     match sort_key {
         ThreadSortKey::CreatedAt => {
-            traverse_flat_paths_created(
-                root,
-                page_size,
-                anchor,
-                allowed_sources,
-                cwd_filters,
-            )
-            .await
+            traverse_flat_paths_created(root, page_size, anchor, allowed_sources, cwd_filters).await
         }
         ThreadSortKey::UpdatedAt | ThreadSortKey::RecencyAt => {
-            traverse_flat_paths_updated(
-                root,
-                page_size,
-                anchor,
-                allowed_sources,
-                cwd_filters,
-            )
-            .await
+            traverse_flat_paths_updated(root, page_size, anchor, allowed_sources, cwd_filters).await
         }
     }
 }
@@ -612,13 +593,7 @@ async fn traverse_flat_paths_created(
             .await
             .unwrap_or(None)
             .and_then(format_rfc3339);
-        if let Some(item) = build_thread_item(
-            path,
-            allowed_sources,
-            cwd_filters,
-            updated_at,
-        )
-        .await
+        if let Some(item) = build_thread_item(path, allowed_sources, cwd_filters, updated_at).await
         {
             items.push(item);
         }

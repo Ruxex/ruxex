@@ -75,11 +75,9 @@ async fn thread_attachments_require_a_supported_sqlite_store() {
 async fn unloaded_thread_attachments_support_listing_and_removal() {
     let home = tempfile::TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state db should initialize");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state db should initialize");
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
     assert!(store.supports_thread_attachments());
 
@@ -192,11 +190,9 @@ async fn unloaded_thread_attachments_support_listing_and_removal() {
 async fn attachment_state_errors_preserve_missing_thread_and_invalid_request_categories() {
     let home = tempfile::TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state db should initialize");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state db should initialize");
     let store = LocalThreadStore::new(config, Some(runtime));
     let thread_id = ThreadId::new();
 
@@ -240,11 +236,9 @@ async fn attachment_state_errors_preserve_missing_thread_and_invalid_request_cat
 async fn attachment_mutations_wait_for_exclusive_thread_lifecycle_operations() {
     let home = tempfile::TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state db should initialize");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state db should initialize");
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
     let thread_id = ThreadId::new();
     let metadata = genex_state::ThreadMetadataBuilder::new(
@@ -465,11 +459,9 @@ async fn store_with_attachment_owners(
     thread_ids: &[ThreadId],
 ) -> (LocalThreadStore, Vec<PathBuf>) {
     let config = test_config(home);
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state db should initialize");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state db should initialize");
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
     let mut rollout_paths = Vec::new();
     for &thread_id in thread_ids {

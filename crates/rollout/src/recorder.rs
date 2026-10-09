@@ -521,9 +521,8 @@ impl RolloutRecorder {
             .unwrap_or_default());
         }
 
-        let listing_has_metadata_filters = !allowed_sources.is_empty()
-            || cwd_filters.is_some()
-            || search_term.is_some();
+        let listing_has_metadata_filters =
+            !allowed_sources.is_empty() || cwd_filters.is_some() || search_term.is_some();
         // Filesystem-first listing intentionally overfetches so we can repair stale/missing
         // SQLite rows before returning the scan page for filtered listings or the DB page for
         // unfiltered listings.
@@ -769,9 +768,7 @@ impl RolloutRecorder {
                     fallback_reason = Some("db_error");
                     break;
                 };
-                if let Some(path) =
-                    select_resume_path_from_db_page(&db_page, filter_cwd).await
-                {
+                if let Some(path) = select_resume_path_from_db_page(&db_page, filter_cwd).await {
                     return Ok(Some(path));
                 }
                 db_cursor = db_page.next_anchor.map(Into::into);
@@ -1341,10 +1338,10 @@ async fn list_threads_from_files_desc(
                 genex_home,
                 scan_page_size,
                 page_cursor.as_ref(),
-                    sort_key,
-                    allowed_sources,
-                    cwd_filters,
-                    archived,
+                sort_key,
+                allowed_sources,
+                cwd_filters,
+                archived,
             )
             .await?;
             scanned_files = scanned_files.saturating_add(page.num_scanned_files);
@@ -2006,19 +2003,11 @@ fn thread_item_from_state_metadata(
     }
 }
 
-async fn select_resume_path(
-    page: &ThreadsPage,
-    filter_cwd: Option<&Path>,
-) -> Option<PathBuf> {
+async fn select_resume_path(page: &ThreadsPage, filter_cwd: Option<&Path>) -> Option<PathBuf> {
     match filter_cwd {
         Some(cwd) => {
             for item in &page.items {
-                if resume_candidate_matches_cwd(
-                    item.path.as_path(),
-                    item.cwd.as_deref(),
-                    cwd,
-                )
-                .await
+                if resume_candidate_matches_cwd(item.path.as_path(), item.cwd.as_deref(), cwd).await
                 {
                     return Some(item.path.clone());
                 }

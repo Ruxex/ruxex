@@ -9,7 +9,7 @@ pub async fn settings_tags(genex_home: &Path) -> [(&'static str, &'static str); 
     let path = genex_home
         .join(crate::STATE_DIR_NAME)
         .join(crate::SETTINGS_FILE_NAME);
-    crate::settings::telemetry_tags(&path).await.unwrap_or([
-        ("shutdown_grace_setting", "unknown"),
-    ])
+    crate::settings::telemetry_tags(&path)
+        .await
+        .unwrap_or([("shutdown_grace_setting", "unknown")])
 }

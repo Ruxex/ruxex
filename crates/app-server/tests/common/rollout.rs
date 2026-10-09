@@ -63,13 +63,7 @@ pub fn create_fake_paginated_rollout(
     preview: &str,
     git_info: Option<GitInfo>,
 ) -> Result<String> {
-    let thread_id = create_fake_rollout(
-        genex_home,
-        filename_ts,
-        meta_rfc3339,
-        preview,
-        git_info,
-    )?;
+    let thread_id = create_fake_rollout(genex_home, filename_ts, meta_rfc3339, preview, git_info)?;
     let path = rollout_path(genex_home, filename_ts, &thread_id);
     let mut lines = fs::read_to_string(path.as_path())?
         .lines()

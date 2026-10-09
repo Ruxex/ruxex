@@ -20,9 +20,9 @@ use std::sync::Arc;
 
 async fn runtime_with_threads(count: usize) -> Result<(Arc<StateRuntime>, PathBuf, Vec<ThreadId>)> {
     let genex_home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await?;
     let mut thread_ids = Vec::with_capacity(count);
     for _ in 0..count {
@@ -322,9 +322,9 @@ async fn attachments_survive_restart_and_archive_but_cascade_on_thread_deletion(
         anyhow::bail!("first attachment should create an attachment");
     };
 
-    let reopened = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let reopened = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await?;
     assert_eq!(
         reopened

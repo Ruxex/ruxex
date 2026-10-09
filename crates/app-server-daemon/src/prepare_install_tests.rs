@@ -26,8 +26,7 @@ fn package(root: &Path, version: &str) -> PathBuf {
         std::fs::create_dir_all(root.join(dir)).expect("package directory");
     }
     let bin = root.join("bin/genex");
-    std::fs::write(&bin, format!("#!/bin/sh\necho 'genex {version}'\n"))
-        .expect("genex executable");
+    std::fs::write(&bin, format!("#!/bin/sh\necho 'genex {version}'\n")).expect("genex executable");
     for file in [
         "bin/genex-code-mode-host",
         "genex-path/rg",
@@ -170,17 +169,14 @@ async fn broken_selection_is_not_a_missing_installation() {
     let current = home.join("packages/app-server-daemon/current");
     std::fs::create_dir_all(current.parent().expect("current parent")).expect("package root");
     std::os::unix::fs::symlink("missing-release", &current).expect("broken selection");
-    let error = prepare_from_package(
-        &daemon,
-        &DaemonSettings::default(),
-        Some(&source),
-        &bin,
-    )
-    .await
-    .expect_err("broken installation");
-    assert!(error
-        .to_string()
-        .contains("repair the existing installation"));
+    let error = prepare_from_package(&daemon, &DaemonSettings::default(), Some(&source), &bin)
+        .await
+        .expect_err("broken installation");
+    assert!(
+        error
+            .to_string()
+            .contains("repair the existing installation")
+    );
     assert_eq!(
         std::fs::read_link(current).expect("current link"),
         PathBuf::from("missing-release")

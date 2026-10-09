@@ -154,9 +154,7 @@ async fn extract_metadata_from_rollout_uses_session_meta() {
     let mut file = File::create(&path).expect("create rollout");
     writeln!(file, "{json}").expect("write rollout");
 
-    let outcome = extract_metadata_from_rollout(&path)
-        .await
-        .expect("extract");
+    let outcome = extract_metadata_from_rollout(&path).await.expect("extract");
 
     let builder = builder_from_session_meta(&session_meta_line, path.as_path()).expect("builder");
     let mut expected = builder.build();
@@ -197,11 +195,7 @@ async fn extract_metadata_from_rollout_rejects_unknown_history_mode() {
     let mut file = File::create(&path).expect("create rollout");
     writeln!(file, "{rollout_line}").expect("write rollout");
 
-    assert!(
-        extract_metadata_from_rollout(&path)
-            .await
-            .is_err()
-    );
+    assert!(extract_metadata_from_rollout(&path).await.is_err());
 }
 
 #[test]
@@ -260,9 +254,9 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
         /*git*/ None,
     );
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await
     .expect("initialize runtime");
     let first_watermark = backfill_watermark_for_path(genex_home.as_path(), first_path.as_path());
@@ -330,9 +324,9 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         }),
     );
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await
     .expect("initialize runtime");
     let thread_id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
@@ -379,9 +373,9 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
         ThreadHistoryMode::Paginated,
     );
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await
     .expect("initialize runtime");
 

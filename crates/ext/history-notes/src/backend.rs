@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use genex_http_client::HttpClientFactory;
 use genex_model_provider::ProviderBackendRequest;
-use genex_model_provider::SharedModelProvider;
 use genex_model_provider::ProviderTransportContext;
+use genex_model_provider::SharedModelProvider;
 use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderValue;
 use serde_json::Value;
@@ -103,8 +103,8 @@ impl HistoryNotesBackend {
                 genex_model_provider::ProviderError::Provider(message)
                     if message.contains("invalid JSON") =>
                 {
-                        format!("{OPERATION_ERROR_PREFIX} The backend returned invalid JSON.")
-                    }
+                    format!("{OPERATION_ERROR_PREFIX} The backend returned invalid JSON.")
+                }
                 _ => format!("{OPERATION_ERROR_PREFIX} The backend request failed."),
             })?;
 

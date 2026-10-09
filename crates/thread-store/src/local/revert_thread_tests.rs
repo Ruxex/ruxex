@@ -28,11 +28,9 @@ use crate::ThreadStore;
 async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let state_db = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("initialize state database");
+    let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("initialize state database");
     let store = LocalThreadStore::new(config, Some(state_db.clone()));
     let thread_id = ThreadId::new();
     create_paginated_thread(&store, thread_id).await;
@@ -141,11 +139,9 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
 async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let state_db = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("initialize state database");
+    let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("initialize state database");
     let store = LocalThreadStore::new(config, Some(state_db.clone()));
 
     for version in [

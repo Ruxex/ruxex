@@ -162,10 +162,7 @@ pub async fn extract_metadata_from_rollout(
     })
 }
 
-pub(crate) async fn backfill_sessions(
-    runtime: &genex_state::StateRuntime,
-    genex_home: &Path,
-) {
+pub(crate) async fn backfill_sessions(runtime: &genex_state::StateRuntime, genex_home: &Path) {
     backfill_sessions_with_lease(runtime, genex_home, BACKFILL_LEASE_SECONDS).await;
 }
 

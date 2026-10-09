@@ -434,9 +434,7 @@ mod tests {
             subagent_history_start_ordinal: None,
             initial_window_id: uuid::Uuid::now_v7().to_string(),
             runtime_workspace_roots: None,
-            metadata: ThreadPersistenceMetadata {
-                cwd: None,
-            },
+            metadata: ThreadPersistenceMetadata { cwd: None },
         })
         .await;
 
@@ -764,9 +762,7 @@ mod tests {
             rollout_path: None,
             history: Some(Arc::new(history)),
             include_archived: false,
-            metadata: ThreadPersistenceMetadata {
-                cwd: None,
-            },
+            metadata: ThreadPersistenceMetadata { cwd: None },
         }
     }
 

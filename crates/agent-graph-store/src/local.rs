@@ -142,9 +142,9 @@ mod tests {
 
     async fn state_runtime() -> TestRuntime {
         let genex_home = TempDir::new().expect("tempdir should be created");
-        let state_db = StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        )
+        let state_db = StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            genex_home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         TestRuntime {

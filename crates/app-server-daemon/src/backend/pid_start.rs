@@ -72,19 +72,18 @@ impl PidBackend {
             .stderr(Stdio::from(stderr_log.into_std().await));
         // Older or pinned managed binaries may predate this optional startup flag.
         if matches!(
-                tokio::time::timeout(
-                    std::time::Duration::from_secs(5),
-                    Command::new(&genex_bin)
-                        .args(["app-server", "--managed-daemon", "--help"])
-                        .stdin(Stdio::null())
-                        .stdout(Stdio::null())
-                        .stderr(Stdio::null())
-                        .kill_on_drop(true)
-                        .status(),
-                ).await,
-                Ok(Ok(status)) if status.success()
-            )
-        {
+            tokio::time::timeout(
+                std::time::Duration::from_secs(5),
+                Command::new(&genex_bin)
+                    .args(["app-server", "--managed-daemon", "--help"])
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .kill_on_drop(true)
+                    .status(),
+            ).await,
+            Ok(Ok(status)) if status.success()
+        ) {
             command.arg("--managed-daemon");
         } else {
             let genex_home = self

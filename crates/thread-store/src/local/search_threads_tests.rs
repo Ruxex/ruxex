@@ -44,11 +44,9 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
     for compressed in [false, true] {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let state_db = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("initialize state database");
+        let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("initialize state database");
         let uuid = Uuid::new_v4();
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("thread ID should parse");
         let selected_path = write_session_file_with(

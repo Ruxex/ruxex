@@ -32,7 +32,6 @@ impl genex_rollout::RolloutConfigView for Config {
     fn cwd(&self) -> &std::path::Path {
         self.cwd.as_path()
     }
-
 }
 
 pub(crate) mod list {

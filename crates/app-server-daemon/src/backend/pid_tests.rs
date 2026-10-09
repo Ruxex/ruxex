@@ -15,7 +15,9 @@ use super::try_lock_file;
 async fn locked_empty_pid_file_is_treated_as_active_reservation() {
     let temp = TempDir::new().expect("temp dir");
     let pid_file = temp.path().join("app-server.pid");
-    tokio::fs::write(&pid_file, "").await.expect("write pid file");
+    tokio::fs::write(&pid_file, "")
+        .await
+        .expect("write pid file");
     let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone());
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)
@@ -37,7 +39,9 @@ async fn locked_empty_pid_file_is_treated_as_active_reservation() {
 async fn unlocked_empty_pid_file_is_treated_as_stale_reservation() {
     let temp = TempDir::new().expect("temp dir");
     let pid_file = temp.path().join("app-server.pid");
-    tokio::fs::write(&pid_file, "").await.expect("write pid file");
+    tokio::fs::write(&pid_file, "")
+        .await
+        .expect("write pid file");
     let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone());
 
     assert_eq!(
@@ -64,9 +68,12 @@ async fn stale_record_cleanup_preserves_a_newer_record() {
         process_identity: None,
         executable_identity: None,
     };
-    tokio::fs::write(&pid_file, serde_json::to_vec(&current).expect("serialize pid"))
-        .await
-        .expect("write pid file");
+    tokio::fs::write(
+        &pid_file,
+        serde_json::to_vec(&current).expect("serialize pid"),
+    )
+    .await
+    .expect("write pid file");
 
     assert_eq!(
         backend
@@ -103,7 +110,9 @@ async fn read_stderr_log_tail_returns_recent_complete_lines() {
 async fn stop_waits_for_a_live_reservation_to_resolve() {
     let temp = TempDir::new().expect("temp dir");
     let pid_file = temp.path().join("app-server.pid");
-    tokio::fs::write(&pid_file, "").await.expect("write pid file");
+    tokio::fs::write(&pid_file, "")
+        .await
+        .expect("write pid file");
     let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone());
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)

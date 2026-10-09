@@ -1308,11 +1308,9 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
     let thread_id = ThreadId::default();
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state runtime");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state runtime");
     let mut builder = genex_state::ThreadMetadataBuilder::new(
         thread_id,
         home.path().join("missing-rollout.jsonl"),
@@ -2287,11 +2285,9 @@ SELECT
 
 async fn projection_store(genex_home: &Path) -> LocalThreadStore {
     let config = test_config(genex_home);
-    let state_db = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("initialize state database for paginated history");
+    let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("initialize state database for paginated history");
     LocalThreadStore::new(config, Some(state_db))
 }
 

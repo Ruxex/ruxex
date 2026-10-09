@@ -5,8 +5,8 @@ use genex_models_manager::manager::ModelCatalogSource;
 use genex_protocol::error::Result as CoreResult;
 
 use crate::contract::ListModelsRequest;
-use crate::contract::SharedModelProvider;
 use crate::contract::ProviderTransportContext;
+use crate::contract::SharedModelProvider;
 
 /// Adapts a runtime provider to the manager-facing catalog source abstraction.
 #[derive(Clone, Debug)]

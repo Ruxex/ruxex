@@ -163,13 +163,11 @@ pub(super) async fn search_threads(
     let mut items = matching_items
         .into_iter()
         .filter_map(|item| {
-            stored_thread_from_rollout_item(
-                item.item,
-                params.archived,
-            )
-            .map(|thread| StoredThreadSearchResult {
-                thread,
-                snippet: item.snippet,
+            stored_thread_from_rollout_item(item.item, params.archived).map(|thread| {
+                StoredThreadSearchResult {
+                    thread,
+                    snippet: item.snippet,
+                }
             })
         })
         .collect::<Vec<_>>();

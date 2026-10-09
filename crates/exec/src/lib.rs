@@ -1632,12 +1632,7 @@ async fn resolve_resume_thread_id(
     if let Some(state_db) = state_db {
         let cwd = (!args.all).then_some(config.cwd.as_path());
         let resolved = state_db
-            .find_thread_by_exact_title(
-                session_id,
-                &[],
-                /*archived_only*/ false,
-                cwd,
-            )
+            .find_thread_by_exact_title(session_id, &[], /*archived_only*/ false, cwd)
             .await?;
         if let Some(thread) = resolved {
             return Ok(Some(thread.id.to_string()));

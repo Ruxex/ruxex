@@ -1923,9 +1923,9 @@ fn tool_call(tool_name: &str, call_id: &str, arguments: serde_json::Value) -> To
 
 async fn test_runtime() -> anyhow::Result<Arc<genex_state::StateRuntime>> {
     let tempdir = TempDir::new()?;
-    genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(tempdir.keep().as_path().abs()),
-    )
+    genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        tempdir.keep().as_path().abs(),
+    ))
     .await
 }
 

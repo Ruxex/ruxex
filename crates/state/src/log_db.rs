@@ -598,9 +598,9 @@ mod tests {
     #[tokio::test]
     async fn flush_persists_logs_for_query() {
         let genex_home = temp_genex_home();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
         let layer = start(runtime.clone());
@@ -631,9 +631,9 @@ mod tests {
     #[tokio::test]
     async fn configured_batch_size_flushes_without_explicit_flush() {
         let genex_home = temp_genex_home();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
         let layer = LogDbLayer::start_with_config(
@@ -682,9 +682,9 @@ mod tests {
     #[tokio::test]
     async fn configured_flush_interval_persists_buffered_logs() {
         let genex_home = temp_genex_home();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
         let layer = LogDbLayer::start_with_config(

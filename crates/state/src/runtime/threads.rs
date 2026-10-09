@@ -990,9 +990,7 @@ ON CONFLICT(id) DO UPDATE SET
             return Ok(());
         }
         let existing_metadata = self.get_thread(builder.id).await?;
-        let mut metadata = existing_metadata
-            .clone()
-            .unwrap_or_else(|| builder.build());
+        let mut metadata = existing_metadata.clone().unwrap_or_else(|| builder.build());
         metadata.rollout_path = builder.rollout_path.clone();
         for item in items {
             apply_rollout_item(&mut metadata, item);
@@ -1481,9 +1479,9 @@ mod tests {
     #[tokio::test]
     async fn list_threads_filters_sections_before_recency_pagination_and_uses_index() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let oldest_pinned = ThreadId::from_string("00000000-0000-0000-0000-000000000041").unwrap();
@@ -1621,9 +1619,9 @@ mod tests {
     #[tokio::test]
     async fn section_position_listing_uses_stable_indexed_keyset_pagination() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         sqlx::query("INSERT INTO thread_sections (id, name) VALUES (?, ?)")
@@ -1723,9 +1721,9 @@ mod tests {
     #[tokio::test]
     async fn delete_thread_cleans_associated_state() -> Result<()> {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await?;
         let thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000401")?;
         let child_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000402")?;
@@ -1772,9 +1770,9 @@ mod tests {
     #[tokio::test]
     async fn delete_thread_keeps_retry_graph_on_cleanup_failure() -> Result<()> {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await?;
         let thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000405")?;
         let child_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000406")?;
@@ -1858,9 +1856,9 @@ mod tests {
     #[tokio::test]
     async fn list_threads_updated_after_returns_oldest_changes_first() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let older_id =
@@ -1947,9 +1945,9 @@ mod tests {
     #[tokio::test]
     async fn list_threads_filters_by_cwd() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let first_id =
@@ -2060,9 +2058,9 @@ mod tests {
     #[tokio::test]
     async fn list_threads_uses_indexes_matching_cwd_filters() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
 
@@ -2148,9 +2146,9 @@ mod tests {
     #[tokio::test]
     async fn list_threads_by_relation_filters_spawn_graph_with_keyset_pagination() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let parent_id = ThreadId::new();
@@ -2356,9 +2354,9 @@ mod tests {
     #[tokio::test]
     async fn apply_rollout_items_preserves_existing_git_branch_and_fills_missing_git_fields() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2435,9 +2433,9 @@ mod tests {
     #[tokio::test]
     async fn upsert_thread_preserves_existing_git_and_originator_atomically() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2500,9 +2498,9 @@ mod tests {
     #[tokio::test]
     async fn upsert_thread_preserves_existing_preview_when_incoming_preview_is_empty() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2535,9 +2533,9 @@ mod tests {
     #[tokio::test]
     async fn set_thread_preview_if_empty_only_fills_blank_preview() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2578,9 +2576,9 @@ mod tests {
     #[tokio::test]
     async fn update_thread_git_info_preserves_newer_non_git_metadata() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2645,9 +2643,9 @@ mod tests {
     #[tokio::test]
     async fn insert_thread_if_absent_preserves_existing_metadata() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2695,9 +2693,9 @@ mod tests {
     #[tokio::test]
     async fn update_thread_git_info_can_clear_fields() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2734,9 +2732,9 @@ mod tests {
     #[tokio::test]
     async fn touch_thread_updated_at_updates_only_updated_at() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2775,9 +2773,9 @@ mod tests {
     #[tokio::test]
     async fn touch_thread_recency_at_is_monotonic_and_survives_stale_upsert() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -2836,9 +2834,9 @@ mod tests {
     #[tokio::test]
     async fn list_threads_orders_and_pages_by_recency_at() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let first_id =
@@ -2962,9 +2960,9 @@ mod tests {
     #[tokio::test]
     async fn thread_updated_at_uses_unique_epoch_millis_and_reads_legacy_seconds() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let first_id =
@@ -3072,9 +3070,9 @@ mod tests {
     #[tokio::test]
     async fn apply_rollout_items_uses_override_updated_at_when_provided() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let thread_id =
@@ -3130,9 +3128,9 @@ mod tests {
     #[tokio::test]
     async fn thread_spawn_edges_track_directional_status() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let parent_thread_id =
@@ -3228,9 +3226,9 @@ mod tests {
     #[tokio::test]
     async fn thread_spawn_children_without_status_filter_lists_all_statuses() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let parent_thread_id =

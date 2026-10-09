@@ -59,8 +59,7 @@ async fn list_threads_db_rejects_mismatched_sqlite_config_without_cleanup() -> a
     let requested_sqlite = genex_state::SqliteConfig::new_for_testing(
         root.path().join("requested-sqlite").as_path().abs(),
     );
-    let runtime =
-        genex_state::StateRuntime::init(runtime_sqlite).await?;
+    let runtime = genex_state::StateRuntime::init(runtime_sqlite).await?;
     let thread_id = ThreadId::new();
     let metadata = ThreadMetadataBuilder::new(
         thread_id,
@@ -96,9 +95,9 @@ async fn list_threads_db_rejects_mismatched_sqlite_config_without_cleanup() -> a
 #[tokio::test]
 async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> {
     let home = TempDir::new().expect("temp dir");
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await?;
     let claimed = runtime.try_claim_backfill(/*lease_seconds*/ 60).await?;
     assert!(claimed);
@@ -128,9 +127,9 @@ async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> 
 #[tokio::test]
 async fn try_init_times_out_waiting_for_stuck_startup_backfill() -> anyhow::Result<()> {
     let home = TempDir::new().expect("temp dir");
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await?;
     let claimed = runtime.try_claim_backfill(/*lease_seconds*/ 60).await?;
     assert!(claimed);
@@ -164,9 +163,9 @@ async fn reconcile_rollout_preserves_existing_explicit_title() -> anyhow::Result
         "Hey",
         ThreadHistoryMode::Paginated,
     )?;
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await?;
 
     let mut metadata = metadata::extract_metadata_from_rollout(rollout_path.as_path())
@@ -214,9 +213,9 @@ async fn filesystem_repair_preserves_existing_rollout_path() -> anyhow::Result<(
         "Current",
         ThreadHistoryMode::Paginated,
     )?;
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await?;
     let active_metadata = metadata::extract_metadata_from_rollout(active_rollout_path.as_path())
         .await?

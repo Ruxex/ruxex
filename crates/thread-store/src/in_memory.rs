@@ -72,9 +72,9 @@ mod tests {
         use pretty_assertions::assert_eq;
 
         let home = tempfile::TempDir::new()?;
-        let state_db = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let state_db = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await?;
         let shared = InMemoryThreadStore::default();
         let store = shared.with_state_db(Some(state_db.clone()));
@@ -182,9 +182,7 @@ mod tests {
                     subagent_history_start_ordinal: None,
                     initial_window_id: uuid::Uuid::now_v7().to_string(),
                     runtime_workspace_roots: None,
-                    metadata: ThreadPersistenceMetadata {
-                        cwd: None,
-                    },
+                    metadata: ThreadPersistenceMetadata { cwd: None },
                 })
                 .await
                 .expect("create thread");
@@ -476,9 +474,7 @@ mod tests {
     }
 
     fn thread_metadata() -> ThreadPersistenceMetadata {
-        ThreadPersistenceMetadata {
-            cwd: None,
-        }
+        ThreadPersistenceMetadata { cwd: None }
     }
 }
 

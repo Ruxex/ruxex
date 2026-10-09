@@ -201,12 +201,10 @@ async fn read_thread_from_rollout_path(
         return stored_thread_from_session_meta(store, path).await;
     };
     let archived = rollout_path_is_archived(store.config.genex_home.as_path(), path.as_path());
-    let mut thread = stored_thread_from_rollout_item(
-        item,
-        archived,
-    )
-    .ok_or_else(|| ThreadStoreError::Internal {
-        message: format!("failed to read thread id from {}", path.display()),
+    let mut thread = stored_thread_from_rollout_item(item, archived).ok_or_else(|| {
+        ThreadStoreError::Internal {
+            message: format!("failed to read thread id from {}", path.display()),
+        }
     })?;
     thread.rollout_path = Some(genex_rollout::plain_rollout_path(path.as_path()));
     let meta_line = read_required_session_meta_line(path.as_path()).await?;
@@ -519,11 +517,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let active_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder = ThreadMetadataBuilder::new(
             thread_id,
@@ -681,11 +677,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
@@ -739,11 +733,9 @@ mod tests {
         )
         .await
         .expect("append rollout user message");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder = ThreadMetadataBuilder::new(
             thread_id,
@@ -812,11 +804,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
@@ -852,11 +842,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
@@ -884,11 +872,9 @@ mod tests {
     async fn read_thread_preserves_sqlite_cwd_when_rollout_metadata_is_stale() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let uuid = Uuid::from_u128(224);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
@@ -1054,11 +1040,9 @@ mod tests {
         });
         writeln!(file, "{meta}").expect("write session meta");
 
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder = ThreadMetadataBuilder::new(
             thread_id,
@@ -1176,11 +1160,9 @@ mod tests {
         let rollout_path = external
             .path()
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder = ThreadMetadataBuilder::new(
             thread_id,
@@ -1235,11 +1217,9 @@ mod tests {
         let rollout_path = external
             .path()
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let mut builder =
             ThreadMetadataBuilder::new(thread_id, rollout_path, Utc::now(), SessionSource::Cli);
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
@@ -1289,11 +1269,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let archived_path = write_archived_session_file(home.path(), "2025-01-03T12-00-00", uuid)
             .expect("archived session file");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let mut builder = ThreadMetadataBuilder::new(
             thread_id,

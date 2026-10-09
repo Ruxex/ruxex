@@ -25,17 +25,11 @@ pub(crate) fn package_root(genex_home: &Path) -> PathBuf {
     for (package, artifacts) in [
         (
             "app-server-daemon",
-            [
-                crate::DAEMON_PID_FILE_NAME,
-                "daemon.stderr.log",
-            ],
+            [crate::DAEMON_PID_FILE_NAME, "daemon.stderr.log"],
         ),
         (
             "standalone",
-            [
-                crate::LEGACY_PID_FILE_NAME,
-                "app-server.stderr.log",
-            ],
+            [crate::LEGACY_PID_FILE_NAME, "app-server.stderr.log"],
         ),
     ] {
         if artifacts.iter().any(|name| {

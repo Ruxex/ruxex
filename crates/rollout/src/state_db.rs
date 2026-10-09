@@ -128,12 +128,8 @@ async fn wait_for_backfill_gate(
         }
 
         if let Some(backfill_lease_seconds) = backfill_lease_seconds {
-            metadata::backfill_sessions_with_lease(
-                runtime,
-                genex_home,
-                backfill_lease_seconds,
-            )
-            .await;
+            metadata::backfill_sessions_with_lease(runtime, genex_home, backfill_lease_seconds)
+                .await;
         } else {
             metadata::backfill_sessions(runtime, genex_home).await;
         }
@@ -195,11 +191,7 @@ pub async fn get_state_db(config: &impl RolloutConfigView) -> Option<StateDbHand
         );
         return None;
     }
-    let runtime = match genex_state::StateRuntime::init(
-        config.sqlite_config().clone(),
-    )
-    .await
-    {
+    let runtime = match genex_state::StateRuntime::init(config.sqlite_config().clone()).await {
         Ok(runtime) => runtime,
         Err(_) => {
             genex_state::record_fallback(

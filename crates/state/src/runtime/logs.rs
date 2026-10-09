@@ -438,9 +438,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_use_dedicated_log_database() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -514,9 +514,9 @@ mod tests {
         pool.close().await;
         drop(pool);
 
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -572,9 +572,9 @@ mod tests {
     #[tokio::test]
     async fn init_configures_logs_db_with_incremental_auto_vacuum() {
         let genex_home = unique_temp_dir();
-        let _runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let _runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -594,9 +594,9 @@ mod tests {
     #[tokio::test]
     async fn query_logs_with_search_matches_rendered_body_substring() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -649,9 +649,9 @@ mod tests {
     #[tokio::test]
     async fn query_logs_filters_level_set_without_rewriting_stored_level() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -736,9 +736,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_old_rows_when_thread_exceeds_size_limit() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -792,9 +792,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_single_thread_row_when_it_exceeds_size_limit() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -832,9 +832,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_threadless_rows_per_process_uuid_only() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -903,9 +903,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_single_threadless_process_row_when_it_exceeds_size_limit() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -943,9 +943,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_threadless_rows_with_null_process_uuid() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -1013,9 +1013,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_single_threadless_null_process_row_when_it_exceeds_limit() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -1053,9 +1053,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_old_rows_when_thread_exceeds_row_limit() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -1098,9 +1098,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_old_threadless_rows_when_process_exceeds_row_limit() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -1147,9 +1147,9 @@ mod tests {
     #[tokio::test]
     async fn insert_logs_prunes_old_threadless_null_process_rows_when_row_limit_exceeded() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 

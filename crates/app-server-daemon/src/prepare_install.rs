@@ -59,14 +59,12 @@ async fn prepare_from_package(
         return Ok(true);
     }
     if !matches!(root.join("current").symlink_metadata(), Err(error) if error.kind() == std::io::ErrorKind::NotFound)
-        || ["daemon.pid", "daemon.stderr.log"]
-            .iter()
-            .any(|name| {
-                !matches!(
-                    home.join("app-server-daemon").join(name).symlink_metadata(),
-                    Err(error) if error.kind() == std::io::ErrorKind::NotFound
-                )
-            })
+        || ["daemon.pid", "daemon.stderr.log"].iter().any(|name| {
+            !matches!(
+                home.join("app-server-daemon").join(name).symlink_metadata(),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound
+            )
+        })
     {
         daemon.ensure_managed_genex_bin()?;
         return Ok(true);

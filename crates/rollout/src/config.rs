@@ -40,7 +40,6 @@ impl RolloutConfigView for RolloutConfig {
     fn cwd(&self) -> &Path {
         self.cwd.as_path()
     }
-
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
@@ -55,7 +54,6 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
     fn cwd(&self) -> &Path {
         (*self).cwd()
     }
-
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
@@ -70,5 +68,4 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
     fn cwd(&self) -> &Path {
         self.as_ref().cwd()
     }
-
 }

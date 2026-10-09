@@ -323,9 +323,9 @@ mod tests {
         let selected_rollout_path = alternate_directory
             .join("..")
             .join(active_path.file_name().expect("file name"));
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));

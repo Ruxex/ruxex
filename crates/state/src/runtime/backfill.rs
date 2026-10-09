@@ -119,9 +119,9 @@ mod tests {
     #[tokio::test]
     async fn backfill_state_persists_progress_and_completion() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 
@@ -204,9 +204,9 @@ mod tests {
     #[tokio::test]
     async fn get_backfill_state_repairs_a_missing_singleton_row() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
         sqlx::query("DELETE FROM backfill_state WHERE id = 1")
@@ -232,9 +232,9 @@ mod tests {
     #[tokio::test]
     async fn backfill_claim_is_singleton_until_stale_and_blocked_when_complete() {
         let genex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        )
+        let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            genex_home.as_path().abs(),
+        ))
         .await
         .expect("initialize runtime");
 

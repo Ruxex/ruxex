@@ -600,11 +600,9 @@ mod tests {
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T14-20-00", uuid).expect("session file");
         let original_rollout = std::fs::read_to_string(&rollout_path).expect("read rollout");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
 
         genex_rollout::state_db::reconcile_rollout(
@@ -750,11 +748,9 @@ mod tests {
         )
         .expect("session file");
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
         let thread = store
             .update_thread_metadata(UpdateThreadMetadataParams {
@@ -825,9 +821,9 @@ mod tests {
         )
         .expect("session file");
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         genex_rollout::state_db::reconcile_rollout(
@@ -920,11 +916,9 @@ mod tests {
     async fn update_thread_metadata_sets_git_info() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime));
         let uuid = Uuid::from_u128(309);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
@@ -966,11 +960,9 @@ mod tests {
     async fn update_thread_metadata_updates_permission_profile_and_reasoning_effort() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
         let uuid = Uuid::from_u128(317);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
@@ -1022,11 +1014,9 @@ mod tests {
     async fn update_thread_metadata_partially_updates_git_info() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime));
         let uuid = Uuid::from_u128(310);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
@@ -1083,11 +1073,9 @@ mod tests {
     async fn update_thread_metadata_clears_git_info_fields() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("state db should initialize");
+        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
         let uuid = Uuid::from_u128(311);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
@@ -1305,9 +1293,9 @@ mod tests {
     async fn update_thread_metadata_applies_combined_explicit_patch() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -1381,9 +1369,9 @@ mod tests {
     async fn metadata_patch_applies_title_over_existing_name() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime));
@@ -1424,9 +1412,9 @@ mod tests {
     async fn metadata_patch_applies_latest_preview_and_first_user_message() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -1482,9 +1470,9 @@ mod tests {
     async fn observed_metadata_rejects_unknown_thread_without_rollout() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -1528,9 +1516,9 @@ mod tests {
             ThreadHistoryMode::Paginated,
         )
         .expect("session file");
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -1568,9 +1556,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         write_archived_session_file(home.path(), "2025-01-03T19-30-00", uuid)
             .expect("archived session file");
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -1604,9 +1592,9 @@ mod tests {
     async fn observed_metadata_normalizes_cwd_for_list_filters() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -1673,9 +1661,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let archived_path = write_archived_session_file(home.path(), "2025-01-03T16-00-00", uuid)
             .expect("archived session file");
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
@@ -1734,9 +1722,9 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let archived_path = write_archived_session_file(home.path(), "2025-01-03T16-30-00", uuid)
             .expect("archived session file");
-        let runtime = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        )
+        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+            home.path().abs(),
+        ))
         .await
         .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));

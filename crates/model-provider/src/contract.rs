@@ -15,6 +15,7 @@ use std::time::Duration;
 use futures::Stream;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
+use genex_protocol::ResponseUsageMetadata;
 use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
@@ -22,7 +23,6 @@ use genex_protocol::protocol::ModelVerification;
 use genex_protocol::protocol::RateLimitSnapshot;
 use genex_protocol::protocol::SessionSource;
 use genex_protocol::protocol::TokenUsage;
-use genex_protocol::ResponseUsageMetadata;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;
@@ -164,9 +164,7 @@ pub type ProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 pub type ProviderChatStream = Pin<Box<dyn Stream<Item = ProviderResult<ProviderChatEvent>> + Send>>;
 pub type SharedModelProvider = Arc<dyn ModelProvider>;
 
-pub(crate) fn headers_to_http(
-    headers: BTreeMap<String, String>,
-) -> ProviderResult<HeaderMap> {
+pub(crate) fn headers_to_http(headers: BTreeMap<String, String>) -> ProviderResult<HeaderMap> {
     let mut result = HeaderMap::new();
     for (name, value) in headers {
         let name = HeaderName::from_bytes(name.as_bytes()).map_err(|error| {
@@ -232,9 +230,7 @@ impl ProviderTransportContext {
 
 impl Default for ProviderTransportContext {
     fn default() -> Self {
-        Self::from_http_client_factory(HttpClientFactory::new(
-            OutboundProxyPolicy::ReqwestDefault,
-        ))
+        Self::from_http_client_factory(HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault))
     }
 }
 
@@ -358,10 +354,7 @@ pub struct ListModelsRequest {
 }
 
 impl ListModelsRequest {
-    pub fn new(
-        client_version: impl Into<String>,
-        transport: ProviderTransportContext,
-    ) -> Self {
+    pub fn new(client_version: impl Into<String>, transport: ProviderTransportContext) -> Self {
         Self {
             client_version: client_version.into(),
             transport,
@@ -459,7 +452,9 @@ pub struct ProviderSafetyBuffering {
 /// Provider-neutral streamed chat events.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ProviderChatEvent {
-    Created { response_id: Option<String> },
+    Created {
+        response_id: Option<String>,
+    },
     SafetyBuffering(ProviderSafetyBuffering),
     OutputItemDone(ResponseItem),
     OutputItemAdded(ResponseItem),
@@ -478,14 +473,22 @@ pub enum ProviderChatEvent {
         call_id: Option<String>,
         delta: String,
     },
-    ReasoningSummaryDelta { delta: String, summary_index: i64 },
+    ReasoningSummaryDelta {
+        delta: String,
+        summary_index: i64,
+    },
     ReasoningSummaryDone {
         item_id: String,
         text: String,
         summary_index: i64,
     },
-    ReasoningContentDelta { delta: String, content_index: i64 },
-    ReasoningSummaryPartAdded { summary_index: i64 },
+    ReasoningContentDelta {
+        delta: String,
+        content_index: i64,
+    },
+    ReasoningSummaryPartAdded {
+        summary_index: i64,
+    },
     RateLimits(RateLimitSnapshot),
     ModelsEtag(String),
 }
@@ -643,9 +646,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
         }
     }
 
-    fn request_snapshot(
-        &self,
-    ) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>>;
+    fn request_snapshot(&self) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>>;
 
     fn auth_fields(&self) -> Vec<ProviderAuthField>;
 
@@ -701,9 +702,7 @@ mod tests {
             }
         }
 
-        fn request_snapshot(
-            &self,
-        ) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>> {
+        fn request_snapshot(&self) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>> {
             Box::pin(async {
                 Ok(ProviderRequestSnapshot {
                     auth: ProviderRequestAuth {

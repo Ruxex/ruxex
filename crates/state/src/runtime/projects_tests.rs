@@ -14,10 +14,8 @@ use crate::runtime::test_support::unique_temp_dir;
 #[tokio::test]
 async fn project_lifecycle_preserves_order_and_clears_assignments() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     let thread_id = ThreadId::default();
     let metadata = ThreadMetadataBuilder::new(
         thread_id,
@@ -175,10 +173,8 @@ async fn project_lifecycle_preserves_order_and_clears_assignments() -> anyhow::R
 #[tokio::test]
 async fn project_idempotency_keys_replay_and_survive_deletion() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     let created = runtime
         .create_project(
             "Imported".to_string(),
@@ -238,10 +234,8 @@ async fn project_idempotency_keys_replay_and_survive_deletion() -> anyhow::Resul
 #[tokio::test]
 async fn project_import_rejects_unknown_thread_without_partial_project() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     let error = runtime
         .create_project(
             "Work".to_string(),
@@ -271,14 +265,10 @@ async fn project_import_rejects_unknown_thread_without_partial_project() -> anyh
 #[tokio::test]
 async fn project_updates_preserve_omitted_fields_across_concurrent_writers() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime_one = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
-    let runtime_two = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime_one =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
+    let runtime_two =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     let project = runtime_one
         .create_project(
             "Work".to_string(),
@@ -322,10 +312,8 @@ async fn project_updates_preserve_omitted_fields_across_concurrent_writers() -> 
 #[tokio::test]
 async fn project_list_rejects_malformed_cursors() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
 
     for cursor in [
         "",
@@ -357,10 +345,8 @@ async fn project_list_rejects_malformed_cursors() -> anyhow::Result<()> {
 #[tokio::test]
 async fn project_list_cursor_round_trips_across_pages() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     for name in ["One", "Two"] {
         runtime
             .create_project(name.to_string(), Vec::new(), BTreeMap::new(), &[], name)
@@ -394,10 +380,8 @@ async fn project_list_cursor_round_trips_across_pages() -> anyhow::Result<()> {
 #[tokio::test]
 async fn project_list_orders_and_pages_recency_with_roots_and_nulls() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     let mut projects = Vec::new();
     for (name, recency_at_ms, archived) in [
         ("older", Some(1_700_000_000_001), false),
@@ -578,10 +562,8 @@ fn project_list_rejects_cursor_sort_mismatches() {
 #[tokio::test]
 async fn project_move_reorders_projects_and_preserves_no_op_timestamp() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     let one = runtime
         .create_project(
             "One".to_string(),
@@ -682,10 +664,8 @@ async fn project_move_reorders_projects_and_preserves_no_op_timestamp() -> anyho
 #[tokio::test]
 async fn initial_project_assignment_is_inserted_with_thread_row() -> anyhow::Result<()> {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await?;
+    let runtime =
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs())).await?;
     let project = runtime
         .create_project(
             "Work".to_string(),

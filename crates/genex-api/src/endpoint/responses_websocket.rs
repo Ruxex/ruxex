@@ -232,8 +232,9 @@ impl ResponsesWebsocketConnection {
         connection_reused: bool,
         turn_state: Option<Arc<OnceLock<String>>>,
     ) -> Result<ResponseStream, ApiError> {
-        let payload = serde_json::to_value(request)
-            .map_err(|err| ApiError::Stream(format!("failed to encode websocket request: {err}")))?;
+        let payload = serde_json::to_value(request).map_err(|err| {
+            ApiError::Stream(format!("failed to encode websocket request: {err}"))
+        })?;
         self.stream_request_json(payload, connection_reused, turn_state)
             .await
     }
@@ -256,8 +257,9 @@ impl ResponsesWebsocketConnection {
         let server_model = self.server_model.clone();
         let telemetry = self.telemetry.clone();
         let timing_log_context = websocket_timing_log_context(&request, connection_reused);
-        let request_text = serde_json::to_string(&request)
-            .map_err(|err| ApiError::Stream(format!("failed to encode websocket request: {err}")))?;
+        let request_text = serde_json::to_string(&request).map_err(|err| {
+            ApiError::Stream(format!("failed to encode websocket request: {err}"))
+        })?;
 
         let current_span = Span::current();
         tokio::spawn(

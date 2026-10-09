@@ -30,9 +30,9 @@ use genex_http_client::HttpClientFactory;
 use genex_http_client::HttpTransport;
 use genex_http_client::RequestBody;
 use genex_login::CredentialManager;
+use genex_login::GENEX_API_KEY_ENV_VAR;
 use genex_login::GenexAuth;
 use genex_login::ProviderAuth;
-use genex_login::GENEX_API_KEY_ENV_VAR;
 use genex_login::default_client::ClientRedirectPolicy;
 use genex_login::default_client::create_client_for_route;
 use genex_model_provider_info::ModelProviderInfo;
@@ -56,8 +56,8 @@ use crate::auth::resolve_provider_auth;
 use crate::auth::resolve_provider_auth_for_scope;
 use crate::cloudflare_provider::CloudflareModelProvider;
 use crate::contract::CURRENT_PROVIDER_PROTOCOL_VERSION;
-use crate::contract::ProviderAuthRecoveryMessages;
 use crate::contract::ProviderAuthEnvironment;
+use crate::contract::ProviderAuthRecoveryMessages;
 use crate::contract::ProviderCapabilities;
 use crate::contract::ProviderConnectionKey;
 use crate::contract::ProviderDescriptor;
@@ -302,14 +302,11 @@ impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection
                 )
                 .await
                 .map_err(map_api_error_to_provider_error)?;
-            Ok(
-                Box::pin(stream.map(|event| {
-                    event
-                        .map(crate::contract::ProviderChatEvent::from)
-                        .map_err(map_api_error_to_provider_error)
-                }))
-                    as crate::contract::ProviderChatStream,
-            )
+            Ok(Box::pin(stream.map(|event| {
+                event
+                    .map(crate::contract::ProviderChatEvent::from)
+                    .map_err(map_api_error_to_provider_error)
+            })) as crate::contract::ProviderChatStream)
         })
     }
 }
@@ -831,9 +828,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         })
     }
 
-    fn request_snapshot(
-        &self,
-    ) -> ModelProviderFuture<'_, CoreResult<ProviderRequestSnapshot>> {
+    fn request_snapshot(&self) -> ModelProviderFuture<'_, CoreResult<ProviderRequestSnapshot>> {
         Box::pin(async move {
             let auth = self.auth().await;
             let api_auth = self.api_auth().await?;
@@ -852,9 +847,7 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             Ok(ProviderRequestSnapshot {
                 auth: ProviderRequestAuth {
                     authenticated: auth.is_some(),
-                    managed_auth: auth
-                        .as_ref()
-                        .is_some_and(GenexAuth::uses_managed_auth),
+                    managed_auth: auth.as_ref().is_some_and(GenexAuth::uses_managed_auth),
                     auth_header_attached: auth_telemetry.attached,
                     auth_header_name: auth_telemetry.name,
                     revision,
@@ -887,10 +880,8 @@ where
 
     fn request_snapshot(
         &self,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<ProviderRequestSnapshot>,
-    > {
+    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderRequestSnapshot>>
+    {
         Box::pin(async move {
             ProviderRuntime::request_snapshot(self)
                 .await
@@ -1762,7 +1753,9 @@ mod tests {
     fn provider_contract_exposes_auth_environment_without_provider_info() {
         let mut info = ModelProviderInfo::create_responses_provider(None);
         info.env_key = Some("GENEX_TEST_PROVIDER_KEY".to_string());
-        let provider = provider_contract(create_model_provider(info, /*credential_manager*/ None));
+        let provider = provider_contract(create_model_provider(
+            info, /*credential_manager*/ None,
+        ));
 
         let environment = provider.auth_environment(false);
 

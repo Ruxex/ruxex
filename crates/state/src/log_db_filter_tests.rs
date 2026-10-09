@@ -13,9 +13,9 @@ async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics()
     let _cleanup = scopeguard::guard(genex_home.clone(), |genex_home| {
         let _ = std::fs::remove_dir_all(genex_home);
     });
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await
     .expect("initialize runtime");
     let layer = start(runtime.clone());

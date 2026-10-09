@@ -218,7 +218,7 @@ fn test_resolve_model_provider_returns_one_custom_provider() {
         ..ModelProviderInfo::default()
     };
     let resolved = resolve_model_provider(Some(custom_provider.clone()))
-    .expect("custom provider should resolve");
+        .expect("custom provider should resolve");
 
     assert_eq!(resolved.id, "custom");
     assert_eq!(resolved.info, custom_provider);
@@ -226,8 +226,7 @@ fn test_resolve_model_provider_returns_one_custom_provider() {
 
 #[test]
 fn test_resolve_model_provider_uses_builtin_default() {
-    let resolved = resolve_model_provider(None)
-        .expect("built-in provider should resolve");
+    let resolved = resolve_model_provider(None).expect("built-in provider should resolve");
 
     assert_eq!(resolved.id, CLOUDFLARE_PROVIDER_ID);
     assert_eq!(resolved.info.id.as_deref(), Some(CLOUDFLARE_PROVIDER_ID));

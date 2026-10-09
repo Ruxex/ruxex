@@ -27,11 +27,9 @@ async fn local_thread_sections_require_sqlite_and_preserve_section_identity() {
         })
     ));
 
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state db should initialize");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state db should initialize");
     let store = LocalThreadStore::new(config, Some(runtime));
     assert!(store.supports_thread_sections());
 

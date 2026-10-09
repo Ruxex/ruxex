@@ -86,9 +86,9 @@ async fn runtime_db_path_for_corruption_error_returns_failed_database_path() -> 
     let path = crate::SqliteConfig::new_for_testing(sqlite_home.as_path().abs()).state_db_path();
     tokio::fs::write(path.as_path(), b"not sqlite").await?;
 
-    let err = match super::super::StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(sqlite_home.as_path().abs()),
-    )
+    let err = match super::super::StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        sqlite_home.as_path().abs(),
+    ))
     .await
     {
         Ok(_) => panic!("malformed sqlite should fail to initialize"),

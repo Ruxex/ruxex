@@ -1004,9 +1004,9 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         "sessions/2099/01/01/rollout-2099-01-01T00-00-00-{uuid}.jsonl"
     ));
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     runtime
@@ -1086,9 +1086,9 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     runtime
@@ -1182,9 +1182,9 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
     let real_path = write_session_file(home.path(), "2025-01-03T13-00-00", uuid)?;
     let stale_cwd = home.path().join("stale-cwd");
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     runtime
@@ -1264,9 +1264,9 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
     let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
     let rollout_path = write_session_file(home.path(), "2025-01-03T16-00-00", uuid)?;
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     runtime
@@ -1430,9 +1430,9 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
     let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
     let real_path = write_session_file(home.path(), "2025-01-03T15-00-00", uuid)?;
 
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-    )
+    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        home.path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     runtime

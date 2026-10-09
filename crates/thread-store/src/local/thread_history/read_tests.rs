@@ -1012,11 +1012,9 @@ async fn store_with_mode(history_mode: ThreadHistoryMode) -> (TempDir, LocalThre
             /*history_base*/ None,
         );
     }
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state runtime");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state runtime");
     let mut builder = genex_state::ThreadMetadataBuilder::new(
         thread_id,
         rollout_path,

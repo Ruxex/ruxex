@@ -101,10 +101,11 @@ use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
 use crate::cyber_access_program;
 use crate::responses_metadata::GenexResponsesMetadata;
-use genex_model_provider::ProviderConnectionKey;
 use genex_model_provider::ProviderChatEvent;
+use genex_model_provider::ProviderConnectionKey;
 use genex_model_provider::ProviderError;
 use genex_model_provider::ProviderRequestAuth;
+use genex_model_provider::ProviderTransportContext;
 use genex_model_provider::ProviderUnauthorizedRecovery;
 use genex_model_provider::ProviderWebsocketConnectRequest;
 use genex_model_provider::ProviderWebsocketEvent;
@@ -113,7 +114,6 @@ use genex_model_provider::ProviderWebsocketTelemetry;
 use genex_model_provider::ProviderWireApi;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::SharedProviderWebsocketConnection;
-use genex_model_provider::ProviderTransportContext;
 #[cfg(test)]
 use genex_model_provider_info::DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS;
 use genex_protocol::error::GenexErr;
@@ -850,28 +850,29 @@ impl ModelClient {
         );
         let websocket_connect_timeout = self.state.provider.websocket_connect_timeout();
         let start = Instant::now();
-        let result = match tokio::time::timeout(
-            websocket_connect_timeout,
-            self.state
-                .provider
-                .connect_websocket(ProviderWebsocketConnectRequest {
-                    transport: ProviderTransportContext::from_http_client_factory(
-                        self.http_client_factory.clone(),
-                    ),
-                    extra_headers: neutral_headers(headers),
-                    default_headers: neutral_headers(
-                        genex_login::default_client::default_headers(),
-                    ),
-                    telemetry: Some(websocket_telemetry),
-                }),
-        )
-        .await
-        {
-            Ok(result) => result,
-            Err(_) => Err(ProviderError::Transient(
-                "provider websocket connection timed out".to_string(),
-            )),
-        };
+        let result =
+            match tokio::time::timeout(
+                websocket_connect_timeout,
+                self.state
+                    .provider
+                    .connect_websocket(ProviderWebsocketConnectRequest {
+                        transport: ProviderTransportContext::from_http_client_factory(
+                            self.http_client_factory.clone(),
+                        ),
+                        extra_headers: neutral_headers(headers),
+                        default_headers: neutral_headers(
+                            genex_login::default_client::default_headers(),
+                        ),
+                        telemetry: Some(websocket_telemetry),
+                    }),
+            )
+            .await
+            {
+                Ok(result) => result,
+                Err(_) => Err(ProviderError::Transient(
+                    "provider websocket connection timed out".to_string(),
+                )),
+            };
         let error_message = result.as_ref().err().map(ToString::to_string);
         session_telemetry.record_websocket_connect(
             start.elapsed(),
@@ -1343,9 +1344,8 @@ impl ModelClientSession {
             let provider_result = self.client.state.provider.chat(provider_request).await;
             match provider_result {
                 Ok(provider_stream) => {
-            let api_stream = provider_stream.map(|event| {
-                event.map(provider_event_to_response_event)
-            });
+                    let api_stream =
+                        provider_stream.map(|event| event.map(provider_event_to_response_event));
                     let (stream, _) = map_response_events(
                         None,
                         api_stream,
@@ -1588,9 +1588,7 @@ impl ModelClientSession {
                 inference_trace_attempt.record_failed(&err, None, /*output_items*/ &[]);
                 err
             })?;
-            let api_stream = stream_result.map(|event| {
-                event.map(provider_event_to_response_event)
-            });
+            let api_stream = stream_result.map(|event| event.map(provider_event_to_response_event));
             let (stream, last_request_rx) = map_response_events(
                 None,
                 api_stream,

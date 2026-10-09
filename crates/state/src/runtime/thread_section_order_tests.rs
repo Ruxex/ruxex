@@ -15,9 +15,9 @@ const OTHER_THREAD_SECTION_ID: &str = "01984de2-8f74-7c91-a3b2-5c5e937cf319";
 #[tokio::test]
 async fn thread_section_ordering_batches_persisted_positions_and_entry_times() -> Result<()> {
     let genex_home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await?;
     let first = ThreadId::new();
     let second = ThreadId::new();
@@ -81,9 +81,9 @@ async fn thread_section_ordering_batches_persisted_positions_and_entry_times() -
 #[tokio::test]
 async fn thread_sections_paginate_and_require_registered_identities() {
     let genex_home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     let before_pinned = crate::ThreadSection {
@@ -198,9 +198,9 @@ async fn thread_sections_paginate_and_require_registered_identities() {
 #[tokio::test]
 async fn thread_section_moves_round_trip_and_survive_rollout_reconciliation() {
     let genex_home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     let thread_id = ThreadId::new();
@@ -308,9 +308,9 @@ async fn thread_section_moves_round_trip_and_survive_rollout_reconciliation() {
 #[tokio::test]
 async fn concurrent_section_moves_preserve_unique_positions() -> Result<()> {
     let genex_home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await?;
     let [first, second, third, fourth, fifth] = [
         "00000000-0000-0000-0000-000000000071",
@@ -430,9 +430,9 @@ async fn concurrent_section_moves_preserve_unique_positions() -> Result<()> {
 #[tokio::test]
 async fn section_moves_preserve_entry_order_and_renumber_exhausted_ranks() {
     let genex_home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-    )
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
+        genex_home.as_path().abs(),
+    ))
     .await
     .expect("state db should initialize");
     for (section_id, section_name) in [

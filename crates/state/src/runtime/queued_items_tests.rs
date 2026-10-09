@@ -9,11 +9,9 @@ use std::borrow::Cow;
 
 async fn runtime_with_thread() -> (Arc<StateRuntime>, ThreadId) {
     let home = unique_temp_dir();
-    let runtime = StateRuntime::init(
-        crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-    )
-    .await
-    .expect("state runtime");
+    let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(home.as_path().abs()))
+        .await
+        .expect("state runtime");
     let thread_id = ThreadId::new();
     let metadata = test_thread_metadata(home.as_path(), thread_id, home.clone());
     runtime.upsert_thread(&metadata).await.unwrap();
@@ -23,9 +21,7 @@ async fn runtime_with_thread() -> (Arc<StateRuntime>, ThreadId) {
 #[tokio::test]
 async fn competing_runtimes_preserve_fifo_queue_order() {
     let (runtime, thread_id) = runtime_with_thread().await;
-    let other = StateRuntime::init(runtime.sqlite().clone())
-        .await
-        .unwrap();
+    let other = StateRuntime::init(runtime.sqlite().clone()).await.unwrap();
     let queue = runtime.thread_queue();
     let other_queue = other.thread_queue();
     let (first, second) = tokio::join!(
@@ -78,9 +74,7 @@ async fn migrating_existing_queue_backfills_thread_revisions() {
     .unwrap();
     pool.close().await;
 
-    let runtime = StateRuntime::init(sqlite)
-        .await
-        .unwrap();
+    let runtime = StateRuntime::init(sqlite).await.unwrap();
     let queue = runtime.thread_queue();
     assert_eq!(
         vec![(thread_id, 1)],
@@ -249,9 +243,7 @@ async fn deleting_a_thread_removes_its_queue() {
 #[tokio::test]
 async fn concurrent_inserts_enforce_the_queue_limit() {
     let (runtime, thread_id) = runtime_with_thread().await;
-    let other = StateRuntime::init(runtime.sqlite().clone())
-        .await
-        .unwrap();
+    let other = StateRuntime::init(runtime.sqlite().clone()).await.unwrap();
 
     for _ in 0..MAX_QUEUE_ITEMS - 1 {
         runtime

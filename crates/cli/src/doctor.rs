@@ -27,9 +27,6 @@ use std::time::Instant;
 
 use anyhow::Context;
 use clap::Parser;
-use genex_model_provider::ProviderError;
-use genex_model_provider::ProviderTransportContext;
-use genex_model_provider::ProviderWebsocketConnectRequest;
 use genex_api::is_azure_responses_provider;
 use genex_app_server::AppServerRuntimeBuilder;
 use genex_app_server::runtime::mount_provider_home_for_config;
@@ -55,6 +52,9 @@ use genex_login::GENEX_API_KEY_ENV_VAR;
 use genex_login::default_client::create_client_without_request_logging;
 use genex_login::default_client::default_headers;
 use genex_login::load_auth_dot_json;
+use genex_model_provider::ProviderError;
+use genex_model_provider::ProviderTransportContext;
+use genex_model_provider::ProviderWebsocketConnectRequest;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::AskForApproval;
 use genex_terminal_detection::Multiplexer;
@@ -2066,7 +2066,7 @@ async fn websocket_reachability_check(
                 .details(details)
                 .remediation(
                     "Check proxy, VPN, firewall, DNS, custom CA, and WebSocket policy support.",
-                )
+                );
             }
             Ok(false) => DoctorCheck::new(
                 "network.websocket_reachability",
@@ -2080,7 +2080,7 @@ async fn websocket_reachability_check(
                 details,
                 websocket_provider_error_detail(&err),
             ),
-        }
+        },
         Ok(Err(err)) => websocket_probe_warning(
             "Responses WebSocket failed; HTTPS fallback may still work",
             details,

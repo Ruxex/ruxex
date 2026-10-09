@@ -12,10 +12,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 /// Apply a rollout item to the metadata structure.
-pub fn apply_rollout_item(
-    metadata: &mut ThreadMetadata,
-    item: &RolloutItem,
-) {
+pub fn apply_rollout_item(metadata: &mut ThreadMetadata, item: &RolloutItem) {
     match item {
         RolloutItem::SessionMeta(meta_line) => apply_session_meta_from_item(metadata, meta_line),
         RolloutItem::TurnContext(turn_ctx) => apply_turn_context(metadata, turn_ctx),

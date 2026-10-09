@@ -723,11 +723,9 @@ SELECT
     async fn delete_thread_removes_materialized_thread_history() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let state_db = genex_state::StateRuntime::init(
-            config.sqlite.clone(),
-        )
-        .await
-        .expect("initialize state database for materialized history");
+        let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+            .await
+            .expect("initialize state database for materialized history");
         let store = LocalThreadStore::new(config, Some(state_db));
         let uuid = Uuid::from_u128(306);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");

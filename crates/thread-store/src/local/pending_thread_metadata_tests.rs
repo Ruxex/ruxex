@@ -138,11 +138,9 @@ async fn store_with_runtime() -> (
 ) {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await
-    .expect("state db should initialize");
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        .await
+        .expect("state db should initialize");
     let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
     (home, store, runtime)
 }

@@ -638,9 +638,9 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     async fn test_runtime() -> std::sync::Arc<StateRuntime> {
-        StateRuntime::init(
-            crate::SqliteConfig::new_for_testing(unique_temp_dir().as_path().abs()),
-        )
+        StateRuntime::init(crate::SqliteConfig::new_for_testing(
+            unique_temp_dir().as_path().abs(),
+        ))
         .await
         .expect("state db should initialize")
     }

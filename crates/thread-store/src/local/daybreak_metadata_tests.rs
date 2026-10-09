@@ -23,10 +23,7 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
     let thread_id = ThreadId::from_string(&uuid.to_string())?;
     let rollout_path = write_session_file(home.path(), "2025-01-03T14-20-00", uuid)?;
     let original_rollout = std::fs::read(&rollout_path)?;
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await?;
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone()).await?;
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
     for daybreak_enabled in [true, false] {
         let updated = store
@@ -59,10 +56,7 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
     drop(store);
     drop(runtime);
 
-    let runtime = genex_state::StateRuntime::init(
-        config.sqlite.clone(),
-    )
-    .await?;
+    let runtime = genex_state::StateRuntime::init(config.sqlite.clone()).await?;
     let store = LocalThreadStore::new(config, Some(runtime));
     for include_history in [false, true] {
         let thread = store
