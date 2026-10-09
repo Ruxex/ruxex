@@ -73,7 +73,6 @@ impl ModelsEndpoint {
             self.credential_manager.as_ref(),
             None,
             &self.provider_info,
-            self.provider_id.as_deref(),
         )
         .await
     }
@@ -142,7 +141,7 @@ impl ModelCatalogSource for ModelsEndpoint {
         let auth = self
             .credential_manager
             .as_ref()
-            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
+            .and_then(|manager| cached_provider_auth(manager));
         crate::models_identity::identity(
             self.provider_id.as_deref(),
             &self.provider_info,

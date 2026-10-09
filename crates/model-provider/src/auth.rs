@@ -40,7 +40,6 @@ impl AuthProvider for HeaderAuthProvider {
 
 struct CredentialManagerAuthProvider {
     credential_manager: Arc<CredentialManager>,
-    provider_id: Option<String>,
     // Request headers always come from the current CredentialManager snapshot below.
     expected_auth: GenexAuth,
 }
@@ -52,14 +51,6 @@ impl CredentialManagerAuthProvider {
     }
 
     fn current_auth(&self) -> Option<GenexAuth> {
-        if let Some(provider_id) = self.provider_id.as_deref()
-            && self
-                .credential_manager
-                .configured_provider_id()
-                .is_some_and(|configured| configured != provider_id)
-        {
-            return None;
-        }
         self.credential_manager
             .auth_cached()
             .filter(|auth| self.is_expected_auth(auth))
@@ -137,7 +128,6 @@ pub(crate) async fn resolve_provider_auth_for_scope(
     credential_manager: Option<Arc<CredentialManager>>,
     auth: Option<&GenexAuth>,
     provider: &ModelProviderInfo,
-    provider_id: Option<&str>,
     scope: ProviderAuthScope,
 ) -> genex_protocol::error::Result<ResolvedProviderAuth> {
     let auth = if provider.auth.is_some() {
@@ -145,9 +135,8 @@ pub(crate) async fn resolve_provider_auth_for_scope(
             Some(credential_manager) => credential_manager.auth().await,
             None => auth.cloned(),
         }
-    } else if let (Some(credential_manager), Some(provider_id)) = (credential_manager, provider_id)
-    {
-        credential_manager.auth_for_provider(provider_id).await
+    } else if let Some(credential_manager) = credential_manager {
+        credential_manager.auth().await
     } else {
         auth.cloned()
     };
@@ -159,7 +148,6 @@ pub(crate) async fn provider_auth(
     credential_manager: Option<&Arc<CredentialManager>>,
     fallback_auth: Option<GenexAuth>,
     provider: &ModelProviderInfo,
-    provider_id: Option<&str>,
 ) -> Option<GenexAuth> {
     if provider.auth.is_some() {
         return match credential_manager {
@@ -175,9 +163,6 @@ pub(crate) async fn provider_auth(
             None => fallback_auth,
         };
     }
-    if let (Some(credential_manager), Some(provider_id)) = (credential_manager, provider_id) {
-        return credential_manager.auth_for_provider(provider_id).await;
-    }
     match credential_manager {
         Some(credential_manager) => credential_manager.auth().await,
         None => fallback_auth,
@@ -186,15 +171,7 @@ pub(crate) async fn provider_auth(
 
 pub(crate) fn cached_provider_auth(
     credential_manager: &CredentialManager,
-    provider_id: Option<&str>,
 ) -> Option<GenexAuth> {
-    if let Some(provider_id) = provider_id
-        && credential_manager
-            .configured_provider_id()
-            .is_some_and(|configured| configured != provider_id)
-    {
-        return None;
-    }
     credential_manager.auth_cached()
 }
 
@@ -233,7 +210,6 @@ pub fn auth_provider_from_credential_manager(
 ) -> SharedAuthProvider {
     Arc::new(CredentialManagerAuthProvider {
         credential_manager,
-        provider_id: None,
         expected_auth: expected_auth.clone(),
     })
 }

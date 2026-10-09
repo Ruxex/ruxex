@@ -1217,10 +1217,6 @@ impl CredentialManagerConfig for Config {
         self.genex_home.to_path_buf()
     }
 
-    fn model_provider_id(&self) -> Option<String> {
-        Some(self.model_provider_id.clone())
-    }
-
     fn cli_auth_credentials_store_mode(&self) -> AuthCredentialsStoreMode {
         self.cli_auth_credentials_store_mode
     }

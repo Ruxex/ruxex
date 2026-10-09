@@ -97,7 +97,7 @@ impl CloudflareModelProvider {
         let auth = self
             .credential_manager
             .as_ref()
-            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
+            .and_then(|manager| cached_provider_auth(manager));
         let provider_info = self.models_info().ok()?;
         models_identity::identity(self.provider_id.as_deref(), &provider_info, auth.as_ref()).ok()
     }
@@ -204,7 +204,6 @@ impl ProviderRuntime for CloudflareModelProvider {
                 self.credential_manager.as_ref(),
                 None,
                 &self.info,
-                self.provider_id(),
             )
             .await
         })
@@ -214,7 +213,7 @@ impl ProviderRuntime for CloudflareModelProvider {
         let auth = self
             .credential_manager
             .as_ref()
-            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()));
+            .and_then(|manager| cached_provider_auth(manager));
         let configured_auth =
             self.info.api_key().is_ok() || self.info.experimental_bearer_token.is_some();
         let authenticated = auth.is_some() || configured_auth;
@@ -260,7 +259,7 @@ impl CloudflareModelProvider {
         if let Some(account_id) = self
             .credential_manager
             .as_ref()
-            .and_then(|manager| cached_provider_auth(manager, self.provider_id.as_deref()))
+            .and_then(|manager| cached_provider_auth(manager))
             .and_then(|auth| auth.credential("account_id"))
         {
             return Ok(account_id);

@@ -842,15 +842,8 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             let Some(credential_manager) = self.credential_manager() else {
                 return Err(ProviderAuthError::Unavailable);
             };
-            let provider_id = self
-                .provider_id()
-                .unwrap_or(self.info().name.as_str())
-                .to_owned();
             credential_manager
-                .login(
-                    &provider_id,
-                    ProviderAuth::api_key_with_credentials(request.api_key, request.credentials),
-                )
+                .login(ProviderAuth::api_key_with_credentials(request.api_key, request.credentials))
                 .await
                 .map_err(|err| ProviderAuthError::Failed(err.to_string()))
         })
@@ -862,12 +855,8 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             let Some(credential_manager) = self.credential_manager() else {
                 return Err(ProviderAuthError::Unavailable);
             };
-            let provider_id = self
-                .provider_id()
-                .unwrap_or(self.info().name.as_str())
-                .to_owned();
             credential_manager
-                .delete(&provider_id)
+                .delete()
                 .await
                 .map_err(|err| ProviderAuthError::Failed(err.to_string()))
         })
@@ -936,7 +925,6 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 self.credential_manager(),
                 auth.as_ref(),
                 self.info(),
-                self.provider_id(),
                 scope,
             )
             .await
@@ -1649,7 +1637,6 @@ impl ProviderRuntime for ConfiguredModelProvider {
                 self.credential_manager.as_ref(),
                 None,
                 &self.info,
-                self.provider_id(),
             )
             .await
         })
@@ -1660,7 +1647,7 @@ impl ProviderRuntime for ConfiguredModelProvider {
             .credential_manager
             .as_ref()
             .and_then(|credential_manager| {
-                cached_provider_auth(credential_manager, self.provider_id())
+                cached_provider_auth(credential_manager)
             });
         let auth_invalid = auth.as_ref().is_some_and(|auth| {
             self.credential_manager
@@ -1696,7 +1683,7 @@ impl ProviderRuntime for ConfiguredModelProvider {
                 .credential_manager
                 .as_ref()
                 .and_then(|credential_manager| {
-                    cached_provider_auth(credential_manager, self.provider_id())
+                    cached_provider_auth(credential_manager)
                         .and_then(|auth| auth.get_account_id())
                 }),
             display_name: None,
@@ -2042,7 +2029,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn provider_auth_does_not_fall_back_to_another_provider() {
+    async fn provider_auth_uses_shared_runtime_credentials() {
         let home = tempfile::tempdir().expect("temporary auth home");
         let credential_manager = Arc::new(
             CredentialManager::new(
@@ -2059,7 +2046,7 @@ mod tests {
             .await,
         );
         credential_manager
-            .login("provider-a", genex_login::ProviderAuth::api_key("a-secret"))
+            .login(genex_login::ProviderAuth::api_key("a-secret"))
             .await
             .expect("provider A login");
 
@@ -2088,13 +2075,15 @@ mod tests {
                 .and_then(|value| value.to_str().ok()),
             Some("Bearer a-secret")
         );
-        assert!(
+        assert_eq!(
             provider_b
                 .api_auth()
                 .await
                 .expect("provider B auth")
                 .to_auth_headers()
-                .is_empty()
+                .get("authorization")
+                .and_then(|value| value.to_str().ok()),
+            Some("Bearer a-secret")
         );
     }
 
