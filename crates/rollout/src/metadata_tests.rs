@@ -262,7 +262,6 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("initialize runtime");
@@ -333,7 +332,6 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("initialize runtime");
@@ -383,7 +381,6 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("initialize runtime");

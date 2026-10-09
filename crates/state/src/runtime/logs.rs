@@ -440,7 +440,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -517,7 +516,6 @@ mod tests {
 
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -576,7 +574,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let _runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -599,7 +596,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -655,7 +651,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -743,7 +738,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -800,7 +794,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -841,7 +834,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -913,7 +905,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -954,7 +945,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -1025,7 +1015,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -1066,7 +1055,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -1112,7 +1100,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -1162,7 +1149,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");

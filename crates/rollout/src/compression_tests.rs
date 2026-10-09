@@ -149,7 +149,6 @@ async fn read_session_meta_line_preserves_pre_header_and_error_semantics() -> an
             "originator": "test",
             "cli_version": "test",
             "source": "cli",
-            "model_provider": "test-provider",
             "history_mode": "future",
         },
     });

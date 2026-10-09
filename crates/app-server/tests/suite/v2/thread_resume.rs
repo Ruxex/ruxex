@@ -164,15 +164,12 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &conversation_id);
     let settings: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_id": conversation_id,
         "thread_settings": {
             "model": "legacy-model",
-            "model_provider_id": "mock_provider",
             "cwd": saved_cwd,
             "approval_policy": "never",
             "approvals_reviewer": "user",
@@ -280,7 +277,6 @@ async fn thread_resume_paginated_model_context_preserves_original_metadata() -> 
 
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     let metadata = state_db
@@ -780,15 +776,12 @@ async fn cold_resume_workspace_roots_honor_owned_snapshot_and_caller_overrides()
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved workspace selection",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &thread_id);
     let owned: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_id": thread_id,
         "thread_settings": {
             "model": "legacy-model",
-            "model_provider_id": "mock_provider",
             "cwd": saved_cwd,
             "runtime_workspace_roots": [saved_cwd, new_cwd, extra_root],
             "approval_policy": "never",
@@ -917,8 +910,6 @@ async fn cold_resume_workspace_roots_validate_foreign_startup_paths() -> Result<
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Foreign startup paths",
-            Some("mock_provider"),
-            /*git_info*/ None,
         )?;
         let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &thread_id);
         let contents = std::fs::read_to_string(&path)?;
@@ -2012,8 +2003,6 @@ async fn unloaded_thread_goal_mutations_respect_parent_ownership() -> Result<()>
             TIMESTAMP,
             "2026-08-20T12:00:00Z",
             "Saved task",
-            Some("mock_provider"),
-            /*git_info*/ None,
             source,
         )?;
         let path = rollout_path(genex_home.path(), TIMESTAMP, &thread_id);
@@ -2105,8 +2094,6 @@ async fn thread_goal_mutations_preserve_authoritative_sqlite_metadata() -> Resul
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Rollout preview",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -2116,7 +2103,6 @@ async fn thread_goal_mutations_preserve_authoritative_sqlite_metadata() -> Resul
         .await?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     let thread_id = ThreadId::from_string(&thread_id)?;
@@ -2191,8 +2177,6 @@ async fn thread_goal_set_repairs_missing_sqlite_metadata() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Rollout preview",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -2202,7 +2186,6 @@ async fn thread_goal_set_repairs_missing_sqlite_metadata() -> Result<()> {
         .await?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     let thread_id = ThreadId::from_string(&thread_id)?;
@@ -2277,7 +2260,6 @@ async fn goal_first_live_thread_appears_in_state_db_thread_list() -> Result<()> 
             "thread/list",
             Some(json!({
                 "limit": 10,
-                "modelProviders": ["mock_provider"],
                 "sourceKinds": ["vscode"],
                 "archived": false,
                 "cwd": cwd.as_path().to_string_lossy().to_string(),
@@ -2313,8 +2295,6 @@ async fn thread_resume_tracks_thread_initialized_analytics() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     set_session_meta_on_fake_rollout(
         genex_home.path(),
@@ -2479,14 +2459,11 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
             .iter()
             .map(|elem| serde_json::to_value(elem).expect("serialize text element"))
             .collect(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     // Old snapshots have no owner ID: keep them readable without adopting their cwd.
     let settings: ThreadSettingsAppliedEvent = serde_json::from_value(json!({
         "thread_settings": {
             "model": "legacy-model",
-            "model_provider_id": "mock_provider",
             "cwd": saved_cwd,
             "approval_policy": "never",
             "approvals_reviewer": "user",
@@ -2561,8 +2538,6 @@ async fn thread_resume_can_skip_turns_for_metadata_only_resume() -> Result<()> {
         "2025-01-05T12:00:00Z",
         "Saved user message",
         Vec::new(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -2597,8 +2572,6 @@ async fn thread_resume_warns_for_paginated_full_history_hydration() -> Result<()
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -2673,8 +2646,6 @@ async fn thread_resume_rejects_archived_session_by_id() -> Result<()> {
         "2025-01-05T12:00:00Z",
         "Archived saved user message",
         Vec::new(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let active_rollout_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let archived_dir = genex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
@@ -3083,8 +3054,6 @@ async fn thread_goal_set_edits_objective_without_resetting_usage() -> Result<()>
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -3114,7 +3083,6 @@ async fn thread_goal_set_edits_objective_without_resetting_usage() -> Result<()>
 
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     let thread_id = ThreadId::from_string(&thread_id)?;
@@ -3600,9 +3568,7 @@ async fn thread_resume_emits_restored_token_usage_before_next_turn() -> Result<(
         genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
-        "Saved user message",
-        Some("mock_provider"),
-    )?;
+        "Saved user message",)?;
 
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -3651,8 +3617,6 @@ async fn cold_paginated_resume_restores_usage_without_loading_turns() -> Result<
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &conversation_id);
     let canonical_turn_id = "persisted-token-usage-turn";
@@ -3745,8 +3709,6 @@ async fn cold_paginated_resume_omits_usage_when_its_turn_is_ambiguous() -> Resul
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     append_rollout_item_to_path(
@@ -3830,9 +3792,7 @@ async fn thread_resume_skips_restored_token_usage_when_turns_are_excluded() -> R
         genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
-        "Saved user message",
-        Some("mock_provider"),
-    )?;
+        "Saved user message",)?;
 
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -3903,9 +3863,7 @@ async fn thread_resume_token_usage_replay_ignores_stale_interrupted_tail_turn() 
         genex_home.path(),
         filename_ts,
         meta_rfc3339,
-        "Saved user message",
-        Some("mock_provider"),
-    )?;
+        "Saved user message",)?;
     let rollout_file_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
     let stale_turn_id = "incomplete-turn-after-token-usage";
@@ -3991,9 +3949,7 @@ async fn thread_resume_token_usage_replay_can_belong_to_interrupted_turn() -> Re
         genex_home.path(),
         filename_ts,
         meta_rfc3339,
-        "Saved user message",
-        Some("mock_provider"),
-    )?;
+        "Saved user message",)?;
     let rollout_file_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
     let interrupted_turn_id = "interrupted-turn-with-token-usage";
@@ -4238,7 +4194,6 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
     )?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -4302,8 +4257,6 @@ async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is
         meta_rfc3339,
         "Saved user message",
         Vec::new(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let rollout_file_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
@@ -4832,7 +4785,6 @@ async fn thread_resume_rejects_mismatched_path_for_running_thread_id() -> Result
             "originator": "test_originator",
             "cli_version": "test_version",
             "source": "cli",
-            "model_provider": "test-provider",
         },
     });
     writeln!(stale_file, "{stale_meta}")?;
@@ -5607,8 +5559,6 @@ async fn thread_resume_surfaces_cloud_config_bundle_load_errors() -> Result<()> 
         "2025-01-05T12:00:00Z",
         "Saved user message",
         Vec::new(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let refresh_token_url = format!("{}/oauth/token", server.uri());
     let mut mcp = TestAppServer::builder()
@@ -5694,8 +5644,6 @@ async fn thread_resume_can_load_source_by_external_path() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "external path history",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let thread_path = rollout_path(external_home.path(), "2025-01-05T12-00-00", &thread_id);
 
@@ -5753,7 +5701,6 @@ async fn thread_resume_supports_history_and_overrides() -> Result<()> {
             thread_id,
             history: Some(history),
             model: Some("mock-model".to_string()),
-            model_provider: Some("mock_provider".to_string()),
             ..Default::default()
         })
         .await?;
@@ -5881,8 +5828,6 @@ async fn setup_rollout_fixture(genex_home: &Path, server_uri: &str) -> Result<Ro
         meta_rfc3339,
         preview,
         Vec::new(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let rollout_file_path = rollout_path(genex_home, filename_ts, &conversation_id);
     let mut session_meta = read_session_meta_line(&rollout_file_path).await?;

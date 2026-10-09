@@ -46,7 +46,6 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create source rollout"),
@@ -205,7 +204,6 @@ async fn viewing_thread_reads_history_without_resuming_it() -> Result<()> {
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create source rollout"),
@@ -249,7 +247,6 @@ async fn legacy_resume_preserves_history_mode_after_picker_server_replacement() 
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create source rollout"),
@@ -289,7 +286,6 @@ async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut()
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved paginated user message",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create paginated rollout"),
@@ -334,7 +330,6 @@ async fn stale_legacy_history_mode_is_revalidated_before_resume() -> Result<()> 
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved paginated user message",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create paginated rollout"),

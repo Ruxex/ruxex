@@ -32,7 +32,6 @@ async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
 async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::StateRuntime>> {
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(config.genex_home.as_path().abs()),
-        config.model_provider_id.clone(),
     )
     .await
     .map_err(std::io::Error::other)?;
@@ -139,7 +138,7 @@ fn thread_metadata(
             .expect("cli session source should deserialize"),
     );
     builder.cwd = config.genex_home.join("project").to_path_buf();
-    let mut metadata = builder.build(config.model_provider_id.as_str());
+    let mut metadata = builder.build();
     metadata.title = name.to_string();
     metadata.first_user_message = Some("preview text".to_string());
     metadata.preview = metadata.first_user_message.clone();

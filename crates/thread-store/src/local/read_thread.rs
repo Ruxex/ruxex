@@ -521,7 +521,6 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -657,7 +656,6 @@ mod tests {
             "2025-01-03T12-00-00",
             uuid,
             "Forked user message",
-            Some("test-provider"),
             Some(parent_uuid),
             ThreadHistoryMode::Paginated,
         )
@@ -685,7 +683,6 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -744,7 +741,6 @@ mod tests {
         .expect("append rollout user message");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -818,7 +814,6 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -859,7 +854,6 @@ mod tests {
             write_session_file(home.path(), "2025-01-03T12-00-00", uuid).expect("session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -892,7 +886,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -915,7 +908,6 @@ mod tests {
                 "originator": "test_originator",
                 "cli_version": "test_version",
                 "source": "cli",
-                "model_provider": "rollout-provider"
             },
         });
         writeln!(file, "{meta}").expect("write session meta");
@@ -1058,14 +1050,12 @@ mod tests {
                 "originator": "test_originator",
                 "cli_version": "test_version",
                 "source": "cli",
-                "model_provider": "rollout-provider"
             },
         });
         writeln!(file, "{meta}").expect("write session meta");
 
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1145,7 +1135,6 @@ mod tests {
                 "originator": "test_originator",
                 "cli_version": "test_version",
                 "source": "cli",
-                "model_provider": "rollout-provider"
             },
         });
         writeln!(file, "{meta}").expect("write session meta");
@@ -1189,7 +1178,6 @@ mod tests {
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1249,7 +1237,6 @@ mod tests {
             .join(format!("rollout-2025-01-03T12-00-00-{uuid}.jsonl"));
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1304,7 +1291,6 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");

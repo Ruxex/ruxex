@@ -17,7 +17,6 @@ async fn thread_section_ordering_batches_persisted_positions_and_entry_times() -
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let first = ThreadId::new();
@@ -84,7 +83,6 @@ async fn thread_sections_paginate_and_require_registered_identities() {
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("state db should initialize");
@@ -202,7 +200,6 @@ async fn thread_section_moves_round_trip_and_survive_rollout_reconciliation() {
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("state db should initialize");
@@ -313,7 +310,6 @@ async fn concurrent_section_moves_preserve_unique_positions() -> Result<()> {
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let [first, second, third, fourth, fifth] = [
@@ -436,7 +432,6 @@ async fn section_moves_preserve_entry_order_and_renumber_exhausted_ranks() {
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("state db should initialize");

@@ -136,8 +136,6 @@ async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let original_path = genex_home
@@ -963,7 +961,6 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
 
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     let source_goal = state_db
@@ -1147,8 +1144,6 @@ async fn thread_fork_inherits_explicit_source_name_from_session_index() -> Resul
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let source_thread_id = ThreadId::from_string(&conversation_id)?;
     let source_name = "Renamed parent thread";
@@ -1191,8 +1186,6 @@ async fn thread_fork_can_load_source_by_path() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let original_path = genex_home
         .path()
@@ -1241,8 +1234,6 @@ async fn thread_fork_can_cut_before_unfinished_stored_turn() -> Result<()> {
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let source_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let unfinished_turn_id = "unfinished-turn";
@@ -1313,9 +1304,7 @@ async fn thread_fork_emits_restored_token_usage_before_next_turn() -> Result<()>
         genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
-        "Saved user message",
-        Some("mock_provider"),
-    )?;
+        "Saved user message",)?;
 
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -1366,9 +1355,7 @@ async fn thread_fork_can_exclude_turns_and_skip_restored_token_usage() -> Result
         genex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
-        "Saved user message",
-        Some("mock_provider"),
-    )?;
+        "Saved user message",)?;
 
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -1418,8 +1405,6 @@ async fn thread_fork_tracks_thread_initialized_analytics() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -1514,8 +1499,6 @@ async fn thread_fork_creates_reference_backed_paginated_thread() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let source_path = rollout_path(
         genex_home.path(),
@@ -1678,8 +1661,6 @@ async fn thread_fork_accepts_resumed_rollout_under_symlinked_sessions_root() -> 
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let source_path = rollout_path(
         genex_home.path(),
@@ -1726,8 +1707,6 @@ async fn thread_fork_warns_for_paginated_full_history_hydration() -> Result<()> 
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -1816,8 +1795,6 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let source_path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &source_thread_id);
     let source_id = ThreadId::from_string(source_thread_id.as_str())?;
@@ -2203,8 +2180,6 @@ async fn thread_fork_with_empty_path_uses_thread_id() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -2273,8 +2248,6 @@ async fn thread_fork_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let refresh_token_url = format!("{}/oauth/token", server.uri());
@@ -2538,8 +2511,6 @@ async fn thread_fork_rejects_incompatible_boundaries_and_ephemeral_goal_deferral
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let mut mcp = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -2590,8 +2561,6 @@ async fn pathless_ephemeral_thread_rejects_genex_home_path_after_reload() -> Res
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Parent message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let side_thread_id = {

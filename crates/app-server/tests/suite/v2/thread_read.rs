@@ -118,8 +118,6 @@ async fn thread_read_returns_summary_without_turns() -> Result<()> {
             .iter()
             .map(|elem| serde_json::to_value(elem).expect("serialize text element"))
             .collect(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -188,8 +186,6 @@ async fn thread_read_can_include_turns() -> Result<()> {
             .iter()
             .map(|elem| serde_json::to_value(elem).expect("serialize text element"))
             .collect(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -318,8 +314,6 @@ async fn paginated_stored_thread_routes_projected_turns() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -429,8 +423,6 @@ async fn thread_turns_list_can_page_backward_and_forward() -> Result<()> {
         "2025-01-05T12:00:00Z",
         "first",
         vec![],
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let rollout_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     append_user_message(rollout_path.as_path(), "2025-01-05T12:01:00Z", "second")?;
@@ -508,8 +500,6 @@ async fn thread_turns_list_supports_requested_items_view() -> Result<()> {
         "2025-01-05T12:00:00Z",
         "first",
         vec![],
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let rollout_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     append_agent_message(rollout_path.as_path(), "2025-01-05T12:01:00Z", "draft")?;
@@ -574,7 +564,7 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
     let thread_id = genex_protocol::ThreadId::default();
     let sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.path().abs());
     let state_db =
-        genex_state::StateRuntime::init(sqlite.clone(), "mock_provider".to_string()).await?;
+        genex_state::StateRuntime::init(sqlite.clone()).await?;
     let store = LocalThreadStore::new(
         LocalThreadStoreConfig {
             genex_home: genex_home.path().to_path_buf(),
@@ -604,7 +594,6 @@ async fn thread_search_occurrences_reads_paginated_projection() -> Result<()> {
             runtime_workspace_roots: None,
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(genex_home.path().to_path_buf()),
-                model_provider: "mock_provider".to_string(),
             },
         })
         .await?;
@@ -1097,8 +1086,6 @@ async fn thread_read_can_return_archived_threads_by_id() -> Result<()> {
         "2025-01-05T12:00:00Z",
         preview,
         vec![],
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let active_rollout_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     let archived_dir = genex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
@@ -1143,8 +1130,6 @@ async fn thread_resume_initial_turns_page_matches_requested_turns_list_page() ->
         "2025-01-05T12:00:00Z",
         "first",
         vec![],
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let rollout_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     append_user_message(rollout_path.as_path(), "2025-01-05T12:01:00Z", "second")?;
@@ -1212,8 +1197,6 @@ async fn thread_turns_list_rejects_cursor_when_anchor_turn_is_rolled_back() -> R
         "2025-01-05T12:00:00Z",
         "first",
         vec![],
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let rollout_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
     append_user_message(rollout_path.as_path(), "2025-01-05T12:01:00Z", "second")?;
@@ -1280,8 +1263,6 @@ async fn thread_read_returns_forked_from_id_for_forked_threads() -> Result<()> {
         "2025-01-05T12:00:00Z",
         "Saved user message",
         vec![],
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -1367,8 +1348,6 @@ async fn paginated_thread_name_set_is_reflected_in_read_list_and_metadata_resume
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -1626,7 +1605,7 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
     let thread_id = genex_protocol::ThreadId::default();
     let sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.path().abs());
     let state_db =
-        genex_state::StateRuntime::init(sqlite.clone(), "mock_provider".to_string()).await?;
+        genex_state::StateRuntime::init(sqlite.clone()).await?;
     let store = LocalThreadStore::new(
         LocalThreadStoreConfig {
             genex_home: genex_home.path().to_path_buf(),
@@ -1656,7 +1635,6 @@ async fn paginated_history_lists_and_legacy_reads_use_projected_turns_and_items(
             runtime_workspace_roots: None,
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(genex_home.path().to_path_buf()),
-                model_provider: "mock_provider".to_string(),
             },
         })
         .await?;
@@ -2379,7 +2357,6 @@ async fn seed_pathless_store_thread(
             runtime_workspace_roots: None,
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
-                model_provider: "test-provider".to_string(),
             },
         })
         .await?;

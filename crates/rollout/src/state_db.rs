@@ -82,7 +82,7 @@ async fn try_init_with_roots_inner(
     sqlite: SqliteConfig,
     backfill_lease_seconds: Option<i64>,
 ) -> anyhow::Result<StateDbHandle> {
-    let runtime = genex_state::StateRuntime::init(sqlite.clone(), String::new())
+    let runtime = genex_state::StateRuntime::init(sqlite.clone())
         .await
         .with_context(|| {
             format!(
@@ -197,7 +197,6 @@ pub async fn get_state_db(config: &impl RolloutConfigView) -> Option<StateDbHand
     }
     let runtime = match genex_state::StateRuntime::init(
         config.sqlite_config().clone(),
-        String::new(),
     )
     .await
     {

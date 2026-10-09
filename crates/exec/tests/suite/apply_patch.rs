@@ -154,7 +154,6 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     use genex_login::AuthDotJson;
     use genex_login::AuthKeyringBackendKind;
     use genex_login::save_auth;
-    use genex_protocol::auth::AuthMode;
     use std::sync::Arc;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering;
@@ -190,7 +189,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     );
     save_auth(
         test.home_path(),
-        &AuthDotJson::legacy(Some(AuthMode::ApiKey), Some("test-api-key".to_string())),
+        &AuthDotJson::new(genex_login::ProviderAuth::api_key("test-api-key")),
         genex_login::AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;

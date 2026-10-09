@@ -11,7 +11,6 @@ async fn deleting_custom_section_preserves_threads_and_clears_section_ordering()
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let deleted_section = runtime
@@ -82,7 +81,6 @@ async fn concurrent_section_deletion_and_membership_moves_preserve_thread_invari
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let section = runtime

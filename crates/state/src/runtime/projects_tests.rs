@@ -16,7 +16,6 @@ async fn project_lifecycle_preserves_order_and_clears_assignments() -> anyhow::R
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let thread_id = ThreadId::default();
@@ -178,7 +177,6 @@ async fn project_idempotency_keys_replay_and_survive_deletion() -> anyhow::Resul
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let created = runtime
@@ -242,7 +240,6 @@ async fn project_import_rejects_unknown_thread_without_partial_project() -> anyh
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let error = runtime
@@ -276,12 +273,10 @@ async fn project_updates_preserve_omitted_fields_across_concurrent_writers() -> 
     let home = unique_temp_dir();
     let runtime_one = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let runtime_two = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let project = runtime_one
@@ -329,7 +324,6 @@ async fn project_list_rejects_malformed_cursors() -> anyhow::Result<()> {
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
 
@@ -365,7 +359,6 @@ async fn project_list_cursor_round_trips_across_pages() -> anyhow::Result<()> {
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     for name in ["One", "Two"] {
@@ -403,7 +396,6 @@ async fn project_list_orders_and_pages_recency_with_roots_and_nulls() -> anyhow:
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let mut projects = Vec::new();
@@ -588,7 +580,6 @@ async fn project_move_reorders_projects_and_preserves_no_op_timestamp() -> anyho
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let one = runtime
@@ -693,7 +684,6 @@ async fn initial_project_assignment_is_inserted_with_thread_row() -> anyhow::Res
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let project = runtime

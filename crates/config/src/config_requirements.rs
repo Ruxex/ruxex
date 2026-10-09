@@ -793,7 +793,6 @@ pub struct ConfigRequirementsToml {
     pub sqlite_home: Option<AbsolutePathBuf>,
     pub log_dir: Option<AbsolutePathBuf>,
     pub model_catalog_json: Option<AbsolutePathBuf>,
-    /// Exact provider selection, overriding local and session configuration.
     pub allow_login_shell: Option<bool>,
     pub allowed_approval_policies: Option<Vec<AskForApproval>>,
     pub allowed_sandbox_modes: Option<Vec<SandboxModeRequirement>>,

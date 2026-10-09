@@ -1,4 +1,4 @@
-//! Registry of model providers supported by Genex.
+//! Resolution and definitions for the model provider mounted by Genex.
 //!
 //! Providers can be defined in two places:
 //!   1. Built-in defaults compiled into the binary so Genex works out-of-the-box.
@@ -382,8 +382,8 @@ impl ModelProviderInfo {
 pub fn resolve_model_provider(
     configured_provider: Option<ModelProviderInfo>,
 ) -> Result<ResolvedModelProvider, String> {
-    let provider_info = configured_provider
-        .unwrap_or_else(ModelProviderInfo::create_cloudflare_provider);
+    let provider_info =
+        configured_provider.unwrap_or_else(ModelProviderInfo::create_cloudflare_provider);
     if provider_info.name.trim().is_empty() {
         return Err("model_provider.name must not be empty".to_string());
     }

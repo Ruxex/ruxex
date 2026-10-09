@@ -220,7 +220,6 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
 
         let state = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-            "test-provider".to_string(),
         )
         .await?;
         let persisted_logs = state.query_logs(&genex_state::LogQuery::default()).await?;

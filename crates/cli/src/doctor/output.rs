@@ -1183,7 +1183,7 @@ mod tests {
                 "network.provider_reachability",
                 "reachability",
                 CheckStatus::Ok,
-                "active provider endpoints are reachable over HTTP",
+                "configured provider endpoints are reachable over HTTP",
             ),
         ];
         DoctorReport {
@@ -1239,7 +1239,7 @@ Configuration
 Connectivity
   ✓ network      network environment readable
   ✓ websocket    Responses WebSocket handshake succeeded
-  ✓ reachability active provider endpoints are reachable over HTTP
+  ✓ reachability configured provider endpoints are reachable over HTTP
 
 Background Server
   ✓ app-server   background server is not running
@@ -1325,7 +1325,7 @@ Configuration
 Connectivity
   ✓ network      network environment readable
   ✓ websocket    Responses WebSocket handshake succeeded
-  ✓ reachability active provider endpoints are reachable over HTTP
+  ✓ reachability configured provider endpoints are reachable over HTTP
 
 Background Server
   ✓ app-server   background server is not running
@@ -1399,7 +1399,7 @@ Configuration
 Connectivity
   [ok] network      network environment readable
   [ok] websocket    Responses WebSocket handshake succeeded
-  [ok] reachability active provider endpoints are reachable over HTTP
+  [ok] reachability configured provider endpoints are reachable over HTTP
 
 Background Server
   [ok] app-server   background server is not running
@@ -1509,7 +1509,7 @@ Run genex doctor without --summary for detailed diagnostics.
                     "network.provider_reachability",
                     "reachability",
                     CheckStatus::Ok,
-                    "active provider endpoints are reachable over HTTP",
+                    "configured provider endpoints are reachable over HTTP",
                 )
                 .detail("reachability mode: API key auth"),
                 DoctorCheck::new(

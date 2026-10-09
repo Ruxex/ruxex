@@ -20,14 +20,13 @@ fn write_index(path: &Path, lines: &[SessionIndexEntry]) -> std::io::Result<()> 
 }
 
 fn write_rollout_with_metadata(path: &Path, thread_id: ThreadId) -> std::io::Result<()> {
-    write_rollout_with_source_and_provider(path, thread_id, SessionSource::Cli, "test-provider")
+    write_rollout_with_source(path, thread_id, SessionSource::Cli)
 }
 
-fn write_rollout_with_source_and_provider(
+fn write_rollout_with_source(
     path: &Path,
     thread_id: ThreadId,
     source: SessionSource,
-    model_provider: &str,
 ) -> std::io::Result<()> {
     let timestamp = "2024-01-01T00-00-00Z".to_string();
     let line = RolloutLine {
@@ -214,18 +213,8 @@ async fn find_thread_meta_candidates_filter_metadata_before_ranking() -> std::io
     ));
     std::fs::create_dir_all(&rollout_dir)?;
     write_rollout_with_metadata(&allowed_path, allowed_id)?;
-    write_rollout_with_source_and_provider(
-        &other_path,
-        other_id,
-        SessionSource::Cli,
-        "other-provider",
-    )?;
-    write_rollout_with_source_and_provider(
-        &noninteractive_path,
-        noninteractive_id,
-        SessionSource::Exec,
-        "test-provider",
-    )?;
+    write_rollout_with_source(&other_path, other_id, SessionSource::Cli)?;
+    write_rollout_with_source(&noninteractive_path, noninteractive_id, SessionSource::Exec)?;
     write_index(
         &index_path,
         &[

@@ -185,7 +185,7 @@ if payload["prompt"] == "blocked":
 async fn test_queue() -> anyhow::Result<(Arc<dyn QueueStore>, TempDir)> {
     let home = tempfile::tempdir()?;
     let sqlite = SqliteConfig::new_for_testing(home.path().abs());
-    let runtime = StateRuntime::init(sqlite.clone(), "test-provider".to_string()).await?;
+    let runtime = StateRuntime::init(sqlite.clone()).await?;
     let queue: Arc<dyn QueueStore> = Arc::new(LocalQueueStore::new(runtime));
     Ok((queue, home))
 }
@@ -603,7 +603,6 @@ async fn externally_changed_queues_dispatch_independently_and_retry_failed_wakes
             .context("state runtime unavailable")?
             .sqlite()
             .clone(),
-        "test-provider".to_string(),
     )
     .await?;
     let external_queue = QueuedItemService::new(

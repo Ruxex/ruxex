@@ -135,7 +135,6 @@ async fn staged_metadata_is_persisted_on_first_turn() -> Result<()> {
             thread_id,
             ThreadMetadataPatch {
                 name: Some(Some("staged-name".to_string())),
-                model_provider: Some("staged-provider".to_string()),
                 ..Default::default()
             },
         )
@@ -157,7 +156,7 @@ async fn staged_metadata_is_persisted_on_first_turn() -> Result<()> {
     .await;
 
     let db = test.genex.state_db().expect("state db enabled");
-    let metadata = db
+    let _metadata = db
         .get_thread(started.thread_id)
         .await?
         .expect("thread should exist in state db");
@@ -168,7 +167,6 @@ async fn staged_metadata_is_persisted_on_first_turn() -> Result<()> {
         )
         .await?;
     assert_eq!(thread.name.as_deref(), Some("staged-name"));
-    assert_eq!(metadata.model_provider, test.config.model_provider_id);
 
     Ok(())
 }
@@ -478,8 +476,6 @@ async fn backfill_scans_existing_rollouts() -> Result<()> {
 
     let db_path = test.config.sqlite.state_db_path();
     let rollout_path = test.config.genex_home.join(&rollout_rel_path);
-    let default_provider = test.config.model_provider_id.clone();
-
     for _ in 0..20 {
         if tokio::fs::try_exists(&db_path).await.unwrap_or(false) {
             break;
@@ -501,7 +497,6 @@ async fn backfill_scans_existing_rollouts() -> Result<()> {
     let metadata = metadata.expect("backfilled thread should exist in state db");
     assert_eq!(metadata.id, thread_id);
     assert_eq!(metadata.rollout_path, rollout_path.to_path_buf());
-    assert_eq!(metadata.model_provider, default_provider);
     assert!(metadata.first_user_message.is_some());
 
     Ok(())

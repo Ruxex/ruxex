@@ -378,7 +378,6 @@ mod tests {
             "2025-01-03T12-00-01",
             Uuid::from_u128(304),
             "Archived user message",
-            Some("test-provider"),
             ThreadHistoryMode::Paginated,
         )
         .expect("child session file");
@@ -726,7 +725,6 @@ SELECT
         let config = test_config(home.path());
         let state_db = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("initialize state database for materialized history");

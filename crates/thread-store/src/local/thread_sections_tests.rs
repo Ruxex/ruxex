@@ -29,7 +29,6 @@ async fn local_thread_sections_require_sqlite_and_preserve_section_identity() {
 
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("state db should initialize");

@@ -88,7 +88,6 @@ async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()>
             "2026-01-01T00-00-00",
             "2026-01-01T00:00:00Z",
             "Saved user message",
-            Some(app.config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create rollout"),
@@ -951,7 +950,6 @@ async fn archive_current_thread_reports_success_only_after_archiving() -> Result
             "2026-08-25T01-00-00",
             "2026-08-25T01:00:00Z",
             "archive me",
-            Some(&app.config.model_provider_id),
             /*git_info*/ None,
         )
         .expect("create rollout"),
@@ -1836,7 +1834,6 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
         "2026-01-02T00-00-00",
         "2026-01-02T00:00:00Z",
         "multi-page transcript",
-        Some(app.config.model_provider_id.as_str()),
         /*git_info*/ None,
     )
     .map_err(|error| color_eyre::eyre::eyre!("failed to create paginated rollout: {error}"))?;
@@ -2707,7 +2704,6 @@ async fn cold_paginated_subagent_transcript_excludes_inherited_parent_history() 
             child_timestamp,
             "2026-01-02T00:00:01Z",
             "child-only paginated history",
-            Some(app.config.model_provider_id.as_str()),
             /*git_info*/ None,
             RolloutSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
                 parent_thread_id,

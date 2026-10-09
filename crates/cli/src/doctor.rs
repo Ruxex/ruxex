@@ -1163,7 +1163,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
             details.push(format!("stored auth mode: {}", stored_auth_mode(&auth)));
             details.push(format!(
                 "stored API key: {}",
-                auth.default_auth()
+                auth.auth()
                     .is_some_and(|provider_auth| provider_auth.api_key.is_some())
             ));
             let auth_issues = stored_auth_issues(&auth, env_var_present);
@@ -1236,7 +1236,7 @@ fn stored_auth_mode(auth: &genex_login::AuthDotJson) -> &'static str {
 }
 
 fn stored_auth_mode_value(auth: &AuthDotJson) -> AuthMode {
-    auth.default_auth()
+    auth.auth()
         .map(|provider_auth| provider_auth.resolved_mode())
         .unwrap_or(AuthMode::ApiKey)
 }
@@ -1249,7 +1249,7 @@ fn stored_auth_issues(
     match stored_auth_mode_value(auth) {
         AuthMode::ApiKey => {
             let stored_key_present = auth
-                .default_auth()
+                .auth()
                 .and_then(|provider_auth| provider_auth.api_key.as_deref())
                 .is_some_and(|key| !key.trim().is_empty());
             let env_key_present = env_var_present(GENEX_API_KEY_ENV_VAR);
@@ -2002,7 +2002,7 @@ async fn websocket_reachability_check(
             "network.websocket_reachability",
             "websocket",
             CheckStatus::Ok,
-            "Responses WebSocket is not enabled for the active provider",
+            "Responses WebSocket is not enabled for the configured provider",
         )
         .details(details);
     }
@@ -2355,12 +2355,12 @@ fn provider_url_for_path(
 async fn provider_reachability_check(plan: ReachabilityPlan) -> DoctorCheck {
     let mut details = vec![format!("reachability mode: {}", plan.description)];
     if plan.endpoints.is_empty() {
-        details.push("active provider endpoint: none configured".to_string());
+        details.push("configured provider endpoint: none configured".to_string());
         return DoctorCheck::new(
             "network.provider_reachability",
             "reachability",
             CheckStatus::Ok,
-            "active provider has no HTTP endpoint to probe",
+            "configured provider has no HTTP endpoint to probe",
         )
         .details(details);
     }
@@ -2499,7 +2499,7 @@ fn provider_reachability_outcome(
     match (required_failures, warnings) {
         (0, 0) => (
             CheckStatus::Ok,
-            "active provider endpoints are reachable over HTTP",
+            "configured provider endpoints are reachable over HTTP",
         ),
         (0, _) => (
             CheckStatus::Warning,

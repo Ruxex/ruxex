@@ -121,7 +121,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -176,7 +175,7 @@ mod tests {
     async fn get_backfill_state_succeeds_while_another_connection_holds_writer_slot() {
         let genex_home = unique_temp_dir();
         let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
-        let runtime = StateRuntime::init(sqlite.clone(), "test-provider".to_string())
+        let runtime = StateRuntime::init(sqlite.clone())
             .await
             .expect("initialize runtime");
         let write_pool = sqlite
@@ -207,7 +206,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -236,7 +234,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");

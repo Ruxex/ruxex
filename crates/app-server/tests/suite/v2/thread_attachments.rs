@@ -50,16 +50,12 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "First thread",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let unrelated_thread = create_fake_rollout(
         genex_home.path(),
         "2025-01-06T10-00-00",
         "2025-01-06T10:00:00Z",
         "Unrelated thread",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let mut server = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -203,8 +199,6 @@ async fn attachment_removal_is_idempotent_and_allows_reattachment() -> Result<()
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "Stored thread",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let mut server = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -374,8 +368,6 @@ async fn thread_attachment_mutations_respond_before_broadcasting_updates_to_mult
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "Stored thread",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
 

@@ -11,7 +11,6 @@ async fn runtime_with_thread() -> (Arc<StateRuntime>, ThreadId) {
     let home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("state runtime");
@@ -24,7 +23,7 @@ async fn runtime_with_thread() -> (Arc<StateRuntime>, ThreadId) {
 #[tokio::test]
 async fn competing_runtimes_preserve_fifo_queue_order() {
     let (runtime, thread_id) = runtime_with_thread().await;
-    let other = StateRuntime::init(runtime.sqlite().clone(), "test-provider".to_string())
+    let other = StateRuntime::init(runtime.sqlite().clone())
         .await
         .unwrap();
     let queue = runtime.thread_queue();
@@ -79,7 +78,7 @@ async fn migrating_existing_queue_backfills_thread_revisions() {
     .unwrap();
     pool.close().await;
 
-    let runtime = StateRuntime::init(sqlite, "test-provider".to_string())
+    let runtime = StateRuntime::init(sqlite)
         .await
         .unwrap();
     let queue = runtime.thread_queue();
@@ -250,7 +249,7 @@ async fn deleting_a_thread_removes_its_queue() {
 #[tokio::test]
 async fn concurrent_inserts_enforce_the_queue_limit() {
     let (runtime, thread_id) = runtime_with_thread().await;
-    let other = StateRuntime::init(runtime.sqlite().clone(), "test-provider".to_string())
+    let other = StateRuntime::init(runtime.sqlite().clone())
         .await
         .unwrap();
 

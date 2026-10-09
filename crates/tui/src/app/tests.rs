@@ -2269,7 +2269,6 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create source rollout"),
@@ -5898,7 +5897,6 @@ async fn remote_resume_keeps_server_only_cwd_out_of_local_config() -> Result<()>
         filename_timestamp,
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some(&app.config.model_provider_id),
         /*git_info*/ None,
     )
     .expect("materialized rollout should be created");
@@ -6025,7 +6023,6 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             filename_timestamp,
             "2025-01-05T12:00:00Z",
             "Saved user message",
-            Some(&config.model_provider_id),
             /*git_info*/ None,
         )
         .expect("materialized rollout should be created");
@@ -6183,7 +6180,6 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
             filename_timestamp,
             metadata_timestamp,
             "Saved user message",
-            Some(&config.model_provider_id),
             /*git_info*/ None,
         )
         .expect("materialized rollout should be created");
@@ -6263,7 +6259,6 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
         filename_ts,
         "2025-01-05T12:00:00Z",
         "unused preview",
-        Some("test-provider"),
         /*git_info*/ None,
     )
     .expect("materialized rollout should be created");

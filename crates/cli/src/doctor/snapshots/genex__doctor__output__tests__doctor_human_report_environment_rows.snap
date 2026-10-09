@@ -56,7 +56,7 @@ Desktop App
 Connectivity
   ✓ network      network environment readable
   ✓ websocket    Responses WebSocket handshake succeeded
-  ✓ reachability active provider endpoints are reachable over HTTP
+  ✓ reachability configured provider endpoints are reachable over HTTP
 
 Background Server
   ✓ app-server   background server is not running

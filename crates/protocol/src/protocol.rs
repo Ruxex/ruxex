@@ -3447,8 +3447,6 @@ pub struct SessionConfiguredEvent {
     /// Tell the client what model is being queried.
     pub model: String,
 
-    pub model_provider_id: String,
-
     #[serde(skip_serializing_if = "Option::is_none")]
     pub service_tier: Option<String>,
 
@@ -3493,6 +3491,7 @@ impl<'de> Deserialize<'de> for SessionConfiguredEvent {
         D: serde::Deserializer<'de>,
     {
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct Wire {
             session_id: SessionId,
             #[serde(default)]
@@ -3504,7 +3503,6 @@ impl<'de> Deserialize<'de> for SessionConfiguredEvent {
             #[serde(default)]
             thread_name: Option<String>,
             model: String,
-            model_provider_id: String,
             service_tier: Option<String>,
             approval_policy: AskForApproval,
             // `SessionConfiguredEvent` is persisted into rollout history. Older
@@ -3541,7 +3539,6 @@ impl<'de> Deserialize<'de> for SessionConfiguredEvent {
             thread_source: wire.thread_source,
             thread_name: wire.thread_name,
             model: wire.model,
-            model_provider_id: wire.model_provider_id,
             service_tier: wire.service_tier,
             approval_policy: wire.approval_policy,
             permission_profile,
@@ -5709,7 +5706,6 @@ mod tests {
                 thread_source: None,
                 thread_name: None,
                 model: "example-model".to_string(),
-                model_provider_id: "provider".to_string(),
                 service_tier: None,
                 approval_policy: AskForApproval::Never,
                 permission_profile: permission_profile.clone(),
@@ -5729,7 +5725,6 @@ mod tests {
                 "session_id": "67e55044-10b1-426f-9247-bb680e5fe0c7",
                 "thread_id": "67e55044-10b1-426f-9247-bb680e5fe0c8",
                 "model": "example-model",
-                "model_provider_id": "provider",
                 "approval_policy": "never",
                 "permission_profile": permission_profile,
                 "cwd": test_path_buf("/home/user/project"),
@@ -5747,7 +5742,6 @@ mod tests {
         let value = json!({
             "session_id": "67e55044-10b1-426f-9247-bb680e5fe0c8",
             "model": "example-model",
-            "model_provider_id": "provider",
             "approval_policy": "never",
             "sandbox_policy": {
                 "type": "read-only"

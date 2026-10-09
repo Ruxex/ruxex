@@ -166,8 +166,6 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
             filename_timestamp,
             timestamp,
             preview,
-            Some("mock_provider"),
-            /*git_info*/ None,
         )?;
         reconcile_rollout(
             Some(&state_db),
@@ -406,8 +404,6 @@ async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_res
             filename_timestamp,
             timestamp,
             preview,
-            Some("mock_provider"),
-            /*git_info*/ None,
         )?;
         reconcile_rollout(
             Some(&state_db),
@@ -879,8 +875,6 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_stored_thread() -
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -938,8 +932,6 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
         "2025-01-06T08-30-00",
         "2025-01-06T08:30:00Z",
         preview,
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let thread_uuid = ThreadId::from_string(&thread_id)?;
     let rollout_path = rollout_path(genex_home.path(), "2025-01-06T08-30-00", &thread_id);
@@ -1028,8 +1020,6 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread()
         "2025-01-06T08-30-00",
         "2025-01-06T08:30:00Z",
         preview,
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let archived_dir = genex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
@@ -1095,15 +1085,6 @@ async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
         "2025-01-07T09-15-00",
         "2025-01-07T09:15:00Z",
         "Thread preview",
-        Some("mock_provider"),
-        Some(RolloutGitInfo {
-            commit_hash: Some(GitSha::new("abc123")),
-            branch: Some("feature/sidebar-pr".to_string()),
-            repository_url: Some(
-                SanitizedGitUrl::try_from("git@example.com:owner/repo.git")
-                    .expect("repository URL should be valid"),
-            ),
-        }),
     )?;
     let _state_db = init_state_db(genex_home.path()).await?;
 
@@ -1158,7 +1139,6 @@ async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
 async fn init_state_db(genex_home: &Path) -> Result<Arc<StateRuntime>> {
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db

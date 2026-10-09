@@ -39,7 +39,6 @@ async fn lifecycle_metadata_uses_local_prompt_history() -> Result<()> {
                 "2025-01-05T12-00-00",
                 "2025-01-05T12:00:00Z",
                 "Saved user message",
-                Some(config.model_provider_id.as_str()),
                 /*git_info*/ None,
             )
             .expect("create source rollout"),

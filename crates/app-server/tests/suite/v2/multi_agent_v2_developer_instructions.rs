@@ -721,7 +721,6 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
 
         let child_resume_params = ThreadResumeParams {
             thread_id: child_thread_id,
-            model_provider: Some("mock_provider".to_string()),
             sandbox: Some(SandboxMode::DangerFullAccess),
             config: Some(HashMap::from([(
                 "model_provider.base_url".to_string(),
@@ -867,7 +866,6 @@ features.shell_tool = false
     if history_mode == ThreadHistoryMode::Paginated {
         let state_db = StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-            "mock_provider".into(),
         )
         .await?;
         let mut metadata = state_db

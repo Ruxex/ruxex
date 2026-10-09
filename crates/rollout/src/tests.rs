@@ -93,7 +93,6 @@ async fn insert_state_db_thread(
 ) -> crate::state_db::StateDbHandle {
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.abs()),
-        TEST_PROVIDER.to_string(),
     )
     .await
     .expect("state db should initialize");
@@ -306,7 +305,6 @@ async fn find_thread_path_repairs_missing_db_row_after_filesystem_fallback() {
     // Create an empty state DB so lookup takes the DB-first path and then falls back to files.
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.abs()),
-        TEST_PROVIDER.to_string(),
     )
     .await
     .expect("state db should initialize");
@@ -362,7 +360,6 @@ async fn assert_state_db_rollout_path(
 ) {
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.abs()),
-        TEST_PROVIDER.to_string(),
     )
     .await
     .expect("state db should initialize");
@@ -380,14 +377,7 @@ fn write_session_file(
     num_records: usize,
     source: Option<SessionSource>,
 ) -> std::io::Result<(OffsetDateTime, Uuid)> {
-    write_session_file_with_provider(
-        root,
-        ts_str,
-        uuid,
-        num_records,
-        source,
-        Some("test-provider"),
-    )
+    write_session_file_with_provider(root, ts_str, uuid, num_records, source)
 }
 
 fn write_session_file_with_provider(
@@ -396,7 +386,6 @@ fn write_session_file_with_provider(
     uuid: Uuid,
     num_records: usize,
     source: Option<SessionSource>,
-    model_provider: Option<&str>,
 ) -> std::io::Result<(OffsetDateTime, Uuid)> {
     let format: &[FormatItem] =
         format_description!("[year]-[month]-[day]T[hour]-[minute]-[second]");
@@ -427,10 +416,6 @@ fn write_session_file_with_provider(
     if let Some(source) = source {
         payload["source"] = serde_json::to_value(source).unwrap();
     }
-    if let Some(provider) = model_provider {
-        payload["model_provider"] = serde_json::Value::String(provider.to_string());
-    }
-
     let meta = serde_json::json!({
         "timestamp": ts_str,
         "type": "session_meta",
@@ -496,7 +481,6 @@ fn write_goal_started_session_file(
             "originator": "test_originator",
             "cli_version": "test_version",
             "source": "vscode",
-            "model_provider": "test-provider",
             "base_instructions": null,
         },
     });
@@ -578,7 +562,6 @@ fn write_session_file_with_delayed_user_event(
             "originator": "test_originator",
             "cli_version": "test_version",
             "source": "vscode",
-            "model_provider": "test-provider",
         });
         let meta = serde_json::json!({
             "timestamp": ts_str,
@@ -1213,7 +1196,6 @@ async fn test_get_thread_contents() {
             "cli_version": "test_version",
             "base_instructions": null,
             "source": "vscode",
-            "model_provider": "test-provider",
         }
     });
     let user_event = serde_json::json!({
@@ -1241,7 +1223,6 @@ async fn test_base_instructions_missing_in_meta_defaults_to_null() {
         "originator": "test_originator",
         "cli_version": "test_version",
         "source": "vscode",
-        "model_provider": "test-provider",
     });
     write_session_file_with_meta_payload(home, ts, uuid, payload).unwrap();
 
@@ -1281,7 +1262,6 @@ async fn test_base_instructions_present_in_meta_is_preserved() {
         "originator": "test_originator",
         "cli_version": "test_version",
         "source": "vscode",
-        "model_provider": "test-provider",
         "base_instructions": {"text": base_text},
     });
     write_session_file_with_meta_payload(home, ts, uuid, payload).unwrap();

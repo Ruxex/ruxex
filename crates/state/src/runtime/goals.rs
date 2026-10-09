@@ -640,7 +640,6 @@ mod tests {
     async fn test_runtime() -> std::sync::Arc<StateRuntime> {
         StateRuntime::init(
             crate::SqliteConfig::new_for_testing(unique_temp_dir().as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize")

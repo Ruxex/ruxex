@@ -233,7 +233,6 @@ mod tests {
             .join(archived_path.file_name().expect("file name"));
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");

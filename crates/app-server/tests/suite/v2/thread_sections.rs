@@ -195,16 +195,12 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "First thread",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let archived_thread = create_fake_rollout(
         genex_home.path(),
         "2025-01-06T09-00-00",
         "2025-01-06T09:00:00Z",
         "Archived thread",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let mut server = TestAppServer::builder()
         .with_genex_home(genex_home.path())

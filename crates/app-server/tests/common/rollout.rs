@@ -36,7 +36,6 @@ pub fn rollout_path(genex_home: &Path, filename_ts: &str, thread_id: &str) -> Pa
 /// - `filename_ts` is the filename timestamp component in `YYYY-MM-DDThh-mm-ss` format.
 /// - `meta_rfc3339` is the envelope timestamp used in JSON lines.
 /// - `preview` is the user message preview text.
-/// - `model_provider` optionally sets the provider in the session meta payload.
 ///
 /// Returns the generated conversation/session UUID as a string.
 pub fn create_fake_rollout(
@@ -44,7 +43,6 @@ pub fn create_fake_rollout(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    model_provider: Option<&str>,
     git_info: Option<GitInfo>,
 ) -> Result<String> {
     create_fake_rollout_with_source(
@@ -52,7 +50,6 @@ pub fn create_fake_rollout(
         filename_ts,
         meta_rfc3339,
         preview,
-        model_provider,
         git_info,
         SessionSource::Cli,
     )
@@ -64,7 +61,6 @@ pub fn create_fake_paginated_rollout(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    model_provider: Option<&str>,
     git_info: Option<GitInfo>,
 ) -> Result<String> {
     let thread_id = create_fake_rollout(
@@ -72,7 +68,6 @@ pub fn create_fake_paginated_rollout(
         filename_ts,
         meta_rfc3339,
         preview,
-        model_provider,
         git_info,
     )?;
     let path = rollout_path(genex_home, filename_ts, &thread_id);
@@ -104,14 +99,12 @@ pub fn create_fake_rollout_with_token_usage(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    model_provider: Option<&str>,
 ) -> Result<String> {
     let thread_id = create_fake_rollout(
         genex_home,
         filename_ts,
         meta_rfc3339,
         preview,
-        model_provider,
         /*git_info*/ None,
     )?;
     let payload = serde_json::to_value(EventMsg::TokenCount(TokenCountEvent {
@@ -158,7 +151,6 @@ pub fn create_fake_rollout_with_source(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    model_provider: Option<&str>,
     git_info: Option<GitInfo>,
     source: SessionSource,
 ) -> Result<String> {
@@ -167,7 +159,6 @@ pub fn create_fake_rollout_with_source(
         filename_ts,
         meta_rfc3339,
         preview,
-        model_provider,
         git_info,
         source,
         /*thread_source*/ None,
@@ -181,7 +172,6 @@ pub fn create_fake_rollout_with_session_and_thread_source(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    model_provider: Option<&str>,
     git_info: Option<GitInfo>,
     source: SessionSource,
     thread_source: Option<ThreadSource>,
@@ -191,7 +181,6 @@ pub fn create_fake_rollout_with_session_and_thread_source(
         filename_ts,
         meta_rfc3339,
         preview,
-        model_provider,
         git_info,
         source,
         thread_source,
@@ -207,7 +196,6 @@ pub fn create_fake_parented_rollout_with_source(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    model_provider: Option<&str>,
     git_info: Option<GitInfo>,
     source: SessionSource,
     session_id: SessionId,
@@ -218,7 +206,6 @@ pub fn create_fake_parented_rollout_with_source(
         filename_ts,
         meta_rfc3339,
         preview,
-        model_provider,
         git_info,
         source,
         /*thread_source*/ None,
@@ -233,7 +220,6 @@ fn create_fake_rollout_with_source_and_parent_thread_id(
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
-    _model_provider: Option<&str>,
     git_info: Option<GitInfo>,
     source: SessionSource,
     thread_source: Option<ThreadSource>,
@@ -327,7 +313,6 @@ pub fn create_fake_rollout_with_text_elements(
     meta_rfc3339: &str,
     preview: &str,
     text_elements: Vec<serde_json::Value>,
-    _model_provider: Option<&str>,
     git_info: Option<GitInfo>,
 ) -> Result<String> {
     let uuid = Uuid::new_v4();

@@ -60,7 +60,7 @@ async fn list_threads_db_rejects_mismatched_sqlite_config_without_cleanup() -> a
         root.path().join("requested-sqlite").as_path().abs(),
     );
     let runtime =
-        genex_state::StateRuntime::init(runtime_sqlite, "test-provider".to_string()).await?;
+        genex_state::StateRuntime::init(runtime_sqlite).await?;
     let thread_id = ThreadId::new();
     let metadata = ThreadMetadataBuilder::new(
         thread_id,
@@ -98,7 +98,6 @@ async fn try_init_waits_for_concurrent_startup_backfill() -> anyhow::Result<()> 
     let home = TempDir::new().expect("temp dir");
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let claimed = runtime.try_claim_backfill(/*lease_seconds*/ 60).await?;
@@ -131,7 +130,6 @@ async fn try_init_times_out_waiting_for_stuck_startup_backfill() -> anyhow::Resu
     let home = TempDir::new().expect("temp dir");
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let claimed = runtime.try_claim_backfill(/*lease_seconds*/ 60).await?;
@@ -168,7 +166,6 @@ async fn reconcile_rollout_preserves_existing_explicit_title() -> anyhow::Result
     )?;
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
 
@@ -219,7 +216,6 @@ async fn filesystem_repair_preserves_existing_rollout_path() -> anyhow::Result<(
     )?;
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let active_metadata = metadata::extract_metadata_from_rollout(active_rollout_path.as_path())

@@ -77,7 +77,6 @@ async fn unloaded_thread_attachments_support_listing_and_removal() {
     let config = test_config(home.path());
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -195,7 +194,6 @@ async fn attachment_state_errors_preserve_missing_thread_and_invalid_request_cat
     let config = test_config(home.path());
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -244,7 +242,6 @@ async fn attachment_mutations_wait_for_exclusive_thread_lifecycle_operations() {
     let config = test_config(home.path());
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -470,7 +467,6 @@ async fn store_with_attachment_owners(
     let config = test_config(home);
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("state db should initialize");

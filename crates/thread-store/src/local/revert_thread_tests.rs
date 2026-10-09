@@ -30,7 +30,6 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
     let config = test_config(home.path());
     let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("initialize state database");
@@ -144,7 +143,6 @@ async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
     let config = test_config(home.path());
     let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("initialize state database");

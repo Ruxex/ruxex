@@ -370,7 +370,6 @@ mod tests {
             "2025-01-03T12-00-00",
             Uuid::from_u128(102),
             "Hello from user",
-            /*model_provider*/ None,
             ThreadHistoryMode::Paginated,
         )
         .expect("session file");
@@ -407,7 +406,6 @@ mod tests {
 
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -475,7 +473,6 @@ mod tests {
 
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -651,7 +648,6 @@ mod tests {
         let config = test_config(home.path());
         let state = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("initialize state");

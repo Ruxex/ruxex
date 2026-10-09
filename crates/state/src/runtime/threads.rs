@@ -1483,7 +1483,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -1624,7 +1623,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -1727,7 +1725,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await?;
         let thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000401")?;
@@ -1777,7 +1774,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await?;
         let thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000405")?;
@@ -1864,7 +1860,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -1954,7 +1949,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2068,7 +2062,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2157,7 +2150,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2366,7 +2358,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2446,7 +2437,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2512,7 +2502,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2548,7 +2537,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2592,7 +2580,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2660,7 +2647,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2711,7 +2697,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2751,7 +2736,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2793,7 +2777,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2855,7 +2838,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -2982,7 +2964,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -3093,7 +3074,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -3152,7 +3132,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");
@@ -3251,7 +3230,6 @@ mod tests {
         let genex_home = unique_temp_dir();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");

@@ -1,7 +1,7 @@
 //! Session- and turn-scoped helpers for talking to model provider APIs.
 //!
 //! `ModelClient` is intended to live for the lifetime of a Genex session and holds the stable
-//! configuration and state needed to talk to a provider (auth, provider selection, conversation id,
+//! configuration and state needed to talk to the mounted provider (auth, conversation id,
 //! and transport fallback state).
 //!
 //! Per-turn settings (model selection, reasoning controls, telemetry context, and turn metadata)
@@ -209,7 +209,7 @@ impl RequestRouteTelemetry {
 /// A session-scoped client for model-provider API calls.
 ///
 /// This holds configuration and state that should be shared across turns within a Genex session
-/// (auth, provider selection, thread id, and transport fallback state).
+/// (auth, mounted provider, thread id, and transport fallback state).
 ///
 /// WebSocket fallback is session-scoped: once a turn activates the HTTP fallback, subsequent turns
 /// will also use HTTP for the remainder of the session.

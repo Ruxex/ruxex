@@ -10,7 +10,6 @@ use super::*;
 fn thread_settings_snapshot(disabled_plugin_ids: Vec<String>) -> Result<ThreadSettingsSnapshot> {
     Ok(serde_json::from_value(json!({
         "model": "example-model",
-        "model_provider_id": "provider",
         "approval_policy": "never",
         "permission_profile": genex_protocol::models::PermissionProfile::read_only(),
         "cwd": std::env::current_dir()?,

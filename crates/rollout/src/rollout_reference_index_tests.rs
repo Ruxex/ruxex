@@ -291,7 +291,6 @@ fn write_rollout(
             "originator": "test",
             "cli_version": "test",
             "source": "cli",
-            "model_provider": "test-provider",
             "history_mode": "paginated",
             "history_base": history_base,
         },

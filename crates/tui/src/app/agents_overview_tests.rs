@@ -285,11 +285,6 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
                 &format!("2025-01-{day:02}T12-00-00"),
                 &format!("2025-01-{day:02}T12:00:00Z"),
                 &format!("Task {day}"),
-                Some(if day == 10 {
-                    "other-provider"
-                } else {
-                    &app.config.model_provider_id
-                }),
                 /*git_info*/ None,
                 source,
             )
@@ -330,7 +325,6 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
         "2025-01-23T12-00-00",
         "2025-01-23T12:00:00Z",
         "Unindexed task",
-        Some(&app.config.model_provider_id),
         /*git_info*/ None,
         genex_protocol::protocol::SessionSource::Cli,
     )
@@ -701,7 +695,6 @@ async fn root_switch_loads_local_preferences_from_disk() -> Result<()> {
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Target task",
-            Some(&app.config.model_provider_id),
             /*git_info*/ None,
         )
         .expect("materialize target rollout"),
@@ -742,7 +735,6 @@ async fn root_switch_preserves_idle_root_with_running_subagent() -> Result<()> {
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Target task",
-            Some(&app.config.model_provider_id),
             /*git_info*/ None,
         )
         .expect("materialize target rollout"),
@@ -822,7 +814,6 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
                 &format!("2025-01-{day:02}T12-00-00"),
                 &format!("2025-01-{day:02}T12:00:00Z"),
                 "Historical session",
-                Some(&server_config.model_provider_id),
                 /*git_info*/ None,
             )
             .expect("create historical session"),
@@ -1167,7 +1158,6 @@ async fn resume_picker_round_trip_preserves_each_threads_input() -> Result<()> {
             timestamp,
             "2025-01-05T12:00:00Z",
             name,
-            Some(&app.config.model_provider_id),
             /*git_info*/ None,
         )
         .expect("saved rollout");
@@ -1262,7 +1252,6 @@ async fn command_center_handles_resume_failure_and_success() -> Result<()> {
         timestamp,
         "2025-01-05T12:00:00Z",
         "Saved task",
-        Some(&app.config.model_provider_id),
         /*git_info*/ None,
     )
     .expect("saved rollout");

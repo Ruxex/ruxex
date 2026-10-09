@@ -123,7 +123,6 @@ fn write_session_file(root: &Path, ts: &str, uuid: Uuid) -> std::io::Result<Path
             "originator": "test_originator",
             "cli_version": "test_version",
             "source": "cli",
-            "model_provider": "test-provider",
             "history_mode": "paginated",
         },
     });
@@ -278,7 +277,6 @@ async fn load_rollout_items_defaults_legacy_session_id() -> std::io::Result<()> 
                 "originator": "test_originator",
                 "cli_version": "test_version",
                 "source": "cli",
-                "model_provider": "test-provider",
             },
         })
     )?;
@@ -344,7 +342,6 @@ async fn load_rollout_items_ignores_unknown_fork_source_history_mode() -> std::i
                 "originator": "test_originator",
                 "cli_version": "test_version",
                 "source": "cli",
-                "model_provider": "test-provider",
                 "history_mode": "future",
             },
         })
@@ -1009,7 +1006,6 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1092,7 +1088,6 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1118,7 +1113,6 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
             "originator": "test_originator",
             "cli_version": "test_version",
             "source": "cli",
-            "model_provider": "test-provider",
         },
     });
     writeln!(file, "{meta}")?;
@@ -1190,7 +1184,6 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1273,7 +1266,6 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        String::new(),
     )
     .await
     .expect("state db should initialize");
@@ -1440,7 +1432,6 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
 
     let runtime = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-        String::new(),
     )
     .await
     .expect("state db should initialize");

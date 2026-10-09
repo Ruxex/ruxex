@@ -82,7 +82,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                     }
                     "model/list" => json!({"data": [], "nextCursor": null}),
                     "config/read" => {
-                        json!({"config": {"model": "provider-model-d", "model_provider": "provider", "projects": {
+                        json!({"config": {"model": "provider-model-d", "projects": {
                         server_cwd.to_string_lossy(): {"trust_level": "trusted"}
                     }}, "origins": {}, "layers": []})
                     }

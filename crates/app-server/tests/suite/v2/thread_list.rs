@@ -74,7 +74,6 @@ async fn list_threads(
     mcp: &mut TestAppServer,
     cursor: Option<String>,
     limit: Option<u32>,
-    _providers: Option<Vec<String>>,
     source_kinds: Option<Vec<ThreadSourceKind>>,
     archived: Option<bool>,
 ) -> Result<ThreadListResponse> {
@@ -82,7 +81,6 @@ async fn list_threads(
         mcp,
         cursor,
         limit,
-        _providers,
         source_kinds,
         /*sort_key*/ None,
         archived,
@@ -94,7 +92,6 @@ async fn list_threads_with_sort(
     mcp: &mut TestAppServer,
     cursor: Option<String>,
     limit: Option<u32>,
-    _providers: Option<Vec<String>>,
     source_kinds: Option<Vec<ThreadSourceKind>>,
     sort_key: Option<ThreadSortKey>,
     archived: Option<bool>,
@@ -131,7 +128,6 @@ async fn list_threads_for_relation(
     relation: ThreadListRelation,
     cursor: Option<String>,
     limit: u32,
-    _model_providers: Option<Vec<String>>,
     source_kinds: Option<Vec<ThreadSourceKind>>,
 ) -> Result<ThreadListResponse> {
     let (parent_thread_id, ancestor_thread_id) = match relation {
@@ -179,8 +175,6 @@ where
             &ts_file,
             &ts_rfc,
             preview,
-            Some(provider_for_index(i)),
-            /*git_info*/ None,
         )?);
     }
     Ok(ids)
@@ -244,7 +238,6 @@ async fn thread_list_basic_empty() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -316,7 +309,6 @@ async fn thread_list_reports_system_error_idle_flag_after_failed_turn() -> Resul
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(vec![
             ThreadSourceKind::AppServer,
             ThreadSourceKind::Cli,
@@ -361,24 +353,18 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let _b = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T13-00-00",
         "2025-01-01T13:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let _c = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T12-00-00",
         "2025-01-01T12:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = init_mcp(genex_home.path()).await?;
@@ -392,7 +378,6 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(2),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -420,7 +405,6 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
         &mut mcp,
         Some(cursor1),
         Some(2),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -452,24 +436,18 @@ async fn thread_list_respects_cwd_filters() -> Result<()> {
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         "first filtered",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let second_filtered_id = create_fake_rollout(
         genex_home.path(),
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "second filtered",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let unfiltered_id = create_fake_rollout(
         genex_home.path(),
         "2025-01-02T11-00-00",
         "2025-01-02T11:00:00Z",
         "unfiltered",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let first_target_cwd = genex_home.path().join("first-target-cwd");
@@ -549,24 +527,18 @@ sqlite = true
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         "match: needle",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let _non_match = create_fake_rollout(
         genex_home.path(),
         "2025-01-02T11-00-00",
         "2025-01-02T11:00:00Z",
         "no hit here",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let newer_match = create_fake_rollout(
         genex_home.path(),
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "needle suffix",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     // `thread/list` applies `search_term` on the sqlite fast path. This test creates
@@ -574,7 +546,6 @@ sqlite = true
     // list large enough to repair every rollout the searched list should find.
     let state_db = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -640,32 +611,24 @@ async fn thread_search_returns_content_matches() -> Result<()> {
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         "match: needle",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let _non_match = create_fake_rollout(
         genex_home.path(),
         "2025-01-02T11-00-00",
         "2025-01-02T11:00:00Z",
         "no hit here",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let unsectioned_match = create_fake_rollout(
         genex_home.path(),
         "2025-01-02T11-30-00",
         "2025-01-02T11:30:00Z",
         "unsectioned needle",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let newer_match = create_fake_rollout(
         genex_home.path(),
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "mixed NEEDLE suffix",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = init_mcp(genex_home.path()).await?;
@@ -781,8 +744,6 @@ async fn thread_search_matches_json_escaped_content() -> Result<()> {
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         search_term,
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = init_mcp(genex_home.path()).await?;
@@ -817,16 +778,12 @@ async fn thread_search_filters_by_source_kind() -> Result<()> {
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "shared needle",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let exec_id = create_fake_rollout_with_source(
         genex_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "shared needle",
-        Some("mock_provider"),
-        /*git_info*/ None,
         CoreSessionSource::Exec,
     )?;
 
@@ -875,12 +832,9 @@ sqlite = true
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         "state db only should not see this before repair",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let state_db = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -991,27 +945,23 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
     let grandchild_id = ThreadId::new();
     let state_db = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".to_string(),
     )
     .await?;
-    for (thread_id, created_at, source, model_provider) in [
+    for (thread_id, created_at, source) in [
         (
             older_child_id,
             "2025-02-01T10:00:00Z",
             CoreSessionSource::SubAgent(SubAgentSource::Other("custom:worker-1".to_string())),
-            "other_provider",
         ),
         (
             newer_child_id,
             "2025-02-01T11:00:00Z",
             CoreSessionSource::Cli,
-            "mock_provider",
         ),
         (
             grandchild_id,
             "2025-02-01T12:00:00Z",
             CoreSessionSource::SubAgent(SubAgentSource::Other("custom:worker-2".to_string())),
-            "mock_provider",
         ),
     ] {
         let created_at = DateTime::parse_from_rfc3339(created_at)?.with_timezone(&Utc);
@@ -1023,7 +973,7 @@ async fn thread_list_relation_filters_read_spawn_graph_from_state_db() -> Result
         );
         builder.cwd = genex_home.path().to_path_buf();
         builder.cli_version = Some("0.0.0".to_string());
-        let mut metadata = builder.build(model_provider);
+        let mut metadata = builder.build();
         metadata.preview = Some("child thread".to_string());
         metadata.first_user_message = metadata.preview.clone();
         state_db.upsert_thread(&metadata).await?;
@@ -1201,16 +1151,12 @@ async fn thread_list_empty_source_kinds_defaults_to_interactive_only() -> Result
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "CLI",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let exec_id = create_fake_rollout_with_source(
         genex_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "Exec",
-        Some("mock_provider"),
-        /*git_info*/ None,
         CoreSessionSource::Exec,
     )?;
 
@@ -1222,7 +1168,6 @@ async fn thread_list_empty_source_kinds_defaults_to_interactive_only() -> Result
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(Vec::new()),
         /*archived*/ None,
     )
@@ -1250,8 +1195,6 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
         "2025-02-01T09-00-00",
         "2025-02-01T09:00:00Z",
         "CLI",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let parent_thread_id = ThreadId::from_string(&cli_id)?;
     let parent_rollout_path = rollout_path(genex_home.path(), "2025-02-01T09-00-00", &cli_id);
@@ -1298,8 +1241,6 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
             filename_ts,
             timestamp,
             "Subagent",
-            Some("mock_provider"),
-            /*git_info*/ None,
             CoreSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
                 parent_thread_id,
                 depth: 1,
@@ -1357,7 +1298,6 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(vec![
             ThreadSourceKind::Cli,
             ThreadSourceKind::SubAgentThreadSpawn,
@@ -1427,7 +1367,6 @@ async fn thread_list_reports_loaded_subagent_direct_input_capability() -> Result
 
     let state_db = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".to_string(),
     )
     .await?;
     for (thread_id, _, _) in &expected_subagents {
@@ -1499,8 +1438,6 @@ async fn thread_list_filters_by_source_kind_subagent_thread_spawn() -> Result<()
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "CLI",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let parent_thread_id = ThreadId::from_string(&Uuid::new_v4().to_string())?;
@@ -1509,8 +1446,6 @@ async fn thread_list_filters_by_source_kind_subagent_thread_spawn() -> Result<()
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "SubAgent",
-        Some("mock_provider"),
-        /*git_info*/ None,
         CoreSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
             parent_thread_id,
             depth: 1,
@@ -1528,7 +1463,6 @@ async fn thread_list_filters_by_source_kind_subagent_thread_spawn() -> Result<()
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(vec![ThreadSourceKind::SubAgentThreadSpawn]),
         /*archived*/ None,
     )
@@ -1556,8 +1490,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         "2025-02-02T09-00-00",
         "2025-02-02T09:00:00Z",
         "Review",
-        Some("mock_provider"),
-        /*git_info*/ None,
         CoreSessionSource::SubAgent(SubAgentSource::Review),
         parent_thread_id.into(),
         parent_thread_id,
@@ -1567,8 +1499,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         "2025-02-02T10-00-00",
         "2025-02-02T10:00:00Z",
         "Compact",
-        Some("mock_provider"),
-        /*git_info*/ None,
         CoreSessionSource::SubAgent(SubAgentSource::Compact),
     )?;
     let spawn_id = create_fake_rollout_with_source(
@@ -1576,8 +1506,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         "2025-02-02T11-00-00",
         "2025-02-02T11:00:00Z",
         "Spawn",
-        Some("mock_provider"),
-        /*git_info*/ None,
         CoreSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
             parent_thread_id,
             depth: 1,
@@ -1591,8 +1519,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         "2025-02-02T12-00-00",
         "2025-02-02T12:00:00Z",
         "Other",
-        Some("mock_provider"),
-        /*git_info*/ None,
         CoreSessionSource::SubAgent(SubAgentSource::Other("custom".to_string())),
     )?;
 
@@ -1602,7 +1528,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(vec![ThreadSourceKind::SubAgentReview]),
         /*archived*/ None,
     )
@@ -1622,7 +1547,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(vec![ThreadSourceKind::SubAgentCompact]),
         /*archived*/ None,
     )
@@ -1638,7 +1562,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(vec![ThreadSourceKind::SubAgentThreadSpawn]),
         /*archived*/ None,
     )
@@ -1650,7 +1573,6 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         Some(vec![ThreadSourceKind::SubAgentOther]),
         /*archived*/ None,
     )
@@ -1693,7 +1615,6 @@ async fn thread_list_enforces_max_limit() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(200),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -1729,8 +1650,6 @@ async fn thread_list_includes_git_info() -> Result<()> {
         "2025-02-01T09-00-00",
         "2025-02-01T09:00:00Z",
         "Git info preview",
-        Some("mock_provider"),
-        Some(git_info),
     )?;
 
     let mut mcp = init_mcp(genex_home.path()).await?;
@@ -1739,7 +1658,6 @@ async fn thread_list_includes_git_info() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -1781,8 +1699,6 @@ async fn thread_list_sanitizes_git_info_from_existing_rollouts() -> Result<()> {
         "2025-02-01T09-00-00",
         "2025-02-01T09:00:00Z",
         "Git info preview",
-        Some("mock_provider"),
-        Some(git_info),
     )?;
     let path = rollout_path(genex_home.path(), "2025-02-01T09-00-00", &conversation_id);
     let rollout = fs::read_to_string(&path)?;
@@ -1799,7 +1715,6 @@ async fn thread_list_sanitizes_git_info_from_existing_rollouts() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -1831,24 +1746,18 @@ async fn thread_list_default_sorts_by_created_at() -> Result<()> {
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_b = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T13-00-00",
         "2025-01-01T13:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_c = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T12-00-00",
         "2025-01-01T12:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = init_mcp(genex_home.path()).await?;
@@ -1857,7 +1766,6 @@ async fn thread_list_default_sorts_by_created_at() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*sort_key*/ None,
         /*archived*/ None,
@@ -1880,24 +1788,18 @@ async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
         "2025-01-01T10-00-00",
         "2025-01-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_mid = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T11-00-00",
         "2025-01-01T11:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_new = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T12-00-00",
         "2025-01-01T12:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     set_rollout_mtime(
@@ -1919,7 +1821,6 @@ async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         Some(ThreadSortKey::UpdatedAt),
         /*archived*/ None,
@@ -1942,16 +1843,12 @@ async fn thread_list_sort_recency_at_uses_state_db_order() -> Result<()> {
         "2025-01-01T10-00-00",
         "2025-01-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_new = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T11-00-00",
         "2025-01-01T11:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     set_rollout_mtime(
         rollout_path(genex_home.path(), "2025-01-01T10-00-00", &id_old).as_path(),
@@ -1960,7 +1857,6 @@ async fn thread_list_sort_recency_at_uses_state_db_order() -> Result<()> {
 
     let state_db = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -1996,7 +1892,6 @@ async fn thread_list_sort_recency_at_uses_state_db_order() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         Some(ThreadSortKey::RecencyAt),
         /*archived*/ None,
@@ -2024,24 +1919,18 @@ async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_b = create_fake_rollout(
         genex_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_c = create_fake_rollout(
         genex_home.path(),
         "2025-02-01T12-00-00",
         "2025-02-01T12:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     set_rollout_mtime(
@@ -2067,7 +1956,6 @@ async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(2),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         Some(ThreadSortKey::UpdatedAt),
         /*archived*/ None,
@@ -2085,7 +1973,6 @@ async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
         &mut mcp,
         Some(cursor1),
         Some(2),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         Some(ThreadSortKey::UpdatedAt),
         /*archived*/ None,
@@ -2108,16 +1995,12 @@ async fn thread_list_backwards_cursor_can_seed_forward_delta_sync() -> Result<()
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_watermark = create_fake_rollout(
         genex_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     set_rollout_mtime(
@@ -2166,8 +2049,6 @@ async fn thread_list_backwards_cursor_can_seed_forward_delta_sync() -> Result<()
         "2025-02-01T12-00-00",
         "2025-02-01T12:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     set_rollout_mtime(
         rollout_path(genex_home.path(), "2025-02-01T12-00-00", &id_new).as_path(),
@@ -2213,16 +2094,12 @@ async fn thread_list_created_at_tie_breaks_by_uuid() -> Result<()> {
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_b = create_fake_rollout(
         genex_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = init_mcp(genex_home.path()).await?;
@@ -2231,7 +2108,6 @@ async fn thread_list_created_at_tie_breaks_by_uuid() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -2256,16 +2132,12 @@ async fn thread_list_updated_at_tie_breaks_by_uuid() -> Result<()> {
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let id_b = create_fake_rollout(
         genex_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let updated_at = "2025-02-03T00:00:00Z";
@@ -2284,7 +2156,6 @@ async fn thread_list_updated_at_tie_breaks_by_uuid() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         Some(ThreadSortKey::UpdatedAt),
         /*archived*/ None,
@@ -2310,8 +2181,6 @@ async fn thread_list_updated_at_uses_mtime() -> Result<()> {
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     set_rollout_mtime(
@@ -2325,7 +2194,6 @@ async fn thread_list_updated_at_uses_mtime() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         Some(ThreadSortKey::UpdatedAt),
         /*archived*/ None,
@@ -2356,16 +2224,12 @@ async fn thread_list_archived_filter() -> Result<()> {
         "2025-03-01T10-00-00",
         "2025-03-01T10:00:00Z",
         "Active",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let archived_id = create_fake_rollout(
         genex_home.path(),
         "2025-03-01T09-00-00",
         "2025-03-01T09:00:00Z",
         "Archived",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let archived_dir = genex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
@@ -2384,7 +2248,6 @@ async fn thread_list_archived_filter() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         /*archived*/ None,
     )
@@ -2396,7 +2259,6 @@ async fn thread_list_archived_filter() -> Result<()> {
         &mut mcp,
         /*cursor*/ None,
         Some(10),
-        Some(vec!["mock_provider".to_string()]),
         /*source_kinds*/ None,
         Some(true),
     )

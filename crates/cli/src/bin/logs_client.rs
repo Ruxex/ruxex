@@ -109,7 +109,7 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let sqlite = resolve_sqlite_config(&args).await?;
     let filter = build_filter(&args)?;
-    let runtime = StateRuntime::init(sqlite, "logs-client".to_string()).await?;
+    let runtime = StateRuntime::init(sqlite).await?;
 
     let mut last_id =
         print_backfill(runtime.as_ref(), &filter, args.backfill, args.compact).await?;

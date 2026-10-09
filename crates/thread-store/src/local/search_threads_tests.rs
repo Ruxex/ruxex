@@ -46,7 +46,6 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
         let config = test_config(home.path());
         let state_db = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("initialize state database");
@@ -58,7 +57,6 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
             "2025-01-03T12-00-00",
             uuid,
             "needle in selected rollout",
-            Some("test-provider"),
             ThreadHistoryMode::Paginated,
         )
         .expect("write selected rollout");
@@ -69,7 +67,6 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
             "2025-01-03T11-00-00",
             uuid,
             "obsolete needle in previous rollout",
-            Some("test-provider"),
             ThreadHistoryMode::Paginated,
         )
         .expect("write unselected rollout");

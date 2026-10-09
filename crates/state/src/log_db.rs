@@ -600,7 +600,6 @@ mod tests {
         let genex_home = temp_genex_home();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -634,7 +633,6 @@ mod tests {
         let genex_home = temp_genex_home();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");
@@ -686,7 +684,6 @@ mod tests {
         let genex_home = temp_genex_home();
         let runtime = StateRuntime::init(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("initialize runtime");

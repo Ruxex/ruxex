@@ -120,7 +120,7 @@ pub(super) fn model_upgrade_for_migration(
     }
 
     // Saved selections can outlive their catalog entries, but migration targets must come from
-    // the active provider catalog rather than a built-in model mapping.
+    // the mounted provider catalog rather than a built-in model mapping.
     None
 }
 

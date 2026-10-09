@@ -433,10 +433,7 @@ fn config_summary_entries(
     let mut entries = vec![
         ("workdir", config.cwd.display().to_string()),
         ("model", session_configured_event.model.clone()),
-        (
-            "provider",
-            session_configured_event.model_provider_id.clone(),
-        ),
+        ("provider", config.model_provider_id.clone()),
         (
             "approval",
             config.permissions.approval_policy.value().to_string(),

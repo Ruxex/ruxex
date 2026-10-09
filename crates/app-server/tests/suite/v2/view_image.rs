@@ -212,8 +212,6 @@ async fn guardian_reviewer_inherits_disabled_view_image() -> Result<()> {
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "review a requested action",
-        Some("mock_provider"),
-        /*git_info*/ None,
         SessionSource::SubAgent(SubAgentSource::Other("guardian".to_string())),
         ThreadId::new().into(),
         ThreadId::new(),

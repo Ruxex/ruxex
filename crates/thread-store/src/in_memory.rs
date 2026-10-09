@@ -74,7 +74,6 @@ mod tests {
         let home = tempfile::TempDir::new()?;
         let state_db = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            "test".to_string(),
         )
         .await?;
         let shared = InMemoryThreadStore::default();

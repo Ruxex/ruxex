@@ -46,7 +46,6 @@ async fn archived_session_requires_confirmation_before_resume_or_fork() -> Resul
             timestamp,
             "2025-01-05T12:00:00Z",
             "Archived saved user message",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create source rollout");

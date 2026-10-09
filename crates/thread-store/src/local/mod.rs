@@ -849,7 +849,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -884,7 +883,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -919,7 +917,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1000,7 +997,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1075,7 +1071,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1171,7 +1166,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1207,7 +1201,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1251,7 +1244,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1303,7 +1295,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");

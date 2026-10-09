@@ -49,7 +49,6 @@ fn write_minimal_rollout_with_id_at_path(file: &Path, id: Uuid) {
                 "cwd": ".",
                 "originator": "test",
                 "cli_version": "test",
-                "model_provider": "test-provider"
             }
         })
     )
@@ -69,7 +68,6 @@ async fn upsert_thread_metadata(
 ) -> StateDbHandle {
     let runtime = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
-        "test-provider".to_string(),
     )
     .await
     .unwrap();

@@ -163,8 +163,6 @@ fn create_rollout(genex_home: &std::path::Path, filename_ts: &str) -> Result<Str
         "2025-01-05T12:00:00Z",
         "Saved user message",
         Vec::new(),
-        Some("mock_provider"),
-        /*git_info*/ None,
     )
 }
 

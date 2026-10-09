@@ -83,6 +83,7 @@ impl<'de> Deserialize<'de> for ProviderAuth {
         D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
         struct Wire {
             #[serde(default)]
             auth_mode: Option<String>,
@@ -165,80 +166,33 @@ impl ProviderAuth {
     }
 }
 
-/// Expected structure for $GENEX_HOME/auth.json.
+/// Expected structure for `$GENEX_HOME/auth.json`.
 ///
-/// Provider-keyed records are retained as a storage migration boundary. The
-/// runtime still resolves exactly one configured provider; the old
-/// `active_provider` field is accepted while reading but is never used or
-/// written again.
+/// A Genex runtime has exactly one mounted model provider, so credentials are
+/// stored as one provider-neutral auth payload. Provider identity belongs to
+/// the mounted runtime, not to the credentials file.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AuthDotJson {
-    pub providers: BTreeMap<String, ProviderAuth>,
-    legacy: Option<ProviderAuth>,
+    auth: Option<ProviderAuth>,
 }
 
 impl AuthDotJson {
-    pub fn for_provider(provider_id: impl Into<String>, auth: ProviderAuth) -> Self {
-        Self {
-            providers: BTreeMap::from([(provider_id.into(), auth)]),
-            legacy: None,
-        }
+    pub fn new(auth: ProviderAuth) -> Self {
+        Self { auth: Some(auth) }
     }
 
-    pub fn legacy(auth_mode: Option<AuthMode>, api_key: Option<String>) -> Self {
-        Self {
-            providers: BTreeMap::new(),
-            legacy: Some(ProviderAuth {
-                auth_mode,
-                api_key,
-                credentials: BTreeMap::new(),
-                invalid_auth_mode: false,
-                raw_auth_mode: None,
-            }),
-        }
+    pub fn empty() -> Self {
+        Self { auth: None }
     }
 
-    pub fn default_auth(&self) -> Option<&ProviderAuth> {
-        if self.providers.len() == 1 {
-            return self.providers.values().next();
-        }
-        self.legacy.as_ref()
-    }
-
-    pub(crate) fn materialize_legacy(&mut self, provider_id: impl Into<String>) {
-        if let Some(legacy) = self.legacy.take() {
-            self.providers.insert(provider_id.into(), legacy);
-        }
-    }
-
-    pub(crate) fn credentials_for_provider(
-        &self,
-        provider_id: Option<&str>,
-    ) -> Option<&ProviderAuth> {
-        provider_id
-            .and_then(|provider_id| self.provider_auth(provider_id))
-            .or_else(|| self.default_auth())
-    }
-
-    pub(crate) fn provider_auth(&self, provider_id: &str) -> Option<&ProviderAuth> {
-        self.providers.get(provider_id).or(self.legacy.as_ref())
-    }
-
-    pub(crate) fn has_legacy_auth(&self) -> bool {
-        self.legacy.is_some()
-    }
-
-    pub(crate) fn into_provider_storage(self) -> Self {
-        self
+    pub fn auth(&self) -> Option<&ProviderAuth> {
+        self.auth.as_ref()
     }
 }
 
 impl Default for AuthDotJson {
     fn default() -> Self {
-        Self {
-            providers: BTreeMap::new(),
-            legacy: None,
-        }
+        Self::empty()
     }
 }
 
@@ -247,20 +201,19 @@ impl Serialize for AuthDotJson {
     where
         S: Serializer,
     {
-        if self.providers.is_empty()
-            && let Some(legacy) = &self.legacy
-        {
-            let mut state = serializer.serialize_struct("AuthDotJson", 3)?;
-            state.serialize_field("auth_mode", &legacy.serialized_auth_mode())?;
-            state.serialize_field("api_key", &legacy.api_key)?;
-            if !legacy.credentials.is_empty() {
-                state.serialize_field("credentials", &legacy.credentials)?;
-            }
-            return state.end();
-        }
-
-        let mut state = serializer.serialize_struct("AuthDotJson", 1)?;
-        state.serialize_field("providers", &self.providers)?;
+        let mut state = serializer.serialize_struct("AuthDotJson", 3)?;
+        let auth = self.auth.as_ref();
+        state.serialize_field(
+            "auth_mode",
+            &auth.and_then(ProviderAuth::serialized_auth_mode),
+        )?;
+        state.serialize_field("api_key", &auth.and_then(|auth| auth.api_key.as_deref()))?;
+        state.serialize_field(
+            "credentials",
+            &auth
+                .map(|auth| &auth.credentials)
+                .unwrap_or(&BTreeMap::new()),
+        )?;
         state.end()
     }
 }
@@ -273,8 +226,6 @@ impl<'de> Deserialize<'de> for AuthDotJson {
         #[derive(Deserialize)]
         struct Wire {
             #[serde(default)]
-            providers: BTreeMap<String, ProviderAuth>,
-            #[serde(default)]
             auth_mode: Option<String>,
             #[serde(default)]
             api_key: Option<String>,
@@ -284,23 +235,18 @@ impl<'de> Deserialize<'de> for AuthDotJson {
 
         let wire = Wire::deserialize(deserializer)?;
         let (auth_mode, invalid_auth_mode, raw_auth_mode) = parse_auth_mode(wire.auth_mode);
-        let legacy = if wire.providers.is_empty() {
-            (auth_mode.is_some() || wire.api_key.is_some() || invalid_auth_mode).then_some(
-                ProviderAuth {
-                    auth_mode,
-                    api_key: wire.api_key,
-                    credentials: wire.credentials,
-                    invalid_auth_mode,
-                    raw_auth_mode,
-                },
-            )
-        } else {
-            None
-        };
-        Ok(Self {
-            providers: wire.providers,
-            legacy,
-        })
+        let auth = (auth_mode.is_some()
+            || wire.api_key.is_some()
+            || !wire.credentials.is_empty()
+            || invalid_auth_mode)
+            .then_some(ProviderAuth {
+                auth_mode,
+                api_key: wire.api_key,
+                credentials: wire.credentials,
+                invalid_auth_mode,
+                raw_auth_mode,
+            });
+        Ok(Self { auth })
     }
 }
 

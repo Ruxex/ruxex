@@ -22,7 +22,6 @@ async fn runtime_with_threads(count: usize) -> Result<(Arc<StateRuntime>, PathBu
     let genex_home = unique_temp_dir();
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     let mut thread_ids = Vec::with_capacity(count);
@@ -325,7 +324,6 @@ async fn attachments_survive_restart_and_archive_but_cascade_on_thread_deletion(
 
     let reopened = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await?;
     assert_eq!(

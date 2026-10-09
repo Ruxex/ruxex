@@ -1925,7 +1925,6 @@ async fn test_runtime() -> anyhow::Result<Arc<genex_state::StateRuntime>> {
     let tempdir = TempDir::new()?;
     genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(tempdir.keep().as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
 }

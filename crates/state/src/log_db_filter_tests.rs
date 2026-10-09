@@ -15,7 +15,6 @@ async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics()
     });
     let runtime = StateRuntime::init(
         crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-        "test-provider".to_string(),
     )
     .await
     .expect("initialize runtime");

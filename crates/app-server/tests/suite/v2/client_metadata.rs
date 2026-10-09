@@ -173,8 +173,6 @@ async fn turn_start_sends_fork_lineage_in_turn_metadata_for_thread_fork_v2() -> 
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -255,8 +253,6 @@ async fn review_start_sends_parent_lineage_in_turn_metadata_for_thread_fork_v2()
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let mut mcp = TestAppServer::builder()
@@ -352,8 +348,6 @@ async fn turn_start_sends_nested_subagent_lineage_after_cold_thread_resume_v2() 
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved subagent message",
-        Some("mock_provider"),
-        /*git_info*/ None,
         SessionSource::SubAgent(SubAgentSource::Other("guardian".to_string())),
         root_thread_id.into(),
         parent_thread_id,

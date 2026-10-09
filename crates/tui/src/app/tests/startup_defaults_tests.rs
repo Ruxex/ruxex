@@ -57,7 +57,6 @@ async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
             "2026-01-01T00-00-00",
             "2026-01-01T00:00:00Z",
             "source prompt",
-            Some(config.model_provider_id.as_str()),
             /*git_info*/ None,
         )
         .expect("create source rollout"),

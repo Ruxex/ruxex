@@ -1014,7 +1014,6 @@ async fn store_with_mode(history_mode: ThreadHistoryMode) -> (TempDir, LocalThre
     }
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("state runtime");

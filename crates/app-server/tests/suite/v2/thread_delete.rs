@@ -40,8 +40,6 @@ async fn thread_delete_rejects_paginated_writer_owned_by_another_process() -> Re
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "owned",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let mut owner = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -98,7 +96,6 @@ async fn thread_delete_deletes_spawned_descendants() -> Result<()> {
 
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
@@ -209,7 +206,6 @@ async fn thread_delete_preflights_external_fork_references_for_spawned_subtrees(
 
     let state_db = StateRuntime::init(
         SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -268,8 +264,6 @@ fn create_delete_test_rollout(genex_home: &Path, minute: u8, preview: &str) -> R
         &format!("2025-01-01T00-{minute:02}-00"),
         &format!("2025-01-01T00:{minute:02}:00Z"),
         preview,
-        Some("mock_provider"),
-        /*git_info*/ None,
     )
 }
 

@@ -100,13 +100,13 @@ pub(super) async fn thread_inventory_check(config: &Config) -> DoctorCheck {
 async fn thread_inventory_check_for_roots(
     genex_home: &Path,
     sqlite: &genex_state::SqliteConfig,
-    default_provider: &str,
+    mounted_provider: &str,
 ) -> DoctorCheck {
     let scan = scan_rollout_files(genex_home).await;
     let state_db_path = sqlite.state_db_path();
 
     let mut details = vec![
-        format!("default model provider: {default_provider}"),
+        format!("mounted model provider: {mounted_provider}"),
         format!("rollout DB active files: {}", scan.active_count()),
         format!("rollout DB archived files: {}", scan.archived_count()),
         format!("rollout DB scan errors: {}", scan.scan_errors.len()),
@@ -1225,7 +1225,6 @@ mod tests {
                 "originator": "test",
                 "cli_version": "test",
                 "source": "cli",
-                "model_provider": "test-provider",
                 "history_mode": "future",
             },
         });
@@ -1244,7 +1243,6 @@ mod tests {
                         "originator": "test",
                         "cli_version": "test",
                         "source": "cli",
-                        "model_provider": "test-provider",
                     },
                 })
             ),
@@ -1294,7 +1292,6 @@ mod tests {
             let sqlite_home = TempDir::new().expect("sqlite home");
             let _runtime = genex_state::StateRuntime::init(
                 genex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
-                "test-provider".to_string(),
             )
             .await
             .expect("state runtime");

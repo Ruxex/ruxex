@@ -602,7 +602,6 @@ mod tests {
         let original_rollout = std::fs::read_to_string(&rollout_path).expect("read rollout");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -753,7 +752,6 @@ mod tests {
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -829,7 +827,6 @@ mod tests {
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -925,7 +922,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -972,7 +968,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1029,7 +1024,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1091,7 +1085,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             config.sqlite.clone(),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1314,7 +1307,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1391,7 +1383,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1435,7 +1426,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1494,7 +1484,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1541,7 +1530,6 @@ mod tests {
         .expect("session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1582,7 +1570,6 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1619,7 +1606,6 @@ mod tests {
         let config = test_config(home.path());
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1689,7 +1675,6 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");
@@ -1751,7 +1736,6 @@ mod tests {
             .expect("archived session file");
         let runtime = genex_state::StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(home.path().abs()),
-            String::new(),
         )
         .await
         .expect("state db should initialize");

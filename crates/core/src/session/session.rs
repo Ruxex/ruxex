@@ -1647,7 +1647,6 @@ impl Session {
                     thread_source: thread_config.thread_source,
                     thread_name: session_configuration.thread_name.clone(),
                     model: thread_config.model,
-                    model_provider_id: thread_config.model_provider_id,
                     service_tier: thread_config.service_tier,
                     approval_policy: thread_config.approval_policy,
                     network_proxy: session_network_proxy.filter(|_| {

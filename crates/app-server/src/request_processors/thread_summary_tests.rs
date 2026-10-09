@@ -19,8 +19,7 @@ fn extract_conversation_summary_prefers_plain_user_messages() -> Result<()> {
             "timestamp": timestamp,
             "cwd": "/",
             "originator": "genex",
-            "cli_version": "0.0.0",
-            "model_provider": "test-provider"
+            "cli_version": "0.0.0"
         }),
         json!({
             "type": "message",

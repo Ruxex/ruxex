@@ -144,7 +144,6 @@ mod tests {
         let genex_home = TempDir::new().expect("tempdir should be created");
         let state_db = StateRuntime::init(
             genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-            "test-provider".to_string(),
         )
         .await
         .expect("state db should initialize");

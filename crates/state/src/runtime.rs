@@ -92,14 +92,13 @@ impl StateRuntime {
     /// `sqlite_home`.
     /// Logs and paginated thread history live in dedicated files to reduce
     /// lock contention with the rest of the state store.
-    pub async fn init(sqlite: SqliteConfig, _default_provider: String) -> anyhow::Result<Arc<Self>> {
+    pub async fn init(sqlite: SqliteConfig) -> anyhow::Result<Arc<Self>> {
         Self::init_inner(sqlite, /*telemetry_override*/ None).await
     }
 
     #[cfg(test)]
     pub(crate) async fn init_with_telemetry_for_tests(
         sqlite: SqliteConfig,
-        _default_provider: String,
         telemetry_override: &dyn DbTelemetry,
     ) -> anyhow::Result<Arc<Self>> {
         Self::init_inner(sqlite, Some(telemetry_override)).await
@@ -584,7 +583,6 @@ mod tests {
 
         let runtime = StateRuntime::init_with_telemetry_for_tests(
             crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
-            "test-provider".to_string(),
             &telemetry,
         )
         .await
@@ -622,7 +620,7 @@ mod tests {
     async fn init_restores_independent_thread_timestamp_maxima() {
         let genex_home = unique_temp_dir();
         let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
-        let runtime = StateRuntime::init(sqlite.clone(), "test-provider".to_string())
+        let runtime = StateRuntime::init(sqlite.clone())
             .await
             .expect("state runtime should initialize");
 
@@ -651,7 +649,7 @@ mod tests {
         runtime.close().await;
         drop(runtime);
 
-        let runtime = StateRuntime::init(sqlite, "test-provider".to_string())
+        let runtime = StateRuntime::init(sqlite)
             .await
             .expect("state runtime should restore thread timestamps");
         assert_eq!(

@@ -63,8 +63,6 @@ async fn thread_archive_rejects_owned_unmaterialized_paginated_descendant() -> R
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
     let mut owner = TestAppServer::builder()
@@ -80,7 +78,6 @@ async fn thread_archive_rejects_owned_unmaterialized_paginated_descendant() -> R
     let child_thread_id = ThreadId::from_string(&child.id)?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -137,22 +134,17 @@ async fn thread_archive_shuts_down_resumed_archived_descendant() -> Result<()> {
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let child_id = create_fake_paginated_rollout(
         genex_home.path(),
         "2025-01-01T00-01-00",
         "2025-01-01T00:01:00Z",
         "child",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -464,24 +456,18 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let child_id = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T00-01-00",
         "2025-01-01T00:01:00Z",
         "child",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let grandchild_id = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T00-02-00",
         "2025-01-01T00:02:00Z",
         "grandchild",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
@@ -489,7 +475,6 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
     let grandchild_thread_id = ThreadId::from_string(&grandchild_id)?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -576,24 +561,18 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let child_id = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T00-01-00",
         "2025-01-01T00:01:00Z",
         "child",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let grandchild_id = create_fake_rollout(
         genex_home.path(),
         "2025-01-01T00-02-00",
         "2025-01-01T00:02:00Z",
         "grandchild",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
 
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
@@ -601,7 +580,6 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
     let grandchild_thread_id = ThreadId::from_string(&grandchild_id)?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db
@@ -793,15 +771,12 @@ async fn thread_archive_succeeds_when_spawned_descendant_is_missing() -> Result<
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
-        Some("mock_provider"),
-        /*git_info*/ None,
     )?;
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
     let missing_child_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000901")?;
 
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
     state_db

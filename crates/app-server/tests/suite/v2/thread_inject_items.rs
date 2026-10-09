@@ -64,7 +64,6 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
         .write(genex_home.path())?;
     let state_db = StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".into(),
     )
     .await?;
 

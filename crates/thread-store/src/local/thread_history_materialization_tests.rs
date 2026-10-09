@@ -1310,7 +1310,6 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
     let thread_id = ThreadId::default();
     let runtime = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("state runtime");
@@ -2290,7 +2289,6 @@ async fn projection_store(genex_home: &Path) -> LocalThreadStore {
     let config = test_config(genex_home);
     let state_db = genex_state::StateRuntime::init(
         config.sqlite.clone(),
-        String::new(),
     )
     .await
     .expect("initialize state database for paginated history");

@@ -1253,7 +1253,6 @@ async fn owned_subagent_approval_before_thread_started_is_preserved() -> Result<
             "2026-01-01T00-00-01",
             "2026-01-01T00:00:01Z",
             "child task",
-            Some(app.config.model_provider_id.as_str()),
             /*git_info*/ None,
             RolloutSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
                 parent_thread_id,

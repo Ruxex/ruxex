@@ -263,7 +263,6 @@ async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
             runtime_workspace_roots: None,
             metadata: ThreadPersistenceMetadata {
                 cwd: None,
-                model_provider: "test-provider".to_string(),
             },
         })
         .await?;

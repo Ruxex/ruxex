@@ -126,7 +126,7 @@ enum Subcommand {
     /// Manage login.
     Login(LoginCommand),
 
-    /// Deactivate the active model provider without deleting credentials.
+    /// Log out from the mounted model provider and delete its credentials.
     Logout(LogoutCommand),
 
     /// Manage external MCP servers for Genex.

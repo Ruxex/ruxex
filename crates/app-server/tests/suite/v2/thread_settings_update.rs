@@ -284,7 +284,6 @@ async fn thread_settings_update_emits_notification_and_updates_future_turns() ->
     // Loaded metadata must come from live settings, even if stored metadata is stale.
     let state_db = genex_state::StateRuntime::init(
         genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
-        "mock_provider".to_string(),
     )
     .await?;
     let mut stored = state_db

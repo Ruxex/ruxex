@@ -48,7 +48,7 @@ async fn thread_list_preserves_filters_and_retries_only_legacy_cwd_errors() -> R
         });
         let params: ThreadListParams = serde_json::from_value(json!({
             "cwd": ["/requested/nested", "/linked/nested"], "cursor": "cursor", "limit": 3,
-            "sortKey": "created_at", "modelProviders": ["provider"], "archived": true,
+            "sortKey": "created_at", "archived": true,
             "searchTerm": "needle"
         }))?;
         let mut expected = vec![serde_json::to_value(&params)?];

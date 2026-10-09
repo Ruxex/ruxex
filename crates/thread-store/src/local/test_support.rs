@@ -33,7 +33,6 @@ pub(super) fn write_session_file_with_history_mode(
         ts,
         uuid,
         "Hello from user",
-        Some("test-provider"),
         history_mode,
     )
 }
@@ -49,7 +48,6 @@ pub(super) fn write_archived_session_file(
         ts,
         uuid,
         "Archived user message",
-        Some("test-provider"),
         ThreadHistoryMode::Paginated,
     )
 }
@@ -60,7 +58,6 @@ pub(super) fn write_session_file_with(
     ts: &str,
     uuid: Uuid,
     first_user_message: &str,
-    model_provider: Option<&str>,
     history_mode: ThreadHistoryMode,
 ) -> std::io::Result<PathBuf> {
     write_session_file_with_fork(
@@ -69,7 +66,6 @@ pub(super) fn write_session_file_with(
         ts,
         uuid,
         first_user_message,
-        model_provider,
         /*forked_from_id*/ None,
         history_mode,
     )
@@ -82,7 +78,6 @@ pub(super) fn write_session_file_with_fork(
     ts: &str,
     uuid: Uuid,
     first_user_message: &str,
-    model_provider: Option<&str>,
     forked_from_id: Option<Uuid>,
     history_mode: ThreadHistoryMode,
 ) -> std::io::Result<PathBuf> {
@@ -101,7 +96,6 @@ pub(super) fn write_session_file_with_fork(
             "originator": "test_originator",
             "cli_version": "test_version",
             "source": "cli",
-            "model_provider": model_provider,
             "history_mode": history_mode,
             "git": {
                 "commit_hash": "abcdef",
