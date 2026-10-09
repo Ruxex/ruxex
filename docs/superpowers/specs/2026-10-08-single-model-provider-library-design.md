@@ -53,7 +53,7 @@ let runtime = Genex::builder()
 In the current repository, the common provider/runtime construction boundary is exposed as:
 
 ```rust
-let app_server_runtime = AppServerRuntimeBuilder::new(provider_runtime)
+let app_server_runtime = AppServerRuntimeBuilder::new(shared_model_provider)
     .build()
 ;
 let runtime = InProcessAppServerBuilder::new(start_args)
@@ -62,9 +62,11 @@ let runtime = InProcessAppServerBuilder::new(start_args)
     .await?;
 ```
 
-`AppServerRuntimeBuilder` is shared by daemon and in-process startup. It derives the public
-provider-neutral contract from the same `SharedProviderRuntime` used by the legacy execution core;
-the adapter is transitional until all core consumers use the broad contract directly.
+`AppServerRuntimeBuilder` is shared by daemon and in-process startup and owns one injected
+`SharedModelProvider`. Configuration-based construction is available only at the host boundary
+through `from_provider_info`, which creates the adapter once. Core, extensions, and model catalog
+consumers share the same contract handle; provider-specific transport/auth implementation remains
+inside the adapter.
 `InProcessAppServerBuilder` is only the in-process transport launcher and rejects construction
 without an already-built `AppServerRuntime`. The resulting handle is wrapped by
 `genex-app-server-client` for higher-level request/response helpers. Its lower-level direct startup

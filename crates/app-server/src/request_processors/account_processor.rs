@@ -64,7 +64,7 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
         _params: AccountDeleteParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        let provider = self.thread_manager.model_provider_contract();
+        let provider = self.thread_manager.model_provider();
         let result = provider
             .delete()
             .await
@@ -97,7 +97,7 @@ impl AccountRequestProcessor {
         params: GetAccountParams,
     ) -> Result<GetAccountResponse, JSONRPCErrorError> {
         self.refresh_token_if_requested(params.refresh_token).await;
-        let provider = self.thread_manager.model_provider_contract();
+        let provider = self.thread_manager.model_provider();
         let account_state = provider
             .account_state()
             .map_err(|err| invalid_request(err.to_string()))?;
@@ -230,7 +230,7 @@ impl AccountRequestProcessor {
         let mut provider_credentials = credentials.clone();
         provider_credentials.insert("api_key".to_string(), api_key.to_string());
         self.thread_manager
-            .model_provider_contract()
+            .model_provider()
             .login(provider_credentials)
             .await
             .map_err(|err| internal_error(format!("failed to save api key: {err}")))
@@ -323,7 +323,7 @@ impl AccountRequestProcessor {
     }
 
     async fn logout_common(&self) -> std::result::Result<Option<AuthMode>, JSONRPCErrorError> {
-        match self.thread_manager.model_provider_contract().logout().await {
+        match self.thread_manager.model_provider().logout().await {
             Ok(_) => {}
             Err(err) => {
                 return Err(internal_error(format!("logout failed: {err}")));

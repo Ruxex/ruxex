@@ -28,6 +28,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 pub use genex_app_server::AppServerRuntime;
+pub use genex_app_server::AppServerRuntimeBuilder;
 pub use genex_app_server::app_server_control_socket_path;
 pub use genex_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 pub use genex_app_server::in_process::InProcessServerEvent;

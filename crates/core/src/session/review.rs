@@ -34,7 +34,6 @@ pub(super) async fn spawn_review_thread(
     );
 
     let review_prompt = resolved.prompt.clone();
-    let provider = parent_turn_context.provider.clone();
     let credential_manager = parent_turn_context.credential_manager.clone();
     let model_info = (**parent_turn_context.model_info()).clone();
     let mut selected = parent_turn_context.initial_settings.selected().clone();
@@ -56,7 +55,6 @@ pub(super) async fn spawn_review_thread(
     }
 
     let credential_manager_for_context = credential_manager.clone();
-    let provider_for_context = provider.clone();
     let session_source = parent_turn_context.session_source.clone();
     let (forked_from_thread_id, thread_source, service_tier) = {
         let state = sess.state.lock().await;
@@ -120,8 +118,7 @@ pub(super) async fn spawn_review_thread(
         disabled_plugin_ids: parent_turn_context.disabled_plugin_ids.clone(),
         current_settings: ArcSwap::from(step_settings),
         session_telemetry: session_telemetry_for_context,
-        provider: provider_for_context,
-        provider_contract: parent_turn_context.provider_contract.clone(),
+        provider: parent_turn_context.provider.clone(),
         session_source,
         history_mode: parent_turn_context.history_mode,
         parent_thread_id: parent_turn_context.parent_thread_id,

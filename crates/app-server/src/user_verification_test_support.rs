@@ -25,6 +25,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_login::AuthHeaders;
 use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::provider_contract;
 use genex_protocol::protocol::SessionSource;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
@@ -148,8 +149,10 @@ impl Harness {
         );
         let (sender, messages) = mpsc::channel(/*buffer*/ 16);
         let outgoing = Arc::new(OutgoingMessageSender::new(sender, ()));
-        let model_provider =
-            create_model_provider(config.model_provider.clone(), Some(Arc::clone(&auth)));
+        let model_provider = provider_contract(create_model_provider(
+            config.model_provider.clone(),
+            Some(Arc::clone(&auth)),
+        ));
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
             outgoing: Arc::clone(&outgoing),
             arg0_paths: Arg0DispatchPaths::default(),

@@ -22,7 +22,6 @@ use crate::state::ActiveTurn;
 use crate::turn_metadata::ExecutionMetadata;
 use genex_attachment_store::AttachmentStore;
 use genex_extension_api::ExtensionDataInit;
-use genex_model_provider::SharedProviderRuntime;
 use genex_model_provider::SharedModelProvider;
 use genex_prompts::render_model_instructions;
 use genex_protocol::SessionId;
@@ -90,10 +89,10 @@ pub(crate) struct Session {
 
 #[derive(Clone)]
 pub(crate) struct SessionConfiguration {
-    /// Runtime provider and its provider-specific execution policy.
-    pub(super) provider: SharedProviderRuntime,
     /// Provider-neutral contract shared by this session and its turns.
-    pub(super) provider_contract: SharedModelProvider,
+    pub(super) provider: SharedModelProvider,
+    /// Host configuration snapshot used for diagnostics and legacy config bridges.
+    pub(super) provider_info: ModelProviderInfo,
 
     /// Desired configured inputs inherited by future turns.
     pub(super) step_settings: Arc<StepSettings>,
@@ -1154,7 +1153,7 @@ impl Session {
             let terminal_type = user_agent();
             let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();
             let auth_env_telemetry = collect_auth_env_telemetry(
-                session_configuration.provider.info(),
+                &session_configuration.provider_info,
                 credential_manager.api_key_env_enabled(),
             );
             let mut session_telemetry = SessionTelemetry::new(
@@ -1559,9 +1558,8 @@ impl Session {
                 thread_store: Arc::clone(&thread_store),
                 attestation_provider: attestation_provider.clone(),
                 time_provider,
-                model_client: ModelClient::new_with_provider_contract(
+                model_client: ModelClient::new_with_provider(
                     Arc::clone(&session_configuration.provider),
-                    Arc::clone(&session_configuration.provider_contract),
                     thread_id,
                     session_configuration.session_source.clone(),
                     session_configuration.originator.clone(),

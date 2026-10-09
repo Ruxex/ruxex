@@ -17,12 +17,10 @@ use genex_extension_api::ThreadLifecycleContributor;
 use genex_extension_api::ThreadOriginator;
 use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolContributor;
+use genex_http_client::HttpClientFactory;
 #[cfg(test)]
 use genex_login::CredentialManager;
-use genex_http_client::HttpClientFactory;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::SharedProviderRuntime;
-use genex_model_provider::provider_contract;
 use genex_protocol::config_types::WebSearchContextSize;
 use genex_protocol::config_types::WebSearchMode;
 
@@ -30,7 +28,7 @@ use crate::tool::WebSearchTool;
 
 #[derive(Clone)]
 struct WebSearchExtension {
-    provider_contract: SharedModelProvider,
+    provider: SharedModelProvider,
     http_client_factory: HttpClientFactory,
 }
 
@@ -110,7 +108,7 @@ impl ThreadLifecycleContributor<Config> for WebSearchExtension {
                 .thread_store
                 .insert(WebSearchExtensionConfig::from_config(
                     input.config,
-                    &self.provider_contract,
+                    &self.provider,
                 ));
         })
     }
@@ -126,7 +124,7 @@ impl ConfigContributor<Config> for WebSearchExtension {
     ) {
         thread_store.insert(WebSearchExtensionConfig::from_config(
             new_config,
-            &self.provider_contract,
+            &self.provider,
         ));
     }
 }
@@ -146,10 +144,10 @@ impl ToolContributor for WebSearchExtension {
             return Vec::new();
         }
 
-                vec![Arc::new(WebSearchTool {
-                    session_id: session_store.level_id().to_string(),
-                    provider: self.provider_contract.clone(),
-                    http_client_factory: self.http_client_factory.clone(),
+        vec![Arc::new(WebSearchTool {
+            session_id: session_store.level_id().to_string(),
+            provider: self.provider.clone(),
+            http_client_factory: self.http_client_factory.clone(),
             settings: config.settings.clone(),
             originator: thread_store
                 .get::<ThreadOriginator>()
@@ -158,21 +156,13 @@ impl ToolContributor for WebSearchExtension {
     }
 }
 
-pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: SharedProviderRuntime) {
-    install_with_provider_contract(
-        registry,
-        provider_contract(provider),
-        HttpClientFactory::new(genex_http_client::OutboundProxyPolicy::ReqwestDefault),
-    );
-}
-
-pub fn install_with_provider_contract(
+pub fn install(
     registry: &mut ExtensionRegistryBuilder<Config>,
-    provider_contract: SharedModelProvider,
+    provider: SharedModelProvider,
     http_client_factory: HttpClientFactory,
 ) {
     let extension = Arc::new(WebSearchExtension {
-        provider_contract,
+        provider,
         http_client_factory,
     });
     registry.thread_lifecycle_contributor(extension.clone());
@@ -185,8 +175,11 @@ mod tests {
     use genex_extension_api::ExtensionData;
     use genex_extension_api::ExtensionRegistryBuilder;
     use genex_extension_api::ToolName;
+    use genex_http_client::HttpClientFactory;
+    use genex_http_client::OutboundProxyPolicy;
     use genex_login::GenexAuth;
     use genex_model_provider::create_model_provider;
+    use genex_model_provider::provider_contract;
     use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
 
@@ -234,7 +227,11 @@ mod tests {
             },
             Some(Arc::clone(&credential_manager)),
         );
-        install(&mut builder, provider);
+        install(
+            &mut builder,
+            provider_contract(provider),
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        );
         let registry = builder.build();
         let session_store = ExtensionData::new("session");
         let thread_store = ExtensionData::new("11111111-1111-4111-8111-111111111111");

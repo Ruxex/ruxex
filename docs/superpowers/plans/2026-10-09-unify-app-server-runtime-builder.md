@@ -4,7 +4,7 @@
 
 **Goal:** Make daemon startup and in-process startup construct one authoritative AppServer runtime through the same builder, so the provider runtime and its provider-neutral contract cannot be supplied independently or diverge.
 
-**Architecture:** Add a public `AppServerRuntimeBuilder` and an `AppServerRuntime` value in `genex-app-server`. The runtime owns the existing `SharedProviderRuntime` required by the core and the `SharedModelProvider` contract adapter derived from that same runtime. Daemon startup and in-process startup both consume this value. `InProcessAppServerBuilder` remains a transport-specific launcher; it no longer accepts a contract-only provider override.
+**Architecture:** Add a public `AppServerRuntimeBuilder` and an `AppServerRuntime` value in `genex-app-server`. The runtime owns one injected `SharedModelProvider`; configuration-based construction is limited to the host-boundary helper that creates the adapter once. Daemon startup and in-process startup both consume this value. `InProcessAppServerBuilder` remains a transport-specific launcher; it no longer accepts a contract-only provider override.
 
 **Tech Stack:** Rust, Tokio, `genex-app-server`, `genex-app-server-client`, existing `genex-model-provider` runtime and contract adapters.
 
@@ -14,7 +14,7 @@
 
 - Preserve the current main-branch work and do not rewrite unrelated provider-migration changes.
 - Keep exactly one provider implementation per AppServer runtime. The contract adapter must be derived from the same runtime provider.
-- Keep the existing `SharedProviderRuntime` internally for this boundary. Migrating all core consumers to the broad `ModelProvider` contract is a later provider-contract task, not a reason to create a second implementation here.
+- Keep provider-specific transport/auth implementation behind the `ModelProvider` adapter. Core and AppServer consumers receive only the shared contract handle.
 - Mount and validate the provider-scoped data root before opening credentials or SQLite, including when a provider runtime is injected.
 - Do not add provider selection or credentials to threads, rollouts, or protocol payloads.
 - Use the repository verification policy: Rust checks must run through the user systemd scope and `just`; do not run standalone test binaries.
@@ -31,16 +31,17 @@
 
 ## Context and Decision
 
-The current code has two provider-shaped values in `MessageProcessorArgs`: the old `SharedProviderRuntime` used by core chat/session code and a `SharedModelProvider` contract adapter used by provider-neutral app-server APIs. They are normally derived from one runtime, but the current in-process builder can replace only the contract value. That permits status/model metadata to disagree with the provider actually used for turns.
+The current code had two provider-shaped values in `MessageProcessorArgs`: the old `SharedProviderRuntime` used by core chat/session code and a `SharedModelProvider` contract adapter used by provider-neutral app-server APIs. The migration now makes `SharedModelProvider` the single runtime-owned handle, so status/model metadata and turns cannot diverge.
 
 This change makes the relationship explicit without attempting the larger migration of every core consumer in the same patch:
 
 ```rust
-let provider_runtime = create_model_provider(config.model_provider.clone(), credentials);
-let runtime = AppServerRuntimeBuilder::new(provider_runtime).build();
+let provider = host_selected_model_provider(config, credentials);
+let runtime = AppServerRuntimeBuilder::new(provider).build();
 ```
 
-Both transports pass `runtime` onward. The runtime internally derives the contract adapter from the provider runtime, so there is one construction point and no contract-only injection path.
+Both transports pass `runtime` onward. The runtime owns the injected contract handle, so there is one
+construction point and no contract-only injection path.
 
 ## Task 1: Add the shared runtime value and builder
 
@@ -52,14 +53,14 @@ Both transports pass `runtime` onward. The runtime internally derives the contra
 
 **Interfaces:**
 
-- Add `pub struct AppServerRuntime` containing the provider runtime and its derived contract adapter.
-- Add `pub struct AppServerRuntimeBuilder` with `new(SharedProviderRuntime)` and `build()`.
-- Add internal accessors for the old runtime, contract adapter, and provider descriptor.
+- Add `pub struct AppServerRuntime` containing one shared provider contract.
+- Add `pub struct AppServerRuntimeBuilder` with `new(SharedModelProvider)` and `build()`.
+- Add the shared provider accessor and provider descriptor helper.
 - Add a configured-runtime helper for legacy startup paths so they also use the builder.
 
 **TDD steps:**
 
-1. Add a compile-time test/use that builds an `AppServerRuntime` from one `SharedProviderRuntime` and verifies that the exposed descriptor is the descriptor of the derived contract.
+1. Add a compile-time test/use that builds an `AppServerRuntime` from one `SharedModelProvider` and verifies that the exposed descriptor is the descriptor of that provider.
 2. Run the focused `just check --tests -p genex-app-server` command through the required systemd scope and confirm the test/API fails before implementation.
 3. Implement the value, builder, derived adapter construction, and configured-runtime helper.
 4. Run the focused check again.
@@ -97,7 +98,7 @@ Both transports pass `runtime` onward. The runtime internally derives the contra
 - Replace `InProcessStartArgs.provider: Option<SharedModelProvider>` with `runtime: Option<AppServerRuntime>`.
 - Remove `InProcessAppServerBuilder::model_provider(...)`; add a runtime-oriented setter only if the compatibility builder needs one, with a name such as `runtime(...)`.
 - Make the explicit builder path require an `AppServerRuntime` and pass it unchanged to startup.
-- Keep the legacy direct `start(...)` path working by creating a configured `SharedProviderRuntime` and wrapping it through `AppServerRuntimeBuilder`.
+- Keep the legacy direct `start(...)` path working by creating a configured `SharedModelProvider` through `AppServerRuntimeBuilder::from_provider_info`.
 - Select the descriptor for data-root mounting from the injected runtime when present, or from configuration before credentials when using the legacy path. Do not construct a provider merely to inspect the descriptor and then construct another provider for execution.
 - Change the client crate to forward the runtime value without depending directly on `genex-model-provider`.
 

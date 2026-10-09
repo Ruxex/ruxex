@@ -6,60 +6,68 @@ use genex_login::CredentialManager;
 use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use genex_model_provider::ProviderDescriptor;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::SharedProviderRuntime;
 use genex_model_provider::create_model_provider;
 use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 
-/// Provider state shared by an AppServer transport and its request processor.
-///
-/// The legacy execution core still consumes [`SharedProviderRuntime`] while
-/// provider-neutral app-server APIs consume [`SharedModelProvider`]. The latter
-/// is always derived from the former here, so a runtime cannot accidentally
-/// expose one provider while executing turns with another.
+/// The single provider contract shared by an AppServer transport and its clients.
 #[derive(Clone)]
 pub struct AppServerRuntime {
-    provider_runtime: SharedProviderRuntime,
-    provider_contract: SharedModelProvider,
+    provider: SharedModelProvider,
 }
 
 impl AppServerRuntime {
-    pub(crate) fn provider_runtime(&self) -> SharedProviderRuntime {
-        Arc::clone(&self.provider_runtime)
-    }
-
-    pub(crate) fn provider_contract(&self) -> SharedModelProvider {
-        Arc::clone(&self.provider_contract)
+    /// Returns the single provider owned by this runtime.
+    pub fn provider(&self) -> SharedModelProvider {
+        Arc::clone(&self.provider)
     }
 
     pub(crate) fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
-        self.provider_runtime.credential_manager()
+        self.provider.credential_manager()
     }
 
     /// Returns the descriptor used for provider-home mount validation.
     pub fn provider_descriptor(&self) -> ProviderDescriptor {
-        self.provider_contract.descriptor()
+        self.provider.descriptor()
     }
 }
 
 /// Constructs the shared provider/runtime state used by an AppServer.
 pub struct AppServerRuntimeBuilder {
-    provider_runtime: SharedProviderRuntime,
+    provider: SharedModelProvider,
 }
 
 impl AppServerRuntimeBuilder {
     /// Starts building an AppServer runtime from its single provider
     /// implementation.
-    pub fn new(provider_runtime: SharedProviderRuntime) -> Self {
-        Self { provider_runtime }
+    pub fn new(provider: SharedModelProvider) -> Self {
+        Self { provider }
     }
 
-    /// Builds the runtime and derives its provider-neutral contract adapter.
+    /// Starts building a runtime for the provider selected by host configuration.
+    ///
+    /// Provider selection belongs at this host boundary. Callers that already own a concrete
+    /// provider can use [`Self::new`].
+    pub fn from_provider_info(
+        provider_info: ModelProviderInfo,
+        credential_manager: Option<Arc<CredentialManager>>,
+    ) -> Self {
+        Self::new(provider_contract(create_model_provider(
+            provider_info,
+            credential_manager,
+        )))
+    }
+
+    /// Returns the descriptor that must be used when mounting this configured provider's data
+    /// root, without constructing credentials or opening provider state.
+    pub fn descriptor_for(provider_info: &ModelProviderInfo) -> ProviderDescriptor {
+        configured_provider_descriptor(provider_info)
+    }
+
+    /// Builds the runtime around the injected provider.
     pub fn build(self) -> AppServerRuntime {
-        let provider_contract = provider_contract(Arc::clone(&self.provider_runtime));
         AppServerRuntime {
-            provider_runtime: self.provider_runtime,
-            provider_contract,
+            provider: self.provider,
         }
     }
 }
@@ -70,11 +78,7 @@ pub(crate) fn configured_app_server_runtime(
     provider_info: ModelProviderInfo,
     credential_manager: Arc<CredentialManager>,
 ) -> AppServerRuntime {
-    AppServerRuntimeBuilder::new(create_model_provider(
-        provider_info,
-        Some(credential_manager),
-    ))
-    .build()
+    AppServerRuntimeBuilder::from_provider_info(provider_info, Some(credential_manager)).build()
 }
 
 pub(crate) fn configured_provider_descriptor(
@@ -96,12 +100,11 @@ mod tests {
     #[test]
     fn contract_is_derived_from_the_runtime_provider() {
         let runtime =
-            AppServerRuntimeBuilder::new(create_model_provider(ModelProviderInfo::default(), None))
-                .build();
+            AppServerRuntimeBuilder::from_provider_info(ModelProviderInfo::default(), None).build();
 
         assert_eq!(
             runtime.provider_descriptor(),
-            runtime.provider_runtime().descriptor()
+            runtime.provider().descriptor()
         );
     }
 }

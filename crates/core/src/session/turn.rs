@@ -68,8 +68,8 @@ use genex_features::Feature;
 use genex_file_system::FindUpErrorPolicy;
 use genex_file_system::find_nearest_ancestor_with_markers;
 use genex_login::GenexAuth;
-use genex_model_provider::RemoteCompactionSupport;
 use genex_model_provider::ProviderWireApi;
+use genex_model_provider::RemoteCompactionSupport;
 use genex_protocol::ResponseItemId;
 use genex_protocol::config_types::AutoCompactTokenLimitScope;
 use genex_protocol::config_types::ModeKind;
@@ -185,7 +185,7 @@ pub(crate) async fn run_turn(
             .await;
         // Publish the failure only after prompt hooks finish, so clients cannot react to
         // an error by steering follow-up input into a turn still preserving its prompt.
-        let message_prefix = match turn_context.provider_contract.capabilities().remote_compaction {
+        let message_prefix = match turn_context.provider.capabilities().remote_compaction {
             RemoteCompactionSupport::V2 => Some("Error running remote compact task".to_string()),
             RemoteCompactionSupport::Unsupported => None,
         };
@@ -985,10 +985,7 @@ async fn capture_current_model_fallback_step_context(
         .as_deref()
         .is_some_and(genex_login::CredentialManager::current_auth_uses_managed_auth);
     if !uses_managed_auth
-        || !matches!(
-            turn_context.provider_contract.wire_api(),
-            ProviderWireApi::Responses
-        )
+        || !matches!(turn_context.provider.wire_api(), ProviderWireApi::Responses)
         || previous_model == turn_context.model_info().slug
     {
         return Ok(None);
@@ -1122,7 +1119,7 @@ async fn run_auto_compact(
         return Ok(());
     }
 
-    match turn_context.provider_contract.capabilities().remote_compaction {
+    match turn_context.provider.capabilities().remote_compaction {
         RemoteCompactionSupport::V2 => {
             emit_compact_metric(
                 &sess.services.session_telemetry,
@@ -1210,7 +1207,7 @@ async fn run_sampling_request(
         Arc::clone(&step_context),
         Arc::clone(&turn_diff_tracker),
     );
-    let max_retries = turn_context.provider_contract.stream_max_retries();
+    let max_retries = turn_context.provider.stream_max_retries();
     let mut retry_state = ResponsesStreamRetryState::default();
     let mut initial_input = Some(input);
     let mut original_input = None;
@@ -1868,20 +1865,13 @@ async fn try_run_sampling_request(
     let inference_trace = sess.services.rollout_thread_trace.inference_trace_context(
         turn_context.sub_id.as_str(),
         step_context.settings.model_info.slug.as_str(),
-        turn_context
-            .provider_contract
-            .descriptor()
-            .provider_kind
-            .as_str(),
+        turn_context.provider.descriptor().provider_kind.as_str(),
     );
     let uses_sequential_cutoff_reasoning_summaries = turn_context
         .config
         .features
         .enabled(Feature::ConcurrentReasoningSummaries)
-        && matches!(
-            turn_context.provider_contract.wire_api(),
-            ProviderWireApi::Responses
-        );
+        && matches!(turn_context.provider.wire_api(), ProviderWireApi::Responses);
     let mut stream = client_session
         .stream(
             prompt,

@@ -10,7 +10,6 @@ use genex_core::config::Config;
 use genex_core::config::UnsupportedUntrustedApprovalPolicyError;
 use genex_core::resolve_installation_id;
 use genex_login::CredentialManager;
-use genex_model_provider::create_model_provider;
 use genex_model_provider::mount_provider_home;
 #[cfg(debug_assertions)]
 use genex_utils_absolute_path::AbsolutePathBuf;
@@ -140,7 +139,6 @@ pub use crate::transport::app_server_control_socket_path;
 pub use crate::transport::auth::AppServerWebsocketAuthArgs;
 pub use crate::transport::auth::AppServerWebsocketAuthSettings;
 pub use crate::transport::auth::WebsocketAuthCliMode;
-pub use genex_model_provider::SharedProviderRuntime;
 
 const LOG_FORMAT_ENV_VAR: &str = "LOG_FORMAT";
 const OTEL_SERVICE_NAME: &str = "genex-app-server";
@@ -558,10 +556,10 @@ pub async fn run_main_with_transport_options(
         CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
             .await
             .map_err(std::io::Error::other)?;
-    let runtime = runtime::AppServerRuntimeBuilder::new(create_model_provider(
+    let runtime = runtime::AppServerRuntimeBuilder::from_provider_info(
         config.model_provider.clone(),
         Some(Arc::clone(&configured_credential_manager)),
-    ))
+    )
     .build();
     let credential_manager = runtime
         .credential_manager()

@@ -851,7 +851,6 @@ mod tests {
     use genex_app_server_protocol::TurnItemsView;
     use genex_app_server_protocol::TurnStatus;
     use genex_core::config::ConfigBuilder;
-    use genex_model_provider::create_model_provider;
     use pretty_assertions::assert_eq;
     use std::path::Path;
     use tempfile::TempDir;
@@ -921,11 +920,9 @@ mod tests {
         let state_db = genex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
-        let runtime = AppServerRuntimeBuilder::new(create_model_provider(
-            config.model_provider.clone(),
-            None,
-        ))
-        .build();
+        let runtime =
+            AppServerRuntimeBuilder::from_provider_info(config.model_provider.clone(), None)
+                .build();
         let expected_provider = runtime.provider_descriptor().provider_kind.clone();
         let client = InProcessAppServerBuilder::new(InProcessStartArgs {
             arg0_paths: Arg0DispatchPaths::default(),

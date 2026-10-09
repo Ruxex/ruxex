@@ -16,6 +16,7 @@ use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
+use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::collaboration_mode_presets;
 use genex_models_manager::manager::SharedModelsManager;
@@ -130,7 +131,7 @@ pub fn models_manager_with_provider(
     credential_manager: Arc<CredentialManager>,
     provider: ModelProviderInfo,
 ) -> SharedModelsManager {
-    let provider = create_model_provider(provider, Some(credential_manager));
+    let provider = provider_contract(create_model_provider(provider, Some(credential_manager)));
     build_models_manager(
         genex_home,
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),

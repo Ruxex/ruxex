@@ -262,8 +262,7 @@ impl MessageProcessor {
             code_mode_session_provider,
             plugin_startup_tasks,
         } = args;
-        let provider = runtime.provider_runtime();
-        let provider_contract = runtime.provider_contract();
+        let provider = runtime.provider();
         let thread_state_manager = ThreadStateManager::new();
         outgoing.watch_user_verification_auth(Arc::clone(&credential_manager));
         // The thread store is intentionally process-scoped. Config reloads can
@@ -301,22 +300,20 @@ impl MessageProcessor {
                     Arc::clone(&extension_event_sink),
                 ))
             });
-            let manager = ThreadManager::new_with_provider_contract(
+            let manager = ThreadManager::new_with_provider(
                 config.as_ref(),
                 credential_manager.clone(),
                 Arc::clone(&provider),
-                provider_contract.clone(),
-                genex_core::build_models_manager_with_provider_contract(
+                genex_core::build_models_manager_with_provider(
                     config.as_ref(),
                     Arc::clone(&provider),
-                    provider_contract.clone(),
                 ),
                 session_source,
                 environment_manager,
                 thread_extensions(ThreadExtensionDependencies {
                     event_sink: Arc::clone(&extension_event_sink),
                     credential_manager: credential_manager.clone(),
-                    provider_contract: provider_contract.clone(),
+                    provider: provider.clone(),
                     http_client_factory: config.http_client_factory(),
                     state_db: state_db.clone(),
                     thread_manager: thread_manager.clone(),

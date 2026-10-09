@@ -35,7 +35,7 @@ use crate::thread_state::ThreadStateManager;
 pub(crate) struct ThreadExtensionDependencies {
     pub(crate) event_sink: Arc<dyn ExtensionEventSink>,
     pub(crate) credential_manager: Arc<CredentialManager>,
-    pub(crate) provider_contract: SharedModelProvider,
+    pub(crate) provider: SharedModelProvider,
     pub(crate) http_client_factory: HttpClientFactory,
     pub(crate) state_db: Option<StateDbHandle>,
     pub(crate) thread_manager: Weak<ThreadManager>,
@@ -53,7 +53,7 @@ pub(crate) fn thread_extensions(
     let ThreadExtensionDependencies {
         event_sink,
         credential_manager,
-        provider_contract,
+        provider,
         http_client_factory,
         state_db,
         thread_manager,
@@ -70,10 +70,10 @@ pub(crate) fn thread_extensions(
     if let Some(queue_service) = queue_service {
         genex_queue_extension::install(&mut builder, queue_service);
     }
-    genex_history_notes_extension::install_with_provider_contract(
+    genex_history_notes_extension::install(
         &mut builder,
         credential_manager,
-        provider_contract.clone(),
+        provider.clone(),
         http_client_factory.clone(),
     );
     if let Some(state_db) = state_db {
@@ -91,11 +91,7 @@ pub(crate) fn thread_extensions(
     }
     genex_mcp_extension::install(&mut builder);
     genex_mcp_extension::install_executor_plugins(&mut builder, environment_manager);
-    genex_web_search_extension::install_with_provider_contract(
-        &mut builder,
-        provider_contract,
-        http_client_factory,
-    );
+    genex_web_search_extension::install(&mut builder, provider, http_client_factory);
     let skill_providers = genex_skills_extension::SkillProviders::new()
         .with_executor_provider(executor_skill_provider)
         .with_host_provider(Arc::new(genex_skills_extension::HostSkillProvider::new()));

@@ -1,8 +1,10 @@
 //! Provider-neutral boundary for Genex hosts and provider implementations.
 //!
-//! The runtime adapter still lives in [`crate::provider`].  This module is intentionally free of
-//! credential-store and wire-client types so a provider implementation can be supplied without
-//! making those implementation details part of the Genex contract.
+//! The primary request, response, stream, capability, and descriptor surface is
+//! provider-neutral. A small set of compatibility methods bridges the current
+//! adapter-backed auth and transport paths while native provider implementations
+//! are migrated; those methods are kept behind the shared provider handle and
+//! are not used for provider selection.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -13,8 +15,16 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use futures::Stream;
+use genex_api::ApiError;
+use genex_api::Provider;
+use genex_api::SharedAuthProvider;
 use genex_http_client::HttpClientFactory;
+use genex_login::CredentialManager;
+use genex_login::GenexAuth;
+use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
+use genex_protocol::error::GenexErr;
+use genex_protocol::error::Result as CoreResult;
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::protocol::RateLimitSnapshot;
@@ -392,6 +402,63 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     }
 
     fn capabilities(&self) -> ProviderCapabilities;
+
+    /// Returns provider metadata needed by host diagnostics and legacy configuration bridges.
+    /// New execution code should prefer [`Self::descriptor`] and [`Self::capabilities`].
+    fn model_provider_info(&self) -> Option<ModelProviderInfo> {
+        None
+    }
+
+    /// Returns the provider's shared credential manager, when it owns one.
+    fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
+        None
+    }
+
+    /// Returns whether this provider includes attestation on model requests.
+    fn supports_attestation(&self) -> bool {
+        false
+    }
+
+    /// Resolves the current provider auth snapshot for request metadata and telemetry.
+    fn auth(&self) -> ProviderFuture<'_, Option<GenexAuth>> {
+        Box::pin(async { None })
+    }
+
+    /// Resolves the provider-neutral API destination used for diagnostics and request metadata.
+    fn api_provider(&self) -> ProviderFuture<'_, CoreResult<Provider>> {
+        Box::pin(async {
+            Err(GenexErr::UnsupportedOperation(
+                "provider API destination is unavailable".to_string(),
+            ))
+        })
+    }
+
+    /// Resolves the auth provider used for an outbound request.
+    fn api_auth(&self) -> ProviderFuture<'_, CoreResult<SharedAuthProvider>> {
+        Box::pin(async {
+            Err(GenexErr::UnsupportedOperation(
+                "provider request auth is unavailable".to_string(),
+            ))
+        })
+    }
+
+    /// Resolves request auth with the provider's scoped credential semantics.
+    fn api_auth_for_scope(
+        &self,
+        scope: crate::auth::ProviderAuthScope,
+    ) -> ProviderFuture<'_, CoreResult<crate::auth::ResolvedProviderAuth>> {
+        let _ = scope;
+        Box::pin(async {
+            Err(GenexErr::UnsupportedOperation(
+                "scoped provider request auth is unavailable".to_string(),
+            ))
+        })
+    }
+
+    /// Maps a provider transport error into the host error model.
+    fn map_api_error(&self, error: ApiError) -> GenexErr {
+        genex_api::map_api_error(error)
+    }
 
     fn chat(&self, request: ChatRequest) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;
 

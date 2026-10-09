@@ -162,7 +162,7 @@ impl ConfigRequestProcessor {
         &self,
     ) -> Result<ModelProviderCapabilitiesReadResponse, JSONRPCErrorError> {
         let _config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let provider = self.thread_manager.model_provider_contract();
+        let provider = self.thread_manager.model_provider();
         let capabilities = provider.capabilities();
         Ok(ModelProviderCapabilitiesReadResponse {
             namespace_tools: capabilities.namespace_tools,
@@ -174,7 +174,7 @@ impl ConfigRequestProcessor {
         &self,
     ) -> Result<ModelProviderReadResponse, JSONRPCErrorError> {
         let _config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        let provider = self.thread_manager.model_provider_contract();
+        let provider = self.thread_manager.model_provider();
         let descriptor = provider.descriptor();
         let account_state = provider
             .account_state()

@@ -4,6 +4,27 @@
 
 ## 単一Provider runtimeの最終境界監査 (2026-10-09)
 
+### 残事項の実装結果
+
+AppServer の host 境界を再監査し、daemon・in-process・CLI credential lifecycle・TUI の
+provider-home 初期化・doctor の provider construction を `AppServerRuntimeBuilder` に統一した。
+`AppServerRuntime` は `SharedModelProvider` を1つだけ保持し、`provider_runtime` と
+`provider_contract` の二重 accessor は廃止した。設定からの provider construction は
+`from_provider_info` に限定し、別 provider は別 runtime/data root で起動する。
+
+`core` の `ThreadManager`、`SessionConfiguration`、`TurnContext`、`ModelClient`、model catalog
+source はすべて `SharedModelProvider` を受け取る形へ移行した。Chat/Responses HTTP、Responses
+WebSocket、continuation、unauthorized recovery、capability 判定は同じ provider handle を使い、
+旧 `SharedProviderRuntime` は adapter の内部実装境界に限定した。残る契約メソッドは、現在の
+configured adapter が auth snapshot・API route・error mapping を provider-neutral contract から
+提供するための移行用であり、wire payload と具体的 HTTP client は adapter に隠蔽されている。
+
+thread/rollout/state/protocol の監査では、SQLite の provider routing column/index、rollout の
+provider routing metadata、thread-list/start/resume/fork の provider selector は既に削除済みである
+ことを確認した。残る app-server の `model_provider` / `provider_id` は mounted runtime の
+status/response fields としてのみ producer/consumer があり、thread execution の選択には使われない。
+この判断を `docs/pre-release-compatibility-inventory.md` に記録した。
+
 History/Notes 拡張の `Config.model_provider.is_responses_provider()` 参照を監査した。
 拡張のバックエンド呼び出しは共有 `ModelProvider` の endpoint/auth を既に利用しており、
 provider 設定型を直接見る必要はない。一方、対応可否は外部 History/Notes backend の
@@ -42,9 +63,9 @@ standalone Web Search の request/response transport と History/Notes backend t
 拡張は provider-neutral な入力と外部機能固有の context/header を組み立て、endpoint 解決、認証、HTTP
 transport は provider adapter が所有する。
 Responses wire 判定、auth recovery、request/response event mapping は契約へ移行した。
-`ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。旧 constructor は
-テスト等の移行途中の caller 向けに adapter を作る互換境界として残し、AppServer の production session は
-`new_with_provider_contract` を利用する。
+`ModelClient` も session の contract handle を保持し、namespace tools の判定に利用する。AppServer の
+production session とテスト caller はともに `new_with_provider` を利用し、旧 runtime/contract の
+paired constructor は削除した。
 
 Responses WebSocket の接続・継続を監査した。接続先解決、認証ヘッダー、idle timeout、socket pump、wire JSON の
 送受信、Responses event の正規化は `genex-api` の provider transport がproducerであり、coreのconsumerは

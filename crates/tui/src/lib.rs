@@ -29,6 +29,7 @@ use app_server_session::ThreadParamsMode;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 use genex_app_server_client::AppServerClient;
+use genex_app_server_client::AppServerRuntimeBuilder;
 use genex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 use genex_app_server_client::InProcessAppServerClient;
 use genex_app_server_client::InProcessClientStartArgs;
@@ -55,7 +56,6 @@ use genex_features::Feature;
 use genex_login::default_client::originator;
 use genex_login::default_client::set_default_client_residency_requirement;
 use genex_login::enforce_login_restrictions;
-use genex_model_provider::create_model_provider;
 use genex_model_provider::mount_provider_home;
 use genex_protocol::ThreadId;
 use genex_protocol::auth::AuthMode;
@@ -295,7 +295,7 @@ async fn init_state_db_for_app_server_target(
     match app_server_target {
         AppServerTarget::Embedded => {
             let provider_descriptor =
-                create_model_provider(config.model_provider.clone(), None).descriptor();
+                AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
             mount_provider_home(&config.genex_home, &provider_descriptor).map_err(|err| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidData,

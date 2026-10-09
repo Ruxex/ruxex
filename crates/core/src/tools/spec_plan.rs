@@ -591,7 +591,7 @@ fn hosted_model_tool_specs(
     // `Some(Cached/Live/Disabled)` are the options for mode when standalone search is unavailable
     // and the provider supports hosted search. `None` prevents emitting a hosted search tool.
     let web_search_mode = (!standalone_web_search_available
-        && turn_context.provider_contract.capabilities().web_search)
+        && turn_context.provider.capabilities().web_search)
         .then_some(turn_context.config.web_search_mode.value());
     let web_search_config = web_search_mode
         .as_ref()
@@ -616,7 +616,7 @@ pub(crate) fn tool_suggest_enabled(turn_context: &TurnContext) -> bool {
 }
 
 fn namespace_tools_enabled(turn_context: &TurnContext) -> bool {
-    turn_context.provider_contract.capabilities().namespace_tools
+    turn_context.provider.capabilities().namespace_tools
 }
 
 fn multi_agent_v2_enabled(turn_context: &TurnContext) -> bool {
@@ -920,7 +920,7 @@ fn add_core_tool_sources(context: &CoreToolPlanContext<'_>, registry: &mut ToolR
 
 fn standalone_web_search_enabled(turn_context: &TurnContext, model_info: &ModelInfo) -> bool {
     namespace_tools_enabled(turn_context)
-        && turn_context.provider_contract.capabilities().web_search
+        && turn_context.provider.capabilities().web_search
         && (model_info.use_responses_lite
             || turn_context
                 .config

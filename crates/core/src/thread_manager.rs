@@ -49,9 +49,8 @@ use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use genex_login::default_client::originator;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::SharedProviderRuntime;
 use genex_model_provider::create_model_provider;
-use genex_model_provider::provider_contract as build_provider_contract;
+use genex_model_provider::provider_contract;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::manager::RefreshStrategy;
 use genex_models_manager::manager::SharedModelsManager;
@@ -395,8 +394,7 @@ pub(crate) struct ThreadManagerState {
     thread_created_tx: broadcast::Sender<ThreadId>,
     thread_id_generator: ThreadIdGenerator,
     credential_manager: Arc<CredentialManager>,
-    provider: SharedProviderRuntime,
-    provider_contract: SharedModelProvider,
+    provider: SharedModelProvider,
     models_manager: SharedModelsManager,
     git_root_discovery: Arc<GitRootDiscovery>,
     environment_manager: Arc<EnvironmentManager>,
@@ -429,38 +427,27 @@ pub fn build_models_manager(
 pub fn build_model_provider(
     config: &Config,
     credential_manager: Arc<CredentialManager>,
-) -> SharedProviderRuntime {
-    create_model_provider(config.model_provider.clone(), Some(credential_manager))
+) -> SharedModelProvider {
+    provider_contract(create_model_provider(
+        config.model_provider.clone(),
+        Some(credential_manager),
+    ))
 }
 
 pub fn build_models_manager_with_provider(
     config: &Config,
-    provider: SharedProviderRuntime,
-) -> SharedModelsManager {
-    build_models_manager_with_provider_contract(
-        config,
-        provider.clone(),
-        build_provider_contract(provider),
-    )
-}
-
-pub fn build_models_manager_with_provider_contract(
-    config: &Config,
-    provider: SharedProviderRuntime,
-    provider_contract: SharedModelProvider,
+    provider: SharedModelProvider,
 ) -> SharedModelsManager {
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
-        Arc::new(ProviderModelCatalogSource::new_with_provider_contract(
-            provider_contract.clone(),
-        )),
+        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
         provider.credential_manager(),
         config.model_catalog.clone(),
     );
     // MyProvider's API is the source of truth for the user's model catalog; keep discovery
     // enabled even while the generic provider feature remains opt-in.
     if config.features.enabled(Feature::ApiKeyModelDiscovery)
-        || provider_contract.capabilities().api_key_model_discovery
+        || provider.capabilities().api_key_model_discovery
     {
         manager.set_api_key_model_discovery_enabled(true);
     }
@@ -513,7 +500,7 @@ impl ThreadManager {
     pub fn new(
         config: &Config,
         credential_manager: Arc<CredentialManager>,
-        provider: SharedProviderRuntime,
+        provider: SharedModelProvider,
         models_manager: SharedModelsManager,
         session_source: SessionSource,
         environment_manager: Arc<EnvironmentManager>,
@@ -526,11 +513,10 @@ impl ThreadManager {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         external_time_provider: Option<Arc<dyn TimeProvider>>,
     ) -> Self {
-        Self::new_with_provider_contract(
+        Self::new_with_provider(
             config,
             credential_manager,
-            provider.clone(),
-            build_provider_contract(provider),
+            provider,
             models_manager,
             session_source,
             environment_manager,
@@ -546,11 +532,10 @@ impl ThreadManager {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn new_with_provider_contract(
+    pub fn new_with_provider(
         config: &Config,
         credential_manager: Arc<CredentialManager>,
-        provider: SharedProviderRuntime,
-        provider_contract: SharedModelProvider,
+        provider: SharedModelProvider,
         models_manager: SharedModelsManager,
         session_source: SessionSource,
         environment_manager: Arc<EnvironmentManager>,
@@ -595,7 +580,6 @@ impl ThreadManager {
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
                 provider,
-                provider_contract,
                 models_manager,
                 git_root_discovery: Arc::default(),
                 environment_manager,
@@ -737,15 +721,16 @@ impl ThreadManager {
             state_db.clone(),
         ));
         let agent_graph_store = local_agent_graph_store_from_state_db(state_db.as_ref());
-        let provider = create_model_provider(provider, Some(credential_manager.clone()));
-        let provider_contract = build_provider_contract(provider.clone());
+        let provider = provider_contract(create_model_provider(
+            provider,
+            Some(credential_manager.clone()),
+        ));
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),
                 thread_created_tx,
                 thread_id_generator: default_thread_id_generator(),
                 provider: Arc::clone(&provider),
-                provider_contract,
                 models_manager: build_catalog_models_manager(
                     genex_home,
                     Arc::new(ProviderModelCatalogSource::new(provider.clone())),
@@ -904,13 +889,8 @@ impl ThreadManager {
         self.state.models_manager.clone()
     }
 
-    pub fn model_provider(&self) -> SharedProviderRuntime {
+    pub fn model_provider(&self) -> SharedModelProvider {
         Arc::clone(&self.state.provider)
-    }
-
-    /// Returns the provider-neutral view of the mounted provider.
-    pub fn model_provider_contract(&self) -> SharedModelProvider {
-        Arc::clone(&self.state.provider_contract)
     }
 
     pub async fn list_models(
@@ -2220,7 +2200,6 @@ impl ThreadManagerState {
             originator,
             agent_control,
             provider: Arc::clone(&self.provider),
-            provider_contract: Arc::clone(&self.provider_contract),
             dynamic_tools,
             metrics_service_name,
             inherited_environments,
