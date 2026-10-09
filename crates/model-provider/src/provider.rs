@@ -23,6 +23,7 @@ use genex_api::SharedAuthProvider;
 use genex_api::StandardChatCompletionApi;
 use genex_api::TransportError;
 use genex_api::WebsocketTelemetry;
+use genex_api::auth_header_telemetry;
 use genex_api::is_azure_responses_provider;
 use genex_http_client::ClientRouteClass;
 use genex_http_client::HttpClientFactory;
@@ -56,7 +57,10 @@ use crate::cloudflare_provider::CloudflareModelProvider;
 use crate::contract::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use crate::contract::ProviderAuthRecoveryMessages;
 use crate::contract::ProviderCapabilities;
+use crate::contract::ProviderConnectionKey;
 use crate::contract::ProviderDescriptor;
+use crate::contract::ProviderRequestAuth;
+use crate::contract::ProviderRequestSnapshot;
 use crate::contract::ProviderUnauthorizedRecovery;
 use crate::contract::ProviderUsage;
 use crate::contract::ProviderUsageResult;
@@ -297,7 +301,11 @@ impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection
                 .await
                 .map_err(map_api_error_to_provider_error)?;
             Ok(
-                Box::pin(stream.map(|event| event.map_err(map_api_error_to_provider_error)))
+                Box::pin(stream.map(|event| {
+                    event
+                        .map(crate::contract::ProviderChatEvent::from)
+                        .map_err(map_api_error_to_provider_error)
+                }))
                     as crate::contract::ProviderChatStream,
             )
         })
@@ -789,6 +797,43 @@ pub trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             .await
         })
     }
+
+    fn request_snapshot(
+        &self,
+    ) -> ModelProviderFuture<'_, CoreResult<ProviderRequestSnapshot>> {
+        Box::pin(async move {
+            let auth = self.auth().await;
+            let api_auth = self.api_auth().await?;
+            let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
+            let (revision, owner_generation) = self
+                .credential_manager()
+                .map(|manager| {
+                    let revision = *manager.auth_change_receiver().borrow();
+                    let owner_generation = manager
+                        .auth_change_state_receiver()
+                        .borrow()
+                        .owner_generation;
+                    (Some(revision), Some(owner_generation))
+                })
+                .unwrap_or((None, None));
+            Ok(ProviderRequestSnapshot {
+                auth: ProviderRequestAuth {
+                    authenticated: auth.is_some(),
+                    managed_auth: auth
+                        .as_ref()
+                        .is_some_and(GenexAuth::uses_managed_auth),
+                    auth_header_attached: auth_telemetry.attached,
+                    auth_header_name: auth_telemetry.name,
+                    revision,
+                    owner_generation,
+                },
+                connection_key: ProviderConnectionKey {
+                    provider_kind: self.descriptor().provider_kind,
+                    auth_revision: revision,
+                },
+            })
+        })
+    }
 }
 
 /// Transitional adapter from the existing runtime implementation to the public provider-neutral
@@ -803,39 +848,21 @@ where
         ProviderRuntime::descriptor(self)
     }
 
-    fn model_provider_info(&self) -> Option<ModelProviderInfo> {
-        Some(ProviderRuntime::info(self).clone())
-    }
-
-    fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
-        ProviderRuntime::credential_manager(self)
-    }
-
     fn supports_attestation(&self) -> bool {
         ProviderRuntime::supports_attestation(self)
     }
 
-    fn auth(&self) -> crate::contract::ProviderFuture<'_, Option<GenexAuth>> {
-        ProviderRuntime::auth(self)
-    }
-
-    fn api_provider(&self) -> crate::contract::ProviderFuture<'_, CoreResult<Provider>> {
-        ProviderRuntime::api_provider(self)
-    }
-
-    fn api_auth(&self) -> crate::contract::ProviderFuture<'_, CoreResult<SharedAuthProvider>> {
-        ProviderRuntime::api_auth(self)
-    }
-
-    fn api_auth_for_scope(
+    fn request_snapshot(
         &self,
-        scope: ProviderAuthScope,
-    ) -> crate::contract::ProviderFuture<'_, CoreResult<ResolvedProviderAuth>> {
-        ProviderRuntime::api_auth_for_scope(self, scope)
-    }
-
-    fn map_api_error(&self, error: ApiError) -> GenexErr {
-        ProviderRuntime::map_api_error(self, error)
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<ProviderRequestSnapshot>,
+    > {
+        Box::pin(async move {
+            ProviderRuntime::request_snapshot(self)
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
     }
 
     fn wire_api(&self) -> ProviderWireApi {
@@ -1192,6 +1219,20 @@ impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
                 display_name: Some(error.to_string()),
             },
         }
+    }
+
+    fn request_snapshot(
+        &self,
+    ) -> crate::contract::ProviderFuture<
+        '_,
+        crate::contract::ProviderResult<crate::contract::ProviderRequestSnapshot>,
+    > {
+        let runtime = self.runtime.clone();
+        Box::pin(async move {
+            ProviderRuntime::request_snapshot(runtime.as_ref())
+                .await
+                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+        })
     }
 
     fn auth_fields(&self) -> Vec<crate::contract::ProviderAuthField> {

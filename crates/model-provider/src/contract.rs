@@ -15,21 +15,16 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use futures::Stream;
-use genex_api::ApiError;
-use genex_api::Provider;
-use genex_api::SharedAuthProvider;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
 use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as CoreResult;
 use genex_protocol::model_types::ModelCatalog;
 use genex_protocol::models::ResponseItem;
+use genex_protocol::protocol::ModelVerification;
 use genex_protocol::protocol::RateLimitSnapshot;
 use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::TokenUsage;
+use genex_protocol::ResponseUsageMetadata;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;
@@ -273,6 +268,32 @@ pub struct ProviderAuthState {
     pub display_name: Option<String>,
 }
 
+/// Auth metadata captured at the start of a provider operation.
+///
+/// This deliberately contains no credential value or provider-specific auth object.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderRequestAuth {
+    pub authenticated: bool,
+    pub managed_auth: bool,
+    pub auth_header_attached: bool,
+    pub auth_header_name: Option<&'static str>,
+    pub revision: Option<u64>,
+    pub owner_generation: Option<u64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderConnectionKey {
+    pub provider_kind: String,
+    pub auth_revision: Option<u64>,
+}
+
+/// Provider-owned request admission and connection-reuse snapshot.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderRequestSnapshot {
+    pub auth: ProviderRequestAuth,
+    pub connection_key: ProviderConnectionKey,
+}
+
 /// A provider-owned credential field exposed to a host login form.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderAuthField {
@@ -416,11 +437,121 @@ pub struct ProviderBackendResponse {
     pub body: Value,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderSafetyBuffering {
+    pub use_cases: Vec<String>,
+    pub reasons: Vec<String>,
+    pub show_buffering_ui: bool,
+    pub faster_model: Option<String>,
+}
+
 /// Provider-neutral streamed chat events.
-///
-/// The current migration reuses the repository's normalized response event vocabulary. Wire
-/// transport errors are still converted to [`ProviderError`] by the provider adapter.
-pub type ProviderChatEvent = genex_api::ResponseEvent;
+#[derive(Debug, Clone, PartialEq)]
+pub enum ProviderChatEvent {
+    Created { response_id: Option<String> },
+    SafetyBuffering(ProviderSafetyBuffering),
+    OutputItemDone(ResponseItem),
+    OutputItemAdded(ResponseItem),
+    ServerModel(String),
+    ModelVerifications(Vec<ModelVerification>),
+    ServerReasoningIncluded(bool),
+    Completed {
+        response_id: String,
+        token_usage: Option<TokenUsage>,
+        usage_metadata: Option<ResponseUsageMetadata>,
+        end_turn: Option<bool>,
+    },
+    OutputTextDelta(String),
+    ToolCallInputDelta {
+        item_id: String,
+        call_id: Option<String>,
+        delta: String,
+    },
+    ReasoningSummaryDelta { delta: String, summary_index: i64 },
+    ReasoningSummaryDone {
+        item_id: String,
+        text: String,
+        summary_index: i64,
+    },
+    ReasoningContentDelta { delta: String, content_index: i64 },
+    ReasoningSummaryPartAdded { summary_index: i64 },
+    RateLimits(RateLimitSnapshot),
+    ModelsEtag(String),
+}
+
+impl From<genex_api::ResponseEvent> for ProviderChatEvent {
+    fn from(event: genex_api::ResponseEvent) -> Self {
+        match event {
+            genex_api::ResponseEvent::Created { response_id } => Self::Created { response_id },
+            genex_api::ResponseEvent::SafetyBuffering(buffering) => {
+                Self::SafetyBuffering(ProviderSafetyBuffering {
+                    use_cases: buffering.use_cases,
+                    reasons: buffering.reasons,
+                    show_buffering_ui: buffering.show_buffering_ui,
+                    faster_model: buffering.faster_model,
+                })
+            }
+            genex_api::ResponseEvent::OutputItemDone(item) => Self::OutputItemDone(item),
+            genex_api::ResponseEvent::OutputItemAdded(item) => Self::OutputItemAdded(item),
+            genex_api::ResponseEvent::ServerModel(model) => Self::ServerModel(model),
+            genex_api::ResponseEvent::ModelVerifications(verifications) => {
+                Self::ModelVerifications(verifications)
+            }
+            genex_api::ResponseEvent::ServerReasoningIncluded(included) => {
+                Self::ServerReasoningIncluded(included)
+            }
+            genex_api::ResponseEvent::Completed {
+                response_id,
+                token_usage,
+                usage_metadata,
+                end_turn,
+            } => Self::Completed {
+                response_id,
+                token_usage,
+                usage_metadata,
+                end_turn,
+            },
+            genex_api::ResponseEvent::OutputTextDelta(delta) => Self::OutputTextDelta(delta),
+            genex_api::ResponseEvent::ToolCallInputDelta {
+                item_id,
+                call_id,
+                delta,
+            } => Self::ToolCallInputDelta {
+                item_id,
+                call_id,
+                delta,
+            },
+            genex_api::ResponseEvent::ReasoningSummaryDelta {
+                delta,
+                summary_index,
+            } => Self::ReasoningSummaryDelta {
+                delta,
+                summary_index,
+            },
+            genex_api::ResponseEvent::ReasoningSummaryDone {
+                item_id,
+                text,
+                summary_index,
+            } => Self::ReasoningSummaryDone {
+                item_id,
+                text,
+                summary_index,
+            },
+            genex_api::ResponseEvent::ReasoningContentDelta {
+                delta,
+                content_index,
+            } => Self::ReasoningContentDelta {
+                delta,
+                content_index,
+            },
+            genex_api::ResponseEvent::ReasoningSummaryPartAdded { summary_index } => {
+                Self::ReasoningSummaryPartAdded { summary_index }
+            }
+            genex_api::ResponseEvent::RateLimits(snapshot) => Self::RateLimits(snapshot),
+            genex_api::ResponseEvent::ModelsEtag(etag) => Self::ModelsEtag(etag),
+        }
+    }
+}
 
 /// Provider-owned model execution, catalog, authentication, and usage contract.
 pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
@@ -454,61 +585,9 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
 
     fn capabilities(&self) -> ProviderCapabilities;
 
-    /// Returns provider metadata needed by host diagnostics and legacy configuration bridges.
-    /// New execution code should prefer [`Self::descriptor`] and [`Self::capabilities`].
-    fn model_provider_info(&self) -> Option<ModelProviderInfo> {
-        None
-    }
-
-    /// Returns the provider's shared credential manager, when it owns one.
-    fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
-        None
-    }
-
     /// Returns whether this provider includes attestation on model requests.
     fn supports_attestation(&self) -> bool {
         false
-    }
-
-    /// Resolves the current provider auth snapshot for request metadata and telemetry.
-    fn auth(&self) -> ProviderFuture<'_, Option<GenexAuth>> {
-        Box::pin(async { None })
-    }
-
-    /// Resolves the provider-neutral API destination used for diagnostics and request metadata.
-    fn api_provider(&self) -> ProviderFuture<'_, CoreResult<Provider>> {
-        Box::pin(async {
-            Err(GenexErr::UnsupportedOperation(
-                "provider API destination is unavailable".to_string(),
-            ))
-        })
-    }
-
-    /// Resolves the auth provider used for an outbound request.
-    fn api_auth(&self) -> ProviderFuture<'_, CoreResult<SharedAuthProvider>> {
-        Box::pin(async {
-            Err(GenexErr::UnsupportedOperation(
-                "provider request auth is unavailable".to_string(),
-            ))
-        })
-    }
-
-    /// Resolves request auth with the provider's scoped credential semantics.
-    fn api_auth_for_scope(
-        &self,
-        scope: crate::auth::ProviderAuthScope,
-    ) -> ProviderFuture<'_, CoreResult<crate::auth::ResolvedProviderAuth>> {
-        let _ = scope;
-        Box::pin(async {
-            Err(GenexErr::UnsupportedOperation(
-                "scoped provider request auth is unavailable".to_string(),
-            ))
-        })
-    }
-
-    /// Maps a provider transport error into the host error model.
-    fn map_api_error(&self, error: ApiError) -> GenexErr {
-        genex_api::map_api_error(error)
     }
 
     fn chat(&self, request: ChatRequest) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;
@@ -545,6 +624,10 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     ) -> ProviderFuture<'_, ProviderResult<ProviderModelCatalog>>;
 
     fn auth_state(&self) -> ProviderAuthState;
+
+    fn request_snapshot(
+        &self,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>>;
 
     fn auth_fields(&self) -> Vec<ProviderAuthField>;
 
@@ -598,6 +681,27 @@ mod tests {
                 account_id: None,
                 display_name: None,
             }
+        }
+
+        fn request_snapshot(
+            &self,
+        ) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>> {
+            Box::pin(async {
+                Ok(ProviderRequestSnapshot {
+                    auth: ProviderRequestAuth {
+                        authenticated: false,
+                        managed_auth: false,
+                        auth_header_attached: false,
+                        auth_header_name: None,
+                        revision: None,
+                        owner_generation: None,
+                    },
+                    connection_key: ProviderConnectionKey {
+                        provider_kind: "fake".to_string(),
+                        auth_revision: None,
+                    },
+                })
+            })
         }
 
         fn auth_fields(&self) -> Vec<ProviderAuthField> {
@@ -660,6 +764,28 @@ mod tests {
             provider.auth_state().status,
             ProviderAuthStatus::Unauthenticated
         );
+    }
+
+    #[tokio::test]
+    async fn provider_request_snapshot_is_neutral_and_explicitly_unauthenticated() {
+        let provider: SharedModelProvider = Arc::new(FakeProvider);
+        let snapshot = provider
+            .request_snapshot()
+            .await
+            .expect("fake provider should expose a request snapshot");
+        assert!(!snapshot.auth.authenticated);
+        assert!(!snapshot.auth.managed_auth);
+        assert_eq!(snapshot.connection_key.provider_kind, "fake");
+        assert!(matches!(
+            ProviderError::Unauthenticated,
+            ProviderError::Unauthenticated
+        ));
+    }
+
+    #[test]
+    fn provider_stream_events_are_owned_by_the_provider_contract() {
+        let event = ProviderChatEvent::OutputTextDelta("delta".to_string());
+        assert!(matches!(event, ProviderChatEvent::OutputTextDelta(_)));
     }
 
     #[test]
