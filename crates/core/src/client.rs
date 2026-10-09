@@ -177,6 +177,7 @@ struct ModelClientState {
 ///
 /// Keeping this as a single bundle ensures prewarm and normal request paths
 /// share the same auth/provider setup flow.
+#[derive(Clone)]
 struct CurrentClientSetup {
     auth: ProviderRequestAuth,
     auth_owner_generation: Option<u64>,
@@ -231,6 +232,12 @@ pub struct ModelClient {
 pub struct ModelClientSession {
     client: ModelClient,
     websocket_session: WebsocketSession,
+    /// Authentication and connection metadata captured for this turn.
+    ///
+    /// The provider captures the corresponding private credential state when it starts the
+    /// operation. Keeping this neutral snapshot for the whole session prevents logout or a
+    /// later login from changing admission, routing, or telemetry in an in-flight turn.
+    turn_client_setup: Option<CurrentClientSetup>,
     /// Turn state for sticky routing.
     ///
     /// This is an `OnceLock` that stores the turn state value received from the server
@@ -520,6 +527,7 @@ impl ModelClient {
         ModelClientSession {
             client: self.clone(),
             websocket_session,
+            turn_client_setup: None,
             turn_state: Arc::new(OnceLock::new()),
         }
     }
@@ -925,6 +933,15 @@ impl Drop for ModelClientSession {
 }
 
 impl ModelClientSession {
+    async fn client_setup(&mut self) -> Result<CurrentClientSetup> {
+        if let Some(setup) = &self.turn_client_setup {
+            return Ok(setup.clone());
+        }
+        let setup = self.client.current_client_setup().await?;
+        self.turn_client_setup = Some(setup.clone());
+        Ok(setup)
+    }
+
     #[allow(clippy::too_many_arguments)]
     /// Builds shared Responses API transport options and request-body options.
     ///
@@ -1040,7 +1057,7 @@ impl ModelClientSession {
         if !self.client.responses_websocket_enabled() {
             return Ok(());
         }
-        let client_setup = self.client.current_client_setup().await.map_err(|err| {
+        let client_setup = self.client_setup().await.map_err(|err| {
             ApiError::Stream(format!(
                 "failed to build websocket prewarm client setup: {err}"
             ))
@@ -1171,13 +1188,16 @@ impl ModelClientSession {
     /// Responses transport does not pass through this path.
     #[allow(clippy::too_many_arguments)]
     async fn stream_chat_completions(
-        &self,
+        &mut self,
         prompt: &Prompt,
         model_info: &ModelInfo,
         session_telemetry: &SessionTelemetry,
         responses_metadata: &GenexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
+        // Admit the turn before constructing the provider request. The provider owns the
+        // private credential snapshot; this neutral setup remains fixed for the session.
+        let _client_setup = self.client_setup().await?;
         if prompt.output_schema.is_some() {
             return Err(genex_protocol::error::GenexErr::UnsupportedOperation(
                 "output_schema is not supported for Chat Completions API".to_string(),
@@ -1240,7 +1260,7 @@ impl ModelClientSession {
         )
     )]
     async fn stream_responses_api(
-        &self,
+        &mut self,
         prompt: &Prompt,
         model_info: &ModelInfo,
         session_telemetry: &SessionTelemetry,
@@ -1252,7 +1272,7 @@ impl ModelClientSession {
     ) -> Result<ResponseStream> {
         let mut provider_auth_recovery_attempted = false;
         loop {
-            let client_setup = self.client.current_client_setup().await?;
+            let client_setup = self.client_setup().await?;
             let responses_headers = self
                 .client
                 .responses_headers(&client_setup.auth, &model_info.slug);
@@ -1389,7 +1409,7 @@ impl ModelClientSession {
         let mut provider_auth_recovery_attempted = false;
         let mut pending_retry = PendingUnauthorizedRetry::default();
         loop {
-            let client_setup = self.client.current_client_setup().await?;
+            let client_setup = self.client_setup().await?;
             let responses_headers = self
                 .client
                 .responses_headers(&client_setup.auth, &model_info.slug);
