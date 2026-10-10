@@ -778,3 +778,15 @@ The remaining provider-named normalized request was not a wire compatibility lay
 Core continuation/telemetry and the adapter. Its normalized fields are now part of `ChatRequest`, while
 the adapter-only Responses projection preserves the existing fields and serialization. The unused plugin provider ID was removed after its
 producer/consumer search, and the model-catalog convenience constructor is now test-only.
+
+### Provider-free client boundary (2026-10-10)
+
+The next implementation wave is limited to the client/AppServer boundary. These are not deletion decisions
+based on names alone; each entry records the current producer and consumer before code changes.
+
+| Candidate | Producer/consumer audit | Decision | Verification |
+|---|---|---|---|
+| TUI provider-derived configuration | Producers are local `Config.model_provider`, `model_provider_id`, `wire_api`, and custom `base_url` reads in `crates/tui/src/lib.rs`, `crates/tui/src/status/card.rs`, and `crates/tui/src/chatwidget/model_popups.rs`; consumers are startup selection, status presentation, and model-picker warnings. The AppServer already produces the authoritative catalog/status/capability responses. | `migrate-in-place`: consume server-derived values in connected mode; retain client-local UI configuration. | Exact TUI field search; bootstrap/reconnect tests; `just check --tests`; `just check` |
+| Remote TUI state DB access | `crates/tui/src/lib.rs` produces the target-specific state handle; `crates/rollout/src/state_db.rs` and `crates/state/src/runtime.rs` consume it by opening provider-scoped SQLite. Remote AppServer is the producer/owner of thread, rollout, credential, and provider state. | `migrate-in-place`: return no provider-owned `StateRuntime` for `Remote`, or replace it with a separately named client-local store after consumers are proven necessary. | State consumer audit; remote no-open regression test; `just check --tests`; `just check` |
+| Remote server metadata and client identity | `crates/app-server/src` produces the initialize response; `crates/app-server-client/src/remote.rs` produces `RemoteServerMetadata`; TUI session/reconnect consumers need a stable scope for provider-derived state. | `migrate-in-place`: carry `AppServerIdentity { signature, version, build_version? }`. The client identity/cache key must not contain a provider descriptor or endpoint path; `providerKind` remains only in the home marker for mount mismatch validation. | Protocol/remote/TUI identity audit; generated schema inspection; `just generate`; `just check --tests`; `just check` |
+| Provider-derived TUI caches | `crates/tui/src/model_catalog.rs` and bootstrap/reconnect code produce in-memory catalog/status state; future persisted cache consumers must be identified before addition. | `migrate-in-place`: scope by `(AppServerIdentity.signature, AppServerIdentity.version)` and invalidate on either component; keep UI preferences unscoped. | A→B isolation test and version invalidation test; `just check --tests`; `just check` |
