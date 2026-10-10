@@ -40,15 +40,20 @@ AppServerは初期化応答で、秘密情報を含まないidentityを返す。
 ```text
 AppServerIdentity {
     signature: opaque stable identity,
-    protocol_version: protocol compatibility version,
-    provider_descriptor: provider kind and protocol compatibility,
-    build_version: optional implementation version,
+    version: runtime/provider contract compatibility version,
+    build_version: optional diagnostic implementation version,
 }
 ```
 
 `signature` は同じprovider-scoped data rootを使うAppServer再起動では安定し、別provider
 または別data rootでは変わる。provider markerと同じ所有境界で生成・保存する。endpoint URL、
 filesystem path、credentialsはidentityに含めない。
+
+`version` は単なるGenex製品のbuild versionではなく、provider contract、protocol schema、
+model catalog/capabilityの互換性を含むcache compatibility versionとする。したがって、
+provider descriptorをidentityに重複して持たせない。provider種別そのものは、mount時の
+`genex-home.json` による不一致検出のために保持するが、クライアントのidentity／cache keyには
+含めない。
 
 暗号学的な相手認証はidentityの目的ではない。WebSocketのTLS/bearer token、Unix socketの
 権限、その他のtransport securityで別途扱う。
@@ -81,11 +86,11 @@ model catalog、capability、account/usage表示、server defaultsなどの接�
 次の複合キーで管理する。
 
 ```text
-(signature, protocol_version, provider_descriptor)
+(signature, version)
 ```
 
 endpoint URLだけをキーにしない。同じendpointのAppServerが別provider homeで再起動される
-可能性があるためである。identityまたはprovider descriptorが変わった場合、model、
+可能性があるためである。identityまたはversionが変わった場合、model、
 reasoning、capability、account/usageのキャッシュを破棄し、bootstrapをやり直す。
 
 同一AppServerを利用する複数クライアントは、各自の一時キャッシュを持てるが、providerの
@@ -129,14 +134,15 @@ provider-owned thread/rollout DBとして扱わない。
 - `crates/app-server-client/src/remote.rs`: 初期化応答からidentityを保持。
 - `crates/app-server-protocol/src/protocol/v1.rs` および `v2/`: identityのwire型と生成schema。
 - `crates/model-provider/src/home_marker.rs` / `crates/app-server/src/runtime.rs`:
-  stable signatureの生成・保存境界。
+  stable signatureとcompatibility versionの生成・保存境界。provider markerのprovider種別は
+  mount mismatch検出用として維持する。
 
 ## 検証方針
 
 - TUIの全設定キーについて、client-local / AppServer-owned / session requestを一覧化する。
 - Provider AのAppServerへ接続後、Provider BのAppServerへ接続して、Aのmodel ID、capability、
   auth state、cache、local DBがBへ漏れないことを検証する。
-- 同じAppServerの再起動ではsignatureが維持され、protocol version変更時はcacheが無効化されることを検証する。
+- 同じAppServerの再起動ではsignatureが維持され、compatibility version変更時はcacheが無効化されることを検証する。
 - Remote TUIがprovider-owned SQLiteをmarkerなしに開かないことを検証する。
 - `just generate`、`just check --tests`、`just check`をリポジトリのmemory guard付きで実行する。
 
