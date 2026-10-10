@@ -40,6 +40,32 @@ async fn run_startup_for_test(
 }
 
 #[tokio::test]
+async fn startup_model_discards_a_local_model_missing_from_the_server_catalog() -> Result<()> {
+    let home = tempdir()?;
+    std::fs::write(
+        home.path().join("config.toml"),
+        "model = \"client-only-model\"\n",
+    )?;
+    let config = ConfigBuilder::default()
+        .genex_home(home.path().to_path_buf())
+        .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
+        .build()
+        .await?;
+    let (server, _requests, proxy) = start_recording_remote_app_server(&config).await?;
+    let mut bootstrap = server.bootstrap(&config).await?;
+    bootstrap.default_model = "server-default-model".to_string();
+
+    assert_eq!(
+        startup_model(&config, &bootstrap, /*server_defaults_read*/ false),
+        "server-default-model"
+    );
+
+    server.shutdown().await?;
+    proxy.await??;
+    Ok(())
+}
+
+#[tokio::test]
 async fn cli_fork_omits_implicit_model_and_effort() -> Result<()> {
     let home = tempdir()?;
     std::fs::write(

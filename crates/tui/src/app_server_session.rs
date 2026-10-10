@@ -35,6 +35,7 @@ use genex_app_server_client::AppServerPath;
 use genex_app_server_client::AppServerRequestHandle;
 use genex_app_server_client::TypedRequestError;
 use genex_app_server_protocol::Account;
+use genex_app_server_protocol::AppServerIdentity;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::AuthMode;
 use genex_app_server_protocol::ClientRequest;
@@ -48,6 +49,8 @@ use genex_app_server_protocol::LogoutAccountResponse;
 use genex_app_server_protocol::Model as ApiModel;
 use genex_app_server_protocol::ModelListParams;
 use genex_app_server_protocol::ModelListResponse;
+use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use genex_app_server_protocol::ModelProviderReadResponse;
 use genex_app_server_protocol::NewThreadModelDefaults;
 use genex_app_server_protocol::RequestId;
 use genex_app_server_protocol::ReviewDelivery;
@@ -276,6 +279,9 @@ pub(crate) struct AppServerBootstrap {
     pub(crate) has_managed_account: bool,
     pub(crate) available_models: Vec<ModelPreset>,
     pub(crate) collaboration_modes: Vec<genex_protocol::config_types::CollaborationModeMask>,
+    pub(crate) app_server_identity: Option<AppServerIdentity>,
+    pub(crate) provider_status: ModelProviderReadResponse,
+    pub(crate) provider_capabilities: ModelProviderCapabilitiesReadResponse,
 }
 
 pub(crate) struct AppServerSession {
@@ -293,6 +299,9 @@ pub(crate) struct AppServerSession {
     available_models: Vec<ModelPreset>,
     managed_new_thread_defaults: Option<NewThreadModelDefaults>,
     dynamic_tool_mcp: Option<Arc<DynamicToolMcpServer>>,
+    app_server_identity: Option<AppServerIdentity>,
+    provider_status: Option<ModelProviderReadResponse>,
+    provider_capabilities: Option<ModelProviderCapabilitiesReadResponse>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -384,6 +393,9 @@ impl AppServerSession {
             available_models: Vec::new(),
             managed_new_thread_defaults: None,
             dynamic_tool_mcp: None,
+            app_server_identity: None,
+            provider_status: None,
+            provider_capabilities: None,
         }
     }
 
@@ -524,6 +536,10 @@ impl AppServerSession {
         client.genex_home()
     }
 
+    pub(crate) fn app_server_identity(&self) -> Option<&AppServerIdentity> {
+        self.client.identity()
+    }
+
     pub(crate) async fn bootstrap(&mut self, config: &Config) -> Result<AppServerBootstrap> {
         let started_at = Instant::now();
         let account = self.read_account().await?;
@@ -588,9 +604,17 @@ impl AppServerSession {
             .into_iter()
             .map(model_preset_from_api_model)
             .collect::<Vec<_>>();
+        let provider_status = self.model_provider_read().await?;
+        let provider_capabilities = self.model_provider_capabilities_read().await?;
         let default_model = config
             .model
-            .clone()
+            .as_ref()
+            .filter(|model| {
+                available_models
+                    .iter()
+                    .any(|preset| &preset.model == *model)
+            })
+            .cloned()
             .or_else(|| {
                 available_models
                     .iter()
@@ -601,6 +625,9 @@ impl AppServerSession {
             .wrap_err("model/list returned no models for TUI bootstrap")?;
         self.default_model = Some(default_model.clone());
         self.available_models = available_models.clone();
+        self.app_server_identity = self.client.identity().cloned();
+        self.provider_status = Some(provider_status.clone());
+        self.provider_capabilities = Some(provider_capabilities.clone());
 
         let (account_email, auth_mode, status_account_display, plan_type, has_managed_account) =
             match account.account {
@@ -623,6 +650,9 @@ impl AppServerSession {
             has_managed_account,
             available_models,
             collaboration_modes,
+            app_server_identity: self.app_server_identity.clone(),
+            provider_status,
+            provider_capabilities,
         })
     }
 

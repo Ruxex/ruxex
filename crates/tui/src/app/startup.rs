@@ -81,21 +81,30 @@ pub(super) fn startup_model(
     bootstrap: &AppServerBootstrap,
     server_defaults_read: bool,
 ) -> String {
-    config.model.clone().unwrap_or_else(|| {
-        if server_defaults_read {
-            // Bootstrap was seeded with local config, which may differ from a cleared server
-            // model. Use the server's model catalog when config/read returned model: null.
-            bootstrap
-                .available_models
-                .iter()
-                .find(|model| model.is_default)
-                .or_else(|| bootstrap.available_models.first())
-                .map(|model| model.model.clone())
-                .unwrap_or_else(|| bootstrap.default_model.clone())
-        } else {
-            bootstrap.default_model.clone()
-        }
-    })
+    if !server_defaults_read
+        && let Some(model) = config.model.as_ref()
+        && bootstrap
+            .available_models
+            .iter()
+            .any(|preset| preset.model == *model)
+    {
+        return model.clone();
+    }
+    bootstrap
+        .available_models
+        .iter()
+        .find(|model| model.is_default)
+        .or_else(|| bootstrap.available_models.first())
+        .map(|model| model.model.clone())
+        .unwrap_or_else(|| {
+            if server_defaults_read {
+                // Bootstrap was seeded with local config, which may differ from a cleared server
+                // model. Use the server's model catalog when config/read returned model: null.
+                bootstrap.default_model.clone()
+            } else {
+                bootstrap.default_model.clone()
+            }
+        })
 }
 
 impl App {
