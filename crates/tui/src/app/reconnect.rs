@@ -233,6 +233,9 @@ impl App {
             bootstrap,
             thread,
         } = connected;
+        let previous_identity = app_server.app_server_identity().cloned();
+        let new_identity = bootstrap.app_server_identity.clone();
+        let server_context_changed = previous_identity != new_identity;
         let selected = self
             .chat_widget
             .selected_index_for_present_view(agents_overview::AGENTS_OVERVIEW_VIEW_ID)
@@ -286,6 +289,8 @@ impl App {
                 .with_server_identity(bootstrap.app_server_identity.as_ref())
                 .with_collaboration_modes(bootstrap.collaboration_modes),
         );
+        self.chat_widget
+            .set_model_catalog(Arc::clone(&self.model_catalog));
         self.pending_app_server_requests.clear();
         let pending_displayed_profile =
             displayed.is_some_and(|id| self.pending_server_profiles.contains_key(&id));
@@ -436,6 +441,11 @@ impl App {
             bootstrap.has_managed_account,
             false,
         );
+        if server_context_changed {
+            tracing::info!(
+                "AppServer identity changed during reconnect; adopted a fresh server context"
+            );
+        }
         if self.chat_widget.has_managed_account() {
             crate::daybreak::prefetch_notice(
                 &self.config,

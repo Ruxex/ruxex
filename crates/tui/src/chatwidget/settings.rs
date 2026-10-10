@@ -141,6 +141,42 @@ impl ChatWidget {
         self.model_catalog.clone()
     }
 
+    /// Replace server-derived catalog data after reconnecting to an AppServer.
+    ///
+    /// Client-local presentation preferences remain untouched. If the previous
+    /// server did not expose the selected model, move the selection to the new
+    /// server's marked default, then its first available model.
+    pub(crate) fn set_model_catalog(&mut self, model_catalog: Arc<ModelCatalog>) {
+        self.model_catalog = model_catalog;
+        let current_model = self.current_model().to_string();
+        let replacement = self
+            .model_catalog
+            .models
+            .iter()
+            .find(|preset| preset.model == current_model)
+            .map(|preset| preset.model.clone())
+            .or_else(|| {
+                self.model_catalog
+                    .models
+                    .iter()
+                    .find(|preset| preset.is_default)
+                    .map(|preset| preset.model.clone())
+            })
+            .or_else(|| {
+                self.model_catalog
+                    .models
+                    .first()
+                    .map(|preset| preset.model.clone())
+            });
+        if let Some(model) = replacement {
+            if model != current_model {
+                self.set_model(&model);
+            } else {
+                self.refresh_model_dependent_surfaces();
+            }
+        }
+    }
+
     pub(crate) fn current_plan_type(&self) -> Option<PlanType> {
         self.plan_type
     }
