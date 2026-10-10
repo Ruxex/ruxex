@@ -242,8 +242,6 @@ impl ChatWidget {
             crate::status::compose_agents_summary(&self.config, &self.instruction_source_paths);
         let (cell, handle) = crate::status::new_status_output_with_rate_limits_handle(
             &self.config,
-            self.thread_id
-                .map(|_| self.config.model_provider_id.as_str()),
             self.remote_connection.as_ref(),
             self.status_account_display.as_ref(),
             token_info,

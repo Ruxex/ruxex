@@ -11,7 +11,6 @@ use crate::version::GENEX_CLI_VERSION;
 use chrono::DateTime;
 use chrono::Local;
 use genex_app_server_protocol::AskForApproval;
-use genex_model_provider_info::WireApi;
 use genex_protocol::ThreadId;
 use genex_protocol::account::PlanType;
 use genex_protocol::model_types::ReasoningEffort;
@@ -128,7 +127,6 @@ struct StatusHistoryCell {
     permissions: String,
     agents_summary: Arc<RwLock<String>>,
     collaboration_mode: Option<String>,
-    model_provider: Option<String>,
     remote_connection: Option<RemoteConnectionStatus>,
     account: Option<StatusAccountDisplay>,
     thread_name: Option<String>,
@@ -195,7 +193,6 @@ pub(crate) fn new_status_output_with_rate_limits(
 ) -> CompositeHistoryCell {
     new_status_output_with_rate_limits_handle(
         config,
-        /*model_provider_id*/ None,
         /*remote_connection*/ None,
         account_display,
         token_info,
@@ -218,7 +215,6 @@ pub(crate) fn new_status_output_with_rate_limits(
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn new_status_output_with_rate_limits_handle(
     config: &Config,
-    model_provider_id: Option<&str>,
     remote_connection: Option<&RemoteConnectionStatus>,
     account_display: Option<&StatusAccountDisplay>,
     token_info: Option<&TokenUsageInfo>,
@@ -238,7 +234,6 @@ pub(crate) fn new_status_output_with_rate_limits_handle(
     let command = PlainHistoryCell::new(vec!["/status".magenta().into()]);
     let card = Arc::new(StatusHistoryCell::new(
         config,
-        model_provider_id,
         remote_connection,
         account_display,
         token_info,
@@ -269,7 +264,6 @@ impl StatusHistoryCell {
     #[allow(clippy::too_many_arguments)]
     fn new(
         config: &Config,
-        model_provider_id: Option<&str>,
         remote_connection: Option<&RemoteConnectionStatus>,
         account_display: Option<&StatusAccountDisplay>,
         token_info: Option<&TokenUsageInfo>,
@@ -290,9 +284,6 @@ impl StatusHistoryCell {
         let permission_profile = config.permissions.effective_permission_profile();
         let workspace_roots = config.effective_workspace_roots();
         let cwd = PathUri::from_abs_path(&config.cwd);
-        let model_provider = model_provider_id
-            .filter(|id| !id.trim().is_empty())
-            .map(str::to_string);
         let mut config_entries = vec![
             ("workdir", config.cwd.display().to_string()),
             ("model", model_name.to_string()),
@@ -305,23 +296,18 @@ impl StatusHistoryCell {
                 summarize_permission_profile(&permission_profile, &cwd, &workspace_roots),
             ),
         ];
-        if let Some(provider_id) = &model_provider {
-            config_entries.insert(2, ("provider", provider_id.clone()));
-        }
-        if config.model_provider.wire_api == WireApi::Responses {
-            let effort_value = reasoning_effort_override
-                .unwrap_or_else(|| config.model_reasoning_effort.clone())
-                .map(|effort| effort.to_string())
-                .unwrap_or_else(|| "none".to_string());
-            config_entries.push(("reasoning effort", effort_value));
-            config_entries.push((
-                "reasoning summaries",
-                config
-                    .model_reasoning_summary
-                    .map(|summary| summary.to_string())
-                    .unwrap_or_else(|| "auto".to_string()),
-            ));
-        }
+        let effort_value = reasoning_effort_override
+            .unwrap_or_else(|| config.model_reasoning_effort.clone())
+            .map(|effort| effort.to_string())
+            .unwrap_or_else(|| "none".to_string());
+        config_entries.push(("reasoning effort", effort_value));
+        config_entries.push((
+            "reasoning summaries",
+            config
+                .model_reasoning_summary
+                .map(|summary| summary.to_string())
+                .unwrap_or_else(|| "auto".to_string()),
+        ));
         let (model_name, model_details) = compose_model_display(model_name, &config_entries);
         let approval = config_entries
             .iter()
@@ -378,7 +364,6 @@ impl StatusHistoryCell {
             directory: config.cwd.to_path_buf(),
             permissions,
             collaboration_mode: collaboration_mode.map(ToString::to_string),
-            model_provider,
             remote_connection: remote_connection.cloned(),
             account,
             thread_name,
@@ -748,9 +733,6 @@ impl StatusHistoryCell {
             .expect("status history agents summary state poisoned")
             .clone();
 
-        if self.model_provider.is_some() {
-            push_label(&mut labels, &mut seen, "Model provider");
-        }
         if account_value.is_some() {
             push_label(&mut labels, &mut seen, "Account");
         }
@@ -804,9 +786,6 @@ impl StatusHistoryCell {
         let directory_value = format_directory_display(&self.directory, Some(value_width));
 
         lines.push(formatter.line("Model", model_spans));
-        if let Some(model_provider) = self.model_provider.as_ref() {
-            lines.push(formatter.line("Model provider", vec![Span::from(model_provider.clone())]));
-        }
         lines.push(formatter.line("Directory", vec![Span::from(directory_value)]));
         lines.push(formatter.line("Permissions", vec![Span::from(self.permissions.clone())]));
         lines.push(formatter.line("Agents.md", vec![Span::from(agents_summary)]));

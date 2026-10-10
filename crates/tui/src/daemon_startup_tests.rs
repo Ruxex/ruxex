@@ -55,6 +55,27 @@ async fn local_daemon_state_db_rejects_a_mismatched_provider_home_before_opening
     Ok(())
 }
 
+#[tokio::test]
+async fn remote_app_server_does_not_open_local_state_db() -> color_eyre::Result<()> {
+    let home = TempDir::new()?;
+    let config = ConfigBuilder::default()
+        .genex_home(home.path().to_path_buf())
+        .build()
+        .await?;
+    let target = AppServerTarget::Remote {
+        endpoint: RemoteAppServerEndpoint::WebSocket {
+            websocket_url: "ws://127.0.0.1:1".to_string(),
+            auth_token: None,
+        },
+    };
+
+    let state_db = init_state_db_for_app_server_target(&config, &target).await?;
+
+    assert!(state_db.is_none());
+    assert!(!config.sqlite_config().state_db_path().exists());
+    Ok(())
+}
+
 #[cfg(windows)]
 #[tokio::test]
 async fn daemon_connection_rejects_unprotected_socket_before_handshake() -> color_eyre::Result<()> {

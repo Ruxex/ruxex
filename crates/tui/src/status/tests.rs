@@ -34,7 +34,6 @@ use genex_app_server_protocol::RateLimitWindow;
 use genex_app_server_protocol::SpendControlLimitSnapshot;
 use genex_config::LoaderOverrides;
 use genex_config::types::AuthCredentialsStoreMode;
-use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::test_support::construct_model_info_offline_for_tests;
 use genex_models_manager::test_support::get_model_offline_for_tests;
 use genex_protocol::ThreadId;
@@ -287,7 +286,6 @@ async fn status_permissions_non_default_workspace_write_uses_workspace_label() {
     let temp_home = TempDir::new().expect("temp home");
     let mut config = test_config(&temp_home).await;
     config.model = Some("example-model".to_string());
-    config.model_provider_id = "provider".to_string();
     config
         .permissions
         .approval_policy

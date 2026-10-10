@@ -283,6 +283,7 @@ impl App {
             FileSearchManager::new(self.config.cwd.to_path_buf(), self.app_event_tx.clone());
         self.model_catalog = Arc::new(
             ModelCatalog::new(bootstrap.available_models)
+                .with_server_identity(bootstrap.app_server_identity.as_ref())
                 .with_collaboration_modes(bootstrap.collaboration_modes),
         );
         self.pending_app_server_requests.clear();

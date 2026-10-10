@@ -331,6 +331,7 @@ impl App {
         }
         let model_catalog = Arc::new(
             ModelCatalog::new(available_models.clone())
+                .with_server_identity(bootstrap.app_server_identity.as_ref())
                 .with_collaboration_modes(bootstrap.collaboration_modes),
         );
         let auth_mode = bootstrap.auth_mode;

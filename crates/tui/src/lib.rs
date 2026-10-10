@@ -319,8 +319,8 @@ async fn init_state_db_for_app_server_target(
         }
         // A remote AppServer owns the provider-scoped home and validates its
         // marker before opening credentials or provider-owned SQLite. The TUI
-        // may use only its own optional local UI state here.
-        AppServerTarget::Remote { .. } => Ok(state_db::get_state_db(config).await),
+        // must not open the local rollout/state database in remote mode.
+        AppServerTarget::Remote { .. } => Ok(None),
     }
 }
 
@@ -1054,8 +1054,8 @@ async fn run_ratatui_app(
         }
     };
     let provider_auth_fields = provider.auth_fields;
+    let initial_model_provider_id = initial_config.model_provider_id.clone();
 
-    let startup_model_provider = initial_config.model_provider_id.clone();
     let Some(active_app_server) = app_server.as_mut() else {
         unreachable!("app server should exist when auth is required");
     };
@@ -1495,7 +1495,9 @@ async fn run_ratatui_app(
     };
     startup_draft.apply_config(&config);
 
-    if config.model_provider_id != startup_model_provider {
+    if matches!(app_server_target, AppServerTarget::Embedded)
+        && config.model_provider_id != initial_model_provider_id
+    {
         startup_account = None;
         if matches!(&app_server_target, AppServerTarget::Embedded) {
             // App-server providers are fixed at startup, so onboarding cannot
