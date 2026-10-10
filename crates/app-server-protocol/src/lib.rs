@@ -23,6 +23,8 @@ pub use protocol::event_mapping::*;
 pub use protocol::item_builders::*;
 pub use protocol::thread_history::*;
 pub use protocol::thread_history_projection::*;
+pub use protocol::v1::APP_SERVER_IDENTITY_VERSION;
+pub use protocol::v1::AppServerIdentity;
 pub use protocol::v1::ClientInfo;
 pub use protocol::v1::ConversationGitInfo;
 pub use protocol::v1::ConversationSummary;

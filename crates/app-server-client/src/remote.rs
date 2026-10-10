@@ -23,6 +23,7 @@ use crate::SHUTDOWN_TIMEOUT;
 use crate::TypedRequestError;
 use futures::SinkExt;
 use futures::StreamExt;
+use genex_app_server_protocol::AppServerIdentity;
 use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::ClientNotification;
 use genex_app_server_protocol::ClientRequest;
@@ -148,6 +149,7 @@ struct RemoteServerMetadata {
     genex_home: Option<String>,
     platform_family: Option<String>,
     platform_os: Option<String>,
+    identity: Option<AppServerIdentity>,
 }
 
 pub struct RemoteAppServerClient {
@@ -211,6 +213,10 @@ impl RemoteAppServerClient {
 
     pub fn platform_os(&self) -> Option<&str> {
         self.metadata.platform_os.as_deref()
+    }
+
+    pub fn identity(&self) -> Option<&AppServerIdentity> {
+        self.metadata.identity.as_ref()
     }
 
     async fn connect_with_stream<S>(
@@ -876,6 +882,12 @@ where
                                 .and_then(serde_json::Value::as_str).map(str::to_string);
                             metadata.platform_os = response.result.get("platformOs")
                                 .and_then(serde_json::Value::as_str).map(str::to_string);
+                            metadata.identity = response
+                                .result
+                                .get("appServerIdentity")
+                                .and_then(|identity| {
+                                    serde_json::from_value(identity.clone()).ok()
+                                });
                             break Ok(());
                         }
                         JSONRPCMessage::Error(error) if error.id == initialize_request_id => {

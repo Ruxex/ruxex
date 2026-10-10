@@ -67,6 +67,59 @@ pub struct InitializeResponse {
     /// Operating system for the running app-server target, for example
     /// `"macos"` or `"linux"`.
     pub platform_os: String,
+    pub app_server_identity: AppServerIdentity,
+}
+
+pub const APP_SERVER_IDENTITY_VERSION: &str = "app-server/1";
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct AppServerIdentity {
+    pub signature: String,
+    pub version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub build_version: Option<String>,
+}
+
+impl AppServerIdentity {
+    pub fn from_provider_home(
+        signature: impl Into<String>,
+        provider_protocol_version: &str,
+        build_version: Option<String>,
+    ) -> Self {
+        Self {
+            signature: signature.into(),
+            version: format!("{APP_SERVER_IDENTITY_VERSION};provider/{provider_protocol_version}"),
+            build_version,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn app_server_identity_round_trips_with_a_diagnostic_build_version() {
+        let response = InitializeResponse {
+            user_agent: "genex-app-server/1.0".to_string(),
+            genex_home: AbsolutePathBuf::from_absolute_path("/server/.genex")
+                .expect("absolute path"),
+            platform_family: "unix".to_string(),
+            platform_os: "linux".to_string(),
+            app_server_identity: AppServerIdentity {
+                signature: "opaque-signature".to_string(),
+                version: "app-server/1;provider/1".to_string(),
+                build_version: Some("1.2.3".to_string()),
+            },
+        };
+
+        let decoded: InitializeResponse =
+            serde_json::from_value(serde_json::to_value(response.clone()).expect("serialize"))
+                .expect("deserialize");
+
+        assert_eq!(decoded, response);
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

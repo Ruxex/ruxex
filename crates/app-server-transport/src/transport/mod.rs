@@ -372,6 +372,11 @@ mod tests {
                     genex_home: genex_home,
                     platform_family: "unix".to_string(),
                     platform_os: "linux".to_string(),
+                    app_server_identity: genex_app_server_protocol::AppServerIdentity {
+                        signature: "test".to_string(),
+                        version: "app-server/1;provider/1".to_string(),
+                        build_version: None,
+                    },
                 },
             )),
         });

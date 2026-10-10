@@ -3,6 +3,7 @@
 export type { AbsolutePathBuf } from "./AbsolutePathBuf";
 export type { AgentMessageInputContent } from "./AgentMessageInputContent";
 export type { AgentPath } from "./AgentPath";
+export type { AppServerIdentity } from "./AppServerIdentity";
 export type { AuthMode } from "./AuthMode";
 export type { AutoCompactTokenLimitScope } from "./AutoCompactTokenLimitScope";
 export type { ClientInfo } from "./ClientInfo";

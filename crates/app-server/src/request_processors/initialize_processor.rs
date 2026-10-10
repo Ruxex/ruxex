@@ -157,7 +157,16 @@ impl InitializeRequestProcessor {
         }
 
         let user_agent = get_user_agent();
+        let marker =
+            crate::runtime::mount_provider_home_for_config(&self.config).map_err(|error| {
+                invalid_request(format!("failed to mount provider data root: {error}"))
+            })?;
         let response = InitializeResponse {
+            app_server_identity: AppServerIdentity::from_provider_home(
+                marker.server_signature,
+                &marker.provider_protocol_version,
+                Some(user_agent.clone()),
+            ),
             user_agent,
             genex_home: genex_home,
             platform_family: std::env::consts::FAMILY.to_string(),

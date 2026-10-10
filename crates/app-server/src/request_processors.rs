@@ -19,6 +19,7 @@ use genex_app_server_protocol::AccountLoginCompletedNotification;
 use genex_app_server_protocol::AccountUpdatedNotification;
 use genex_app_server_protocol::AdditionalContextEntry;
 use genex_app_server_protocol::AdditionalContextKind;
+use genex_app_server_protocol::AppServerIdentity;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::AuthMode;
 use genex_app_server_protocol::CancelLoginAccountParams;

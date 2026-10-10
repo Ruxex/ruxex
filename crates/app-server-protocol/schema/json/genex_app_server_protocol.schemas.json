@@ -84,6 +84,27 @@
       },
       "type": "object"
     },
+    "AppServerIdentity": {
+      "properties": {
+        "buildVersion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signature": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "signature",
+        "version"
+      ],
+      "type": "object"
+    },
     "AttestationGenerateParams": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AttestationGenerateParams",
@@ -2831,6 +2852,9 @@
     "InitializeResponse": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
+        "appServerIdentity": {
+          "$ref": "#/definitions/AppServerIdentity"
+        },
         "genexHome": {
           "allOf": [
             {
@@ -2852,6 +2876,7 @@
         }
       },
       "required": [
+        "appServerIdentity",
         "genexHome",
         "platformFamily",
         "platformOs",

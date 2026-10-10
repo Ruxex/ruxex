@@ -4,12 +4,13 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use crate::contract::ProviderDescriptor;
+use uuid::Uuid;
 
 /// File written at the root of a provider-scoped Genex home.
 pub const PROVIDER_HOME_MARKER_FILE: &str = "genex-home.json";
 
 /// Version of the marker file format.
-pub const PROVIDER_HOME_FORMAT_VERSION: u32 = 1;
+pub const PROVIDER_HOME_FORMAT_VERSION: u32 = 2;
 
 /// Non-secret identity stored in a provider-scoped Genex home.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -21,6 +22,8 @@ pub struct ProviderHomeMarker {
     pub provider_kind: String,
     #[serde(rename = "providerProtocolVersion")]
     pub provider_protocol_version: String,
+    #[serde(rename = "serverSignature")]
+    pub server_signature: String,
 }
 
 impl From<&ProviderDescriptor> for ProviderHomeMarker {
@@ -29,6 +32,7 @@ impl From<&ProviderDescriptor> for ProviderHomeMarker {
             format_version: PROVIDER_HOME_FORMAT_VERSION,
             provider_kind: descriptor.provider_kind.clone(),
             provider_protocol_version: descriptor.provider_protocol_version.clone(),
+            server_signature: Uuid::new_v4().to_string(),
         }
     }
 }
@@ -105,7 +109,12 @@ pub fn mount_provider_home(
                         source,
                     }
                 })?;
-            let expected = ProviderHomeMarker::from(descriptor);
+            let expected = ProviderHomeMarker {
+                format_version: PROVIDER_HOME_FORMAT_VERSION,
+                provider_kind: descriptor.provider_kind.clone(),
+                provider_protocol_version: descriptor.provider_protocol_version.clone(),
+                server_signature: actual.server_signature.clone(),
+            };
             if actual != expected {
                 return Err(ProviderHomeError::DescriptorMismatch {
                     path,
@@ -235,5 +244,37 @@ mod tests {
         let second = mount_provider_home(temp.path(), &descriptor).expect("reuse mount");
 
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn new_home_gets_a_stable_server_signature() {
+        let temp = tempfile::tempdir().expect("temporary home");
+        let descriptor = descriptor("provider-a");
+
+        let first = mount_provider_home(temp.path(), &descriptor).expect("initial mount");
+        let second = mount_provider_home(temp.path(), &descriptor).expect("reuse mount");
+
+        assert!(!first.server_signature.is_empty());
+        assert_eq!(first.server_signature, second.server_signature);
+    }
+
+    #[test]
+    fn old_marker_format_requires_explicit_migration() {
+        let temp = tempfile::tempdir().expect("temporary home");
+        fs::write(
+            temp.path().join(PROVIDER_HOME_MARKER_FILE),
+            serde_json::json!({
+                "formatVersion": 1,
+                "providerKind": "provider-a",
+                "providerProtocolVersion": CURRENT_PROVIDER_PROTOCOL_VERSION,
+            })
+            .to_string(),
+        )
+        .expect("old marker should be written");
+
+        let error = mount_provider_home(temp.path(), &descriptor("provider-a"))
+            .expect_err("old marker should not be opened implicitly");
+
+        assert!(matches!(error, ProviderHomeError::InvalidMarker { .. }));
     }
 }

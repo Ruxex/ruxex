@@ -37,6 +37,7 @@ use genex_app_server::in_process::LogDbLayer;
 pub use genex_app_server::in_process::StateDbHandle;
 pub use genex_app_server::runtime::configured_app_server_runtime_from_config;
 pub use genex_app_server::runtime::mount_provider_home_for_config;
+use genex_app_server_protocol::AppServerIdentity;
 use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::ClientNotification;
 use genex_app_server_protocol::ClientRequest;
@@ -296,6 +297,7 @@ pub struct InProcessAppServerClient {
     command_tx: mpsc::Sender<ClientCommand>,
     event_rx: mpsc::UnboundedReceiver<InProcessServerEvent>,
     worker_handle: tokio::task::JoinHandle<()>,
+    identity: Option<AppServerIdentity>,
 }
 
 #[derive(Clone)]
@@ -321,6 +323,15 @@ impl InProcessAppServerClient {
     /// Request queues remain bounded without blocking on unread notifications.
     pub async fn start(args: InProcessClientStartArgs) -> IoResult<Self> {
         let channel_capacity = args.channel_capacity.max(1);
+        let identity = genex_app_server::runtime::mount_provider_home_for_config(&args.config)
+            .map(|marker| {
+                AppServerIdentity::from_provider_home(
+                    marker.server_signature,
+                    &marker.provider_protocol_version,
+                    None,
+                )
+            })
+            .map_err(|error| IoError::new(ErrorKind::InvalidData, error.to_string()))?;
         let mut handle =
             genex_app_server::in_process::start(args.into_runtime_start_args()).await?;
         let request_sender = handle.sender();
@@ -410,6 +421,7 @@ impl InProcessAppServerClient {
             command_tx,
             event_rx,
             worker_handle,
+            identity: Some(identity),
         })
     }
 
@@ -571,6 +583,7 @@ impl InProcessAppServerClient {
             command_tx,
             event_rx,
             worker_handle,
+            ..
         } = self;
         let mut worker_handle = worker_handle;
         // Stop forwarding caller-facing events before asking the worker to shut down.
@@ -741,6 +754,13 @@ impl AppServerClient {
         match self {
             Self::InProcess(_) => Some(std::env::consts::OS),
             Self::Remote(client) => client.platform_os(),
+        }
+    }
+
+    pub fn identity(&self) -> Option<&AppServerIdentity> {
+        match self {
+            Self::InProcess(client) => client.identity.as_ref(),
+            Self::Remote(client) => client.identity(),
         }
     }
 
@@ -976,6 +996,11 @@ mod tests {
             serde_json::json!({
                 "userAgent": "genex_cli_rs/9.8.7-test (Test OS; x86_64) rust",
                 "genexHome": "/server/.genex",
+                "appServerIdentity": {
+                    "signature": "server-a",
+                    "version": "app-server/1;provider/1",
+                    "buildVersion": "9.8.7-test"
+                }
             }),
         )
         .await;
@@ -1291,6 +1316,12 @@ mod tests {
 
         assert_eq!(client.server_version(), Some("9.8.7-test"));
         assert_eq!(client.genex_home(), Some("/server/.genex"));
+        assert_eq!(
+            client
+                .identity()
+                .map(|identity| identity.signature.as_str()),
+            Some("server-a")
+        );
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
@@ -1952,6 +1983,7 @@ mod tests {
             command_tx,
             event_rx,
             worker_handle,
+            identity: None,
         };
 
         let event = timeout(Duration::from_secs(2), client.next_event())
@@ -1997,6 +2029,7 @@ mod tests {
             command_tx,
             event_rx,
             worker_handle,
+            identity: None,
         };
 
         client.shutdown().await.expect("shutdown should complete");
