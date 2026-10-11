@@ -76,7 +76,6 @@ pub(crate) async fn start_temporary_thread(
         ("features.shell_tool".to_string(), false.into()),
         ("features.standalone_web_search".to_string(), false.into()),
         ("features.token_budget".to_string(), false.into()),
-        ("features.tool_suggest".to_string(), false.into()),
         ("features.unified_exec".to_string(), false.into()),
         ("features.view_image".to_string(), false.into()),
         ("orchestrator.skills.enabled".to_string(), false.into()),

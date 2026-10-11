@@ -36,10 +36,6 @@
         "$ref": "#/definitions/AgentRoleToml"
       },
       "properties": {
-        "default_subagent_model": {
-          "description": "Default model for spawned subagents when the spawn call does not select one.",
-          "type": "string"
-        },
         "default_subagent_reasoning_effort": {
           "allOf": [
             {
@@ -172,25 +168,6 @@
           "description": "Store credentials in memory only for the current process.",
           "enum": [
             "ephemeral"
-          ],
-          "type": "string"
-        }
-      ]
-    },
-    "AutoCompactTokenLimitScope": {
-      "description": "Selects which part of the active context is charged against `model_auto_compact_token_limit`.",
-      "oneOf": [
-        {
-          "description": "Count the full active context against the limit.",
-          "enum": [
-            "total"
-          ],
-          "type": "string"
-        },
-        {
-          "description": "Count sampled output and later growth after the carried window prefix.",
-          "enum": [
-            "body_after_prefix"
           ],
           "type": "string"
         }
@@ -476,9 +453,6 @@
             "reasoning_effort_override": {
               "type": "boolean"
             },
-            "recommended_plugins": {
-              "type": "boolean"
-            },
             "remote_compaction_v2": {
               "type": "boolean"
             },
@@ -575,9 +549,6 @@
             "tool_search_always_defer_mcp_tools": {
               "type": "boolean"
             },
-            "tool_suggest": {
-              "type": "boolean"
-            },
             "unbounded_connection_retries": {
               "type": "boolean"
             },
@@ -644,17 +615,6 @@
         "metrics": {
           "$ref": "#/definitions/MetricsConfigToml"
         },
-        "model": {
-          "type": "string"
-        },
-        "model_catalog_json": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AbsolutePathBuf"
-            }
-          ],
-          "description": "Optional path to a JSON model catalog (applied on startup only)."
-        },
         "model_instructions_file": {
           "allOf": [
             {
@@ -663,17 +623,8 @@
           ],
           "description": "Optional path to a file containing model instructions."
         },
-        "model_reasoning_effort": {
-          "$ref": "#/definitions/ReasoningEffort"
-        },
-        "model_reasoning_summary": {
-          "$ref": "#/definitions/ReasoningSummary"
-        },
         "model_verbosity": {
           "$ref": "#/definitions/Verbosity"
-        },
-        "plan_mode_reasoning_effort": {
-          "$ref": "#/definitions/ReasoningEffort"
         },
         "sandbox_mode": {
           "$ref": "#/definitions/SandboxMode"
@@ -1542,154 +1493,6 @@
         "format": "uint32",
         "minimum": 0.0,
         "type": "integer"
-      },
-      "type": "object"
-    },
-    "ModelProviderAuthInfo": {
-      "additionalProperties": false,
-      "description": "Configuration for obtaining a provider bearer token from a command.",
-      "properties": {
-        "args": {
-          "default": [],
-          "description": "Command arguments.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "command": {
-          "description": "Command to execute. Bare names are resolved via `PATH`; paths are resolved against `cwd`.",
-          "type": "string"
-        },
-        "cwd": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/AbsolutePathBuf"
-            }
-          ],
-          "description": "Working directory used when running the token command."
-        },
-        "refresh_interval_ms": {
-          "default": 300000,
-          "description": "Maximum age for the cached token before rerunning the command. Set to `0` to disable proactive refresh and only rerun after a 401 retry path.",
-          "format": "uint64",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "timeout_ms": {
-          "default": 5000,
-          "description": "Maximum time to wait for the token command to exit successfully.",
-          "format": "uint64",
-          "minimum": 1.0,
-          "type": "integer"
-        }
-      },
-      "required": [
-        "command"
-      ],
-      "type": "object"
-    },
-    "ModelProviderInfo": {
-      "additionalProperties": false,
-      "description": "Serializable representation of a provider definition.",
-      "properties": {
-        "auth": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/ModelProviderAuthInfo"
-            }
-          ],
-          "description": "Command-backed bearer-token configuration for this provider."
-        },
-        "base_url": {
-          "description": "Base URL for the provider's provider-compatible API.",
-          "type": "string"
-        },
-        "env_http_headers": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Optional HTTP headers to include in requests to this provider where the (key, value) pairs are the header name and _environment variable_ whose value should be used. If the environment variable is not set, or the value is empty, the header will not be included in the request.",
-          "type": "object"
-        },
-        "env_key": {
-          "description": "Environment variable that stores the user's API key for this provider.",
-          "type": "string"
-        },
-        "env_key_instructions": {
-          "description": "Optional instructions to help the user get a valid value for the variable and set it.",
-          "type": "string"
-        },
-        "experimental_bearer_token": {
-          "description": "Value to use with `Authorization: Bearer <token>` header. Use of this config is discouraged in favor of `env_key` for security reasons, but this may be necessary when using this programmatically.",
-          "type": "string"
-        },
-        "http_headers": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Additional HTTP headers to include in requests to this provider where the (key, value) pairs are the header name and value.",
-          "type": "object"
-        },
-        "id": {
-          "description": "Stable identifier used for provider-scoped credentials and diagnostics.",
-          "type": "string"
-        },
-        "name": {
-          "default": "",
-          "description": "Friendly display name.",
-          "type": "string"
-        },
-        "query_params": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Optional query parameters to append to the base URL.",
-          "type": "object"
-        },
-        "request_max_retries": {
-          "description": "Maximum number of times to retry a failed HTTP request to this provider.",
-          "format": "uint64",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "stream_idle_timeout_ms": {
-          "description": "Idle timeout (in milliseconds) to wait for activity on a streaming response before treating the connection as lost.",
-          "format": "uint64",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "stream_max_retries": {
-          "description": "Number of times to retry reconnecting a dropped streaming response before failing.",
-          "format": "uint64",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "supports_standalone_web_search": {
-          "default": false,
-          "description": "Whether this provider supports the standalone web-search endpoint.",
-          "type": "boolean"
-        },
-        "supports_websockets": {
-          "default": false,
-          "description": "Whether this provider supports the Responses API WebSocket transport.",
-          "type": "boolean"
-        },
-        "websocket_connect_timeout_ms": {
-          "description": "Maximum time (in milliseconds) to wait for a websocket connection attempt before treating it as failed.",
-          "format": "uint64",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "wire_api": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/WireApi"
-            }
-          ],
-          "default": "responses",
-          "description": "Which wire protocol this provider expects."
-        }
       },
       "type": "object"
     },
@@ -2672,26 +2475,6 @@
       "minLength": 1,
       "type": "string"
     },
-    "ReasoningSummary": {
-      "description": "A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process. See https://platform.provider.com/docs/guides/reasoning?api-mode=responses#reasoning-summaries",
-      "oneOf": [
-        {
-          "enum": [
-            "auto",
-            "concise",
-            "detailed"
-          ],
-          "type": "string"
-        },
-        {
-          "description": "Option to disable reasoning summaries.",
-          "enum": [
-            "none"
-          ],
-          "type": "string"
-        }
-      ]
-    },
     "ResumeCwdMode": {
       "description": "Working directory to use when resuming or forking a session.",
       "oneOf": [
@@ -3069,64 +2852,6 @@
         }
       },
       "type": "object"
-    },
-    "ToolSuggestConfig": {
-      "additionalProperties": false,
-      "properties": {
-        "disabled_tools": {
-          "default": [],
-          "items": {
-            "$ref": "#/definitions/ToolSuggestDisabledTool"
-          },
-          "type": "array"
-        },
-        "discoverables": {
-          "default": [],
-          "items": {
-            "$ref": "#/definitions/ToolSuggestDiscoverable"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "ToolSuggestDisabledTool": {
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/ToolSuggestDiscoverableType"
-        }
-      },
-      "required": [
-        "id",
-        "type"
-      ],
-      "type": "object"
-    },
-    "ToolSuggestDiscoverable": {
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/ToolSuggestDiscoverableType"
-        }
-      },
-      "required": [
-        "id",
-        "type"
-      ],
-      "type": "object"
-    },
-    "ToolSuggestDiscoverableType": {
-      "enum": [
-        "plugin"
-      ],
-      "type": "string"
     },
     "ToolsToml": {
       "additionalProperties": false,
@@ -5112,25 +4837,6 @@
       },
       "type": "object"
     },
-    "WireApi": {
-      "description": "Wire protocol that the provider speaks.",
-      "oneOf": [
-        {
-          "description": "The Chat Completions API exposed by provider at `/v1/chat/completions`.",
-          "enum": [
-            "chat"
-          ],
-          "type": "string"
-        },
-        {
-          "description": "The Responses API exposed by provider at `/v1/responses`.",
-          "enum": [
-            "responses"
-          ],
-          "type": "string"
-        }
-      ]
-    },
     "WorkspaceRootsToml": {
       "type": "object"
     }
@@ -5370,9 +5076,6 @@
         "reasoning_effort_override": {
           "type": "boolean"
         },
-        "recommended_plugins": {
-          "type": "boolean"
-        },
         "remote_compaction_v2": {
           "type": "boolean"
         },
@@ -5467,9 +5170,6 @@
           "type": "boolean"
         },
         "tool_search_always_defer_mcp_tools": {
-          "type": "boolean"
-        },
-        "tool_suggest": {
           "type": "boolean"
         },
         "unbounded_connection_retries": {
@@ -5668,36 +5368,6 @@
       ],
       "description": "When `false`, disables metrics across Genex product surfaces in this machine. Defaults to `true`."
     },
-    "model": {
-      "description": "Optional override of model selection.",
-      "type": "string"
-    },
-    "model_auto_compact_token_limit": {
-      "description": "Token usage threshold triggering auto-compaction of conversation history.",
-      "format": "int64",
-      "type": "integer"
-    },
-    "model_auto_compact_token_limit_scope": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/AutoCompactTokenLimitScope"
-        }
-      ],
-      "description": "Controls whether the auto-compaction limit applies to the full context or only to tokens after the carried prefix in the current compaction window."
-    },
-    "model_catalog_json": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/AbsolutePathBuf"
-        }
-      ],
-      "description": "Optional path to a JSON model catalog (applied on startup only). Per-thread `config` overrides are accepted but do not reapply this (no-ops)."
-    },
-    "model_context_window": {
-      "description": "Size of the context window for the model, in tokens.",
-      "format": "int64",
-      "type": "integer"
-    },
     "model_instructions_file": {
       "allOf": [
         {
@@ -5705,20 +5375,6 @@
         }
       ],
       "description": "Optional path to a file containing model instructions that will override the built-in instructions for the selected model. Users are STRONGLY DISCOURAGED from using this field, as deviating from the instructions sanctioned by Genex will likely degrade model performance."
-    },
-    "model_provider": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/ModelProviderInfo"
-        }
-      ],
-      "description": "Connection settings for the single built-in provider mounted by this Genex runtime. This does not select a provider implementation or a per-thread provider."
-    },
-    "model_reasoning_effort": {
-      "$ref": "#/definitions/ReasoningEffort"
-    },
-    "model_reasoning_summary": {
-      "$ref": "#/definitions/ReasoningSummary"
     },
     "model_verbosity": {
       "allOf": [
@@ -5768,9 +5424,6 @@
       ],
       "default": null,
       "description": "Named permissions profiles."
-    },
-    "plan_mode_reasoning_effort": {
-      "$ref": "#/definitions/ReasoningEffort"
     },
     "plugins": {
       "additionalProperties": {
@@ -5899,14 +5552,6 @@
       "format": "uint",
       "minimum": 0.0,
       "type": "integer"
-    },
-    "tool_suggest": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/ToolSuggestConfig"
-        }
-      ],
-      "description": "Additional discoverable tools that can be suggested for installation."
     },
     "tools": {
       "allOf": [

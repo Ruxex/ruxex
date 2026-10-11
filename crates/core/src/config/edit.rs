@@ -6,14 +6,12 @@ use genex_config::is_structured_feature_path;
 use genex_config::types::McpServerConfig;
 use genex_config::types::ResumeCwdMode;
 use genex_config::types::SessionPickerViewMode;
-use genex_config::types::ToolSuggestDisabledTool;
 use genex_features::FEATURES;
 use genex_protocol::config_types::ServiceTier;
 use genex_protocol::config_types::TrustLevel;
 use genex_protocol::model_types::ReasoningEffort;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 use tokio::task;
@@ -57,8 +55,6 @@ pub enum ConfigEdit {
     RecordModelMigrationSeen { from: String, to: String },
     /// Replace the entire `[mcp_servers]` table.
     ReplaceMcpServers(BTreeMap<String, McpServerConfig>),
-    /// Add a disabled tool suggestion under `[tool_suggest].disabled_tools`.
-    AddToolSuggestDisabledTool(ToolSuggestDisabledTool),
     /// Set or clear a skill config entry under `[[skills.config]]` by path.
     SetSkillConfig { path: PathBuf, enabled: bool },
     /// Set or clear a skill config entry under `[[skills.config]]` by name.
@@ -296,9 +292,6 @@ impl ConfigDocument {
                 value(to.clone()),
             )),
             ConfigEdit::ReplaceMcpServers(servers) => self.replace_mcp_servers(servers),
-            ConfigEdit::AddToolSuggestDisabledTool(disabled_tool) => {
-                Ok(self.add_tool_suggest_disabled_tool(disabled_tool))
-            }
             ConfigEdit::SetSkillConfig { path, enabled } => {
                 Ok(self.set_skill_config(SkillConfigSelector::Path(path.clone()), *enabled))
             }
@@ -376,40 +369,6 @@ impl ConfigDocument {
             .map(|segment| (*segment).to_string())
             .collect::<Vec<_>>();
         self.remove(&resolved)
-    }
-
-    fn add_tool_suggest_disabled_tool(&mut self, disabled_tool: &ToolSuggestDisabledTool) -> bool {
-        let disabled_tools_item = self
-            .doc
-            .get("tool_suggest")
-            .and_then(|item| item.as_table_like())
-            .and_then(|table| table.get("disabled_tools"));
-        let existing_from_array = disabled_tools_item
-            .and_then(|item| item.as_value())
-            .and_then(|value| value.as_array())
-            .into_iter()
-            .flat_map(|array| array.iter())
-            .filter_map(document_helpers::parse_tool_suggest_disabled_tool);
-        let existing_from_tables = disabled_tools_item
-            .and_then(|item| match item {
-                TomlItem::ArrayOfTables(array) => Some(array),
-                _ => None,
-            })
-            .into_iter()
-            .flat_map(|array| array.iter())
-            .filter_map(document_helpers::parse_tool_suggest_disabled_tool_table);
-
-        let mut seen = HashSet::new();
-        let disabled_tools = existing_from_array
-            .chain(existing_from_tables)
-            .chain(std::iter::once(disabled_tool.clone()))
-            .filter_map(|disabled_tool| disabled_tool.normalized())
-            .filter(|disabled_tool| seen.insert(disabled_tool.clone()))
-            .collect::<Vec<_>>();
-        self.write_value(
-            &["tool_suggest", "disabled_tools"],
-            document_helpers::tool_suggest_disabled_tools_value(&disabled_tools),
-        )
     }
 
     fn clear_owned(&mut self, segments: &[String]) -> bool {
@@ -931,7 +890,6 @@ impl ConfigEditsBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_config::types::ToolSuggestDiscoverableType;
     use std::fs;
 
     #[test]
@@ -1025,7 +983,7 @@ mod tests {
     }
 
     #[test]
-    fn deduplicates_nux_edits_and_normalizes_disabled_tool_entries() {
+    fn deduplicates_nux_edits() {
         let edits = model_availability_nux_count_edits(&HashMap::from([
             ("zeta".to_string(), 2),
             ("alpha".to_string(), 1),
@@ -1037,24 +995,6 @@ mod tests {
                 if segments.last().is_some_and(|segment| segment == "alpha")
                     && value.as_integer() == Some(1)
         ));
-
-        let disabled = ToolSuggestDisabledTool {
-            kind: ToolSuggestDiscoverableType::Plugin,
-            id: "plugin-id".to_string(),
-        };
-        let mut document = ConfigDocument::new(
-            "[tool_suggest]\ndisabled_tools = [{ type = \"plugin\", id = \"old\" }]\n"
-                .parse::<DocumentMut>()
-                .expect("valid TOML"),
-        );
-        assert!(
-            document
-                .apply(&ConfigEdit::AddToolSuggestDisabledTool(disabled))
-                .expect("disabled tool edit")
-        );
-        let rendered = document.doc.to_string();
-        assert!(rendered.contains("plugin-id"));
-        assert!(rendered.contains("old"));
     }
 
     #[test]

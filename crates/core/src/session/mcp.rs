@@ -11,18 +11,8 @@ use genex_mcp::ElicitationReviewer;
 use genex_mcp::ElicitationReviewerHandle;
 use genex_protocol::capabilities::CapabilityRootLocation;
 use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY as MCP_ELICITATION_APPROVAL_KIND_KEY;
-use genex_protocol::mcp_approval_meta::APPROVAL_KIND_TOOL_SUGGESTION as MCP_ELICITATION_APPROVAL_KIND_TOOL_SUGGESTION;
-use genex_protocol::mcp_approval_meta::TOOL_NAME_KEY as MCP_ELICITATION_TOOL_NAME_KEY;
 use genex_rmcp_client::Elicitation;
 use rmcp::model::RequestId;
-use serde_json::Map;
-use serde_json::Value;
-
-const TOOL_SUGGESTION_ACTION_INSTALL: &str = "install";
-const TOOL_SUGGESTION_ACTION_KEY: &str = "suggest_type";
-const TOOL_SUGGESTION_TOOL_ID_KEY: &str = "tool_id";
-const TOOL_SUGGESTION_TOOL_TYPE_KEY: &str = "tool_type";
 
 struct McpElicitationReviewer {
     session: std::sync::Weak<Session>,
@@ -31,13 +21,6 @@ struct McpElicitationReviewer {
 pub(crate) struct McpServerElicitationOutcome {
     pub(crate) response: Option<ElicitationResponse>,
     pub(crate) sent: bool,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-struct PluginInstallElicitationTelemetryMetadata {
-    tool_type: String,
-    tool_id: String,
-    tool_name: String,
 }
 
 impl McpElicitationReviewer {
@@ -492,20 +475,10 @@ impl Session {
             id,
             request,
         });
-        let plugin_install_telemetry = plugin_install_elicitation_telemetry_metadata(&event);
         turn_context
             .turn_metadata_state
             .mark_user_input_requested_during_turn();
         self.send_event(turn_context, event).await;
-        if let Some(plugin_install_telemetry) = plugin_install_telemetry {
-            turn_context
-                .session_telemetry
-                .record_plugin_install_elicitation_sent(
-                    plugin_install_telemetry.tool_type.as_str(),
-                    plugin_install_telemetry.tool_id.as_str(),
-                    plugin_install_telemetry.tool_name.as_str(),
-                );
-        }
         Ok(McpServerElicitationOutcome {
             response: rx_response.await.ok(),
             sent: true,
@@ -669,42 +642,4 @@ async fn review_mcp_elicitation(
         .request_mcp_server_elicitation(&turn_context, request.server_name, request_id, elicitation)
         .await?
         .response)
-}
-
-fn metadata_str<'a>(meta: &'a Map<String, Value>, key: &str) -> Option<&'a str> {
-    meta.get(key).and_then(Value::as_str)
-}
-
-fn metadata_owned_string(meta: &Map<String, Value>, key: &str) -> Option<String> {
-    metadata_str(meta, key)
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(ToOwned::to_owned)
-}
-
-fn plugin_install_elicitation_telemetry_metadata(
-    event: &EventMsg,
-) -> Option<PluginInstallElicitationTelemetryMetadata> {
-    let EventMsg::ElicitationRequest(ElicitationRequestEvent { request, .. }) = event else {
-        return None;
-    };
-    let genex_protocol::approvals::ElicitationRequest::Form {
-        meta: Some(Value::Object(meta)),
-        ..
-    } = request
-    else {
-        return None;
-    };
-    if metadata_str(meta, MCP_ELICITATION_APPROVAL_KIND_KEY)
-        != Some(MCP_ELICITATION_APPROVAL_KIND_TOOL_SUGGESTION)
-        || metadata_str(meta, TOOL_SUGGESTION_ACTION_KEY) != Some(TOOL_SUGGESTION_ACTION_INSTALL)
-    {
-        return None;
-    }
-
-    Some(PluginInstallElicitationTelemetryMetadata {
-        tool_type: metadata_owned_string(meta, TOOL_SUGGESTION_TOOL_TYPE_KEY)?,
-        tool_id: metadata_owned_string(meta, TOOL_SUGGESTION_TOOL_ID_KEY)?,
-        tool_name: metadata_owned_string(meta, MCP_ELICITATION_TOOL_NAME_KEY)?,
-    })
 }

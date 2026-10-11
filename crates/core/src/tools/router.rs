@@ -20,7 +20,6 @@ use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ToolMode;
 use genex_protocol::models::ResponseItem;
 use genex_protocol::models::SearchToolCallParams;
-use genex_tools::DiscoverableTool;
 use genex_tools::ResponsesApiNamespaceTool;
 use genex_tools::ToolName;
 use genex_tools::ToolSpec;
@@ -78,18 +77,6 @@ pub struct ToolRouter {
     code_mode_tool_names: BTreeMap<String, ToolName>,
     tool_namespaces_info: Option<TurnToolNamespacesInfo>,
     can_manage_children: bool,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ToolSuggestPresentation {
-    ListTool,
-    RecommendationContext,
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct ToolSuggestCandidates {
-    pub(crate) tools: Vec<DiscoverableTool>,
-    pub(crate) presentation: ToolSuggestPresentation,
 }
 
 impl ToolRouter {

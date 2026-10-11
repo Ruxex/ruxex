@@ -2424,9 +2424,7 @@ mod tests {
             turn_id: Some("turn_123".to_string()),
             server_name: "calendar".to_string(),
             request: v2::McpServerElicitationRequest::Form {
-                meta: Some(json!({
-                    "suggestion_id": "request_plugin_install_install-github"
-                })),
+                meta: None,
                 message: "Allow this request?".to_string(),
                 requested_schema,
             },
@@ -2445,9 +2443,6 @@ mod tests {
                     "turnId": "turn_123",
                     "serverName": "calendar",
                     "mode": "form",
-                    "_meta": {
-                        "suggestion_id": "request_plugin_install_install-github"
-                    },
                     "message": "Allow this request?",
                     "requestedSchema": {
                         "type": "object",

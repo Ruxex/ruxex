@@ -23,6 +23,16 @@ Related references: [design spec](superpowers/specs/2026-09-19-remove-pre-releas
 | `genex_api::ResponseId` extension-data insert | `core::session::turn` was the only producer and no workspace consumer read the value; it was not persisted or sent over an external protocol. | `remove` the dead provider-adapter-specific insert |
 | Core-to-OTel `genex_api::ResponseEvent` conversion | Core model execution consumes `ProviderChatEvent`; `genex-otel::SessionTelemetry::record_responses` is the existing consumer of the telemetry event shape. No request or wire routing depends on this conversion. | `retain` only this internal telemetry adapter; keep provider request/stream contracts provider-neutral |
 
+## Configuration and tool-suggestion cleanup (2026-10-11)
+
+| Surface | Producer / consumer audit | Decision |
+|---|---|---|
+| User-configurable `model`, model context/compaction limits and scopes, model/plan reasoning effort, model catalog path, and default subagent model | Host/runtime startup, thread execution, compaction, model catalog, and subagent creation still consume these values when supplied by host/runtime APIs or managed requirements. No user TOML input is required for the single-provider runtime contract. | `remove` user-config deserialization/schema exposure; `retain` host/runtime and managed-requirement inputs |
+| User-configurable `model_provider` and `model_reasoning_summary` | The mounted provider and AppServer continue to use the provider descriptor and reasoning-summary runtime fields. They are supplied by the host/runtime or protocol layer, not by user config/profile TOML. | `remove` user-config deserialization/schema exposure; `retain` runtime/provider and protocol consumers |
+| `tool_suggest` config, `ToolSuggest*` config types/feature flags, discoverable-plugin exploration, recommendation context, metadata cache, model-facing list/install tools, elicitation metadata/telemetry, and TUI handling | The audited producers and consumers were confined to the tool-suggestion path: config resolution, plugin discovery/cache, core tool registration, MCP elicitation routing, session telemetry, context injection, TUI parsing, and generated config schema. Explicit CLI plugin listing/install/read/uninstall and ordinary plugin/marketplace runtime paths remain separate and active. | `remove` the feature and its configuration/protocol/UI/runtime paths; `retain` explicit plugin management and ordinary plugin capabilities |
+| `forced_login_method` | Auth policy, login manager, and AppServer config responses still consume `Managed` versus `Api` to constrain the available authentication route. Single-provider runtime selection does not imply a single authentication method. | `retain` |
+| `cli_auth_credentials_store` | CLI credential loading and persistence consume the file/keyring/auto/ephemeral modes; this is a credential-storage policy, not provider selection. | `retain` |
+
 ## Decision categories
 
 - `remove`: exists only to read, write, migrate, replay, or describe an

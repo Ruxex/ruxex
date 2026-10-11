@@ -51,10 +51,7 @@ use crate::tools::ToolRouter;
 use crate::tools::context::SharedTurnDiffTracker;
 use crate::tools::parallel::ToolCallRuntime;
 use crate::tools::registry::ToolArgumentDiffConsumer;
-use crate::tools::router::ToolSuggestCandidates;
-use crate::tools::router::ToolSuggestPresentation;
 use crate::tools::spec_plan::build_tool_router;
-use crate::tools::spec_plan::tool_suggest_enabled;
 use crate::turn_diff_tracker::TurnDiffTracker;
 use crate::turn_timing::record_turn_ttft_metric;
 use crate::util::error_or_panic;
@@ -1299,27 +1296,6 @@ pub(crate) async fn built_tools(
     mcp: &Arc<genex_mcp::McpBinding>,
     step_store: &ExtensionData,
 ) -> GenexResult<Arc<ToolRouter>> {
-    let tool_suggest_is_enabled = tool_suggest_enabled(turn_context);
-    let tool_suggest_candidates = if tool_suggest_is_enabled {
-        match crate::plugins::list_tool_suggest_discoverable_plugins(
-            &turn_context.config,
-            sess.services.plugins_manager.as_ref(),
-        )
-        .await
-        {
-            Ok(tools) if tools.is_empty() => None,
-            Ok(tools) => Some(ToolSuggestCandidates {
-                tools: tools.into_iter().map(Into::into).collect(),
-                presentation: ToolSuggestPresentation::ListTool,
-            }),
-            Err(err) => {
-                warn!("failed to load discoverable plugin suggestions: {err:#}");
-                None
-            }
-        }
-    } else {
-        None
-    };
     Ok(Arc::new(build_tool_router(
         sess,
         turn_context,
@@ -1327,7 +1303,6 @@ pub(crate) async fn built_tools(
         environments,
         mcp,
         step_store,
-        tool_suggest_candidates.as_ref(),
     )?))
 }
 

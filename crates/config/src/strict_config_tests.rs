@@ -107,6 +107,37 @@ fn strict_config_rejects_removed_provider_base_url() {
 }
 
 #[test]
+fn strict_config_rejects_runtime_model_settings() {
+    let path = Path::new("/tmp/config.toml");
+    for contents in [
+        "model = \"example-model\"\n",
+        "[model_provider]\nid = \"example-provider\"\n",
+        "model_context_window = 128000\n",
+        "model_auto_compact_token_limit = 100000\n",
+        "model_auto_compact_token_limit_scope = \"full\"\n",
+        "model_reasoning_effort = \"high\"\n",
+        "plan_mode_reasoning_effort = \"high\"\n",
+        "model_reasoning_summary = \"concise\"\n",
+        "model_catalog_json = \"models.json\"\n",
+        "[profiles.work]\nmodel = \"example-model\"\n",
+        "[profiles.work]\nmodel_reasoning_effort = \"high\"\n",
+        "[profiles.work]\nplan_mode_reasoning_effort = \"high\"\n",
+        "[profiles.work]\nmodel_catalog_json = \"models.json\"\n",
+        "[profiles.work]\nmodel_reasoning_summary = \"concise\"\n",
+        "[tool_suggest]\ndiscoverables = [{ type = \"plugin\", id = \"example-plugin\" }]\n",
+        "[agents]\ndefault_subagent_model = \"example-model\"\n",
+    ] {
+        let error = config_error_from_ignored_toml_fields::<ConfigToml>(path, contents)
+            .expect("runtime model setting should be rejected");
+        assert!(
+            error.message.starts_with("unknown configuration field"),
+            "unexpected error for {contents:?}: {}",
+            error.message
+        );
+    }
+}
+
+#[test]
 fn strict_config_accepts_tool_registry_config() {
     let path = Path::new("/tmp/config.toml");
 

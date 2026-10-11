@@ -193,54 +193,6 @@ pub struct MetricsConfigToml {
     pub enabled: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ToolSuggestDiscoverableType {
-    Plugin,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct ToolSuggestDiscoverable {
-    #[serde(rename = "type")]
-    pub kind: ToolSuggestDiscoverableType,
-    pub id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct ToolSuggestDisabledTool {
-    #[serde(rename = "type")]
-    pub kind: ToolSuggestDiscoverableType,
-    pub id: String,
-}
-
-impl ToolSuggestDisabledTool {
-    pub fn plugin(id: impl Into<String>) -> Self {
-        Self {
-            kind: ToolSuggestDiscoverableType::Plugin,
-            id: id.into(),
-        }
-    }
-
-    pub fn normalized(&self) -> Option<Self> {
-        let id = self.id.trim();
-        (!id.is_empty()).then(|| Self {
-            kind: self.kind,
-            id: id.to_string(),
-        })
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
-#[schemars(deny_unknown_fields)]
-pub struct ToolSuggestConfig {
-    #[serde(default)]
-    pub discoverables: Vec<ToolSuggestDiscoverable>,
-    #[serde(default)]
-    pub disabled_tools: Vec<ToolSuggestDisabledTool>,
-}
-
 // ===== OTEL configuration =====
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]

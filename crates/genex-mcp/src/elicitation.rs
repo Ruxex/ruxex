@@ -29,7 +29,6 @@ use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::mcp::RequestId as ProtocolRequestId;
 use genex_protocol::mcp_approval_meta::APPROVAL_KIND_BROWSER_AUTH;
 use genex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY;
-use genex_protocol::mcp_approval_meta::APPROVAL_KIND_TOOL_SUGGESTION;
 use genex_protocol::mcp_approval_meta::REQUIRES_USER_INPUT_KEY;
 use genex_protocol::protocol::AskForApproval;
 use genex_protocol::protocol::Event;
@@ -301,19 +300,6 @@ impl ElicitationRequestManager {
                     anyhow::ensure!(!requires_user_input, MCP_ELICITATION_HANDOFF_MESSAGE);
                 }
                 if router.auto_deny() {
-                    return Ok(ElicitationResponse {
-                        action: ElicitationAction::Decline,
-                        content: None,
-                        meta: None,
-                    });
-                }
-
-                if elicitation
-                    .meta()
-                    .and_then(|meta| meta.get(APPROVAL_KIND_KEY))
-                    .and_then(serde_json::Value::as_str)
-                    == Some(APPROVAL_KIND_TOOL_SUGGESTION)
-                {
                     return Ok(ElicitationResponse {
                         action: ElicitationAction::Decline,
                         content: None,

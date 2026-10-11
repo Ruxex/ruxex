@@ -23,7 +23,6 @@ use crate::types::PluginConfig;
 use crate::types::SandboxWorkspaceWrite;
 use crate::types::ShellEnvironmentPolicyToml;
 use crate::types::SkillsConfig;
-use crate::types::ToolSuggestConfig;
 use crate::types::Tui;
 use crate::types::UriBasedFileOpener;
 use genex_features::FeaturesToml;
@@ -133,19 +132,32 @@ pub struct OrchestratorFeatureToml {
 #[schemars(deny_unknown_fields)]
 pub struct ConfigToml {
     /// Optional override of model selection.
+    ///
+    /// This is populated only by runtime overrides. It is intentionally not
+    /// deserialized from config.toml.
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model: Option<String>,
     /// Connection settings for the single built-in provider mounted by this Genex runtime.
-    /// This does not select a provider implementation or a per-thread provider.
+    /// This is supplied by the host/runtime and is not deserialized from user config.
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_provider: Option<ModelProviderInfo>,
 
     /// Size of the context window for the model, in tokens.
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_context_window: Option<i64>,
 
     /// Token usage threshold triggering auto-compaction of conversation history.
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_auto_compact_token_limit: Option<i64>,
 
     /// Controls whether the auto-compaction limit applies to the full context or
     /// only to tokens after the carried prefix in the current compaction window.
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_auto_compact_token_limit_scope: Option<AutoCompactTokenLimitScope>,
 
     /// Default approval policy for executing commands.
@@ -324,14 +336,22 @@ pub struct ConfigToml {
     /// Defaults to `false`.
     pub show_raw_agent_reasoning: Option<bool>,
 
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_reasoning_effort: Option<ReasoningEffort>,
+    #[serde(skip)]
+    #[schemars(skip)]
     pub plan_mode_reasoning_effort: Option<ReasoningEffort>,
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_reasoning_summary: Option<ReasoningSummary>,
     /// Optional verbosity control for models supporting Responses API `text.verbosity`.
     pub model_verbosity: Option<Verbosity>,
 
     /// Optional path to a JSON model catalog (applied on startup only).
     /// Per-thread `config` overrides are accepted but do not reapply this (no-ops).
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_catalog_json: Option<AbsolutePathBuf>,
 
     /// Optional explicit service tier request id for new turns (for example
@@ -356,9 +376,6 @@ pub struct ConfigToml {
 
     /// Nested tools section for feature toggles
     pub tools: Option<ToolsToml>,
-
-    /// Additional discoverable tools that can be suggested for installation.
-    pub tool_suggest: Option<ToolSuggestConfig>,
 
     /// Agent-related settings (thread limits, etc.).
     pub agents: Option<AgentsToml>,
@@ -507,6 +524,8 @@ pub struct AgentsToml {
     /// Maximum nesting depth for V1 agent threads. Ignored by V2.
     pub max_depth: Option<i32>,
     /// Default model for spawned subagents when the spawn call does not select one.
+    #[serde(skip)]
+    #[schemars(skip)]
     pub default_subagent_model: Option<String>,
     /// Default reasoning effort for spawned subagents when the spawn call does not select one.
     pub default_subagent_reasoning_effort: Option<ReasoningEffort>,

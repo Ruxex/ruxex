@@ -4,7 +4,6 @@
 pub const APPROVAL_KIND_KEY: &str = "genex_approval_kind";
 pub const APPROVAL_KIND_MCP_TOOL_CALL: &str = "mcp_tool_call";
 pub const APPROVAL_KIND_BROWSER_AUTH: &str = "browser_auth";
-pub const APPROVAL_KIND_TOOL_SUGGESTION: &str = "tool_suggestion";
 /// Marks requests that need user input even when their form schema is empty.
 pub const REQUIRES_USER_INPUT_KEY: &str = "genex_requires_user_input";
 pub const REQUEST_TYPE_KEY: &str = "genex_request_type";
@@ -20,7 +19,6 @@ pub const SOURCE_CONNECTOR: &str = "connector";
 pub const CONNECTOR_ID_KEY: &str = "connector_id";
 pub const CONNECTOR_NAME_KEY: &str = "connector_name";
 pub const CONNECTOR_DESCRIPTION_KEY: &str = "connector_description";
-pub const TOOL_NAME_KEY: &str = "tool_name";
 pub const TOOL_TITLE_KEY: &str = "tool_title";
 pub const TOOL_DESCRIPTION_KEY: &str = "tool_description";
 pub const TOOL_PARAMS_KEY: &str = "tool_params";

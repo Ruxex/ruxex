@@ -5,13 +5,10 @@ use genex_config::types::McpServerConfig;
 use genex_config::types::McpServerEnvVar;
 use genex_config::types::McpServerToolConfig;
 use genex_config::types::McpServerTransportConfig;
-use genex_config::types::ToolSuggestDisabledTool;
-use genex_config::types::ToolSuggestDiscoverableType;
 use toml_edit::Array as TomlArray;
 use toml_edit::InlineTable;
 use toml_edit::Item as TomlItem;
 use toml_edit::Table as TomlTable;
-use toml_edit::Value as TomlValue;
 use toml_edit::value;
 
 pub(super) fn ensure_table_for_write(item: &mut TomlItem) -> Option<&mut TomlTable> {
@@ -247,48 +244,6 @@ pub(super) fn new_implicit_table() -> TomlTable {
     table
 }
 
-pub(super) fn parse_tool_suggest_disabled_tool(
-    value: &TomlValue,
-) -> Option<ToolSuggestDisabledTool> {
-    let table = value.as_inline_table()?;
-    let kind = match table.get("type").and_then(TomlValue::as_str) {
-        Some("plugin") => ToolSuggestDiscoverableType::Plugin,
-        _ => return None,
-    };
-    let id = table.get("id").and_then(TomlValue::as_str)?;
-    Some(ToolSuggestDisabledTool {
-        kind,
-        id: id.to_string(),
-    })
-}
-
-pub(super) fn parse_tool_suggest_disabled_tool_table(
-    table: &TomlTable,
-) -> Option<ToolSuggestDisabledTool> {
-    let kind = match table.get("type").and_then(TomlItem::as_str) {
-        Some("plugin") => ToolSuggestDiscoverableType::Plugin,
-        _ => return None,
-    };
-    let id = table.get("id").and_then(TomlItem::as_str)?;
-    Some(ToolSuggestDisabledTool {
-        kind,
-        id: id.to_string(),
-    })
-}
-
-pub(super) fn tool_suggest_disabled_tools_value(
-    disabled_tools: &[ToolSuggestDisabledTool],
-) -> TomlItem {
-    let mut array = TomlArray::new();
-    for disabled_tool in disabled_tools {
-        let mut table = InlineTable::new();
-        table.insert("type", "plugin".into());
-        table.insert("id", disabled_tool.id.clone().into());
-        array.push(table);
-    }
-    TomlItem::Value(array.into())
-}
-
 fn array_from_iter<I>(iter: I) -> TomlItem
 where
     I: Iterator<Item = String>,
@@ -335,7 +290,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use toml_edit::DocumentMut;
+    use toml_edit::Value as TomlValue;
 
     #[test]
     fn ensures_tables_for_writes_and_reads() {
@@ -352,40 +307,6 @@ mod tests {
         let mut inline_for_read: TomlItem = "{ name = \"value\" }".parse().expect("inline table");
         assert!(ensure_table_for_read(&mut inline_for_read).is_some());
         assert_eq!(inline_for_read["name"].as_str(), Some("value"));
-    }
-
-    #[test]
-    fn parses_and_serializes_disabled_plugin_suggestions() {
-        let parse_inline = |source: &str| {
-            let document: DocumentMut = format!("entry = {source}").parse().expect("inline table");
-            document["entry"].as_value().expect("inline value").clone()
-        };
-        let plugin_value: TomlValue = parse_inline("{ type = \"plugin\", id = \"demo\" }");
-        assert_eq!(
-            parse_tool_suggest_disabled_tool(&plugin_value)
-                .expect("plugin")
-                .id,
-            "demo"
-        );
-        let non_plugin_value: TomlValue = parse_inline("{ type = \"skill\", id = \"x\" }");
-        assert!(parse_tool_suggest_disabled_tool(&non_plugin_value).is_none());
-
-        let mut table = TomlTable::new();
-        table["type"] = value("plugin");
-        table["id"] = value("table-demo");
-        assert_eq!(
-            parse_tool_suggest_disabled_tool_table(&table)
-                .expect("plugin table")
-                .id,
-            "table-demo"
-        );
-
-        let tools = vec![ToolSuggestDisabledTool {
-            kind: ToolSuggestDiscoverableType::Plugin,
-            id: "one".to_string(),
-        }];
-        let rendered = tool_suggest_disabled_tools_value(&tools);
-        assert_eq!(rendered.as_array().expect("array").len(), 1);
     }
 
     #[test]

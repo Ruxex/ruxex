@@ -1,4 +1,3 @@
-mod discoverable;
 mod injection;
 mod mentions;
 pub(crate) mod metrics;
@@ -14,7 +13,6 @@ use std::sync::Arc;
 
 pub(crate) use genex_plugin::PluginCapabilitySummary;
 
-pub(crate) use discoverable::list_tool_suggest_discoverable_plugins;
 pub(crate) use injection::build_plugin_injections;
 pub(crate) use render::render_explicit_plugin_instructions;
 

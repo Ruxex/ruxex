@@ -19,6 +19,8 @@ use genex_protocol::protocol::AskForApproval;
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[schemars(deny_unknown_fields)]
 pub struct ConfigProfile {
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model: Option<String>,
     /// Optional explicit service tier request id for new turns (for example
     /// `default`, `priority`, or `flex`; legacy `fast` also works).
@@ -26,11 +28,19 @@ pub struct ConfigProfile {
     #[schemars(with = "Option<crate::schema::ConfigAskForApproval>")]
     pub approval_policy: Option<AskForApproval>,
     pub sandbox_mode: Option<SandboxMode>,
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_reasoning_effort: Option<ReasoningEffort>,
+    #[serde(skip)]
+    #[schemars(skip)]
     pub plan_mode_reasoning_effort: Option<ReasoningEffort>,
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_reasoning_summary: Option<ReasoningSummary>,
     pub model_verbosity: Option<Verbosity>,
     /// Optional path to a JSON model catalog (applied on startup only).
+    #[serde(skip)]
+    #[schemars(skip)]
     pub model_catalog_json: Option<AbsolutePathBuf>,
     pub managed_auth_base_url: Option<String>,
     /// Optional path to a file containing model instructions.

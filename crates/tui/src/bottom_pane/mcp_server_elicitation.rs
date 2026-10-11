@@ -18,11 +18,9 @@ use genex_app_server_protocol::RequestId as AppServerRequestId;
 use genex_protocol::ThreadId;
 use genex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY as APPROVAL_META_KIND_KEY;
 use genex_protocol::mcp_approval_meta::APPROVAL_KIND_MCP_TOOL_CALL as APPROVAL_META_KIND_MCP_TOOL_CALL;
-use genex_protocol::mcp_approval_meta::APPROVAL_KIND_TOOL_SUGGESTION as APPROVAL_META_KIND_TOOL_SUGGESTION;
 use genex_protocol::mcp_approval_meta::PERSIST_ALWAYS as APPROVAL_PERSIST_ALWAYS_VALUE;
 use genex_protocol::mcp_approval_meta::PERSIST_KEY as APPROVAL_PERSIST_KEY;
 use genex_protocol::mcp_approval_meta::PERSIST_SESSION as APPROVAL_PERSIST_SESSION_VALUE;
-use genex_protocol::mcp_approval_meta::TOOL_NAME_KEY;
 use genex_protocol::mcp_approval_meta::TOOL_PARAMS_DISPLAY_KEY as APPROVAL_TOOL_PARAMS_DISPLAY_KEY;
 use genex_protocol::mcp_approval_meta::TOOL_PARAMS_KEY as APPROVAL_TOOL_PARAMS_KEY;
 use genex_protocol::user_input::TextElement;
@@ -71,10 +69,6 @@ const APPROVAL_DECLINE_VALUE: &str = "decline";
 const APPROVAL_CANCEL_VALUE: &str = "cancel";
 const APPROVAL_TOOL_PARAM_DISPLAY_LIMIT: usize = 3;
 const APPROVAL_TOOL_PARAM_VALUE_TRUNCATE_GRAPHEMES: usize = 60;
-const TOOL_ID_KEY: &str = "tool_id";
-const TOOL_SUGGEST_SUGGEST_TYPE_KEY: &str = "suggest_type";
-const TOOL_SUGGEST_REASON_KEY: &str = "suggest_reason";
-const TOOL_SUGGEST_INSTALL_URL_KEY: &str = "install_url";
 
 #[derive(Clone, PartialEq, Default)]
 struct ComposerDraft {
@@ -135,21 +129,6 @@ enum McpServerElicitationResponseMode {
     ApprovalAction,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ToolSuggestionType {
-    Install,
-    Enable,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ToolSuggestionRequest {
-    pub(crate) suggest_type: ToolSuggestionType,
-    pub(crate) suggest_reason: String,
-    pub(crate) tool_id: String,
-    pub(crate) tool_name: String,
-    pub(crate) install_url: Option<String>,
-}
-
 #[derive(Clone, Debug, PartialEq)]
 struct McpToolApprovalDisplayParam {
     name: String,
@@ -166,7 +145,6 @@ pub(crate) struct McpServerElicitationFormRequest {
     approval_display_params: Vec<McpToolApprovalDisplayParam>,
     response_mode: McpServerElicitationResponseMode,
     fields: Vec<McpServerElicitationField>,
-    tool_suggestion: Option<ToolSuggestionRequest>,
 }
 
 #[derive(Default)]
@@ -237,7 +215,6 @@ impl McpServerElicitationFormRequest {
         message: String,
         requested_schema: Value,
     ) -> Option<Self> {
-        let tool_suggestion = parse_tool_suggestion_request(meta);
         let is_tool_approval = meta
             .and_then(Value::as_object)
             .and_then(|meta| meta.get(APPROVAL_META_KIND_KEY))
@@ -258,9 +235,7 @@ impl McpServerElicitationFormRequest {
             Vec::new()
         };
 
-        let (response_mode, fields) = if tool_suggestion.is_some() && is_message_only_schema {
-            (McpServerElicitationResponseMode::FormContent, Vec::new())
-        } else if is_message_only_schema {
+        let (response_mode, fields) = if is_message_only_schema {
             let allow_description = if is_tool_approval_action {
                 "Run the tool and continue."
             } else {
@@ -343,12 +318,7 @@ impl McpServerElicitationFormRequest {
             approval_display_params,
             response_mode,
             fields,
-            tool_suggestion,
         })
-    }
-
-    pub(crate) fn tool_suggestion(&self) -> Option<&ToolSuggestionRequest> {
-        self.tool_suggestion.as_ref()
     }
 
     pub(crate) fn thread_id(&self) -> ThreadId {
@@ -362,41 +332,6 @@ impl McpServerElicitationFormRequest {
     pub(crate) fn request_id(&self) -> &AppServerRequestId {
         &self.request_id
     }
-}
-
-fn parse_tool_suggestion_request(meta: Option<&Value>) -> Option<ToolSuggestionRequest> {
-    let meta = meta?.as_object()?;
-    if meta.get(APPROVAL_META_KIND_KEY).and_then(Value::as_str)
-        != Some(APPROVAL_META_KIND_TOOL_SUGGESTION)
-    {
-        return None;
-    }
-
-    if meta.get("tool_type").and_then(Value::as_str) != Some("plugin") {
-        return None;
-    }
-    let suggest_type = match meta
-        .get(TOOL_SUGGEST_SUGGEST_TYPE_KEY)
-        .and_then(Value::as_str)
-    {
-        Some("install") => ToolSuggestionType::Install,
-        Some("enable") => ToolSuggestionType::Enable,
-        _ => return None,
-    };
-
-    Some(ToolSuggestionRequest {
-        suggest_type,
-        suggest_reason: meta
-            .get(TOOL_SUGGEST_REASON_KEY)
-            .and_then(Value::as_str)?
-            .to_string(),
-        tool_id: meta.get(TOOL_ID_KEY).and_then(Value::as_str)?.to_string(),
-        tool_name: meta.get(TOOL_NAME_KEY).and_then(Value::as_str)?.to_string(),
-        install_url: meta
-            .get(TOOL_SUGGEST_INSTALL_URL_KEY)
-            .and_then(Value::as_str)
-            .map(ToString::to_string),
-    })
 }
 
 fn approval_supports_persist_mode(meta: Option<&Value>, expected_mode: &str) -> bool {

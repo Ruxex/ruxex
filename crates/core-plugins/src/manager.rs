@@ -48,7 +48,6 @@ use crate::store::PluginInstallResult as StorePluginInstallResult;
 use crate::store::PluginStore;
 use crate::store::PluginStoreError;
 use crate::store::error_context_sub_error_type;
-use crate::tool_suggest_metadata::ToolSuggestMetadataCache;
 use genex_config::ConfigLayerStack;
 use genex_config::SkillConfigRules;
 use genex_config::clear_user_plugin;
@@ -262,7 +261,6 @@ pub struct PluginsManager {
     loaded_plugins_cache: Mutex<LoadedPluginsCache>,
     loaded_plugins_load_semaphore: Semaphore,
     skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
-    tool_suggest_metadata_cache: ToolSuggestMetadataCache,
     restriction_product: Option<Product>,
     credential_manager: Arc<CredentialManager>,
 }
@@ -366,7 +364,6 @@ impl PluginsManager {
             loaded_plugins_cache: Mutex::new(LoadedPluginsCache::default()),
             loaded_plugins_load_semaphore: Semaphore::new(/*permits*/ 1),
             skill_root_loader,
-            tool_suggest_metadata_cache: ToolSuggestMetadataCache::new(),
             restriction_product,
             credential_manager,
         }
@@ -472,7 +469,6 @@ impl PluginsManager {
     }
 
     fn clear_loaded_plugins_cache(&self) {
-        self.tool_suggest_metadata_cache.clear();
         let mut cache = match self.loaded_plugins_cache.lock() {
             Ok(cache) => cache,
             Err(err) => err.into_inner(),
@@ -493,8 +489,6 @@ impl PluginsManager {
             if let Some(on_effective_plugins_changed) = on_effective_plugins_changed {
                 on_effective_plugins_changed(EffectivePluginsChange::default());
             }
-        } else {
-            self.tool_suggest_metadata_cache.clear();
         }
     }
 
@@ -828,24 +822,6 @@ impl PluginsManager {
 
         let marketplace_roots = self.marketplace_roots(config, additional_roots);
         self.list_marketplaces_with_policy(config, &marketplace_roots)
-    }
-
-    pub(crate) async fn tool_suggest_metadata_for_marketplace_plugin(
-        &self,
-        marketplace_name: &str,
-        plugin: &ConfiguredMarketplacePlugin,
-        skill_config_rules: &SkillConfigRules,
-    ) -> Result<PluginCapabilitySummary, MarketplaceError> {
-        let fragment = self
-            .tool_suggest_metadata_cache
-            .metadata_for_plugin(
-                marketplace_name,
-                plugin,
-                self.restriction_product,
-                self.skill_root_loader.as_ref(),
-            )
-            .await?;
-        Ok(fragment.project(skill_config_rules, self.auth_mode()))
     }
 
     pub async fn read_plugin_for_config(

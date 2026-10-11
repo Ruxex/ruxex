@@ -1,6 +1,5 @@
 mod artifact_operation;
 mod command_migration;
-mod discoverable;
 mod error_subtype;
 mod executor_hooks;
 mod git_policy;
@@ -27,7 +26,6 @@ pub mod store;
 #[cfg(test)]
 mod test_support;
 pub mod toggles;
-mod tool_suggest_metadata;
 
 pub(crate) use git_policy::PluginGitMode;
 pub(crate) use git_policy::configure_trusted_git_repository;
@@ -52,8 +50,6 @@ pub use command_migration::RewriteProfile as CommandRewriteProfile;
 pub use command_migration::count_missing_commands_with_profile;
 pub use command_migration::import_commands_with_profile;
 pub use command_migration::missing_command_names_with_profile;
-pub use discoverable::ToolSuggestDiscoverablePlugin;
-pub use discoverable::ToolSuggestPluginDiscoveryInput;
 pub use executor_hooks::executor_plugin_hook_sources;
 pub use loader::PluginHookLoadOutcome;
 pub use manager::ConfiguredMarketplace;

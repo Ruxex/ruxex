@@ -16,7 +16,6 @@ pub use genex_config::types::Notice;
 pub use genex_config::types::OAuthCredentialsStoreMode;
 pub use genex_config::types::OtelConfig;
 pub use genex_config::types::SessionPickerViewMode;
-pub use genex_config::types::ToolSuggestConfig;
 pub use genex_config::types::TuiKeymap;
 pub use genex_config::types::TuiNotificationSettings;
 pub use genex_config::types::UriBasedFileOpener;
