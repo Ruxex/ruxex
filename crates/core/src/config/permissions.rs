@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use std::collections::HashSet;
 use std::io;
 use std::path::Path;
-use std::path::PathBuf;
 
 use genex_config::ConfigPathContext;
 use genex_config::permissions_toml::FilesystemPermissionToml;
@@ -34,7 +33,6 @@ use genex_protocol::permissions::FileSystemSandboxPolicy;
 use genex_protocol::permissions::FileSystemSpecialPath;
 use genex_protocol::permissions::NetworkSandboxPolicy;
 use genex_protocol::permissions::project_roots_glob_pattern;
-use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
 
 use super::ProjectConfig;
@@ -500,37 +498,6 @@ pub(crate) fn reject_unknown_builtin_permission_profile(profile_name: &str) -> i
     }
 
     Ok(())
-}
-
-/// Returns a list of paths that must be readable by shell tools in order
-/// for Genex to function. These should always be added to the
-/// `FileSystemSandboxPolicy` for a thread.
-pub(crate) fn get_readable_roots_required_for_genex_runtime(
-    genex_home: &Path,
-    zsh_path: Option<&PathBuf>,
-    main_execve_wrapper_exe: Option<&PathBuf>,
-) -> Vec<AbsolutePathBuf> {
-    let arg0_root = AbsolutePathBuf::from_absolute_path(genex_home.join("tmp").join("arg0")).ok();
-    let zsh_path = zsh_path.and_then(|path| AbsolutePathBuf::from_absolute_path(path).ok());
-    let execve_wrapper_root = main_execve_wrapper_exe.and_then(|path| {
-        let path = AbsolutePathBuf::from_absolute_path(path).ok()?;
-        if let Some(arg0_root) = arg0_root.as_ref()
-            && path.as_path().starts_with(arg0_root.as_path())
-        {
-            path.parent()
-        } else {
-            Some(path)
-        }
-    });
-
-    let mut readable_roots = Vec::new();
-    if let Some(zsh_path) = zsh_path {
-        readable_roots.push(zsh_path);
-    }
-    if let Some(execve_wrapper_root) = execve_wrapper_root {
-        readable_roots.push(execve_wrapper_root);
-    }
-    readable_roots
 }
 
 fn compile_network_sandbox_policy(

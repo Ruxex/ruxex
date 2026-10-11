@@ -810,13 +810,13 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     for dir in [&genex_home, &dot_genex, &system_dir, &managed_dir] {
         std::fs::create_dir_all(dir).expect("create fixture directory");
     }
-    std::fs::write(project.join(".project-root"), "").expect("write project marker");
+    std::fs::create_dir(project.join(".git")).expect("write project marker");
 
     let project_key = project_trust_key(&project);
     let project_key = TomlValue::String(project_key).to_string();
     let user_config = |trust_level| {
         format!(
-            "project_root_markers=[\".project-root\"]\nmodel_instructions_file=\"./user.md\"\n[projects.{project_key}]\ntrust_level=\"{trust_level}\""
+            "model_instructions_file=\"./user.md\"\n[projects.{project_key}]\ntrust_level=\"{trust_level}\""
         )
     };
     let user_file = genex_home.join(CONFIG_TOML_FILE);

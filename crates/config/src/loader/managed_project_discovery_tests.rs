@@ -7,7 +7,6 @@ use crate::loader::load_config_layers_state;
 use crate::loader::local::load_local_config_layers_with_overrides;
 use crate::loader::project_trust_key;
 use crate::loader::tests::TestFileSystem;
-use crate::merge_toml_values;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
@@ -66,10 +65,6 @@ impl Fixture {
             &self.home,
             Some(self.cwd.clone()),
             &[
-                (
-                    "project_root_markers".into(),
-                    toml::Value::try_from([".git"])?,
-                ),
                 ("model".into(), TomlValue::String("session".into())),
             ],
             self.overrides.clone(),
@@ -91,7 +86,6 @@ fn assert_discovery(
     canonical: &ConfigLayerStack,
     local: &LocalConfigLayers,
     expected_dirs: &[&AbsolutePathBuf],
-    markers: &[&str],
 ) -> anyhow::Result<()> {
     let project_dirs = |sources: Vec<&ConfigLayerSource>| {
         sources
@@ -125,17 +119,6 @@ fn assert_discovery(
         ),
         (expected_dirs.clone(), expected_dirs)
     );
-    let effective = canonical.effective_config();
-    let mut local_effective = TomlValue::Table(toml::map::Map::new());
-    for layer in &local.config.layers {
-        merge_toml_values(&mut local_effective, &layer.toml);
-    }
-    let expected_markers = TomlValue::try_from(markers)?;
-    assert_eq!(
-        effective.get("project_root_markers"),
-        Some(&expected_markers)
-    );
-    assert_eq!(local_effective.get("project_root_markers"), None);
     Ok(())
 }
 
@@ -149,12 +132,11 @@ async fn managed_project_discovery_ignores_incomplete_nested_git_directory() -> 
         &canonical,
         &local,
         &[&fixture.repo, &fixture.project, &fixture.cwd],
-        &[".git"],
     )?;
 
     std::fs::write(fixture.home.join("config.toml"), fixture.trust("untrusted"))?;
     let (canonical, local) = fixture.load().await?;
-    assert_discovery(&canonical, &local, &[], &[".git"])?;
+    assert_discovery(&canonical, &local, &[])?;
     let trust_key = project_trust_key(fixture.repo.as_path());
     assert!(
         canonical
@@ -194,7 +176,7 @@ async fn managed_project_discovery_uses_managed_project_trust() -> anyhow::Resul
     ] {
         std::fs::write(&user_config, user)?;
         let (canonical, local) = fixture.load().await?;
-        assert_discovery(&canonical, &local, &dirs, &[".git"])?;
+        assert_discovery(&canonical, &local, &dirs)?;
         let project_layers = canonical
             .all_layers_low_to_high()
             .filter(|layer| matches!(layer.name, ConfigLayerSource::Project { .. }))
@@ -254,45 +236,6 @@ async fn managed_project_discovery_preserves_remapped_provider_bindings() -> any
             &*credentials
         );
         assert_eq!(effective["shell_environment_policy"], expected_policy);
-    }
-    Ok(())
-}
-
-#[cfg(target_os = "macos")]
-#[tokio::test]
-async fn managed_project_discovery_mdm_overrides_file_markers() -> anyhow::Result<()> {
-    use base64::Engine;
-    use base64::prelude::BASE64_STANDARD;
-
-    let mut fixture = Fixture::new()?;
-    for (markers, dirs) in [
-        (vec![], vec![&fixture.cwd]),
-        (vec![".company-root"], vec![&fixture.project, &fixture.cwd]),
-    ] {
-        let markers_toml = TomlValue::try_from(&markers)?;
-        fixture.overrides.managed_preferences_base64 =
-            Some(BASE64_STANDARD.encode(format!("project_root_markers = {markers_toml}\n")));
-        let (canonical, local) = fixture.load().await?;
-        assert_discovery(&canonical, &local, &dirs, &markers)?;
-        assert_eq!(
-            (
-                canonical
-                    .layers_high_to_low()
-                    .next()
-                    .map(|layer| &layer.name),
-                local.config.layers.last().map(|layer| &layer.source),
-            ),
-            (
-                Some(&ConfigLayerSource::Mdm {
-                    domain: "com.genex.genex".to_string(),
-                    key: "config_toml_base64".to_string(),
-                }),
-                Some(&ConfigLayerSource::Mdm {
-                    domain: "com.genex.genex".to_string(),
-                    key: "config_toml_base64".to_string(),
-                }),
-            )
-        );
     }
     Ok(())
 }

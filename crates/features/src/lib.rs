@@ -22,7 +22,6 @@ pub use feature_configs::ContextManagementConfigToml;
 pub use feature_configs::CurrentTimeReminderConfigToml;
 pub use feature_configs::CurrentTimeReminderDeliveryMode;
 pub use feature_configs::CurrentTimeSource;
-pub use feature_configs::MultiAgentV2ConfigToml;
 pub use feature_configs::NetworkProxyConfigToml;
 pub use feature_configs::NetworkProxyDomainPermissionToml;
 pub use feature_configs::NetworkProxyModeToml;
@@ -115,14 +114,6 @@ pub enum Feature {
     UnifiedExec,
     /// Allow unified exec commands to allocate an interactive terminal.
     UnifiedExecTty,
-    /// Route shell tool execution through the zsh exec bridge.
-    ShellZshFork,
-    /// Allow unified exec to compose with the zsh exec bridge.
-    ///
-    /// This flag is only a composition gate. Enabling it by itself must not turn
-    /// on either `unified_exec` or `shell_zsh_fork` because those features have
-    /// separate rollout and enterprise controls.
-    UnifiedExecZshFork,
     /// Removed compatibility flag. Transcript scrollback reflow on terminal resize is always on.
     TerminalResizeReflow,
     /// Add terminal-specific visualization guidance to TUI developer instructions.
@@ -182,10 +173,6 @@ pub enum Feature {
     McpOAuthRefreshCoordination,
     /// Enable enterprise refresh-token authorization for configured MCP resources.
     UseXaa,
-    /// Removed compatibility flag retained as a no-op now that tool_search is always enabled.
-    ToolSearch,
-    /// Removed compatibility flag. MCP tools are always deferred when tool_search is available.
-    ToolSearchAlwaysDeferMcpTools,
     /// Describe deferred tool namespaces in the model-visible world state.
     DeferredToolWorldState,
     /// Expose MCP model-visible namespaces without the legacy `mcp__` prefix.
@@ -620,8 +607,6 @@ pub struct FeaturesToml {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub non_prefixed_mcp_tool_names: Option<FeatureToml<NonPrefixedMcpToolNamesConfigToml>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub multi_agent_v2: Option<FeatureToml<MultiAgentV2ConfigToml>>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub token_budget: Option<FeatureToml<TokenBudgetConfigToml>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_management: Option<FeatureToml<ContextManagementConfigToml>>,
@@ -659,9 +644,6 @@ impl FeaturesToml {
             .and_then(FeatureToml::enabled)
         {
             entries.insert(Feature::NonPrefixedMcpToolNames.key().to_string(), enabled);
-        }
-        if let Some(enabled) = self.multi_agent_v2.as_ref().and_then(FeatureToml::enabled) {
-            entries.insert(Feature::MultiAgentV2.key().to_string(), enabled);
         }
         if let Some(enabled) = self.token_budget.as_ref().and_then(FeatureToml::enabled) {
             entries.insert(Feature::TokenBudget.key().to_string(), enabled);
@@ -758,12 +740,6 @@ pub const FEATURES: &[FeatureSpec] = &[
     },
     // Stable features.
     FeatureSpec {
-        id: Feature::GhostCommit,
-        key: "undo",
-        stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
         id: Feature::ShellTool,
         key: "shell_tool",
         stage: Stage::Stable,
@@ -797,18 +773,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         id: Feature::UnifiedExecTty,
         key: "unified_exec_tty",
         stage: Stage::Stable,
-        default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::ShellZshFork,
-        key: "shell_zsh_fork",
-        stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::UnifiedExecZshFork,
-        key: "unified_exec_zsh_fork",
-        stage: Stage::Removed,
         default_enabled: true,
     },
     FeatureSpec {
@@ -878,12 +842,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::TerminalResizeReflow,
-        key: "terminal_resize_reflow",
-        stage: Stage::Removed,
-        default_enabled: true,
-    },
-    FeatureSpec {
         id: Feature::WebSearchRequest,
         key: "web_search_request",
         stage: Stage::Deprecated,
@@ -932,12 +890,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::ApplyPatchPreserveLineEndings,
-        key: "apply_patch_preserve_line_endings",
-        stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
         id: Feature::ExecPermissionApprovals,
         key: "exec_permission_approvals",
         stage: Stage::UnderDevelopment,
@@ -962,21 +914,9 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::UseLinuxSandboxBwrap,
-        key: "use_linux_sandbox_bwrap",
-        stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
         id: Feature::UseLegacyLandlock,
         key: "use_legacy_landlock",
         stage: Stage::Deprecated,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::RemoteModels,
-        key: "remote_models",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {
@@ -1026,12 +966,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: true,
     },
     FeatureSpec {
-        id: Feature::MultiAgentV2,
-        key: "multi_agent_v2",
-        stage: Stage::Stable,
-        default_enabled: false,
-    },
-    FeatureSpec {
         id: Feature::Mcp20260728,
         key: "mcp_2026_07_28",
         stage: Stage::UnderDevelopment,
@@ -1048,18 +982,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "use_xaa",
         stage: Stage::UnderDevelopment,
         default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::ToolSearch,
-        key: "tool_search",
-        stage: Stage::Removed,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::ToolSearchAlwaysDeferMcpTools,
-        key: "tool_search_always_defer_mcp_tools",
-        stage: Stage::Removed,
-        default_enabled: true,
     },
     FeatureSpec {
         id: Feature::DeferredToolWorldState,
@@ -1164,18 +1086,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::ResizeAllImages,
-        key: "resize_all_images",
-        stage: Stage::Removed,
-        default_enabled: true,
-    },
-    FeatureSpec {
-        id: Feature::ItemIds,
-        key: "item_ids",
-        stage: Stage::Removed,
-        default_enabled: true,
-    },
-    FeatureSpec {
         id: Feature::ConcurrentReasoningSummaries,
         key: "concurrent_reasoning_summaries",
         stage: Stage::UnderDevelopment,
@@ -1200,21 +1110,9 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: true,
     },
     FeatureSpec {
-        id: Feature::Steer,
-        key: "steer",
-        stage: Stage::Removed,
-        default_enabled: true,
-    },
-    FeatureSpec {
         id: Feature::DefaultModeRequestUserInput,
         key: "default_mode_request_user_input",
         stage: Stage::UnderDevelopment,
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::SendAsyncMessage,
-        key: "send_async_message",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {
@@ -1272,12 +1170,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::CollaborationModes,
-        key: "collaboration_modes",
-        stage: Stage::Removed,
-        default_enabled: true,
-    },
-    FeatureSpec {
         id: Feature::ToolCallMcpElicitation,
         key: "tool_call_mcp_elicitation",
         stage: Stage::Stable,
@@ -1307,12 +1199,6 @@ pub const FEATURES: &[FeatureSpec] = &[
         } else {
             Stage::UnderDevelopment
         },
-        default_enabled: false,
-    },
-    FeatureSpec {
-        id: Feature::RemoteCompactionV2,
-        key: "remote_compaction_v2",
-        stage: Stage::Removed,
         default_enabled: false,
     },
     FeatureSpec {

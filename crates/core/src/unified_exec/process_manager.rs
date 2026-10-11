@@ -1422,7 +1422,6 @@ impl UnifiedExecProcessManager {
                     allow_prefix_rules: context.step_context.turn.allow_prefix_rules(),
                 },
                 configured_shell,
-                &request.shell_mode,
                 command_platform,
             )
             .await;

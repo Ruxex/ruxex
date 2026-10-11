@@ -84,7 +84,6 @@ use genex_tools::ToolExposures;
 use genex_tools::ToolName;
 use genex_tools::ToolSearchInfo;
 use genex_tools::ToolSpec;
-use genex_tools::UnifiedExecShellMode;
 use genex_tools::can_request_original_image_detail;
 use genex_tools::collect_code_mode_exec_prompt_tool_definitions;
 use genex_tools::default_namespace_description;
@@ -966,12 +965,8 @@ fn unified_exec_should_include_shell_parameter(
     turn_context: &TurnContext,
     environments: &TurnEnvironmentSnapshot,
 ) -> bool {
-    !matches!(
-        &turn_context.unified_exec_shell_mode,
-        UnifiedExecShellMode::ZshFork(_)
-    ) || environments
-        .turn_environments()
-        .any(|environment| environment.environment.is_remote())
+    let _ = (turn_context, environments);
+    true
 }
 
 #[instrument(level = "trace", skip_all)]

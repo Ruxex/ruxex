@@ -32,7 +32,6 @@ mod test_environment;
 pub mod test_genex;
 pub mod test_genex_exec;
 pub mod tracing;
-pub mod zsh_fork;
 
 pub(crate) use test_environment::TestEnvironment;
 pub use test_environment::TestTargetOs;

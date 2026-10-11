@@ -6,9 +6,6 @@ use dirs::home_dir;
 use futures::StreamExt;
 use genex_config::ConfigLayerSource;
 use genex_config::ConfigLayerStack;
-use genex_config::default_project_root_markers;
-use genex_config::merge_toml_values;
-use genex_config::project_root_markers_from_config;
 use genex_exec_server::ExecutorFileSystem;
 use genex_exec_server::GetMetadataOptions;
 use genex_exec_server::LOCAL_FS;
@@ -17,7 +14,6 @@ use genex_skills::system_cache_root_dir;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
 use genex_utils_plugins::PluginSkillRoot;
-use toml::Value as TomlValue;
 
 use crate::loader::HostSkillRoot;
 
@@ -134,13 +130,13 @@ fn local_root(path: AbsolutePathBuf, scope: SkillScope) -> HostSkillRoot {
 
 async fn repo_agents_skill_roots(
     repository_file_system: Option<Arc<dyn ExecutorFileSystem>>,
-    config_layer_stack: &ConfigLayerStack,
+    _config_layer_stack: &ConfigLayerStack,
     cwd: &AbsolutePathBuf,
 ) -> Vec<HostSkillRoot> {
     let Some(repository_file_system) = repository_file_system else {
         return Vec::new();
     };
-    let project_root_markers = project_root_markers_from_stack(config_layer_stack);
+    let project_root_markers = [".git".to_string()];
     let project_root =
         find_project_root(repository_file_system.as_ref(), cwd, &project_root_markers).await;
     let directories = dirs_between_project_root_and_cwd(cwd, &project_root);
@@ -180,25 +176,6 @@ async fn repo_agents_skill_roots(
         }
     }
     roots
-}
-
-fn project_root_markers_from_stack(config_layer_stack: &ConfigLayerStack) -> Vec<String> {
-    let mut merged = TomlValue::Table(toml::map::Map::new());
-    for layer in config_layer_stack.layers_low_to_high() {
-        if matches!(layer.name, ConfigLayerSource::Project { .. }) {
-            continue;
-        }
-        merge_toml_values(&mut merged, &layer.config);
-    }
-
-    match project_root_markers_from_config(&merged) {
-        Ok(Some(markers)) => markers,
-        Ok(None) => default_project_root_markers(),
-        Err(error) => {
-            tracing::warn!("invalid project_root_markers: {error}");
-            default_project_root_markers()
-        }
-    }
 }
 
 async fn find_project_root(

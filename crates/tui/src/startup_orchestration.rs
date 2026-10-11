@@ -238,7 +238,6 @@ pub(super) async fn run_main_inner(
         cwd: cwd_override,
         genex_self_exe: arg0_paths.genex_self_exe.clone(),
         genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
-        main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
         show_raw_agent_reasoning: None,
         bypass_hook_trust: cli.bypass_hook_trust.then_some(true),
         additional_writable_roots: additional_dirs,

@@ -1,7 +1,6 @@
 use super::shell_approval_command;
 use crate::shell::Shell;
 use crate::shell::ShellType;
-use genex_tools::UnifiedExecShellMode;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 
@@ -20,7 +19,7 @@ fn parent_directory_traversal_is_not_a_trusted_system_shell() {
     ];
 
     assert_eq!(
-        shell_approval_command(&command, &shell, &UnifiedExecShellMode::Direct),
+        shell_approval_command(&command, &shell),
         &command[..1],
     );
 }

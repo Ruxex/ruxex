@@ -56,7 +56,6 @@ use genex_features::FeatureOverrides;
 use genex_features::FeatureToml;
 use genex_features::Features;
 use genex_features::FeaturesToml;
-use genex_features::MultiAgentV2ConfigToml;
 use genex_features::NetworkProxyConfigToml;
 #[cfg(test)]
 use genex_features::RolloutBudgetConfigToml;
@@ -65,7 +64,6 @@ use genex_features::TokenBudgetConfigToml;
 use genex_git_utils::resolve_root_git_project_for_trust;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_install_context::InstallContext;
 use genex_login::AuthRouteConfig;
 use genex_login::CredentialManagerConfig;
 use genex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
@@ -133,7 +131,6 @@ use crate::config::permissions::BUILT_IN_READ_ONLY_PROFILE;
 use crate::config::permissions::BUILT_IN_WORKSPACE_PROFILE;
 use crate::config::permissions::apply_network_proxy_feature_config;
 use crate::config::permissions::default_builtin_permission_profile_name;
-use crate::config::permissions::get_readable_roots_required_for_genex_runtime;
 use crate::config::permissions::network_proxy_config_for_profile_selection;
 use crate::config::permissions::validate_user_permission_profile_names;
 use crate::responses_metadata::validate_extra_metadata;
@@ -791,9 +788,6 @@ pub struct Config {
     /// Maximum total bytes of project instruction content across all selected environments.
     pub project_doc_max_bytes: usize,
 
-    /// Additional filenames to try when looking for project-level docs.
-    pub project_doc_fallback_filenames: Vec<String>,
-
     /// Token budget applied when storing tool/function outputs in the context manager.
     pub tool_output_token_limit: Option<usize>,
 
@@ -860,14 +854,6 @@ pub struct Config {
     ///
     /// When this program is invoked, arg0 will be set to `genex-linux-sandbox`.
     pub genex_linux_sandbox_exe: Option<PathBuf>,
-
-    /// Path to the `genex-execve-wrapper` executable used for shell
-    /// escalation. This cannot be set in the config file: it must be set in
-    /// code via [`ConfigOverrides`].
-    pub main_execve_wrapper_exe: Option<PathBuf>,
-
-    /// Optional absolute path to patched zsh used by zsh-exec-bridge-backed shell execution.
-    pub zsh_path: Option<PathBuf>,
 
     /// Value to use for `reasoning.effort` when making a request using the
     /// Responses API.
@@ -1659,18 +1645,11 @@ impl Config {
             .effective_config()
             .try_into()
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?;
-        let default_zsh_path = refreshed_config
-            .zsh_path
-            .clone()
-            .map(AbsolutePathBuf::try_from)
-            .transpose()?;
-
         Self::load_config_with_layer_stack(
             LOCAL_FS.as_ref(),
             cfg,
             ConfigOverrides {
                 cwd: Some(cwd),
-                default_zsh_path,
                 ..Default::default()
             },
             refreshed_config.genex_home.clone(),
@@ -1760,7 +1739,6 @@ impl Config {
     ///
     /// Further, [ConfigOverrides] contains some options that are not supported
     /// in [ConfigToml], such as `cwd`, `genex_self_exe`, `genex_linux_sandbox_exe`, and
-    /// `main_execve_wrapper_exe`.
     pub async fn load_with_cli_overrides_and_harness_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
         harness_overrides: ConfigOverrides,
@@ -2297,8 +2275,6 @@ pub struct ConfigOverrides {
     pub service_tier: Option<Option<String>>,
     pub genex_self_exe: Option<PathBuf>,
     pub genex_linux_sandbox_exe: Option<PathBuf>,
-    pub main_execve_wrapper_exe: Option<PathBuf>,
-    pub default_zsh_path: Option<AbsolutePathBuf>,
     pub base_instructions: Option<String>,
     pub developer_instructions: Option<String>,
     pub compact_prompt: Option<String>,
@@ -2393,61 +2369,27 @@ fn resolve_code_mode_config(config_toml: &ConfigToml) -> CodeModeConfig {
 }
 
 fn resolve_multi_agent_v2_config(config_toml: &ConfigToml) -> MultiAgentV2Config {
-    let base = multi_agent_v2_toml_config(config_toml.features.as_ref());
-    let max_concurrent_threads_per_session = base
-        .and_then(|config| config.max_concurrent_threads_per_session)
-        .or_else(|| {
-            config_toml
-                .agents
-                .as_ref()
-                .and_then(|agents| agents.max_concurrent_threads_per_session)
-                .map(|max_threads| max_threads.saturating_add(1))
-        })
+    let max_concurrent_threads_per_session = config_toml
+        .agents
+        .as_ref()
+        .and_then(|agents| agents.max_concurrent_threads_per_session)
+        .map(|max_threads| max_threads.saturating_add(1))
         .unwrap_or(DEFAULT_MULTI_AGENT_V2_MAX_CONCURRENT_THREADS_PER_SESSION);
     let default =
         MultiAgentV2Config::defaults_for_max_concurrency(max_concurrent_threads_per_session);
-    let min_wait_timeout_ms = base
-        .and_then(|config| config.min_wait_timeout_ms)
-        .unwrap_or(default.min_wait_timeout_ms);
-    let max_wait_timeout_ms = base
-        .and_then(|config| config.max_wait_timeout_ms)
-        .unwrap_or(default.max_wait_timeout_ms);
-    let default_wait_timeout_ms = base
-        .and_then(|config| config.default_wait_timeout_ms)
-        .unwrap_or(default.default_wait_timeout_ms);
-    let usage_hint_text = base
-        .and_then(|config| config.usage_hint_text.as_ref())
-        .cloned()
-        .or(default.usage_hint_text);
-    let hide_spawn_agent_metadata = base
-        .and_then(|config| config.hide_spawn_agent_metadata)
-        .unwrap_or(default.hide_spawn_agent_metadata);
-    let expose_spawn_agent_model_overrides = base
-        .and_then(|config| config.expose_spawn_agent_model_overrides)
-        .unwrap_or(default.expose_spawn_agent_model_overrides);
-    let root_agent_usage_hint_text = base
-        .and_then(|config| config.root_agent_usage_hint_text.as_ref())
-        .cloned();
-    let subagent_usage_hint_text = base
-        .and_then(|config| config.subagent_usage_hint_text.as_ref())
-        .cloned();
-    let wait_agent_enabled = base
-        .and_then(|config| config.wait_agent_enabled)
-        .unwrap_or(default.wait_agent_enabled);
-    let subagent_developer_instructions = base
-        .and_then(|config| config.subagent_developer_instructions.as_ref())
-        .map(|instructions| instructions.trim().to_string());
-    let multi_agent_mode_hint_text = base
-        .and_then(|config| config.multi_agent_mode_hint_text.as_ref())
-        .cloned()
-        .or(default.multi_agent_mode_hint_text);
-    let tool_namespace = base
-        .and_then(|config| config.tool_namespace.as_ref())
-        .cloned()
-        .or(default.tool_namespace);
-    let non_code_mode_only = base
-        .and_then(|config| config.non_code_mode_only)
-        .unwrap_or(default.non_code_mode_only);
+    let min_wait_timeout_ms = default.min_wait_timeout_ms;
+    let max_wait_timeout_ms = default.max_wait_timeout_ms;
+    let default_wait_timeout_ms = default.default_wait_timeout_ms;
+    let usage_hint_text = default.usage_hint_text;
+    let hide_spawn_agent_metadata = default.hide_spawn_agent_metadata;
+    let expose_spawn_agent_model_overrides = default.expose_spawn_agent_model_overrides;
+    let root_agent_usage_hint_text = None;
+    let subagent_usage_hint_text = None;
+    let wait_agent_enabled = default.wait_agent_enabled;
+    let subagent_developer_instructions = None;
+    let multi_agent_mode_hint_text = default.multi_agent_mode_hint_text;
+    let tool_namespace = default.tool_namespace;
+    let non_code_mode_only = default.non_code_mode_only;
 
     MultiAgentV2Config {
         max_concurrent_threads_per_session,
@@ -2624,13 +2566,6 @@ fn resolve_terminal_resize_reflow_config(config_toml: &ConfigToml) -> TerminalRe
 
 fn code_mode_toml_config(features: Option<&FeaturesToml>) -> Option<&CodeModeConfigToml> {
     match features?.code_mode.as_ref()? {
-        FeatureToml::Enabled(_) => None,
-        FeatureToml::Config(config) => Some(config),
-    }
-}
-
-fn multi_agent_v2_toml_config(features: Option<&FeaturesToml>) -> Option<&MultiAgentV2ConfigToml> {
-    match features?.multi_agent_v2.as_ref()? {
         FeatureToml::Enabled(_) => None,
         FeatureToml::Config(config) => Some(config),
     }
@@ -2925,8 +2860,6 @@ impl Config {
             service_tier: service_tier_override,
             genex_self_exe,
             genex_linux_sandbox_exe,
-            main_execve_wrapper_exe,
-            default_zsh_path,
             base_instructions,
             developer_instructions,
             compact_prompt,
@@ -3489,7 +3422,7 @@ impl Config {
         let base_instructions_provenance = base_instructions
             .as_ref()
             .map(|_| BaseInstructionsProvenance::Custom);
-        let developer_instructions = developer_instructions.or(cfg.developer_instructions);
+        let developer_instructions = developer_instructions;
         let include_permissions_instructions = cfg.include_permissions_instructions.unwrap_or(true);
         let include_collaboration_mode_instructions =
             cfg.include_collaboration_mode_instructions.unwrap_or(true);
@@ -3503,10 +3436,6 @@ impl Config {
             .as_ref()
             .and_then(|skills| skills.max_context_tokens);
         let include_environment_context = cfg.include_environment_context.unwrap_or(true);
-        let zsh_path = default_zsh_path
-            .or_else(|| InstallContext::current().bundled_zsh_path())
-            .map(AbsolutePathBuf::into_path_buf);
-
         let model_catalog = load_model_catalog(cfg.model_catalog_json.clone())?;
 
         let log_dir = cfg
@@ -3591,11 +3520,7 @@ impl Config {
             &network_permission_profile,
             &shell_environment_policy.r#set,
         )?;
-        let helper_readable_roots = get_readable_roots_required_for_genex_runtime(
-            &genex_home,
-            zsh_path.as_ref(),
-            main_execve_wrapper_exe.as_ref(),
-        );
+        let helper_readable_roots = Vec::new();
         let effective_permission_profile = constrained_permission_profile.value.get().clone();
         let (mut effective_file_system_sandbox_policy, effective_network_sandbox_policy) =
             effective_permission_profile.to_runtime_permissions();
@@ -3762,20 +3687,7 @@ impl Config {
                 .map(Duration::from_millis)
                 .unwrap_or(DEFAULT_OPTIONAL_MCP_STARTUP_GRACE),
             project_doc_max_bytes: cfg.project_doc_max_bytes.unwrap_or(AGENTS_MD_MAX_BYTES),
-            project_doc_fallback_filenames: cfg
-                .project_doc_fallback_filenames
-                .unwrap_or_default()
-                .into_iter()
-                .filter_map(|name| {
-                    let trimmed = name.trim();
-                    if trimmed.is_empty() {
-                        None
-                    } else {
-                        Some(trimmed.to_string())
-                    }
-                })
-                .collect(),
-            tool_output_token_limit: cfg.tool_output_token_limit,
+            tool_output_token_limit: Some(256),
             agents_enabled,
             agent_max_threads,
             agent_default_subagent_model,
@@ -3807,9 +3719,6 @@ impl Config {
             file_opener: cfg.file_opener.unwrap_or(UriBasedFileOpener::VsCode),
             genex_self_exe,
             genex_linux_sandbox_exe,
-            main_execve_wrapper_exe,
-            zsh_path,
-
             hide_agent_reasoning: cfg.hide_agent_reasoning.unwrap_or(false),
             show_raw_agent_reasoning: cfg
                 .show_raw_agent_reasoning
@@ -4391,26 +4300,12 @@ mod tests {
             direct_only_tool_namespaces: Some(vec!["beta".to_string()]),
             ..Default::default()
         }));
-        feature_configs.multi_agent_v2 = Some(FeatureToml::Config(MultiAgentV2ConfigToml {
-            max_concurrent_threads_per_session: Some(9),
-            subagent_developer_instructions: Some("  instructions  ".to_string()),
-            tool_namespace: Some("collab".to_string()),
-            ..Default::default()
-        }));
         config.features = Some(feature_configs);
 
         let code_mode = resolve_code_mode_config(&config);
         assert_eq!(code_mode.default_exec_yield_time_ms, 123);
         assert_eq!(code_mode.excluded_tool_namespaces, ["alpha"]);
         assert_eq!(code_mode.direct_only_tool_namespaces, ["beta"]);
-
-        let multi_agent = resolve_multi_agent_v2_config(&config);
-        assert_eq!(multi_agent.max_concurrent_threads_per_session, 9);
-        assert_eq!(
-            multi_agent.subagent_developer_instructions.as_deref(),
-            Some("instructions")
-        );
-        assert_eq!(multi_agent.tool_namespace.as_deref(), Some("collab"));
 
         config.tui =
             Some(toml::from_str("terminal_resize_reflow_max_rows = 0").expect("valid tui config"));

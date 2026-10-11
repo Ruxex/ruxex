@@ -3966,7 +3966,6 @@ dependencies = [
  "genex-install-context",
  "genex-linux-sandbox",
  "genex-sandboxing",
- "genex-shell-escalation",
  "genex-utils-absolute-path",
  "genex-utils-home-dir",
  "pretty_assertions",
@@ -4324,7 +4323,6 @@ dependencies = [
  "genex-rollout-trace",
  "genex-sandboxing",
  "genex-shell-command",
- "genex-shell-escalation",
  "genex-skills",
  "genex-skills-extension",
  "genex-state",
@@ -5489,26 +5487,6 @@ dependencies = [
  "tree-sitter-bash",
  "url",
  "which 8.0.0",
-]
-
-[[package]]
-name = "genex-shell-escalation"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "genex-protocol",
- "genex-utils-absolute-path",
- "libc",
- "pretty_assertions",
- "serde",
- "serde_json",
- "socket2 0.6.3",
- "tempfile",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

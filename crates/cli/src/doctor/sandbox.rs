@@ -70,10 +70,5 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
         "Linux sandbox helper",
         arg0_paths.genex_linux_sandbox_exe.as_deref(),
     );
-    push_path_detail(
-        &mut details,
-        "execve wrapper helper",
-        arg0_paths.main_execve_wrapper_exe.as_deref(),
-    );
     DoctorCheck::new("sandbox.helpers", "sandbox", status, summary).details(details)
 }

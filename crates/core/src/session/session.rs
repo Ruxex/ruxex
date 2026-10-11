@@ -1238,30 +1238,10 @@ impl Session {
                 mcp_server_names.iter().map(String::as_str).collect(),
             );
 
-            let use_zsh_fork_shell = config.features.enabled(Feature::ShellZshFork);
             let default_shell = if let Some(user_shell_override) =
                 session_configuration.user_shell_override.clone()
             {
                 user_shell_override
-            } else if use_zsh_fork_shell {
-                let zsh_path = config.zsh_path.as_ref().ok_or_else(|| {
-                    anyhow::anyhow!(
-                        "zsh fork feature enabled, but no packaged zsh fork is available for this install"
-                    )
-                })?;
-                if zsh_path.is_file() {
-                    shell::Shell {
-                        shell_type: shell::ShellType::Zsh,
-                        shell_path: zsh_path.clone(),
-                    }
-                } else {
-                    shell::get_shell(shell::ShellType::Zsh).ok_or_else(|| {
-                        anyhow::anyhow!(
-                            "zsh fork feature enabled, but packaged zsh fork `{}` is not usable",
-                            zsh_path.display()
-                        )
-                    })?
-                }
             } else {
                 shell::default_user_shell()
             };
@@ -1291,9 +1271,6 @@ impl Session {
                 && matches!(
                     genex_tools::UnifiedExecShellMode::for_session(
                         config.features.get(),
-                        crate::tools::tool_user_shell_type(&default_shell),
-                        config.zsh_path.as_ref(),
-                        config.main_execve_wrapper_exe.as_ref(),
                     ),
                     genex_tools::UnifiedExecShellMode::Direct
                 );
@@ -1532,8 +1509,6 @@ impl Session {
                     config.background_terminal_max_timeout,
                 ),
                 elicitations: crate::elicitation::ElicitationService::new(),
-                shell_zsh_path: config.zsh_path.clone(),
-                main_execve_wrapper_exe: config.main_execve_wrapper_exe.clone(),
                 hooks: arc_swap::ArcSwap::from_pointee(hooks),
                 rollout_thread_trace,
                 user_shell: Arc::new(default_shell),

@@ -1594,7 +1594,6 @@ impl ThreadRequestProcessor {
                 .map(genex_app_server_protocol::AskForApproval::to_core),
             sandbox_mode: sandbox.map(SandboxMode::to_core),
             genex_linux_sandbox_exe: self.arg0_paths.genex_linux_sandbox_exe.clone(),
-            main_execve_wrapper_exe: self.arg0_paths.main_execve_wrapper_exe.clone(),
             base_instructions,
             developer_instructions,
             ..Default::default()

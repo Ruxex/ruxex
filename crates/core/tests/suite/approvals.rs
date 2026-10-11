@@ -54,10 +54,6 @@ use core_test_support::test_genex::test_genex;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_with_timeout;
-use core_test_support::zsh_fork::build_zsh_fork_test;
-use core_test_support::zsh_fork::restrictive_workspace_write_profile;
-use core_test_support::zsh_fork::zsh_fork_runtime;
-use core_test_support::zsh_fork::zsh_fork_test_builder;
 use pretty_assertions::assert_eq;
 use regex_lite::Regex;
 use serde_json::Value;
@@ -2740,7 +2736,6 @@ async fn spawned_subagent_execpolicy_amendment_propagates_to_parent_session() ->
 }
 
 #[cfg(unix)]
-#[test_case("zsh_fork", false, false; "zsh_fork_unsupported")]
 #[test_case("direct", false, false; "explicit_zsh")]
 #[test_case("direct", true, false; "non_login_in_login_enabled_session")]
 #[test_case("direct", true, true; "login_startup")]
@@ -2769,22 +2764,15 @@ async fn shell_startup_credentials_are_brokered(
     let global_startup = matches!(shell_mode, "filtered_startup" | "startup_override");
     let direct = shell_mode == "direct" || global_startup || request_extra_permissions;
 
-    let builder = if shell_mode == "zsh_fork" {
-        let Some(runtime) = zsh_fork_runtime("zsh-fork credential broker environment test")? else {
-            return Ok(());
-        };
-        zsh_fork_test_builder(runtime, AskForApproval::Never)
-    } else {
-        let Some(zsh) = genex_core::shell::get_shell(genex_core::shell::ShellType::Zsh) else {
-            return Ok(());
-        };
-        test_genex()
-            .with_user_shell(zsh)
-            .with_config(move |config| {
-                config.permissions.approval_policy = Constrained::allow_any(approval_policy);
-                config.features.enable(Feature::ShellTool).unwrap();
-            })
+    let Some(zsh) = genex_core::shell::get_shell(genex_core::shell::ShellType::Zsh) else {
+        return Ok(());
     };
+    let builder = test_genex()
+        .with_user_shell(zsh)
+        .with_config(move |config| {
+            config.permissions.approval_policy = Constrained::allow_any(approval_policy);
+            config.features.enable(Feature::ShellTool).unwrap();
+        });
 
     let outside_dir = tempfile::tempdir_in(std::env::current_dir()?)?;
     let outside_path = outside_dir.path().join("unsandboxed-snapshot-write");
@@ -2909,14 +2897,12 @@ ZDOTDIR = "{}"
         if direct {
             config
                 .features
-                .disable(Feature::ShellZshFork)
-                .expect("test config should allow direct shell execution");
         }
     });
     let server = start_mock_server().await;
     let test = builder.build(&server).await?;
     let snapshot_dir = test.home.path().join("shell_snapshots");
-    let workdir = if allow_login_shell || shell_mode == "zsh_fork" {
+    let workdir = if allow_login_shell {
         test.cwd.path().to_path_buf()
     } else {
         let workdir = test.cwd.path().join("brokered-subdirectory");
@@ -3015,13 +3001,6 @@ ZDOTDIR = "{}"
     }
 
     let output = responses.requests()[1].function_call_output(call_id);
-    if shell_mode == "zsh_fork" {
-        let output = output.to_string();
-        assert!(output.contains("credential brokerage does not yet support shell_zsh_fork"));
-        assert!(!workdir.join("captured-snapshot").exists());
-        assert!(!output.contains(REAL_GITHUB_TOKEN));
-        return Ok(());
-    }
     let result = parse_result(&output);
     assert_eq!(result.exit_code, Some(0), "command failed: {result:?}");
     assert!(!result.stdout.contains(REAL_GITHUB_TOKEN));
@@ -3161,8 +3140,6 @@ GH_TOKEN = "{REAL_GITHUB_TOKEN}"
             .expect("test config should allow ShellSnapshot override");
             config
                 .features
-                .disable(Feature::ShellZshFork)
-                .expect("test config should allow direct shell execution");
         });
     let test = builder.build(&server).await?;
 
@@ -3377,7 +3354,6 @@ ENV = "{}"
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
             config.permissions.allow_login_shell = true;
             config.features.enable(Feature::ShellSnapshot).unwrap();
-            config.features.disable(Feature::ShellZshFork).unwrap();
             if !credential_startup {
                 config
                     .permissions
@@ -3442,6 +3418,7 @@ ENV = "{}"
     Ok(())
 }
 
+#[cfg(any())]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg(unix)]
 async fn env_zsh_script_spawned_by_python_can_request_escalation_under_zsh_fork() -> Result<()> {
@@ -3598,6 +3575,7 @@ async fn env_zsh_script_spawned_by_python_can_request_escalation_under_zsh_fork(
     Ok(())
 }
 
+#[cfg(any())]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg(unix)]
 async fn matched_prefix_rule_runs_unsandboxed_under_zsh_fork() -> Result<()> {
@@ -3807,6 +3785,7 @@ touch {outside_path:?}
 /// dropping managed enterprise requirements. The script treats the inherited
 /// environment value as untrusted and accepts only explicitly allowlisted
 /// profile names before passing one to `genex sandbox -P`.
+#[cfg(any())]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg(unix)]
 async fn zsh_fork_inner_allowed_script_inherits_active_permission_profile() -> Result<()> {

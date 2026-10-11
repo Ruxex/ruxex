@@ -24,74 +24,6 @@ use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use tempfile::TempDir;
 
-#[tokio::test]
-async fn restricted_read_implicitly_allows_helper_executables() -> std::io::Result<()> {
-    let temp_dir = TempDir::new()?;
-    let cwd = temp_dir.path().join("workspace");
-    let genex_home = temp_dir.path().join(".genex");
-    let zsh_path = temp_dir.path().join("runtime").join("zsh");
-    let arg0_root = genex_home.join("tmp").join("arg0");
-    let allowed_arg0_dir = arg0_root.join("genex-arg0-session");
-    let sibling_arg0_dir = arg0_root.join("genex-arg0-other-session");
-    let execve_wrapper = allowed_arg0_dir.join("genex-execve-wrapper");
-    std::fs::create_dir_all(&cwd)?;
-    std::fs::create_dir_all(zsh_path.parent().expect("zsh path should have parent"))?;
-    std::fs::create_dir_all(&allowed_arg0_dir)?;
-    std::fs::create_dir_all(&sibling_arg0_dir)?;
-    std::fs::write(&zsh_path, "")?;
-    std::fs::write(&execve_wrapper, "")?;
-
-    let config = Config::load_from_base_config_with_overrides(
-        ConfigToml {
-            default_permissions: Some("workspace".to_string()),
-            permissions: Some(PermissionsToml {
-                entries: BTreeMap::from([(
-                    "workspace".to_string(),
-                    PermissionProfileToml {
-                        description: None,
-                        extends: None,
-                        workspace_roots: None,
-                        filesystem: Some(FilesystemPermissionsToml {
-                            glob_scan_max_depth: None,
-                            entries: BTreeMap::new(),
-                        }),
-                        network: None,
-                    },
-                )]),
-            }),
-            ..Default::default()
-        },
-        ConfigOverrides {
-            cwd: Some(cwd.clone()),
-            default_zsh_path: Some(AbsolutePathBuf::try_from(zsh_path.clone())?),
-            main_execve_wrapper_exe: Some(execve_wrapper),
-            ..Default::default()
-        },
-        AbsolutePathBuf::from_absolute_path(&genex_home)?,
-    )
-    .await?;
-
-    let expected_zsh = AbsolutePathBuf::try_from(zsh_path)?;
-    let expected_allowed_arg0_dir = AbsolutePathBuf::try_from(allowed_arg0_dir)?;
-    let expected_sibling_arg0_dir = AbsolutePathBuf::try_from(sibling_arg0_dir)?;
-    let policy = config.permissions.file_system_sandbox_policy();
-
-    assert!(
-        policy.can_read_local_path_with_cwd(expected_zsh.as_path(), &cwd),
-        "expected zsh helper path to be readable, policy: {policy:?}"
-    );
-    assert!(
-        policy.can_read_local_path_with_cwd(expected_allowed_arg0_dir.as_path(), &cwd),
-        "expected active arg0 helper dir to be readable, policy: {policy:?}"
-    );
-    assert!(
-        !policy.can_read_local_path_with_cwd(expected_sibling_arg0_dir.as_path(), &cwd),
-        "expected sibling arg0 helper dir to remain unreadable, policy: {policy:?}"
-    );
-
-    Ok(())
-}
-
 #[test]
 fn network_toml_ignores_legacy_network_list_keys() {
     let parsed = toml::from_str::<NetworkToml>(
@@ -655,20 +587,6 @@ fn user_profiles_cannot_use_reserved_builtin_prefix() {
         .expect_err("reserved names must not be user-defined");
     assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
     assert!(validate_user_permission_profile_names(None).is_ok());
-}
-
-#[test]
-fn readable_runtime_roots_include_helper_paths_without_overgranting() {
-    let home = PathBuf::from("/tmp/genex-home");
-    let zsh = PathBuf::from("/usr/bin/zsh");
-    let wrapper = home.join("tmp/arg0/session/genex-execve-wrapper");
-    let roots = get_readable_roots_required_for_genex_runtime(&home, Some(&zsh), Some(&wrapper));
-    assert!(roots.iter().any(|root| root.as_path() == zsh));
-    assert!(
-        roots
-            .iter()
-            .any(|root| root.as_path() == home.join("tmp/arg0/session"))
-    );
 }
 
 #[test]

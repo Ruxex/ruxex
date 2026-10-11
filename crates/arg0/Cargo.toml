@@ -20,7 +20,6 @@ genex-exec-server = { workspace = true }
 genex-install-context = { workspace = true }
 genex-linux-sandbox = { workspace = true }
 genex-sandboxing = { workspace = true }
-genex-shell-escalation = { workspace = true }
 genex-utils-absolute-path = { workspace = true }
 genex-utils-home-dir = { workspace = true }
 dotenvy = { workspace = true }

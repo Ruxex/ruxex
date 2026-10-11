@@ -7,7 +7,6 @@ use super::load_config_toml_for_required_layer_raw;
 use super::load_requirements_toml;
 use super::load_root_checkout_project_config;
 use super::project_discovery;
-use super::project_root_markers_from_config;
 use super::project_trust_context;
 use super::system_config_toml_file_with_overrides;
 use super::system_requirements_toml_file_with_overrides;
@@ -17,7 +16,6 @@ use crate::LoaderOverrides;
 use crate::RequirementSource;
 use crate::RequirementsLayerEntry;
 use crate::compose_requirements;
-use crate::default_project_root_markers;
 use crate::merge_toml_values;
 use genex_file_system::ExecutorFileSystem;
 use genex_utils_absolute_path::AbsolutePathBuf;
@@ -134,8 +132,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
         &loaded_managed,
         genex_home.as_path(),
     )?;
-    let project_root_markers = project_root_markers_from_config(&discovery_config)?
-        .unwrap_or_else(default_project_root_markers);
+    let project_root_markers = vec![".git".to_string()];
     let requirements = local_requirements_layers(fs, genex_home.as_path(), overrides).await?;
     let mut trust_context = project_trust_context(
         fs,

@@ -53,16 +53,6 @@ pub(crate) fn flat_tool_name(tool_name: &ToolName) -> Cow<'_, str> {
     }
 }
 
-pub(crate) fn tool_user_shell_type(
-    user_shell: &crate::shell::Shell,
-) -> genex_tools::ToolUserShellType {
-    match user_shell.shell_type {
-        crate::shell::ShellType::Zsh => genex_tools::ToolUserShellType::Zsh,
-        crate::shell::ShellType::Bash => genex_tools::ToolUserShellType::Bash,
-        crate::shell::ShellType::Sh => genex_tools::ToolUserShellType::Sh,
-    }
-}
-
 pub(crate) fn requested_tool_mode(turn_context: &TurnContext, model_info: &ModelInfo) -> ToolMode {
     model_info.tool_mode.unwrap_or_else(|| {
         if turn_context.config.features.enabled(Feature::CodeModeOnly) {

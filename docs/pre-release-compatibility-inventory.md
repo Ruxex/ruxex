@@ -33,6 +33,18 @@ Related references: [design spec](superpowers/specs/2026-09-19-remove-pre-releas
 | `forced_login_method` | Auth policy, login manager, and AppServer config responses still consume `Managed` versus `Api` to constrain the available authentication route. Single-provider runtime selection does not imply a single authentication method. | `retain` |
 | `cli_auth_credentials_store` | CLI credential loading and persistence consume the file/keyring/auto/ephemeral modes; this is a credential-storage policy, not provider selection. | `retain` |
 
+## Configuration override audit decisions (2026-10-12)
+
+The user-directed configuration audit in `docs/config-audit.md` supersedes
+earlier provisional rows for these repository-owned configuration surfaces.
+
+| Surface | Producer / consumer audit | Decision |
+|---|---|---|
+| Top-level `developer_instructions`, `project_doc_fallback_filenames`, `project_root_markers`, and `tool_output_token_limit` | `ConfigToml`, config defaults/schema, loader/merge layers, project discovery, prompt construction, and context-manager consumers read these values. The user-config override paths are repository-owned; active managed/protocol developer-instruction fields and fixed runtime defaults remain separate consumers. | `remove` user-config deserialization, schema, merge, and override propagation; retain active managed/protocol paths and fixed defaults |
+| User-configurable `features.multi_agent_v2` table and nested V2 overrides | `FeaturesToml`, feature schema/merge, `ConfigToml` resolution, and V2 config consumers produce/consume the table. V2 runtime types and host-controlled execution are separate; the user TOML override is not required. | `remove` TOML table and nested overrides; retain internal/runtime V2 code where still consumed |
+| Removed/compatibility-only Feature config keys: `undo`, `terminal_resize_reflow`, `apply_patch_preserve_line_endings`, `use_linux_sandbox_bwrap`, `remote_models`, `tool_search`, `tool_search_always_defer_mcp_tools`, `resize_all_images`, `item_ids`, `steer`, `send_async_message`, `collaboration_modes`, and `remote_compaction_v2` | Feature registry, config schema, merge/normalization, CLI/TUI projections, and each exact feature consumer were inventoried. Current always-on behavior and active external headers/protocol values are separate retained behavior. | `remove` obsolete user-config/compatibility paths; retain current always-on behavior and audited external contracts |
+| `shell_zsh_fork`, `unified_exec_zsh_fork`, patched zsh, `genex-execve-wrapper`, and the zsh shell-escalation backend | Feature registry/config schema, session shell selection, unified-exec runtime, shell escalation crate, install/arg0 paths, release fixtures, app-server/TUI integration tests, and approval/sandbox consumers form the producer/consumer graph. The user explicitly chose to remove the functionality because both Feature entries are `Removed`. | `remove` the backend, wrapper/package artifacts, config/features, runtime paths, and zsh-fork-only tests; retain direct shell/unified-exec safety behavior |
+
 ## Decision categories
 
 - `remove`: exists only to read, write, migrate, replay, or describe an

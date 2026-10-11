@@ -1076,14 +1076,11 @@ impl Session {
     /// creation time and thread it into the client. Remote compaction stays advertised unconditionally.
     fn build_model_client_beta_features_header(config: &Config) -> Option<String> {
         Some(
-            FEATURES
-                .iter()
-                .filter(|spec| {
-                    spec.id == Feature::RemoteCompactionV2
-                        || (spec.stage.experimental_menu_description().is_some()
-                            && config.features.enabled(spec.id))
-                })
-                .map(|spec| spec.key)
+            std::iter::once("remote_compaction_v2")
+                .chain(FEATURES.iter().filter(|spec| {
+                    spec.stage.experimental_menu_description().is_some()
+                        && config.features.enabled(spec.id)
+                }).map(|spec| spec.key))
                 .collect::<Vec<_>>()
                 .join(","),
         )

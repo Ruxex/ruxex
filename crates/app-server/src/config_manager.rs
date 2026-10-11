@@ -204,7 +204,6 @@ impl ConfigManager {
                 cwd: Some(cwd.to_path_buf()),
                 default_permissions: Some(permission_profile),
                 genex_linux_sandbox_exe: self.arg0_paths.genex_linux_sandbox_exe.clone(),
-                main_execve_wrapper_exe: self.arg0_paths.main_execve_wrapper_exe.clone(),
                 ..Default::default()
             },
             Some(cwd.to_path_buf()),
@@ -292,7 +291,6 @@ impl ConfigManager {
     fn apply_arg0_paths(&self, config: &mut Config) {
         config.genex_self_exe = self.arg0_paths.genex_self_exe.clone();
         config.genex_linux_sandbox_exe = self.arg0_paths.genex_linux_sandbox_exe.clone();
-        config.main_execve_wrapper_exe = self.arg0_paths.main_execve_wrapper_exe.clone();
     }
 
     #[cfg(test)]

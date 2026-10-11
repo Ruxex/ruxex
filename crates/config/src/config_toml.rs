@@ -58,10 +58,6 @@ const fn default_project_doc_max_bytes() -> Option<usize> {
     Some(DEFAULT_PROJECT_DOC_MAX_BYTES)
 }
 
-fn default_project_doc_fallback_filenames() -> Option<Vec<String>> {
-    Some(Vec::new())
-}
-
 const fn default_hide_agent_reasoning() -> Option<bool> {
     Some(false)
 }
@@ -210,10 +206,6 @@ pub struct ConfigToml {
     /// System instructions.
     pub instructions: Option<String>,
 
-    /// Developer instructions inserted as a `developer` role message.
-    #[serde(default)]
-    pub developer_instructions: Option<String>,
-
     /// Whether to inject the `<permissions instructions>` developer block.
     pub include_permissions_instructions: Option<bool>,
 
@@ -284,13 +276,6 @@ pub struct ConfigToml {
     /// Maximum total bytes of project instruction content across all selected environments.
     #[serde(default = "default_project_doc_max_bytes")]
     pub project_doc_max_bytes: Option<usize>,
-
-    /// Ordered list of fallback filenames to look for when AGENTS.md is missing.
-    #[serde(default = "default_project_doc_fallback_filenames")]
-    pub project_doc_fallback_filenames: Option<Vec<String>>,
-
-    /// Token budget applied when storing tool/function outputs in the context manager.
-    pub tool_output_token_limit: Option<usize>,
 
     /// Maximum poll window for background terminal output (`write_stdin`), in milliseconds.
     /// Default: `300000` (5 minutes).
@@ -406,11 +391,6 @@ pub struct ConfigToml {
     /// Suppress warnings about unstable (under development) features.
     pub suppress_unstable_features_warning: Option<bool>,
 
-    /// Markers used to detect the project root when searching parent
-    /// directories for `.genex` folders. Defaults to [".git"] when unset.
-    #[serde(default)]
-    pub project_root_markers: Option<Vec<String>>,
-
     /// When `false`, disables metrics across Genex product surfaces in this machine.
     /// Defaults to `true`.
     pub metrics: Option<MetricsConfigToml>,
@@ -515,7 +495,6 @@ pub struct GoalsToml {
 #[schemars(deny_unknown_fields)]
 pub struct AgentsToml {
     /// Whether multi-agent tools are enabled. Defaults to true.
-    /// An enabled `features.multi_agent_v2` setting takes precedence.
     pub enabled: Option<bool>,
     /// Maximum number of spawned agent threads that can be open concurrently per session.
     /// When unset, the selected multi-agent backend uses its default.

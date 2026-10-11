@@ -29,7 +29,6 @@ members = [
     "crates/config-schema",
     "crates/context-fragments",
     "crates/shell-command",
-    "crates/shell-escalation",
     "crates/skills",
     "crates/core",
     "crates/core-api",
@@ -207,7 +206,6 @@ genex-rollout-trace = { path = "crates/rollout-trace" }
 genex-sandboxing = { path = "crates/sandboxing" }
 genex-secrets = { path = "crates/secrets" }
 genex-shell-command = { path = "crates/shell-command" }
-genex-shell-escalation = { path = "crates/shell-escalation" }
 genex-skills-extension = { path = "crates/ext/skills" }
 genex-skills = { path = "crates/skills" }
 genex-state = { path = "crates/state" }

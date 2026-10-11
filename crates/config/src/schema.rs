@@ -77,15 +77,6 @@ pub fn features_schema(schema_gen: &mut SchemaGenerator) -> Schema {
             );
             continue;
         }
-        if feature.id == genex_features::Feature::MultiAgentV2 {
-            validation.properties.insert(
-                feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::MultiAgentV2ConfigToml,
-                >>(),
-            );
-            continue;
-        }
         if feature.id == genex_features::Feature::TokenBudget {
             validation.properties.insert(
                 feature.key.to_string(),

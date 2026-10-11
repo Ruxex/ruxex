@@ -112,35 +112,16 @@ pub(crate) fn get_command(
         None => allow_login_shell,
     };
 
-    match shell_mode {
-        UnifiedExecShellMode::Direct => {
-            let model_shell = args
-                .shell
-                .as_ref()
-                .map(|shell_str| get_shell_by_model_provided_path(&PathBuf::from(shell_str)));
-            let shell = model_shell.as_ref().unwrap_or(session_shell.as_ref());
-            Ok(ResolvedCommand {
-                command: shell.derive_exec_args(&args.cmd, use_login_shell),
-                shell_type: shell.shell_type,
-            })
-        }
-        UnifiedExecShellMode::ZshFork(zsh_fork_config) => {
-            if args.shell.is_some() {
-                return Err(
-                    "`shell` is not supported for local zsh-fork exec; omit `shell` to use zsh-fork, or target a remote environment where `shell` is supported.".to_string(),
-                );
-            }
-
-            Ok(ResolvedCommand {
-                command: vec![
-                    zsh_fork_config.shell_zsh_path.to_string_lossy().to_string(),
-                    if use_login_shell { "-lc" } else { "-c" }.to_string(),
-                    args.cmd.clone(),
-                ],
-                shell_type: ShellType::Zsh,
-            })
-        }
-    }
+    let _ = shell_mode;
+    let model_shell = args
+        .shell
+        .as_ref()
+        .map(|shell_str| get_shell_by_model_provided_path(&PathBuf::from(shell_str)));
+    let shell = model_shell.as_ref().unwrap_or(session_shell.as_ref());
+    Ok(ResolvedCommand {
+        command: shell.derive_exec_args(&args.cmd, use_login_shell),
+        shell_type: shell.shell_type,
+    })
 }
 
 pub(crate) fn shell_mode_for_environment(

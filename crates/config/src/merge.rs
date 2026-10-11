@@ -63,11 +63,8 @@ pub fn is_structured_feature_path<S: AsRef<str>>(path: &[S]) -> bool {
         _ => return false,
     };
 
-    features.as_ref() == "features"
-        && matches!(
-            feature.as_ref(),
-            "multi_agent_v2" | "network_proxy" | "sleep_tool"
-        )
+        features.as_ref() == "features"
+        && matches!(feature.as_ref(), "network_proxy" | "sleep_tool")
 }
 
 fn merge_toml_values_at_path(base: &mut TomlValue, overlay: &TomlValue, path: &mut Vec<String>) {

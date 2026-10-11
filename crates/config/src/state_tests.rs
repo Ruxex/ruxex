@@ -7,45 +7,6 @@ fn test_user_config_path(temp_dir: &TempDir, file_name: &str) -> AbsolutePathBuf
         .expect("test user config path should be absolute")
 }
 
-/// Legacy feature toggles own the semantic enabled leaf after layered merging.
-#[test]
-fn origins_attribute_multi_agent_v2_enabled_to_overriding_boolean_layer() {
-    let temp_dir = TempDir::new().expect("tempdir");
-    let user_layer = ConfigLayerEntry::new(
-        ConfigLayerSource::User {
-            file: test_user_config_path(&temp_dir, "config.toml"),
-            profile: None,
-        },
-        toml::from_str(
-            "[features.multi_agent_v2]\nenabled = true\nsubagent_usage_hint_text = \"keep\"\n",
-        )
-        .expect("user config"),
-    );
-    let user_metadata = user_layer.metadata();
-    let session_layer = ConfigLayerEntry::new(
-        ConfigLayerSource::SessionFlags,
-        toml::from_str("[features]\nmulti_agent_v2 = false\n").expect("session config"),
-    );
-    let session_metadata = session_layer.metadata();
-    let stack = ConfigLayerStack::new(
-        vec![user_layer, session_layer],
-        ConfigRequirements::default(),
-        ConfigRequirementsToml::default(),
-    )
-    .expect("layer stack should be valid");
-
-    let origins = stack.origins();
-
-    assert_eq!(
-        origins.get("features.multi_agent_v2.enabled"),
-        Some(&session_metadata)
-    );
-    assert_eq!(
-        origins.get("features.multi_agent_v2.subagent_usage_hint_text"),
-        Some(&user_metadata)
-    );
-}
-
 #[test]
 fn origins_omit_displaced_credential_providers() {
     let temp_dir = TempDir::new().expect("tempdir");

@@ -18,8 +18,6 @@ use tempfile::TempDir;
 
 const APPLY_PATCH_ARG0: &str = "apply_patch";
 const MISSPELLED_APPLY_PATCH_ARG0: &str = "applypatch";
-#[cfg(unix)]
-const EXECVE_WRAPPER_ARG0: &str = "genex-execve-wrapper";
 const LOCK_FILENAME: &str = ".lock";
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -31,7 +29,6 @@ pub struct Arg0DispatchPaths {
     /// instead of the real Genex CLI.
     pub genex_self_exe: Option<PathBuf>,
     pub genex_linux_sandbox_exe: Option<PathBuf>,
-    pub main_execve_wrapper_exe: Option<PathBuf>,
 }
 
 /// Keeps the per-session PATH entry alive and locked for the process lifetime.
@@ -63,32 +60,6 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
         .file_name()
         .and_then(|s| s.to_str())
         .unwrap_or("");
-
-    #[cfg(unix)]
-    if exe_name == EXECVE_WRAPPER_ARG0 {
-        let mut args = std::env::args();
-        let _ = args.next();
-        let file = match args.next() {
-            Some(file) => file,
-            None => std::process::exit(1),
-        };
-        let argv = args.collect::<Vec<_>>();
-
-        let runtime = match tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-        {
-            Ok(runtime) => runtime,
-            Err(_) => std::process::exit(1),
-        };
-        let exit_code = runtime.block_on(
-            genex_shell_escalation::run_shell_escalation_execve_wrapper(file, argv),
-        );
-        match exit_code {
-            Ok(exit_code) => std::process::exit(exit_code),
-            Err(_) => std::process::exit(1),
-        }
-    }
 
     if exe_name == GENEX_LINUX_SANDBOX_ARG0 {
         // Safety: [`run_main`] never returns.
@@ -252,9 +223,6 @@ where
         } else {
             None
         },
-        main_execve_wrapper_exe: path_entry_guard
-            .as_ref()
-            .and_then(|path_entry| path_entry.paths().main_execve_wrapper_exe.clone()),
     };
 
     let result = main_fn(paths).await;
@@ -379,8 +347,6 @@ fn prepare_path_entry_for_genex_aliases(
         MISSPELLED_APPLY_PATCH_ARG0,
         #[cfg(target_os = "linux")]
         GENEX_LINUX_SANDBOX_ARG0,
-        #[cfg(unix)]
-        EXECVE_WRAPPER_ARG0,
     ] {
         let exe = std::env::current_exe()?;
 
@@ -401,16 +367,6 @@ fn prepare_path_entry_for_genex_aliases(
                 Some(path.join(GENEX_LINUX_SANDBOX_ARG0))
             }
             #[cfg(not(target_os = "linux"))]
-            {
-                None
-            }
-        },
-        main_execve_wrapper_exe: {
-            #[cfg(unix)]
-            {
-                Some(path.join(EXECVE_WRAPPER_ARG0))
-            }
-            #[cfg(not(unix))]
             {
                 None
             }
@@ -577,7 +533,6 @@ mod tests {
             Arg0DispatchPaths {
                 genex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
                 genex_linux_sandbox_exe: Some(alias_path.clone()),
-                main_execve_wrapper_exe: None,
             },
         );
 
@@ -658,7 +613,6 @@ mod tests {
             Arg0DispatchPaths {
                 genex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
                 genex_linux_sandbox_exe: Some(alias_path.clone()),
-                main_execve_wrapper_exe: Some(alias_path),
             },
         );
 
@@ -668,7 +622,6 @@ mod tests {
             |paths| async move {
                 let alias_path = paths
                     .genex_linux_sandbox_exe
-                    .or(paths.main_execve_wrapper_exe)
                     .expect("unix dispatch should create at least one alias path");
                 ensure!(
                     alias_path.exists(),

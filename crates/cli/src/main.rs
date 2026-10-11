@@ -1583,7 +1583,6 @@ async fn run_debug_prompt_input_command(
         cwd: shared.cwd,
         genex_self_exe: arg0_paths.genex_self_exe,
         genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe,
-        main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe,
         show_raw_agent_reasoning: None,
         ephemeral: Some(true),
         bypass_hook_trust: shared.bypass_hook_trust.then_some(true),

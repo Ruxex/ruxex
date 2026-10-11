@@ -21,9 +21,6 @@ use core_test_support::test_genex::local_selections;
 use core_test_support::test_genex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
-use core_test_support::zsh_fork::build_zsh_fork_test;
-use core_test_support::zsh_fork::restrictive_workspace_write_profile;
-use core_test_support::zsh_fork::zsh_fork_runtime;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -138,6 +135,7 @@ fn output_shows_sandbox_denial(output: &str) -> bool {
         || output.contains("Read-only file system")
 }
 
+#[cfg(any())]
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn shell_zsh_fork_skill_scripts_ignore_declared_permissions() -> Result<()> {
@@ -233,6 +231,7 @@ async fn shell_zsh_fork_skill_scripts_ignore_declared_permissions() -> Result<()
     Ok(())
 }
 
+#[cfg(any())]
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn shell_zsh_fork_still_enforces_workspace_write_sandbox() -> Result<()> {

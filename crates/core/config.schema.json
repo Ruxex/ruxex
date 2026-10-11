@@ -45,7 +45,7 @@
           "description": "Default reasoning effort for spawned subagents when the spawn call does not select one."
         },
         "enabled": {
-          "description": "Whether multi-agent tools are enabled. Defaults to true. An enabled `features.multi_agent_v2` setting takes precedence.",
+          "description": "Whether multi-agent tools are enabled. Defaults to true.",
           "type": "boolean"
         },
         "interrupt_message": {
@@ -303,9 +303,6 @@
             "api_key_model_discovery": {
               "type": "boolean"
             },
-            "apply_patch_preserve_line_endings": {
-              "type": "boolean"
-            },
             "apply_patch_streaming_events": {
               "type": "boolean"
             },
@@ -337,9 +334,6 @@
               "type": "boolean"
             },
             "collab": {
-              "type": "boolean"
-            },
-            "collaboration_modes": {
               "type": "boolean"
             },
             "compaction_image_budget": {
@@ -411,9 +405,6 @@
             "in_app_updates": {
               "type": "boolean"
             },
-            "item_ids": {
-              "type": "boolean"
-            },
             "local_thread_store_compression": {
               "type": "boolean"
             },
@@ -428,9 +419,6 @@
             },
             "multi_agent": {
               "type": "boolean"
-            },
-            "multi_agent_v2": {
-              "$ref": "#/definitions/FeatureToml_for_MultiAgentV2ConfigToml"
             },
             "network_proxy": {
               "$ref": "#/definitions/FeatureToml_for_NetworkProxyConfigToml"
@@ -453,19 +441,10 @@
             "reasoning_effort_override": {
               "type": "boolean"
             },
-            "remote_compaction_v2": {
-              "type": "boolean"
-            },
-            "remote_models": {
-              "type": "boolean"
-            },
             "request_permissions": {
               "type": "boolean"
             },
             "request_permissions_tool": {
-              "type": "boolean"
-            },
-            "resize_all_images": {
               "type": "boolean"
             },
             "respect_system_proxy": {
@@ -483,9 +462,6 @@
             "secret_auth_storage": {
               "type": "boolean"
             },
-            "send_async_message": {
-              "type": "boolean"
-            },
             "send_message_to_user_async": {
               "type": "boolean"
             },
@@ -496,9 +472,6 @@
               "type": "boolean"
             },
             "shell_tool": {
-              "type": "boolean"
-            },
-            "shell_zsh_fork": {
               "type": "boolean"
             },
             "skill_mcp_dependency_install": {
@@ -519,16 +492,10 @@
             "standalone_web_search": {
               "type": "boolean"
             },
-            "steer": {
-              "type": "boolean"
-            },
             "step_model_switching": {
               "type": "boolean"
             },
             "telepathy": {
-              "type": "boolean"
-            },
-            "terminal_resize_reflow": {
               "type": "boolean"
             },
             "terminal_visualization_instructions": {
@@ -543,16 +510,7 @@
             "tool_registry": {
               "$ref": "#/definitions/ToolRegistryConfigToml"
             },
-            "tool_search": {
-              "type": "boolean"
-            },
-            "tool_search_always_defer_mcp_tools": {
-              "type": "boolean"
-            },
             "unbounded_connection_retries": {
-              "type": "boolean"
-            },
-            "undo": {
               "type": "boolean"
             },
             "unified_exec": {
@@ -561,16 +519,10 @@
             "unified_exec_tty": {
               "type": "boolean"
             },
-            "unified_exec_zsh_fork": {
-              "type": "boolean"
-            },
             "unified_image_budget": {
               "type": "boolean"
             },
             "use_legacy_landlock": {
-              "type": "boolean"
-            },
-            "use_linux_sandbox_bwrap": {
               "type": "boolean"
             },
             "use_xaa": {
@@ -847,16 +799,6 @@
         },
         {
           "$ref": "#/definitions/CurrentTimeReminderConfigToml"
-        }
-      ]
-    },
-    "FeatureToml_for_MultiAgentV2ConfigToml": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "$ref": "#/definitions/MultiAgentV2ConfigToml"
         }
       ]
     },
@@ -1493,78 +1435,6 @@
         "format": "uint32",
         "minimum": 0.0,
         "type": "integer"
-      },
-      "type": "object"
-    },
-    "MultiAgentV2ConfigToml": {
-      "additionalProperties": false,
-      "properties": {
-        "default_wait_timeout_ms": {
-          "format": "int64",
-          "maximum": 3600000.0,
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "expose_spawn_agent_model_overrides": {
-          "description": "Exposes `model` and `reasoning_effort` on the multi-agent v2 spawn tool and adds corresponding guidance to root and subagent usage hints.",
-          "type": "boolean"
-        },
-        "hide_spawn_agent_metadata": {
-          "type": "boolean"
-        },
-        "max_concurrent_threads_per_session": {
-          "format": "uint",
-          "minimum": 1.0,
-          "type": "integer"
-        },
-        "max_wait_timeout_ms": {
-          "format": "int64",
-          "maximum": 3600000.0,
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "min_wait_timeout_ms": {
-          "format": "int64",
-          "maximum": 3600000.0,
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "multi_agent_mode_hint_text": {
-          "type": "string"
-        },
-        "non_code_mode_only": {
-          "type": "boolean"
-        },
-        "root_agent_usage_hint_text": {
-          "type": "string"
-        },
-        "subagent_developer_instructions": {
-          "description": "Overrides inherited developer instructions for subagents without role-specific instructions.",
-          "type": "string"
-        },
-        "subagent_usage_hint_text": {
-          "type": "string"
-        },
-        "tool_namespace": {
-          "maxLength": 64,
-          "minLength": 1,
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "type": "string"
-        },
-        "usage_hint_enabled": {
-          "description": "Deprecated compatibility field. Its value is ignored.",
-          "type": "boolean"
-        },
-        "usage_hint_text": {
-          "type": "string"
-        },
-        "wait_agent_enabled": {
-          "description": "Expose the multi-agent v2 `wait_agent` tool.",
-          "type": "boolean"
-        }
       },
       "type": "object"
     },
@@ -4902,11 +4772,6 @@
       "description": "Opaque desktop settings stored alongside the rest of config.toml.",
       "type": "object"
     },
-    "developer_instructions": {
-      "default": null,
-      "description": "Developer instructions inserted as a `developer` role message.",
-      "type": "string"
-    },
     "experimental_thread_store": {
       "allOf": [
         {
@@ -4924,9 +4789,6 @@
           "type": "boolean"
         },
         "api_key_model_discovery": {
-          "type": "boolean"
-        },
-        "apply_patch_preserve_line_endings": {
           "type": "boolean"
         },
         "apply_patch_streaming_events": {
@@ -4960,9 +4822,6 @@
           "type": "boolean"
         },
         "collab": {
-          "type": "boolean"
-        },
-        "collaboration_modes": {
           "type": "boolean"
         },
         "compaction_image_budget": {
@@ -5034,9 +4893,6 @@
         "in_app_updates": {
           "type": "boolean"
         },
-        "item_ids": {
-          "type": "boolean"
-        },
         "local_thread_store_compression": {
           "type": "boolean"
         },
@@ -5051,9 +4907,6 @@
         },
         "multi_agent": {
           "type": "boolean"
-        },
-        "multi_agent_v2": {
-          "$ref": "#/definitions/FeatureToml_for_MultiAgentV2ConfigToml"
         },
         "network_proxy": {
           "$ref": "#/definitions/FeatureToml_for_NetworkProxyConfigToml"
@@ -5076,19 +4929,10 @@
         "reasoning_effort_override": {
           "type": "boolean"
         },
-        "remote_compaction_v2": {
-          "type": "boolean"
-        },
-        "remote_models": {
-          "type": "boolean"
-        },
         "request_permissions": {
           "type": "boolean"
         },
         "request_permissions_tool": {
-          "type": "boolean"
-        },
-        "resize_all_images": {
           "type": "boolean"
         },
         "respect_system_proxy": {
@@ -5106,9 +4950,6 @@
         "secret_auth_storage": {
           "type": "boolean"
         },
-        "send_async_message": {
-          "type": "boolean"
-        },
         "send_message_to_user_async": {
           "type": "boolean"
         },
@@ -5119,9 +4960,6 @@
           "type": "boolean"
         },
         "shell_tool": {
-          "type": "boolean"
-        },
-        "shell_zsh_fork": {
           "type": "boolean"
         },
         "skill_mcp_dependency_install": {
@@ -5142,16 +4980,10 @@
         "standalone_web_search": {
           "type": "boolean"
         },
-        "steer": {
-          "type": "boolean"
-        },
         "step_model_switching": {
           "type": "boolean"
         },
         "telepathy": {
-          "type": "boolean"
-        },
-        "terminal_resize_reflow": {
           "type": "boolean"
         },
         "terminal_visualization_instructions": {
@@ -5166,16 +4998,7 @@
         "tool_registry": {
           "$ref": "#/definitions/ToolRegistryConfigToml"
         },
-        "tool_search": {
-          "type": "boolean"
-        },
-        "tool_search_always_defer_mcp_tools": {
-          "type": "boolean"
-        },
         "unbounded_connection_retries": {
-          "type": "boolean"
-        },
-        "undo": {
           "type": "boolean"
         },
         "unified_exec": {
@@ -5184,16 +5007,10 @@
         "unified_exec_tty": {
           "type": "boolean"
         },
-        "unified_exec_zsh_fork": {
-          "type": "boolean"
-        },
         "unified_image_budget": {
           "type": "boolean"
         },
         "use_legacy_landlock": {
-          "type": "boolean"
-        },
-        "use_linux_sandbox_bwrap": {
           "type": "boolean"
         },
         "use_xaa": {
@@ -5445,28 +5262,12 @@
       "description": "Named profiles to facilitate switching between different configurations.",
       "type": "object"
     },
-    "project_doc_fallback_filenames": {
-      "default": [],
-      "description": "Ordered list of fallback filenames to look for when AGENTS.md is missing.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
     "project_doc_max_bytes": {
       "default": 32768,
       "description": "Maximum total bytes of project instruction content across all selected environments.",
       "format": "uint",
       "minimum": 0.0,
       "type": "integer"
-    },
-    "project_root_markers": {
-      "default": null,
-      "description": "Markers used to detect the project root when searching parent directories for `.genex` folders. Defaults to [\".git\"] when unset.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
     },
     "projects": {
       "additionalProperties": {
@@ -5544,12 +5345,6 @@
     "thread_unload_delay_secs": {
       "description": "Seconds a thread must have no subscribers and no activity before app-server unloads it. Defaults to 60; zero unloads immediately. Changes require a server restart.",
       "format": "uint64",
-      "minimum": 0.0,
-      "type": "integer"
-    },
-    "tool_output_token_limit": {
-      "description": "Token budget applied when storing tool/function outputs in the context manager.",
-      "format": "uint",
       "minimum": 0.0,
       "type": "integer"
     },

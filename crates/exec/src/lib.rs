@@ -479,8 +479,6 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         service_tier: None,
         genex_self_exe: arg0_paths.genex_self_exe.clone(),
         genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
-        main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
-        default_zsh_path: None,
         base_instructions: None,
         developer_instructions: None,
         compact_prompt: None,

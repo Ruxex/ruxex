@@ -21,8 +21,6 @@ use crate::diagnostics::first_layer_config_error_from_entries as typed_first_lay
 use crate::diagnostics::io_error_from_config_error;
 use crate::merge::merge_toml_values;
 use crate::overrides::build_cli_overrides_layer;
-use crate::project_root_markers::default_project_root_markers;
-use crate::project_root_markers::project_root_markers_from_config;
 use crate::shell_environment_policy::ShellEnvironmentPolicyFilterConfigToml;
 use crate::state::ConfigLayerEntry;
 use crate::state::ConfigLayerStack;
@@ -293,19 +291,7 @@ pub async fn load_config_layers_state(
             genex_home,
         )?;
 
-        let project_root_markers = match project_root_markers_from_config(&merged_so_far) {
-            Ok(markers) => markers.unwrap_or_else(default_project_root_markers),
-            Err(err) => {
-                if let Some(config_error) = first_layer_config_error_from_entries(&layers).await {
-                    return Err(io_error_from_config_error(
-                        io::ErrorKind::InvalidData,
-                        config_error,
-                        /*source*/ None,
-                    ));
-                }
-                return Err(err);
-            }
-        };
+        let project_root_markers = vec![".git".to_string()];
         let mut project_trust_context = match project_trust_context(
             fs,
             &merged_so_far,

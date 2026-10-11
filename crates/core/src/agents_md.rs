@@ -1,17 +1,12 @@
 //! AGENTS.md discovery and user instruction assembly.
 //!
 //! Project-level documentation is primarily stored in files named `AGENTS.md`.
-//! Additional fallback filenames can be configured via `project_doc_fallback_filenames`.
-//! Fallback entries containing path syntax for the executor's OS are ignored
-//! before any filesystem probes use them.
 //! We include the concatenation of all files found along the path from the
 //! project root to the current working directory as follows:
 //!
 //! 1.  Determine the project root by walking upwards from the current working
-//!     directory until a configured `project_root_markers` entry is found.
-//!     When `project_root_markers` is unset, the default marker list is used
-//!     (`.git`). If no marker is found, only the current working directory is
-//!     considered. An empty marker list disables parent traversal.
+//!     directory until the `.git` marker is found. If no marker is found,
+//!     only the current working directory is considered.
 //! 2.  Collect every `AGENTS.md` found from the project root down to the
 //!     current working directory (inclusive) and concatenate their contents in
 //!     that order.
@@ -21,10 +16,6 @@ use crate::config::Config;
 use crate::context::UserInstructions as ContextUserInstructions;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use futures::StreamExt;
-use genex_config::ConfigLayerSource;
-use genex_config::default_project_root_markers;
-use genex_config::merge_toml_values;
-use genex_config::project_root_markers_from_config;
 use genex_exec_server::ExecutorFileSystem;
 use genex_exec_server::GetMetadataOptions;
 use genex_exec_server::ReadFileOptions;
@@ -35,7 +26,6 @@ use genex_file_system::find_nearest_ancestor_with_markers;
 use genex_utils_absolute_path::AbsolutePathBuf;
 use genex_utils_path_uri::PathUri;
 use std::io;
-use toml::Value as TomlValue;
 use tracing::error;
 
 /// Default filename scanned for AGENTS.md instructions.
@@ -122,7 +112,7 @@ pub(crate) async fn load_project_instructions(
 /// decide how to handle them.
 #[tracing::instrument(name = "agents_md.load", skip_all, fields(max_total = max_total))]
 async fn read_agents_md(
-    config: &Config,
+    _config: &Config,
     fs: &dyn ExecutorFileSystem,
     environment_id: &str,
     cwd: &PathUri,
@@ -133,7 +123,7 @@ async fn read_agents_md(
         return Ok(None);
     }
 
-    let paths = agents_md_paths(config, cwd, fs, sandbox).await?;
+    let paths = agents_md_paths(cwd, fs, sandbox).await?;
     if paths.is_empty() {
         return Ok(None);
     }
@@ -189,32 +179,16 @@ async fn read_agents_md(
 /// directory, inclusive. Symlinks are allowed.
 #[tracing::instrument(name = "agents_md.discover", skip_all)]
 async fn agents_md_paths(
-    config: &Config,
     cwd: &PathUri,
     fs: &dyn ExecutorFileSystem,
     sandbox: Option<&FileSystemSandboxContext>,
 ) -> io::Result<Vec<PathUri>> {
     let dir = cwd.clone();
 
-    let mut merged = TomlValue::Table(toml::map::Map::new());
-    for layer in config.config_layer_stack.layers_low_to_high() {
-        if matches!(layer.name, ConfigLayerSource::Project { .. }) {
-            continue;
-        }
-        merge_toml_values(&mut merged, &layer.config);
-    }
-    let project_root_markers = match project_root_markers_from_config(&merged) {
-        Ok(Some(markers)) => markers,
-        Ok(None) => default_project_root_markers(),
-        Err(err) => {
-            tracing::warn!("invalid project_root_markers: {err}");
-            default_project_root_markers()
-        }
-    };
     let project_root = find_nearest_ancestor_with_markers(
         fs,
         &dir,
-        project_root_markers,
+        vec![".git".to_string()],
         FindUpErrorPolicy::Ignore,
         sandbox,
     )
@@ -238,7 +212,7 @@ async fn agents_md_paths(
         vec![dir]
     };
 
-    let candidate_filenames = candidate_filenames(config, cwd);
+    let candidate_filenames = candidate_filenames();
     let candidate_filenames = &candidate_filenames;
     let mut results = futures::stream::iter(search_dirs)
         .map(|directory| async move {
@@ -268,24 +242,8 @@ async fn agents_md_paths(
     Ok(found)
 }
 
-fn candidate_filenames<'a>(config: &'a Config, _cwd: &PathUri) -> Vec<&'a str> {
-    let mut names: Vec<&str> = Vec::with_capacity(2 + config.project_doc_fallback_filenames.len());
-    names.push(LOCAL_AGENTS_MD_FILENAME);
-    names.push(DEFAULT_AGENTS_MD_FILENAME);
-    for candidate in &config.project_doc_fallback_filenames {
-        let candidate = candidate.as_str();
-        if candidate.is_empty() {
-            continue;
-        }
-        if matches!(candidate, "." | "..") || candidate.contains(['/', '\0']) {
-            tracing::warn!("ignoring project_doc_fallback_filenames entry that is not a filename");
-            continue;
-        }
-        if !names.contains(&candidate) {
-            names.push(candidate);
-        }
-    }
-    names
+fn candidate_filenames() -> [&'static str; 2] {
+    [LOCAL_AGENTS_MD_FILENAME, DEFAULT_AGENTS_MD_FILENAME]
 }
 
 /// Model-visible instructions loaded from AGENTS.md files and internal

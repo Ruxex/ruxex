@@ -64,12 +64,6 @@ pub fn parse_agent_role_file_contents(
         &format!("agent role file {}.description", role_file_label.display()),
         parsed.description.as_deref(),
     )?;
-    validate_agent_role_file_developer_instructions(
-        role_file_label,
-        parsed.config.developer_instructions.as_deref(),
-        role_name_hint.is_none(),
-    )?;
-
     let role_name = parsed
         .name
         .as_deref()
@@ -128,31 +122,6 @@ pub(crate) fn normalize_agent_role_description(
         )),
         Some(description) => Ok(Some(description.to_string())),
         None => Ok(None),
-    }
-}
-
-fn validate_agent_role_file_developer_instructions(
-    role_file_label: &Path,
-    developer_instructions: Option<&str>,
-    require_present: bool,
-) -> std::io::Result<()> {
-    match developer_instructions.map(str::trim) {
-        Some("") => Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!(
-                "agent role file at {}.developer_instructions cannot be blank",
-                role_file_label.display()
-            ),
-        )),
-        Some(_) => Ok(()),
-        None if require_present => Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!(
-                "agent role file at {} must define `developer_instructions`",
-                role_file_label.display()
-            ),
-        )),
-        None => Ok(()),
     }
 }
 

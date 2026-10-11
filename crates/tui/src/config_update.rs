@@ -20,7 +20,6 @@ use genex_app_server_protocol::MergeStrategy;
 use genex_app_server_protocol::RequestId;
 use genex_app_server_protocol::SkillsConfigWriteParams;
 use genex_app_server_protocol::SkillsConfigWriteResponse;
-use genex_config::default_project_root_markers;
 use genex_config::loader::find_project_root;
 use genex_config::loader::normalized_project_trust_keys;
 use genex_config::loader::project_trust_key;
@@ -243,10 +242,7 @@ pub(crate) async fn read_remote_project_trust(
     };
     let local_roots = if host == ProjectTrustHost::Local && project_layers.is_empty() {
         let cwd = AbsolutePathBuf::from_absolute_path(&cwd)?;
-        let markers = serde_json::from_value::<Option<Vec<String>>>(
-            response["config"]["project_root_markers"].clone(),
-        )?
-        .unwrap_or_else(default_project_root_markers);
+        let markers = vec![".git".to_string()];
         let project_root = find_project_root(LOCAL_FS.as_ref(), &cwd, &markers).await?;
         let git_root = resolve_root_git_project_for_trust(LOCAL_FS.as_ref(), &cwd).await;
         Some((

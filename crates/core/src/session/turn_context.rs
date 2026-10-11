@@ -770,9 +770,7 @@ impl Session {
         provider: SharedModelProvider,
         session_configuration: &SessionConfiguration,
         multi_agent_version: MultiAgentVersion,
-        user_shell: &shell::Shell,
-        shell_zsh_path: Option<&PathBuf>,
-        main_execve_wrapper_exe: Option<&PathBuf>,
+        _user_shell: &shell::Shell,
         per_turn_config: Config,
         step_settings: Arc<ResolvedStepSettings>,
         models_manager: &SharedModelsManager,
@@ -788,9 +786,6 @@ impl Session {
         let available_models = models_manager.try_list_models().unwrap_or_default();
         let unified_exec_shell_mode = UnifiedExecShellMode::for_session(
             per_turn_config.features.get(),
-            crate::tools::tool_user_shell_type(user_shell),
-            shell_zsh_path,
-            main_execve_wrapper_exe,
         );
 
         let mut per_turn_config = per_turn_config;
@@ -1047,8 +1042,7 @@ impl Session {
             &session_configuration,
             multi_agent_version,
             self.services.user_shell.as_ref(),
-            self.services.shell_zsh_path.as_ref(),
-            self.services.main_execve_wrapper_exe.as_ref(),
+
             per_turn_config,
             step_settings,
             &self.services.models_manager,

@@ -600,7 +600,6 @@ fn config_overrides_from_interactive(
         cwd: interactive.cwd.clone(),
         genex_self_exe: arg0_paths.genex_self_exe.clone(),
         genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
-        main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
         show_raw_agent_reasoning: None,
         additional_writable_roots: interactive.add_dir.clone(),
         ..Default::default()

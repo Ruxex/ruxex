@@ -20,7 +20,6 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_completed;
 use core_test_support::responses::start_mock_server;
-use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_wine_exec;
@@ -28,8 +27,6 @@ use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::TestGenex;
 use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
-use core_test_support::zsh_fork::zsh_fork_runtime;
-use core_test_support::zsh_fork::zsh_fork_test_builder;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::fs;
@@ -47,7 +44,6 @@ enum ModelSpecialty {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ShellBackend {
     Standard,
-    ZshFork,
 }
 
 fn configure_saved_prefix_and_guardian(config: &mut Config) {
@@ -109,7 +105,6 @@ async fn submit_model_turn(test: &TestGenex, model: &str, prompt: &str) -> Resul
 }
 
 #[test_case(ModelSpecialty::Cyber, ShellBackend::Standard; "cyber unified exec is reviewed")]
-#[test_case(ModelSpecialty::Cyber, ShellBackend::ZshFork; "cyber zsh unified exec is reviewed")]
 #[test_case(ModelSpecialty::General, ShellBackend::Standard; "general unified exec keeps saved approval")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn saved_prefix_only_bypasses_guardian_for_general_models(
@@ -123,13 +118,6 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
     let server = start_mock_server().await;
     let builder = match shell_backend {
         ShellBackend::Standard => test_genex(),
-        ShellBackend::ZshFork => {
-            skip_if_host_windows!(Ok(()));
-            let Some(runtime) = zsh_fork_runtime("cyber model zsh-fork saved prefix")? else {
-                return Ok(());
-            };
-            zsh_fork_test_builder(runtime, AskForApproval::OnRequest)
-        }
     };
     let mut builder = builder
         .with_model_info_override("legacy-model", move |model| {
@@ -142,7 +130,6 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
     let expected_guardian_review_count = match (model_specialty, shell_backend) {
         (ModelSpecialty::General, _) => 0,
         (ModelSpecialty::Cyber, ShellBackend::Standard) => 1,
-        (ModelSpecialty::Cyber, ShellBackend::ZshFork) => 2,
     };
 
     let mut response_bodies = vec![command_response(
