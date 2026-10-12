@@ -41,7 +41,7 @@
 
 **Interfaces:**
 - Produces public `create_model_provider*` functions returning `SharedModelProvider`.
-- Keeps `ProviderRuntime`, `ProviderApi`, `SharedProviderRuntime`, and `provider_contract` private to the adapter crate.
+- Keeps `ProviderRuntime`, `ProviderApi`, and `SharedProviderRuntime` private to the model-provider crate; concrete providers implement `ModelProvider` directly.
 
 - [x] Write a compile-level test/use site assigning the factory result directly to `SharedModelProvider`.
 - [x] Run `just check --tests` and confirm the old return type/API causes the intended compile failure.

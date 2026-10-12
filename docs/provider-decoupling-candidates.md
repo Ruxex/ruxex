@@ -41,9 +41,14 @@ fork/worktree・debug・doctor・plugin の provider-home 初期化を共通 hel
 `core` の `ThreadManager`、`SessionConfiguration`、`TurnContext`、`ModelClient`、model catalog
 source はすべて `SharedModelProvider` を受け取る形へ移行した。Chat/Responses HTTP、Responses
 WebSocket、continuation、unauthorized recovery、capability 判定は同じ provider handle を使い、
-旧 `SharedProviderRuntime` は adapter の内部実装境界に限定した。Core-facing compatibility
+旧 `SharedProviderRuntime` は provider implementation の内部実装境界に限定した。Core-facing compatibility
 accessor は削除し、auth snapshot・API route・error mapping は provider-neutral contract から
-提供する。wire payload と具体的 HTTP client は adapter に隠蔽されている。
+提供する。wire payload と具体的 HTTP client は provider implementation に隠蔽されている。
+
+この runtime bridge は削除し、`ConfiguredModelProvider` と `CloudflareModelProvider` が
+`ModelProvider` を直接実装する形へ移行した。`ProviderRuntime` は provider-specific な
+credential、auth、HTTP client、WebSocket session、wire 処理を共有する内部実装補助としてのみ残し、
+Core/AppServer には公開しない。別 provider は同じ provider-neutral `ModelProvider` 契約を直接実装できる。
 
 thread/rollout/state/protocol の監査では、SQLite の provider routing column/index、rollout の
 provider routing metadata、thread-list/start/resume/fork の provider selector、および Thread/ThreadSettings
@@ -77,7 +82,7 @@ AppServer の provider-neutral contract は `MessageProcessor` の生成境界�
 モデル実行と拡張バックエンドの transport は契約操作へ移し、WebSocket 等の残る実行境界だけを内部
 `ProviderRuntime` の移行対象として残す。
 モデルカタログの cache identity と capability 判定は同じ契約ハンドルを共有する。
-モデル列挙の呼び出し自体は `ModelProvider::list_models` へ移し、既存の HTTP fetch は runtime adapter 内で
+モデル列挙の呼び出し自体は `ModelProvider::list_models` へ移し、既存の HTTP fetch は provider implementation 内で
 provider-neutral な catalog/identity/ETag snapshot へ変換する。
 
 ### 残事項の追加監査と解消 (2026-10-09)
@@ -98,7 +103,7 @@ provider-neutral な catalog/identity/ETag snapshot へ変換する。
 実装後の production 再走査では、直接 provider construction は host runtime helper と test-only
 fixture に限定され、local startup の `runtime: None` と marker より前の state/credential 初期化は残っていない。
 Chat Completions の実行も `ModelProvider::chat` 経由へ移し、request construction と SSE stream の生成を
-runtime adapter に閉じ込めた。Responses HTTP も同じ契約経由で `ResponsesClient` を呼び出す形へ移し、
+provider implementation に閉じ込めた。Responses HTTP も同じ契約経由で `ResponsesClient` を呼び出す形へ移し、
 core は provider-neutral な正規化 request、header context、turn continuation stateだけを担う。
 Responses WebSocket、auth recovery、wire transportはProvider契約へ移行済みである。
 同じ再走査で `genex_api::ResponseId` の唯一の producer（`session/turn.rs`）には consumer がなく、
@@ -121,7 +126,7 @@ Responses WebSocket の接続・継続を監査した。接続先解決、認証
 送受信、Responses event の正規化は `genex-api` の provider transport がproducerであり、coreのconsumerは
 socketの再利用判定、継続用payload、turn state、正規化済みevent stream、fallback/auth recovery、telemetry
 である。したがって `ModelProvider` に接続・stream・closed判定・正規化event・classified error の契約を追加し、
-既存 Responses 実装を runtime adapter に閉じ込める。coreの継続判定とturn state管理はprovider-neutralなため保持し、
+既存 Responses 実装を provider implementation に閉じ込める。coreの継続判定とturn state管理はprovider-neutralなため保持し、
 WebSocket capabilityを持たないProviderの既定値は `Unsupported` とする。
 
 Responses の 401 認証回復を監査した。HTTP と WebSocket の両方が同じ回復手順を呼び出しており、現在は
@@ -736,18 +741,16 @@ as part of the provider-neutral plugin cleanup.
 ### ModelProvider public contract boundary (2026-10-09)
 
 The current runtime provider trait is consumed by core request execution, model catalog, account,
-CLI, app-server, and extensions. Its methods still expose repository implementation types such as
-`ModelProviderInfo`, `CredentialManager`, `GenexAuth`, and concrete API provider/auth handles.
-Those consumers are active runtime paths, so this is not a deletion candidate. The boundary will be
-migrated in place: introduce provider-neutral request, stream, auth, usage, and error types, retain
-an explicitly internal runtime adapter during the transition, and migrate consumers before removing
-the old adapter contract.
+CLI, app-server, and extensions. Its public surface now exposes provider-neutral request, stream,
+auth, usage, and error types; concrete transport, credential, and API provider/auth handles remain
+inside the configured provider implementations. This is not a deletion candidate: the provider
+contract is the runtime boundary, while implementation helpers stay private to the provider crate.
 
 | Area | Producer/consumer audit | Decision | Verification |
 |---|---|---|---|
-| Public `ModelProvider` trait and shared handle | `genex-model-provider` produces the configured and Cloudflare runtime implementations; core Chat/session, models-manager, app-server account/capability handlers, CLI auth, Web Search, and History/Notes consume the shared handle. Account/config handlers, CLI auth, extension capability gates, model-catalog operations, Chat/Responses HTTP, and Responses WebSocket consume provider-neutral operations; concrete transport/auth types remain only in the adapter. | `migrate-in-place` completed: keep the provider-neutral public contract as the runtime boundary; retain the internal adapter only for provider implementation bridging | Cross-crate trait/method audit; provider adapter lifecycle/catalog capability tests; focused and full `just check --tests`; `just check` |
-| Chat Completions execution operation | Core `ModelClient` previously built the Chat Completions request and SSE client directly from `ProviderRuntime`. The active Chat wire path now sends a provider-neutral `ChatRequest` through the shared `ModelProvider` handle; the runtime adapter owns provider auth resolution, request construction, and stream creation. | `migrate-in-place`: route Chat Completions through `ModelProvider::chat` | Core/model-provider chat producer-consumer audit; focused `just check --tests`; `just check` |
-| Responses HTTP execution operation | Core `ModelClient` still normalizes the active Responses payload and request headers, but the request now flows through `ModelProvider::chat`; the runtime adapter owns route selection, `ResponsesClient`, session/thread headers, compression, and SSE stream creation. WebSocket execution and auth recovery use their own provider operations; core retains only retry and continuation policy. | `migrate-in-place`: route Responses HTTP, WebSocket, and auth recovery through `ModelProvider`; retain provider-neutral turn-session behavior in core | Core/model-provider Responses producer-consumer audit; focused `just check --tests`; `just check` |
+| Public `ModelProvider` trait and shared handle | `genex-model-provider` produces the configured and Cloudflare implementations; core Chat/session, models-manager, app-server account/capability handlers, CLI auth, Web Search, and History/Notes consume the shared handle. Account/config handlers, CLI auth, extension capability gates, model-catalog operations, Chat/Responses HTTP, and Responses WebSocket consume provider-neutral operations; concrete transport/auth types remain inside each provider implementation. | `migrate-in-place` completed: keep the provider-neutral public contract as the runtime boundary; remove the old runtime-to-contract bridge and retain only provider-internal implementation helpers | Cross-crate trait/method audit; direct provider lifecycle/catalog/capability tests; focused and full `just check --tests`; `just check` |
+| Chat Completions execution operation | Core `ModelClient` previously built the Chat Completions request and SSE client directly from `ProviderRuntime`. The active Chat wire path now sends a provider-neutral `ChatRequest` through the shared `ModelProvider` handle; the mounted provider implementation owns provider auth resolution, request construction, and stream creation. | `migrate-in-place`: route Chat Completions through `ModelProvider::chat` | Core/model-provider chat producer-consumer audit; focused `just check --tests`; `just check` |
+| Responses HTTP execution operation | Core `ModelClient` still normalizes the active Responses payload and request headers, but the request now flows through `ModelProvider::chat`; the mounted provider implementation owns route selection, `ResponsesClient`, session/thread headers, compression, and SSE stream creation. WebSocket execution and auth recovery use their own provider operations; core retains only retry and continuation policy. | `migrate-in-place`: route Responses HTTP, WebSocket, and auth recovery through `ModelProvider`; retain provider-neutral turn-session behavior in core | Core/model-provider Responses producer-consumer audit; focused `just check --tests`; `just check` |
 | Build-time default data-root name | `genex-utils-home-dir::find_genex_home` produces the fallback `~/.genex` path used by core, CLI, app-server, executor, and MCP startup paths; `GENEX_HOME` is the existing runtime override. The fallback directory name is repository-owned and is not an external protocol or persisted field. | `migrate-in-place`: make the fallback directory name configurable through `GENEX_DEFAULT_HOME_DIR_NAME` at build time; retain runtime `GENEX_HOME` precedence and `.genex` as the default value | Home-directory producer/consumer audit; focused `just check --tests`; `just check` |
 
 ### Single-provider residual closure (2026-10-09)
@@ -755,8 +758,8 @@ the old adapter contract.
 | Candidate | Producer/consumer audit | Decision | Verification |
 |---|---|---|---|
 | `allow_provider_model_fallback` / `allowProviderModelFallback` | App-server thread-start producers, Core session options, model-manager fallback, and generated protocol schemas used the old provider-selection name even though fallback remains within the mounted provider's catalog. | `migrate-in-place`: rename to `allow_model_fallback` / `allowModelFallback`; retain same-provider model fallback and remove provider-routing wording | Exact old-name search; `just generate`; `just check --tests`; `just check` |
-| Turn transport credential lookup in `ProviderRuntime::chat` and `connect_websocket` | Core captures one opaque credential snapshot at turn admission and passes it through Chat HTTP and WebSocket requests. The adapter downcasts only its own snapshot type; it no longer re-reads the mutable manager for an admitted turn. Doctor obtains and passes the same snapshot for its direct diagnostic connection. | `migrate-in-place`: enforce adapter-owned start-time credential snapshots; retain the provider-neutral opaque handle and shared auth-change lifecycle | Model-provider/Core/CLI producer-consumer audit; focused and full `just check --tests`; `git diff --check` |
-| `ProviderRuntime::credential_manager` adapter accessor | Model catalog and adapter-owned unauthorized recovery still consume the provider-scoped manager. Core no longer uses this accessor to validate or route an injected provider. | `retain` adapter-internal compatibility boundary; do not expose it through `ModelProvider` consumers | Adapter call-site audit; explicit retain decision; `just check --tests`; `just check` |
+| Turn transport credential lookup in `ProviderRuntime::chat` and `connect_websocket` | Core captures one opaque credential snapshot at turn admission and passes it through Chat HTTP and WebSocket requests. The provider implementation downcasts only its own snapshot type; it no longer re-reads the mutable manager for an admitted turn. Doctor obtains and passes the same snapshot for its direct diagnostic connection. | `migrate-in-place`: enforce provider-owned start-time credential snapshots; retain the provider-neutral opaque handle and shared auth-change lifecycle | Model-provider/Core/CLI producer-consumer audit; focused and full `just check --tests`; `git diff --check` |
+| `ProviderRuntime::credential_manager` provider-implementation accessor | Model catalog and provider-owned unauthorized recovery still consume the provider-scoped manager. Core no longer uses this accessor to validate or route an injected provider. | `retain` provider-implementation-internal boundary; do not expose it through `ModelProvider` consumers | Provider call-site audit; explicit retain decision; `just check --tests`; `just check` |
 | `scripts/mock_responses_websocket_server.py` profile/provider registry example | The active local WebSocket harness printed a plural provider registry and profile selector, which no longer describes the single-provider config surface. | `migrate-in-place`: print a singular `[model_provider]` plus top-level model settings and Genex startup command; preserve the Responses WebSocket wire fixture | Python syntax check; exact stale-config search; `git diff --check` |
 
 ### Residual closure implemented (2026-10-10)

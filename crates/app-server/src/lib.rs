@@ -31,6 +31,7 @@ use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
 use crate::runtime::configured_app_server_runtime_from_config;
+use crate::runtime::mount_provider_home_for_runtime;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::ConnectionOrigin;
 use crate::transport::ConnectionState;
@@ -58,6 +59,7 @@ use genex_core::config::find_genex_home;
 use genex_exec_server::EnvironmentManager;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_features::Feature;
+use genex_login::CredentialManager;
 use genex_protocol::protocol::SessionSource;
 use genex_rollout::state_db as rollout_state_db;
 use genex_state::log_db;
@@ -470,6 +472,67 @@ pub async fn run_main_with_transport_options(
     auth: AppServerWebsocketAuthSettings,
     runtime_options: AppServerRuntimeOptions,
 ) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        None,
+    )
+    .await
+}
+
+/// Starts the daemon transport using a host-injected AppServer runtime.
+///
+/// The injected runtime is the single provider instance used by the daemon.
+/// Its provider descriptor is validated against the provider-scoped data root
+/// before credentials or SQLite state are opened.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_main_with_transport_options_and_runtime(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+    runtime: AppServerRuntime,
+) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        Some(runtime),
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn run_main_with_transport_options_and_optional_runtime(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+    injected_runtime: Option<AppServerRuntime>,
+) -> IoResult<AppServerExit> {
     let loader_overrides = loader_overrides_with_test_user_config_file(
         loader_overrides,
         test_user_config_file_from_env(),
@@ -543,13 +606,28 @@ pub async fn run_main_with_transport_options(
         }
     };
     config.auth_config().validate()?;
-    let runtime =
-        configured_app_server_runtime_from_config(&config, /*enable_api_key_env*/ false)
+    let runtime = match injected_runtime {
+        Some(runtime) => {
+            mount_provider_home_for_runtime(&config, &runtime).map_err(|error| {
+                std::io::Error::new(
+                    ErrorKind::InvalidData,
+                    format!("failed to mount injected provider data root: {error}"),
+                )
+            })?;
+            runtime
+        }
+        None => {
+            configured_app_server_runtime_from_config(&config, /*enable_api_key_env*/ false)
+                .await
+                .map_err(std::io::Error::other)?
+        }
+    };
+    let credential_manager = match runtime.credential_manager() {
+        Some(credential_manager) => credential_manager,
+        None => CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
             .await
-            .map_err(std::io::Error::other)?;
-    let credential_manager = runtime
-        .credential_manager()
-        .ok_or_else(|| std::io::Error::other("configured runtime has no credential manager"))?;
+            .map_err(std::io::Error::other)?,
+    };
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),

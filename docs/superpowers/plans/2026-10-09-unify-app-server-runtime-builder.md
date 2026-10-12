@@ -77,7 +77,7 @@ construction point and no contract-only injection path.
 
 - Replace the separate `provider` and `provider_contract` fields in `MessageProcessorArgs` with one `AppServerRuntime`.
 - Destructure/access the two handles only inside `MessageProcessor` and the existing core bridge points.
-- In `run_main_with_transport_options`, keep the data-root marker validation before credentials, then create the provider runtime once and pass it through `AppServerRuntimeBuilder`.
+- Keep `run_main_with_transport_options` as the configuration-based convenience wrapper, and add `run_main_with_transport_options_and_runtime` for hosts that inject an already-built runtime. Both paths validate the provider-home marker before credentials and SQLite, then pass the single runtime through `MessageProcessor`.
 - Remove the daemon-local duplicate `provider_contract(...)` construction.
 
 **Verification:**
@@ -122,6 +122,7 @@ construction point and no contract-only injection path.
 - Document `AppServerRuntimeBuilder` as the common provider/runtime construction point.
 - Describe `InProcessAppServerBuilder` as a transport launcher that consumes an already-built runtime.
 - State that daemon startup uses the same builder internally; it does not receive a provider through the daemon protocol.
+- State that embedding hosts may supply the runtime through `run_main_with_transport_options_and_runtime`; the daemon protocol still has no provider-selection operation.
 - Remove examples showing a contract-only `model_provider(...)` override.
 - Record that the old runtime/contract split remains an internal transitional adapter until the core provider-contract migration is complete.
 

@@ -45,7 +45,7 @@
 **Interfaces:**
 - Produce `ProviderTransportOptions` with only session/thread metadata, generic string headers, compression, and turn state.
 - Produce `ProviderWebsocketConnectRequest`, `ProviderSearchRequest`, `ProviderBackendRequest`, and `ListModelsRequest` without HTTP concrete types.
-- Keep `ProviderRuntime` as the adapter-internal boundary; `RuntimeProviderContractAdapter` converts neutral requests to internal HTTP/wire requests and owns the configured `HttpClientFactory`.
+- Keep `ProviderRuntime` as a private provider-implementation helper; `ConfiguredModelProvider` and `CloudflareModelProvider` implement the neutral `ModelProvider` contract directly while continuing to own the configured `HttpClientFactory` and internal HTTP/wire requests.
 
 - [x] **Step 1: Write failing compile-only contract assertions**
 

@@ -65,7 +65,8 @@ use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
 use crate::runtime::AppServerRuntime;
 use crate::runtime::configured_app_server_runtime;
-use crate::runtime::configured_provider_descriptor;
+use crate::runtime::mount_provider_home_for_config;
+use crate::runtime::mount_provider_home_for_runtime;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::OutboundConnectionState;
 use crate::transport::route_outgoing_envelope;
@@ -89,7 +90,6 @@ use genex_core::config::Config;
 use genex_core::resolve_installation_id;
 use genex_exec_server::EnvironmentManager;
 use genex_login::CredentialManager;
-use genex_model_provider::mount_provider_home;
 use genex_protocol::protocol::SessionSource;
 pub use genex_rollout::StateDbHandle;
 pub use genex_state::log_db::LogDbLayer;
@@ -450,12 +450,11 @@ async fn run_outbound_router(
 
 async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClientHandle> {
     args.config.auth_config().validate()?;
-    let provider_descriptor = args
-        .runtime
-        .as_ref()
-        .map(AppServerRuntime::provider_descriptor)
-        .unwrap_or_else(|| configured_provider_descriptor(&args.config.model_provider));
-    mount_provider_home(&args.config.genex_home, &provider_descriptor).map_err(|err| {
+    let mount_result = match args.runtime.as_ref() {
+        Some(runtime) => mount_provider_home_for_runtime(&args.config, runtime),
+        None => mount_provider_home_for_config(&args.config),
+    };
+    mount_result.map_err(|err| {
         IoError::new(
             ErrorKind::InvalidData,
             format!("failed to mount provider data root: {err}"),

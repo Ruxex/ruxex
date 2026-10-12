@@ -98,13 +98,13 @@ pub(crate) struct ProviderAccountState {
 
 /// Provider-neutral credentials supplied by a host login flow.
 #[derive(Clone, PartialEq, Eq)]
-pub(crate) struct ProviderLoginRequest {
+pub(super) struct ProviderLoginRequest {
     pub api_key: String,
     pub credentials: BTreeMap<String, String>,
 }
 
 impl ProviderLoginRequest {
-    pub(crate) fn new(api_key: impl Into<String>, credentials: BTreeMap<String, String>) -> Self {
+    pub(super) fn new(api_key: impl Into<String>, credentials: BTreeMap<String, String>) -> Self {
         Self {
             api_key: api_key.into(),
             credentials,
@@ -114,7 +114,7 @@ impl ProviderLoginRequest {
 
 /// Error classification for provider-owned credential lifecycle operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum ProviderAuthError {
+pub(super) enum ProviderAuthError {
     Unavailable,
     Failed(String),
 }
@@ -158,8 +158,8 @@ pub(crate) enum ProviderApi {
     Chat(Arc<dyn ChatCompletionApi>),
 }
 
-/// OpenAI Responses wire payload. Core supplies the neutral [`ChatRequest`]; this adapter-only
-/// projection owns the external field names and serialization shape.
+/// OpenAI Responses wire payload. Core supplies the neutral [`ChatRequest`]; this
+/// provider-implementation projection owns the external field names and serialization shape.
 #[derive(Debug, Clone, serde::Serialize)]
 struct ResponsesPayload {
     model: String,
@@ -377,13 +377,13 @@ struct RuntimeStreamSessionState {
 
 /// Provider-owned persistent streaming state. Core only sees the neutral session interface.
 #[derive(Debug)]
-struct RuntimeStreamSession {
+pub(super) struct RuntimeStreamSession {
     runtime: SharedProviderRuntime,
     state: Mutex<RuntimeStreamSessionState>,
 }
 
 impl RuntimeStreamSession {
-    fn new(runtime: SharedProviderRuntime) -> Self {
+    pub(super) fn new(runtime: SharedProviderRuntime) -> Self {
         Self {
             runtime,
             state: Mutex::new(RuntimeStreamSessionState::default()),
@@ -579,7 +579,7 @@ impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection
 /// Implementations own provider-specific behavior for a model backend. The
 /// `ModelProviderInfo` returned by `info` is the serialized/configured provider
 /// metadata used by the default provider-compatible implementation.
-pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
+pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// Returns the configured provider metadata.
     fn info(&self) -> &ModelProviderInfo;
 
@@ -973,10 +973,10 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         false
     }
 
-    /// Returns the provider-scoped auth manager for adapter-internal operations.
+    /// Returns the provider-scoped auth manager for provider-implementation-internal operations.
     ///
     /// Core must use the provider-neutral auth lifecycle and request snapshot instead.
-    /// The adapter retains this narrow accessor because its legacy model-catalog and
+    /// The provider implementation retains this narrow accessor because its model-catalog and
     /// unauthorized-recovery implementations still consume the provider-owned manager.
     fn credential_manager(&self) -> Option<Arc<CredentialManager>>;
 
@@ -992,7 +992,7 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
 
     /// Attempts provider-owned authentication recovery using the mounted auth manager.
     ///
-    /// The recovery state machine remains inside the provider adapter so Core does not need
+    /// The recovery state machine remains inside the provider implementation so Core does not need
     /// to know which credential source or refresh protocol the provider uses.
     fn recover_from_unauthorized(
         &self,
@@ -1127,501 +1127,256 @@ pub(crate) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     }
 }
 
-/// Transitional adapter from the existing runtime implementation to the public provider-neutral
-/// contract. New provider implementations should implement [`crate::ModelProvider`] directly;
-/// this blanket adapter exists so the current transport-backed provider can be migrated without
-/// changing every execution consumer in one step.
-impl<T> crate::contract::ModelProvider for T
-where
-    T: ProviderRuntime,
-{
-    fn descriptor(&self) -> ProviderDescriptor {
-        ProviderRuntime::descriptor(self)
-    }
-
-    fn supports_attestation(&self) -> bool {
-        ProviderRuntime::supports_attestation(self)
-    }
-
-    fn request_snapshot(
-        &self,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderRequestSnapshot>>
-    {
-        Box::pin(async move {
-            ProviderRuntime::request_snapshot(self)
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
-    }
-
-    fn request_format(&self) -> ProviderRequestFormat {
-        match ProviderRuntime::wire_api(self) {
-            ProviderWireApi::Responses => ProviderRequestFormat::Responses,
-            ProviderWireApi::Chat => ProviderRequestFormat::Chat,
-        }
-    }
-
-    fn websocket_connect_timeout(&self) -> Duration {
-        ProviderRuntime::websocket_connect_timeout(self)
-    }
-
-    fn stream_max_retries(&self) -> u64 {
-        ProviderRuntime::stream_max_retries(self)
-    }
-
-    fn capabilities(&self) -> ProviderCapabilities {
-        let mut capabilities = ProviderRuntime::capabilities(self);
-        capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
-            || ProviderRuntime::api_key_model_discovery_enabled_by_default(self)
-            || ProviderRuntime::info(self).env_key.is_some();
-        capabilities.command_auth =
-            capabilities.command_auth || ProviderRuntime::info(self).has_command_auth();
-        capabilities
-    }
-
-    fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
-        let auth =
-            ProviderRuntime::credential_manager(self).and_then(|manager| manager.auth_cached());
-        crate::models_identity::identity(
-            ProviderRuntime::provider_id(self),
-            ProviderRuntime::info(self),
-            auth.as_ref(),
-        )
-        .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-    }
-
-    fn chat(
-        &self,
-        request: crate::contract::ChatRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
-    > {
-        ProviderRuntime::chat(self, request)
-    }
-
-    fn search(
-        &self,
-        request: crate::contract::ProviderSearchRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
-    > {
-        ProviderRuntime::search(self, request)
-    }
-
-    fn backend(
-        &self,
-        request: crate::contract::ProviderBackendRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
-    > {
-        ProviderRuntime::backend(self, request)
-    }
-
-    fn auth_recovery_messages(&self) -> Option<crate::contract::ProviderAuthRecoveryMessages> {
-        ProviderRuntime::auth_recovery_messages(self)
-    }
-
-    fn recover_from_unauthorized(
-        &self,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderUnauthorizedRecovery>,
-    > {
-        let runtime = self;
-        Box::pin(async move {
-            ProviderRuntime::recover_from_unauthorized(runtime)
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
-    }
-
-    fn list_models(
-        &self,
-        request: crate::contract::ListModelsRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
-    > {
-        let client_version = request.client_version;
-        let http_client_factory = ProviderRuntime::http_client_factory(self);
-        Box::pin(async move {
-            ProviderRuntime::list_models(self, &client_version, http_client_factory)
-                .await
-                .map(|snapshot| crate::contract::ProviderModelCatalog {
-                    catalog: snapshot.catalog,
-                    identity: snapshot.identity,
-                    etag: snapshot.etag,
-                })
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
-    }
-
-    fn auth_state(&self) -> crate::contract::ProviderAuthState {
-        match ProviderRuntime::account_state(self) {
-            Ok(state) => crate::contract::ProviderAuthState {
-                status: state.auth_status,
-                account_id: state.account_id,
-                display_name: state.display_name,
-            },
-            Err(error) => crate::contract::ProviderAuthState {
-                status: ProviderAuthStatus::Invalid,
-                account_id: None,
-                display_name: Some(error.to_string()),
-            },
-        }
-    }
-
-    fn auth_fields(&self) -> Vec<crate::contract::ProviderAuthField> {
-        ProviderRuntime::auth_fields(self)
-            .into_iter()
-            .map(|field| {
-                crate::contract::ProviderAuthField::new(field.id, field.label, field.secret)
-            })
-            .collect()
-    }
-
-    fn account_state(
-        &self,
-    ) -> crate::contract::ProviderResult<crate::contract::ProviderAccountState> {
-        ProviderRuntime::account_state(self)
-            .map(|state| crate::contract::ProviderAccountState {
-                provider_id: state.provider_id,
-                account: state.account,
-                account_id: state.account_id,
-                display_name: state.display_name,
-                auth_status: state.auth_status,
-                usage: state.usage,
-            })
-            .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-    }
-
-    fn login(
-        &self,
-        credentials: BTreeMap<String, String>,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
-        let api_key = credentials.get("api_key").cloned().unwrap_or_default();
-        Box::pin(async move {
-            ProviderRuntime::login(self, ProviderLoginRequest::new(api_key, credentials))
-                .await
-                .map_err(|error| match error {
-                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
-                    ProviderAuthError::Failed(message) => {
-                        crate::contract::ProviderError::Provider(message)
-                    }
-                })
-        })
-    }
-
-    fn logout(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
-        Box::pin(async move {
-            ProviderRuntime::logout(self)
-                .await
-                .map(|_| ())
-                .map_err(|error| match error {
-                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
-                    ProviderAuthError::Failed(message) => {
-                        crate::contract::ProviderError::Provider(message)
-                    }
-                })
-        })
-    }
-
-    fn delete(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
-        Box::pin(async move {
-            ProviderRuntime::delete(self)
-                .await
-                .map_err(|error| match error {
-                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
-                    ProviderAuthError::Failed(message) => {
-                        crate::contract::ProviderError::Provider(message)
-                    }
-                })
-        })
-    }
-
-    fn usage(
-        &self,
-        _request: crate::contract::UsageRequest,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderUsage>> {
-        Box::pin(async move {
-            ProviderRuntime::usage(self)
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
-    }
-}
-
-/// Adapts the legacy transport-backed runtime to the provider-neutral host contract.
-///
-/// The adapter intentionally shares the runtime allocation. It is a transition aid while
-/// execution moves to `ModelProvider`; it must not create a second credential or provider state.
-#[derive(Clone, Debug)]
-struct RuntimeProviderContractAdapter {
-    runtime: SharedProviderRuntime,
-}
-
-impl crate::contract::ModelProvider for RuntimeProviderContractAdapter {
-    fn descriptor(&self) -> ProviderDescriptor {
-        self.runtime.descriptor()
-    }
-
-    fn request_format(&self) -> ProviderRequestFormat {
-        match self.runtime.wire_api() {
-            ProviderWireApi::Responses => ProviderRequestFormat::Responses,
-            ProviderWireApi::Chat => ProviderRequestFormat::Chat,
-        }
-    }
-
-    fn websocket_connect_timeout(&self) -> Duration {
-        self.runtime.websocket_connect_timeout()
-    }
-
-    fn stream_max_retries(&self) -> u64 {
-        self.runtime.stream_max_retries()
-    }
-
-    fn capabilities(&self) -> ProviderCapabilities {
-        let mut capabilities = self.runtime.capabilities();
-        capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
-            || self.runtime.api_key_model_discovery_enabled_by_default()
-            || self.runtime.info().env_key.is_some();
-        capabilities.command_auth =
-            capabilities.command_auth || self.runtime.info().has_command_auth();
-        capabilities
-    }
-
-    fn auth_environment(&self) -> ProviderAuthEnvironment {
-        self.runtime.auth_environment()
-    }
-
-    fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
-        let auth = self
-            .runtime
-            .credential_manager()
-            .and_then(|manager| manager.auth_cached());
-        crate::models_identity::identity(
-            self.runtime.provider_id(),
-            self.runtime.info(),
-            auth.as_ref(),
-        )
-        .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-    }
-
-    fn chat(
-        &self,
-        request: crate::contract::ChatRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
-    > {
-        let runtime = self.runtime.clone();
-        Box::pin(async move { ProviderRuntime::chat(runtime.as_ref(), request).await })
-    }
-
-    fn open_stream_session(
-        &self,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<SharedProviderStreamSession>,
-    > {
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            if ProviderRuntime::wire_api(runtime.as_ref()) != ProviderWireApi::Responses
-                || !ProviderRuntime::capabilities(runtime.as_ref()).websocket
-            {
-                return Err(crate::contract::ProviderError::Unsupported);
+macro_rules! impl_model_provider_for_runtime {
+    ($provider:ty) => {
+        impl crate::contract::ModelProvider for $provider {
+            fn descriptor(&self) -> ProviderDescriptor {
+                ProviderRuntime::descriptor(self)
             }
-            Ok(Arc::new(RuntimeStreamSession::new(runtime)) as SharedProviderStreamSession)
-        })
-    }
 
-    fn search(
-        &self,
-        request: crate::contract::ProviderSearchRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
-    > {
-        let runtime = self.runtime.clone();
-        Box::pin(async move { ProviderRuntime::search(runtime.as_ref(), request).await })
-    }
-
-    fn backend(
-        &self,
-        request: crate::contract::ProviderBackendRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
-    > {
-        let runtime = self.runtime.clone();
-        Box::pin(async move { ProviderRuntime::backend(runtime.as_ref(), request).await })
-    }
-
-    fn auth_recovery_messages(&self) -> Option<crate::contract::ProviderAuthRecoveryMessages> {
-        self.runtime.auth_recovery_messages()
-    }
-
-    fn recover_from_unauthorized(
-        &self,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderUnauthorizedRecovery>,
-    > {
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            ProviderRuntime::recover_from_unauthorized(runtime.as_ref())
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
-    }
-
-    fn list_models(
-        &self,
-        request: crate::contract::ListModelsRequest,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
-    > {
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            runtime
-                .list_models(
-                    &request.client_version,
-                    ProviderRuntime::http_client_factory(runtime.as_ref()),
-                )
-                .await
-                .map(|snapshot| crate::contract::ProviderModelCatalog {
-                    catalog: snapshot.catalog,
-                    identity: snapshot.identity,
-                    etag: snapshot.etag,
-                })
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
-    }
-
-    fn auth_state(&self) -> crate::contract::ProviderAuthState {
-        match self.runtime.account_state() {
-            Ok(state) => crate::contract::ProviderAuthState {
-                status: state.auth_status,
-                account_id: state.account_id,
-                display_name: state.display_name,
-            },
-            Err(error) => crate::contract::ProviderAuthState {
-                status: ProviderAuthStatus::Invalid,
-                account_id: None,
-                display_name: Some(error.to_string()),
-            },
-        }
-    }
-
-    fn request_snapshot(
-        &self,
-    ) -> crate::contract::ProviderFuture<
-        '_,
-        crate::contract::ProviderResult<crate::contract::ProviderRequestSnapshot>,
-    > {
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            ProviderRuntime::request_snapshot(runtime.as_ref())
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
-    }
-
-    fn auth_fields(&self) -> Vec<crate::contract::ProviderAuthField> {
-        self.runtime
-            .auth_fields()
-            .into_iter()
-            .map(|field| {
-                crate::contract::ProviderAuthField::new(field.id, field.label, field.secret)
-            })
-            .collect()
-    }
-
-    fn account_state(
-        &self,
-    ) -> crate::contract::ProviderResult<crate::contract::ProviderAccountState> {
-        self.runtime
-            .account_state()
-            .map(|state| crate::contract::ProviderAccountState {
-                provider_id: state.provider_id,
-                account: state.account,
-                account_id: state.account_id,
-                display_name: state.display_name,
-                auth_status: state.auth_status,
-                usage: state.usage,
-            })
-            .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-    }
-
-    fn login(
-        &self,
-        credentials: BTreeMap<String, String>,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
-        let api_key = credentials.get("api_key").cloned().unwrap_or_default();
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            runtime
-                .login(ProviderLoginRequest::new(api_key, credentials))
-                .await
-                .map_err(|error| match error {
-                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
-                    ProviderAuthError::Failed(message) => {
-                        crate::contract::ProviderError::Provider(message)
-                    }
-                })
-        })
-    }
-
-    fn logout(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            runtime
-                .logout()
-                .await
-                .map(|_| ())
-                .map_err(|error| match error {
-                    ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
-                    ProviderAuthError::Failed(message) => {
-                        crate::contract::ProviderError::Provider(message)
-                    }
-                })
-        })
-    }
-
-    fn delete(&self) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            runtime.delete().await.map_err(|error| match error {
-                ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
-                ProviderAuthError::Failed(message) => {
-                    crate::contract::ProviderError::Provider(message)
+            fn request_format(&self) -> ProviderRequestFormat {
+                match ProviderRuntime::wire_api(self) {
+                    ProviderWireApi::Responses => ProviderRequestFormat::Responses,
+                    ProviderWireApi::Chat => ProviderRequestFormat::Chat,
                 }
-            })
-        })
-    }
+            }
 
-    fn usage(
-        &self,
-        _request: crate::contract::UsageRequest,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderUsage>> {
-        let runtime = self.runtime.clone();
-        Box::pin(async move {
-            runtime
-                .usage()
-                .await
+            fn websocket_connect_timeout(&self) -> Duration {
+                ProviderRuntime::websocket_connect_timeout(self)
+            }
+
+            fn stream_max_retries(&self) -> u64 {
+                ProviderRuntime::stream_max_retries(self)
+            }
+
+            fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
+                let auth = ProviderRuntime::credential_manager(self)
+                    .and_then(|manager| manager.auth_cached());
+                crate::models_identity::identity(
+                    ProviderRuntime::provider_id(self),
+                    ProviderRuntime::info(self),
+                    auth.as_ref(),
+                )
                 .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
-        })
+            }
+
+            fn capabilities(&self) -> ProviderCapabilities {
+                let mut capabilities = ProviderRuntime::capabilities(self);
+                capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
+                    || ProviderRuntime::api_key_model_discovery_enabled_by_default(self)
+                    || ProviderRuntime::info(self).env_key.is_some();
+                capabilities.command_auth =
+                    capabilities.command_auth || ProviderRuntime::info(self).has_command_auth();
+                capabilities
+            }
+
+            fn supports_attestation(&self) -> bool {
+                ProviderRuntime::supports_attestation(self)
+            }
+
+            fn chat(
+                &self,
+                request: crate::contract::ChatRequest,
+            ) -> crate::contract::ProviderFuture<
+                '_,
+                crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+            > {
+                ProviderRuntime::chat(self, request)
+            }
+
+            fn open_stream_session(
+                &self,
+            ) -> crate::contract::ProviderFuture<
+                '_,
+                crate::contract::ProviderResult<SharedProviderStreamSession>,
+            > {
+                if ProviderRuntime::wire_api(self) != ProviderWireApi::Responses
+                    || !ProviderRuntime::capabilities(self).websocket
+                {
+                    return Box::pin(async { Err(crate::contract::ProviderError::Unsupported) });
+                }
+
+                let runtime: SharedProviderRuntime = Arc::new(self.clone());
+                Box::pin(async move {
+                    Ok(Arc::new(RuntimeStreamSession::new(runtime)) as SharedProviderStreamSession)
+                })
+            }
+
+            fn search(
+                &self,
+                request: crate::contract::ProviderSearchRequest,
+            ) -> crate::contract::ProviderFuture<
+                '_,
+                crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
+            > {
+                ProviderRuntime::search(self, request)
+            }
+
+            fn backend(
+                &self,
+                request: crate::contract::ProviderBackendRequest,
+            ) -> crate::contract::ProviderFuture<
+                '_,
+                crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
+            > {
+                ProviderRuntime::backend(self, request)
+            }
+
+            fn auth_recovery_messages(
+                &self,
+            ) -> Option<crate::contract::ProviderAuthRecoveryMessages> {
+                ProviderRuntime::auth_recovery_messages(self)
+            }
+
+            fn recover_from_unauthorized(
+                &self,
+            ) -> crate::contract::ProviderFuture<
+                '_,
+                crate::contract::ProviderResult<crate::contract::ProviderUnauthorizedRecovery>,
+            > {
+                Box::pin(async move {
+                    ProviderRuntime::recover_from_unauthorized(self)
+                        .await
+                        .map_err(|error| {
+                            crate::contract::ProviderError::Provider(error.to_string())
+                        })
+                })
+            }
+
+            fn list_models(
+                &self,
+                request: crate::contract::ListModelsRequest,
+            ) -> crate::contract::ProviderFuture<
+                '_,
+                crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
+            > {
+                let client_version = request.client_version;
+                let http_client_factory = ProviderRuntime::http_client_factory(self);
+                Box::pin(async move {
+                    ProviderRuntime::list_models(self, &client_version, http_client_factory)
+                        .await
+                        .map(|snapshot| crate::contract::ProviderModelCatalog {
+                            catalog: snapshot.catalog,
+                            identity: snapshot.identity,
+                            etag: snapshot.etag,
+                        })
+                        .map_err(|error| {
+                            crate::contract::ProviderError::Provider(error.to_string())
+                        })
+                })
+            }
+
+            fn auth_state(&self) -> crate::contract::ProviderAuthState {
+                match ProviderRuntime::account_state(self) {
+                    Ok(state) => crate::contract::ProviderAuthState {
+                        status: state.auth_status,
+                        account_id: state.account_id,
+                        display_name: state.display_name,
+                    },
+                    Err(error) => crate::contract::ProviderAuthState {
+                        status: ProviderAuthStatus::Invalid,
+                        account_id: None,
+                        display_name: Some(error.to_string()),
+                    },
+                }
+            }
+
+            fn auth_environment(&self) -> ProviderAuthEnvironment {
+                ProviderRuntime::auth_environment(self)
+            }
+
+            fn request_snapshot(
+                &self,
+            ) -> crate::contract::ProviderFuture<
+                '_,
+                crate::contract::ProviderResult<ProviderRequestSnapshot>,
+            > {
+                Box::pin(async move {
+                    ProviderRuntime::request_snapshot(self)
+                        .await
+                        .map_err(|error| {
+                            crate::contract::ProviderError::Provider(error.to_string())
+                        })
+                })
+            }
+
+            fn auth_fields(&self) -> Vec<crate::contract::ProviderAuthField> {
+                ProviderRuntime::auth_fields(self)
+                    .into_iter()
+                    .map(|field| {
+                        crate::contract::ProviderAuthField::new(field.id, field.label, field.secret)
+                    })
+                    .collect()
+            }
+
+            fn account_state(
+                &self,
+            ) -> crate::contract::ProviderResult<crate::contract::ProviderAccountState> {
+                ProviderRuntime::account_state(self)
+                    .map(|state| crate::contract::ProviderAccountState {
+                        provider_id: state.provider_id,
+                        account: state.account,
+                        account_id: state.account_id,
+                        display_name: state.display_name,
+                        auth_status: state.auth_status,
+                        usage: state.usage,
+                    })
+                    .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+            }
+
+            fn login(
+                &self,
+                credentials: BTreeMap<String, String>,
+            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+                let api_key = credentials.get("api_key").cloned().unwrap_or_default();
+                Box::pin(async move {
+                    ProviderRuntime::login(self, ProviderLoginRequest::new(api_key, credentials))
+                        .await
+                        .map_err(map_provider_auth_error)
+                })
+            }
+
+            fn logout(
+                &self,
+            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+                Box::pin(async move {
+                    ProviderRuntime::logout(self)
+                        .await
+                        .map(|_| ())
+                        .map_err(map_provider_auth_error)
+                })
+            }
+
+            fn delete(
+                &self,
+            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
+                Box::pin(async move {
+                    ProviderRuntime::delete(self)
+                        .await
+                        .map_err(map_provider_auth_error)
+                })
+            }
+
+            fn usage(
+                &self,
+                _request: crate::contract::UsageRequest,
+            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderUsage>>
+            {
+                ProviderRuntime::usage(self)
+            }
+        }
+    };
+}
+
+fn map_provider_auth_error(error: ProviderAuthError) -> crate::contract::ProviderError {
+    match error {
+        ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
+        ProviderAuthError::Failed(message) => crate::contract::ProviderError::Provider(message),
     }
 }
 
-/// Creates the provider-neutral view of an existing runtime provider without duplicating state.
-fn provider_contract(provider: SharedProviderRuntime) -> crate::contract::SharedModelProvider {
-    Arc::new(RuntimeProviderContractAdapter { runtime: provider })
-}
+impl_model_provider_for_runtime!(ConfiguredModelProvider);
+impl_model_provider_for_runtime!(CloudflareModelProvider);
 
 fn environment_variable_present(name: &str) -> bool {
     match std::env::var(name) {
@@ -1634,7 +1389,7 @@ fn environment_variable_present(name: &str) -> bool {
 pub(crate) type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// Shared runtime model provider handle.
-pub(crate) type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
+pub(super) type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
 
 /// Creates the provider-neutral model provider for configured provider metadata.
 pub fn create_model_provider(
@@ -1654,11 +1409,7 @@ pub fn create_model_provider_with_http_client_factory(
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
 ) -> crate::contract::SharedModelProvider {
-    provider_contract(create_runtime_provider_with_http_client_factory(
-        provider_info,
-        credential_manager,
-        http_client_factory,
-    ))
+    create_model_provider_internal(provider_info, credential_manager, http_client_factory)
 }
 
 #[cfg(test)]
@@ -1673,36 +1424,53 @@ fn create_runtime_provider(
     )
 }
 
+#[cfg(test)]
 fn create_runtime_provider_with_http_client_factory(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
 ) -> SharedProviderRuntime {
-    let provider_id = provider_info.id.clone();
-    create_model_provider_internal(
-        provider_id,
+    create_provider_instance(
         provider_info,
         credential_manager,
         http_client_factory,
+        |provider| Arc::new(provider) as SharedProviderRuntime,
+        |provider| Arc::new(provider) as SharedProviderRuntime,
     )
 }
 
 fn create_model_provider_internal(
-    provider_id: Option<String>,
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
-) -> SharedProviderRuntime {
+) -> crate::contract::SharedModelProvider {
+    create_provider_instance(
+        provider_info,
+        credential_manager,
+        http_client_factory,
+        |provider| Arc::new(provider) as crate::contract::SharedModelProvider,
+        |provider| Arc::new(provider) as crate::contract::SharedModelProvider,
+    )
+}
+
+fn create_provider_instance<T>(
+    provider_info: ModelProviderInfo,
+    credential_manager: Option<Arc<CredentialManager>>,
+    http_client_factory: HttpClientFactory,
+    configured: impl FnOnce(ConfiguredModelProvider) -> T,
+    cloudflare: impl FnOnce(CloudflareModelProvider) -> T,
+) -> T {
+    let provider_id = provider_info.id.clone();
     match provider_info.name.as_str() {
         genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => {
-            Arc::new(CloudflareModelProvider::new(
+            cloudflare(CloudflareModelProvider::new(
                 provider_id,
                 provider_info,
                 credential_manager,
                 http_client_factory,
             ))
         }
-        _ => Arc::new(ConfiguredModelProvider::new(
+        _ => configured(ConfiguredModelProvider::new(
             provider_id,
             provider_info,
             credential_manager,
@@ -1874,7 +1642,7 @@ mod tests {
     }
 
     #[test]
-    fn runtime_credentials_require_the_adapter_owned_snapshot() {
+    fn runtime_credentials_require_the_provider_owned_snapshot() {
         assert!(matches!(
             runtime_credentials(None),
             Err(crate::contract::ProviderError::Provider(message))
@@ -1970,12 +1738,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn provider_contract_adapts_lifecycle_without_new_provider_state() {
-        let runtime = create_runtime_provider(
+    async fn configured_provider_implements_neutral_lifecycle_directly() {
+        let provider = create_model_provider(
             ModelProviderInfo::default(),
             /*credential_manager*/ None,
         );
-        let provider = provider_contract(runtime);
 
         assert_eq!(provider.descriptor().provider_kind, "Responses provider");
         assert_eq!(provider.auth_fields()[0].id, "api_key");
@@ -2095,7 +1862,7 @@ mod tests {
     }
 
     #[test]
-    fn provider_contract_exposes_auth_environment_without_provider_info() {
+    fn provider_implementation_exposes_auth_environment_without_provider_info() {
         let mut info = ModelProviderInfo::create_responses_provider(None);
         info.env_key = Some("GENEX_TEST_PROVIDER_KEY".to_string());
         let provider = create_model_provider(info, /*credential_manager*/ None);
@@ -2400,19 +2167,14 @@ mod tests {
 
         let mut provider_info = provider_for(server.uri());
         provider_info.experimental_bearer_token = Some("provider-token".into());
-        let provider = create_runtime_provider(
-            provider_info,
-            Some(CredentialManager::from_auth_for_testing(
-                GenexAuth::from_api_key("ambient-api-key"),
-            )),
-        );
+        let credential_manager =
+            CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("ambient-api-key"));
+        let provider = create_model_provider(provider_info, Some(credential_manager.clone()));
 
         let manager = build_models_manager(
             test_genex_home(),
-            Arc::new(ProviderModelCatalogSource::new(provider_contract(
-                provider.clone(),
-            ))),
-            provider.credential_manager(),
+            Arc::new(ProviderModelCatalogSource::new(provider)),
+            Some(credential_manager),
             /*config_model_catalog*/ None,
         );
         let catalog = manager

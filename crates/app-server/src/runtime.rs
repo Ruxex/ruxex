@@ -55,6 +55,18 @@ pub fn mount_provider_home_for_config(
     mount_provider_home(&config.genex_home, &descriptor)
 }
 
+/// Mounts the provider-scoped data root for an already-injected runtime.
+///
+/// This is the startup boundary for hosts that select a concrete provider
+/// themselves. It must run before credentials, SQLite, sessions, or caches are
+/// opened.
+pub fn mount_provider_home_for_runtime(
+    config: &Config,
+    runtime: &AppServerRuntime,
+) -> Result<ProviderHomeMarker, ProviderHomeError> {
+    mount_provider_home(&config.genex_home, &runtime.provider_descriptor())
+}
+
 /// Mounts the provider home and constructs the single runtime owned by a local host.
 pub async fn configured_app_server_runtime_from_config(
     config: &Config,
@@ -211,6 +223,29 @@ mod tests {
             mount_provider_home_for_config(&config),
             Err(ProviderHomeError::DescriptorMismatch { .. })
         ));
+    }
+
+    #[tokio::test]
+    async fn injected_runtime_home_mount_uses_runtime_descriptor() {
+        let temp = tempfile::tempdir().expect("temporary provider home");
+        let config = genex_core::config::ConfigBuilder::default()
+            .genex_home(temp.path().to_path_buf())
+            .build()
+            .await
+            .expect("config should build");
+        let runtime = AppServerRuntimeBuilder::from_provider_info(
+            ModelProviderInfo {
+                id: Some("injected-provider".to_string()),
+                ..ModelProviderInfo::default()
+            },
+            None,
+        )
+        .build();
+
+        let marker = mount_provider_home_for_runtime(&config, &runtime)
+            .expect("injected provider home should mount");
+
+        assert_eq!(marker.provider_kind, "injected-provider");
     }
 
     #[tokio::test]

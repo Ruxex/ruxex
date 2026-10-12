@@ -14,7 +14,7 @@
 
 ## フォアグラウンドランタイム
 
-CLI は `--listen`/`--stdio`、strict-config、メトリクスの既定値、認証、code-mode-host のオプションを [`app-server/src/lib.rs#L417`](../../../../crates/app-server/src/lib.rs#L417) の `codex_app_server::run_main` に変換します。トランスポート対応のエントリポイントは [L473](../../../../crates/app-server/src/lib.rs#L473) の `run_main_with_transport_options` です。設定を読み込み、ランタイムパスを作成し、リクエスト/通知チャネルを初期化して、リクエスト処理を開始します。
+CLI は `--listen`/`--stdio`、strict-config、メトリクスの既定値、認証、code-mode-host のオプションを [`app-server/src/lib.rs#L417`](../../../../crates/app-server/src/lib.rs#L417) の `codex_app_server::run_main` に変換します。トランスポート対応の既定エントリポイントは [L473](../../../../crates/app-server/src/lib.rs#L473) の `run_main_with_transport_options` です。ホストが構築済みの `AppServerRuntime` を注入する場合は、同じ起動処理を `run_main_with_transport_options_and_runtime` から開始できます。設定を読み込み、provider-home を検証してからランタイムパス、リクエスト/通知チャネルを初期化し、リクエスト処理を開始します。
 
 CLI で対応するトランスポートの形は `stdio://`、Unix ソケット、WebSocket URL、`off` です。ただし、コマンドのプラットフォーム/ランタイム検証に従います。
 

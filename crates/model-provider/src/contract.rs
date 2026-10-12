@@ -82,7 +82,7 @@ pub enum ProviderRequestFormat {
     Chat,
 }
 
-/// Internal adapter-only representation of the legacy runtime wire implementation.
+/// Internal provider-implementation representation of the runtime wire implementation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ProviderWireApi {
     Responses,
@@ -529,7 +529,7 @@ pub struct ProviderStreamOptions {
     pub reasoning_summary_delivery: ProviderReasoningSummaryDelivery,
 }
 
-/// Input used by the provider adapter to construct a WebSocket wire request.
+/// Input used by the provider implementation to construct a WebSocket wire request.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct ProviderWebsocketPayloadRequest {
     pub request: ChatRequest,
@@ -655,7 +655,7 @@ pub struct ProviderStreamContinuation {
     pub client_metadata: Option<BTreeMap<String, String>>,
 }
 
-/// Neutral model-stream request. Wire payload construction remains inside the provider adapter.
+/// Neutral model-stream request. Wire payload construction remains inside the provider implementation.
 #[derive(Clone)]
 pub struct ProviderStreamRequest {
     pub request: ChatRequest,
