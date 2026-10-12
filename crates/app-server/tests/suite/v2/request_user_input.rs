@@ -137,7 +137,6 @@ async fn request_user_input_round_trip_for_mode(
     assert_eq!(params.item_id, "call1");
     assert_eq!(params.questions.len(), 1);
     assert_eq!(params.is_blocking, expected_is_blocking);
-    assert_eq!(params.auto_resolution_ms, None);
     let resolved_request_id = request_id.clone();
 
     mcp.send_response(

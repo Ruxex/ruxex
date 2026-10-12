@@ -286,8 +286,8 @@ impl RequestUserInputOverlay {
     }
 
     fn auto_resolution_timing_at(&self, now: Instant) -> AutoResolutionTiming {
-        // autoResolutionMs is deprecated; isBlocking now controls whether the
-        // request can auto-resolve using the TUI's fixed grace/countdown policy.
+        // isBlocking controls whether the request can auto-resolve using the
+        // TUI's fixed grace/countdown policy.
         if self.request.is_blocking || self.auto_resolution_snoozed {
             return AutoResolutionTiming::Disabled;
         }

@@ -163,7 +163,6 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
     assert_eq!(request.call_id, call_id);
     assert_eq!(request.questions.len(), 1);
     assert_eq!(request.is_blocking, expected_is_blocking);
-    assert_eq!(request.auto_resolution_ms, None);
     assert_eq!(request.questions[0].is_other, true);
     assert!(
         timeout(Duration::from_millis(200), async {

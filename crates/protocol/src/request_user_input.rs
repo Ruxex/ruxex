@@ -35,10 +35,6 @@ pub struct RequestUserInputArgs {
     #[schemars(rename = "isBlocking")]
     #[ts(rename = "isBlocking")]
     pub is_blocking: bool,
-    /// @deprecated Use `isBlocking` to decide whether the request should block.
-    #[serde(rename = "autoResolutionMs", skip_serializing_if = "Option::is_none")]
-    #[schemars(rename = "autoResolutionMs")]
-    pub auto_resolution_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, JsonSchema, TS)]
@@ -64,10 +60,6 @@ pub struct RequestUserInputEvent {
     #[schemars(rename = "isBlocking")]
     #[ts(rename = "isBlocking")]
     pub is_blocking: bool,
-    /// @deprecated Use `isBlocking` to decide whether the request should block.
-    #[serde(rename = "autoResolutionMs", skip_serializing_if = "Option::is_none")]
-    #[schemars(rename = "autoResolutionMs")]
-    pub auto_resolution_ms: Option<u64>,
 }
 
 impl<'de> Deserialize<'de> for RequestUserInputEvent {
@@ -83,8 +75,6 @@ impl<'de> Deserialize<'de> for RequestUserInputEvent {
             questions: Vec<RequestUserInputQuestion>,
             #[serde(rename = "isBlocking")]
             is_blocking: Option<bool>,
-            #[serde(rename = "autoResolutionMs")]
-            auto_resolution_ms: Option<u64>,
         }
 
         let wire = WireRequestUserInputEvent::deserialize(deserializer)?;
@@ -93,7 +83,6 @@ impl<'de> Deserialize<'de> for RequestUserInputEvent {
             turn_id: wire.turn_id,
             questions: wire.questions,
             is_blocking: wire.is_blocking.unwrap_or(true),
-            auto_resolution_ms: wire.auto_resolution_ms,
         })
     }
 }

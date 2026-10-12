@@ -518,7 +518,6 @@ pub(crate) async fn apply_bespoke_event_handling(
                 item_id: request.call_id,
                 questions,
                 is_blocking: request.is_blocking,
-                auto_resolution_ms: request.auto_resolution_ms,
             };
             let (pending_request_id, rx) = outgoing
                 .send_request(ServerRequestPayload::ToolRequestUserInput(params))

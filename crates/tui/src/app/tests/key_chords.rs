@@ -537,7 +537,6 @@ async fn physical_chords_route_list_and_mixed_request_input_modals() -> Result<(
                 ),
             }],
             is_blocking: true,
-            auto_resolution_ms: None,
         });
     let contexts = app.chat_widget.keymap_contexts();
     assert!(contexts.contains(KeymapContext::Chat));

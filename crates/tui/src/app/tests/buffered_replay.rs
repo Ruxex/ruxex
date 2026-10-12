@@ -437,7 +437,6 @@ fn buffered_replay_preserves_text_before_interactive_requests() {
                 item_id: "tool".into(),
                 questions: Vec::new(),
                 is_blocking: true,
-                auto_resolution_ms: None,
             },
         },
     );

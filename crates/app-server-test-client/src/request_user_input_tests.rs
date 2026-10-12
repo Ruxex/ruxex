@@ -44,7 +44,6 @@ fn collects_option_and_free_form_answers() {
             },
         ],
         is_blocking: false,
-        auto_resolution_ms: Some(60_000),
     };
     let mut input = Cursor::new(b"2\ninclude snapshots\n");
     let mut output = Vec::new();
@@ -104,7 +103,6 @@ fn retries_invalid_selection_and_collects_other_answer() {
             }]),
         }],
         is_blocking: true,
-        auto_resolution_ms: None,
     };
     let mut input = Cursor::new(b"9\no\nSDK wrapper\n");
     let mut output = Vec::new();

@@ -1235,10 +1235,6 @@ pub struct ToolRequestUserInputParams {
     pub item_id: String,
     pub questions: Vec<ToolRequestUserInputQuestion>,
     pub is_blocking: bool,
-    /// @deprecated Use `isBlocking` to decide whether the request should block.
-    #[serde(default)]
-    #[ts(type = "number | null")]
-    pub auto_resolution_ms: Option<u64>,
 }
 
 impl<'de> Deserialize<'de> for ToolRequestUserInputParams {
@@ -1254,7 +1250,6 @@ impl<'de> Deserialize<'de> for ToolRequestUserInputParams {
             item_id: String,
             questions: Vec<ToolRequestUserInputQuestion>,
             is_blocking: Option<bool>,
-            auto_resolution_ms: Option<u64>,
         }
 
         let wire = WireToolRequestUserInputParams::deserialize(deserializer)?;
@@ -1264,7 +1259,6 @@ impl<'de> Deserialize<'de> for ToolRequestUserInputParams {
             item_id: wire.item_id,
             questions: wire.questions,
             is_blocking: wire.is_blocking.unwrap_or(true),
-            auto_resolution_ms: wire.auto_resolution_ms,
         })
     }
 }

@@ -5521,7 +5521,6 @@ fn request_user_input_request(thread_id: ThreadId, turn_id: &str, item_id: &str)
             item_id: item_id.to_string(),
             questions: Vec::new(),
             is_blocking: true,
-            auto_resolution_ms: None,
         },
     }
 }

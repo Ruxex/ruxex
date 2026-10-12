@@ -80,7 +80,6 @@ impl RequestUserInputHandler {
         let args = RequestUserInputArgs {
             questions: args.questions,
             is_blocking: mode == ModeKind::Plan,
-            auto_resolution_ms: None,
         };
         let questions = args.questions.clone();
         let accepted = session

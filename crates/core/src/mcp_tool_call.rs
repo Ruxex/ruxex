@@ -1242,7 +1242,6 @@ pub(crate) async fn request_mcp_tool_user_approval(
         let args = RequestUserInputArgs {
             questions: vec![question],
             is_blocking: true,
-            auto_resolution_ms: None,
         };
         let response = sess
             .request_user_input(turn_context, call_id.to_string(), args)

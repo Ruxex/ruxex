@@ -486,9 +486,6 @@
             "sleep_tool": {
               "$ref": "#/definitions/FeatureToml_for_SleepToolConfigToml"
             },
-            "sqlite": {
-              "type": "boolean"
-            },
             "standalone_web_search": {
               "type": "boolean"
             },
@@ -4973,9 +4970,6 @@
         },
         "sleep_tool": {
           "$ref": "#/definitions/FeatureToml_for_SleepToolConfigToml"
-        },
-        "sqlite": {
-          "type": "boolean"
         },
         "standalone_web_search": {
           "type": "boolean"

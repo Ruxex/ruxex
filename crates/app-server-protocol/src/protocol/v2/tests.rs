@@ -4743,7 +4743,12 @@ fn tool_request_user_input_params_default_legacy_missing_is_blocking_to_true() {
                 }]),
             }],
             is_blocking: true,
-            auto_resolution_ms: Some(60_000),
         }
+    );
+
+    let serialized = serde_json::to_value(&params).expect("params should serialize");
+    assert!(
+        serialized.get("autoResolutionMs").is_none(),
+        "deprecated autoResolutionMs must not be emitted"
     );
 }
