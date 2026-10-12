@@ -45,6 +45,13 @@ earlier provisional rows for these repository-owned configuration surfaces.
 | Removed/compatibility-only Feature config keys: `undo`, `terminal_resize_reflow`, `apply_patch_preserve_line_endings`, `use_linux_sandbox_bwrap`, `remote_models`, `tool_search`, `tool_search_always_defer_mcp_tools`, `resize_all_images`, `item_ids`, `steer`, `send_async_message`, `collaboration_modes`, and `remote_compaction_v2` | Feature registry, config schema, merge/normalization, CLI/TUI projections, and each exact feature consumer were inventoried. Current always-on behavior and active external headers/protocol values are separate retained behavior. | `remove` obsolete user-config/compatibility paths; retain current always-on behavior and audited external contracts |
 | `shell_zsh_fork`, `unified_exec_zsh_fork`, patched zsh, `genex-execve-wrapper`, and the zsh shell-escalation backend | Feature registry/config schema, session shell selection, unified-exec runtime, shell escalation crate, install/arg0 paths, release fixtures, app-server/TUI integration tests, and approval/sandbox consumers form the producer/consumer graph. The user explicitly chose to remove the functionality because both Feature entries are `Removed`. | `remove` the backend, wrapper/package artifacts, config/features, runtime paths, and zsh-fork-only tests; retain direct shell/unified-exec safety behavior |
 
+## Unused compatibility surface cleanup (2026-10-12)
+
+| Surface | Producer / consumer audit | Decision |
+|---|---|---|
+| `Feature::Sqlite` and the `sqlite` feature key | The feature enum/spec and test builders referenced the flag, but no production path checks it. `StateRuntime`, `AppServerRuntime`, `LocalThreadStore`, and the SQLite migrations open and use SQLite independently of the flag. | `remove` the orphaned registry/config/test toggle; `retain` the SQLite state runtime, databases, migrations, JSONL fallback, and direct SQLite tests |
+| `autoResolutionMs` / `auto_resolution_ms` | Core creates the request/event, app-server relays it, and protocol/TUI tests round-trip it, but no current request-input behavior reads it; `isBlocking` is the active control. Existing JSON deserializers can ignore the old optional key after the field is removed, preserving old rollout/protocol input readability. | `remove` the current Rust field, relay/output, app-server schema, and generated field; `retain` `isBlocking` and unknown-field tolerance for old input |
+
 ## Decision categories
 
 - `remove`: exists only to read, write, migrate, replay, or describe an

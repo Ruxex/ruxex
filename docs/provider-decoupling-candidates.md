@@ -471,6 +471,11 @@ CLI/managed-feature consumer の参照監査、`just generate`、
 - `in_app_*`、`browser_use_*`、`computer_use` は requirements-only gate として config/app-server 側に consumer があるため、registry だけを見て削除しない。
 - `recommended_plugins`、`workspace_dependencies`、code-mode、MCP、plugin runtime など、デフォルトオフでも現行 entrypoint やテストから到達できる機能は別扱いにする。
 
+### 2.1 追加した削除候補 (2026-10-12)
+
+- `Feature::Sqlite` は production consumer がなく、SQLite runtime は feature flag と独立して常時利用されるため、フラグ・schema・テストの enable 呼び出しだけを `remove` とする。SQLite本体、StateRuntime、JSONL fallback は `retain`。
+- `autoResolutionMs` は `isBlocking` に置き換えられ、現行のブロッキング制御 consumer がないため、Rust field・relay・schema・生成物を `remove` とする。旧JSONの任意フィールドは serde の未知フィールド無視で読み込み可能なため、旧rollout/protocol入力の読取互換は `retain`。
+
 ## 3. provider バックエンド依存の capability 候補
 
 ### 3.1 ChatGPT の利用量・Reserve 自動切替・復旧 UI（Banner 部分は削除済み）
