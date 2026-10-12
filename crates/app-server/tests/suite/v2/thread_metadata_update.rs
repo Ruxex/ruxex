@@ -29,7 +29,6 @@ use genex_app_server_protocol::ThreadStartParams;
 use genex_app_server_protocol::ThreadStartResponse;
 use genex_app_server_protocol::ThreadStatus;
 use genex_core::ARCHIVED_SESSIONS_SUBDIR;
-use genex_features::Feature;
 use genex_git_utils::GitSha;
 use genex_protocol::SanitizedGitUrl;
 use genex_protocol::ThreadId;
@@ -1150,5 +1149,4 @@ async fn init_state_db(genex_home: &Path) -> Result<Arc<StateRuntime>> {
 fn mock_responses_config(server_uri: &str) -> MockResponsesConfig {
     MockResponsesConfig::new(server_uri)
         .with_root_config("suppress_unstable_features_warning = true")
-        .enable_feature(Feature::Sqlite)
 }

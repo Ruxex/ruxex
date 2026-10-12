@@ -1337,7 +1337,6 @@ async fn fork_preserves_thread_instructions(source: InstructionForkSource) -> Re
         .with_config(|config| {
             config
                 .features
-                .enable(Feature::Sqlite)
                 .expect("enable local persistence");
         })
         .with_history_mode(history_mode);

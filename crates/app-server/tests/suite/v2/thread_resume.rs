@@ -1976,7 +1976,6 @@ async fn unloaded_thread_goal_mutations_respect_parent_ownership() -> Result<()>
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Goals)
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let child_source = RolloutSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
         parent_thread_id: ThreadId::new(),
@@ -4067,7 +4066,6 @@ async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Res
     let server = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     mock_responses_config(&server.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
 
     let repo_path = genex_home.path().join("repo");

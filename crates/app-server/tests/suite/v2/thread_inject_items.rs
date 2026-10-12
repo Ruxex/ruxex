@@ -59,7 +59,6 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
 
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
-        .enable_feature(Feature::Sqlite)
         .enable_feature(Feature::RetainClientDeveloperMessages)
         .write(genex_home.path())?;
     let state_db = StateRuntime::init(

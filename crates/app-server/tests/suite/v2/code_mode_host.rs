@@ -349,7 +349,6 @@ async fn app_server_blocks_goal_after_repeated_code_mode_host_failures() -> Resu
     MockResponsesConfig::new(&model_server.uri())
         .enable_feature(Feature::CodeModeOnly)
         .enable_feature(Feature::Goals)
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;

@@ -32,7 +32,6 @@ use genex_app_server_protocol::ThreadAttachmentUpdatedNotification;
 use genex_app_server_protocol::ThreadListResponse;
 use genex_app_server_protocol::ThreadLoadedListParams;
 use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_features::Feature;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -43,7 +42,6 @@ async fn thread_attachments_support_unloaded_listing_and_idempotent_attachment()
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let first_thread = create_fake_rollout(
         genex_home.path(),
@@ -192,7 +190,6 @@ async fn attachment_removal_is_idempotent_and_allows_reattachment() -> Result<()
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
         genex_home.path(),
@@ -301,7 +298,6 @@ async fn thread_attachment_requests_reject_invalid_identities_and_cursors() -> R
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -361,7 +357,6 @@ async fn thread_attachment_mutations_respond_before_broadcasting_updates_to_mult
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let thread_id = create_fake_rollout(
         genex_home.path(),

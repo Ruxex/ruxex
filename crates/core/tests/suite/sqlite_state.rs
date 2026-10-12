@@ -5,7 +5,6 @@ use genex_core::StartThreadOptions;
 use genex_core::TurnInputRequest;
 use genex_core::config::Config;
 use genex_extension_api::ExtensionRegistryBuilder;
-use genex_features::Feature;
 use genex_history::RolloutItem;
 use genex_history::RolloutLine;
 use genex_login::GenexAuth;
@@ -64,7 +63,6 @@ async fn new_thread_is_recorded_in_state_db() -> Result<()> {
     let mut builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
             .expect("test config should allow feature update");
     });
     let test = builder.build(&server).await?;
@@ -125,8 +123,6 @@ async fn staged_metadata_is_persisted_on_first_turn() -> Result<()> {
     let mut builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
-            .expect("test config should allow feature update");
     });
     let test = builder.build_with_auto_env(&server).await?;
     let thread_id = test.thread_manager.reserve_thread_id();
@@ -208,8 +204,6 @@ async fn resume_restores_dynamic_tools_from_rollout_with_sqlite_enabled() -> Res
     let mut builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
-            .expect("test config should allow feature update");
     });
     let base_test = builder.build(&server).await?;
     let started = base_test
@@ -241,8 +235,6 @@ async fn resume_restores_dynamic_tools_from_rollout_with_sqlite_enabled() -> Res
     let mut resume_builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
-            .expect("test config should allow feature update");
     });
     let resumed = resume_builder
         .resume(&server, base_test.home.clone(), rollout_path)
@@ -303,8 +295,6 @@ async fn resume_restores_legacy_dynamic_tools_from_rollout_with_sqlite_enabled()
     let mut builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
-            .expect("test config should allow feature update");
     });
     let base_test = builder.build(&server).await?;
     let started = base_test
@@ -355,8 +345,6 @@ async fn resume_restores_legacy_dynamic_tools_from_rollout_with_sqlite_enabled()
     let mut resume_builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
-            .expect("test config should allow feature update");
     });
     let resumed = resume_builder
         .resume(&server, base_test.home.clone(), rollout_path)
@@ -468,8 +456,6 @@ async fn backfill_scans_existing_rollouts() -> Result<()> {
         .with_config(|config| {
             config
                 .features
-                .enable(Feature::Sqlite)
-                .expect("test config should allow feature update");
         });
 
     let test = builder.build(&server).await?;
@@ -517,8 +503,6 @@ async fn user_messages_persist_in_state_db() -> Result<()> {
     let mut builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
-            .expect("test config should allow feature update");
     });
     let test = builder.build(&server).await?;
 
@@ -584,8 +568,6 @@ async fn tool_call_logs_include_thread_id() -> Result<()> {
     let mut builder = test_genex().with_config(|config| {
         config
             .features
-            .enable(Feature::Sqlite)
-            .expect("test config should allow feature update");
     });
     let test = builder.build(&server).await?;
     let db = test.genex.state_db().expect("state db enabled");

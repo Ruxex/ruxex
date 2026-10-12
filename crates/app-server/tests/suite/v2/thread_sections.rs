@@ -26,7 +26,6 @@ use genex_app_server_protocol::ThreadSectionUpdateParams;
 use genex_app_server_protocol::ThreadSectionUpdateResponse;
 use genex_app_server_protocol::ThreadUnarchiveParams;
 use genex_app_server_protocol::ThreadUnarchiveResponse;
-use genex_features::Feature;
 use genex_state::PINNED_THREAD_SECTION_ID;
 use genex_state::PINNED_THREAD_SECTION_NAME;
 use pretty_assertions::assert_eq;
@@ -56,7 +55,6 @@ async fn custom_sections_remain_discoverable_across_ordered_updates_and_restart(
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
         .with_genex_home(genex_home.path())
@@ -188,7 +186,6 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let first_thread = create_fake_rollout(
         genex_home.path(),
@@ -334,7 +331,6 @@ async fn custom_section_management_rejects_empty_names_missing_ids_and_pinned_mu
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
     let genex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .enable_feature(Feature::Sqlite)
         .write(genex_home.path())?;
     let mut server = TestAppServer::builder()
         .with_genex_home(genex_home.path())
