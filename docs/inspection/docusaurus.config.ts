@@ -42,6 +42,16 @@ const config: Config = {
     navbar: {
       title: 'Genex 内部構造ガイド',
       hideOnScroll: true,
+      items: [
+        {to: '/intro/reading-order', label: '読み方', position: 'left'},
+        {to: '/chat/chat-loop', label: 'チャットループ', position: 'left'},
+        {to: '/storage/sqlite', label: 'DB', position: 'left'},
+        {
+          href: 'https://github.com/edge-m/codex-fork',
+          label: 'Repository',
+          position: 'right',
+        },
+      ],
     },
     prism: {
       additionalLanguages: ['bash', 'json', 'rust', 'toml', 'sql'],
@@ -51,6 +61,26 @@ const config: Config = {
         hideable: true,
         autoCollapseCategories: true,
       },
+    },
+    footer: {
+      style: 'dark',
+      links: [
+        {
+          title: '読む',
+          items: [
+            {label: '読み方', to: '/intro/reading-order'},
+            {label: 'システムマップ', to: '/intro/system-map'},
+          ],
+        },
+        {
+          title: '中心テーマ',
+          items: [
+            {label: 'チャットループ', to: '/chat/chat-loop'},
+            {label: 'SQLite', to: '/storage/sqlite'},
+          ],
+        },
+      ],
+      copyright: `Genex internal documentation`,
     },
   } satisfies Preset.ThemeConfig,
 };
