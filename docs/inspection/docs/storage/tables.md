@@ -11,7 +11,7 @@ title: SQLiteテーブル
 | `threads` | Thread ID、Rollout path、時刻、タイトル、CWD、Git情報、Model、Reasoning、権限、Archive、Project、Sectionなど |
 | `thread_dynamic_tools` | Threadに紐づく追加Toolの順序、名前、説明、Input Schema |
 | `thread_spawn_edges` | 親子ThreadのSpawn関係と状態 |
-| `backfill_state` | Rolloutからの初期Backfillの状態、Watermark、Lease情報 |
+| `backfill_state` | Rolloutからの初期Backfillの状態、Watermark、最終成功時刻。Lease判定にも使う |
 | `thread_sections` | Thread Sectionの名前・表示設定 |
 | `projects` | Projectの名前、Metadata、表示順 |
 | `project_roots` | Projectに属するWorkspace Root |

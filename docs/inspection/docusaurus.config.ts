@@ -4,7 +4,6 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Genex 内部構造ガイド',
   tagline: 'Genexを設計と振る舞いから理解するためのコードリーディングガイド',
-  favicon: 'img/favicon.ico',
   url: 'https://localhost',
   baseUrl: '/',
   organizationName: 'genex',
