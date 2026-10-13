@@ -1,14 +1,14 @@
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { useThreadList } from "../../app-server/hooks";
 import { projectThreadListParams } from "../../app-server/hooks/useProjects";
 
 type ThreadListProps = {
   projectId?: string;
+  selectedThreadId?: string;
 };
 
-export function ThreadList({ projectId }: ThreadListProps) {
-  const params = useParams<{ threadId?: string }>();
+export function ThreadList({ projectId, selectedThreadId }: ThreadListProps) {
   const threads = useThreadList(
     projectId ? projectThreadListParams(projectId) : { limit: 50 },
   );
@@ -28,7 +28,7 @@ export function ThreadList({ projectId }: ThreadListProps) {
       {threads.data.data.map((thread) => (
         <li key={thread.id}>
           <Link
-            className={params.threadId === thread.id ? "active" : undefined}
+            className={selectedThreadId === thread.id ? "active" : undefined}
             to={`/chat/${thread.id}`}
           >
             <span className="min-w-0">

@@ -5,9 +5,13 @@ import { ThreadList } from "./ThreadList";
 
 type ProjectSidebarProps = {
   selectedProjectId?: string;
+  selectedThreadId?: string;
 };
 
-export function ProjectSidebar({ selectedProjectId }: ProjectSidebarProps) {
+export function ProjectSidebar({
+  selectedProjectId,
+  selectedThreadId,
+}: ProjectSidebarProps) {
   const projects = useProjectList({
     limit: 100,
     sortKey: "position",
@@ -62,7 +66,10 @@ export function ProjectSidebar({ selectedProjectId }: ProjectSidebarProps) {
             Browse
           </Link>
         </div>
-        <ThreadList projectId={selectedProjectId} />
+        <ThreadList
+          projectId={selectedProjectId}
+          selectedThreadId={selectedThreadId}
+        />
       </div>
     </aside>
   );

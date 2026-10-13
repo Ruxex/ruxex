@@ -1,6 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 
 import { useProject, useProjectThreads } from "../app-server/hooks";
+import { EmptyState, ErrorState, LoadingState } from "../components/common/AsyncState";
+import { ThreadCard } from "../components/common/ThreadCard";
 
 export function ProjectHomePage() {
   const { projectId = "" } = useParams<{ projectId: string }>();
@@ -8,10 +10,10 @@ export function ProjectHomePage() {
   const threads = useProjectThreads(projectId);
 
   if (project.isLoading) {
-    return <span className="loading loading-spinner loading-lg" />;
+    return <LoadingState />;
   }
   if (project.isError || !project.data) {
-    return <p className="alert alert-error">Unable to load this project.</p>;
+    return <ErrorState>Unable to load this project.</ErrorState>;
   }
 
   const details = project.data.project;
@@ -32,27 +34,16 @@ export function ProjectHomePage() {
       <section className="card border border-base-300 bg-base-100 shadow-sm">
         <div className="card-body">
           <h2 className="card-title">Recent chats</h2>
-          {threads.isLoading && <span className="loading loading-spinner" />}
+          {threads.isLoading && <LoadingState size="sm" />}
           {threads.isError && (
-            <p className="alert alert-error">Unable to load project chats.</p>
+            <ErrorState>Unable to load project chats.</ErrorState>
           )}
           {!threads.isLoading && !threads.data?.data.length && (
-            <p className="text-base-content/60">No chats in this project yet.</p>
+            <EmptyState>No chats in this project yet.</EmptyState>
           )}
           <div className="grid gap-3">
             {threads.data?.data.map((thread) => (
-              <Link
-                className="rounded-box border border-base-300 p-4 transition hover:border-primary"
-                key={thread.id}
-                to={`/chat/${thread.id}`}
-              >
-                <h3 className="font-medium">
-                  {thread.name || thread.preview || "Untitled chat"}
-                </h3>
-                <p className="mt-1 line-clamp-2 text-sm text-base-content/70">
-                  {thread.preview || "No preview available."}
-                </p>
-              </Link>
+              <ThreadCard key={thread.id} thread={thread} compact />
             ))}
           </div>
         </div>

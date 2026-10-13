@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 
 import { useThreadList, useThreadSearch } from "../app-server/hooks";
+import { ThreadCard } from "../components/common/ThreadCard";
 
 export function ThreadsPage() {
   const [search, setSearch] = useState("");
@@ -50,23 +51,7 @@ export function ThreadsPage() {
       )}
       <div className="grid gap-3">
         {rows.map((thread) => (
-          <article
-            className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary"
-            key={thread.id}
-          >
-            <div className="card-body gap-2 p-5">
-              <Link className="card-title text-lg hover:text-primary" to={`/chat/${thread.id}`}>
-                {thread.name ?? (thread.preview || "Untitled thread")}
-              </Link>
-              <p className="line-clamp-2 text-sm text-base-content/70">
-                {thread.preview || "No preview available."}
-              </p>
-              <div className="text-xs text-base-content/50">
-                {thread.model ?? "Unknown model"} ·{" "}
-                {new Date(thread.updatedAt * 1000).toLocaleString()}
-              </div>
-            </div>
-          </article>
+          <ThreadCard key={thread.id} thread={thread} />
         ))}
       </div>
     </div>
