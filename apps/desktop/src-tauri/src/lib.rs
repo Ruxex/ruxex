@@ -34,16 +34,30 @@ struct AppServerStatus {
     app_server_version: String,
 }
 
+#[derive(Clone, Copy, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+enum DesktopAppServerErrorKind {
+    Lifecycle,
+    Initialization,
+    Connection,
+    Transport,
+    Server,
+    Decode,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DesktopAppServerError {
-    kind: &'static str,
+    kind: DesktopAppServerErrorKind,
     message: String,
 }
 
 type CommandResult<T> = Result<T, DesktopAppServerError>;
 
-fn command_error(kind: &'static str, message: impl Into<String>) -> DesktopAppServerError {
+fn command_error(
+    kind: DesktopAppServerErrorKind,
+    message: impl Into<String>,
+) -> DesktopAppServerError {
     DesktopAppServerError {
         kind,
         message: message.into(),
@@ -86,7 +100,11 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
+    use super::DESKTOP_EXPERIMENTAL_API;
+    use super::DesktopAppServerErrorKind;
+    use super::command_error;
     use super::desktop_genex_home_from_user_home;
+    use serde_json::json;
     use std::path::Path;
 
     #[test]
@@ -96,9 +114,41 @@ mod tests {
             Path::new("/home/user/.genex_desktop"),
         );
     }
+
+    #[test]
+    fn desktop_connects_with_experimental_protocol_capability() {
+        assert!(DESKTOP_EXPERIMENTAL_API);
+    }
+
+    #[test]
+    fn app_server_error_categories_are_structured() {
+        let errors = [
+            command_error(DesktopAppServerErrorKind::Initialization, "bad handshake"),
+            command_error(DesktopAppServerErrorKind::Transport, "socket closed"),
+            command_error(DesktopAppServerErrorKind::Server, "request rejected"),
+        ];
+        let kinds = errors
+            .into_iter()
+            .map(|error| serde_json::to_value(error).unwrap()["kind"].clone())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            kinds,
+            [json!("initialization"), json!("transport"), json!("server")]
+        );
+
+        let transport_error = command_error(DesktopAppServerErrorKind::Transport, "socket closed");
+        assert_eq!(
+            serde_json::to_value(transport_error).unwrap(),
+            json!({
+                "kind": "transport",
+                "message": "socket closed",
+            })
+        );
+    }
 }
 
 const DESKTOP_GENEX_HOME_DIR: &str = ".genex_desktop";
+const DESKTOP_EXPERIMENTAL_API: bool = true;
 
 fn desktop_genex_home_from_user_home(user_home: &Path) -> PathBuf {
     user_home.join(DESKTOP_GENEX_HOME_DIR)
@@ -120,7 +170,7 @@ async fn connect_app_server(
         endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
         client_name: "genex-desktop".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
-        experimental_api: false,
+        experimental_api: DESKTOP_EXPERIMENTAL_API,
         opt_out_notification_methods: Vec::new(),
         channel_capacity: 128,
     })
@@ -137,22 +187,29 @@ async fn ensure_app_server(
         return Ok(status);
     }
 
-    let home = desktop_genex_home().map_err(|error| command_error("lifecycle", error))?;
-    let socket_path = genex_app_server_client::app_server_control_socket_path(&home)
-        .map_err(|error| command_error("initialization", error.to_string()))?;
+    let home = desktop_genex_home()
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
+    let socket_path =
+        genex_app_server_client::app_server_control_socket_path(&home).map_err(|error| {
+            command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
+        })?;
     let (client, bootstrapped_version) = match connect_app_server(socket_path.clone()).await {
         Ok(client) => (client, None),
         Err(_) => {
-            let package_source =
-                runtime_package_source(&app).map_err(|error| command_error("lifecycle", error))?;
+            let package_source = runtime_package_source(&app)
+                .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
             let bootstrap = genex_app_server_daemon::bootstrap_from_package(&package_source)
                 .await
-                .map_err(|error| command_error("lifecycle", format!("{error:#}")))?;
+                .map_err(|error| {
+                    command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}"))
+                })?;
             let socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
-                .map_err(|error| command_error("initialization", error.to_string()))?;
-            let client = connect_app_server(socket_path)
-                .await
-                .map_err(|error| command_error("initialization", error.to_string()))?;
+                .map_err(|error| {
+                    command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
+                })?;
+            let client = connect_app_server(socket_path).await.map_err(|error| {
+                command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
+            })?;
             (client, Some(bootstrap.app_server_version))
         }
     };
@@ -213,10 +270,15 @@ async fn app_server_request(
     let result = request_handle
         .request(request)
         .await
-        .map_err(|error| command_error("transport", format!("{method} transport error: {error}")))?
         .map_err(|error| {
             command_error(
-                "server",
+                DesktopAppServerErrorKind::Transport,
+                format!("{method} transport error: {error}"),
+            )
+        })?
+        .map_err(|error| {
+            command_error(
+                DesktopAppServerErrorKind::Server,
                 format!("{method} failed: {} (code {})", error.message, error.code),
             )
         })?;
@@ -227,7 +289,10 @@ async fn app_server_request(
         "response": result,
     });
     serde_json::from_value(response).map_err(|error| {
-        command_error("decode", format!("{method} response decode error: {error}"))
+        command_error(
+            DesktopAppServerErrorKind::Decode,
+            format!("{method} response decode error: {error}"),
+        )
     })
 }
 
@@ -241,7 +306,7 @@ async fn app_server_resolve_server_request(
         .await?
         .resolve_server_request(request_id, result)
         .await
-        .map_err(|error| command_error("transport", error.to_string()))?;
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Transport, error.to_string()))?;
     Ok(())
 }
 
@@ -255,17 +320,17 @@ async fn app_server_reject_server_request(
         .await?
         .reject_server_request(request_id, error)
         .await
-        .map_err(|error| command_error("transport", error.to_string()))?;
+        .map_err(|error| command_error(DesktopAppServerErrorKind::Transport, error.to_string()))?;
     Ok(())
 }
 
 async fn request_handle(state: &State<'_, AppState>) -> CommandResult<AppServerRequestHandle> {
-    state
-        .request_handle
-        .lock()
-        .await
-        .clone()
-        .ok_or_else(|| command_error("connection", "app-server is not connected"))
+    state.request_handle.lock().await.clone().ok_or_else(|| {
+        command_error(
+            DesktopAppServerErrorKind::Connection,
+            "app-server is not connected",
+        )
+    })
 }
 
 fn runtime_package_source(app: &AppHandle) -> Result<PathBuf, String> {
