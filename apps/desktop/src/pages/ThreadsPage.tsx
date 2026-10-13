@@ -1,9 +1,16 @@
 import { Link } from "react-router-dom";
 
-import { useThreadList } from "../app-server/hooks";
+import { useState } from "react";
+
+import { useThreadList, useThreadSearch } from "../app-server/hooks";
 
 export function ThreadsPage() {
+  const [search, setSearch] = useState("");
   const threads = useThreadList({ limit: 50 });
+  const searchResults = useThreadSearch(search);
+  const rows = search.trim()
+    ? searchResults.data?.data.map((result) => result.thread) ?? []
+    : threads.data?.data ?? [];
 
   return (
     <div className="space-y-4">
@@ -18,13 +25,20 @@ export function ThreadsPage() {
           New chat
         </Link>
       </div>
-      {threads.isLoading && (
+      <input
+        className="input input-bordered w-full"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search chats"
+        aria-label="Search chats"
+      />
+      {(threads.isLoading || searchResults.isLoading) && (
         <span className="loading loading-spinner loading-lg" />
       )}
       {threads.isError && (
         <p className="alert alert-error">{String(threads.error)}</p>
       )}
-      {threads.data?.data.length === 0 && (
+      {!threads.isLoading && !searchResults.isLoading && rows.length === 0 && (
         <div className="card border border-dashed border-base-300 bg-base-100">
           <div className="card-body items-center text-center">
             <p>No threads yet.</p>
@@ -35,7 +49,7 @@ export function ThreadsPage() {
         </div>
       )}
       <div className="grid gap-3">
-        {threads.data?.data.map((thread) => (
+        {rows.map((thread) => (
           <article
             className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary"
             key={thread.id}

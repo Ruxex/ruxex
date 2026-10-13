@@ -18,6 +18,24 @@ export function useThreadList(params: v2.ThreadListParams = {}) {
   });
 }
 
+export function useThreadSearch(searchTerm: string) {
+  const status = useAppServerStatus();
+  const params: v2.ThreadSearchParams = {
+    searchTerm,
+    limit: 50,
+    sortKey: "recency_at",
+    sortDirection: "desc",
+  };
+  return useQuery({
+    queryKey: appServerQueryKeys.threadSearch(params),
+    queryFn: async () => {
+      const response = await requestAppServerMethod("thread/search", params);
+      return response.response;
+    },
+    enabled: Boolean(status.data && searchTerm.trim()),
+  });
+}
+
 export function archivedThreadListParams(): v2.ThreadListParams {
   return {
     archived: true,
@@ -158,6 +176,45 @@ export function useUnarchiveThread() {
   return useMutation({
     mutationFn: async (params: v2.ThreadUnarchiveParams) => {
       const response = await requestAppServerMethod("thread/unarchive", params);
+      return response.response;
+    },
+    onSuccess: () => invalidateThreadList(queryClient),
+  });
+}
+
+export function useRenameThread() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: v2.ThreadSetNameParams) => {
+      const response = await requestAppServerMethod("thread/name/set", params);
+      return response.response;
+    },
+    onSuccess: (_response, params) => {
+      void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.thread(params.threadId) });
+      invalidateThreadList(queryClient);
+    },
+  });
+}
+
+export function useResumeThread() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: v2.ThreadResumeParams) => {
+      const response = await requestAppServerMethod("thread/resume", params);
+      return response.response;
+    },
+    onSuccess: (_response, params) => {
+      void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.thread(params.threadId) });
+      invalidateThreadList(queryClient);
+    },
+  });
+}
+
+export function useForkThread() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: v2.ThreadForkParams) => {
+      const response = await requestAppServerMethod("thread/fork", params);
       return response.response;
     },
     onSuccess: () => invalidateThreadList(queryClient),
