@@ -21,6 +21,12 @@
 
 この基準により、ImageGen は provider Images adapter を削除する隔離対象、Web Search は hosted provider search だけを外す汎用化対象、Realtime voice は capability 全体を削除する対象である。
 
+## 現在の Provider 実装境界
+
+provider-neutral な `ModelProvider` trait、request/response/event/error/capability 型、provider-home marker は `genex-model-provider` が提供する。具体的な built-in adapter、wire payload、HTTP transport、credential lifecycle、モデル catalog 実装は `genex-providers` が所有し、現在は `genex-providers::cloudflare::CloudflareModelProvider` と設定済み互換 provider runtime を収録する。
+
+ホストは `AppServerRuntimeBuilder::new(SharedModelProvider)` へ具体的な実装を一つだけ注入する。任意の Provider は別 crate で `genex-model-provider::ModelProvider` を実装し、ホスト binary が compile-time に選択して注入する。runtime registry、thread 単位の Provider 選択、runtime 中の Provider switch は設けない。
+
 ## 機能単位で追加した再監査対象
 
 Feedback の削除で確認したように、provider 固有性はクレート単位ではなく、現行の producer から consumer まで到達できる capability 単位で判定する。次の機能は、既存のクレート候補表とは別の一括監査・削除単位として扱う。

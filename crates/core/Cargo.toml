@@ -52,6 +52,7 @@ genex-network-proxy = { workspace = true }
 genex-otel = { workspace = true }
 genex-plugin = { workspace = true }
 genex-model-provider = { workspace = true }
+genex-providers = { workspace = true }
 genex-protocol = { workspace = true }
 genex-response-debug-context = { workspace = true }
 genex-prompts = { workspace = true }

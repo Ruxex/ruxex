@@ -84,7 +84,8 @@ pub enum ProviderRequestFormat {
 
 /// Internal provider-implementation representation of the runtime wire implementation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ProviderWireApi {
+#[doc(hidden)]
+pub enum ProviderWireApi {
     Responses,
     Chat,
 }
@@ -173,7 +174,8 @@ pub type ProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 pub type ProviderChatStream = Pin<Box<dyn Stream<Item = ProviderResult<ProviderChatEvent>> + Send>>;
 pub type SharedModelProvider = Arc<dyn ModelProvider>;
 
-pub(crate) fn headers_to_http(headers: BTreeMap<String, String>) -> ProviderResult<HeaderMap> {
+#[doc(hidden)]
+pub fn headers_to_http(headers: BTreeMap<String, String>) -> ProviderResult<HeaderMap> {
     let mut result = HeaderMap::new();
     for (name, value) in headers {
         let name = HeaderName::from_bytes(name.as_bytes()).map_err(|error| {
@@ -210,7 +212,8 @@ pub trait ProviderStreamTelemetry: Send + Sync {
 
 /// Provider-neutral telemetry event emitted by a WebSocket transport.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum ProviderWebsocketEvent {
+#[doc(hidden)]
+pub enum ProviderWebsocketEvent {
     Message(Value),
     Ignored,
     Closed,
@@ -218,7 +221,8 @@ pub(crate) enum ProviderWebsocketEvent {
 }
 
 /// Host telemetry sink for provider-owned WebSocket transport.
-pub(crate) trait ProviderWebsocketTelemetry: Send + Sync {
+#[doc(hidden)]
+pub trait ProviderWebsocketTelemetry: Send + Sync {
     fn on_request(
         &self,
         duration: Duration,
@@ -230,7 +234,8 @@ pub(crate) trait ProviderWebsocketTelemetry: Send + Sync {
 }
 
 /// Input to a provider-owned WebSocket connection.
-pub(crate) struct ProviderWebsocketConnectRequest {
+#[doc(hidden)]
+pub struct ProviderWebsocketConnectRequest {
     pub session_id: Option<String>,
     pub thread_id: Option<String>,
     pub extra_headers: BTreeMap<String, String>,
@@ -242,14 +247,16 @@ pub(crate) struct ProviderWebsocketConnectRequest {
 
 /// A serialized provider wire request sent over a WebSocket connection.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct ProviderWebsocketRequest {
+#[doc(hidden)]
+pub struct ProviderWebsocketRequest {
     pub payload: Value,
     pub connection_reused: bool,
     pub turn_state: Option<Arc<OnceLock<String>>>,
 }
 
 /// Provider-neutral handle for a connected WebSocket.
-pub(crate) trait ProviderWebsocketConnection: fmt::Debug + Send + Sync {
+#[doc(hidden)]
+pub trait ProviderWebsocketConnection: fmt::Debug + Send + Sync {
     fn is_closed(&self) -> ProviderFuture<'_, ProviderResult<bool>>;
 
     fn stream_request(
@@ -258,7 +265,8 @@ pub(crate) trait ProviderWebsocketConnection: fmt::Debug + Send + Sync {
     ) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>>;
 }
 
-pub(crate) type SharedProviderWebsocketConnection = Arc<dyn ProviderWebsocketConnection>;
+#[doc(hidden)]
+pub type SharedProviderWebsocketConnection = Arc<dyn ProviderWebsocketConnection>;
 
 /// Current provider authentication state. Credential values are deliberately absent.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -543,7 +551,8 @@ pub struct ProviderStreamOptions {
 
 /// Input used by the provider implementation to construct a WebSocket wire request.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct ProviderWebsocketPayloadRequest {
+#[doc(hidden)]
+pub struct ProviderWebsocketPayloadRequest {
     pub request: ChatRequest,
     pub previous_response_id: Option<String>,
     pub input: Vec<ResponseItem>,

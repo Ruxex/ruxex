@@ -50,41 +50,41 @@ use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::Message;
 
-use crate::auth::cached_provider_auth;
-use crate::auth::credential_manager_for_provider;
-use crate::auth::provider_auth;
-use crate::auth::resolve_provider_auth;
-use crate::cloudflare_provider::CloudflareModelProvider;
-use crate::contract::CURRENT_PROVIDER_PROTOCOL_VERSION;
-use crate::contract::ProviderAuthEnvironment;
-use crate::contract::ProviderAuthRecoveryMessages;
-use crate::contract::ProviderCapabilities;
-use crate::contract::ProviderConnectionKey;
-use crate::contract::ProviderCredentialSnapshot;
-use crate::contract::ProviderDescriptor;
-use crate::contract::ProviderRequestAuth;
-use crate::contract::ProviderRequestFormat;
-use crate::contract::ProviderRequestSnapshot;
-use crate::contract::ProviderStreamConnectRequest;
-use crate::contract::ProviderStreamEvent;
-use crate::contract::ProviderStreamOutcome;
-use crate::contract::ProviderStreamRequest;
-use crate::contract::ProviderStreamSession;
-use crate::contract::ProviderStreamTelemetry;
-use crate::contract::ProviderUnauthorizedRecovery;
-use crate::contract::ProviderUsage;
-use crate::contract::ProviderUsageResult;
-use crate::contract::ProviderWebsocketConnectRequest;
-use crate::contract::ProviderWebsocketEvent;
-use crate::contract::ProviderWebsocketPayloadRequest;
-use crate::contract::ProviderWebsocketRequest;
-use crate::contract::ProviderWireApi;
-use crate::contract::RemoteCompactionSupport;
-use crate::contract::SharedProviderCredentialSnapshot;
-use crate::contract::SharedProviderStreamSession;
-use crate::contract::SharedProviderWebsocketConnection;
-use crate::contract::headers_to_http;
-use crate::models_endpoint::ModelsEndpoint;
+use crate::cloudflare::CloudflareModelProvider;
+use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use genex_model_provider::ModelsEndpoint;
+use genex_model_provider::ProviderAuthEnvironment;
+use genex_model_provider::ProviderAuthRecoveryMessages;
+use genex_model_provider::ProviderCapabilities;
+use genex_model_provider::ProviderConnectionKey;
+use genex_model_provider::ProviderCredentialSnapshot;
+use genex_model_provider::ProviderDescriptor;
+use genex_model_provider::ProviderRequestAuth;
+use genex_model_provider::ProviderRequestFormat;
+use genex_model_provider::ProviderRequestSnapshot;
+use genex_model_provider::ProviderStreamConnectRequest;
+use genex_model_provider::ProviderStreamEvent;
+use genex_model_provider::ProviderStreamOutcome;
+use genex_model_provider::ProviderStreamRequest;
+use genex_model_provider::ProviderStreamSession;
+use genex_model_provider::ProviderStreamTelemetry;
+use genex_model_provider::ProviderUnauthorizedRecovery;
+use genex_model_provider::ProviderUsage;
+use genex_model_provider::ProviderUsageResult;
+use genex_model_provider::ProviderWebsocketConnectRequest;
+use genex_model_provider::ProviderWebsocketEvent;
+use genex_model_provider::ProviderWebsocketPayloadRequest;
+use genex_model_provider::ProviderWebsocketRequest;
+use genex_model_provider::ProviderWireApi;
+use genex_model_provider::RemoteCompactionSupport;
+use genex_model_provider::SharedProviderCredentialSnapshot;
+use genex_model_provider::SharedProviderStreamSession;
+use genex_model_provider::SharedProviderWebsocketConnection;
+use genex_model_provider::cached_provider_auth;
+use genex_model_provider::credential_manager_for_provider;
+use genex_model_provider::headers_to_http;
+use genex_model_provider::provider_auth;
+use genex_model_provider::resolve_provider_auth;
 
 /// Current app-visible account state for a model provider.
 #[derive(Debug, Clone, PartialEq)]
@@ -171,26 +171,26 @@ struct ResponsesPayload {
     tools: Option<Value>,
     tool_choice: String,
     parallel_tool_calls: bool,
-    reasoning: Option<crate::contract::ProviderReasoning>,
+    reasoning: Option<genex_model_provider::ProviderReasoning>,
     store: bool,
     stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    stream_options: Option<crate::contract::ProviderStreamOptions>,
+    stream_options: Option<genex_model_provider::ProviderStreamOptions>,
     include: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     service_tier: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     prompt_cache_key: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    text: Option<crate::contract::ProviderTextControls>,
+    text: Option<genex_model_provider::ProviderTextControls>,
     #[serde(skip_serializing_if = "Option::is_none")]
     client_metadata: Option<BTreeMap<String, String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     access_programs: Option<Value>,
 }
 
-impl From<&crate::contract::ChatRequest> for ResponsesPayload {
-    fn from(request: &crate::contract::ChatRequest) -> Self {
+impl From<&genex_model_provider::ChatRequest> for ResponsesPayload {
+    fn from(request: &genex_model_provider::ChatRequest) -> Self {
         Self {
             model: request.model.clone(),
             instructions: request.instructions.clone(),
@@ -212,44 +212,48 @@ impl From<&crate::contract::ChatRequest> for ResponsesPayload {
     }
 }
 
-fn map_api_error_to_provider_error(error: ApiError) -> crate::contract::ProviderError {
+fn map_api_error_to_provider_error(error: ApiError) -> genex_model_provider::ProviderError {
     match error {
         ApiError::Transport(TransportError::Http { status, .. })
             if status == http::StatusCode::UNAUTHORIZED =>
         {
-            crate::contract::ProviderError::Unauthorized
+            genex_model_provider::ProviderError::Unauthorized
         }
         ApiError::Transport(TransportError::Http { status, .. })
             if status == http::StatusCode::UPGRADE_REQUIRED =>
         {
-            crate::contract::ProviderError::UpgradeRequired
+            genex_model_provider::ProviderError::UpgradeRequired
         }
         ApiError::InvalidRequest { message } => {
-            crate::contract::ProviderError::InvalidRequest(message)
+            genex_model_provider::ProviderError::InvalidRequest(message)
         }
-        ApiError::RateLimitExceeded { delay, .. } => crate::contract::ProviderError::RateLimited {
-            retry_after_seconds: delay.map(|delay| delay.as_secs()),
-        },
+        ApiError::RateLimitExceeded { delay, .. } => {
+            genex_model_provider::ProviderError::RateLimited {
+                retry_after_seconds: delay.map(|delay| delay.as_secs()),
+            }
+        }
         ApiError::Retryable { message, .. } => {
-            crate::contract::ProviderError::Transient(message_or_default(message))
+            genex_model_provider::ProviderError::Transient(message_or_default(message))
         }
         ApiError::ServerOverloaded => {
-            crate::contract::ProviderError::Transient("server overloaded".to_string())
+            genex_model_provider::ProviderError::Transient("server overloaded".to_string())
         }
         ApiError::Transport(error) => map_transport_error_to_provider_error(error),
-        other => crate::contract::ProviderError::Provider(other.to_string()),
+        other => genex_model_provider::ProviderError::Provider(other.to_string()),
     }
 }
 
-fn map_transport_error_to_provider_error(error: TransportError) -> crate::contract::ProviderError {
+fn map_transport_error_to_provider_error(
+    error: TransportError,
+) -> genex_model_provider::ProviderError {
     match error {
         TransportError::Http { status, .. } if status == http::StatusCode::UNAUTHORIZED => {
-            crate::contract::ProviderError::Unauthorized
+            genex_model_provider::ProviderError::Unauthorized
         }
         TransportError::Timeout => {
-            crate::contract::ProviderError::Transient("provider request timed out".to_string())
+            genex_model_provider::ProviderError::Transient("provider request timed out".to_string())
         }
-        other => crate::contract::ProviderError::Transport(other.to_string()),
+        other => genex_model_provider::ProviderError::Transport(other.to_string()),
     }
 }
 
@@ -261,40 +265,44 @@ fn message_or_default(message: String) -> String {
     }
 }
 
-fn classify_api_error(error: &ApiError) -> crate::contract::ProviderError {
+fn classify_api_error(error: &ApiError) -> genex_model_provider::ProviderError {
     match error {
         ApiError::Transport(TransportError::Http { status, .. })
             if *status == http::StatusCode::UNAUTHORIZED =>
         {
-            crate::contract::ProviderError::Unauthorized
+            genex_model_provider::ProviderError::Unauthorized
         }
         ApiError::Transport(TransportError::Http { status, .. })
             if *status == http::StatusCode::UPGRADE_REQUIRED =>
         {
-            crate::contract::ProviderError::UpgradeRequired
+            genex_model_provider::ProviderError::UpgradeRequired
         }
         ApiError::InvalidRequest { message } => {
-            crate::contract::ProviderError::InvalidRequest(message.clone())
+            genex_model_provider::ProviderError::InvalidRequest(message.clone())
         }
-        ApiError::RateLimitExceeded { delay, .. } => crate::contract::ProviderError::RateLimited {
-            retry_after_seconds: delay.map(|delay| delay.as_secs()),
-        },
+        ApiError::RateLimitExceeded { delay, .. } => {
+            genex_model_provider::ProviderError::RateLimited {
+                retry_after_seconds: delay.map(|delay| delay.as_secs()),
+            }
+        }
         ApiError::Retryable { message, .. } => {
-            crate::contract::ProviderError::Transient(message_or_default(message.clone()))
+            genex_model_provider::ProviderError::Transient(message_or_default(message.clone()))
         }
         ApiError::ServerOverloaded => {
-            crate::contract::ProviderError::Transient("server overloaded".to_string())
+            genex_model_provider::ProviderError::Transient("server overloaded".to_string())
         }
         ApiError::Transport(TransportError::Timeout) => {
-            crate::contract::ProviderError::Transient("provider request timed out".to_string())
+            genex_model_provider::ProviderError::Transient("provider request timed out".to_string())
         }
-        ApiError::Transport(error) => crate::contract::ProviderError::Transport(error.to_string()),
-        other => crate::contract::ProviderError::Provider(other.to_string()),
+        ApiError::Transport(error) => {
+            genex_model_provider::ProviderError::Transport(error.to_string())
+        }
+        other => genex_model_provider::ProviderError::Provider(other.to_string()),
     }
 }
 
 struct ProviderWebsocketTelemetryAdapter {
-    telemetry: Arc<dyn crate::contract::ProviderWebsocketTelemetry>,
+    telemetry: Arc<dyn genex_model_provider::ProviderWebsocketTelemetry>,
 }
 
 impl WebsocketTelemetry for ProviderWebsocketTelemetryAdapter {
@@ -324,12 +332,12 @@ impl WebsocketTelemetry for ProviderWebsocketTelemetryAdapter {
             Ok(Some(Ok(Message::Binary(_))))
             | Ok(Some(Ok(Message::Close(_))))
             | Ok(Some(Ok(Message::Frame(_)))) => {
-                ProviderWebsocketEvent::Error(crate::contract::ProviderError::Transport(
+                ProviderWebsocketEvent::Error(genex_model_provider::ProviderError::Transport(
                     "unexpected websocket message".to_string(),
                 ))
             }
             Ok(Some(Err(error))) => ProviderWebsocketEvent::Error(
-                crate::contract::ProviderError::Transport(error.to_string()),
+                genex_model_provider::ProviderError::Transport(error.to_string()),
             ),
             Ok(None) => ProviderWebsocketEvent::Closed,
             Err(error) => ProviderWebsocketEvent::Error(classify_api_error(error)),
@@ -347,11 +355,11 @@ struct StreamTelemetryAdapter {
     telemetry: Arc<dyn ProviderStreamTelemetry>,
 }
 
-impl crate::contract::ProviderWebsocketTelemetry for StreamTelemetryAdapter {
+impl genex_model_provider::ProviderWebsocketTelemetry for StreamTelemetryAdapter {
     fn on_request(
         &self,
         duration: Duration,
-        error: Option<&crate::contract::ProviderError>,
+        error: Option<&genex_model_provider::ProviderError>,
         connection_reused: bool,
     ) {
         self.telemetry
@@ -395,7 +403,7 @@ impl RuntimeStreamSession {
         &self,
         request: &ProviderStreamConnectRequest,
         telemetry: Option<Arc<dyn ProviderStreamTelemetry>>,
-    ) -> crate::contract::ProviderResult<(SharedProviderWebsocketConnection, bool)> {
+    ) -> genex_model_provider::ProviderResult<(SharedProviderWebsocketConnection, bool)> {
         let mut state = self.state.lock().await;
         if let Some(connection) = state.connection.clone() {
             let same_route = state.connection_key.as_ref() == Some(&request.connection_key)
@@ -408,7 +416,7 @@ impl RuntimeStreamSession {
 
         let telemetry = telemetry.map(|telemetry| {
             Arc::new(StreamTelemetryAdapter { telemetry })
-                as Arc<dyn crate::contract::ProviderWebsocketTelemetry>
+                as Arc<dyn genex_model_provider::ProviderWebsocketTelemetry>
         });
         let connection = ProviderRuntime::connect_websocket(
             self.runtime.as_ref(),
@@ -433,7 +441,7 @@ impl ProviderStreamSession for RuntimeStreamSession {
     fn preconnect(
         &self,
         request: ProviderStreamConnectRequest,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+    ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<()>> {
         Box::pin(async move {
             self.ensure_connection(&request, request.telemetry.clone())
                 .await
@@ -444,8 +452,10 @@ impl ProviderStreamSession for RuntimeStreamSession {
     fn stream_request(
         &self,
         request: ProviderStreamRequest,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderStreamOutcome>>
-    {
+    ) -> genex_model_provider::ProviderFuture<
+        '_,
+        genex_model_provider::ProviderResult<ProviderStreamOutcome>,
+    > {
         Box::pin(async move {
             if ProviderRuntime::wire_api(self.runtime.as_ref()) != ProviderWireApi::Responses {
                 return Ok(ProviderStreamOutcome::FallbackToHttp);
@@ -453,14 +463,14 @@ impl ProviderStreamSession for RuntimeStreamSession {
 
             let transport = &request.request.transport;
             let connection_key = transport.connection_key.clone().ok_or_else(|| {
-                crate::contract::ProviderError::InvalidRequest(
+                genex_model_provider::ProviderError::InvalidRequest(
                     "provider stream request is missing a connection key".to_string(),
                 )
             })?;
             let credential_snapshot = transport
                 .credential_snapshot
                 .clone()
-                .ok_or_else(|| crate::contract::ProviderError::Unauthenticated)?;
+                .ok_or_else(|| genex_model_provider::ProviderError::Unauthenticated)?;
             let connect_request = ProviderStreamConnectRequest {
                 session_id: transport.session_id.clone(),
                 thread_id: transport.thread_id.clone(),
@@ -474,7 +484,7 @@ impl ProviderStreamSession for RuntimeStreamSession {
                 .ensure_connection(&connect_request, request.telemetry.clone())
                 .await?;
             let continuation = request.continuation.unwrap_or_else(|| {
-                crate::contract::ProviderStreamContinuation {
+                genex_model_provider::ProviderStreamContinuation {
                     previous_response_id: None,
                     input: request.request.input.clone(),
                     generate: None,
@@ -525,9 +535,9 @@ impl ProviderCredentialSnapshot for RuntimeCredentialSnapshot {
 
 fn runtime_credentials(
     snapshot: Option<&SharedProviderCredentialSnapshot>,
-) -> crate::contract::ProviderResult<(Provider, SharedAuthProvider)> {
+) -> genex_model_provider::ProviderResult<(Provider, SharedAuthProvider)> {
     let snapshot = snapshot.ok_or_else(|| {
-        crate::contract::ProviderError::Provider(
+        genex_model_provider::ProviderError::Provider(
             "provider request is missing its credential snapshot".to_string(),
         )
     })?;
@@ -535,26 +545,26 @@ fn runtime_credentials(
         .as_any()
         .downcast_ref::<RuntimeCredentialSnapshot>()
         .ok_or_else(|| {
-            crate::contract::ProviderError::Provider(
+            genex_model_provider::ProviderError::Provider(
                 "provider request credential snapshot belongs to another provider".to_string(),
             )
         })?;
     Ok((snapshot.provider.clone(), Arc::clone(&snapshot.auth)))
 }
 
-impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection {
+impl genex_model_provider::ProviderWebsocketConnection for RuntimeWebsocketConnection {
     fn is_closed(
         &self,
-    ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
+    ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<bool>> {
         Box::pin(async move { Ok(self.connection.is_closed().await) })
     }
 
     fn stream_request(
         &self,
         request: ProviderWebsocketRequest,
-    ) -> crate::contract::ProviderFuture<
+    ) -> genex_model_provider::ProviderFuture<
         '_,
-        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+        genex_model_provider::ProviderResult<genex_model_provider::ProviderChatStream>,
     > {
         Box::pin(async move {
             let stream = self
@@ -568,9 +578,9 @@ impl crate::contract::ProviderWebsocketConnection for RuntimeWebsocketConnection
                 .map_err(map_api_error_to_provider_error)?;
             Ok(Box::pin(stream.map(|event| {
                 event
-                    .map(crate::contract::ProviderChatEvent::from)
+                    .map(genex_model_provider::ProviderChatEvent::from)
                     .map_err(map_api_error_to_provider_error)
-            })) as crate::contract::ProviderChatStream)
+            })) as genex_model_provider::ProviderChatStream)
         })
     }
 }
@@ -648,9 +658,9 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     fn connect_websocket(
         &self,
         request: ProviderWebsocketConnectRequest,
-    ) -> crate::contract::ProviderFuture<
+    ) -> genex_model_provider::ProviderFuture<
         '_,
-        crate::contract::ProviderResult<SharedProviderWebsocketConnection>,
+        genex_model_provider::ProviderResult<SharedProviderWebsocketConnection>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
@@ -683,15 +693,15 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     fn build_websocket_payload(
         &self,
         request: ProviderWebsocketPayloadRequest,
-    ) -> crate::contract::ProviderResult<Value> {
+    ) -> genex_model_provider::ProviderResult<Value> {
         let mut payload =
             serde_json::to_value(ResponsesPayload::from(&request.request)).map_err(|error| {
-                crate::contract::ProviderError::InvalidRequest(format!(
+                genex_model_provider::ProviderError::InvalidRequest(format!(
                     "failed to encode provider websocket request: {error}"
                 ))
             })?;
         let object = payload.as_object_mut().ok_or_else(|| {
-            crate::contract::ProviderError::InvalidRequest(
+            genex_model_provider::ProviderError::InvalidRequest(
                 "provider websocket request must be an object".to_string(),
             )
         })?;
@@ -702,7 +712,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         object.insert(
             "input".to_string(),
             serde_json::to_value(request.input).map_err(|error| {
-                crate::contract::ProviderError::InvalidRequest(error.to_string())
+                genex_model_provider::ProviderError::InvalidRequest(error.to_string())
             })?,
         );
         if let Some(previous_response_id) = request.previous_response_id {
@@ -718,7 +728,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             object.insert(
                 "client_metadata".to_string(),
                 serde_json::to_value(client_metadata).map_err(|error| {
-                    crate::contract::ProviderError::InvalidRequest(error.to_string())
+                    genex_model_provider::ProviderError::InvalidRequest(error.to_string())
                 })?,
             );
         }
@@ -732,10 +742,10 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// recovery/continuation and WebSocket policy.
     fn chat(
         &self,
-        request: crate::contract::ChatRequest,
-    ) -> crate::contract::ProviderFuture<
+        request: genex_model_provider::ChatRequest,
+    ) -> genex_model_provider::ProviderFuture<
         '_,
-        crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+        genex_model_provider::ProviderResult<genex_model_provider::ProviderChatStream>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
@@ -750,7 +760,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         ClientRedirectPolicy::Default,
                     )
                     .map_err(|error| {
-                        crate::contract::ProviderError::Transport(error.to_string())
+                        genex_model_provider::ProviderError::Transport(error.to_string())
                     })?;
                     let transport = genex_api::ReqwestTransport::from_http_client(client);
                     let chat_request = chat_api
@@ -764,7 +774,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                             session_source: request.session_source,
                         })
                         .map_err(|error| {
-                            crate::contract::ProviderError::InvalidRequest(error.to_string())
+                            genex_model_provider::ProviderError::InvalidRequest(error.to_string())
                         })?;
                     let stream = ChatClient::with_api(transport, api_provider, api_auth, chat_api)
                         .stream_request(chat_request)
@@ -772,10 +782,10 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         .map_err(map_api_error_to_provider_error)?;
                     Ok(Box::pin(stream.map(|event| {
                         event
-                            .map(crate::contract::ProviderChatEvent::from)
+                            .map(genex_model_provider::ProviderChatEvent::from)
                             .map_err(map_api_error_to_provider_error)
                     }))
-                        as crate::contract::ProviderChatStream)
+                        as genex_model_provider::ProviderChatStream)
                 }
                 ProviderApi::Responses => {
                     let payload = ResponsesPayload::from(&request);
@@ -786,14 +796,14 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         ClientRedirectPolicy::Default,
                     )
                     .map_err(|error| {
-                        crate::contract::ProviderError::Transport(error.to_string())
+                        genex_model_provider::ProviderError::Transport(error.to_string())
                     })?;
                     let transport = genex_api::ReqwestTransport::from_http_client(client);
                     let compression = match request.transport.compression {
-                        crate::contract::ProviderRequestCompression::None => {
+                        genex_model_provider::ProviderRequestCompression::None => {
                             genex_api::Compression::None
                         }
-                        crate::contract::ProviderRequestCompression::Zstd => {
+                        genex_model_provider::ProviderRequestCompression::Zstd => {
                             genex_api::Compression::Zstd
                         }
                     };
@@ -811,7 +821,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         }
                     }
                     let payload = serde_json::to_value(payload).map_err(|error| {
-                        crate::contract::ProviderError::InvalidRequest(error.to_string())
+                        genex_model_provider::ProviderError::InvalidRequest(error.to_string())
                     })?;
                     let stream = ResponsesClient::new(transport, api_provider, api_auth)
                         .stream(payload, headers, compression, request.transport.turn_state)
@@ -819,10 +829,10 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         .map_err(map_api_error_to_provider_error)?;
                     Ok(Box::pin(stream.map(|event| {
                         event
-                            .map(crate::contract::ProviderChatEvent::from)
+                            .map(genex_model_provider::ProviderChatEvent::from)
                             .map_err(map_api_error_to_provider_error)
                     }))
-                        as crate::contract::ProviderChatStream)
+                        as genex_model_provider::ProviderChatStream)
                 }
             }
         })
@@ -830,35 +840,33 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
 
     fn search(
         &self,
-        request: crate::contract::ProviderSearchRequest,
-    ) -> crate::contract::ProviderFuture<
+        request: genex_model_provider::ProviderSearchRequest,
+    ) -> genex_model_provider::ProviderFuture<
         '_,
-        crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
+        genex_model_provider::ProviderResult<genex_model_provider::ProviderSearchResponse>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
-            let api_provider = self
-                .api_provider()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
-            let api_auth = self
-                .api_auth()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let api_provider = self.api_provider().await.map_err(|error| {
+                genex_model_provider::ProviderError::Provider(error.to_string())
+            })?;
+            let api_auth = self.api_auth().await.map_err(|error| {
+                genex_model_provider::ProviderError::Provider(error.to_string())
+            })?;
             let client = create_client_for_route(
                 &http_client_factory,
                 &api_provider.url_for_path("alpha/search"),
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
             )
-            .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
+            .map_err(|error| genex_model_provider::ProviderError::Transport(error.to_string()))?;
             let commands: SearchCommands =
                 serde_json::from_value(request.commands).map_err(|error| {
-                    crate::contract::ProviderError::InvalidRequest(error.to_string())
+                    genex_model_provider::ProviderError::InvalidRequest(error.to_string())
                 })?;
             let settings: SearchSettings =
                 serde_json::from_value(request.settings).map_err(|error| {
-                    crate::contract::ProviderError::InvalidRequest(error.to_string())
+                    genex_model_provider::ProviderError::InvalidRequest(error.to_string())
                 })?;
             let search_request = SearchRequest {
                 id: request.id,
@@ -877,7 +885,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             .search(&search_request, headers_to_http(request.extra_headers)?)
             .await
             .map_err(map_api_error_to_provider_error)?;
-            Ok(crate::contract::ProviderSearchResponse {
+            Ok(genex_model_provider::ProviderSearchResponse {
                 output: response.output,
                 results: response.results,
             })
@@ -891,28 +899,26 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// transport stay inside the runtime provider.
     fn backend(
         &self,
-        request: crate::contract::ProviderBackendRequest,
-    ) -> crate::contract::ProviderFuture<
+        request: genex_model_provider::ProviderBackendRequest,
+    ) -> genex_model_provider::ProviderFuture<
         '_,
-        crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
+        genex_model_provider::ProviderResult<genex_model_provider::ProviderBackendResponse>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
-            let api_provider = self
-                .api_provider()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
-            let api_auth = self
-                .api_auth()
-                .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+            let api_provider = self.api_provider().await.map_err(|error| {
+                genex_model_provider::ProviderError::Provider(error.to_string())
+            })?;
+            let api_auth = self.api_auth().await.map_err(|error| {
+                genex_model_provider::ProviderError::Provider(error.to_string())
+            })?;
             let client = create_client_for_route(
                 &http_client_factory,
                 &api_provider.url_for_path(&request.path),
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
             )
-            .map_err(|error| crate::contract::ProviderError::Transport(error.to_string()))?;
+            .map_err(|error| genex_model_provider::ProviderError::Transport(error.to_string()))?;
             let mut backend_request = api_provider.build_request(http::Method::POST, &request.path);
             backend_request
                 .headers
@@ -922,17 +928,19 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             let backend_request = api_auth
                 .apply_auth(backend_request)
                 .await
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))?;
+                .map_err(|error| {
+                    genex_model_provider::ProviderError::Provider(error.to_string())
+                })?;
             let response = genex_api::ReqwestTransport::from_http_client(client)
                 .execute(backend_request)
                 .await
                 .map_err(map_transport_error_to_provider_error)?;
             let body = serde_json::from_slice(&response.body).map_err(|error| {
-                crate::contract::ProviderError::Provider(format!(
+                genex_model_provider::ProviderError::Provider(format!(
                     "provider backend returned invalid JSON: {error}"
                 ))
             })?;
-            Ok(crate::contract::ProviderBackendResponse { body })
+            Ok(genex_model_provider::ProviderBackendResponse { body })
         })
     }
 
@@ -969,20 +977,20 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         ProviderCapabilities::default()
     }
 
-    fn model_catalog_auth(&self) -> crate::contract::ProviderModelCatalogAuth {
+    fn model_catalog_auth(&self) -> genex_model_provider::ProviderModelCatalogAuth {
         match self
             .credential_manager()
             .and_then(|manager| manager.auth_mode())
         {
-            Some(AuthMode::Headers) => crate::contract::ProviderModelCatalogAuth {
+            Some(AuthMode::Headers) => genex_model_provider::ProviderModelCatalogAuth {
                 uses_managed_auth: true,
                 has_api_key_auth: false,
             },
-            Some(AuthMode::ApiKey) => crate::contract::ProviderModelCatalogAuth {
+            Some(AuthMode::ApiKey) => genex_model_provider::ProviderModelCatalogAuth {
                 uses_managed_auth: false,
                 has_api_key_auth: true,
             },
-            None => crate::contract::ProviderModelCatalogAuth::default(),
+            None => genex_model_provider::ProviderModelCatalogAuth::default(),
         }
     }
 
@@ -1158,7 +1166,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
 
 macro_rules! impl_model_provider_for_runtime {
     ($provider:ty) => {
-        impl crate::contract::ModelProvider for $provider {
+        impl genex_model_provider::ModelProvider for $provider {
             fn descriptor(&self) -> ProviderDescriptor {
                 ProviderRuntime::descriptor(self)
             }
@@ -1178,15 +1186,15 @@ macro_rules! impl_model_provider_for_runtime {
                 ProviderRuntime::stream_max_retries(self)
             }
 
-            fn model_catalog_identity(&self) -> crate::contract::ProviderResult<String> {
+            fn model_catalog_identity(&self) -> genex_model_provider::ProviderResult<String> {
                 let auth = ProviderRuntime::credential_manager(self)
                     .and_then(|manager| manager.auth_cached());
-                crate::models_identity::identity(
+                genex_model_provider::provider_models_identity::identity(
                     ProviderRuntime::provider_id(self),
                     ProviderRuntime::info(self),
                     auth.as_ref(),
                 )
-                .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+                .map_err(|error| genex_model_provider::ProviderError::Provider(error.to_string()))
             }
 
             fn capabilities(&self) -> ProviderCapabilities {
@@ -1199,7 +1207,7 @@ macro_rules! impl_model_provider_for_runtime {
                 capabilities
             }
 
-            fn model_catalog_auth(&self) -> crate::contract::ProviderModelCatalogAuth {
+            fn model_catalog_auth(&self) -> genex_model_provider::ProviderModelCatalogAuth {
                 ProviderRuntime::model_catalog_auth(self)
             }
 
@@ -1209,24 +1217,24 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn chat(
                 &self,
-                request: crate::contract::ChatRequest,
-            ) -> crate::contract::ProviderFuture<
+                request: genex_model_provider::ChatRequest,
+            ) -> genex_model_provider::ProviderFuture<
                 '_,
-                crate::contract::ProviderResult<crate::contract::ProviderChatStream>,
+                genex_model_provider::ProviderResult<genex_model_provider::ProviderChatStream>,
             > {
                 ProviderRuntime::chat(self, request)
             }
 
             fn open_stream_session(
                 &self,
-            ) -> crate::contract::ProviderFuture<
+            ) -> genex_model_provider::ProviderFuture<
                 '_,
-                crate::contract::ProviderResult<SharedProviderStreamSession>,
+                genex_model_provider::ProviderResult<SharedProviderStreamSession>,
             > {
                 if ProviderRuntime::wire_api(self) != ProviderWireApi::Responses
                     || !ProviderRuntime::capabilities(self).websocket
                 {
-                    return Box::pin(async { Err(crate::contract::ProviderError::Unsupported) });
+                    return Box::pin(async { Err(genex_model_provider::ProviderError::Unsupported) });
                 }
 
                 let runtime: SharedProviderRuntime = Arc::new(self.clone());
@@ -1237,78 +1245,78 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn search(
                 &self,
-                request: crate::contract::ProviderSearchRequest,
-            ) -> crate::contract::ProviderFuture<
+                request: genex_model_provider::ProviderSearchRequest,
+            ) -> genex_model_provider::ProviderFuture<
                 '_,
-                crate::contract::ProviderResult<crate::contract::ProviderSearchResponse>,
+                genex_model_provider::ProviderResult<genex_model_provider::ProviderSearchResponse>,
             > {
                 ProviderRuntime::search(self, request)
             }
 
             fn backend(
                 &self,
-                request: crate::contract::ProviderBackendRequest,
-            ) -> crate::contract::ProviderFuture<
+                request: genex_model_provider::ProviderBackendRequest,
+            ) -> genex_model_provider::ProviderFuture<
                 '_,
-                crate::contract::ProviderResult<crate::contract::ProviderBackendResponse>,
+                genex_model_provider::ProviderResult<genex_model_provider::ProviderBackendResponse>,
             > {
                 ProviderRuntime::backend(self, request)
             }
 
             fn auth_recovery_messages(
                 &self,
-            ) -> Option<crate::contract::ProviderAuthRecoveryMessages> {
+            ) -> Option<genex_model_provider::ProviderAuthRecoveryMessages> {
                 ProviderRuntime::auth_recovery_messages(self)
             }
 
             fn recover_from_unauthorized(
                 &self,
-            ) -> crate::contract::ProviderFuture<
+            ) -> genex_model_provider::ProviderFuture<
                 '_,
-                crate::contract::ProviderResult<crate::contract::ProviderUnauthorizedRecovery>,
+                genex_model_provider::ProviderResult<genex_model_provider::ProviderUnauthorizedRecovery>,
             > {
                 Box::pin(async move {
                     ProviderRuntime::recover_from_unauthorized(self)
                         .await
                         .map_err(|error| {
-                            crate::contract::ProviderError::Provider(error.to_string())
+                            genex_model_provider::ProviderError::Provider(error.to_string())
                         })
                 })
             }
 
             fn list_models(
                 &self,
-                request: crate::contract::ListModelsRequest,
-            ) -> crate::contract::ProviderFuture<
+                request: genex_model_provider::ListModelsRequest,
+            ) -> genex_model_provider::ProviderFuture<
                 '_,
-                crate::contract::ProviderResult<crate::contract::ProviderModelCatalog>,
+                genex_model_provider::ProviderResult<genex_model_provider::ProviderModelCatalog>,
             > {
                 let client_version = request.client_version;
                 let http_client_factory = ProviderRuntime::http_client_factory(self);
                 Box::pin(async move {
                     ProviderRuntime::list_models(self, &client_version, http_client_factory)
                         .await
-                        .map(|snapshot| crate::contract::ProviderModelCatalog {
+                        .map(|snapshot| genex_model_provider::ProviderModelCatalog {
                             catalog: snapshot.catalog,
                             identity: snapshot.identity,
                             etag: snapshot.etag,
                         })
                         .map_err(|error| {
-                            crate::contract::ProviderError::Provider(error.to_string())
+                            genex_model_provider::ProviderError::Provider(error.to_string())
                         })
                 })
             }
 
-            fn auth_state(&self) -> crate::contract::ProviderAuthState {
+            fn auth_state(&self) -> genex_model_provider::ProviderAuthState {
                 match ProviderRuntime::account_state(self) {
-                    Ok(state) => crate::contract::ProviderAuthState {
+                    Ok(state) => genex_model_provider::ProviderAuthState {
                         status: state.auth_status,
                         account_id: state.account_id,
                         display_name: state.display_name,
                         managed_auth: ProviderRuntime::managed_auth(self),
                         revision: ProviderRuntime::auth_revision(self),
                     },
-                    Err(error) => crate::contract::ProviderAuthState {
+                    Err(error) => genex_model_provider::ProviderAuthState {
                         status: ProviderAuthStatus::Invalid,
                         account_id: None,
                         display_name: Some(error.to_string()),
@@ -1324,33 +1332,33 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn request_snapshot(
                 &self,
-            ) -> crate::contract::ProviderFuture<
+            ) -> genex_model_provider::ProviderFuture<
                 '_,
-                crate::contract::ProviderResult<ProviderRequestSnapshot>,
+                genex_model_provider::ProviderResult<ProviderRequestSnapshot>,
             > {
                 Box::pin(async move {
                     ProviderRuntime::request_snapshot(self)
                         .await
                         .map_err(|error| {
-                            crate::contract::ProviderError::Provider(error.to_string())
+                            genex_model_provider::ProviderError::Provider(error.to_string())
                         })
                 })
             }
 
-            fn auth_fields(&self) -> Vec<crate::contract::ProviderAuthField> {
+            fn auth_fields(&self) -> Vec<genex_model_provider::ProviderAuthField> {
                 ProviderRuntime::auth_fields(self)
                     .into_iter()
                     .map(|field| {
-                        crate::contract::ProviderAuthField::new(field.id, field.label, field.secret)
+                        genex_model_provider::ProviderAuthField::new(field.id, field.label, field.secret)
                     })
                     .collect()
             }
 
             fn account_state(
                 &self,
-            ) -> crate::contract::ProviderResult<crate::contract::ProviderAccountState> {
+            ) -> genex_model_provider::ProviderResult<genex_model_provider::ProviderAccountState> {
                 ProviderRuntime::account_state(self)
-                    .map(|state| crate::contract::ProviderAccountState {
+                    .map(|state| genex_model_provider::ProviderAccountState {
                         provider_id: state.provider_id,
                         account: state.account,
                         account_id: state.account_id,
@@ -1358,13 +1366,13 @@ macro_rules! impl_model_provider_for_runtime {
                         auth_status: state.auth_status,
                         usage: state.usage,
                     })
-                    .map_err(|error| crate::contract::ProviderError::Provider(error.to_string()))
+                    .map_err(|error| genex_model_provider::ProviderError::Provider(error.to_string()))
             }
 
             fn login(
                 &self,
                 credentials: BTreeMap<String, String>,
-            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<()>> {
                 let api_key = credentials.get("api_key").cloned().unwrap_or_default();
                 Box::pin(async move {
                     ProviderRuntime::login(self, ProviderLoginRequest::new(api_key, credentials))
@@ -1375,7 +1383,7 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn logout(
                 &self,
-            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<()>> {
+            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<()>> {
                 Box::pin(async move {
                     ProviderRuntime::logout(self)
                         .await
@@ -1386,7 +1394,7 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn delete(
                 &self,
-            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<bool>> {
+            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<bool>> {
                 Box::pin(async move {
                     ProviderRuntime::delete(self)
                         .await
@@ -1396,8 +1404,8 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn usage(
                 &self,
-                _request: crate::contract::UsageRequest,
-            ) -> crate::contract::ProviderFuture<'_, crate::contract::ProviderResult<ProviderUsage>>
+                _request: genex_model_provider::UsageRequest,
+            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<ProviderUsage>>
             {
                 ProviderRuntime::usage(self)
             }
@@ -1405,10 +1413,12 @@ macro_rules! impl_model_provider_for_runtime {
     };
 }
 
-fn map_provider_auth_error(error: ProviderAuthError) -> crate::contract::ProviderError {
+fn map_provider_auth_error(error: ProviderAuthError) -> genex_model_provider::ProviderError {
     match error {
-        ProviderAuthError::Unavailable => crate::contract::ProviderError::Unsupported,
-        ProviderAuthError::Failed(message) => crate::contract::ProviderError::Provider(message),
+        ProviderAuthError::Unavailable => genex_model_provider::ProviderError::Unsupported,
+        ProviderAuthError::Failed(message) => {
+            genex_model_provider::ProviderError::Provider(message)
+        }
     }
 }
 
@@ -1432,7 +1442,7 @@ pub(super) type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
 pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
-) -> crate::contract::SharedModelProvider {
+) -> genex_model_provider::SharedModelProvider {
     create_model_provider_with_http_client_factory(
         provider_info,
         credential_manager,
@@ -1445,7 +1455,7 @@ pub fn create_model_provider_with_http_client_factory(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
-) -> crate::contract::SharedModelProvider {
+) -> genex_model_provider::SharedModelProvider {
     create_model_provider_internal(provider_info, credential_manager, http_client_factory)
 }
 
@@ -1480,13 +1490,13 @@ fn create_model_provider_internal(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
-) -> crate::contract::SharedModelProvider {
+) -> genex_model_provider::SharedModelProvider {
     create_provider_instance(
         provider_info,
         credential_manager,
         http_client_factory,
-        |provider| Arc::new(provider) as crate::contract::SharedModelProvider,
-        |provider| Arc::new(provider) as crate::contract::SharedModelProvider,
+        |provider| Arc::new(provider) as genex_model_provider::SharedModelProvider,
+        |provider| Arc::new(provider) as genex_model_provider::SharedModelProvider,
     )
 }
 
@@ -1659,11 +1669,11 @@ mod tests {
     use wiremock::matchers::path;
 
     use super::*;
-    use crate::model_catalog_source::ProviderModelCatalogSource;
+    use genex_model_provider::ProviderModelCatalogSource;
 
     #[test]
     fn factory_returns_provider_neutral_contract() {
-        let _provider: crate::contract::SharedModelProvider = create_model_provider(
+        let _provider: genex_model_provider::SharedModelProvider = create_model_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1682,20 +1692,20 @@ mod tests {
     fn runtime_credentials_require_the_provider_owned_snapshot() {
         assert!(matches!(
             runtime_credentials(None),
-            Err(crate::contract::ProviderError::Provider(message))
+            Err(genex_model_provider::ProviderError::Provider(message))
                 if message.contains("missing its credential snapshot")
         ));
 
         let foreign: SharedProviderCredentialSnapshot = Arc::new(ForeignCredentialSnapshot);
         assert!(matches!(
             runtime_credentials(Some(&foreign)),
-            Err(crate::contract::ProviderError::Provider(message))
+            Err(genex_model_provider::ProviderError::Provider(message))
                 if message.contains("belongs to another provider")
         ));
     }
 
     #[test]
-    fn cloudflare_provider_selects_chat_runtime_api() {
+    fn cloudflare_selects_chat_runtime_api() {
         let provider = create_runtime_provider(
             ModelProviderInfo::create_cloudflare_provider(),
             /*credential_manager*/ None,
@@ -1705,7 +1715,7 @@ mod tests {
     }
 
     #[test]
-    fn cloudflare_provider_declares_api_key_and_account_id_auth_fields() {
+    fn cloudflare_declares_api_key_and_account_id_auth_fields() {
         let provider = create_model_provider(
             ModelProviderInfo::create_cloudflare_provider(),
             /*credential_manager*/ None,
@@ -1785,7 +1795,7 @@ mod tests {
         assert_eq!(provider.auth_fields()[0].id, "api_key");
         assert!(matches!(
             provider.delete().await,
-            Err(crate::ProviderError::Unsupported)
+            Err(genex_model_provider::ProviderError::Unsupported)
         ));
     }
 
@@ -1825,12 +1835,15 @@ mod tests {
                 "api-key".to_string(),
             )]))
             .await;
-        assert!(matches!(result, Err(crate::ProviderError::Unsupported)));
+        assert!(matches!(
+            result,
+            Err(genex_model_provider::ProviderError::Unsupported)
+        ));
 
         let logout_result = provider.logout().await;
         assert!(matches!(
             logout_result,
-            Err(crate::ProviderError::Unsupported)
+            Err(genex_model_provider::ProviderError::Unsupported)
         ));
     }
 
@@ -1849,7 +1862,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn cloudflare_provider_lists_models_from_cloudflare_search_endpoint() {
+    async fn cloudflare_lists_models_from_cloudflare_search_endpoint() {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
             .and(path("/models/search"))
@@ -1873,7 +1886,7 @@ mod tests {
         info.env_key = None;
         let provider = create_model_provider(info, /*credential_manager*/ None);
         let catalog = provider
-            .list_models(crate::contract::ListModelsRequest::new("test-client"))
+            .list_models(genex_model_provider::ListModelsRequest::new("test-client"))
             .await
             .expect("Cloudflare provider should list models");
 
@@ -2152,7 +2165,7 @@ mod tests {
 
         assert_eq!(
             provider
-                .usage(crate::contract::UsageRequest { model: None })
+                .usage(genex_model_provider::UsageRequest { model: None })
                 .await,
             Ok(ProviderUsage::Unsupported)
         );

@@ -747,6 +747,8 @@ with the corresponding call arguments.
 
 ### First-party auth and model-provider adapter audit (2026-09-28)
 
+| `genex-model-provider` built-in implementation boundary and new `genex-providers` workspace crate | The provider-neutral `ModelProvider` contract and `AppServerRuntimeBuilder::new(SharedModelProvider)` are active consumers. The configured and Cloudflare adapter runtime now live in `genex-providers`; `genex-model-provider` retains the neutral contract and public provider-support helpers without a provider registry or runtime switching. | Provider-neutral contract remains in `genex-model-provider`; built-in adapters migrate to `genex-providers`; host binaries inject exactly one concrete provider | `migrate-in-place` (completed) | `rg -n 'genex_model_provider::create_model_provider' crates` is empty; `rg -n 'CloudflareModelProvider|impl_model_provider_for_runtime!\(Cloudflare' crates/providers`; `just check --tests`; `just check` |
+
 The producer/consumer audit for the next Phase 3 slice is complete. The shared
 crates remain reachable, so this slice does not justify deleting
 `genex-login`, `genex-model-provider-info`, `genex-model-provider`, or

@@ -63,6 +63,7 @@ members = [
     "crates/mermaid",
     "crates/model-provider-info",
     "crates/models-manager",
+    "crates/providers",
     "crates/network-proxy",
     "crates/process-hardening",
     "crates/protocol",
@@ -192,6 +193,7 @@ genex-mcp = { path = "crates/genex-mcp" }
 genex-mcp-extension = { path = "crates/ext/mcp" }
 genex-model-provider-info = { path = "crates/model-provider-info" }
 genex-models-manager = { path = "crates/models-manager" }
+genex-providers = { path = "crates/providers" }
 genex-network-proxy = { path = "crates/network-proxy" }
 genex-otel = { path = "crates/otel" }
 genex-otel-trace-websocket = { path = "crates/otel-trace-websocket" }

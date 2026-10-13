@@ -1,12 +1,10 @@
 mod auth;
 mod bearer_auth_provider;
-mod cloudflare_provider;
 mod contract;
 mod home_marker;
 mod model_catalog_source;
 mod models_endpoint;
 mod models_identity;
-mod provider;
 pub mod test_support;
 
 /// Effective destination and credentials that permit reusing a Responses socket.
@@ -27,6 +25,14 @@ impl ResponsesConnectionKey {
 
 pub use auth::auth_provider_from_auth;
 pub use auth::auth_provider_from_credential_manager;
+#[doc(hidden)]
+pub use auth::cached_provider_auth;
+#[doc(hidden)]
+pub use auth::credential_manager_for_provider;
+#[doc(hidden)]
+pub use auth::provider_auth;
+#[doc(hidden)]
+pub use auth::resolve_provider_auth;
 pub use auth::unauthenticated_auth_provider;
 pub use bearer_auth_provider::BearerAuthProvider;
 pub use bearer_auth_provider::BearerAuthProvider as CoreAuthProvider;
@@ -77,12 +83,30 @@ pub use contract::ProviderTextFormatType;
 pub use contract::ProviderUnauthorizedRecovery;
 pub use contract::ProviderUsage;
 pub use contract::ProviderUsageResult;
+#[doc(hidden)]
+pub use contract::ProviderWebsocketConnectRequest;
+#[doc(hidden)]
+pub use contract::ProviderWebsocketConnection;
+#[doc(hidden)]
+pub use contract::ProviderWebsocketEvent;
+#[doc(hidden)]
+pub use contract::ProviderWebsocketPayloadRequest;
+#[doc(hidden)]
+pub use contract::ProviderWebsocketRequest;
+#[doc(hidden)]
+pub use contract::ProviderWebsocketTelemetry;
+#[doc(hidden)]
+pub use contract::ProviderWireApi;
 pub use contract::RemoteCompactionSupport;
 pub use contract::SharedModelProvider;
 pub use contract::SharedProviderCredentialSnapshot;
 pub use contract::SharedProviderStreamSession;
+#[doc(hidden)]
+pub use contract::SharedProviderWebsocketConnection;
 pub use contract::UsageRequest;
 pub use contract::build_provider_text_controls;
+#[doc(hidden)]
+pub use contract::headers_to_http;
 pub use genex_protocol::account::ProviderAccount;
 pub use home_marker::PROVIDER_HOME_FORMAT_VERSION;
 pub use home_marker::PROVIDER_HOME_MARKER_FILE;
@@ -90,5 +114,9 @@ pub use home_marker::ProviderHomeError;
 pub use home_marker::ProviderHomeMarker;
 pub use home_marker::mount_provider_home;
 pub use model_catalog_source::ProviderModelCatalogSource;
-pub use provider::create_model_provider;
-pub use provider::create_model_provider_with_http_client_factory;
+#[doc(hidden)]
+pub use models_endpoint::ModelsEndpoint;
+#[doc(hidden)]
+pub mod provider_models_identity {
+    pub use crate::models_identity::identity;
+}

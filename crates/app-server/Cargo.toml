@@ -67,6 +67,7 @@ genex-mcp-extension = { workspace = true }
 genex-model-provider = { workspace = true }
 genex-model-provider-info = { workspace = true }
 genex-models-manager = { workspace = true }
+genex-providers = { workspace = true }
 genex-prompts = { workspace = true }
 genex-protocol = { workspace = true }
 genex-queue-extension = { workspace = true }

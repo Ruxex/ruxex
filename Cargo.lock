@@ -1721,6 +1721,7 @@ dependencies = [
  "genex-model-provider-info",
  "genex-models-manager",
  "genex-protocol",
+ "genex-providers",
  "genex-thread-store",
  "genex-utils-absolute-path",
  "genex-utils-cargo-bin",
@@ -3730,6 +3731,7 @@ dependencies = [
  "genex-plugin",
  "genex-prompts",
  "genex-protocol",
+ "genex-providers",
  "genex-queue-extension",
  "genex-rmcp-client",
  "genex-rollout",
@@ -4319,6 +4321,7 @@ dependencies = [
  "genex-plugin",
  "genex-prompts",
  "genex-protocol",
+ "genex-providers",
  "genex-response-debug-context",
  "genex-rmcp-client",
  "genex-rollout",
@@ -4817,6 +4820,7 @@ dependencies = [
  "genex-model-provider",
  "genex-model-provider-info",
  "genex-protocol",
+ "genex-providers",
  "genex-tools",
  "genex-utils-output-truncation",
  "http",
@@ -5309,6 +5313,37 @@ dependencies = [
  "ts-rs",
  "uuid",
  "wildmatch",
+]
+
+[[package]]
+name = "genex-providers"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "futures",
+ "genex-api",
+ "genex-http-client",
+ "genex-login",
+ "genex-model-provider",
+ "genex-model-provider-info",
+ "genex-models-manager",
+ "genex-otel",
+ "genex-protocol",
+ "genex-response-debug-context",
+ "genex-utils-redacted-string",
+ "http",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "url",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]
@@ -6069,6 +6104,7 @@ dependencies = [
  "genex-model-provider-info",
  "genex-otel",
  "genex-protocol",
+ "genex-providers",
  "genex-tools",
  "http",
  "pretty_assertions",

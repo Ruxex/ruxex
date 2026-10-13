@@ -28,6 +28,7 @@ genex-login = { workspace = true }
 genex-model-provider = { workspace = true }
 genex-model-provider-info = { workspace = true }
 genex-models-manager = { workspace = true }
+genex-providers = { workspace = true }
 genex-protocol = { workspace = true }
 genex-thread-store = { workspace = true }
 genex-utils-absolute-path = { workspace = true }

@@ -15,7 +15,6 @@ use genex_http_client::OutboundProxyPolicy;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::ProviderModelCatalogSource;
-use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_models_manager::collaboration_mode_presets;
 use genex_models_manager::manager::SharedModelsManager;
@@ -28,6 +27,7 @@ use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::model_types::ModelInfo;
 use genex_protocol::model_types::ModelPreset;
 use genex_protocol::protocol::SessionSource;
+use genex_providers::create_model_provider;
 use once_cell::sync::Lazy;
 
 use crate::ThreadManager;

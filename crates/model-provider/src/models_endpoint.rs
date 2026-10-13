@@ -39,7 +39,7 @@ const MODELS_ENDPOINT: &str = "/models";
 
 /// Provider-owned provider-compatible `/models` endpoint.
 #[derive(Debug)]
-pub(crate) struct ModelsEndpoint {
+pub struct ModelsEndpoint {
     provider_id: Option<String>,
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
@@ -55,7 +55,7 @@ impl ModelsEndpoint {
         Self::new_for_provider(None, provider_info, credential_manager)
     }
 
-    pub(crate) fn new_for_provider(
+    pub fn new_for_provider(
         provider_id: Option<String>,
         provider_info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
@@ -72,7 +72,7 @@ impl ModelsEndpoint {
         provider_auth(self.credential_manager.as_ref(), None, &self.provider_info).await
     }
 
-    pub(crate) async fn list_models(
+    pub async fn list_models(
         &self,
         client_version: &str,
         http_client_factory: HttpClientFactory,

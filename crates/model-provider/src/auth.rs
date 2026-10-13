@@ -81,7 +81,7 @@ pub fn unauthenticated_auth_provider() -> SharedAuthProvider {
 /// Returns the provider-scoped auth manager when this provider uses command-backed auth.
 ///
 /// Providers without custom auth continue using the caller-supplied base manager, when present.
-pub(crate) fn credential_manager_for_provider(
+pub fn credential_manager_for_provider(
     credential_manager: Option<Arc<CredentialManager>>,
     provider: &ModelProviderInfo,
 ) -> Option<Arc<CredentialManager>> {
@@ -91,7 +91,7 @@ pub(crate) fn credential_manager_for_provider(
     }
 }
 
-pub(crate) fn resolve_provider_auth(
+pub fn resolve_provider_auth(
     auth: Option<&GenexAuth>,
     provider: &ModelProviderInfo,
 ) -> genex_protocol::error::Result<SharedAuthProvider> {
@@ -109,7 +109,7 @@ pub(crate) fn resolve_provider_auth(
     Ok(unauthenticated_auth_provider())
 }
 
-pub(crate) async fn provider_auth(
+pub async fn provider_auth(
     credential_manager: Option<&Arc<CredentialManager>>,
     fallback_auth: Option<GenexAuth>,
     provider: &ModelProviderInfo,
@@ -134,7 +134,7 @@ pub(crate) async fn provider_auth(
     }
 }
 
-pub(crate) fn cached_provider_auth(credential_manager: &CredentialManager) -> Option<GenexAuth> {
+pub fn cached_provider_auth(credential_manager: &CredentialManager) -> Option<GenexAuth> {
     credential_manager.auth_cached()
 }
 

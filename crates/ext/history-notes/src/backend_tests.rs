@@ -1,8 +1,8 @@
 use genex_login::AuthHeaders;
 use genex_login::CredentialManager;
 use genex_login::GenexAuth;
-use genex_model_provider::create_model_provider;
 use genex_model_provider_info::ModelProviderInfo;
+use genex_providers::create_model_provider;
 use genex_utils_output_truncation::TruncationPolicy;
 use http::HeaderMap;
 use http::HeaderValue;

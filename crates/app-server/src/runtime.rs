@@ -12,9 +12,9 @@ use genex_model_provider::ProviderDescriptor;
 use genex_model_provider::ProviderHomeError;
 use genex_model_provider::ProviderHomeMarker;
 use genex_model_provider::SharedModelProvider;
-use genex_model_provider::create_model_provider_with_http_client_factory;
 use genex_model_provider::mount_provider_home;
 use genex_model_provider_info::ModelProviderInfo;
+use genex_providers::create_model_provider_with_http_client_factory;
 
 /// The single provider contract shared by an AppServer transport and its clients.
 #[derive(Clone)]

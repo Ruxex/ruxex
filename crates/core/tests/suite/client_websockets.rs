@@ -1,54 +1,4 @@
 #![allow(clippy::unwrap_used)]
-use genex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
-use genex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
-use genex_core::GenexResponsesMetadata;
-use genex_core::ModelClient;
-use genex_core::ModelClientSession;
-use genex_core::Prompt;
-use genex_core::ResponseEvent;
-use genex_core::TurnInputRequest;
-use genex_core::X_GENEX_ROUTING_HINT_HEADER;
-use genex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
-use genex_core::test_support::with_parent_turn;
-use genex_features::Feature;
-use genex_http_client::OutboundProxyPolicy;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider::create_model_provider;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::WireApi;
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
-use genex_otel::SessionTelemetry;
-use genex_otel::TelemetryAuthMode;
-use genex_otel::current_span_w3c_trace_context;
-use genex_protocol::ResponseItemId;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::account::PlanType;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ExecutedToolCall;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::models::ToolResultMetadata;
-use genex_protocol::models::ToolResultSource;
-use genex_protocol::models::ToolResultSources;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_protocol::user_input::UserInput;
-use genex_rollout_trace::ConversationPart;
-use genex_rollout_trace::InferenceTraceContext;
-use genex_rollout_trace::RawTraceEventPayload;
-use genex_rollout_trace::TraceWriter;
-use genex_rollout_trace::replay_bundle;
 use core_test_support::TestGenexResponsesRequestKind;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::WebSocketConnectionConfig;
@@ -64,6 +14,56 @@ use core_test_support::test_genex::test_genex;
 use core_test_support::tracing::install_test_tracing;
 use core_test_support::wait_for_event;
 use futures::StreamExt;
+use genex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
+use genex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
+use genex_core::GenexResponsesMetadata;
+use genex_core::ModelClient;
+use genex_core::ModelClientSession;
+use genex_core::Prompt;
+use genex_core::ResponseEvent;
+use genex_core::TurnInputRequest;
+use genex_core::X_GENEX_ROUTING_HINT_HEADER;
+use genex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
+use genex_core::test_support::with_parent_turn;
+use genex_features::Feature;
+use genex_http_client::OutboundProxyPolicy;
+use genex_login::CredentialManager;
+use genex_login::GenexAuth;
+use genex_model_provider_info::ModelProviderInfo;
+use genex_model_provider_info::WireApi;
+use genex_otel::MetricsClient;
+use genex_otel::MetricsConfig;
+use genex_otel::SessionTelemetry;
+use genex_otel::TelemetryAuthMode;
+use genex_otel::current_span_w3c_trace_context;
+use genex_protocol::ResponseItemId;
+use genex_protocol::SessionId;
+use genex_protocol::ThreadId;
+use genex_protocol::account::PlanType;
+use genex_protocol::config_types::ReasoningSummary;
+use genex_protocol::config_types::ServiceTier;
+use genex_protocol::model_types::ModelInfo;
+use genex_protocol::model_types::ModelServiceTier;
+use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use genex_protocol::models::BaseInstructions;
+use genex_protocol::models::ContentItem;
+use genex_protocol::models::ExecutedToolCall;
+use genex_protocol::models::FunctionCallOutputPayload;
+use genex_protocol::models::ResponseInputItem;
+use genex_protocol::models::ResponseItem;
+use genex_protocol::models::ToolResultMetadata;
+use genex_protocol::models::ToolResultSource;
+use genex_protocol::models::ToolResultSources;
+use genex_protocol::protocol::EventMsg;
+use genex_protocol::protocol::SessionSource;
+use genex_protocol::protocol::W3cTraceContext;
+use genex_protocol::user_input::UserInput;
+use genex_providers::create_model_provider;
+use genex_rollout_trace::ConversationPart;
+use genex_rollout_trace::InferenceTraceContext;
+use genex_rollout_trace::RawTraceEventPayload;
+use genex_rollout_trace::TraceWriter;
+use genex_rollout_trace::replay_bundle;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -2667,7 +2667,8 @@ async fn websocket_harness(server: &WebSocketTestServer) -> WebsocketTestHarness
 }
 
 async fn websocket_harness_for_genex_backend(server: &WebSocketTestServer) -> WebsocketTestHarness {
-    let provider = ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri())));
+    let provider =
+        ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri())));
     websocket_harness_with_provider_options_and_auth(
         provider,
         /*runtime_metrics_enabled*/ false,
@@ -2763,7 +2764,9 @@ async fn websocket_harness_with_provider_options_and_auth(
         )
     });
     let credential_manager = client_credential_manager.clone().unwrap_or_else(|| {
-        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("Test API Key"))
+        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key(
+            "Test API Key",
+        ))
     });
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(

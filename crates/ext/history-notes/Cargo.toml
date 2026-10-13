@@ -18,6 +18,7 @@ genex-extension-api = { workspace = true }
 genex-http-client = { workspace = true }
 genex-login = { workspace = true }
 genex-model-provider = { workspace = true }
+genex-providers = { workspace = true }
 genex-protocol = { workspace = true }
 genex-tools = { workspace = true }
 genex-utils-output-truncation = { workspace = true }

@@ -166,8 +166,8 @@ mod tests {
     use genex_extension_api::ExtensionRegistryBuilder;
     use genex_extension_api::ToolName;
     use genex_login::GenexAuth;
-    use genex_model_provider::create_model_provider;
     use genex_model_provider_info::ModelProviderInfo;
+    use genex_providers::create_model_provider;
     use pretty_assertions::assert_eq;
 
     use super::Config;

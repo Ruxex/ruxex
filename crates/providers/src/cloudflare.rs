@@ -28,15 +28,15 @@ use http::HeaderMap;
 use serde_json::Value;
 use tokio::time::timeout;
 
-use super::auth::cached_provider_auth;
-use super::auth::provider_auth;
-use super::auth::resolve_provider_auth;
-use super::models_identity;
-use super::provider::ModelProviderFuture;
-use super::provider::ProviderAccountResult;
-use super::provider::ProviderAccountState;
-use super::provider::ProviderApi;
-use super::provider::ProviderRuntime;
+use crate::provider::ModelProviderFuture;
+use crate::provider::ProviderAccountResult;
+use crate::provider::ProviderAccountState;
+use crate::provider::ProviderApi;
+use crate::provider::ProviderRuntime;
+use genex_model_provider::cached_provider_auth;
+use genex_model_provider::provider_auth;
+use genex_model_provider::provider_models_identity;
+use genex_model_provider::resolve_provider_auth;
 
 const CLOUDFLARE_API_ROOT: &str = "https://api.cloudflare.com/client/v4";
 const CLOUDFLARE_MODELS_TIMEOUT: Duration = Duration::from_secs(5);
@@ -45,7 +45,7 @@ const CLOUDFLARE_MAX_MODEL_PAGES: usize = 100;
 const CLOUDFLARE_TEXT_GENERATION_TASK: &str = "Text%20Generation";
 
 #[derive(Clone, Debug)]
-pub(crate) struct CloudflareModelProvider {
+pub struct CloudflareModelProvider {
     provider_id: Option<String>,
     info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
@@ -53,7 +53,7 @@ pub(crate) struct CloudflareModelProvider {
 }
 
 impl CloudflareModelProvider {
-    pub(crate) fn new(
+    pub fn new(
         provider_id: Option<String>,
         info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
@@ -65,6 +65,21 @@ impl CloudflareModelProvider {
             credential_manager,
             http_client_factory,
         }
+    }
+
+    /// Constructs the Cloudflare provider as a provider-neutral runtime handle.
+    pub fn create_cloudflare_provider(
+        provider_id: Option<String>,
+        info: ModelProviderInfo,
+        credential_manager: Option<Arc<CredentialManager>>,
+        http_client_factory: HttpClientFactory,
+    ) -> genex_model_provider::SharedModelProvider {
+        Arc::new(Self::new(
+            provider_id,
+            info,
+            credential_manager,
+            http_client_factory,
+        ))
     }
 
     fn chat_base_url(&self) -> CoreResult<String> {
@@ -99,7 +114,12 @@ impl CloudflareModelProvider {
             .as_ref()
             .and_then(|manager| cached_provider_auth(manager));
         let provider_info = self.models_info().ok()?;
-        models_identity::identity(self.provider_id.as_deref(), &provider_info, auth.as_ref()).ok()
+        provider_models_identity::identity(
+            self.provider_id.as_deref(),
+            &provider_info,
+            auth.as_ref(),
+        )
+        .ok()
     }
 
     async fn fetch_models(
@@ -146,6 +166,21 @@ impl CloudflareModelProvider {
 
         Ok((models, etag))
     }
+}
+
+/// Constructs a shared Cloudflare provider for host-side runtime injection.
+pub fn create_cloudflare_provider(
+    provider_id: Option<String>,
+    info: ModelProviderInfo,
+    credential_manager: Option<Arc<CredentialManager>>,
+    http_client_factory: HttpClientFactory,
+) -> genex_model_provider::SharedModelProvider {
+    CloudflareModelProvider::create_cloudflare_provider(
+        provider_id,
+        info,
+        credential_manager,
+        http_client_factory,
+    )
 }
 
 impl ProviderRuntime for CloudflareModelProvider {
@@ -322,6 +357,8 @@ fn decode_cloudflare_models(body: &[u8], page: usize) -> CoreResult<DecodedCloud
 mod tests {
     use super::*;
 
+    use genex_http_client::OutboundProxyPolicy;
+
     #[test]
     fn cloudflare_model_search_response_is_converted_to_provider_models() {
         let models = decode_cloudflare_models(
@@ -354,5 +391,24 @@ mod tests {
         .expect_err("failed Cloudflare response should be rejected");
 
         assert!(error.to_string().contains("model search failed"));
+    }
+
+    #[test]
+    fn cloudflare_descriptor_is_available_without_opening_credentials() {
+        let provider = CloudflareModelProvider::new(
+            Some("cloudflare".to_string()),
+            ModelProviderInfo::create_cloudflare_provider(),
+            None,
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        );
+
+        assert_eq!(
+            genex_model_provider::ModelProvider::descriptor(&provider).provider_kind,
+            "cloudflare"
+        );
+        assert_eq!(
+            genex_model_provider::ModelProvider::request_format(&provider),
+            genex_model_provider::ProviderRequestFormat::Chat
+        );
     }
 }

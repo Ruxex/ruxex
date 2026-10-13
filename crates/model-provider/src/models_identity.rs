@@ -10,7 +10,7 @@ use sha2::Sha256;
 
 use crate::auth::resolve_provider_auth;
 
-pub(crate) fn identity(
+pub fn identity(
     provider_id: Option<&str>,
     provider_info: &ModelProviderInfo,
     auth: Option<&GenexAuth>,

@@ -1,138 +1,173 @@
-# General-purpose AI Agent Foundation (Rust)
+# Genex
 
-This repository is a general-purpose AI agent foundation. Provider-specific features
-and assumptions are removed so the
-runtime can provide a provider-neutral base for building a wide range of AI
-agents.
+Genex is a general-purpose AI agent foundation written in Rust. It provides
+the agent loop, tools, MCP integration, sandboxing, persistence, and an
+AppServer boundary without coupling the core runtime to a particular model
+provider.
 
-## Repository snapshot
+The repository is currently an unreleased workspace. The crates under
+`crates/` are intended to be composed by a host binary or another workspace
+crate rather than consumed as a published, versioned SDK.
 
-- Snapshot commit: `fe8228b3d945a857502e1981e9e7d57f17fe3ae6`
-- Approximate size: 1,958,791 lines across 7,207 Git-tracked files
+## Architecture
 
-Approximate line count by file type:
+Genex uses one concrete model provider per runtime/AppServer:
 
-| Category | Lines |
-| --- | ---: |
-| Rust | 1,678,472 |
-| TypeScript | 7,502 |
-| Python | 25,438 |
-| SQL | 806 |
-| Shell | 2,746 |
-| C/C headers | 6,265 |
-| Protocol Buffers | 383 |
-| Markdown | 14,274 |
-| Config/data (JSON, TOML, YAML, XML, lockfiles) | 178,104 |
-| Other tracked files | 44,801 |
+| Crate | Responsibility |
+| --- | --- |
+| `genex-model-provider` | Provider-neutral request, response, stream, error, capability, authentication, usage, and data-root contracts. |
+| `genex-providers` | Built-in provider adapters and provider-specific HTTP, wire payload, credentials, and model-catalog behavior. Cloudflare lives under `genex_providers::cloudflare`. |
+| `genex-app-server` | The shared runtime boundary. `AppServerRuntimeBuilder::new(SharedModelProvider)` accepts the provider selected by the host. |
+| `genex-core` | Provider-neutral agent, session, thread, tool, and turn execution. |
 
-The line count includes source, tests, documentation, and generated files, and
-excludes untracked and ignored files. Categories are grouped by file extension.
+Provider selection is a host-startup concern. Threads and rollouts do not
+select providers, and a running runtime does not switch providers. To use a
+different provider, construct another runtime/AppServer with another provider
+and another provider-scoped data root.
 
-## Current repository snapshot
+## Run the CLI
 
-- Snapshot commit: `f42f440d72a7471fc36264cc71de168970e13b50` (`Remove Guardian provider integration`)
-- Approximate size at this commit: 1,755,036 lines across 6,651 Git-tracked files
+Install the Rust toolchain selected by `rust-toolchain.toml`, then build the
+`genex` binary from the `genex-cli` crate with your preferred Cargo profile.
+The repository supports Linux and macOS. Windows users should run Genex in
+WSL2.
 
-Approximate line count by file type at this commit:
+The CLI uses the provider configured for the current host. Its default data
+root is `~/.genex`; set `GENEX_HOME` to use an existing directory instead.
 
-| Category | Lines |
-| --- | ---: |
-| Rust | 1,500,917 |
-| TypeScript | 6,608 |
-| Python | 25,438 |
-| SQL | 794 |
-| Shell | 2,500 |
-| C/C headers | 6,265 |
-| Protocol Buffers | 338 |
-| Markdown | 15,556 |
-| Config/data (JSON, TOML, YAML, XML, lockfiles) | 161,081 |
-| Other tracked files | 35,539 |
+## Embed Genex in a Rust host
 
-This snapshot uses the same scope as the preceding one: source, tests,
-documentation, and generated files are included, while untracked and ignored
-files are excluded.
+Add the workspace crates needed by the host:
 
-## Current repository snapshot
-
-- Snapshot commit: `1b846427c7a092b96acb97ced6148d43cc1e1e23` (`Remove residual ChatGPT auth artifacts`)
-- Approximate size at this commit: 1,632,277 lines across 6,359 Git-tracked files
-
-Approximate line count by file type at this commit:
-
-| Category | Lines |
-| --- | ---: |
-| Rust | 1,267,670 |
-| TypeScript | 6,455 |
-| Python | 25,346 |
-| SQL | 753 |
-| Shell | 2,503 |
-| C/C headers | 6,265 |
-| Protocol Buffers | 269 |
-| Markdown | 18,690 |
-| Config/data (JSON, TOML, YAML, XML, lockfiles) | 269,814 |
-| Other tracked files | 34,512 |
-
-This snapshot uses the same scope as the preceding one: source, tests,
-documentation, and generated files are included, while untracked and ignored
-files are excluded.
-
-## Current repository snapshot
-
-- Snapshot commit: `1fe4724b63f366dd3c4584bede6a6067840ac6d1` (`chore: remove Windows support`)
-- Approximate size at this commit: 1,564,943 lines across 5,046 Git-tracked files
-
-Approximate line count by file type at this commit:
-
-| Category | Lines |
-| --- | ---: |
-| Rust | 1,112,338 |
-| TypeScript | 6,143 |
-| Python | 23,221 |
-| SQL | 753 |
-| Shell | 1,873 |
-| C/C headers | 6,265 |
-| Protocol Buffers | 269 |
-| Markdown | 22,019 |
-| Config/data (JSON, TOML, YAML, XML, lockfiles) | 373,178 |
-| Other tracked files | 18,884 |
-
-This snapshot uses the same scope as the preceding one: source, tests,
-documentation, and generated files are included, while untracked and ignored
-files are excluded.
-
-The Rust implementation remains in a root Cargo workspace. Member crates live
-under `crates/`; shared utility and extension crates retain their existing
-subdirectories. Vendored bubblewrap sources live in `crates/vendor/` to preserve
-the crate's build-time relative paths.
-
-## Build locally
-
-Install Rust with rustup and the native build dependencies for your platform.
-The pinned toolchain is selected by `rust-toolchain.toml`.
-
-```sh
-cargo check --locked -p genex-cli
-cargo build --locked --release -p genex-cli --bin genex
-./target/release/genex
+```toml
+[dependencies]
+genex-app-server = { path = "crates/app-server" }
+genex-http-client = { path = "crates/http-client" }
+genex-model-provider = { path = "crates/model-provider" }
+genex-model-provider-info = { path = "crates/model-provider-info" }
+genex-providers = { path = "crates/providers" }
 ```
 
-Supported hosts are Linux and macOS. Windows users should run Genex inside WSL2.
-Release artifacts are built locally and attached to releases manually. Features
-that launch helper executables or use native resources still need those resources
-beside the CLI; building the CLI alone does not assemble a complete runtime package.
+The built-in Cloudflare adapter can be constructed and injected like this:
+
+```rust
+use genex_app_server::runtime::AppServerRuntimeBuilder;
+use genex_http_client::{HttpClientFactory, OutboundProxyPolicy};
+use genex_model_provider_info::ModelProviderInfo;
+use genex_providers::create_cloudflare_provider;
+
+let provider = create_cloudflare_provider(
+    Some("cloudflare".to_owned()),
+    ModelProviderInfo::create_cloudflare_provider(),
+    credential_manager,
+    HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+);
+let runtime = AppServerRuntimeBuilder::new(provider).build();
+```
+
+The configured-provider convenience constructor is available when the host
+already uses `ModelProviderInfo`:
+
+```rust
+let runtime = AppServerRuntimeBuilder::from_provider_info(
+    provider_info,
+    credential_manager,
+)
+.build();
+```
+
+Hosts that construct a provider themselves should mount its data root before
+opening credentials, SQLite, sessions, or caches:
+
+```rust
+use genex_app_server::runtime::mount_provider_home_for_runtime;
+
+mount_provider_home_for_runtime(&config, &runtime)?;
+```
+
+The mount writes or validates `genex-home.json`. A marker for a different
+provider or incompatible provider protocol is rejected before sensitive state
+is opened.
+
+## Implement a custom provider
+
+Provider implementations do not need to be registered in Genex. Implement the
+public `genex_model_provider::ModelProvider` trait in the host or in another
+workspace crate, store it as `SharedModelProvider`, and inject it into the
+runtime:
+
+```rust
+use std::sync::Arc;
+
+use genex_app_server::runtime::AppServerRuntimeBuilder;
+use genex_model_provider::SharedModelProvider;
+
+// MyProvider implements ModelProvider and owns its provider-specific client,
+// credentials, wire payloads, and configuration.
+let provider: SharedModelProvider = Arc::new(MyProvider::new(/* ... */));
+let runtime = AppServerRuntimeBuilder::new(provider).build();
+```
+
+The contract keeps provider-specific details behind the implementation. The
+host receives neutral chat/model-catalog/auth/usage operations and explicit
+`Unsupported` results for capabilities the provider does not implement.
+See [`genex-model-provider/src/contract.rs`](crates/model-provider/src/contract.rs)
+for the complete trait and neutral types.
+
+## Provider data and credentials
+
+- Default data root: `~/.genex`.
+- Runtime override: `GENEX_HOME`.
+- Build-time default override: `GENEX_DEFAULT_HOME_DIR_NAME`.
+- Provider marker: `genex-home.json` in the data root.
+- Credential values are owned by the provider/runtime lifecycle and are not
+  persisted in threads or rollouts.
+- Credential changes affect new turns; an in-flight turn retains its
+  start-time credential snapshot.
+
+Use a separate runtime and data root when running different providers. This
+prevents credentials, caches, sessions, and provider-specific state from being
+accidentally shared across incompatible provider implementations.
+
+## External provider contracts
+
+The provider-neutral layer does not rewrite the external model API contract.
+The existing OpenAI endpoint URLs, request/response fields, authentication
+headers and environment variables, and model identifiers remain unchanged
+where they are required by the endpoint.
+
+Provider-specific HTTP and wire serialization belong in the adapter crate;
+agent, MCP, sandbox, security, session, and thread code should depend only on
+the neutral contract.
 
 ## Repository layout
 
 - `Cargo.toml`, `Cargo.lock`: workspace definition and locked dependencies.
-- `crates/`: Rust crates and their unchanged source, tests, and generated schemas.
-- `scripts/`, `tools/`: local development helpers.
-- `third_party/`: native dependency sources, metadata, and development helpers.
+- `crates/`: Rust libraries, the CLI, AppServer, provider contracts, and
+  built-in adapters.
+- `docs/`: architecture, compatibility, provider-boundary, and generated
+  protocol documentation.
+- `scripts/`, `tools/`: development and generation helpers.
+- `third_party/`: vendored native sources and metadata.
 
-Standalone TypeScript/Python SDKs, package publishing, GitHub Actions, and Bazel
-build infrastructure are not maintained in this fork. The app-server protocol's
-generated TypeScript and JSON schemas remain in
-`crates/app-server-protocol/schema/`.
+Standalone TypeScript/Python SDKs, package publishing, GitHub Actions, and
+Bazel build infrastructure are not maintained in this fork. AppServer JSON and
+TypeScript schemas remain under `crates/app-server-protocol/schema/`.
 
-Use `just write-app-server-schema` to regenerate only the app-server schemas.
-`just fmt` formats repository sources; `just test -p <crate>` runs selected tests
-with cargo-nextest. Python and uv remain development dependencies for the helpers.
+## Development
+
+The repository uses `just` recipes for checks and generated artifacts:
+
+```sh
+just check
+just check --tests
+just generate
+```
+
+`just check --tests` compiles test targets without executing them. Use
+`just test -p <crate>` when an actual test run is specifically needed.
+
+For provider-boundary details, see
+[`docs/provider-specific-crates.md`](docs/provider-specific-crates.md) and the
+single-provider design in
+[`docs/superpowers/specs/2026-10-08-single-model-provider-library-design.md`](docs/superpowers/specs/2026-10-08-single-model-provider-library-design.md).
