@@ -899,7 +899,6 @@ async fn run_main_with_transport_options_and_optional_runtime(
 
     let recovery_file = daemon_recovery_file_path(&config.genex_home);
     let processor_handle = tokio::spawn({
-        let credential_manager = credential_manager.clone();
         let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));
         let outbound_control_tx = outbound_control_tx;
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
