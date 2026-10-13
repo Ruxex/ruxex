@@ -257,6 +257,15 @@ pub(super) async fn run_main_inner(
         && !cli.no_daemon
         && !app_server_target.uses_remote_workspace();
     if auto_start_daemon && daemon_exclusion.is_none() {
+        // The daemon creates its control state under GENEX_HOME before it starts the
+        // managed app-server. Mount the provider home first so that this startup-created
+        // state cannot make a fresh root look like an uninitialized existing root.
+        genex_app_server_client::mount_provider_home_for_config(&config).map_err(|err| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("failed to mount provider data root: {err}"),
+            )
+        })?;
         startup_draft.flush_pending_events().await?;
         let output = startup_draft
             .tui_mut()

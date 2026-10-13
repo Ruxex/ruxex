@@ -977,7 +977,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 auth,
             } = app_server_cli;
             let strict_config = app_server_strict_config || root_strict_config;
-            reject_strict_config_for_app_server_subcommand(strict_config, subcommand.as_ref())?;
+                reject_strict_config_for_app_server_subcommand(strict_config, subcommand.as_ref())?;
             match subcommand {
                 None => {
                     let transport = if stdio {
@@ -1010,15 +1010,18 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 }
                 Some(AppServerSubcommand::Daemon(daemon_cli)) => match daemon_cli.subcommand {
                     AppServerDaemonSubcommand::Start => {
+                        mount_provider_home_before_daemon(&root_config_overrides).await?;
                         print_app_server_daemon_output(AppServerLifecycleCommand::Start).await?;
                     }
                     AppServerDaemonSubcommand::Bootstrap => {
+                        mount_provider_home_before_daemon(&root_config_overrides).await?;
                         let output =
                             genex_app_server_daemon::bootstrap(AppServerBootstrapOptions {})
                                 .await?;
                         println!("{}", serde_json::to_string(&output)?);
                     }
                     AppServerDaemonSubcommand::Restart => {
+                        mount_provider_home_before_daemon(&root_config_overrides).await?;
                         print_app_server_daemon_output(AppServerLifecycleCommand::Restart).await?;
                     }
                     AppServerDaemonSubcommand::Stop => {
@@ -1869,6 +1872,13 @@ async fn print_app_server_daemon_output(command: AppServerLifecycleCommand) -> a
     Ok(())
 }
 
+async fn mount_provider_home_before_daemon(
+    config_overrides: &CliConfigOverrides,
+) -> anyhow::Result<()> {
+    let config = cloud_config::load_config(config_overrides, LoaderOverrides::default()).await?;
+    cloud_config::mount_provider_home(&config)
+}
+
 fn read_remote_auth_token_from_env_var_with<F>(
     env_var_name: &str,
     get_var: F,
@@ -1938,9 +1948,13 @@ async fn run_interactive_tui(
         if !std::io::stdout().is_terminal() {
             return Ok(AppExitInfo::fatal("stdout is not a terminal"));
         }
-        cloud_config::load_config(&interactive.config_overrides, LoaderOverrides::default())
-            .await
-            .map_err(std::io::Error::other)?;
+        let config = cloud_config::load_config(
+            &interactive.config_overrides,
+            LoaderOverrides::default(),
+        )
+        .await
+        .map_err(std::io::Error::other)?;
+        cloud_config::mount_provider_home(&config).map_err(std::io::Error::other)?;
         genex_app_server_daemon::run(AppServerLifecycleCommand::Start)
             .await
             .map_err(|err| std::io::Error::other(format!(

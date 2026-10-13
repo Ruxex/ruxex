@@ -75,11 +75,6 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
     if let Some(network) = network {
         network.apply_to_env(&mut env);
     }
-    // macOS fd cleanup must keep the shell escalation socket.
-    #[cfg(target_os = "macos")]
-    let inherited_fd = env
-        .get(genex_shell_escalation::ESCALATE_SOCKET_ENV_VAR)
-        .and_then(|fd| fd.parse().ok());
     cmd.env_clear();
     cmd.envs(env);
 
@@ -110,7 +105,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
             }
             // macOS cannot receive the fd with close-on-exec set atomically.
             #[cfg(target_os = "macos")]
-            genex_utils_pty::pty::close_inherited_fds_except(inherited_fd.as_slice());
+            genex_utils_pty::pty::close_inherited_fds_except(&[]);
             Ok(())
         });
     }
