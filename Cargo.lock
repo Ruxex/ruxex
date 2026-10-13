@@ -4465,6 +4465,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "genex-credential-broker"
+version = "0.0.0"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
 name = "genex-desktop"
 version = "0.1.0"
 dependencies = [

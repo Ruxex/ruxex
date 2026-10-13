@@ -1,0 +1,16 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "genex-credential-broker"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "genex_credential_broker"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }

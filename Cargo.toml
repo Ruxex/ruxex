@@ -27,6 +27,7 @@ members = [
     "crates/collaboration-mode-templates",
     "crates/config",
     "crates/config-schema",
+    "crates/credential-broker",
     "crates/context-fragments",
     "crates/shell-command",
     "crates/skills",
@@ -156,6 +157,7 @@ genex-home = { path = "crates/genex-home" }
 genex-http-client = { path = "crates/http-client" }
 genex-websocket-client = { path = "crates/websocket-client" }
 genex-config = { path = "crates/config" }
+genex-credential-broker = { path = "crates/credential-broker" }
 genex-agent-extension = { path = "crates/ext/agent" }
 genex-context-fragments = { path = "crates/context-fragments" }
 genex-core = { path = "crates/core" }
