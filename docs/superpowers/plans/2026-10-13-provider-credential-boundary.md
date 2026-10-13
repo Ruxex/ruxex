@@ -28,9 +28,17 @@
 - MCP OAuth behavior remains independent of model-provider login state; compile and run existing MCP auth tests without passing a provider credential manager.
 - Core and model-catalog APIs do not reintroduce concrete `CredentialManager`, `GenexAuth`, `ModelProviderInfo`, HTTP client, or auth-header types; add exact `rg` audits to the final task.
 
+## Execution record (2026-10-13)
+
+Tasks 1–5 and 7 were implemented in commits `3fe149f`, `377ab1f`, `040e8fa`,
+`d2cbab3e5`, `b923cb569`, and `a6b8d8b40`. Task 6 was completed by audit:
+MCP OAuth and server bearer credentials are already MCP-owned and have no
+model-provider credential-manager dependency. Task 8 records the final
+inventory decisions and verification evidence.
+
 ---
 
-### Task 1: Add the provider-neutral scoped credential contract
+### Task 1: Add the provider-neutral scoped credential contract (complete)
 
 **Files:**
 - Create: `crates/credential-broker/Cargo.toml`
@@ -48,7 +56,7 @@
 - [ ] **Step 4: Run the contract tests through `just check --tests`** and verify the crate compiles.
 - [ ] **Step 5: Commit** `feat: add scoped credential broker contract`.
 
-### Task 2: Make the injected provider authoritative in AppServer startup
+### Task 2: Make the injected provider authoritative in AppServer startup (complete)
 
 **Files:**
 - Modify: `crates/app-server/src/runtime.rs`
@@ -70,7 +78,7 @@
 - [ ] **Step 5: Run the focused AppServer test target and verify the injected-provider test passes.**
 - [ ] **Step 6: Commit** `fix: keep injected provider authoritative during app-server startup`.
 
-### Task 3: Remove concrete auth managers from model catalog code
+### Task 3: Remove concrete auth managers from model catalog code (complete)
 
 **Files:**
 - Modify: `crates/models-manager/src/manager.rs`
@@ -92,7 +100,7 @@
 - [ ] **Step 5: Run model-manager compile-only tests through the required scope.**
 - [ ] **Step 6: Commit** `refactor: make model catalog auth provider-neutral`.
 
-### Task 4: Remove provider credential state from Core session execution
+### Task 4: Remove provider credential state from Core session execution (complete)
 
 **Files:**
 - Modify: `crates/core/src/thread_manager.rs`
@@ -119,7 +127,7 @@
 - [ ] **Step 5: Run `just check --tests` and inspect all Core errors/warnings related to removed credential parameters.**
 - [ ] **Step 6: Commit** `refactor: remove provider credentials from core execution`.
 
-### Task 5: Introduce and wire the Plugin credential broker
+### Task 5: Introduce and wire the Plugin credential broker (complete)
 
 **Files:**
 - Modify: `crates/core-plugins/Cargo.toml`
@@ -145,7 +153,7 @@
 - [ ] **Step 5: Run core-plugins and app-server compile-only tests through the required scope.**
 - [ ] **Step 6: Commit** `refactor: scope plugin credentials behind broker`.
 
-### Task 6: Make MCP credential ownership explicit
+### Task 6: Make MCP credential ownership explicit (complete by audit)
 
 **Files:**
 - Modify: `crates/genex-mcp/src/rmcp_client.rs`
@@ -164,7 +172,7 @@
 - [ ] **Step 3: Run the existing MCP auth tests and compile-only targets.**
 - [ ] **Step 4: Commit** `refactor: isolate mcp credential lifecycle`.
 
-### Task 7: Migrate AppServer, user verification, CLI, and model-provider adapters
+### Task 7: Migrate AppServer, user verification, CLI, and model-provider adapters (complete)
 
 **Files:**
 - Modify: `crates/app-server/src/user_verification.rs`
@@ -192,7 +200,7 @@
 - [ ] **Step 5: Run targeted AppServer, CLI, and model-provider compile-only checks.**
 - [ ] **Step 6: Commit** `refactor: route provider auth through model provider`.
 
-### Task 8: Persistence, inventory, generated artifacts, and final verification
+### Task 8: Persistence, inventory, generated artifacts, and final verification (complete)
 
 **Files:**
 - Modify: `docs/pre-release-compatibility-inventory.md`
@@ -207,4 +215,3 @@
 - [ ] **Step 5: Run `just check --tests` through the required systemd scope.**
 - [ ] **Step 6: Verify `git diff --check`, `git status`, and all focused tests/compile targets.**
 - [ ] **Step 7: Commit** `refactor: complete provider credential boundary`.
-
