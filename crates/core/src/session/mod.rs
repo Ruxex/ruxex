@@ -611,7 +611,7 @@ impl Session {
             && model != *requested_model
         {
             info!(
-                model_provider = %config.model_provider_id,
+                model_provider = %provider.descriptor().provider_kind,
                 requested_model,
                 fallback_model = %model,
                 "replaced unavailable requested model with mounted provider default"
