@@ -37,13 +37,13 @@ export function ThreadsPage() {
       <div className="grid gap-3">
         {threads.data?.data.map((thread) => (
           <article
-            className="card border border-base-300 bg-base-100 shadow-sm"
+            className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary"
             key={thread.id}
           >
             <div className="card-body gap-2 p-5">
-              <h2 className="card-title text-lg">
+              <Link className="card-title text-lg hover:text-primary" to={`/chat/${thread.id}`}>
                 {thread.name ?? (thread.preview || "Untitled thread")}
-              </h2>
+              </Link>
               <p className="line-clamp-2 text-sm text-base-content/70">
                 {thread.preview || "No preview available."}
               </p>

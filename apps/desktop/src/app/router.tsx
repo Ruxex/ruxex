@@ -5,6 +5,8 @@ import { AccountPage } from "../pages/AccountPage";
 import { HomePage } from "../pages/HomePage";
 import { LoginPage } from "../pages/LoginPage";
 import { NewChatPage } from "../pages/NewChatPage";
+import { ProjectHomePage } from "../pages/ProjectHomePage";
+import { ThreadPage } from "../pages/ThreadPage";
 import { ThreadsPage } from "../pages/ThreadsPage";
 
 export const router = createHashRouter([
@@ -17,6 +19,9 @@ export const router = createHashRouter([
       { path: "account", element: <AccountPage /> },
       { path: "threads", element: <ThreadsPage /> },
       { path: "chat/new", element: <NewChatPage /> },
+      { path: "chat/:threadId", element: <ThreadPage /> },
+      { path: "projects/:projectId", element: <ProjectHomePage /> },
+      { path: "projects/:projectId/chat/new", element: <NewChatPage /> },
     ],
   },
 ]);

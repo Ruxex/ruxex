@@ -1,29 +1,43 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import {
   useCreateThread,
   useModelList,
   useSendMessage,
+  useProject,
 } from "../app-server/hooks";
 
 export function NewChatPage() {
   const navigate = useNavigate();
+  const { projectId } = useParams<{ projectId?: string }>();
   const models = useModelList();
+  const project = useProject(projectId ?? "");
   const createThread = useCreateThread();
   const sendMessage = useSendMessage();
   const [model, setModel] = useState("");
+  const [reasoningEffort, setReasoningEffort] = useState("");
   const [message, setMessage] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      const thread = await createThread.mutateAsync(model ? { model } : {});
+      const root = project.data?.project.roots[0]?.path;
+      const thread = await createThread.mutateAsync({
+        ...(model ? { model } : {}),
+        ...(projectId ? { projectId } : {}),
+        ...(root ? { cwd: root } : {}),
+        approvalPolicy: "on-request",
+        sandbox: "workspace-write",
+        ...(reasoningEffort
+          ? { config: { model_reasoning_effort: reasoningEffort } }
+          : {}),
+      });
       await sendMessage.mutateAsync({
         threadId: thread.thread.id,
         input: [{ type: "text", text: message, text_elements: [] }],
       });
-      navigate("/threads");
+      navigate(`/chat/${thread.thread.id}`);
     } catch {
       // The mutation state renders the error below the form.
     }
@@ -61,6 +75,19 @@ export function NewChatPage() {
                   {item.displayName}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="form-control">
+            <span className="label-text">Reasoning</span>
+            <select
+              className="select select-bordered mt-2"
+              value={reasoningEffort}
+              onChange={(event) => setReasoningEffort(event.target.value)}
+            >
+              <option value="">Use the default reasoning</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
             </select>
           </label>
           <label className="form-control">
