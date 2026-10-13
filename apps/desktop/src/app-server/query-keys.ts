@@ -4,6 +4,9 @@ export const appServerQueryKeys = {
   all: ["app-server"] as const,
   status: ["app-server", "status"] as const,
   models: ["app-server", "models"] as const,
+  provider: ["app-server", "provider"] as const,
+  providerCapabilities: ["app-server", "provider", "capabilities"] as const,
+  permissionProfiles: ["app-server", "permission-profiles"] as const,
   account: ["app-server", "account"] as const,
   accountRead: (refreshToken: boolean) =>
     ["app-server", "account", { refreshToken }] as const,

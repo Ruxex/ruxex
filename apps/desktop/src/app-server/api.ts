@@ -72,3 +72,10 @@ export function rejectServerRequest(
 ): Promise<void> {
   return invoke("app_server_reject_server_request", { requestId, error });
 }
+
+export function rejectServerRequestWithMessage(
+  requestId: RequestId,
+  message: string,
+): Promise<void> {
+  return rejectServerRequest(requestId, { code: -32000, message });
+}

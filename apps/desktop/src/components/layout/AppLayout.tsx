@@ -44,6 +44,12 @@ export function AppLayout() {
               <NavLink className="btn btn-ghost btn-sm" to="/account">
                 Account
               </NavLink>
+              <NavLink className="btn btn-ghost btn-sm" to="/approvals">
+                Approvals
+              </NavLink>
+              <NavLink className="btn btn-ghost btn-sm" to="/settings">
+                Settings
+              </NavLink>
             </nav>
             <div className="badge badge-outline gap-2">
               <span

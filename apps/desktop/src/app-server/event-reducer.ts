@@ -239,7 +239,8 @@ function requestKey(requestId: RequestId): string {
 }
 
 function serverRequestKind(request: ServerRequest): PendingServerRequest["kind"] {
-  if (request.method.includes("requestApproval")) {
+  const method = typeof request.method === "string" ? request.method : "";
+  if (method.includes("requestApproval")) {
     return "approval";
   }
   if (request.method === "item/tool/requestUserInput") {

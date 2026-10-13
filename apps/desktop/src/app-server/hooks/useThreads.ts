@@ -18,6 +18,19 @@ export function useThreadList(params: v2.ThreadListParams = {}) {
   });
 }
 
+export function archivedThreadListParams(): v2.ThreadListParams {
+  return {
+    archived: true,
+    limit: 50,
+    sortKey: "updated_at",
+    sortDirection: "desc",
+  };
+}
+
+export function useArchivedThreadList() {
+  return useThreadList(archivedThreadListParams());
+}
+
 export function useThread(threadId: string, includeTurns = false) {
   const status = useAppServerStatus();
 
@@ -122,5 +135,31 @@ export function useCreateThread() {
         queryKey: appServerQueryKeys.threads,
       });
     },
+  });
+}
+
+function invalidateThreadList(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: appServerQueryKeys.threads });
+}
+
+export function useArchiveThread() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: v2.ThreadArchiveParams) => {
+      const response = await requestAppServerMethod("thread/archive", params);
+      return response.response;
+    },
+    onSuccess: () => invalidateThreadList(queryClient),
+  });
+}
+
+export function useUnarchiveThread() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: v2.ThreadUnarchiveParams) => {
+      const response = await requestAppServerMethod("thread/unarchive", params);
+      return response.response;
+    },
+    onSuccess: () => invalidateThreadList(queryClient),
   });
 }
