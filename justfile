@@ -99,7 +99,7 @@ bench-smoke:
     just bench -- --test
 
 # Regenerate all checked-in generated artifacts.
-generate: write-config-schema write-app-server-schema write-hooks-schema
+generate: write-config-schema write-app-server-schema write-app-server-schema-experimental write-hooks-schema
 
 # Regenerate the json schema for config.toml from the current config types.
 write-config-schema:
@@ -108,6 +108,9 @@ write-config-schema:
 # Regenerate app-server protocol schemas.
 write-app-server-schema *args:
     {{ python }} scripts/write_app_server_schema.py {args}
+
+write-app-server-schema-experimental:
+    {{ python }} scripts/write_app_server_schema.py --experimental
 
 # Generate JSON and HTML for workspace member crate dependencies.
 crate-dependency-graph *args:

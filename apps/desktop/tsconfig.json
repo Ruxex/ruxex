@@ -18,10 +18,10 @@
     "baseUrl": ".",
     "paths": {
       "@genex/protocol": [
-        "../../crates/app-server-protocol/schema/typescript/index.ts"
+        "../../crates/app-server-protocol/schema/typescript-experimental/index.ts"
       ],
       "@genex/protocol/*": [
-        "../../crates/app-server-protocol/schema/typescript/*"
+        "../../crates/app-server-protocol/schema/typescript-experimental/*"
       ]
     }
   },

@@ -9,7 +9,7 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(rootDir, "../..");
 const protocolRoot = path.join(
   repositoryRoot,
-  "crates/app-server-protocol/schema/typescript",
+  "crates/app-server-protocol/schema/typescript-experimental",
 );
 
 export default defineConfig({

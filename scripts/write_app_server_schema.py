@@ -18,7 +18,7 @@ def main() -> None:
     parser.add_argument(
         "--experimental",
         action="store_true",
-        help="regenerate the precomputed experimental exports",
+        help="regenerate the checked-in experimental TypeScript tree and precomputed exports",
     )
     args = parser.parse_args()
 

@@ -6,6 +6,7 @@ use crate::precomputed_exports::decode_precomputed_exports;
 use crate::schema_fixtures::SchemaFixtureOptions;
 use crate::schema_fixtures::collect_export_files_recursive;
 use crate::schema_fixtures::generate_typescript_schema_fixture_subtree_for_tests;
+use crate::schema_fixtures::generate_typescript_schema_fixture_subtree_for_tests_with_options;
 use crate::schema_fixtures::read_schema_fixture_subtree;
 use crate::schema_fixtures::write_schema_fixtures_with_options;
 use anyhow::Context;
@@ -64,6 +65,54 @@ fn typescript_schema_fixtures_match_generated() -> Result<()> {
     );
 
     Ok(())
+}
+
+#[test]
+fn experimental_typescript_schema_fixtures_match_generated() -> Result<()> {
+    let schema_root = schema_root()?;
+    let fixture_tree = read_tree(&schema_root, "typescript-experimental")?;
+    let generated_tree =
+        generate_typescript_schema_fixture_subtree_for_tests_with_options(SchemaFixtureOptions {
+            experimental_api: true,
+        })?;
+
+    let client_request = String::from_utf8_lossy(
+        generated_tree
+            .get(Path::new("ClientRequest.ts"))
+            .context("generated experimental ClientRequest.ts should exist")?,
+    );
+    anyhow::ensure!(
+        client_request.contains("\"method\": \"project/list\""),
+        "experimental ClientRequest.ts should contain project/list"
+    );
+    anyhow::ensure!(
+        client_request.contains("\"method\": \"thread/queue/add\""),
+        "experimental ClientRequest.ts should contain thread/queue/add"
+    );
+    let client_response = String::from_utf8_lossy(
+        generated_tree
+            .get(Path::new("ClientResponse.ts"))
+            .context("generated experimental ClientResponse.ts should exist")?,
+    );
+    anyhow::ensure!(
+        client_response.contains("\"method\": \"project/list\""),
+        "experimental ClientResponse.ts should contain project/list"
+    );
+    anyhow::ensure!(
+        client_response.contains("\"method\": \"thread/queue/add\""),
+        "experimental ClientResponse.ts should contain thread/queue/add"
+    );
+    let thread_start = String::from_utf8_lossy(
+        generated_tree
+            .get(Path::new("v2/ThreadStartParams.ts"))
+            .context("generated experimental ThreadStartParams.ts should exist")?,
+    );
+    anyhow::ensure!(
+        thread_start.contains("projectId"),
+        "experimental ThreadStartParams.ts should contain projectId"
+    );
+
+    assert_schema_trees_match("typescript-experimental", &fixture_tree, &generated_tree)
 }
 
 #[test]

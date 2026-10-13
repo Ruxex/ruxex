@@ -133,6 +133,8 @@ pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> R
         filter_experimental_ts(out_dir)?;
     }
 
+    ensure_typescript_namespace_imports(out_dir)?;
+
     if options.generate_indices {
         generate_index_ts(out_dir)?;
         generate_index_ts(&v2_out_dir)?;
@@ -170,6 +172,38 @@ pub fn generate_ts_with_options(out_dir: &Path, options: GenerateTsOptions) -> R
     trim_trailing_whitespace_in_ts_files(&ts_files)?;
 
     Ok(())
+}
+
+pub(crate) fn ensure_typescript_namespace_imports(out_dir: &Path) -> Result<()> {
+    for path in ts_files_in_recursive(out_dir)? {
+        let content = fs::read_to_string(&path)
+            .with_context(|| format!("Failed to read {}", path.display()))?;
+        let updated = ensure_typescript_namespace_imports_contents(content);
+        fs::write(&path, updated).with_context(|| format!("Failed to write {}", path.display()))?;
+    }
+    Ok(())
+}
+
+pub(crate) fn ensure_typescript_namespace_imports_tree(
+    tree: &mut BTreeMap<PathBuf, String>,
+) {
+    for content in tree.values_mut() {
+        *content = ensure_typescript_namespace_imports_contents(std::mem::take(content));
+    }
+}
+
+fn ensure_typescript_namespace_imports_contents(content: String) -> String {
+    if !content.contains("v2.") || content.contains("from \"./v2\";") {
+        return content;
+    }
+
+    if let Some(rest) = content.strip_prefix(GENERATED_TS_HEADER) {
+        format!(
+            "{GENERATED_TS_HEADER}import type * as v2 from \"./v2\";\n\n{rest}"
+        )
+    } else {
+        format!("import type * as v2 from \"./v2\";\n\n{content}")
+    }
 }
 
 pub fn generate_json(out_dir: &Path) -> Result<()> {

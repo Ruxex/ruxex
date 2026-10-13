@@ -8,6 +8,7 @@ use crate::TS;
 use crate::export::GENERATED_TS_HEADER;
 use crate::export::filter_experimental_ts_tree;
 use crate::export::generate_index_ts_tree;
+use crate::export::ensure_typescript_namespace_imports_tree;
 use crate::export::trim_trailing_line_whitespace;
 use crate::precomputed_exports::PrecomputedExports;
 use crate::protocol::common::visit_client_response_types;
@@ -58,6 +59,15 @@ pub fn read_schema_fixture_subtree(
 #[doc(hidden)]
 pub fn generate_typescript_schema_fixture_subtree_for_tests() -> Result<BTreeMap<PathBuf, Vec<u8>>>
 {
+    generate_typescript_schema_fixture_subtree_for_tests_with_options(
+        SchemaFixtureOptions::default(),
+    )
+}
+
+#[doc(hidden)]
+pub fn generate_typescript_schema_fixture_subtree_for_tests_with_options(
+    options: SchemaFixtureOptions,
+) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
     let mut files = BTreeMap::new();
     let mut seen = HashSet::new();
 
@@ -77,8 +87,17 @@ pub fn generate_typescript_schema_fixture_subtree_for_tests() -> Result<BTreeMap
     })?;
     collect_typescript_fixture_file::<ServerNotification>(&mut files, &mut seen)?;
     collect_typescript_fixture_file::<ServerNotificationEnvelope>(&mut files, &mut seen)?;
+    if options.experimental_api {
+        collect_typescript_fixture_file::<crate::UserVerificationRpcError>(
+            &mut files,
+            &mut seen,
+        )?;
+    }
 
-    filter_experimental_ts_tree(&mut files)?;
+    if !options.experimental_api {
+        filter_experimental_ts_tree(&mut files)?;
+    }
+    ensure_typescript_namespace_imports_tree(&mut files);
     generate_index_ts_tree(&mut files);
     for content in files.values_mut() {
         *content = trim_trailing_line_whitespace(content);
@@ -145,12 +164,34 @@ fn write_experimental_precomputed_exports(schema_root: &Path) -> Result<()> {
     )?;
     crate::export::generate_json_with_experimental(&json_out_dir, /*experimental_api*/ true)?;
 
+    let checked_in_typescript_dir = schema_root.join("typescript-experimental");
+    ensure_empty_dir(&checked_in_typescript_dir)?;
+    copy_dir_recursive(&typescript_out_dir, &checked_in_typescript_dir)?;
+
     let exports = PrecomputedExports {
         typescript: collect_export_files_recursive(&typescript_out_dir)?,
         json_schema: collect_export_files_recursive(&json_out_dir)?,
         internal_json_schema: BTreeMap::new(),
     };
     write_precomputed_exports(schema_root, "experimental", &exports)
+}
+
+fn copy_dir_recursive(from: &Path, to: &Path) -> Result<()> {
+    for entry in std::fs::read_dir(from).with_context(|| format!("read {}", from.display()))? {
+        let entry = entry.with_context(|| format!("read entry in {}", from.display()))?;
+        let source = entry.path();
+        let destination = to.join(entry.file_name());
+        if source.is_dir() {
+            std::fs::create_dir_all(&destination)
+                .with_context(|| format!("create {}", destination.display()))?;
+            copy_dir_recursive(&source, &destination)?;
+        } else {
+            std::fs::copy(&source, &destination).with_context(|| {
+                format!("copy {} to {}", source.display(), destination.display())
+            })?;
+        }
+    }
+    Ok(())
 }
 
 fn write_precomputed_exports(
