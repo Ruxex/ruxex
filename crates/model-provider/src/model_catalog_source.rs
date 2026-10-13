@@ -1,4 +1,5 @@
 use genex_http_client::HttpClientFactory;
+use genex_models_manager::manager::ModelCatalogAuthContext;
 use genex_models_manager::manager::ModelCatalogFuture;
 use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_models_manager::manager::ModelCatalogSource;
@@ -20,6 +21,14 @@ impl ProviderModelCatalogSource {
 }
 
 impl ModelCatalogSource for ProviderModelCatalogSource {
+    fn auth_context(&self) -> ModelCatalogAuthContext {
+        let auth = self.provider.model_catalog_auth();
+        ModelCatalogAuthContext {
+            uses_managed_auth: auth.uses_managed_auth,
+            has_api_key_auth: auth.has_api_key_auth,
+        }
+    }
+
     fn identity(&self) -> Option<String> {
         self.provider.model_catalog_identity().ok()
     }

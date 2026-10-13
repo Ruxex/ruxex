@@ -42,6 +42,7 @@ use genex_model_provider_info::WireApi;
 use genex_models_manager::manager::ModelCatalogSnapshot;
 use genex_protocol::account::ProviderAccount;
 use genex_protocol::account::ProviderAuthStatus;
+use genex_protocol::auth::AuthMode;
 use genex_protocol::error::GenexErr;
 use genex_protocol::error::Result as CoreResult;
 use genex_protocol::protocol::RateLimitSnapshot;
@@ -968,6 +969,23 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         ProviderCapabilities::default()
     }
 
+    fn model_catalog_auth(&self) -> crate::contract::ProviderModelCatalogAuth {
+        match self
+            .credential_manager()
+            .and_then(|manager| manager.auth_mode())
+        {
+            Some(AuthMode::Headers) => crate::contract::ProviderModelCatalogAuth {
+                uses_managed_auth: true,
+                has_api_key_auth: false,
+            },
+            Some(AuthMode::ApiKey) => crate::contract::ProviderModelCatalogAuth {
+                uses_managed_auth: false,
+                has_api_key_auth: true,
+            },
+            None => crate::contract::ProviderModelCatalogAuth::default(),
+        }
+    }
+
     /// Returns whether requests made through this provider should include attestation.
     fn supports_attestation(&self) -> bool {
         false
@@ -1168,6 +1186,10 @@ macro_rules! impl_model_provider_for_runtime {
                 capabilities.command_auth =
                     capabilities.command_auth || ProviderRuntime::info(self).has_command_auth();
                 capabilities
+            }
+
+            fn model_catalog_auth(&self) -> crate::contract::ProviderModelCatalogAuth {
+                ProviderRuntime::model_catalog_auth(self)
             }
 
             fn supports_attestation(&self) -> bool {
@@ -2174,7 +2196,6 @@ mod tests {
         let manager = build_models_manager(
             test_genex_home(),
             Arc::new(ProviderModelCatalogSource::new(provider)),
-            Some(credential_manager),
             /*config_model_catalog*/ None,
         );
         let catalog = manager

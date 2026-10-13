@@ -422,7 +422,6 @@ pub fn build_models_manager_with_provider(
     let manager = build_catalog_models_manager(
         config.genex_home.to_path_buf(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-        None,
         config.model_catalog.clone(),
     );
     // MyProvider's API is the source of truth for the user's model catalog; keep discovery
@@ -712,7 +711,6 @@ impl ThreadManager {
                 models_manager: build_catalog_models_manager(
                     genex_home,
                     Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-                    Some(credential_manager.clone()),
                     /*config_model_catalog*/ None,
                 ),
                 git_root_discovery: Arc::default(),

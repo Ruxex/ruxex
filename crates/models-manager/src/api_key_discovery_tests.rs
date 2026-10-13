@@ -13,17 +13,13 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
     let endpoint = Arc::new(TestModelCatalogSource {
         has_command_auth: true,
         uses_managed_auth: false,
+        has_api_key_auth: true,
         responses: Mutex::new(vec![models.clone()].into()),
         etag: None,
         fetch_count: AtomicUsize::new(0),
         observed_proxy_policy: Mutex::new(None),
     });
-    let manager = RemoteModelsManager::new_without_cache(
-        endpoint.clone(),
-        Some(CredentialManager::from_auth_for_testing(
-            GenexAuth::from_api_key("test-key"),
-        )),
-    );
+    let manager = RemoteModelsManager::new_without_cache(endpoint.clone());
     assert_eq!(
         manager
             .raw_model_catalog(RefreshStrategy::Online, DEFAULT_HTTP_CLIENT_FACTORY)
@@ -39,9 +35,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     let home = tempdir().unwrap();
     let models = vec![remote_model("dynamic", "Dynamic", /*priority*/ 0)];
     let endpoint = TestModelCatalogSource::without_refresh(vec![models.clone()]);
-    let auth = CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("test-key"));
-    let manager =
-        RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
+    let manager = RemoteModelsManager::new(home.path().into(), endpoint.clone());
 
     for strategy in [
         RefreshStrategy::Online,
@@ -58,8 +52,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     }
     assert_eq!(endpoint.fetch_count(), 0);
 
-    let manager =
-        RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
+    let manager = RemoteModelsManager::new(home.path().into(), endpoint.clone());
     manager.set_api_key_model_discovery_enabled(/*enabled*/ true);
     assert_eq!(
         manager
@@ -72,8 +65,7 @@ async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
 
     // A new session must honor its startup flag even when a matching disk cache exists.
     for enabled in [false, true] {
-        let restarted =
-            RemoteModelsManager::new(home.path().into(), endpoint.clone(), Some(auth.clone()));
+        let restarted = RemoteModelsManager::new(home.path().into(), endpoint.clone());
         restarted.set_api_key_model_discovery_enabled(enabled);
         let expected: &[ModelInfo] = if enabled { &models } else { &[] };
         for strategy in [RefreshStrategy::Offline, RefreshStrategy::OnlineIfUncached] {

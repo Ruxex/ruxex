@@ -134,7 +134,6 @@ pub fn models_manager_with_provider(
     build_models_manager(
         genex_home,
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-        Some(credential_manager),
         /*config_model_catalog*/ None,
     )
 }

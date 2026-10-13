@@ -352,6 +352,13 @@ pub struct ProviderAuthEnvironment {
     pub provider_env_key_present: Option<bool>,
 }
 
+/// Non-secret authentication metadata needed by model catalog discovery.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ProviderModelCatalogAuth {
+    pub uses_managed_auth: bool,
+    pub has_api_key_auth: bool,
+}
+
 /// A provider-owned credential field exposed to a host login form.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderAuthField {
@@ -782,6 +789,10 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
     }
 
     fn capabilities(&self) -> ProviderCapabilities;
+
+    fn model_catalog_auth(&self) -> ProviderModelCatalogAuth {
+        ProviderModelCatalogAuth::default()
+    }
 
     /// Returns whether this provider includes attestation on model requests.
     fn supports_attestation(&self) -> bool {

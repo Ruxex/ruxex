@@ -16,13 +16,7 @@ async fn mismatched_and_legacy_cache_entries_fetch_the_current_catalog() {
             models: vec![stale],
         });
         let endpoint = TestModelCatalogSource::new(vec![vec![current.clone()]]);
-        let manager = RemoteModelsManager::new_with_cache(
-            cache.clone(),
-            endpoint.clone(),
-            Some(CredentialManager::from_auth_for_testing(
-                GenexAuth::from_api_key("test-api-key"),
-            )),
-        );
+        let manager = RemoteModelsManager::new_with_cache(cache.clone(), endpoint.clone());
         manager.set_api_key_model_discovery_enabled(true);
         assert_eq!(
             manager

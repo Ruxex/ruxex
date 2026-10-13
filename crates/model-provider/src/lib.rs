@@ -51,6 +51,7 @@ pub use contract::ProviderDescriptor;
 pub use contract::ProviderError;
 pub use contract::ProviderFuture;
 pub use contract::ProviderModelCatalog;
+pub use contract::ProviderModelCatalogAuth;
 pub use contract::ProviderReasoning;
 pub use contract::ProviderReasoningContext;
 pub use contract::ProviderReasoningSummaryDelivery;

@@ -15,7 +15,6 @@ workspace = true
 [dependencies]
 chrono = { workspace = true, features = ["serde"] }
 genex-http-client = { workspace = true }
-genex-login = { workspace = true }
 genex-otel = { workspace = true }
 genex-protocol = { workspace = true }
 genex-prompts = { workspace = true }

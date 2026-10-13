@@ -22,6 +22,7 @@ use genex_core::TurnInputRequest;
 use genex_core::shell::default_user_shell;
 use genex_features::Feature;
 use genex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets;
+use genex_models_manager::manager::ModelCatalogAuthContext;
 use genex_models_manager::manager::StaticModelsManager;
 use genex_models_manager::test_support::test_models_response;
 use genex_prompts::render_model_instructions;
@@ -154,7 +155,7 @@ async fn prompt_tools_are_consistent_across_requests(
         .instructions_template = Some(MODEL_BASE_INSTRUCTIONS.to_string());
     // Supply model instructions without making them an explicit config catalog override.
     let models_manager = Arc::new(StaticModelsManager::new(
-        /*credential_manager*/ None,
+        ModelCatalogAuthContext::default(),
         ModelCatalog {
             models: vec![model],
         },

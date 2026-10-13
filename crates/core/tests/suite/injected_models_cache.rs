@@ -19,8 +19,6 @@ use core_test_support::submit_thread_settings;
 use core_test_support::test_genex::test_genex;
 use core_test_support::wait_for_event;
 use genex_http_client::HttpClientFactory;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
 use genex_model_provider::ProviderModelCatalogSource;
 use genex_model_provider::create_model_provider;
 use genex_models_manager::cache::ModelsCache;
@@ -184,13 +182,7 @@ fn models_manager(
     cache: Arc<dyn ModelsCache>,
     endpoint: Arc<TestModelsEndpoint>,
 ) -> SharedModelsManager {
-    Arc::new(RemoteModelsManager::new_with_cache(
-        cache,
-        endpoint,
-        Some(CredentialManager::from_auth_for_testing(GenexAuth::from_api_key(
-            "test-api-key",
-        ))),
-    ))
+    Arc::new(RemoteModelsManager::new_with_cache(cache, endpoint))
 }
 
 async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &str) -> Result<()> {
@@ -321,7 +313,6 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     let manager = build_models_manager_with_cache(
         cache.clone(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-        provider.credential_manager(),
         /*config_model_catalog*/ None,
     );
     let mut old_model = remote_model("legacy-model");

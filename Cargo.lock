@@ -5128,7 +5128,6 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "genex-http-client",
- "genex-login",
  "genex-otel",
  "genex-prompts",
  "genex-protocol",

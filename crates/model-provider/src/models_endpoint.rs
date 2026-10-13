@@ -490,10 +490,10 @@ mod tests {
             RESIDENCY_HEADER_NAME.to_string(),
             "us".into(),
         )]));
-        let manager = RemoteModelsManager::new_without_cache(
-            Arc::new(ModelsEndpoint::new(provider, Some(auth.clone()))),
+        let manager = RemoteModelsManager::new_without_cache(Arc::new(ModelsEndpoint::new(
+            provider,
             Some(auth.clone()),
-        );
+        )));
         let catalog = manager
             .raw_model_catalog(
                 RefreshStrategy::OnlineIfUncached,

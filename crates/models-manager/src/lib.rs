@@ -7,7 +7,6 @@ pub mod model_presets;
 pub mod test_support;
 
 pub use config::ModelsManagerConfig;
-pub use genex_protocol::auth::AuthMode;
 
 /// Convert the client version string to a whole version string (e.g. "1.2.3-alpha.4" -> "1.2.3").
 pub fn client_version_to_whole() -> String {
