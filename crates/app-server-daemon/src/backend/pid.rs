@@ -3,6 +3,7 @@
 #[path = "pid_identity.rs"]
 mod identity;
 
+use std::ffi::OsString;
 use std::io::SeekFrom;
 use std::path::Path;
 use std::path::PathBuf;
@@ -33,6 +34,7 @@ pub(crate) struct PidBackend {
     genex_bin: PathBuf,
     pid_file: PathBuf,
     lock_file: PathBuf,
+    command_args: Option<Vec<OsString>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -75,12 +77,17 @@ enum PidFileState {
 }
 
 impl PidBackend {
-    pub(crate) fn new(genex_bin: PathBuf, pid_file: PathBuf) -> Self {
+    pub(crate) fn new(
+        genex_bin: PathBuf,
+        pid_file: PathBuf,
+        command_args: Option<Vec<OsString>>,
+    ) -> Self {
         let lock_file = pid_file.with_extension("pid.lock");
         Self {
             genex_bin,
             pid_file,
             lock_file,
+            command_args,
         }
     }
 
@@ -287,8 +294,13 @@ impl PidBackend {
     }
 
     #[cfg(unix)]
-    fn command_args(&self) -> Vec<&str> {
-        vec!["app-server", "--listen", "unix://"]
+    fn command_args(&self) -> Vec<OsString> {
+        self.command_args.clone().unwrap_or_else(|| {
+            ["app-server", "--listen", "unix://"]
+                .into_iter()
+                .map(OsString::from)
+                .collect()
+        })
     }
 
     #[cfg(unix)]

@@ -12,6 +12,8 @@ pub(super) async fn run_main_inner(
     arg0_paths: Arg0DispatchPaths,
     loader_overrides: LoaderOverrides,
     explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    provider_factory: Option<ProviderRuntimeFactory>,
+    host_executable: Option<std::path::PathBuf>,
 ) -> std::io::Result<AppExitInfo> {
     if cli.no_daemon && explicit_remote_endpoint.is_some() {
         return Err(std::io::Error::other(
@@ -272,9 +274,20 @@ pub(super) async fn run_main_inner(
             .with_restored(|| async {
                 // Package installation may print progress; keep ordinary Ctrl+C handling.
                 crossterm::terminal::disable_raw_mode()?;
-                let result =
+                let result = if let Some(executable) = host_executable.as_deref() {
+                    genex_app_server_daemon::run_with_host_executable(
+                        genex_app_server_daemon::LifecycleCommand::Start,
+                        executable,
+                        &[
+                            std::ffi::OsString::from(super::APP_SERVER_DAEMON_MODE_ARG),
+                            std::ffi::OsString::from("--managed-daemon"),
+                        ],
+                    )
+                    .await
+                } else {
                     genex_app_server_daemon::run(genex_app_server_daemon::LifecycleCommand::Start)
-                        .await;
+                        .await
+                };
                 daemon_telemetry::record_start(&config, &result).await;
                 result.map_err(|err| {
                     std::io::Error::other(format!("{err:#}\n{}", daemon_startup::FAILURE_HINT))
@@ -571,6 +584,7 @@ pub(super) async fn run_main_inner(
         daemon_startup_warning,
         launch_telemetry,
         startup_draft,
+        provider_factory,
     )
     .await
     .map_err(|err| {

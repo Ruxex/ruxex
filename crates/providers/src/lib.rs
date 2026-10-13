@@ -10,9 +10,9 @@ mod provider;
 pub use cloudflare::CloudflareModelProvider;
 pub use cloudflare::create_cloudflare_provider;
 pub use genex_model_provider::SharedModelProvider;
+pub use genex_model_provider_info::ModelProviderInfo;
 pub use provider::create_model_provider;
 pub use provider::create_model_provider_with_http_client_factory;
-pub use genex_model_provider_info::ModelProviderInfo;
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,7 @@
 mod auth;
 mod bearer_auth_provider;
 mod contract;
+mod factory;
 mod home_marker;
 mod model_catalog_source;
 mod models_endpoint;
@@ -107,6 +108,8 @@ pub use contract::UsageRequest;
 pub use contract::build_provider_text_controls;
 #[doc(hidden)]
 pub use contract::headers_to_http;
+pub use factory::ModelProviderFactory;
+pub use factory::ProviderInit;
 pub use genex_protocol::account::ProviderAccount;
 pub use home_marker::PROVIDER_HOME_FORMAT_VERSION;
 pub use home_marker::PROVIDER_HOME_MARKER_FILE;

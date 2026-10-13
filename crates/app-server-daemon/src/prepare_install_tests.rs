@@ -17,6 +17,7 @@ fn daemon(home: &Path) -> crate::Daemon {
         operation_lock_file: state.join("daemon.lock"),
         settings_file: state.join("settings.json"),
         managed_genex_bin: crate::managed_install::managed_genex_bin(home),
+        host_command_args: None,
     }
 }
 

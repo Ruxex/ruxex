@@ -15,6 +15,69 @@ pub use login::run_login_delete;
 pub use login::run_login_status;
 pub use login::run_logout;
 
+use anyhow::Result;
+use genex_app_server::AppServerExit;
+use genex_app_server::AppServerRuntimeOptions;
+use genex_app_server::AppServerTransport;
+use genex_app_server::AppServerWebsocketAuthSettings;
+use genex_app_server::ModelProviderFactory;
+use genex_app_server::app_server_control_socket_path;
+use genex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
+use genex_app_server_daemon::LifecycleOutput as AppServerLifecycleOutput;
+use genex_app_server_daemon::run_with_host_executable;
+use genex_arg0::Arg0DispatchPaths;
+use genex_config::LoaderOverrides;
+use genex_protocol::protocol::SessionSource;
+use std::ffi::OsString;
+
+/// Hidden argument used by a provider-owned host when it re-enters itself as
+/// the AppServer daemon process.
+pub const APP_SERVER_DAEMON_MODE_ARG: &str = "__genex-app-server-daemon";
+
+/// Starts the current host executable as its provider-owned AppServer daemon.
+pub async fn start_host_app_server_daemon() -> Result<AppServerLifecycleOutput> {
+    let executable = std::env::current_exe()?;
+    let command_args = [
+        OsString::from(APP_SERVER_DAEMON_MODE_ARG),
+        OsString::from("--managed-daemon"),
+    ];
+    Ok(
+        run_with_host_executable(AppServerLifecycleCommand::Start, &executable, &command_args)
+            .await?,
+    )
+}
+
+/// Runs the generic AppServer entrypoint for the host's hidden daemon mode.
+///
+/// The caller's binary should dispatch to this function before normal CLI
+/// parsing when [`APP_SERVER_DAEMON_MODE_ARG`] is present. `P` is compiled into
+/// the host binary and is constructed in the daemon process by `P::new`.
+pub async fn run_host_app_server_daemon<P: ModelProviderFactory>(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+) -> Result<AppServerExit> {
+    let genex_home = genex_core::config::find_genex_home()?;
+    let socket_path = app_server_control_socket_path(&genex_home)?;
+    let exit = genex_app_server::run_main_with_transport_options_and_provider::<P>(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        /*default_metrics_enabled*/ false,
+        AppServerTransport::UnixSocket { socket_path },
+        SessionSource::Cli,
+        AppServerWebsocketAuthSettings::default(),
+        AppServerRuntimeOptions {
+            managed_daemon: true,
+            ..Default::default()
+        },
+    )
+    .await?;
+    Ok(exit)
+}
+
 #[derive(Debug, Default, Args)]
 pub struct SandboxStateArgs {
     /// JSON value from `genex/sandbox-state-meta` to apply directly.

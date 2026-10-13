@@ -9,6 +9,7 @@ mod settings;
 pub mod telemetry;
 mod thread_recovery;
 
+use std::ffi::OsString;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -107,6 +108,25 @@ pub async fn run(command: LifecycleCommand) -> Result<LifecycleOutput> {
     Box::pin(Daemon::from_environment()?.run(command)).await
 }
 
+/// Runs the daemon lifecycle against a host-owned executable.
+///
+/// The executable is expected to enter its AppServer daemon mode when invoked
+/// with `command_args`. This lets a generic host launch the same binary that
+/// owns its concrete provider type instead of launching the built-in managed
+/// executable.
+pub async fn run_with_host_executable(
+    command: LifecycleCommand,
+    executable: &Path,
+    command_args: &[OsString],
+) -> Result<LifecycleOutput> {
+    ensure_supported_platform()?;
+    Box::pin(
+        Daemon::from_environment_with_host_executable(executable, command_args.to_vec())?
+            .run(command),
+    )
+    .await
+}
+
 pub async fn bootstrap(options: BootstrapOptions) -> Result<BootstrapOutput> {
     ensure_supported_platform()?;
     Box::pin(Daemon::from_environment()?.bootstrap(options, None)).await
@@ -132,6 +152,7 @@ struct Daemon {
     operation_lock_file: PathBuf,
     settings_file: PathBuf,
     managed_genex_bin: PathBuf,
+    host_command_args: Option<Vec<OsString>>,
 }
 
 impl Daemon {
@@ -155,7 +176,18 @@ impl Daemon {
             operation_lock_file: state_dir.join(OPERATION_LOCK_FILE_NAME),
             settings_file: state_dir.join(SETTINGS_FILE_NAME),
             managed_genex_bin,
+            host_command_args: None,
         })
+    }
+
+    fn from_environment_with_host_executable(
+        executable: &Path,
+        command_args: Vec<OsString>,
+    ) -> Result<Self> {
+        let mut daemon = Self::from_environment()?;
+        daemon.managed_genex_bin = executable.to_path_buf();
+        daemon.host_command_args = Some(command_args);
+        Ok(daemon)
     }
 
     fn recovery_file(&self) -> Result<PathBuf> {
@@ -231,8 +263,10 @@ impl Daemon {
             if let Err(err) = thread_recovery::discard_pending(self) {
                 eprintln!("warning: failed to clear stale daemon recovery before start: {err}");
             }
-            prepare_install::prepare(self, &settings, None).await?;
-            managed.managed_genex_bin = self.current_managed_genex_bin()?;
+            if self.host_command_args.is_none() {
+                prepare_install::prepare(self, &settings, None).await?;
+                managed.managed_genex_bin = self.current_managed_genex_bin()?;
+            }
             managed.ensure_managed_genex_bin()?;
             let pid = managed.start_managed_backend(&settings).await?;
             (
@@ -256,9 +290,13 @@ impl Daemon {
                 "app server is running but is not managed by genex app-server daemon"
             ));
         }
-        prepare_install::prepare(self, &settings, None).await?;
+        if self.host_command_args.is_none() {
+            prepare_install::prepare(self, &settings, None).await?;
+        }
         let mut managed = self.clone();
-        managed.managed_genex_bin = self.current_managed_genex_bin()?;
+        if self.host_command_args.is_none() {
+            managed.managed_genex_bin = self.current_managed_genex_bin()?;
+        }
 
         managed.ensure_managed_genex_bin()?;
         if let Some(backend) = self.running_backend_instance(&settings).await? {
@@ -453,6 +491,9 @@ impl Daemon {
     }
 
     fn current_managed_genex_bin(&self) -> Result<PathBuf> {
+        if self.host_command_args.is_some() {
+            return Ok(self.managed_genex_bin.clone());
+        }
         let home = self
             .settings_file
             .parent()
@@ -474,6 +515,9 @@ impl Daemon {
 
     #[cfg(unix)]
     async fn managed_genex_version_best_effort(&self) -> Option<String> {
+        if self.host_command_args.is_some() {
+            return None;
+        }
         managed_genex_version(&self.managed_genex_bin).await.ok()
     }
 
@@ -489,6 +533,7 @@ impl Daemon {
         BackendPaths {
             genex_bin: managed_genex_bin.to_path_buf(),
             pid_file: self.pid_file.clone(),
+            command_args: self.host_command_args.clone(),
         }
     }
 
@@ -596,6 +641,7 @@ mod tests {
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
             managed_genex_bin: super::managed_genex_bin(home.path()),
+            host_command_args: None,
         };
         let lock = daemon.acquire_operation_lock().await.expect("lock");
         let stop = daemon.run(super::LifecycleCommand::Stop);
@@ -628,6 +674,7 @@ mod tests {
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
             managed_genex_bin: state.join("missing-genex"),
+            host_command_args: None,
         };
         assert_eq!(
             daemon
@@ -652,6 +699,7 @@ mod tests {
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
             managed_genex_bin: home.path().join("genex"),
+            host_command_args: None,
         };
         genex_app_server_transport::daemon_recovery::write_candidates(
             &daemon.recovery_file().expect("recovery path"),
@@ -689,6 +737,7 @@ mod tests {
             operation_lock_file: temp_dir.path().join("daemon.lock"),
             settings_file: temp_dir.path().join("settings.json"),
             managed_genex_bin: temp_dir.path().join("missing-genex"),
+            host_command_args: None,
         };
         let stderr_log = daemon.pid_file.with_extension("stderr.log");
         tokio::fs::write(&stderr_log, "unexpected argument")

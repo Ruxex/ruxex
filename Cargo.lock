@@ -5316,6 +5316,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "genex-provider-host-example"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "genex-app-server",
+ "genex-arg0",
+ "genex-cli",
+ "genex-config",
+ "genex-providers",
+ "genex-tui",
+ "genex-utils-cli",
+]
+
+[[package]]
 name = "genex-providers"
 version = "0.0.0"
 dependencies = [

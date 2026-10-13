@@ -29,13 +29,17 @@ use app_server_session::ThreadParamsMode;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 use genex_app_server_client::AppServerClient;
+use genex_app_server_client::AppServerRuntime;
+use genex_app_server_client::AppServerRuntimeBuilder;
 use genex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 use genex_app_server_client::InProcessAppServerClient;
 use genex_app_server_client::InProcessClientStartArgs;
+use genex_app_server_client::ProviderInit;
 use genex_app_server_client::RemoteAppServerClient;
 use genex_app_server_client::RemoteAppServerConnectArgs;
 pub use genex_app_server_client::RemoteAppServerEndpoint;
 use genex_app_server_client::configured_app_server_runtime_from_config;
+use genex_app_server_client::provider_init_from_config_with_descriptor;
 use genex_app_server_protocol::AskForApproval;
 use genex_app_server_protocol::ConfigWarningNotification;
 use genex_app_server_protocol::GetAccountResponse;
@@ -56,6 +60,8 @@ use genex_features::Feature;
 use genex_login::default_client::originator;
 use genex_login::default_client::set_default_client_residency_requirement;
 use genex_login::enforce_login_restrictions;
+use genex_model_provider::ModelProviderFactory;
+use genex_model_provider::ProviderDescriptor;
 use genex_protocol::ThreadId;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::config_types::AltScreenMode;
@@ -236,6 +242,12 @@ const INTERACTIVE_OTEL_SHUTDOWN_TIMEOUT: Duration = Duration::from_millis(/*mill
 const AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT: std::time::Duration =
     std::time::Duration::from_millis(50);
 
+/// Hidden argument used when a provider-owned host re-enters itself as the
+/// AppServer daemon process.
+pub const APP_SERVER_DAEMON_MODE_ARG: &str = "__genex-app-server-daemon";
+
+type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
+
 #[allow(clippy::too_many_arguments)]
 async fn start_embedded_app_server(
     arg0_paths: Arg0DispatchPaths,
@@ -246,6 +258,7 @@ async fn start_embedded_app_server(
     log_db: Option<log_db::LogDbLayer>,
     state_db: Option<StateDbHandle>,
     environment_manager: Arc<EnvironmentManager>,
+    provider_factory: Option<ProviderRuntimeFactory>,
 ) -> color_eyre::Result<InProcessAppServerClient> {
     start_embedded_app_server_with(
         arg0_paths,
@@ -256,6 +269,7 @@ async fn start_embedded_app_server(
         log_db,
         state_db,
         environment_manager,
+        provider_factory,
         InProcessAppServerClient::start,
     )
     .await
@@ -469,6 +483,7 @@ async fn start_app_server(
     log_db: Option<log_db::LogDbLayer>,
     state_db: &mut Option<StateDbHandle>,
     environment_manager: Arc<EnvironmentManager>,
+    provider_factory: Option<ProviderRuntimeFactory>,
 ) -> color_eyre::Result<AppServerClient> {
     let connection = if matches!(target, AppServerTarget::Embedded) {
         None
@@ -509,6 +524,7 @@ async fn start_app_server(
         log_db,
         state_db.clone(),
         environment_manager,
+        provider_factory,
     )
     .await
     .map(AppServerClient::InProcess)
@@ -532,6 +548,7 @@ pub(crate) async fn start_app_server_for_picker(
         /*log_db*/ None,
         &mut state_db,
         environment_manager,
+        None,
     )
     .await?;
     Ok(
@@ -564,6 +581,7 @@ async fn start_embedded_app_server_with<F, Fut>(
     log_db: Option<log_db::LogDbLayer>,
     state_db: Option<StateDbHandle>,
     environment_manager: Arc<EnvironmentManager>,
+    provider_factory: Option<ProviderRuntimeFactory>,
     start_client: F,
 ) -> color_eyre::Result<InProcessAppServerClient>
 where
@@ -580,11 +598,20 @@ where
             range: None,
         })
         .collect();
-    let runtime = configured_app_server_runtime_from_config(&config, false)
-        .await
-        .map_err(|err| {
-            color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
-        })?;
+    let runtime = if let Some(provider_factory) = provider_factory {
+        let init = provider_init_from_config_with_descriptor(&config, false, &provider_factory.1)
+            .await
+            .map_err(|err| {
+                color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
+            })?;
+        (provider_factory.0)(init)
+    } else {
+        configured_app_server_runtime_from_config(&config, false)
+            .await
+            .map_err(|err| {
+                color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
+            })?
+    };
     let client = start_client(InProcessClientStartArgs {
         arg0_paths,
         config: Arc::new(config),
@@ -944,6 +971,43 @@ pub async fn run_main(
         arg0_paths,
         loader_overrides,
         explicit_remote_endpoint,
+        None,
+        None,
+    ))
+    .await
+    {
+        Err(err) if startup_draft::StartupCancelled::matches(&err) => Ok(AppExitInfo {
+            token_usage: TokenUsage::default(),
+            thread_id: None,
+            resume_hint: None,
+            disconnect_info: None,
+            exit_reason: ExitReason::UserRequested,
+        }),
+        result => result,
+    }
+}
+
+/// Runs the TUI with a provider type owned by the embedding host.
+///
+/// The same host executable is used for the default local daemon. The daemon
+/// constructs `P` in its own process; embedded mode constructs it in-process.
+pub async fn run_main_with_provider<P: ModelProviderFactory>(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    loader_overrides: LoaderOverrides,
+    explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+) -> std::io::Result<AppExitInfo> {
+    system_motion::initialize().await;
+    match Box::pin(startup_orchestration::run_main_inner(
+        cli,
+        arg0_paths,
+        loader_overrides,
+        explicit_remote_endpoint,
+        Some((
+            AppServerRuntimeBuilder::build_from_provider_factory::<P>,
+            P::provider_descriptor(),
+        )),
+        Some(std::env::current_exe().map_err(std::io::Error::other)?),
     ))
     .await
     {
@@ -976,6 +1040,7 @@ async fn run_ratatui_app(
     daemon_startup_warning: Option<String>,
     launch_telemetry: daemon_telemetry::Launch<impl FnOnce(&AppServerTarget, bool)>,
     startup_draft: startup_draft::StartupDraft,
+    provider_factory: Option<ProviderRuntimeFactory>,
 ) -> color_eyre::Result<AppExitInfo> {
     let uses_remote_workspace = app_server_target.uses_remote_workspace();
     color_eyre::install()?;
@@ -1008,6 +1073,7 @@ async fn run_ratatui_app(
                 log_db.clone(),
                 &mut state_db,
                 environment_manager.clone(),
+                provider_factory.clone(),
             ),
         )
         .await;
@@ -1520,6 +1586,7 @@ async fn run_ratatui_app(
                     log_db.clone(),
                     &mut state_db,
                     environment_manager.clone(),
+                    provider_factory.clone(),
                 ),
             )
             .await
@@ -1600,6 +1667,7 @@ async fn run_ratatui_app(
                     log_db.clone(),
                     &mut state_db,
                     environment_manager.clone(),
+                    provider_factory.clone(),
                 )
                 .await?;
                 app_server = AppServerSession::new(client, app_server_target.thread_params_mode())

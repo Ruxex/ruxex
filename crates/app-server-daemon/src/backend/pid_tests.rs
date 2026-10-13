@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use std::time::Duration;
 
 use pretty_assertions::assert_eq;
@@ -18,7 +19,7 @@ async fn locked_empty_pid_file_is_treated_as_active_reservation() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone());
+    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone(), None);
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -42,7 +43,7 @@ async fn unlocked_empty_pid_file_is_treated_as_stale_reservation() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone());
+    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone(), None);
 
     assert_eq!(
         backend.read_pid_file_state().await.expect("read pid"),
@@ -55,7 +56,7 @@ async fn unlocked_empty_pid_file_is_treated_as_stale_reservation() {
 async fn stale_record_cleanup_preserves_a_newer_record() {
     let temp = TempDir::new().expect("temp dir");
     let pid_file = temp.path().join("app-server.pid");
-    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone());
+    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone(), None);
     let stale = PidRecord {
         pid: 1,
         process_start_time: "old".to_string(),
@@ -113,7 +114,7 @@ async fn stop_waits_for_a_live_reservation_to_resolve() {
     tokio::fs::write(&pid_file, "")
         .await
         .expect("write pid file");
-    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone());
+    let backend = PidBackend::new(temp.path().join("genex"), pid_file.clone(), None);
     let reservation = tokio::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -132,4 +133,27 @@ async fn stop_waits_for_a_live_reservation_to_resolve() {
 
     backend.stop().await.expect("stop");
     cleanup.await.expect("cleanup task");
+}
+
+#[test]
+fn host_command_args_replace_the_managed_app_server_command() {
+    let temp = TempDir::new().expect("temp dir");
+    let backend = PidBackend::new(
+        temp.path().join("genex"),
+        temp.path().join("app-server.pid"),
+        Some(vec![
+            OsString::from("__genex-app-server-daemon"),
+            OsString::from("--listen"),
+            OsString::from("unix://"),
+        ]),
+    );
+
+    assert_eq!(
+        backend.command_args(),
+        vec![
+            OsString::from("__genex-app-server-daemon"),
+            OsString::from("--listen"),
+            OsString::from("unix://"),
+        ]
+    );
 }

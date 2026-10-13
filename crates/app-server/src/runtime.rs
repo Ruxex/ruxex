@@ -8,9 +8,11 @@ use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
 use genex_login::CredentialManager;
 use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use genex_model_provider::ModelProviderFactory;
 use genex_model_provider::ProviderDescriptor;
 use genex_model_provider::ProviderHomeError;
 use genex_model_provider::ProviderHomeMarker;
+use genex_model_provider::ProviderInit;
 use genex_model_provider::SharedModelProvider;
 use genex_model_provider::mount_provider_home;
 use genex_model_provider_info::ModelProviderInfo;
@@ -66,18 +68,48 @@ pub async fn configured_app_server_runtime_from_config(
     config: &Config,
     enable_api_key_env: bool,
 ) -> anyhow::Result<AppServerRuntime> {
-    mount_provider_home_for_config(config).context("failed to mount provider data root")?;
-    let credential_manager = CredentialManager::shared_from_config(config, enable_api_key_env)
-        .await
-        .context("failed to load provider credentials")?;
+    let init = provider_init_from_config(config, enable_api_key_env).await?;
     Ok(
         AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
-            config.model_provider.clone(),
-            Some(credential_manager),
-            config.http_client_factory(),
+            init.provider_info,
+            Some(init.credential_manager),
+            init.http_client_factory,
         )
         .build(),
     )
+}
+
+/// Mounts the provider home and loads the process-local inputs for a
+/// host-owned provider constructor.
+pub async fn provider_init_from_config(
+    config: &Config,
+    enable_api_key_env: bool,
+) -> anyhow::Result<ProviderInit> {
+    provider_init_from_config_with_descriptor(
+        config,
+        enable_api_key_env,
+        &AppServerRuntimeBuilder::descriptor_for(&config.model_provider),
+    )
+    .await
+}
+
+/// Mounts the provider home using the host-selected provider identity and
+/// loads the process-local inputs for a provider constructor.
+pub async fn provider_init_from_config_with_descriptor(
+    config: &Config,
+    enable_api_key_env: bool,
+    descriptor: &ProviderDescriptor,
+) -> anyhow::Result<ProviderInit> {
+    mount_provider_home(&config.genex_home, descriptor)
+        .context("failed to mount provider data root")?;
+    let credential_manager = CredentialManager::shared_from_config(config, enable_api_key_env)
+        .await
+        .context("failed to load provider credentials")?;
+    Ok(ProviderInit {
+        provider_info: config.model_provider.clone(),
+        credential_manager,
+        http_client_factory: config.http_client_factory(),
+    })
 }
 
 impl AppServerRuntimeBuilder {
@@ -85,6 +117,18 @@ impl AppServerRuntimeBuilder {
     /// implementation.
     pub fn new(provider: SharedModelProvider) -> Self {
         Self { provider }
+    }
+
+    /// Starts a runtime by constructing the host-selected provider type.
+    pub fn from_provider_factory<P: ModelProviderFactory>(init: ProviderInit) -> Self {
+        Self::new(Arc::new(P::new(init)))
+    }
+
+    /// Constructs a complete runtime from the host-selected provider type.
+    pub fn build_from_provider_factory<P: ModelProviderFactory>(
+        init: ProviderInit,
+    ) -> AppServerRuntime {
+        Self::from_provider_factory::<P>(init).build()
     }
 
     /// Starts building a runtime for the provider selected by host configuration.

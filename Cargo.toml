@@ -64,6 +64,7 @@ members = [
     "crates/model-provider-info",
     "crates/models-manager",
     "crates/providers",
+    "examples/provider-host",
     "crates/network-proxy",
     "crates/process-hardening",
     "crates/protocol",
@@ -150,6 +151,7 @@ genex-arg0 = { path = "crates/arg0" }
 genex-async-utils = { path = "crates/async-utils" }
 genex-build-info = { path = "crates/build-info" }
 genex-client = { path = "crates/genex-client" }
+genex-cli = { path = "crates/cli" }
 genex-collaboration-mode-templates = { path = "crates/collaboration-mode-templates" }
 genex-code-mode = { path = "crates/code-mode" }
 genex-code-mode-protocol = { path = "crates/code-mode-protocol" }

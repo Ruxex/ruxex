@@ -31,7 +31,6 @@ use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
 use crate::runtime::configured_app_server_runtime;
-use crate::runtime::mount_provider_home_for_config;
 use crate::runtime::mount_provider_home_for_runtime;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::ConnectionOrigin;
@@ -61,6 +60,7 @@ use genex_exec_server::EnvironmentManager;
 use genex_exec_server::ExecServerRuntimePaths;
 use genex_features::Feature;
 use genex_login::CredentialManager;
+use genex_model_provider::mount_provider_home;
 use genex_protocol::protocol::SessionSource;
 use genex_rollout::state_db as rollout_state_db;
 use genex_state::log_db;
@@ -134,12 +134,14 @@ pub use crate::code_mode_host::AppServerCodeModeHostArgs;
 pub use crate::code_mode_host::CodeModeHostTransport;
 pub use crate::error_code::INPUT_TOO_LARGE_ERROR_CODE;
 pub use crate::error_code::INVALID_PARAMS_ERROR_CODE;
+pub use crate::runtime::provider_init_from_config;
 pub use crate::runtime::{AppServerRuntime, AppServerRuntimeBuilder};
 pub use crate::transport::AppServerTransport;
 pub use crate::transport::app_server_control_socket_path;
 pub use crate::transport::auth::AppServerWebsocketAuthArgs;
 pub use crate::transport::auth::AppServerWebsocketAuthSettings;
 pub use crate::transport::auth::WebsocketAuthCliMode;
+pub use genex_model_provider::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
 
 const LOG_FORMAT_ENV_VAR: &str = "LOG_FORMAT";
 const OTEL_SERVICE_NAME: &str = "genex-app-server";
@@ -484,6 +486,7 @@ pub async fn run_main_with_transport_options(
         auth,
         runtime_options,
         None,
+        None,
     )
     .await
 }
@@ -517,6 +520,41 @@ pub async fn run_main_with_transport_options_and_runtime(
         auth,
         runtime_options,
         Some(runtime),
+        None,
+    )
+    .await
+}
+
+/// Starts the AppServer using the concrete provider type selected by the host
+/// binary. The provider is constructed in this process with
+/// [`ModelProviderFactory::new`].
+#[allow(clippy::too_many_arguments)]
+pub async fn run_main_with_transport_options_and_provider<P: ModelProviderFactory>(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        None,
+        Some((
+            AppServerRuntimeBuilder::build_from_provider_factory::<P>,
+            P::provider_descriptor(),
+        )),
     )
     .await
 }
@@ -533,6 +571,10 @@ async fn run_main_with_transport_options_and_optional_runtime(
     auth: AppServerWebsocketAuthSettings,
     runtime_options: AppServerRuntimeOptions,
     injected_runtime: Option<AppServerRuntime>,
+    provider_factory: Option<(
+        fn(ProviderInit) -> AppServerRuntime,
+        ProviderDescriptor,
+    )>,
 ) -> IoResult<AppServerExit> {
     let loader_overrides = loader_overrides_with_test_user_config_file(
         loader_overrides,
@@ -618,7 +660,12 @@ async fn run_main_with_transport_options_and_optional_runtime(
             (runtime, None)
         }
         None => {
-            mount_provider_home_for_config(&config).map_err(|error| {
+            let descriptor = provider_factory
+                .as_ref()
+                .map(|(_, descriptor)| descriptor)
+                .cloned()
+                .unwrap_or_else(|| AppServerRuntimeBuilder::descriptor_for(&config.model_provider));
+            mount_provider_home(&config.genex_home, &descriptor).map_err(|error| {
                 std::io::Error::new(
                     ErrorKind::InvalidData,
                     format!("failed to mount provider data root: {error}"),
@@ -628,11 +675,21 @@ async fn run_main_with_transport_options_and_optional_runtime(
                 CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
                     .await
                     .map_err(std::io::Error::other)?;
-            let runtime = configured_app_server_runtime(
-                config.model_provider.clone(),
-                Arc::clone(&credential_manager),
-                config.http_client_factory(),
-            );
+            let runtime = provider_factory
+                .map(|(factory, _)| {
+                    factory(ProviderInit {
+                        provider_info: config.model_provider.clone(),
+                        credential_manager: Arc::clone(&credential_manager),
+                        http_client_factory: config.http_client_factory(),
+                    })
+                })
+                .unwrap_or_else(|| {
+                    configured_app_server_runtime(
+                        config.model_provider.clone(),
+                        Arc::clone(&credential_manager),
+                        config.http_client_factory(),
+                    )
+                });
             (runtime, Some(credential_manager))
         }
     };

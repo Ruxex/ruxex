@@ -89,6 +89,54 @@ The mount writes or validates `genex-home.json`. A marker for a different
 provider or incompatible provider protocol is rejected before sensitive state
 is opened.
 
+## Host-owned daemon startup
+
+A host that wants the default daemon behavior can compile the provider type
+into both its foreground code and its AppServer entrypoint. The daemon process
+reconstructs the provider; the foreground process never sends a provider
+instance over the socket:
+
+```rust
+use genex_app_server::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
+
+impl ModelProviderFactory for MyProvider {
+    fn provider_descriptor() -> ProviderDescriptor {
+        ProviderDescriptor::new("my-provider", "1")
+    }
+
+    fn new(init: ProviderInit) -> Self {
+        MyProvider::from_startup(init)
+    }
+}
+
+// The host's hidden daemon mode calls this in the child process.
+genex_app_server::run_main_with_transport_options_and_provider::<MyProvider>(
+    arg0_paths,
+    cli_config_overrides,
+    loader_overrides,
+    strict_config,
+    false,
+    genex_app_server::AppServerTransport::UnixSocket { socket_path },
+    session_source,
+    genex_app_server::AppServerWebsocketAuthSettings::default(),
+    genex_app_server::AppServerRuntimeOptions::default(),
+).await?;
+```
+
+The host can use `genex_app_server_daemon::run_with_host_executable` to start
+that hidden mode in the same executable. Only serializable startup arguments
+cross the process boundary; `P::new(ProviderInit)` runs inside the AppServer
+daemon. The standalone `genex-app-server` binary remains available as a
+compatibility and operational entrypoint, but it is not required by a
+provider-owned host.
+
+For a complete TUI host, call `genex_tui::run_main_with_provider::<P>(...)` in
+the foreground branch and dispatch `APP_SERVER_DAEMON_MODE_ARG` to
+`run_host_app_server_daemon::<P>(...)` before normal argument parsing in the
+child branch. The runnable
+[`examples/provider-host`](examples/provider-host/src/main.rs) crate shows this
+layout with `CloudflareModelProvider`.
+
 ## Implement a custom provider
 
 Provider implementations do not need to be registered in Genex. Implement the

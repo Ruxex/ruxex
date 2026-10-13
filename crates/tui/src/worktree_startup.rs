@@ -154,6 +154,7 @@ pub(super) async fn prepare(
             /*log_db*/ None,
             state,
             Arc::new(environment),
+            /*provider_factory*/ None,
         )
         .await?;
         let mut lookup = AppServerSession::new(

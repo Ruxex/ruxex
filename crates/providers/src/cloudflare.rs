@@ -13,6 +13,7 @@ use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_login::default_client::create_client_for_route_async;
 use genex_model_provider_info::CLOUDFLARE_ACCOUNT_ID_ENV_VAR;
+use genex_model_provider_info::CLOUDFLARE_PROVIDER_ID;
 use genex_model_provider_info::ModelProviderInfo;
 use genex_model_provider_info::ProviderAuthField;
 use genex_models_manager::manager::ModelCatalogSnapshot;
@@ -33,6 +34,9 @@ use crate::provider::ProviderAccountResult;
 use crate::provider::ProviderAccountState;
 use crate::provider::ProviderApi;
 use crate::provider::ProviderRuntime;
+use genex_model_provider::ModelProviderFactory;
+use genex_model_provider::ProviderInit;
+use genex_model_provider::ProviderDescriptor;
 use genex_model_provider::cached_provider_auth;
 use genex_model_provider::provider_auth;
 use genex_model_provider::provider_models_identity;
@@ -165,6 +169,25 @@ impl CloudflareModelProvider {
         }
 
         Ok((models, etag))
+    }
+}
+
+impl ModelProviderFactory for CloudflareModelProvider {
+    fn provider_descriptor() -> ProviderDescriptor {
+        ProviderDescriptor::new(
+            CLOUDFLARE_PROVIDER_ID,
+            genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION,
+        )
+    }
+
+    fn new(init: ProviderInit) -> Self {
+        let provider_id = Some(CLOUDFLARE_PROVIDER_ID.to_owned());
+        Self::new(
+            provider_id,
+            init.provider_info,
+            Some(init.credential_manager),
+            init.http_client_factory,
+        )
     }
 }
 

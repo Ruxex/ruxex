@@ -29,6 +29,7 @@ use std::time::Duration;
 
 pub use genex_app_server::AppServerRuntime;
 pub use genex_app_server::AppServerRuntimeBuilder;
+pub use genex_app_server::ProviderInit;
 pub use genex_app_server::app_server_control_socket_path;
 pub use genex_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 pub use genex_app_server::in_process::InProcessServerEvent;
@@ -37,6 +38,8 @@ use genex_app_server::in_process::LogDbLayer;
 pub use genex_app_server::in_process::StateDbHandle;
 pub use genex_app_server::runtime::configured_app_server_runtime_from_config;
 pub use genex_app_server::runtime::mount_provider_home_for_config;
+pub use genex_app_server::runtime::provider_init_from_config;
+pub use genex_app_server::runtime::provider_init_from_config_with_descriptor;
 use genex_app_server_protocol::AppServerIdentity;
 use genex_app_server_protocol::ClientInfo;
 use genex_app_server_protocol::ClientNotification;
