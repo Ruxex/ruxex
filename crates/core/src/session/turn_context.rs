@@ -283,7 +283,6 @@ pub struct TurnContext {
     pub(crate) configured_token_budget: Option<TokenBudgetConfig>,
     /// Captured once so later steps do not re-read config layers to detect user preferences.
     pub(crate) use_model_token_budget_defaults: bool,
-    pub(crate) credential_manager: Option<Arc<CredentialManager>>,
     /// Frozen settings used to construct this context. Legacy turn consumers
     /// keep this view even when later steps use different settings.
     pub(crate) initial_settings: Arc<ResolvedStepSettings>,
@@ -551,7 +550,6 @@ impl TurnContext {
             config: Arc::new(config),
             configured_token_budget: self.configured_token_budget.clone(),
             use_model_token_budget_defaults: self.use_model_token_budget_defaults,
-            credential_manager: self.credential_manager.clone(),
             initial_settings: Arc::clone(&step_settings),
             disabled_plugin_ids: self.disabled_plugin_ids.clone(),
             current_settings: ArcSwap::from(step_settings),
@@ -765,7 +763,6 @@ impl Session {
     pub(crate) fn make_turn_context(
         thread_id: ThreadId,
         session_id: SessionId,
-        credential_manager: Option<Arc<CredentialManager>>,
         session_telemetry: &SessionTelemetry,
         provider: SharedModelProvider,
         session_configuration: &SessionConfiguration,
@@ -784,9 +781,8 @@ impl Session {
         let session_telemetry_for_context = step_settings.telemetry(session_telemetry);
         let session_source = session_configuration.session_source.clone();
         let available_models = models_manager.try_list_models().unwrap_or_default();
-        let unified_exec_shell_mode = UnifiedExecShellMode::for_session(
-            per_turn_config.features.get(),
-        );
+        let unified_exec_shell_mode =
+            UnifiedExecShellMode::for_session(per_turn_config.features.get());
 
         let mut per_turn_config = per_turn_config;
         let configured_token_budget = per_turn_config.token_budget.clone();
@@ -831,7 +827,6 @@ impl Session {
             config: per_turn_config,
             configured_token_budget,
             use_model_token_budget_defaults,
-            credential_manager,
             initial_settings: Arc::clone(&step_settings),
             disabled_plugin_ids: session_configuration.disabled_plugin_ids.clone(),
             current_settings: ArcSwap::from(step_settings),
@@ -1036,13 +1031,11 @@ impl Session {
         let mut turn_context: TurnContext = Self::make_turn_context(
             self.thread_id(),
             self.session_id(),
-            Some(Arc::clone(&self.services.credential_manager)),
             &self.services.session_telemetry,
             session_configuration.provider.clone(),
             &session_configuration,
             multi_agent_version,
             self.services.user_shell.as_ref(),
-
             per_turn_config,
             step_settings,
             &self.services.models_manager,

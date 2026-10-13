@@ -110,7 +110,6 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
     thread_manager: &ThreadManager,
     config: Config,
     rollout_path: PathBuf,
-    credential_manager: Arc<CredentialManager>,
     user_shell_override: crate::shell::Shell,
     _supports_provider_form_elicitation: bool,
 ) -> genex_protocol::error::Result<crate::NewThread> {
@@ -118,7 +117,6 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
         .resume_thread_from_rollout_with_user_shell_override_for_tests(
             config,
             rollout_path,
-            credential_manager,
             user_shell_override,
             ClientMcpExtensions::new(None),
         )

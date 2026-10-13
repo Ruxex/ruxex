@@ -2,6 +2,9 @@
 
 use std::sync::Arc;
 
+use core::time::Duration;
+use core_test_support::load_default_config_for_test;
+use core_test_support::wait_for_event;
 use genex_core::NewThread;
 use genex_history::InitialHistory;
 use genex_history::ResumedHistory;
@@ -17,9 +20,6 @@ use genex_protocol::protocol::TurnContextItem;
 use genex_protocol::protocol::TurnStartedEvent;
 use genex_protocol::protocol::UserMessageEvent;
 use genex_protocol::protocol::WarningEvent;
-use core::time::Duration;
-use core_test_support::load_default_config_for_test;
-use core_test_support::wait_for_event;
 use tempfile::TempDir;
 
 fn resume_history(
@@ -108,9 +108,6 @@ async fn emits_warning_when_resumed_model_differs() {
         GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
-    let credential_manager =
-        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("test"));
-
     // Act: resume the conversation.
     let NewThread {
         thread: conversation,
@@ -119,7 +116,6 @@ async fn emits_warning_when_resumed_model_differs() {
         .resume_thread_with_history(
             config.clone(),
             initial_history,
-            credential_manager,
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )

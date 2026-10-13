@@ -1,5 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
+use core::time::Duration;
+use core_test_support::load_default_config_for_test;
+use core_test_support::wait_for_event;
 use genex_config::CONFIG_TOML_FILE;
 use genex_core::NewThread;
 use genex_features::Feature;
@@ -9,9 +12,6 @@ use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::WarningEvent;
 use genex_utils_absolute_path::AbsolutePathBuf;
-use core::time::Duration;
-use core_test_support::load_default_config_for_test;
-use core_test_support::wait_for_event;
 use tempfile::TempDir;
 use tokio::time::timeout;
 use toml::toml;
@@ -39,9 +39,6 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
-    let credential_manager =
-        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("test"));
-
     let NewThread {
         thread: conversation,
         ..
@@ -49,7 +46,6 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         .resume_thread_with_history(
             config.clone(),
             InitialHistory::New,
-            credential_manager,
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )
@@ -89,9 +85,6 @@ async fn suppresses_warning_when_configured() {
         GenexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
-    let credential_manager =
-        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key("test"));
-
     let NewThread {
         thread: conversation,
         ..
@@ -99,7 +92,6 @@ async fn suppresses_warning_when_configured() {
         .resume_thread_with_history(
             config.clone(),
             InitialHistory::New,
-            credential_manager,
             /*parent_trace*/ None,
             ClientMcpExtensions::default(),
         )

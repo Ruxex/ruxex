@@ -669,7 +669,6 @@ async fn externally_changed_queues_dispatch_independently_and_retry_failed_wakes
         .resume_thread_from_rollout(
             test.config.clone(),
             rollout_path,
-            test.thread_manager.credential_manager(),
             /*parent_trace*/ None,
             Default::default(),
         )

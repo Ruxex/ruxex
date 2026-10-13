@@ -10,6 +10,16 @@ use super::compact::FIRST_REPLY;
 use super::compact::SUMMARY_TEXT;
 use anyhow::Context;
 use anyhow::Result;
+use core_test_support::ThreadIdle;
+use core_test_support::responses::ResponseMock;
+use core_test_support::responses::ResponsesRequest;
+use core_test_support::responses::ev_assistant_message;
+use core_test_support::responses::ev_completed;
+use core_test_support::responses::mount_sse_once_match;
+use core_test_support::responses::mount_sse_sequence;
+use core_test_support::responses::sse;
+use core_test_support::test_genex::test_genex;
+use core_test_support::wait_for_event;
 use genex_core::GenexThread;
 use genex_core::ThreadManager;
 use genex_core::TurnInputRequest;
@@ -26,16 +36,6 @@ use genex_protocol::protocol::EventMsg;
 use genex_protocol::protocol::Op;
 use genex_protocol::protocol::WarningEvent;
 use genex_protocol::user_input::UserInput;
-use core_test_support::ThreadIdle;
-use core_test_support::responses::ResponseMock;
-use core_test_support::responses::ResponsesRequest;
-use core_test_support::responses::ev_assistant_message;
-use core_test_support::responses::ev_completed;
-use core_test_support::responses::mount_sse_once_match;
-use core_test_support::responses::mount_sse_sequence;
-use core_test_support::responses::sse;
-use core_test_support::test_genex::test_genex;
-use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -684,13 +684,9 @@ async fn resume_conversation(
     config: &Config,
     path: std::path::PathBuf,
 ) -> Arc<GenexThread> {
-    let credential_manager = genex_core::test_support::credential_manager_from_auth(
-        genex_login::GenexAuth::from_api_key("dummy"),
-    );
     Box::pin(manager.resume_thread_from_rollout(
         config.clone(),
         path,
-        credential_manager,
         /*parent_trace*/ None,
         ClientMcpExtensions::default(),
     ))

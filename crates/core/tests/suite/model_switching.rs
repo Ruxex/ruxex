@@ -898,7 +898,6 @@ async fn model_change_projects_media_without_changing_live_or_replayed_history(
                 .resume_thread_from_rollout(
                     test.config.clone(),
                     rollout_path,
-                    test.thread_manager.credential_manager(),
                     /*parent_trace*/ None,
                     ClientMcpExtensions::default(),
                 )

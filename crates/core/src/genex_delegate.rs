@@ -28,7 +28,6 @@ use crate::session::SessionSpawnArgs;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use genex_history::InitialHistory;
-use genex_login::CredentialManager;
 use genex_models_manager::manager::SharedModelsManager;
 use genex_protocol::error::GenexErr;
 use genex_protocol::protocol::MultiAgentVersion;
@@ -47,7 +46,6 @@ use crate::session::completed_session_loop_termination;
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn run_genex_thread_interactive(
     mut config: Config,
-    credential_manager: Arc<CredentialManager>,
     models_manager: SharedModelsManager,
     parent_session: Arc<Session>,
     parent_ctx: Arc<TurnContext>,
@@ -82,7 +80,6 @@ pub(crate) async fn run_genex_thread_interactive(
         allow_model_fallback: false,
         instructions,
         installation_id: parent_session.installation_id.clone(),
-        credential_manager,
         provider: parent_session.model_provider().await,
         models_manager,
         git_root_discovery: Arc::clone(&parent_session.services.git_root_discovery),
@@ -162,7 +159,6 @@ pub(crate) fn forward_session_io(io: Arc<SessionIo>, cancel_token: CancellationT
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn run_genex_thread_one_shot(
     config: Config,
-    credential_manager: Arc<CredentialManager>,
     models_manager: SharedModelsManager,
     input: Vec<UserInput>,
     parent_session: Arc<Session>,
@@ -180,7 +176,6 @@ pub(crate) async fn run_genex_thread_one_shot(
     let root_turn_id = parent_ctx.turn_metadata_state.root_turn_id();
     let (session, io) = Box::pin(run_genex_thread_interactive(
         config,
-        credential_manager,
         models_manager,
         parent_session,
         parent_ctx,

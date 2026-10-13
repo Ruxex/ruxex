@@ -671,62 +671,49 @@ impl TestGenexBuilder {
         let user_shell_override = self.user_shell_override.clone();
         let client_mcp_extensions = || ClientMcpExtensions::new(None);
 
-        let new_conversation = match (resume_from, user_shell_override) {
-            (Some(path), Some(user_shell_override)) => {
-                let credential_manager =
-                    genex_core::test_support::credential_manager_from_auth_with_home(
-                        auth,
-                        config.genex_home.to_path_buf(),
-                    );
-                Box::pin(
+        let new_conversation =
+            match (resume_from, user_shell_override) {
+                (Some(path), Some(user_shell_override)) => Box::pin(
                     genex_core::test_support::resume_thread_from_rollout_with_user_shell_override(
                         thread_manager.as_ref(),
                         config.clone(),
                         path,
-                        credential_manager,
                         user_shell_override,
                         false,
                     ),
                 )
-                .await?
-            }
-            (Some(path), None) => {
-                let credential_manager =
-                    genex_core::test_support::credential_manager_from_auth_with_home(
-                        auth,
-                        config.genex_home.to_path_buf(),
-                    );
-                Box::pin(thread_manager.resume_thread_from_rollout(
-                    config.clone(),
-                    path,
-                    credential_manager,
-                    /*parent_trace*/ None,
-                    client_mcp_extensions(),
-                ))
-                .await?
-            }
-            (None, Some(user_shell_override)) => {
-                Box::pin(
-                    genex_core::test_support::start_thread_with_user_shell_override(
-                        thread_manager.as_ref(),
+                .await?,
+                (Some(path), None) => {
+                    Box::pin(thread_manager.resume_thread_from_rollout(
                         config.clone(),
-                        user_shell_override,
-                        false,
-                    ),
-                )
-                .await?
-            }
-            (None, None) => {
-                let environments = None;
-                Box::pin(thread_manager.start_thread(StartThreadOptions {
-                    history_mode: self.history_mode,
-                    client_mcp_extensions: client_mcp_extensions(),
-                    environments,
-                    ..StartThreadOptions::new(config.clone())
-                }))
-                .await?
-            }
-        };
+                        path,
+                        /*parent_trace*/ None,
+                        client_mcp_extensions(),
+                    ))
+                    .await?
+                }
+                (None, Some(user_shell_override)) => {
+                    Box::pin(
+                        genex_core::test_support::start_thread_with_user_shell_override(
+                            thread_manager.as_ref(),
+                            config.clone(),
+                            user_shell_override,
+                            false,
+                        ),
+                    )
+                    .await?
+                }
+                (None, None) => {
+                    let environments = None;
+                    Box::pin(thread_manager.start_thread(StartThreadOptions {
+                        history_mode: self.history_mode,
+                        client_mcp_extensions: client_mcp_extensions(),
+                        environments,
+                        ..StartThreadOptions::new(config.clone())
+                    }))
+                    .await?
+                }
+            };
 
         Ok(TestGenex {
             home,

@@ -1,5 +1,12 @@
 use std::sync::Arc;
 
+use core_test_support::responses::ev_completed;
+use core_test_support::responses::ev_response_created;
+use core_test_support::responses::sse;
+use core_test_support::skip_if_no_network;
+use core_test_support::submit_thread_settings;
+use core_test_support::test_genex::test_genex;
+use core_test_support::wait_for_event;
 use genex_core::ForkSnapshot;
 use genex_core::NewThread;
 use genex_core::TurnInputRequest;
@@ -16,13 +23,6 @@ use genex_protocol::protocol::ThreadSettingsAppliedEvent;
 use genex_protocol::protocol::ThreadSettingsOverrides;
 use genex_protocol::protocol::ThreadSettingsSnapshot;
 use genex_protocol::user_input::UserInput;
-use core_test_support::responses::ev_completed;
-use core_test_support::responses::ev_response_created;
-use core_test_support::responses::sse;
-use core_test_support::skip_if_no_network;
-use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
-use core_test_support::wait_for_event;
 use wiremock::Mock;
 use wiremock::MockServer;
 use wiremock::ResponseTemplate;
@@ -335,9 +335,6 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
             .resume_thread_with_history(
                 test.config.clone(),
                 resumed_history,
-                genex_core::test_support::credential_manager_from_auth(
-                    genex_login::GenexAuth::from_api_key("dummy"),
-                ),
                 /*parent_trace*/ None,
                 ClientMcpExtensions::default(),
             )

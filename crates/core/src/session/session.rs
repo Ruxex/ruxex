@@ -711,7 +711,6 @@ impl Session {
         config: Arc<Config>,
         instructions: SessionInstructions,
         installation_id: String,
-        credential_manager: Arc<CredentialManager>,
         models_manager: SharedModelsManager,
         git_root_discovery: Arc<GitRootDiscovery>,
         model_info: ModelInfo,
@@ -1101,8 +1100,16 @@ impl Session {
                 session_source: session_configuration.session_source.clone(),
                 cwd: session_configuration.cwd().to_path_buf(),
                 rollout_path: rollout_path.clone(),
-                model: session_configuration.step_settings.collaboration_mode.model().to_string(),
-                approval_policy: session_configuration.step_settings.approval_policy.value().to_string(),
+                model: session_configuration
+                    .step_settings
+                    .collaboration_mode
+                    .model()
+                    .to_string(),
+                approval_policy: session_configuration
+                    .step_settings
+                    .approval_policy
+                    .value()
+                    .to_string(),
                 sandbox_policy: format!(
                     "{:?}",
                     session_configuration.sandbox_policy(environment_selections)
@@ -1142,7 +1149,9 @@ impl Session {
             let effective_config = config.config_layer_stack.effective_config();
             let config_path = config.genex_home.join(CONFIG_TOML_FILE);
             if let Some(event) = unstable_features_warning_event(
-                effective_config.get("features").and_then(TomlValue::as_table),
+                effective_config
+                    .get("features")
+                    .and_then(TomlValue::as_table),
                 config.suppress_unstable_features_warning,
                 &config.features,
                 &config_path.display().to_string(),
@@ -1154,7 +1163,11 @@ impl Session {
             let account_email = None;
             let originator = session_configuration.originator.clone();
             let terminal_type = user_agent();
-            let session_model = session_configuration.step_settings.collaboration_mode.model().to_string();
+            let session_model = session_configuration
+                .step_settings
+                .collaboration_mode
+                .model()
+                .to_string();
             let auth_environment = session_configuration.provider.auth_environment();
             let auth_env_telemetry = AuthEnvTelemetryMetadata {
                 genex_api_key_env_present: auth_environment.host_api_key_env_present,
@@ -1196,11 +1209,15 @@ impl Session {
                 slug: Some(session_model),
             };
             crate::config::emit_session_start_metrics(config.as_ref(), &session_telemetry);
-            let is_worktree = session_configuration.cwd().canonicalize().ok().and_then(|cwd| {
-                genex_git_utils::repository_identity(&cwd).and_then(|_| {
-                    get_git_repo_root(&cwd).map(|root| root.join(".git").is_file())
-                })
-            });
+            let is_worktree = session_configuration
+                .cwd()
+                .canonicalize()
+                .ok()
+                .and_then(|cwd| {
+                    genex_git_utils::repository_identity(&cwd).and_then(|_| {
+                        get_git_repo_root(&cwd).map(|root| root.join(".git").is_file())
+                    })
+                });
             let is_worktree_tag = match is_worktree {
                 Some(true) => "true",
                 Some(false) => "false",
@@ -1217,15 +1234,17 @@ impl Session {
                 &[("is_git", is_git_tag), ("is_worktree", is_worktree_tag)],
             );
 
-            let mcp_server_names =
-                genex_mcp::effective_mcp_servers(&mcp_projection.config)
-                    .into_iter()
-                    .filter_map(|(name, server)| server.enabled().then_some(name))
-                    .collect::<Vec<_>>();
+            let mcp_server_names = genex_mcp::effective_mcp_servers(&mcp_projection.config)
+                .into_iter()
+                .filter_map(|(name, server)| server.enabled().then_some(name))
+                .collect::<Vec<_>>();
             let provider_name = session_configuration.provider.descriptor().provider_kind;
             session_telemetry.conversation_starts(
                 provider_name.as_str(),
-                session_configuration.step_settings.collaboration_mode.reasoning_effort(),
+                session_configuration
+                    .step_settings
+                    .collaboration_mode
+                    .reasoning_effort(),
                 config
                     .model_reasoning_summary
                     .unwrap_or(ReasoningSummaryConfig::Auto),
@@ -1269,9 +1288,7 @@ impl Session {
                 && config.features.enabled(Feature::ShellTool)
                 && config.features.enabled(Feature::UnifiedExec)
                 && matches!(
-                    genex_tools::UnifiedExecShellMode::for_session(
-                        config.features.get(),
-                    ),
+                    genex_tools::UnifiedExecShellMode::for_session(config.features.get(),),
                     genex_tools::UnifiedExecShellMode::Direct
                 );
             let use_executor_shell_snapshots =
@@ -1337,12 +1354,12 @@ impl Session {
             let (agents_md_result, instruction_warnings) = instruction_refresh;
             // TODO(anp): Present AGENTS.md discovery errors more clearly to the user.
             agents_md_result?;
-            post_session_configured_events.extend(
-                instruction_warnings.into_iter().map(|message| Event {
+            post_session_configured_events.extend(instruction_warnings.into_iter().map(
+                |message| Event {
                     id: INITIAL_SUBMIT_ID.to_owned(),
                     msg: EventMsg::Warning(WarningEvent { message }),
-                }),
-            );
+                },
+            ));
             for err in &plugin_skill_errors {
                 error!(
                     "failed to load skill {}: {}",
@@ -1356,12 +1373,17 @@ impl Session {
                 initial_auto_compact_window_ids,
                 ContextManager::new(),
             );
-            state.last_started_turn_id = initial_history.get_rollout_items().iter().rev().find_map(|item| {
-                match item {
-                    RolloutItem::EventMsg(EventMsg::TurnStarted(event)) => Some(event.turn_id.clone()),
-                    _ => None,
-                }
-            });
+            state.last_started_turn_id =
+                initial_history
+                    .get_rollout_items()
+                    .iter()
+                    .rev()
+                    .find_map(|item| match item {
+                        RolloutItem::EventMsg(EventMsg::TurnStarted(event)) => {
+                            Some(event.turn_id.clone())
+                        }
+                        _ => None,
+                    });
             state.base_instructions_provenance = base_instructions_provenance.clone();
             state.active_disabled_plugin_ids = session_configuration.disabled_plugin_ids.clone();
             let managed_network_requirements_configured = config
@@ -1369,7 +1391,8 @@ impl Session {
                 .requirements_toml()
                 .network
                 .is_some();
-            let managed_network_requirements_enabled = config.managed_network_requirements_enabled();
+            let managed_network_requirements_enabled =
+                config.managed_network_requirements_enabled();
             let network_approval = Arc::new(NetworkApprovalService::default());
             // The managed proxy can call back into core for allowlist-miss decisions.
             let network_policy_decider_session = if managed_network_requirements_configured {
@@ -1395,34 +1418,33 @@ impl Session {
                             Arc::clone(network_policy_decider_session),
                         )
                     });
-            let (network_proxy, session_network_proxy) =
-                if let Some(spec) = config
-                    .permissions
-                    .network
-                    .as_ref()
-                    .filter(|spec| spec.enabled())
-                {
-                    let current_exec_policy = exec_policy.current();
-                    let (network_proxy, session_network_proxy) = Self::start_managed_network_proxy(
-                        spec,
-                        current_exec_policy.as_ref(),
-                        config.permissions.permission_profile(),
-                        network_policy_decider.as_ref().map(Arc::clone),
-                        blocked_request_observer.as_ref().map(Arc::clone),
-                        managed_network_requirements_configured,
-                        network_proxy_audit_metadata.clone(),
-                    )
-                    .instrument(info_span!(
-                        "session_init.network_proxy",
-                        otel.name = "session_init.network_proxy",
-                        session_init.managed_network_requirements_enabled =
-                            managed_network_requirements_enabled,
-                    ))
-                    .await?;
-                    (Some(network_proxy), Some(session_network_proxy))
-                } else {
-                    (None, None)
-                };
+            let (network_proxy, session_network_proxy) = if let Some(spec) = config
+                .permissions
+                .network
+                .as_ref()
+                .filter(|spec| spec.enabled())
+            {
+                let current_exec_policy = exec_policy.current();
+                let (network_proxy, session_network_proxy) = Self::start_managed_network_proxy(
+                    spec,
+                    current_exec_policy.as_ref(),
+                    config.permissions.permission_profile(),
+                    network_policy_decider.as_ref().map(Arc::clone),
+                    blocked_request_observer.as_ref().map(Arc::clone),
+                    managed_network_requirements_configured,
+                    network_proxy_audit_metadata.clone(),
+                )
+                .instrument(info_span!(
+                    "session_init.network_proxy",
+                    otel.name = "session_init.network_proxy",
+                    session_init.managed_network_requirements_enabled =
+                        managed_network_requirements_enabled,
+                ))
+                .await?;
+                (Some(network_proxy), Some(session_network_proxy))
+            } else {
+                (None, None)
+            };
             if let Some(network_proxy) = network_proxy.as_ref()
                 && config
                     .permissions
@@ -1483,23 +1505,24 @@ impl Session {
             let extension_metrics =
                 extension_metrics::from_session_telemetry(session_telemetry.clone());
             for contributor in extensions.thread_lifecycle_contributors() {
-                contributor.on_thread_start(genex_extension_api::ThreadStartInput {
-                    config: config.as_ref(),
-                    session_source: &session_configuration.session_source,
-                    persistent_thread_state_available: state_db_ctx.is_some(),
-                    environments: environment_selections,
-                    mcp_resource_client: Some(Arc::clone(&mcp_resource_client)),
-                    extension_metrics: Some(Arc::clone(&extension_metrics)),
-                    session_store: &session_extension_data,
-                    thread_store: &thread_extension_data,
-                }).await;
+                contributor
+                    .on_thread_start(genex_extension_api::ThreadStartInput {
+                        config: config.as_ref(),
+                        session_source: &session_configuration.session_source,
+                        persistent_thread_state_available: state_db_ctx.is_some(),
+                        environments: environment_selections,
+                        mcp_resource_client: Some(Arc::clone(&mcp_resource_client)),
+                        extension_metrics: Some(Arc::clone(&extension_metrics)),
+                        session_store: &session_extension_data,
+                        thread_store: &thread_extension_data,
+                    })
+                    .await;
             }
 
-            let executed_tool_calls = crate::state::ExecutedToolCalls::new(
-                &config.features,
-                &initial_history,
-            );
-            let genex_responses_headers = thread_extension_data.get::<crate::GenexResponsesHeaders>();
+            let executed_tool_calls =
+                crate::state::ExecutedToolCalls::new(&config.features, &initial_history);
+            let genex_responses_headers =
+                thread_extension_data.get::<crate::GenexResponsesHeaders>();
             let services = SessionServices {
                 // Start with an empty connection set. The initialized set is
                 // published after SessionConfigured so MCP events follow it.
@@ -1514,7 +1537,6 @@ impl Session {
                 user_shell: Arc::new(default_shell),
                 show_raw_agent_reasoning: config.show_raw_agent_reasoning,
                 exec_policy,
-                credential_manager: Arc::clone(&credential_manager),
                 session_telemetry,
                 models_manager: Arc::clone(&models_manager),
                 git_root_discovery,
@@ -1552,7 +1574,8 @@ impl Session {
                     config.features.enabled(Feature::EnableRequestCompression),
                     config.features.enabled(Feature::RuntimeMetrics),
                     Self::build_model_client_beta_features_header(config.as_ref()),
-                    /*concurrent_reasoning_summaries_enabled*/ config
+                    /*concurrent_reasoning_summaries_enabled*/
+                    config
                         .features
                         .enabled(Feature::ConcurrentReasoningSummaries),
                     attestation_provider,
@@ -1591,7 +1614,7 @@ impl Session {
                 multi_agent_version,
                 mcp_refresh: McpRefresh::new(),
                 mcp_tool_approval_metadata: Default::default(),
-        mcp_elicitation_reviewer_handle: OnceLock::new(),
+                mcp_elicitation_reviewer_handle: OnceLock::new(),
                 mcp_elicitation_lifecycle_handle: OnceLock::new(),
                 mcp_prewarm_tx,
                 mcp_prewarm_shutdown: CancellationToken::new(),

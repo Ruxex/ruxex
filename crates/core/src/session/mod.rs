@@ -72,7 +72,6 @@ use genex_features::unstable_features_warning_event;
 use genex_history::RolloutItem;
 use genex_hooks::Hooks;
 use genex_hooks::HooksConfig;
-use genex_login::CredentialManager;
 use genex_mcp::McpResourceClient;
 use genex_mcp::McpRuntime;
 use genex_mcp::McpRuntimeContext;
@@ -401,7 +400,6 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) allow_model_fallback: bool,
     pub(crate) instructions: SessionInstructions,
     pub(crate) installation_id: String,
-    pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) provider: SharedModelProvider,
     pub(crate) models_manager: SharedModelsManager,
     pub(crate) git_root_discovery: Arc<GitRootDiscovery>,
@@ -504,7 +502,6 @@ impl Session {
             allow_model_fallback,
             instructions,
             installation_id,
-            credential_manager,
             provider,
             models_manager,
             git_root_discovery,
@@ -785,7 +782,6 @@ impl Session {
             config.clone(),
             instructions,
             installation_id,
-            credential_manager.clone(),
             models_manager.clone(),
             git_root_discovery,
             model_info,
@@ -1077,10 +1073,15 @@ impl Session {
     fn build_model_client_beta_features_header(config: &Config) -> Option<String> {
         Some(
             std::iter::once("remote_compaction_v2")
-                .chain(FEATURES.iter().filter(|spec| {
-                    spec.stage.experimental_menu_description().is_some()
-                        && config.features.enabled(spec.id)
-                }).map(|spec| spec.key))
+                .chain(
+                    FEATURES
+                        .iter()
+                        .filter(|spec| {
+                            spec.stage.experimental_menu_description().is_some()
+                                && config.features.enabled(spec.id)
+                        })
+                        .map(|spec| spec.key),
+                )
                 .collect::<Vec<_>>()
                 .join(","),
         )

@@ -236,7 +236,6 @@ pub struct ThreadManager {
 #[derive(Clone)]
 pub struct InternalSessionParent {
     pub(crate) thread_id: ThreadId,
-    pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) agent_control: AgentControl,
     pub(crate) originator: String,
     pub(crate) inherited_instructions: Option<SessionInstructions>,
@@ -308,7 +307,6 @@ impl StartThreadOptions {
 struct ThreadSpawnRequest {
     startup: Option<Arc<crate::session::startup::SessionStartup>>,
     options: StartThreadOptions,
-    credential_manager: Arc<CredentialManager>,
     agent_control: AgentControl,
     parent_thread_id: Option<ThreadId>,
     parent_originator: Option<String>,
@@ -321,15 +319,10 @@ struct ThreadSpawnRequest {
 }
 
 impl ThreadSpawnRequest {
-    fn new(
-        options: StartThreadOptions,
-        credential_manager: Arc<CredentialManager>,
-        agent_control: AgentControl,
-    ) -> Self {
+    fn new(options: StartThreadOptions, agent_control: AgentControl) -> Self {
         Self {
             startup: None,
             options,
-            credential_manager,
             agent_control,
             parent_thread_id: None,
             parent_originator: None,
@@ -1083,7 +1076,6 @@ impl ThreadManager {
         options.initial_history = history;
         options.internal_parent = Some(InternalSessionParent {
             thread_id: parent_thread_id,
-            credential_manager: Arc::clone(&parent.session.services.credential_manager),
             agent_control: parent.session.services.agent_control.clone(),
             originator: parent.config_snapshot().await.originator,
             inherited_instructions,
@@ -1123,8 +1115,7 @@ impl ThreadManager {
             ));
         }
         let mut request = if let Some(parent) = parent {
-            let mut request =
-                ThreadSpawnRequest::new(options, parent.credential_manager, parent.agent_control);
+            let mut request = ThreadSpawnRequest::new(options, parent.agent_control);
             request.parent_thread_id = Some(parent.thread_id);
             request.parent_originator = Some(parent.originator);
             request.inherited_instructions = parent.inherited_instructions;
@@ -1132,11 +1123,7 @@ impl ThreadManager {
             request
         } else {
             let agent_control = self.agent_control_for_config(&options.config);
-            let mut request = ThreadSpawnRequest::new(
-                options,
-                Arc::clone(&self.state.credential_manager),
-                agent_control,
-            );
+            let mut request = ThreadSpawnRequest::new(options, agent_control);
             request.forked_from_thread_id = forked_from_thread_id;
             request
         };
@@ -1185,7 +1172,6 @@ impl ThreadManager {
         &self,
         config: Config,
         rollout_path: PathBuf,
-        credential_manager: Arc<CredentialManager>,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
     ) -> GenexResult<NewThread> {
@@ -1193,7 +1179,6 @@ impl ThreadManager {
         Box::pin(self.resume_thread_with_history(
             config,
             initial_history,
-            credential_manager,
             parent_trace,
             client_mcp_extensions,
         ))
@@ -1238,7 +1223,6 @@ impl ThreadManager {
         &self,
         config: Config,
         initial_history: InitialHistory,
-        credential_manager: Arc<CredentialManager>,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
     ) -> GenexResult<NewThread> {
@@ -1254,11 +1238,10 @@ impl ThreadManager {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        Box::pin(self.state.spawn_thread(ThreadSpawnRequest::new(
-            options,
-            credential_manager,
-            agent_control,
-        )))
+        Box::pin(
+            self.state
+                .spawn_thread(ThreadSpawnRequest::new(options, agent_control)),
+        )
         .await
     }
 
@@ -1273,11 +1256,7 @@ impl ThreadManager {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        let mut request = ThreadSpawnRequest::new(
-            options,
-            Arc::clone(&self.state.credential_manager),
-            agent_control,
-        );
+        let mut request = ThreadSpawnRequest::new(options, agent_control);
         request.user_shell_override = Some(user_shell_override);
         Box::pin(self.state.spawn_thread(request)).await
     }
@@ -1286,7 +1265,6 @@ impl ThreadManager {
         &self,
         config: Config,
         rollout_path: PathBuf,
-        credential_manager: Arc<CredentialManager>,
         user_shell_override: crate::shell::Shell,
         client_mcp_extensions: ClientMcpExtensions,
     ) -> GenexResult<NewThread> {
@@ -1302,7 +1280,7 @@ impl ThreadManager {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        let mut request = ThreadSpawnRequest::new(options, credential_manager, agent_control);
+        let mut request = ThreadSpawnRequest::new(options, agent_control);
         request.user_shell_override = Some(user_shell_override);
         Box::pin(self.state.spawn_thread(request)).await
     }
@@ -1538,11 +1516,7 @@ impl ThreadManager {
         );
         options.initial_history = fork_history_from_snapshot(snapshot, history, interrupted_marker);
         let agent_control = self.agent_control_for_config(&options.config);
-        let mut request = ThreadSpawnRequest::new(
-            options,
-            Arc::clone(&self.state.credential_manager),
-            agent_control,
-        );
+        let mut request = ThreadSpawnRequest::new(options, agent_control);
         request.forked_from_thread_id = source_thread_id;
         request.fork_persistence = fork_persistence;
         request.inherited_instructions = Some(instructions);
@@ -1893,8 +1867,7 @@ impl ThreadManagerState {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.credential_manager), agent_control);
+        let mut request = ThreadSpawnRequest::new(options, agent_control);
         request.parent_thread_id = parent_thread_id;
         request.forked_from_thread_id = forked_from_thread_id;
         request.inherited_environments = inherited_environments;
@@ -1936,8 +1909,7 @@ impl ThreadManagerState {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.credential_manager), agent_control);
+        let mut request = ThreadSpawnRequest::new(options, agent_control);
         request.parent_thread_id = parent_thread_id;
         request.inherited_environments = inherited_environments;
         request.inherited_instructions = inherited_instructions;
@@ -1972,8 +1944,7 @@ impl ThreadManagerState {
             client_mcp_extensions,
             ..StartThreadOptions::new(config)
         };
-        let mut request =
-            ThreadSpawnRequest::new(options, Arc::clone(&self.credential_manager), agent_control);
+        let mut request = ThreadSpawnRequest::new(options, agent_control);
         request.parent_thread_id = parent_thread_id;
         request.forked_from_thread_id = forked_from_thread_id;
         request.inherited_environments = inherited_environments;
@@ -1999,7 +1970,6 @@ impl ThreadManagerState {
         let ThreadSpawnRequest {
             startup,
             options,
-            credential_manager,
             agent_control,
             parent_thread_id,
             parent_originator,
@@ -2156,7 +2126,6 @@ impl ThreadManagerState {
             allow_model_fallback,
             instructions,
             installation_id: self.installation_id.clone(),
-            credential_manager,
             models_manager: Arc::clone(&self.models_manager),
             git_root_discovery: Arc::clone(&self.git_root_discovery),
             environment_manager: Arc::clone(&self.environment_manager),

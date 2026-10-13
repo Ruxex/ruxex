@@ -2124,7 +2124,6 @@ impl ThreadRequestProcessor {
             .resume_thread_with_history(
                 config,
                 thread_history,
-                self.credential_manager.clone(),
                 self.request_trace_context(request_id).await,
                 client_mcp_extensions,
             )
@@ -3737,7 +3736,6 @@ impl ThreadRequestProcessor {
             .resume_thread_with_history(
                 config,
                 thread_history,
-                self.credential_manager.clone(),
                 match target {
                     ThreadResumeTarget::Client(request_id) => {
                         self.request_trace_context(request_id).await
