@@ -1,6 +1,25 @@
+mod cloud_config;
 pub(crate) mod debug_sandbox;
+mod doctor;
+mod exec_server_telemetry;
 mod exit_status;
 pub(crate) mod login;
+mod marketplace_cmd;
+mod mcp_cmd;
+mod mcp_login;
+mod plugin_cmd;
+mod queue_cmd;
+mod state_db_recovery;
+
+#[path = "cli_main.rs"]
+mod cli_main;
+
+pub(crate) use cli_main::InteractiveRemoteOptions;
+pub(crate) use cli_main::SessionArchiveConfigOverrides;
+pub(crate) use cli_main::finalize_session_archive_interactive;
+pub(crate) use cli_main::resolve_remote_endpoint;
+pub use cli_main::run_legacy;
+pub use cli_main::run_with_provider;
 
 use clap::Args;
 use clap::Parser;
@@ -36,15 +55,19 @@ pub use genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_D
 
 /// Starts the current host executable as its provider-owned AppServer daemon.
 pub async fn start_host_app_server_daemon() -> Result<AppServerLifecycleOutput> {
+    run_host_app_server_lifecycle(AppServerLifecycleCommand::Start).await
+}
+
+/// Runs a lifecycle command against this provider-owned host executable.
+pub async fn run_host_app_server_lifecycle(
+    command: AppServerLifecycleCommand,
+) -> Result<AppServerLifecycleOutput> {
     let executable = std::env::current_exe()?;
     let command_args = [
         OsString::from(APP_SERVER_DAEMON_MODE_ARG),
         OsString::from("--managed-daemon"),
     ];
-    Ok(
-        run_with_host_executable(AppServerLifecycleCommand::Start, &executable, &command_args)
-            .await?,
-    )
+    Ok(run_with_host_executable(command, &executable, &command_args).await?)
 }
 
 /// Runs the generic AppServer entrypoint for the host's hidden daemon mode.

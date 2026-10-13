@@ -246,7 +246,7 @@ const AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT: std::time::Duration =
 /// AppServer daemon process.
 pub use genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
 
-type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
+pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
 #[allow(clippy::too_many_arguments)]
 async fn start_embedded_app_server(
@@ -964,6 +964,26 @@ pub async fn run_main(
     loader_overrides: LoaderOverrides,
     explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
 ) -> std::io::Result<AppExitInfo> {
+    run_main_with_provider_factory(
+        cli,
+        arg0_paths,
+        loader_overrides,
+        explicit_remote_endpoint,
+        None,
+        None,
+    )
+    .await
+}
+
+/// Runs the TUI with an optional provider factory supplied by the embedding host.
+pub async fn run_main_with_provider_factory(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    loader_overrides: LoaderOverrides,
+    explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    provider_factory: Option<ProviderRuntimeFactory>,
+    provider_executable: Option<PathBuf>,
+) -> std::io::Result<AppExitInfo> {
     system_motion::initialize().await;
     // Keep the startup future out of the CLI caller's frame while the TUI is running.
     match Box::pin(startup_orchestration::run_main_inner(
@@ -971,8 +991,8 @@ pub async fn run_main(
         arg0_paths,
         loader_overrides,
         explicit_remote_endpoint,
-        None,
-        None,
+        provider_factory,
+        provider_executable,
     ))
     .await
     {
@@ -997,8 +1017,7 @@ pub async fn run_main_with_provider<P: ModelProviderFactory>(
     loader_overrides: LoaderOverrides,
     explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
 ) -> std::io::Result<AppExitInfo> {
-    system_motion::initialize().await;
-    match Box::pin(startup_orchestration::run_main_inner(
+    run_main_with_provider_factory(
         cli,
         arg0_paths,
         loader_overrides,
@@ -1008,18 +1027,8 @@ pub async fn run_main_with_provider<P: ModelProviderFactory>(
             P::provider_descriptor(),
         )),
         Some(std::env::current_exe().map_err(std::io::Error::other)?),
-    ))
+    )
     .await
-    {
-        Err(err) if startup_draft::StartupCancelled::matches(&err) => Ok(AppExitInfo {
-            token_usage: TokenUsage::default(),
-            thread_id: None,
-            resume_hint: None,
-            disconnect_info: None,
-            exit_reason: ExitReason::UserRequested,
-        }),
-        result => result,
-    }
 }
 
 #[allow(clippy::too_many_arguments)]

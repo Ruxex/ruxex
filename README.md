@@ -135,10 +135,11 @@ daemon. The standalone `genex-app-server` binary remains available as a
 compatibility and operational entrypoint, but it is not required by a
 provider-owned host.
 
-For a complete TUI host, call `genex_tui::run_main_with_provider::<P>(...)` in
+For a complete CLI host, call `genex_cli::run_with_provider::<P>(arg0_paths)` in
 the foreground branch and dispatch `APP_SERVER_DAEMON_MODE_ARG` to
 `run_host_app_server_daemon::<P>(...)` before normal argument parsing in the
-child branch. The runnable
+child branch. The CLI library owns the command dispatch, including interactive
+TUI, exec, debug, session, and AppServer commands. The runnable
 [`examples/provider-host`](examples/provider-host/src/main.rs) crate shows this
 layout with `CloudflareModelProvider`.
 

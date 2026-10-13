@@ -4519,6 +4519,7 @@ dependencies = [
  "genex-git-utils",
  "genex-history",
  "genex-login",
+ "genex-model-provider",
  "genex-model-provider-info",
  "genex-otel",
  "genex-protocol",
@@ -5320,14 +5321,10 @@ name = "genex-provider-host-example"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "clap",
  "genex-app-server",
  "genex-arg0",
  "genex-cli",
- "genex-config",
  "genex-providers",
- "genex-tui",
- "genex-utils-cli",
 ]
 
 [[package]]

@@ -10,11 +10,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = { workspace = true }
-clap = { workspace = true }
 genex-arg0 = { workspace = true }
 genex-app-server = { workspace = true }
 genex-cli = { workspace = true }
-genex-config = { workspace = true }
 genex-providers = { workspace = true }
-genex-tui = { workspace = true }
-genex-utils-cli = { workspace = true }

@@ -29,6 +29,7 @@ use genex_protocol::ThreadId;
 use genex_utils_cli::CliConfigOverrides;
 use genex_utils_home_dir::find_genex_home;
 
+use super::ProviderRuntimeFactory;
 use super::RemoteAppServerEndpoint;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,6 +49,7 @@ pub struct SessionArchiveCommandOptions {
     pub cli: Cli,
     pub arg0_paths: Arg0DispatchPaths,
     pub explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    pub provider_factory: Option<ProviderRuntimeFactory>,
 }
 
 fn success_message(
@@ -221,6 +223,7 @@ pub(super) async fn start_app_server_for_session_command(
         cli,
         arg0_paths,
         explicit_remote_endpoint,
+        provider_factory,
     } = options;
     if cli.no_daemon && explicit_remote_endpoint.is_some() {
         return Err(eyre!("--no-daemon cannot be used with --remote."));
@@ -322,7 +325,7 @@ pub(super) async fn start_app_server_for_session_command(
         /*log_db*/ None,
         &mut state_db,
         environment_manager,
-        /*provider_factory*/ None,
+        provider_factory,
     )
     .await?;
     Ok(

@@ -52,14 +52,17 @@ pub use exec_events::TurnFailedEvent;
 pub use exec_events::TurnStartedEvent;
 pub use exec_events::Usage;
 pub use exec_events::WebSearchItem;
+use genex_app_server_client::AppServerRuntime;
 use genex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 use genex_app_server_client::EnvironmentManager;
 use genex_app_server_client::ExecServerRuntimePaths;
 use genex_app_server_client::InProcessAppServerClient;
 use genex_app_server_client::InProcessClientStartArgs;
 use genex_app_server_client::InProcessServerEvent;
+use genex_app_server_client::ProviderInit;
 use genex_app_server_client::TypedRequestError;
 use genex_app_server_client::configured_app_server_runtime_from_config;
+use genex_app_server_client::provider_init_from_config_with_descriptor;
 use genex_app_server_protocol::ClientRequest;
 use genex_app_server_protocol::ConfigWarningNotification;
 use genex_app_server_protocol::JSONRPCErrorError;
@@ -118,6 +121,7 @@ use genex_history::RolloutLine;
 use genex_login::default_client::set_default_client_residency_requirement;
 use genex_login::default_client::set_default_originator;
 use genex_login::enforce_login_restrictions;
+use genex_model_provider::ProviderDescriptor;
 use genex_otel::set_parent_from_context;
 use genex_otel::traceparent_context_from_env;
 use genex_protocol::SessionId;
@@ -241,7 +245,26 @@ fn exec_stderr_env_filter() -> EnvFilter {
         .unwrap_or_else(|_| EnvFilter::new("error"))
 }
 
+pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
+
 pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
+    run_main_with_runtime_factory(cli, arg0_paths, None).await
+}
+
+/// Runs exec with a provider factory supplied by the embedding host.
+pub async fn run_main_with_provider_factory(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    provider_factory: ProviderRuntimeFactory,
+) -> anyhow::Result<()> {
+    run_main_with_runtime_factory(cli, arg0_paths, Some(provider_factory)).await
+}
+
+async fn run_main_with_runtime_factory(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    provider_factory: Option<ProviderRuntimeFactory>,
+) -> anyhow::Result<()> {
     if let Err(err) = set_default_originator("genex_exec".to_string()) {
         tracing::warn!(?err, "Failed to set Genex exec originator override {err:?}");
     }
@@ -391,6 +414,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
                 &cli_kv_overrides,
                 &loader_overrides,
                 strict_config,
+                provider_factory.clone(),
             )
             .await?;
             if resolved_cwd.is_none() {
@@ -572,7 +596,13 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
         genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
     );
-    let runtime = configured_app_server_runtime_from_config(&config, true).await?;
+    let runtime = if let Some(provider_factory) = provider_factory {
+        let init =
+            provider_init_from_config_with_descriptor(&config, true, &provider_factory.1).await?;
+        (provider_factory.0)(init)
+    } else {
+        configured_app_server_runtime_from_config(&config, true).await?
+    };
     let state_db = genex_core::init_state_db(&config).await;
     let environment_manager = if run_loader_overrides.ignore_user_config {
         EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory())

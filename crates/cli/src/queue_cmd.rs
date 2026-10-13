@@ -33,6 +33,7 @@ pub(crate) async fn run_queue_command(
     root_remote: Option<String>,
     root_remote_auth_token_env: Option<String>,
     arg0_paths: Arg0DispatchPaths,
+    provider_factory: Option<genex_tui::ProviderRuntimeFactory>,
 ) -> anyhow::Result<String> {
     let QueueCommand {
         thread,
@@ -56,6 +57,7 @@ pub(crate) async fn run_queue_command(
             cli,
             arg0_paths,
             explicit_remote_endpoint,
+            provider_factory,
         },
     )
     .await

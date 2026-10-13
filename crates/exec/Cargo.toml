@@ -33,6 +33,7 @@ genex-features = { workspace = true }
 genex-git-utils = { workspace = true }
 genex-history = { workspace = true }
 genex-login = { workspace = true }
+genex-model-provider = { workspace = true }
 genex-model-provider-info = { workspace = true }
 genex-otel = { workspace = true }
 genex-protocol = { workspace = true }

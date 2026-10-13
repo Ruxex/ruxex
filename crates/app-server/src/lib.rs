@@ -143,6 +143,8 @@ pub use crate::transport::auth::AppServerWebsocketAuthSettings;
 pub use crate::transport::auth::WebsocketAuthCliMode;
 pub use genex_model_provider::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
 
+pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
+
 const LOG_FORMAT_ENV_VAR: &str = "LOG_FORMAT";
 const OTEL_SERVICE_NAME: &str = "genex-app-server";
 #[cfg(debug_assertions)]
@@ -559,6 +561,36 @@ pub async fn run_main_with_transport_options_and_provider<P: ModelProviderFactor
     .await
 }
 
+/// Starts the AppServer using a provider factory selected by the embedding host.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_main_with_transport_options_and_provider_factory(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+    provider_factory: ProviderRuntimeFactory,
+) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        None,
+        Some(provider_factory),
+    )
+    .await
+}
+
 #[allow(clippy::too_many_arguments)]
 async fn run_main_with_transport_options_and_optional_runtime(
     arg0_paths: Arg0DispatchPaths,
@@ -571,10 +603,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
     auth: AppServerWebsocketAuthSettings,
     runtime_options: AppServerRuntimeOptions,
     injected_runtime: Option<AppServerRuntime>,
-    provider_factory: Option<(
-        fn(ProviderInit) -> AppServerRuntime,
-        ProviderDescriptor,
-    )>,
+    provider_factory: Option<(fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor)>,
 ) -> IoResult<AppServerExit> {
     let loader_overrides = loader_overrides_with_test_user_config_file(
         loader_overrides,
