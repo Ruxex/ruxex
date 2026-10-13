@@ -18,7 +18,6 @@ pub(crate) use cli_main::InteractiveRemoteOptions;
 pub(crate) use cli_main::SessionArchiveConfigOverrides;
 pub(crate) use cli_main::finalize_session_archive_interactive;
 pub(crate) use cli_main::resolve_remote_endpoint;
-pub use cli_main::run_legacy;
 pub use cli_main::run_with_provider;
 
 use clap::Args;

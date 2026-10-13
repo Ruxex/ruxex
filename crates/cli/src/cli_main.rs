@@ -786,13 +786,6 @@ type ProviderRuntimeFactory = (
     ProviderDescriptor,
 );
 
-/// Runs the restored command dispatcher with the legacy configuration-based provider.
-///
-/// This is kept only for the transition while the fixed CLI binary is removed.
-pub async fn run_legacy(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
-    run_cli(arg0_paths, None).await
-}
-
 /// Runs the complete Genex CLI using the provider type selected by the host.
 ///
 /// The provider type is compiled into the host and reconstructed in any
