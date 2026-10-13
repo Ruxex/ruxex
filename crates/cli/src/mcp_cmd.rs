@@ -42,7 +42,6 @@ use genex_utils_cli::format_env_display;
 use crate::cloud_config;
 use crate::mcp_login::McpLoginMode;
 use crate::mcp_login::perform_oauth_login_retry_without_scopes;
-use crate::plugin_cmd::load_cli_credential_manager;
 
 /// Subcommands:
 /// - `list`   — list configured servers (with `--json`)
@@ -503,7 +502,7 @@ async fn run_remove(config_overrides: &CliConfigOverrides, remove_args: RemoveAr
 async fn load_mcp_manager(config: &Config) -> Result<McpManager> {
     let plugins_manager = Arc::new(plugins_manager_for_config(
         config,
-        load_cli_credential_manager(config).await?,
+        genex_credential_broker::UnsupportedCredentialBroker::shared(),
     ));
     Ok(McpManager::new(plugins_manager))
 }

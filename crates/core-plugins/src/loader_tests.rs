@@ -85,14 +85,9 @@ async fn ema_policy_overlays_native_and_agent_plugins_without_changing_endpoints
                 &root.join(mcp_path),
                 &mcp.replace("https://resource.example/mcp", endpoint),
             );
-            let declared = load_plugin_mcp_servers(&root, /*auth_mode*/ None).await;
+            let declared = load_plugin_mcp_servers(&root).await;
             let transport = declared["example"].transport.clone();
-            let installed = load_plugin_mcp_servers_with_policy(
-                &root,
-                /*auth_mode*/ None,
-                Some(&policies),
-            )
-            .await;
+            let installed = load_plugin_mcp_servers_with_policy(&root, Some(&policies)).await;
             let mut selected = declared;
             apply_configured_plugin_mcp_server_policies(&policies, &mut selected);
             assert_eq!(installed, selected);
@@ -154,7 +149,7 @@ async fn agent_plugin_mcp_overlay_only_forwards_matching_stdio_server_env_vars()
 }"#,
     );
 
-    let mut expected = load_plugin_mcp_servers(&plugin_root, /*auth_mode*/ None).await;
+    let mut expected = load_plugin_mcp_servers(&plugin_root).await;
     let Some(McpServerConfig {
         transport: McpServerTransportConfig::Stdio { env, env_vars, .. },
         ..
@@ -185,10 +180,7 @@ async fn agent_plugin_mcp_overlay_only_forwards_matching_stdio_server_env_vars()
 }"#,
     );
 
-    assert_eq!(
-        load_plugin_mcp_servers(&plugin_root, /*auth_mode*/ None).await,
-        expected
-    );
+    assert_eq!(load_plugin_mcp_servers(&plugin_root).await, expected);
 }
 
 #[tokio::test]
@@ -212,7 +204,7 @@ async fn agent_plugin_mcp_overlay_supports_inline_legacy_servers_without_portabl
 }"#,
     );
 
-    let mut expected = load_plugin_mcp_servers(&plugin_root, /*auth_mode*/ None).await;
+    let mut expected = load_plugin_mcp_servers(&plugin_root).await;
     let Some(McpServerConfig {
         transport: McpServerTransportConfig::Stdio { env_vars, .. },
         ..
@@ -232,10 +224,7 @@ async fn agent_plugin_mcp_overlay_supports_inline_legacy_servers_without_portabl
 }"#,
     );
 
-    assert_eq!(
-        load_plugin_mcp_servers(&plugin_root, /*auth_mode*/ None).await,
-        expected
-    );
+    assert_eq!(load_plugin_mcp_servers(&plugin_root).await, expected);
 }
 
 #[cfg(unix)]

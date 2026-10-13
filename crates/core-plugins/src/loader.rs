@@ -28,7 +28,6 @@ use genex_plugin::PluginCapabilitySummary;
 use genex_plugin::PluginHookSource;
 use genex_plugin::PluginId;
 use genex_plugin::PluginIdError;
-use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::Product;
 use genex_skills::SkillMetadata;
 use genex_skills::SkillRootLoadRequest;
@@ -858,11 +857,8 @@ pub async fn plugin_capability_summary_from_root(
 }
 
 /// Loads plugin MCP servers without applying user-specific policy overrides.
-pub async fn load_plugin_mcp_servers(
-    plugin_root: &Path,
-    auth_mode: Option<AuthMode>,
-) -> HashMap<String, McpServerConfig> {
-    load_plugin_mcp_servers_with_policy(plugin_root, auth_mode, /*plugin_policy*/ None).await
+pub async fn load_plugin_mcp_servers(plugin_root: &Path) -> HashMap<String, McpServerConfig> {
+    load_plugin_mcp_servers_with_policy(plugin_root, /*plugin_policy*/ None).await
 }
 
 /// Resolves effective per-plugin MCP policies without validating opaque selected-root IDs.
@@ -940,7 +936,6 @@ pub fn apply_configured_plugin_mcp_server_policies(
 
 async fn load_plugin_mcp_servers_with_policy(
     plugin_root: &Path,
-    _auth_mode: Option<AuthMode>,
     plugin_policy: Option<&HashMap<String, PluginMcpServerConfig>>,
 ) -> HashMap<String, McpServerConfig> {
     load_declared_plugin_mcp_servers(plugin_root, plugin_policy).await

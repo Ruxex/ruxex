@@ -36,6 +36,7 @@ genex-build-info = { workspace = true }
 genex-api = { workspace = true }
 genex-utils-cli = { workspace = true }
 genex-config = { workspace = true }
+genex-credential-broker = { workspace = true }
 genex-core = { workspace = true }
 genex-core-plugins = { workspace = true }
 genex-history = { workspace = true }

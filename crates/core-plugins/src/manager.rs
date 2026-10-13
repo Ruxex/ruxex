@@ -54,13 +54,12 @@ use genex_config::clear_user_plugin;
 use genex_config::set_user_plugin_enabled;
 use genex_config::skill_config_rules_from_stack;
 use genex_config::types::PluginConfig;
+use genex_credential_broker::SharedCredentialBroker;
 use genex_hooks::plugin_hook_declarations;
-use genex_login::CredentialManager;
 use genex_plugin::PluginCapabilitySummary;
 use genex_plugin::PluginId;
 use genex_plugin::PluginIdError;
 use genex_plugin::prompt_safe_plugin_description;
-use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::HookEventName;
 use genex_protocol::protocol::Product;
 use genex_skills::SkillMetadata;
@@ -262,7 +261,7 @@ pub struct PluginsManager {
     loaded_plugins_load_semaphore: Semaphore,
     skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     restriction_product: Option<Product>,
-    credential_manager: Arc<CredentialManager>,
+    credential_broker: SharedCredentialBroker,
 }
 
 #[derive(Clone)]
@@ -326,13 +325,13 @@ impl PluginLoadCacheKey {
 impl PluginsManager {
     pub fn new(
         genex_home: PathBuf,
-        credential_manager: Arc<CredentialManager>,
+        credential_broker: SharedCredentialBroker,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
         Self::new_with_options(
             genex_home,
             Some(Product::Codex),
-            credential_manager,
+            credential_broker,
             skill_root_loader,
         )
     }
@@ -340,7 +339,7 @@ impl PluginsManager {
     pub fn new_with_options(
         genex_home: PathBuf,
         restriction_product: Option<Product>,
-        credential_manager: Arc<CredentialManager>,
+        credential_broker: SharedCredentialBroker,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
         // Product restrictions are enforced at marketplace admission time for a given GENEX_HOME:
@@ -365,12 +364,16 @@ impl PluginsManager {
             loaded_plugins_load_semaphore: Semaphore::new(/*permits*/ 1),
             skill_root_loader,
             restriction_product,
-            credential_manager,
+            credential_broker,
         }
     }
 
-    pub fn auth_mode(&self) -> Option<AuthMode> {
-        self.credential_manager.get_api_auth_mode()
+    /// Resolves a credential only for the explicitly supplied Plugin or Marketplace owner.
+    pub async fn resolve_credential(
+        &self,
+        request: genex_credential_broker::CredentialRequest,
+    ) -> genex_credential_broker::CredentialResult {
+        self.credential_broker.resolve(request).await
     }
 
     fn restriction_product_matches(&self, products: Option<&[Product]>) -> bool {

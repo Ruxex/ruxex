@@ -15,10 +15,6 @@ use genex_config::loader::load_config_layers_state;
 use genex_exec_server::LOCAL_FS;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_login::AuthHeaders;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_login::test_support::credential_manager_from_optional_auth;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::Product;
 use genex_protocol::protocol::SkillScope;
@@ -46,7 +42,7 @@ pub(crate) fn curated_plugins_repo_path(genex_home: &Path) -> PathBuf {
 pub(crate) fn test_plugins_manager(genex_home: PathBuf) -> PluginsManager {
     PluginsManager::new(
         genex_home,
-        test_credential_manager(/*auth_mode*/ None),
+        genex_credential_broker::UnsupportedCredentialBroker::shared(),
         test_skill_root_loader(),
     )
 }
@@ -59,20 +55,12 @@ pub(crate) fn test_plugins_manager_with_options(
     PluginsManager::new_with_options(
         genex_home,
         restriction_product,
-        test_credential_manager(auth_mode),
+        {
+            let _ = auth_mode;
+            genex_credential_broker::UnsupportedCredentialBroker::shared()
+        },
         test_skill_root_loader(),
     )
-}
-
-pub(crate) fn test_credential_manager(auth_mode: Option<AuthMode>) -> Arc<CredentialManager> {
-    credential_manager_from_optional_auth(test_genex_auth(auth_mode))
-}
-
-fn test_genex_auth(auth_mode: Option<AuthMode>) -> Option<GenexAuth> {
-    auth_mode.map(|auth_mode| match auth_mode {
-        AuthMode::ApiKey => GenexAuth::from_api_key("test-api-key"),
-        AuthMode::Headers => GenexAuth::Headers(AuthHeaders::new(http::HeaderMap::new())),
-    })
 }
 
 pub(crate) fn test_skill_root_loader() -> Arc<dyn SkillRootLoader<PluginSkillRoot>> {

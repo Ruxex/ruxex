@@ -32,6 +32,7 @@ use genex_code_mode::CodeModeSessionProvider;
 use genex_code_mode::DisabledCodeModeSessionProvider;
 use genex_code_mode::ProcessOwnedCodeModeSessionProvider;
 use genex_core_plugins::PluginsManager;
+use genex_credential_broker::UnsupportedCredentialBroker;
 use genex_exec_server::EnvironmentManager;
 use genex_extension_api::ExtensionDataInit;
 use genex_extension_api::ExtensionRegistry;
@@ -532,7 +533,7 @@ impl ThreadManager {
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
             genex_home.to_path_buf(),
             restriction_product,
-            Arc::clone(&credential_manager),
+            UnsupportedCredentialBroker::shared(),
             skills_service.clone(),
         ));
         let mcp_manager = Arc::new(McpManager::new_with_extensions(
@@ -680,7 +681,7 @@ impl ThreadManager {
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
             genex_home.clone(),
             restriction_product,
-            Arc::clone(&credential_manager),
+            UnsupportedCredentialBroker::shared(),
             skills_service.clone(),
         ));
         let mcp_manager = Arc::new(McpManager::new(Arc::clone(&plugins_manager)));

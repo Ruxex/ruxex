@@ -7,7 +7,7 @@ pub(crate) mod test_support;
 
 use crate::config::Config;
 use genex_core_plugins::PluginsManager;
-use genex_login::CredentialManager;
+use genex_credential_broker::SharedCredentialBroker;
 use genex_skills_extension::HostSkillsService;
 use std::sync::Arc;
 
@@ -25,7 +25,7 @@ pub(crate) use mentions::collect_tool_mentions_from_messages;
 /// Callers that already own a host skills service should inject that existing service instead.
 pub fn plugins_manager_for_config(
     config: &Config,
-    credential_manager: Arc<CredentialManager>,
+    credential_broker: SharedCredentialBroker,
 ) -> PluginsManager {
     let skill_root_loader = Arc::new(HostSkillsService::new(
         config.genex_home.clone(),
@@ -33,7 +33,7 @@ pub fn plugins_manager_for_config(
     ));
     PluginsManager::new(
         config.genex_home.to_path_buf(),
-        credential_manager,
+        credential_broker,
         skill_root_loader,
     )
 }

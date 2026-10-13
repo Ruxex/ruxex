@@ -69,6 +69,22 @@ pub trait CredentialBroker: Send + Sync {
 
 pub type SharedCredentialBroker = Arc<dyn CredentialBroker>;
 
+/// Host default for runtimes that do not expose external Plugin/Marketplace credentials.
+#[derive(Debug, Default)]
+pub struct UnsupportedCredentialBroker;
+
+impl UnsupportedCredentialBroker {
+    pub fn shared() -> SharedCredentialBroker {
+        Arc::new(Self)
+    }
+}
+
+impl CredentialBroker for UnsupportedCredentialBroker {
+    fn resolve<'a>(&'a self, _request: CredentialRequest) -> CredentialFuture<'a> {
+        Box::pin(async { Err(CredentialError::Unsupported) })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

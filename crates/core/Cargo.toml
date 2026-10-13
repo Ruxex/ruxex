@@ -29,6 +29,7 @@ genex-client = { workspace = true }
 genex-code-mode = { workspace = true }
 genex-context-fragments = { workspace = true }
 genex-config = { workspace = true }
+genex-credential-broker = { workspace = true }
 genex-core-plugins = { workspace = true }
 genex-diagnostics = { workspace = true }
 genex-exec-server = { workspace = true }

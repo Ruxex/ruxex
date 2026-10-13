@@ -593,10 +593,9 @@ async fn load_plugin_command_context(
         .context("failed to load configuration")?;
     mount_provider_home_for_config(&config).context("failed to mount provider data root")?;
     let plugins_input = config.plugins_config_input();
-    let credential_manager = load_cli_credential_manager(&config).await?;
     let manager = Arc::new(plugins_manager_for_config(
         &config,
-        Arc::clone(&credential_manager),
+        genex_credential_broker::UnsupportedCredentialBroker::shared(),
     ));
     Ok(PluginCommandContext {
         genex_home: genex_home.to_path_buf(),

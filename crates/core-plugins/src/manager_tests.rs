@@ -27,6 +27,13 @@ use genex_config::RequirementsLayerEntry;
 use genex_config::SkillConfigRules;
 use genex_config::compose_requirements;
 use genex_config::types::McpServerTransportConfig;
+use genex_credential_broker::CredentialBroker;
+use genex_credential_broker::CredentialError;
+use genex_credential_broker::CredentialFuture;
+use genex_credential_broker::CredentialOwner;
+use genex_credential_broker::CredentialPurpose;
+use genex_credential_broker::CredentialRequest;
+use genex_credential_broker::CredentialSnapshot;
 use genex_plugin::PluginId;
 use genex_protocol::auth::AuthMode;
 use genex_protocol::protocol::Product;
@@ -36,10 +43,55 @@ use genex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 use tempfile::TempDir;
 use toml::Value;
 
 const MAX_CAPABILITY_SUMMARY_DESCRIPTION_LEN: usize = 1024;
+
+struct ExactOwnerBroker {
+    request: CredentialRequest,
+}
+
+impl CredentialBroker for ExactOwnerBroker {
+    fn resolve<'a>(&'a self, request: CredentialRequest) -> CredentialFuture<'a> {
+        Box::pin(async move {
+            if request == self.request {
+                Ok(Some(CredentialSnapshot::from_opaque(())))
+            } else {
+                Err(CredentialError::Unsupported)
+            }
+        })
+    }
+}
+
+#[tokio::test]
+async fn plugin_manager_keeps_credential_requests_owner_scoped() {
+    let genex_home = tempfile::tempdir().expect("create Genex home");
+    let request = CredentialRequest::new(
+        CredentialOwner::Plugin("weather".to_string()),
+        CredentialPurpose::PluginResource,
+    );
+    let manager = PluginsManager::new_with_options(
+        genex_home.path().to_path_buf(),
+        Some(Product::Codex),
+        Arc::new(ExactOwnerBroker {
+            request: request.clone(),
+        }),
+        test_skill_root_loader(),
+    );
+
+    assert!(manager.resolve_credential(request).await.is_ok());
+    assert!(matches!(
+        manager
+            .resolve_credential(CredentialRequest::new(
+                CredentialOwner::Plugin("other-plugin".to_string()),
+                CredentialPurpose::PluginResource,
+            ))
+            .await,
+        Err(CredentialError::Unsupported)
+    ));
+}
 
 fn unrestricted_config_layer_stack() -> ConfigLayerStack {
     ConfigLayerStack::default()
