@@ -1,8 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
-import { useQueryClient } from "@tanstack/react-query";
 import { appServerQueryKeys } from "../query-keys";
 
 function invalidateThreadQueries(queryClient: ReturnType<typeof useQueryClient>, threadId: string) {

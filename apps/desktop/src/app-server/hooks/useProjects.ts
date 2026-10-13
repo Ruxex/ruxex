@@ -4,7 +4,7 @@ import type { v2 } from "../../protocol";
 import { requestAppServerMethod } from "../api";
 import { useAppServerStatus } from "../queries";
 import { appServerQueryKeys } from "../query-keys";
-import { useThreadList } from "./useThreads";
+import { useThreadList } from "./useThreadQueries";
 
 export function useProjectList(params: v2.ProjectListParams = {}) {
   const status = useAppServerStatus();
@@ -43,7 +43,9 @@ export function projectThreadListParams(projectId: string): v2.ThreadListParams 
 }
 
 export function useProjectThreads(projectId: string) {
-  return useThreadList(projectThreadListParams(projectId));
+  return useThreadList(projectThreadListParams(projectId), {
+    enabled: Boolean(projectId),
+  });
 }
 
 export function useCreateProject() {
