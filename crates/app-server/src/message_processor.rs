@@ -398,6 +398,7 @@ impl MessageProcessor {
         let initialize_processor = InitializeRequestProcessor::new(
             outgoing.clone(),
             Arc::clone(&config),
+            runtime.provider_descriptor(),
             config_warnings.clone(),
             Arc::clone(&user_verification),
         );

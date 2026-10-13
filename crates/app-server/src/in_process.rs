@@ -859,6 +859,7 @@ mod tests {
     use genex_app_server_protocol::TurnItemsView;
     use genex_app_server_protocol::TurnStatus;
     use genex_core::config::ConfigBuilder;
+    use genex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
     use std::path::Path;
     use tempfile::TempDir;
@@ -969,6 +970,63 @@ mod tests {
             .expect("model provider read should succeed")
             .expect("model provider read should return a response");
         assert_eq!(response["id"], expected_provider);
+        client.shutdown().await.expect("shutdown should complete");
+    }
+
+    #[tokio::test]
+    async fn injected_provider_remains_authoritative_during_initialize() {
+        let genex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config(genex_home.path()).await);
+        let state_db = genex_rollout::state_db::try_init(config.as_ref())
+            .await
+            .expect("state db should initialize for in-process test");
+        let injected_provider = ModelProviderInfo {
+            id: Some("injected-provider".to_string()),
+            ..ModelProviderInfo::default()
+        };
+        assert_ne!(
+            AppServerRuntimeBuilder::descriptor_for(&config.model_provider),
+            AppServerRuntimeBuilder::descriptor_for(&injected_provider)
+        );
+        let runtime = AppServerRuntimeBuilder::from_provider_info(injected_provider, None).build();
+
+        let client = InProcessAppServerBuilder::new(InProcessStartArgs {
+            arg0_paths: Arg0DispatchPaths::default(),
+            config,
+            cli_overrides: Vec::new(),
+            loader_overrides: LoaderOverrides::default(),
+            strict_config: false,
+            thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
+            log_db: None,
+            state_db: Some(state_db),
+            environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
+            config_warnings: Vec::new(),
+            session_source: SessionSource::Cli,
+            enable_api_key_env: false,
+            runtime: Some(runtime),
+            initialize: InitializeParams {
+                client_info: ClientInfo {
+                    name: "genex-in-process-test".to_string(),
+                    title: None,
+                    version: "0.0.0".to_string(),
+                },
+                capabilities: None,
+            },
+            channel_capacity: DEFAULT_IN_PROCESS_CHANNEL_CAPACITY,
+        })
+        .build()
+        .await
+        .expect("injected provider should initialize even when config differs");
+
+        let response = client
+            .request(ClientRequest::ModelProviderRead {
+                request_id: RequestId::Integer(2),
+                params: Default::default(),
+            })
+            .await
+            .expect("model provider read should succeed")
+            .expect("model provider read should return a response");
+        assert_eq!(response["id"], "injected-provider");
         client.shutdown().await.expect("shutdown should complete");
     }
 

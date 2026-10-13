@@ -7,6 +7,8 @@ use genex_login::default_client::USER_AGENT_SUFFIX;
 use genex_login::default_client::get_user_agent;
 use genex_login::default_client::set_default_client_residency_requirement;
 use genex_login::default_client::set_default_originator;
+use genex_model_provider::ProviderDescriptor;
+use genex_model_provider::mount_provider_home;
 use genex_protocol::mcp::ClientMcpExtensions;
 
 use super::*;
@@ -20,6 +22,7 @@ const NON_ORIGINATING_CLIENT_NAMES: &[&str] = &["genex_app_server_daemon", "gene
 pub(crate) struct InitializeRequestProcessor {
     outgoing: Arc<OutgoingMessageSender>,
     config: Arc<Config>,
+    provider_descriptor: ProviderDescriptor,
     config_warnings: Arc<Vec<ConfigWarningNotification>>,
     user_verification: Arc<crate::user_verification::Service>,
 }
@@ -28,12 +31,14 @@ impl InitializeRequestProcessor {
     pub(crate) fn new(
         outgoing: Arc<OutgoingMessageSender>,
         config: Arc<Config>,
+        provider_descriptor: ProviderDescriptor,
         config_warnings: Vec<ConfigWarningNotification>,
         user_verification: Arc<crate::user_verification::Service>,
     ) -> Self {
         Self {
             outgoing,
             config,
+            provider_descriptor,
             config_warnings: Arc::new(config_warnings),
             user_verification,
         }
@@ -157,8 +162,8 @@ impl InitializeRequestProcessor {
         }
 
         let user_agent = get_user_agent();
-        let marker =
-            crate::runtime::mount_provider_home_for_config(&self.config).map_err(|error| {
+        let marker = mount_provider_home(&self.config.genex_home, &self.provider_descriptor)
+            .map_err(|error| {
                 invalid_request(format!("failed to mount provider data root: {error}"))
             })?;
         let response = InitializeResponse {
