@@ -4,6 +4,22 @@
 
 ## 単一Provider runtimeの最終境界監査 (2026-10-09)
 
+### 固定CLIバイナリのホスト移行監査 (2026-10-13)
+
+`genex-cli` の `genex` バイナリは、設定からProviderを構築する従来の実行ホストである。
+直接のproducer/consumerは、`crates/cli/src/main.rs`、`justfile`、デスクトップのパッケージ
+staging/bootstrap、CLI統合テスト、Core/TUI/AppServerの子プロセス試験、
+`genex-app-server-test-client` の実行例である。新しい `examples/provider-host` はTUIの前景経路と
+同一実行ファイルの隠しAppServerデーモン経路を持つが、既存CLIの `exec`、`app-server`、sandbox、
+plugin、MCP等のサブコマンドをまだ置き換えていない。
+
+したがって現時点で `genex` binary target を削除すると、desktop packageのdaemon起動と複数の
+repository-owned test producerが壊れる。`genex-app-server` binaryは別の運用入口として保持する。
+これは固定Providerを残す判断ではなく、provider-owned hostへの **migrate-in-place** を完了するまで
+旧binaryを一時的に **retain** する判断である。詳細な移行単位は
+[`2026-10-13-remove-fixed-provider-cli-binary.md`](superpowers/plans/2026-10-13-remove-fixed-provider-cli-binary.md)
+に記録した。
+
 ### 追加監査: 実装記録との不一致
 
 前節の完了記述後に production source を再走査したところ、次の3項目は「解消済み」とは言えない

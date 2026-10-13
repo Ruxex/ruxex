@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -198,11 +199,17 @@ async fn ensure_app_server(
         Err(_) => {
             let package_source = runtime_package_source(&app)
                 .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
-            let bootstrap = genex_app_server_daemon::bootstrap_from_package(&package_source)
-                .await
-                .map_err(|error| {
-                    command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}"))
-                })?;
+            let bootstrap = genex_app_server_daemon::bootstrap_from_package_with_host_args(
+                &package_source,
+                &[
+                    OsString::from(genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG),
+                    OsString::from("--managed-daemon"),
+                ],
+            )
+            .await
+            .map_err(|error| {
+                command_error(DesktopAppServerErrorKind::Lifecycle, format!("{error:#}"))
+            })?;
             let socket_path = AbsolutePathBuf::from_absolute_path(bootstrap.socket_path.clone())
                 .map_err(|error| {
                     command_error(DesktopAppServerErrorKind::Initialization, error.to_string())

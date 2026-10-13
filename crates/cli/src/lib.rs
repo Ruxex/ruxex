@@ -32,7 +32,7 @@ use std::ffi::OsString;
 
 /// Hidden argument used by a provider-owned host when it re-enters itself as
 /// the AppServer daemon process.
-pub const APP_SERVER_DAEMON_MODE_ARG: &str = "__genex-app-server-daemon";
+pub use genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
 
 /// Starts the current host executable as its provider-owned AppServer daemon.
 pub async fn start_host_app_server_daemon() -> Result<AppServerLifecycleOutput> {

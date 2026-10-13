@@ -142,7 +142,7 @@ fn host_command_args_replace_the_managed_app_server_command() {
         temp.path().join("genex"),
         temp.path().join("app-server.pid"),
         Some(vec![
-            OsString::from("__genex-app-server-daemon"),
+            OsString::from(crate::HOST_APP_SERVER_DAEMON_MODE_ARG),
             OsString::from("--listen"),
             OsString::from("unix://"),
         ]),
@@ -151,7 +151,7 @@ fn host_command_args_replace_the_managed_app_server_command() {
     assert_eq!(
         backend.command_args(),
         vec![
-            OsString::from("__genex-app-server-daemon"),
+            OsString::from(crate::HOST_APP_SERVER_DAEMON_MODE_ARG),
             OsString::from("--listen"),
             OsString::from("unix://"),
         ]

@@ -39,6 +39,8 @@ const OPERATION_LOCK_FILE_NAME: &str = "daemon.lock";
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const STATE_DIR_NAME: &str = "app-server-daemon";
 
+pub const HOST_APP_SERVER_DAEMON_MODE_ARG: &str = "__genex-app-server-daemon";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LifecycleCommand {
     Start,
@@ -138,6 +140,25 @@ pub async fn bootstrap(options: BootstrapOptions) -> Result<BootstrapOutput> {
 pub async fn bootstrap_from_package(package_source: &Path) -> Result<BootstrapOutput> {
     ensure_supported_platform()?;
     Box::pin(Daemon::from_environment()?.bootstrap(BootstrapOptions {}, Some(package_source))).await
+}
+
+/// Bootstraps a packaged provider-owned host and starts its hidden daemon mode.
+///
+/// Package preparation still uses the normal managed package layout. The
+/// supplied arguments are used only when the installed host executable is
+/// launched, so the package can own a concrete provider without exposing an
+/// `app-server` subcommand or serializing a provider instance.
+pub async fn bootstrap_from_package_with_host_args(
+    package_source: &Path,
+    host_command_args: &[OsString],
+) -> Result<BootstrapOutput> {
+    ensure_supported_platform()?;
+    Box::pin(Daemon::from_environment()?.bootstrap_with_host_args(
+        BootstrapOptions {},
+        package_source,
+        host_command_args,
+    ))
+    .await
 }
 
 #[cfg(unix)]
@@ -414,10 +435,32 @@ impl Daemon {
             .await
     }
 
+    async fn bootstrap_with_host_args(
+        &self,
+        options: BootstrapOptions,
+        package_source: &Path,
+        host_command_args: &[OsString],
+    ) -> Result<BootstrapOutput> {
+        let _operation_lock = self.acquire_operation_lock().await?;
+        self.current_installation()?
+            .bootstrap_locked_with_host_args(options, Some(package_source), host_command_args)
+            .await
+    }
+
     async fn bootstrap_locked(
         &self,
         _options: BootstrapOptions,
         package_source: Option<&Path>,
+    ) -> Result<BootstrapOutput> {
+        self.bootstrap_locked_with_host_args(_options, package_source, &[])
+            .await
+    }
+
+    async fn bootstrap_locked_with_host_args(
+        &self,
+        _options: BootstrapOptions,
+        package_source: Option<&Path>,
+        host_command_args: &[OsString],
     ) -> Result<BootstrapOutput> {
         let settings = self.load_settings().await?;
         if client::probe(&self.socket_path).await.is_ok()
@@ -430,6 +473,9 @@ impl Daemon {
         prepare_install::prepare(self, &settings, package_source).await?;
         let mut managed = self.clone();
         managed.managed_genex_bin = self.current_managed_genex_bin()?;
+        if !host_command_args.is_empty() {
+            managed.host_command_args = Some(host_command_args.to_vec());
+        }
         managed.ensure_managed_genex_bin()?;
         settings.save(&self.settings_file).await?;
 

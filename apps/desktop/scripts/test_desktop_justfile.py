@@ -17,7 +17,10 @@ class DesktopJustfileTest(unittest.TestCase):
         )
 
         dry_run = result.stdout + result.stderr
-        self.assertIn("cargo build -p genex-cli -p genex-code-mode-host", dry_run)
+        self.assertIn(
+            "cargo build -p genex-provider-host-example -p genex-code-mode-host",
+            dry_run,
+        )
         self.assertIn("stage:runtime", dry_run)
         self.assertIn("tauri dev", dry_run)
 

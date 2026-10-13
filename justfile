@@ -26,8 +26,8 @@ exec *args:
 
 # Build and stage the local runtime package used by the Tauri desktop app.
 before-desktop:
-    systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo build -p genex-cli -p genex-code-mode-host
-    pnpm --dir {{ justfile_directory() }}/apps/desktop run stage:runtime --output {{ justfile_directory() }}/apps/desktop/src-tauri/resources/genex-package --genex-bin {{ justfile_directory() }}/target/debug/genex --code-mode-host {{ justfile_directory() }}/target/debug/genex-code-mode-host
+    systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo build -p genex-provider-host-example -p genex-code-mode-host
+    pnpm --dir {{ justfile_directory() }}/apps/desktop run stage:runtime --output {{ justfile_directory() }}/apps/desktop/src-tauri/resources/genex-package --genex-bin {{ justfile_directory() }}/target/debug/genex-provider-host-example --code-mode-host {{ justfile_directory() }}/target/debug/genex-code-mode-host
 
 # Start the local Tauri desktop application in development mode.
 desktop: before-desktop

@@ -244,7 +244,7 @@ const AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT: std::time::Duration =
 
 /// Hidden argument used when a provider-owned host re-enters itself as the
 /// AppServer daemon process.
-pub const APP_SERVER_DAEMON_MODE_ARG: &str = "__genex-app-server-daemon";
+pub use genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
 
 type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
