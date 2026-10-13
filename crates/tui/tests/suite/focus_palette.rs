@@ -196,8 +196,7 @@ impl PtyGenex {
         let stdin = slave.try_clone().context("clone pseudo-terminal stdin")?;
         let stdout = slave.try_clone().context("clone pseudo-terminal stdout")?;
 
-        let genex = genex_utils_cargo_bin::cargo_bin("genex-tui")
-            .or_else(|_| genex_utils_cargo_bin::cargo_bin("genex"))?;
+        let genex = genex_utils_cargo_bin::cargo_bin("genex-provider-host-example")?;
         let child = Command::new(genex)
             .args(extra_args)
             .arg("--no-alt-screen")

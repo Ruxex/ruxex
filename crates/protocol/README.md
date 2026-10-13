@@ -1,6 +1,8 @@
 # genex-protocol
 
-This crate defines the "types" for the protocol used by Genex CLI, which includes both "internal types" for communication between `genex-core` and `genex-tui`, as well as "external types" used with `genex app-server`.
+This crate defines the protocol types used by Genex hosts, including both
+internal types for communication between `genex-core` and `genex-tui`, and
+external types used with `genex-app-server`.
 
 This crate should have minimal dependencies.
 

@@ -27,11 +27,11 @@ cargo install --locked just
 # Install nextest for the `just test` helper.
 cargo install --locked cargo-nextest
 
-# Build Codex.
-cargo build -p genex-cli --bin codex
+# Build the provider-owned sample host.
+cargo build -p genex-provider-host-example
 
 # Launch the TUI with a sample prompt.
-cargo run --bin codex -- "explain this codebase to me"
+cargo run -p genex-provider-host-example -- "explain this codebase to me"
 
 # After making changes, use the root justfile helpers (they run at the repository root):
 just fmt
@@ -52,10 +52,10 @@ Codex is written in Rust, so it honors the `RUST_LOG` environment variable to co
 The TUI records diagnostics in bounded local stores by default. Set `log_dir` explicitly to enable a plaintext TUI log for a run:
 
 ```bash
-genex -c log_dir=./.genex-log
+genex-provider-host-example -c log_dir=./.genex-log
 tail -F ./.genex-log/genex-tui.log
 ```
 
-The non-interactive mode (`genex exec`) defaults to `RUST_LOG=error`, but messages are printed inline, so there is no need to monitor a separate file.
+Provider-specific non-interactive command surfaces belong to the host application. A host selects its provider at compile time and invokes the provider-neutral library APIs directly.
 
 See the Rust documentation on [`RUST_LOG`](https://docs.rs/env_logger/latest/env_logger/#enabling-logging) for more information on the configuration options.

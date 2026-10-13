@@ -3,19 +3,17 @@
 > `genex-app-server-daemon` is experimental and its lifecycle contract may
 > change while the daemon lifecycle flow is still being developed.
 
-`genex-app-server-daemon` backs the machine-readable `genex app-server`
-lifecycle commands used by local and remote app-server clients. It supports
-Linux and macOS using Unix process and file-locking primitives.
+`genex-app-server-daemon` provides the machine-readable lifecycle API used by
+provider-owned hosts, desktop clients, and local app-server clients. It
+supports Linux and macOS using Unix process and file-locking primitives.
 
-## Commands
+There is no fixed-provider CLI command for this crate. A host selects its
+`ModelProvider` and calls the Rust API; the host executable is re-entered with
+serializable daemon arguments when a detached process is required.
 
-```sh
-genex app-server daemon start
-genex app-server daemon restart
-genex app-server daemon stop
-genex app-server daemon version
-genex app-server daemon bootstrap
-```
+Use `run_with_host_executable` for an already packaged host, or
+`bootstrap_from_package_with_host_args` when the host package must first be
+installed into the managed layout.
 
 On success, every command writes exactly one JSON object to stdout. Consumers
 should parse that JSON rather than relying on human-readable text. Lifecycle
@@ -24,7 +22,7 @@ running app-server version when applicable.
 
 ## Bootstrap flow
 
-`bootstrap` can use any complete CLI package. If no daemon package is installed,
+`bootstrap` can use any complete provider-owned host package. If no daemon package is installed,
 it copies the invoking package into
 `GENEX_HOME/packages/app-server-daemon` and prints an installation message.
 Existing daemon packages are reused, including legacy installations; a broken

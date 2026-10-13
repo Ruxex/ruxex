@@ -6,17 +6,16 @@
 
 ### 固定CLIバイナリのホスト移行監査 (2026-10-13)
 
-`genex-cli` の `genex` バイナリは、設定からProviderを構築する従来の実行ホストである。
-直接のproducer/consumerは、`crates/cli/src/main.rs`、`justfile`、デスクトップのパッケージ
-staging/bootstrap、CLI統合テスト、Core/TUI/AppServerの子プロセス試験、
-`genex-app-server-test-client` の実行例である。新しい `examples/provider-host` はTUIの前景経路と
-同一実行ファイルの隠しAppServerデーモン経路を持つが、既存CLIの `exec`、`app-server`、sandbox、
-plugin、MCP等のサブコマンドをまだ置き換えていない。
+`genex-cli` の固定 `genex` binary target と `genex-tui` targetを削除した。
+デスクトップのpackage staging/bootstrapは `examples/provider-host` に移行し、
+`genex-app-server-test-client` は保持する `genex-app-server` binaryを直接起動する。
+Core/AppServerのexec-server試験は専用 `exec-server` targetへ、TUIのPTY試験は
+provider-owned host exampleへ移行した。固定CLIの `exec`、sandbox、plugin、MCP等の
+サブコマンド専用統合テストは、対応する固定実行ホストを削除するため一緒に削除した。
 
-したがって現時点で `genex` binary target を削除すると、desktop packageのdaemon起動と複数の
-repository-owned test producerが壊れる。`genex-app-server` binaryは別の運用入口として保持する。
-これは固定Providerを残す判断ではなく、provider-owned hostへの **migrate-in-place** を完了するまで
-旧binaryを一時的に **retain** する判断である。詳細な移行単位は
+`genex-app-server` binaryは別の運用入口として保持する。CLI/TUIのprovider-specificな
+コマンド面は共有ライブラリの責務に戻さず、必要なホストがProviderを選んでライブラリAPIを
+呼び出す構成とする。移行単位と削除判断は
 [`2026-10-13-remove-fixed-provider-cli-binary.md`](superpowers/plans/2026-10-13-remove-fixed-provider-cli-binary.md)
 に記録した。
 

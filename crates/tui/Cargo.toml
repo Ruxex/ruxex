@@ -6,10 +6,6 @@ license.workspace = true
 autobins = false
 
 [[bin]]
-name = "genex-tui"
-path = "src/main.rs"
-
-[[bin]]
 name = "md-events"
 path = "src/bin/md-events.rs"
 

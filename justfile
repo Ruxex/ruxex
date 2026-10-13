@@ -11,18 +11,10 @@ python := "python3"
 help:
     just -l
 
-# `codex`
-alias c := codex
-codex *args:
-    cargo run --bin genex -- {args}
-
-# Run the Genex CLI with the same native GStreamer and rusty_v8 setup as `check`.
+# Run the provider-owned sample host with the same native GStreamer and rusty_v8 setup as `check`.
+alias c := run
 run *args:
-    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo run -p genex-cli -- "$@"
-
-# `genex exec`
-exec *args:
-    cargo run --bin genex -- exec {args}
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo run -p genex-provider-host-example -- "$@"
 
 # Build and stage the local runtime package used by the Tauri desktop app.
 before-desktop:
@@ -52,10 +44,10 @@ file-search *args:
 code-mode-host *args:
     cargo run --bin genex-code-mode-host -- {args}
 
-# Build the CLI and run the app-server test client
+# Build the standalone app-server and run the app-server test client
 app-server-test-client *args:
-    cargo build -p genex-cli
-    cargo run -p genex-app-server-test-client -- --codex-bin ./target/debug/genex {args}
+    cargo build -p genex-app-server --bin genex-app-server
+    cargo run -p genex-app-server-test-client -- --app-server-bin ./target/debug/genex-app-server {args}
 
 # Format the justfile and Rust sources.
 fmt:

@@ -25,14 +25,19 @@ select providers, and a running runtime does not switch providers. To use a
 different provider, construct another runtime/AppServer with another provider
 and another provider-scoped data root.
 
-## Run the CLI
+## Run the provider-owned sample host
 
 Install the Rust toolchain selected by `rust-toolchain.toml`, then build the
-`genex` binary from the `genex-cli` crate with your preferred Cargo profile.
-The repository supports Linux and macOS. Windows users should run Genex in
-WSL2.
+provider-owned sample host. The repository supports Linux and macOS. Windows
+users should run Genex in WSL2.
 
-The CLI uses the provider configured for the current host. Its default data
+```sh
+cargo build -p genex-provider-host-example
+cargo run -p genex-provider-host-example -- "explain this codebase to me"
+```
+
+There is no fixed-provider `genex` CLI binary. A host chooses its provider at
+compile time; the sample host uses `CloudflareModelProvider`. Its default data
 root is `~/.genex`; set `GENEX_HOME` to use an existing directory instead.
 
 ## Embed Genex in a Rust host
@@ -191,8 +196,8 @@ the neutral contract.
 ## Repository layout
 
 - `Cargo.toml`, `Cargo.lock`: workspace definition and locked dependencies.
-- `crates/`: Rust libraries, the CLI, AppServer, provider contracts, and
-  built-in adapters.
+- `crates/`: Rust libraries, host-support APIs, AppServer, provider contracts,
+  and built-in adapters.
 - `docs/`: architecture, compatibility, provider-boundary, and generated
   protocol documentation.
 - `scripts/`, `tools/`: development and generation helpers.

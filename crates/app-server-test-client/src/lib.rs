@@ -107,19 +107,19 @@ const TRACE_DISABLED_MESSAGE: &str =
 #[derive(Parser)]
 #[command(author = "Genex", version, about = "Bootstrap Genex app-server", long_about = None)]
 struct Cli {
-    /// Path to the `genex` CLI binary. When set, requests use stdio by
-    /// spawning `genex app-server` as a child process.
-    #[arg(long, env = "GENEX_BIN", global = true)]
-    genex_bin: Option<PathBuf>,
+    /// Path to the standalone app-server binary. When set, requests use
+    /// stdio by spawning it as a child process.
+    #[arg(long = "app-server-bin", env = "GENEX_APP_SERVER_BIN", global = true)]
+    app_server_bin: Option<PathBuf>,
 
     /// Existing websocket server URL to connect to.
     ///
-    /// If neither `--genex-bin` nor `--url` is provided, defaults to
+    /// If neither `--app-server-bin` nor `--url` is provided, defaults to
     /// `ws://127.0.0.1:4222`.
     #[arg(long, env = "GENEX_APP_SERVER_URL", global = true)]
     url: Option<String>,
 
-    /// Forwarded to the `genex` CLI as `--config key=value`. Repeatable.
+    /// Forwarded to the app-server as `--config key=value`. Repeatable.
     ///
     /// Example:
     ///   `--config 'model_provider.base_url="http://localhost:4010/v2"'`
@@ -147,12 +147,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum CliCommand {
-    /// Start `genex app-server` on a websocket endpoint in the background.
+    /// Start the standalone app-server binary on a websocket endpoint in the background.
     ///
     /// Logs are written to:
     ///   `/tmp/genex-app-server-test-client/`
     Serve {
-        /// WebSocket listen URL passed to `genex app-server --listen`.
+        /// WebSocket listen URL passed to the app-server binary as `--listen`.
         #[arg(long, default_value = "ws://127.0.0.1:4222")]
         listen: String,
         /// Kill any process listening on the same port before starting.
@@ -258,7 +258,7 @@ enum CliCommand {
 
 pub async fn run() -> Result<()> {
     let Cli {
-        genex_bin,
+        app_server_bin,
         url,
         config_overrides,
         dynamic_tools,
@@ -270,19 +270,20 @@ pub async fn run() -> Result<()> {
     match command {
         CliCommand::Serve { listen, kill } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "serve")?;
-            let genex_bin = genex_bin.unwrap_or_else(|| PathBuf::from("genex"));
-            serve(&genex_bin, &config_overrides, &listen, kill)
+            let app_server_bin =
+                app_server_bin.unwrap_or_else(|| PathBuf::from("genex-app-server"));
+            serve(&app_server_bin, &config_overrides, &listen, kill)
         }
         CliCommand::SendMessage { user_message } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "send-message")?;
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             send_message(&endpoint, &config_overrides, user_message).await
         }
         CliCommand::SendMessageV2 {
             experimental_api,
             user_message,
         } => {
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             send_message_v2_endpoint(
                 &endpoint,
                 &config_overrides,
@@ -296,7 +297,7 @@ pub async fn run() -> Result<()> {
             thread_id,
             user_message,
         } => {
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             resume_message_v2(
                 &endpoint,
                 &config_overrides,
@@ -308,31 +309,31 @@ pub async fn run() -> Result<()> {
         }
         CliCommand::ThreadResume { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-resume")?;
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             thread_resume_follow(&endpoint, &config_overrides, thread_id).await
         }
         CliCommand::Watch => {
             ensure_dynamic_tools_unused(&dynamic_tools, "watch")?;
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             watch(&endpoint, &config_overrides).await
         }
         CliCommand::TriggerCmdApproval { user_message } => {
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             trigger_cmd_approval(&endpoint, &config_overrides, user_message, &dynamic_tools).await
         }
         CliCommand::TriggerPatchApproval { user_message } => {
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             trigger_patch_approval(&endpoint, &config_overrides, user_message, &dynamic_tools).await
         }
         CliCommand::NoTriggerCmdApproval => {
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             no_trigger_cmd_approval(&endpoint, &config_overrides, &dynamic_tools).await
         }
         CliCommand::SendFollowUpV2 {
             first_message,
             follow_up_message,
         } => {
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             send_follow_up_v2(
                 &endpoint,
                 &config_overrides,
@@ -344,27 +345,29 @@ pub async fn run() -> Result<()> {
         }
         CliCommand::TestLogout => {
             ensure_dynamic_tools_unused(&dynamic_tools, "test-logout")?;
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             test_logout(&endpoint, &config_overrides).await
         }
         CliCommand::ModelList => {
             ensure_dynamic_tools_unused(&dynamic_tools, "model-list")?;
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             model_list(&endpoint, &config_overrides).await
         }
         CliCommand::ThreadList { limit } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-list")?;
-            let endpoint = resolve_endpoint(genex_bin, url)?;
+            let endpoint = resolve_endpoint(app_server_bin, url)?;
             thread_list(&endpoint, &config_overrides, limit).await
         }
         CliCommand::ThreadIncrementElicitation { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-increment-elicitation")?;
-            let url = resolve_shared_websocket_url(genex_bin, url, "thread-increment-elicitation")?;
+            let url =
+                resolve_shared_websocket_url(app_server_bin, url, "thread-increment-elicitation")?;
             thread_increment_elicitation(&url, thread_id)
         }
         CliCommand::ThreadDecrementElicitation { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-decrement-elicitation")?;
-            let url = resolve_shared_websocket_url(genex_bin, url, "thread-decrement-elicitation")?;
+            let url =
+                resolve_shared_websocket_url(app_server_bin, url, "thread-decrement-elicitation")?;
             thread_decrement_elicitation(&url, thread_id)
         }
         CliCommand::LiveElicitationTimeoutPause {
@@ -375,7 +378,7 @@ pub async fn run() -> Result<()> {
         } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "live-elicitation-timeout-pause")?;
             live_elicitation_timeout_pause(
-                genex_bin,
+                app_server_bin,
                 url,
                 &config_overrides,
                 model,
@@ -399,7 +402,7 @@ struct BackgroundAppServer {
 
 fn resolve_endpoint(genex_bin: Option<PathBuf>, url: Option<String>) -> Result<Endpoint> {
     if genex_bin.is_some() && url.is_some() {
-        bail!("--genex-bin and --url are mutually exclusive");
+        bail!("--app-server-bin and --url are mutually exclusive");
     }
     if let Some(genex_bin) = genex_bin {
         return Ok(Endpoint::SpawnGenex(genex_bin));
@@ -417,7 +420,7 @@ fn resolve_shared_websocket_url(
 ) -> Result<String> {
     if genex_bin.is_some() {
         bail!(
-            "{command} requires --url or an already-running websocket app-server; --genex-bin would spawn a private stdio app-server instead"
+            "{command} requires --url or an already-running websocket app-server; --app-server-bin would spawn a private stdio app-server instead"
         );
     }
 
@@ -445,7 +448,6 @@ impl BackgroundAppServer {
             cmd.arg("--config").arg(override_kv);
         }
         let process = cmd
-            .arg("app-server")
             .arg("--listen")
             .arg(&url)
             .stdin(Stdio::null())
@@ -495,7 +497,7 @@ fn serve(genex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool
     for override_kv in config_overrides {
         cmdline.push_str(&format!(" --config {}", shell_quote(override_kv)));
     }
-    cmdline.push_str(&format!(" app-server --listen {}", shell_quote(listen)));
+    cmdline.push_str(&format!(" --listen {}", shell_quote(listen)));
 
     let child = Command::new("nohup")
         .arg("sh")
@@ -1016,7 +1018,7 @@ fn live_elicitation_timeout_pause(
 
     let mut _background_server = None;
     let websocket_url = match (genex_bin, url) {
-        (Some(_), Some(_)) => bail!("--genex-bin and --url are mutually exclusive"),
+        (Some(_), Some(_)) => bail!("--app-server-bin and --url are mutually exclusive"),
         (Some(genex_bin), None) => {
             let server = BackgroundAppServer::spawn(&genex_bin, config_overrides)?;
             let websocket_url = server.url.clone();
@@ -1271,7 +1273,6 @@ impl GenexClient {
             cmd.env(name, value);
         }
         let mut genex_app_server = cmd
-            .arg("app-server")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())

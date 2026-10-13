@@ -53,8 +53,8 @@ pub(super) struct ExecServerProcess {
 impl ExecServerProcess {
     pub(super) async fn start() -> Result<Self> {
         let genex_home = TempDir::new()?;
-        let mut child = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-            .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
+        let mut child = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+            .args(["--listen", "ws://127.0.0.1:0"])
             .env("GENEX_HOME", genex_home.path())
             .stdin(Stdio::null())
             .stdout(Stdio::piped())

@@ -45,7 +45,6 @@ mod apply_patch_serialization;
 mod approvals;
 mod audio_truncation;
 mod catalog_permission_messages;
-mod cli_stream;
 mod client_websockets;
 mod cloud_config;
 mod code_mode_elicitation;

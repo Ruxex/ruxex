@@ -1,17 +1,17 @@
 # App Server Test Client
-Quickstart for running and hitting `genex app-server`.
+Quickstart for running and hitting the standalone `genex-app-server` binary.
 
 ## Quickstart
 
 Run from `<reporoot>/genex-rs`.
 
 ```bash
-# 1) Build debug genex binary
-cargo build -p genex-cli --bin genex
+# 1) Build the standalone app-server binary
+cargo build -p genex-app-server --bin genex-app-server
 
 # 2) Start websocket app-server in background
 cargo run -p genex-app-server-test-client -- \
-  --genex-bin ./target/debug/genex \
+  --app-server-bin ./target/debug/genex-app-server \
   serve --listen ws://127.0.0.1:4222 --kill
 
 # 3) Call app-server (defaults to ws://127.0.0.1:4222)
@@ -30,7 +30,7 @@ isolated directory when testing credential cleanup.
 
 ```bash
 cargo run -p genex-app-server-test-client -- \
-  --genex-bin ./target/debug/genex \
+  --app-server-bin ./target/debug/genex-app-server \
   test-logout
 ```
 

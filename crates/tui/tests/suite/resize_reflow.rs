@@ -586,14 +586,14 @@ impl Drop for TmuxSession {
 }
 
 fn genex_binary(repo_root: &Path) -> Result<PathBuf> {
-    if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex") {
+    if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex-provider-host-example") {
         return Ok(path);
     }
 
-    let fallback = repo_root.join("genex-rs/target/debug/genex");
+    let fallback = repo_root.join("target/debug/genex-provider-host-example");
     anyhow::ensure!(
         fallback.is_file(),
-        "genex binary is unavailable; run `cargo build -p genex-cli` first"
+        "provider-owned host is unavailable; run `cargo build -p genex-provider-host-example` first"
     );
     Ok(fallback)
 }

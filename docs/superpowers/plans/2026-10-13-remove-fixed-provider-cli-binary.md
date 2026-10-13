@@ -59,9 +59,9 @@
 - Modify: `crates/core/tests/**`, `crates/tui/tests/**`, `crates/app-server/tests/**`
 - Modify: `crates/app-server-test-client/README.md`
 
-- [ ] Replace generic child-process launches with the provider-owned host fixture where the exercised behavior remains in scope.
-- [ ] Remove tests for the deleted CLI-only command surface only after recording their producer/consumer decision.
-- [ ] Preserve direct AppServer and runtime contract coverage independent of any CLI executable.
+- [x] Replace generic child-process launches with the provider-owned host fixture where the exercised behavior remains in scope.
+- [x] Remove tests for the deleted CLI-only command surface only after recording their producer/consumer decision.
+- [x] Preserve direct AppServer and runtime contract coverage independent of any CLI executable.
 
 ### Task 4: Remove the fixed-provider executable target
 
@@ -70,13 +70,13 @@
 - Modify/remove: `crates/cli/src/main.rs` and executable-only modules/tests
 - Modify: workspace manifests and package/build documentation
 
-- [ ] Remove `[[bin]] name = "genex"` only after Tasks 2 and 3 have no active consumers.
-- [ ] Keep any reusable host-library APIs in a provider-neutral crate or `genex-cli` library without an executable dependency.
-- [ ] Keep `genex-app-server` binary available as the explicitly retained operational entrypoint.
+- [x] Remove `[[bin]] name = "genex"` only after Tasks 2 and 3 have no active consumers.
+- [x] Keep reusable host-library APIs in `genex-cli` without an executable dependency.
+- [x] Keep `genex-app-server` binary available as the explicitly retained operational entrypoint.
 
 ### Task 5: Verify and finalize
 
-- [ ] Run exact `genex` binary/reference scans and inspect all remaining matches as retained external/security/package contracts or historical documentation.
-- [ ] Run `just check --tests` and `just check` through the required systemd scope.
+- [x] Run exact `genex` binary/reference scans and inspect all remaining matches as retained external/security/package contracts or historical documentation.
+- [x] Run `just check --tests` and `just check` through the required systemd scope.
 - [ ] Run `just generate` if package/schema/generated artifacts changed, then inspect the diff.
 - [ ] Commit and push the migration as a separate change from the generic host-daemon phase.

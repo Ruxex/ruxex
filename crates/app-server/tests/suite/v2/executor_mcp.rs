@@ -142,8 +142,8 @@ async fn selected_executor_discovers_browser_mcp_with_executor_only_bearer_token
     )?;
     // Browser auth tokens are not inherited by spawned executors, so use the production
     // WebSocket connection and put the token directly in the executor's environment.
-    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
+    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+        .args(["--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
         .env("GENEX_HOME", executor_home.path())
@@ -285,8 +285,8 @@ async fn legacy_executor_skips_required_browser_and_keeps_host_owned_mcp() -> Re
         ),
     )?;
 
-    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
+    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+        .args(["--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
         .env("GENEX_HOME", executor_home.path())
@@ -428,7 +428,7 @@ async fn guardian_review_does_not_discover_executor_mcp() -> Result<()> {
         .write(genex_home.path())?;
     std::fs::write(executor_home.path().join("config.toml"), "")?;
     let genex_bin = toml::Value::String(
-        genex_utils_cargo_bin::cargo_bin("genex")?
+        genex_utils_cargo_bin::cargo_bin("exec-server")?
             .to_string_lossy()
             .into_owned(),
     );
@@ -437,7 +437,7 @@ async fn guardian_review_does_not_discover_executor_mcp() -> Result<()> {
     std::fs::write(
         genex_home.path().join("environments.toml"),
         format!(
-            "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nprogram = {genex_bin}\nargs = [\"exec-server\", \"--listen\", \"stdio\"]\n[environments.env]\nGENEX_HOME = {executor_home_value}\n"
+            "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nprogram = {genex_bin}\nargs = [\"--listen\", \"stdio\"]\n[environments.env]\nGENEX_HOME = {executor_home_value}\n"
         ),
     )?;
     let mut app_server = TestAppServer::builder()
@@ -668,8 +668,8 @@ async fn selected_executor_plugin_exposes_its_mcps_only_to_that_thread() -> Resu
         &oauth_credentials_path,
         serde_json::to_vec(&json!({"host": host_oauth_credential.clone()}))?,
     )?;
-    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("genex")?)
-        .args(["exec-server", "--listen", "ws://127.0.0.1:0"])
+    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+        .args(["--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
         .env("GENEX_HOME", executor_home.path())

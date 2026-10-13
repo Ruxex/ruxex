@@ -749,20 +749,15 @@ impl TestGenexBuilder {
         config.model = Some("example-model".to_string());
         config.cwd = cwd_override;
         config.model_provider = model_provider;
-        if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex") {
-            config.genex_self_exe = Some(path);
-        } else if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex-exec") {
+        if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex-exec") {
             // `genex-exec` also supports `--genex-run-as-apply-patch`, so use it
             // when the multitool binary is not available in test builds.
             config.genex_self_exe = Some(path);
         } else if let Ok(exe) = std::env::current_exe()
             && let Some(bin_dir) = exe.parent().and_then(|parent| parent.parent())
         {
-            let genex = bin_dir.join("genex");
             let genex_exec = bin_dir.join("genex-exec");
-            if genex.is_file() {
-                config.genex_self_exe = Some(genex);
-            } else if genex_exec.is_file() {
+            if genex_exec.is_file() {
                 config.genex_self_exe = Some(genex_exec);
             }
         }
