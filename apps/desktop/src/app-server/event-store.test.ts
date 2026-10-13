@@ -31,4 +31,36 @@ describe("app-server event store", () => {
       skippedEvents: 2,
     });
   });
+
+  it("does not leak a listener when StrictMode restarts before listen resolves", async () => {
+    let resolveFirst: ((unlisten: () => void) => void) | undefined;
+    let resolveSecond: ((unlisten: () => void) => void) | undefined;
+    const firstUnlisten = vi.fn();
+    const secondUnlisten = vi.fn();
+    listenToAppServerEvents
+      .mockImplementationOnce(
+        () => new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+      )
+      .mockImplementationOnce(
+        () => new Promise((resolve) => {
+          resolveSecond = resolve;
+        }),
+      );
+
+    const store = await import("./event-store");
+    const firstStart = store.startAppServerEventStore();
+    store.stopAppServerEventStore();
+    const secondStart = store.startAppServerEventStore();
+
+    resolveFirst?.(firstUnlisten);
+    await firstStart;
+    expect(firstUnlisten).toHaveBeenCalledTimes(1);
+
+    resolveSecond?.(secondUnlisten);
+    await secondStart;
+    store.stopAppServerEventStore();
+    expect(secondUnlisten).toHaveBeenCalledTimes(1);
+  });
 });
