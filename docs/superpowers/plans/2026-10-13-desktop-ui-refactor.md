@@ -48,12 +48,12 @@
 - `runtime-queries.ts` owns `useAppServerStatus`.
 - `provider-queries.ts` owns model/provider/capability/permission queries.
 
-- [ ] **Step 1: Move read-only thread hooks without changing their signatures**
-- [ ] **Step 2: Move thread mutations and preserve invalidation behavior**
-- [ ] **Step 3: Split runtime/provider query implementations and keep compatibility re-exports**
-- [ ] **Step 4: Consolidate React Query imports and guard empty project ids**
-- [ ] **Step 5: Run `pnpm check` and `pnpm test` from `apps/desktop`**
-- [ ] **Step 6: Commit the hook refactor**
+- [x] **Step 1: Move read-only thread hooks without changing their signatures**
+- [x] **Step 2: Move thread mutations and preserve invalidation behavior**
+- [x] **Step 3: Split runtime/provider query implementations and keep compatibility re-exports**
+- [x] **Step 4: Consolidate React Query imports and guard empty project ids**
+- [x] **Step 5: Run `pnpm check` and `pnpm test` from `apps/desktop`**
+- [x] **Step 6: Commit the hook refactor**
 
 ---
 
@@ -76,13 +76,13 @@
 - `TopBar` owns navigation, connection display, and logout controls while `AppLayout` owns shell composition.
 - Settings cards own presentation only; `SettingsPage` remains the query composition boundary.
 
-- [ ] **Step 1: Add focused shared thread/card and query-state components**
-- [ ] **Step 2: Extract top-bar responsibilities from `AppLayout`**
-- [ ] **Step 3: Split settings sections into presentation components**
-- [ ] **Step 4: Replace repeated thread markup in list/archive/project pages**
-- [ ] **Step 5: Keep selected thread state explicit in `ThreadList`**
-- [ ] **Step 6: Run the desktop test suite and lint checks**
-- [ ] **Step 7: Commit the shared UI refactor**
+- [x] **Step 1: Add focused shared thread/card and query-state components**
+- [x] **Step 2: Extract top-bar responsibilities from `AppLayout`**
+- [x] **Step 3: Split settings sections into presentation components**
+- [x] **Step 4: Replace repeated thread markup in list/archive/project pages**
+- [x] **Step 5: Keep selected thread state explicit in `ThreadList`**
+- [x] **Step 6: Run the desktop test suite and lint checks**
+- [x] **Step 7: Commit the shared UI refactor**
 
 ---
 
@@ -91,9 +91,9 @@
 **Files:**
 - Modify: only files required by verification fixes.
 
-- [ ] **Step 1: Review the complete diff for behavior changes and new effects**
-- [ ] **Step 2: Run `pnpm check`**
-- [ ] **Step 3: Run `pnpm test`**
-- [ ] **Step 4: Run `pnpm build`**
-- [ ] **Step 5: Run `git diff --check` and confirm a clean intended diff**
-- [ ] **Step 6: Commit any final fixes and push `main`**
+- [x] **Step 1: Review the complete diff for behavior changes and new effects**
+- [x] **Step 2: Run `pnpm check`**
+- [x] **Step 3: Run `pnpm test`**
+- [x] **Step 4: Run `pnpm build`**
+- [x] **Step 5: Run `git diff --check` and confirm a clean intended diff**
+- [x] **Step 6: Commit any final fixes and push `main`**

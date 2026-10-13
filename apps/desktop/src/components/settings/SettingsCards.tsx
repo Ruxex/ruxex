@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 type ConnectionCardProps = {
   connected: boolean;
   appServerVersion?: string;
@@ -130,4 +132,3 @@ function SummaryCard({ label, children }: { label: string; children: ReactNode }
     </div>
   );
 }
-import type { ReactNode } from "react";

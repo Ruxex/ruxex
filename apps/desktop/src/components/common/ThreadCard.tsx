@@ -16,26 +16,34 @@ type ThreadCardProps = {
 };
 
 export function ThreadCard({ thread, actions, compact = false }: ThreadCardProps) {
+  if (compact) {
+    return (
+      <Link
+        className="rounded-box block border border-base-300 p-4 transition hover:border-primary"
+        to={`/chat/${thread.id}`}
+      >
+        <span className="font-medium">
+          {thread.name || thread.preview || "Untitled thread"}
+        </span>
+        <span className="mt-1 block line-clamp-2 text-sm text-base-content/70">
+          {thread.preview || "No preview available."}
+        </span>
+      </Link>
+    );
+  }
+
   return (
-    <article
-      className={
-        compact
-          ? "rounded-box border border-base-300 p-4 transition hover:border-primary"
-          : "card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary"
-      }
-    >
-      <div className={compact ? "space-y-1" : "card-body gap-2 p-5"}>
-        <Link className="font-medium hover:text-primary" to={`/chat/${thread.id}`}>
+    <article className="card border border-base-300 bg-base-100 shadow-sm transition hover:border-primary">
+      <div className="card-body gap-2 p-5">
+        <Link className="card-title text-lg hover:text-primary" to={`/chat/${thread.id}`}>
           {thread.name || thread.preview || "Untitled thread"}
         </Link>
         <p className="line-clamp-2 text-sm text-base-content/70">
           {thread.preview || "No preview available."}
         </p>
-        {!compact && (
-          <div className="text-xs text-base-content/50">
-            {thread.model || "Unknown model"} · {new Date(thread.updatedAt * 1000).toLocaleString()}
-          </div>
-        )}
+        <div className="text-xs text-base-content/50">
+          {thread.model || "Unknown model"} · {new Date(thread.updatedAt * 1000).toLocaleString()}
+        </div>
         {actions && <div className="card-actions justify-end">{actions}</div>}
       </div>
     </article>
