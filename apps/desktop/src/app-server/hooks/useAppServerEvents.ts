@@ -5,5 +5,5 @@ export function useAppServerEvents() {
 }
 
 export function useServerRequests() {
-  return useAppServerEventStore().serverRequests;
+  return Object.values(useAppServerEventStore().pendingServerRequests);
 }

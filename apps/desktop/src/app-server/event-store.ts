@@ -1,20 +1,17 @@
 import { useSyncExternalStore } from "react";
 
-import { listenToAppServerEvents, type AppServerEvent } from "./events";
+import {
+  createInitialEventState,
+  reduceAppServerEvent,
+  type EventState,
+} from "./event-reducer";
+import { listenToAppServerEvents } from "./events";
 import { isDesktopRuntime } from "./runtime";
 
-type EventSnapshot = {
-  events: AppServerEvent[];
-  connected: boolean;
-  serverRequests: Extract<AppServerEvent, { type: "serverRequest" }>["data"][];
-};
+export type EventSnapshot = EventState;
 
 const listeners = new Set<() => void>();
-let snapshot: EventSnapshot = {
-  events: [],
-  connected: false,
-  serverRequests: [],
-};
+let snapshot: EventSnapshot = createInitialEventState();
 let unlisten: (() => void) | undefined;
 
 function notify() {
@@ -28,14 +25,7 @@ export async function startAppServerEventStore(): Promise<void> {
     return;
   }
   unlisten = await listenToAppServerEvents((event) => {
-    snapshot = {
-      connected: event.type !== "disconnected",
-      events: [...snapshot.events, event].slice(-100),
-      serverRequests:
-        event.type === "serverRequest"
-          ? [...snapshot.serverRequests, event.data]
-          : snapshot.serverRequests,
-    };
+    snapshot = reduceAppServerEvent(snapshot, event);
     notify();
   });
   snapshot = { ...snapshot, connected: true };
@@ -45,8 +35,12 @@ export async function startAppServerEventStore(): Promise<void> {
 export function stopAppServerEventStore(): void {
   unlisten?.();
   unlisten = undefined;
-  snapshot = { ...snapshot, connected: false };
+  snapshot = { ...createInitialEventState(), connected: false };
   notify();
+}
+
+export function getAppServerEventSnapshot(): EventSnapshot {
+  return snapshot;
 }
 
 export function useAppServerEventStore(): EventSnapshot {
@@ -56,6 +50,6 @@ export function useAppServerEventStore(): EventSnapshot {
       return () => listeners.delete(listener);
     },
     () => snapshot,
-    () => ({ events: [], connected: false, serverRequests: [] }),
+    () => createInitialEventState(),
   );
 }

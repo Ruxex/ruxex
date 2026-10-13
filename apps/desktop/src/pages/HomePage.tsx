@@ -58,7 +58,7 @@ export function HomePage() {
             <h2 className="card-title">Events</h2>
             <p className="text-sm text-base-content/70">
               {events.connected
-                ? `${events.events.length} events received`
+                ? `${events.history.length} events received`
                 : "Waiting for the app-server"}
             </p>
           </div>
