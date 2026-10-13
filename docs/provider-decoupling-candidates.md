@@ -12,10 +12,12 @@
 Core/AppServerのexec-server試験は専用 `exec-server` targetへ、TUIのPTY試験は
 provider-owned host exampleへ移行した。固定CLIの `exec`、sandbox、plugin、MCP等の
 サブコマンド専用統合テストは、対応する固定実行ホストを削除するため一緒に削除した。
+復元したCLIの解析・dispatch処理は `genex-cli` ライブラリの
+`run_with_provider::<P>` に移し、provider-owned host exampleから利用できるようにした。
 
 `genex-app-server` binaryは別の運用入口として保持する。CLI/TUIのprovider-specificな
-コマンド面は共有ライブラリの責務に戻さず、必要なホストがProviderを選んでライブラリAPIを
-呼び出す構成とする。移行単位と削除判断は
+コマンド面は固定バイナリではなく共有ライブラリの責務として保持し、必要なホストがProviderを
+選んでライブラリAPIを呼び出す構成とする。移行単位と削除判断は
 [`2026-10-13-remove-fixed-provider-cli-binary.md`](superpowers/plans/2026-10-13-remove-fixed-provider-cli-binary.md)
 に記録した。
 
