@@ -462,28 +462,23 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
     })?;
     let channel_capacity = args.channel_capacity.max(1);
     let installation_id = resolve_installation_id(&args.config.genex_home).await?;
-    let configured_credential_manager = match args
-        .runtime
-        .as_ref()
-        .and_then(AppServerRuntime::credential_manager)
-    {
-        Some(credential_manager) => credential_manager,
+    let runtime = match args.runtime {
+        Some(runtime) => runtime,
         None => {
-            CredentialManager::shared_from_config(args.config.as_ref(), args.enable_api_key_env)
-                .await
-                .map_err(IoError::other)?
+            let credential_manager = CredentialManager::shared_from_config(
+                args.config.as_ref(),
+                args.enable_api_key_env,
+            )
+            .await
+            .map_err(IoError::other)?;
+            let runtime = configured_app_server_runtime(
+                args.config.model_provider.clone(),
+                Arc::clone(&credential_manager),
+                args.config.http_client_factory(),
+            );
+            runtime
         }
     };
-    let runtime = args.runtime.unwrap_or_else(|| {
-        configured_app_server_runtime(
-            args.config.model_provider.clone(),
-            Arc::clone(&configured_credential_manager),
-            args.config.http_client_factory(),
-        )
-    });
-    let credential_manager = runtime
-        .credential_manager()
-        .unwrap_or(configured_credential_manager);
     let (client_tx, mut client_rx) = mpsc::channel::<InProcessClientMessage>(channel_capacity);
     let (event_tx, event_rx) = mpsc::channel::<InProcessServerEvent>(channel_capacity);
 
@@ -535,10 +530,9 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
                 state_db: args.state_db,
                 config_warnings: args.config_warnings,
                 session_source: args.session_source,
-                user_verification: Arc::new(crate::user_verification::Service::new(Arc::clone(
-                    &credential_manager,
-                ))),
-                credential_manager,
+                user_verification: Arc::new(crate::user_verification::Service::new(
+                    runtime.provider(),
+                )),
                 runtime,
                 installation_id,
                 code_mode_session_provider: None,

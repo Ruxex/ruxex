@@ -65,7 +65,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
         Some(Arc::clone(&credential_manager)),
     );
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
-    install(&mut extensions, credential_manager, provider);
+    install(&mut extensions, provider);
     let test = test_genex()
         .with_auth(auth)
         .with_model_info_override("example-model", |model_info| {

@@ -266,6 +266,11 @@ pub struct ProviderAuthState {
     pub status: ProviderAuthStatus,
     pub account_id: Option<String>,
     pub display_name: Option<String>,
+    /// Whether the provider's current authentication is host-managed rather than API-key based.
+    pub managed_auth: bool,
+    /// Opaque local revision that changes whenever credentials or account ownership changes.
+    /// Hosts use this only to invalidate work admitted under an older auth state.
+    pub revision: Option<u64>,
 }
 
 /// Auth metadata captured at the start of a provider operation.
@@ -910,6 +915,8 @@ mod tests {
                 status: ProviderAuthStatus::Unauthenticated,
                 account_id: None,
                 display_name: None,
+                managed_auth: false,
+                revision: None,
             }
         }
 

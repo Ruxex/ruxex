@@ -122,7 +122,7 @@ pub(crate) enum OutgoingEnvelope {
 
 /// Sends messages to the client and manages request callbacks.
 pub(crate) struct OutgoingMessageSender {
-    verification_auth: OnceLock<Arc<genex_login::CredentialManager>>,
+    verification_auth: OnceLock<genex_model_provider::SharedModelProvider>,
     verification_connections: Mutex<HashSet<ConnectionId>>,
     next_server_request_id: AtomicI64,
     sender: mpsc::Sender<OutgoingEnvelope>,

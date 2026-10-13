@@ -4,7 +4,7 @@
 use crate::connection_rpc_gate::ConnectionRpcGate;
 use crate::transport::ConnectionOrigin;
 use genex_app_server_protocol as rpc;
-use genex_login::CredentialManager;
+use genex_model_provider::SharedModelProvider;
 use genex_user_verification as native;
 use std::sync::Arc;
 use std::time::Duration;
@@ -31,7 +31,7 @@ pub(crate) enum Operation {
 /// Shared local provider dependencies and a bounded native worker slot.
 /// The slot stays with the worker until it exits, including after RPC cancellation.
 pub(crate) struct Service {
-    credential_manager: Arc<CredentialManager>,
+    model_provider: SharedModelProvider,
     provider: Arc<
         dyn Fn(native::UserVerificationKeyNamespace) -> Arc<dyn native::UserVerificationProvider>
             + Send
@@ -43,9 +43,9 @@ pub(crate) struct Service {
 }
 
 impl Service {
-    pub(crate) fn new(credential_manager: Arc<CredentialManager>) -> Self {
+    pub(crate) fn new(provider: SharedModelProvider) -> Self {
         Self {
-            credential_manager,
+            model_provider: provider,
             provider: Arc::new(native::platform_provider),
             platform_supported: native::platform_supported(),
             device_supported: native::device_supported,
@@ -72,11 +72,9 @@ impl Service {
             Operation::Enroll => NativeOperation::Enroll,
             Operation::Delete => NativeOperation::Delete,
         };
-        let credential_manager = Arc::clone(&self.credential_manager);
-        let auth_changes = credential_manager.auth_change_receiver();
-        let auth_revision = *auth_changes.borrow();
-        let Some(identity) = identity(&credential_manager).filter(|_| self.platform_supported)
-        else {
+        let model_provider = Arc::clone(&self.model_provider);
+        let auth_state = model_provider.auth_state();
+        let Some(identity) = auth_state.account_id.filter(|_| self.platform_supported) else {
             return match operation {
                 NativeOperation::Status => Ok(GuardedResponse {
                     payload: rpc::UserVerificationStatusResponse {
@@ -97,11 +95,11 @@ impl Service {
             };
         };
         let provider = (self.provider)(native::UserVerificationKeyNamespace::new(&identity));
+        let model_provider_for_guard = Arc::clone(&model_provider);
         let guard = native::UserVerificationRequestGuard::with_activity_check(move || {
             !connection.is_closed()
                 && !cancellation.is_cancelled()
-                && *auth_changes.borrow() == auth_revision
-                && self::identity(&credential_manager).as_ref() == Some(&identity)
+                && model_provider_for_guard.auth_state().account_id.as_ref() == Some(&identity)
         });
         run(operation, provider, guard, Arc::clone(&self.worker)).await
     }
@@ -123,10 +121,6 @@ impl GuardedResponse {
             self.guard.0.check().map_err(native_error)
         })
     }
-}
-
-fn identity(credential_manager: &CredentialManager) -> Option<String> {
-    credential_manager.auth_cached()?.get_account_id()
 }
 
 enum NativeOperation {

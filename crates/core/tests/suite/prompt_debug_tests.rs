@@ -43,7 +43,6 @@ async fn build_prompt_input_includes_context_and_user_message() -> Result<()> {
     let input = build_prompt_input(
         config,
         provider,
-        credential_manager,
         vec![UserInput::Text {
             text: "hello from debug prompt".to_string(),
             text_elements: Vec::new(),

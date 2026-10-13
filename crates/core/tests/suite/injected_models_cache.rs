@@ -371,7 +371,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         }))?,
     )?;
     auth.reload().await;
-    test.thread_manager.credential_manager().reload().await;
+    auth.reload().await;
 
     let mut new_model = remote_model("legacy-model");
     new_model.default_reasoning_summary = ReasoningSummary::Detailed;

@@ -642,7 +642,6 @@ impl TestGenexBuilder {
             let extensions = self.extensions.to_builder();
             let thread_manager = ThreadManager::new(
                 &config,
-                credential_manager.clone(),
                 provider,
                 models_manager,
                 SessionSource::Exec,

@@ -20,17 +20,12 @@ use genex_model_provider_info::ModelProviderInfo;
 #[derive(Clone)]
 pub struct AppServerRuntime {
     provider: SharedModelProvider,
-    credential_manager: Option<Arc<CredentialManager>>,
 }
 
 impl AppServerRuntime {
     /// Returns the single provider owned by this runtime.
     pub fn provider(&self) -> SharedModelProvider {
         Arc::clone(&self.provider)
-    }
-
-    pub fn credential_manager(&self) -> Option<Arc<CredentialManager>> {
-        self.credential_manager.clone()
     }
 
     /// Returns the descriptor used for provider-home mount validation.
@@ -42,7 +37,6 @@ impl AppServerRuntime {
 /// Constructs the shared provider/runtime state used by an AppServer.
 pub struct AppServerRuntimeBuilder {
     provider: SharedModelProvider,
-    credential_manager: Option<Arc<CredentialManager>>,
 }
 
 /// Mounts the provider-scoped data root for a configured host provider.
@@ -90,10 +84,7 @@ impl AppServerRuntimeBuilder {
     /// Starts building an AppServer runtime from its single provider
     /// implementation.
     pub fn new(provider: SharedModelProvider) -> Self {
-        Self {
-            provider,
-            credential_manager: None,
-        }
+        Self { provider }
     }
 
     /// Starts building a runtime for the provider selected by host configuration.
@@ -122,10 +113,7 @@ impl AppServerRuntimeBuilder {
             credential_manager.clone(),
             http_client_factory,
         );
-        Self {
-            provider,
-            credential_manager,
-        }
+        Self { provider }
     }
 
     /// Returns the descriptor that must be used when mounting this configured provider's data
@@ -138,7 +126,6 @@ impl AppServerRuntimeBuilder {
     pub fn build(self) -> AppServerRuntime {
         AppServerRuntime {
             provider: self.provider,
-            credential_manager: self.credential_manager,
         }
     }
 }

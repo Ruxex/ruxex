@@ -18,7 +18,6 @@ use genex_exec_server::ExecServerRuntimePaths;
 use genex_execpolicy::ExecPolicyCheckCommand;
 use genex_http_client::HttpClientFactory;
 use genex_http_client::OutboundProxyPolicy;
-use genex_login::CredentialManager;
 use genex_rollout_trace::REDUCED_STATE_FILE_NAME;
 use genex_rollout_trace::replay_bundle;
 use genex_tui::AppExitInfo;
@@ -1625,16 +1624,9 @@ async fn run_debug_prompt_input_command(
                 .enabled(genex_features::Feature::SkillSearch),
         }
     });
-    let credential_manager = match runtime.credential_manager() {
-        Some(manager) => manager,
-        None => CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ true)
-            .await
-            .map_err(anyhow::Error::from)?,
-    };
     let prompt_input = genex_core::build_prompt_input(
         config,
         runtime.provider(),
-        credential_manager,
         input,
         /*state_db*/ None,
         Arc::new(extensions.build()),

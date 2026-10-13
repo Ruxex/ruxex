@@ -999,6 +999,17 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     fn credential_manager(&self) -> Option<Arc<CredentialManager>>;
 
     /// Returns the configured provider ID used for provider-scoped credentials.
+    fn auth_revision(&self) -> Option<u64> {
+        self.credential_manager()
+            .map(|manager| *manager.auth_change_receiver().borrow())
+    }
+
+    fn managed_auth(&self) -> bool {
+        self.credential_manager()
+            .and_then(|manager| manager.auth_mode())
+            .is_some_and(|mode| mode == AuthMode::Headers)
+    }
+
     fn provider_id(&self) -> Option<&str> {
         None
     }
@@ -1294,11 +1305,15 @@ macro_rules! impl_model_provider_for_runtime {
                         status: state.auth_status,
                         account_id: state.account_id,
                         display_name: state.display_name,
+                        managed_auth: ProviderRuntime::managed_auth(self),
+                        revision: ProviderRuntime::auth_revision(self),
                     },
                     Err(error) => crate::contract::ProviderAuthState {
                         status: ProviderAuthStatus::Invalid,
                         account_id: None,
                         display_name: Some(error.to_string()),
+                        managed_auth: false,
+                        revision: None,
                     },
                 }
             }

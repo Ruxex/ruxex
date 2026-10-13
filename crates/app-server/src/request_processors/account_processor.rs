@@ -1,20 +1,12 @@
 use super::*;
-use crate::auth_mode::auth_mode_to_api;
-use crate::outgoing_message::AccountNotification;
 use genex_app_server_protocol::Account;
 use genex_app_server_protocol::AccountDeleteParams;
 use genex_app_server_protocol::AccountDeleteResponse;
 use genex_app_server_protocol::GetAccountResponse;
 
-enum RefreshTokenRequestOutcome {
-    NotAttemptedOrSucceeded,
-    FailedTransiently,
-    FailedPermanently,
-}
-
 #[derive(Clone)]
 pub(crate) struct AccountRequestProcessor {
-    credential_manager: Arc<CredentialManager>,
+    provider: genex_model_provider::SharedModelProvider,
     thread_manager: Arc<ThreadManager>,
     outgoing: Arc<OutgoingMessageSender>,
     config_manager: ConfigManager,
@@ -22,13 +14,13 @@ pub(crate) struct AccountRequestProcessor {
 
 impl AccountRequestProcessor {
     pub(crate) fn new(
-        credential_manager: Arc<CredentialManager>,
+        provider: genex_model_provider::SharedModelProvider,
         thread_manager: Arc<ThreadManager>,
         outgoing: Arc<OutgoingMessageSender>,
         config_manager: ConfigManager,
     ) -> Self {
         let processor = Self {
-            credential_manager,
+            provider,
             thread_manager,
             outgoing,
             config_manager,
@@ -64,8 +56,8 @@ impl AccountRequestProcessor {
         request_id: ConnectionRequestId,
         _params: AccountDeleteParams,
     ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
-        let provider = self.thread_manager.model_provider();
-        let result = provider
+        let result = self
+            .provider
             .delete()
             .await
             .map(|deleted| AccountDeleteResponse { deleted })
@@ -96,12 +88,13 @@ impl AccountRequestProcessor {
         &self,
         params: GetAccountParams,
     ) -> Result<GetAccountResponse, JSONRPCErrorError> {
-        self.refresh_token_if_requested(params.refresh_token).await;
-        let provider = self.thread_manager.model_provider();
-        let account_state = provider
+        let _ = params.refresh_token;
+        let account_state = self
+            .provider
             .account_state()
             .map_err(|err| invalid_request(err.to_string()))?;
-        let usage = provider
+        let usage = self
+            .provider
             .usage(genex_model_provider::UsageRequest::default())
             .await
             .map_err(|err| invalid_request(err.to_string()))?;
@@ -123,18 +116,11 @@ impl AccountRequestProcessor {
 
     pub(crate) async fn cancel_active_login(&self) {}
 
-    pub(crate) fn clear_external_auth(&self) {
-        self.credential_manager.clear_external_auth();
-    }
+    pub(crate) fn clear_external_auth(&self) {}
 
     fn current_account_updated_notification(&self) -> AccountUpdatedNotification {
         AccountUpdatedNotification {
-            auth_mode: self
-                .credential_manager
-                .auth_cached()
-                .as_ref()
-                .map(GenexAuth::api_auth_mode)
-                .map(auth_mode_to_api),
+            auth_mode: None,
             plan_type: None,
         }
     }
@@ -142,7 +128,6 @@ impl AccountRequestProcessor {
     async fn maybe_refresh_plugin_caches_for_current_config(
         config_manager: &ConfigManager,
         thread_manager: &Arc<ThreadManager>,
-        _auth: Option<GenexAuth>,
     ) {
         thread_manager.plugins_manager().clear_cache();
 
@@ -203,34 +188,14 @@ impl AccountRequestProcessor {
         Ok(())
     }
 
-    fn external_auth_active_error(&self) -> JSONRPCErrorError {
-        invalid_request(
-            "External auth is active. Use host-managed authentication to update it or account/logout to clear it.",
-        )
-    }
-
     async fn login_api_key_common(
         &self,
         api_key: &str,
         credentials: &std::collections::BTreeMap<String, String>,
     ) -> std::result::Result<(), JSONRPCErrorError> {
-        if self.credential_manager.has_external_auth() {
-            return Err(self.external_auth_active_error());
-        }
-
-        if !self
-            .credential_manager
-            .is_login_method_allowed(ForcedLoginMethod::Api)
-        {
-            return Err(invalid_request(
-                "API key login is disabled. Use managed authentication instead.",
-            ));
-        }
-
         let mut provider_credentials = credentials.clone();
         provider_credentials.insert("api_key".to_string(), api_key.to_string());
-        self.thread_manager
-            .model_provider()
+        self.provider
             .login(provider_credentials)
             .await
             .map_err(|err| internal_error(format!("failed to save api key: {err}")))
@@ -278,8 +243,6 @@ impl AccountRequestProcessor {
         &self,
         mut payload: AccountLoginCompletedNotification,
     ) {
-        let auth_changes = self.credential_manager.auth_change_state_receiver();
-        let owner_generation = auth_changes.borrow().owner_generation;
         if payload.success
             && let Err(error) = self
                 .get_account_response(GetAccountParams {
@@ -290,34 +253,23 @@ impl AccountRequestProcessor {
             payload.success = false;
             payload.error = Some(error.message);
         }
-        if payload.success && auth_changes.borrow().owner_generation == owner_generation {
+        if payload.success {
             Self::maybe_refresh_plugin_caches_for_current_config(
                 &self.config_manager,
                 &self.thread_manager,
-                self.credential_manager.auth_cached(),
             )
             .await;
         }
 
         let success = payload.success;
         self.outgoing
-            .send_account_notification(
-                /*connection_id*/ None,
-                &auth_changes,
-                owner_generation,
-                AccountNotification::LoginCompleted(payload),
-            )
+            .send_server_notification(ServerNotification::AccountLoginCompleted(payload))
             .await;
 
         if success {
             let notification = self.current_account_updated_notification();
             self.outgoing
-                .send_account_notification(
-                    /*connection_id*/ None,
-                    &auth_changes,
-                    owner_generation,
-                    AccountNotification::Updated(notification),
-                )
+                .send_server_notification(ServerNotification::AccountUpdated(notification))
                 .await;
         }
     }
@@ -332,17 +284,11 @@ impl AccountRequestProcessor {
         Self::maybe_refresh_plugin_caches_for_current_config(
             &self.config_manager,
             &self.thread_manager,
-            self.credential_manager.auth_cached(),
         )
         .await;
 
         // Reflect the current auth method after logout (likely None).
-        Ok(self
-            .credential_manager
-            .auth_cached()
-            .as_ref()
-            .map(GenexAuth::api_auth_mode)
-            .map(auth_mode_to_api))
+        Ok(None)
     }
 
     async fn logout_v2(&self, request_id: ConnectionRequestId) -> Result<(), JSONRPCErrorError> {
@@ -366,20 +312,5 @@ impl AccountRequestProcessor {
                 .await;
         }
         Ok(())
-    }
-
-    async fn refresh_token_if_requested(&self, do_refresh: bool) -> RefreshTokenRequestOutcome {
-        if self.credential_manager.has_external_auth() {
-            return RefreshTokenRequestOutcome::NotAttemptedOrSucceeded;
-        }
-        if do_refresh && let Err(err) = self.credential_manager.refresh_token().await {
-            let failed_reason = err.failed_reason();
-            if failed_reason.is_none() {
-                tracing::warn!("failed to refresh token while getting account: {err}");
-                return RefreshTokenRequestOutcome::FailedTransiently;
-            }
-            return RefreshTokenRequestOutcome::FailedPermanently;
-        }
-        RefreshTokenRequestOutcome::NotAttemptedOrSucceeded
     }
 }

@@ -30,7 +30,8 @@ use crate::outgoing_message::OutgoingEnvelope;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
-use crate::runtime::configured_app_server_runtime_from_config;
+use crate::runtime::configured_app_server_runtime;
+use crate::runtime::mount_provider_home_for_config;
 use crate::runtime::mount_provider_home_for_runtime;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::ConnectionOrigin;
@@ -606,7 +607,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
         }
     };
     config.auth_config().validate()?;
-    let runtime = match injected_runtime {
+    let (runtime, credential_manager) = match injected_runtime {
         Some(runtime) => {
             mount_provider_home_for_runtime(&config, &runtime).map_err(|error| {
                 std::io::Error::new(
@@ -614,19 +615,26 @@ async fn run_main_with_transport_options_and_optional_runtime(
                     format!("failed to mount injected provider data root: {error}"),
                 )
             })?;
-            runtime
+            (runtime, None)
         }
         None => {
-            configured_app_server_runtime_from_config(&config, /*enable_api_key_env*/ false)
-                .await
-                .map_err(std::io::Error::other)?
+            mount_provider_home_for_config(&config).map_err(|error| {
+                std::io::Error::new(
+                    ErrorKind::InvalidData,
+                    format!("failed to mount provider data root: {error}"),
+                )
+            })?;
+            let credential_manager =
+                CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+                    .await
+                    .map_err(std::io::Error::other)?;
+            let runtime = configured_app_server_runtime(
+                config.model_provider.clone(),
+                Arc::clone(&credential_manager),
+                config.http_client_factory(),
+            );
+            (runtime, Some(credential_manager))
         }
-    };
-    let credential_manager = match runtime.credential_manager() {
-        Some(credential_manager) => credential_manager,
-        None => CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
-            .await
-            .map_err(std::io::Error::other)?,
     };
     #[cfg(target_os = "macos")]
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
@@ -829,7 +837,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
         otel,
         otel_logger_reload_handle,
         config_manager.clone(),
-        Arc::clone(&credential_manager),
+        credential_manager.clone(),
         default_metrics_enabled,
         transport_shutdown_token.clone(),
     );
@@ -891,7 +899,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
 
     let recovery_file = daemon_recovery_file_path(&config.genex_home);
     let processor_handle = tokio::spawn({
-        let credential_manager = Arc::clone(&credential_manager);
+        let credential_manager = credential_manager.clone();
         let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));
         let outbound_control_tx = outbound_control_tx;
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
@@ -904,10 +912,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
             state_db: state_db.clone(),
             config_warnings,
             session_source,
-            user_verification: Arc::new(crate::user_verification::Service::new(Arc::clone(
-                &credential_manager,
-            ))),
-            credential_manager,
+            user_verification: Arc::new(crate::user_verification::Service::new(runtime.provider())),
             runtime,
             installation_id,
             code_mode_session_provider,

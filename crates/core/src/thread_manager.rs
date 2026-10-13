@@ -386,7 +386,6 @@ pub(crate) struct ThreadManagerState {
     threads: Arc<RwLock<HashMap<ThreadId, Arc<GenexThread>>>>,
     thread_created_tx: broadcast::Sender<ThreadId>,
     thread_id_generator: ThreadIdGenerator,
-    credential_manager: Arc<CredentialManager>,
     provider: SharedModelProvider,
     models_manager: SharedModelsManager,
     git_root_discovery: Arc<GitRootDiscovery>,
@@ -473,7 +472,6 @@ impl ThreadManager {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         config: &Config,
-        credential_manager: Arc<CredentialManager>,
         provider: SharedModelProvider,
         models_manager: SharedModelsManager,
         session_source: SessionSource,
@@ -489,7 +487,6 @@ impl ThreadManager {
     ) -> Self {
         Self::new_with_provider(
             config,
-            credential_manager,
             provider,
             models_manager,
             session_source,
@@ -508,7 +505,6 @@ impl ThreadManager {
     #[allow(clippy::too_many_arguments)]
     pub fn new_with_provider(
         config: &Config,
-        credential_manager: Arc<CredentialManager>,
         provider: SharedModelProvider,
         models_manager: SharedModelsManager,
         session_source: SessionSource,
@@ -569,7 +565,6 @@ impl ThreadManager {
                 agent_graph_store,
                 attestation_provider,
                 external_time_provider,
-                credential_manager,
                 session_source,
                 installation_id,
                 ops_log: should_use_test_thread_manager_behavior()
@@ -723,7 +718,6 @@ impl ThreadManager {
                 agent_graph_store,
                 attestation_provider: None,
                 external_time_provider: None,
-                credential_manager,
                 session_source: SessionSource::Exec,
                 installation_id,
                 ops_log: should_use_test_thread_manager_behavior()
@@ -735,10 +729,6 @@ impl ThreadManager {
 
     pub fn session_source(&self) -> SessionSource {
         self.state.session_source.clone()
-    }
-
-    pub fn credential_manager(&self) -> Arc<CredentialManager> {
-        self.state.credential_manager.clone()
     }
 
     pub fn skills_service(&self) -> Arc<HostSkillsService> {

@@ -14,7 +14,6 @@ use genex_extension_api::ThreadStartInput;
 use genex_extension_api::ToolCall;
 use genex_extension_api::ToolContributor;
 use genex_extension_api::ToolExecutor;
-use genex_login::CredentialManager;
 use genex_model_provider::SharedModelProvider;
 use genex_protocol::AgentPath;
 use genex_utils_output_truncation::TruncationPolicy;
@@ -28,7 +27,6 @@ use crate::tools::HistoryNotesTool;
 const MAX_THREAD_HINT_BYTES: usize = 4_000;
 
 struct HistoryNotesExtension {
-    credential_manager: Arc<CredentialManager>,
     provider: SharedModelProvider,
 }
 
@@ -47,7 +45,7 @@ impl HistoryNotesExtension {
             .as_ref()
             .is_some_and(|token_budget| token_budget.use_history_notes_extension)
             && self.provider.capabilities().history_notes
-            && self.credential_manager.current_auth_uses_managed_auth()
+            && self.provider.auth_state().managed_auth
         {
             thread_store.insert(HistoryNotesExtensionConfig {
                 backend: HistoryNotesBackend::new(self.provider.clone()),
@@ -161,15 +159,8 @@ impl ToolContributor for HistoryNotesExtension {
 }
 
 /// Installs the standalone history and notes tools backed by the Genex backend.
-pub fn install(
-    registry: &mut ExtensionRegistryBuilder<Config>,
-    credential_manager: Arc<CredentialManager>,
-    provider: SharedModelProvider,
-) {
-    let extension = Arc::new(HistoryNotesExtension {
-        credential_manager,
-        provider,
-    });
+pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: SharedModelProvider) {
+    let extension = Arc::new(HistoryNotesExtension { provider });
     registry.thread_lifecycle_contributor(extension.clone());
     registry.config_contributor(extension.clone());
     registry.prompt_contributor(extension.clone());

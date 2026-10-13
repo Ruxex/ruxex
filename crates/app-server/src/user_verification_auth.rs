@@ -1,6 +1,6 @@
 //! Cancels device ceremonies when cached authentication changes.
 
-use genex_login::CredentialManager;
+use genex_model_provider::SharedModelProvider;
 
 use super::*;
 
@@ -34,30 +34,8 @@ impl OutgoingMessageSender {
             .retain(|_, entry| entry.verification_owner != Some(connection_id));
     }
 
-    pub(crate) fn watch_user_verification_auth(
-        self: &Arc<Self>,
-        credential_manager: Arc<CredentialManager>,
-    ) {
-        let mut changes = credential_manager.auth_change_receiver();
-        if self.verification_auth.set(credential_manager).is_err() {
-            return;
-        }
-        let outgoing = Arc::downgrade(self);
-        tokio::spawn(async move {
-            while changes.changed().await.is_ok() {
-                let Some(outgoing) = outgoing.upgrade() else {
-                    break;
-                };
-                // Compare revisions, since watch can coalesce an account switch and switch back.
-                // Requests created after the change already belong to the new auth revision.
-                let mut callbacks = outgoing.request_id_to_callback.lock().await;
-                let revision = outgoing.verification_auth_revision();
-                callbacks.retain(|_, entry| {
-                    entry.verification_owner.is_none()
-                        || entry.verification_auth_revision == revision
-                });
-            }
-        });
+    pub(crate) fn watch_user_verification_auth(self: &Arc<Self>, provider: SharedModelProvider) {
+        let _ = self.verification_auth.set(provider);
     }
 
     pub(super) fn verification_identity(&self) -> Option<Identity> {
@@ -65,7 +43,8 @@ impl OutgoingMessageSender {
     }
 
     pub(super) fn verification_auth_revision(&self) -> Option<u64> {
-        let changes = self.verification_auth.get()?.auth_change_receiver();
-        Some(*changes.borrow())
+        self.verification_auth
+            .get()
+            .and_then(|provider| provider.auth_state().revision)
     }
 }

@@ -45,13 +45,21 @@ pub(crate) fn spawn<S>(
     mut provider: Option<OtelProvider>,
     logger_reload_handle: reload::Handle<OtelExportLayer<S>, S>,
     config_manager: ConfigManager,
-    credential_manager: Arc<CredentialManager>,
+    credential_manager: Option<Arc<CredentialManager>>,
     default_metrics_enabled: bool,
     shutdown_token: CancellationToken,
 ) -> JoinHandle<()>
 where
     S: Subscriber + for<'span> LookupSpan<'span> + Send + Sync + 'static,
 {
+    let Some(credential_manager) = credential_manager else {
+        return tokio::spawn(async move {
+            shutdown_token.cancelled().await;
+            if let Some(provider) = provider {
+                let _ = tokio::task::spawn_blocking(move || provider.shutdown()).await;
+            }
+        });
+    };
     let mut auth_changes = credential_manager.auth_change_receiver();
 
     tokio::spawn(async move {

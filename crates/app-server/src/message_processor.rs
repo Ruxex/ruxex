@@ -69,7 +69,6 @@ use genex_exec_server::EnvironmentManager;
 use genex_extension_api::TurnStartAdmission;
 use genex_goal_extension::GoalService;
 use genex_home::GenexHomeUserInstructionsProvider;
-use genex_login::CredentialManager;
 use genex_protocol::ThreadId;
 use genex_protocol::mcp::ClientMcpExtensions;
 use genex_protocol::protocol::SessionSource;
@@ -232,7 +231,6 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) state_db: Option<StateDbHandle>,
     pub(crate) config_warnings: Vec<ConfigWarningNotification>,
     pub(crate) session_source: SessionSource,
-    pub(crate) credential_manager: Arc<CredentialManager>,
     pub(crate) runtime: AppServerRuntime,
     pub(crate) user_verification: Arc<crate::user_verification::Service>,
     pub(crate) installation_id: String,
@@ -255,7 +253,6 @@ impl MessageProcessor {
             state_db,
             config_warnings,
             session_source,
-            credential_manager,
             runtime,
             user_verification,
             installation_id,
@@ -264,7 +261,7 @@ impl MessageProcessor {
         } = args;
         let provider = runtime.provider();
         let thread_state_manager = ThreadStateManager::new();
-        outgoing.watch_user_verification_auth(Arc::clone(&credential_manager));
+        outgoing.watch_user_verification_auth(provider.clone());
         // The thread store is intentionally process-scoped. Config reloads can
         // affect per-thread behavior, but they must not move newly started,
         // resumed, or forked threads to a different persistence backend/root.
@@ -302,7 +299,6 @@ impl MessageProcessor {
             });
             let manager = ThreadManager::new_with_provider(
                 config.as_ref(),
-                credential_manager.clone(),
                 Arc::clone(&provider),
                 genex_core::build_models_manager_with_provider(
                     config.as_ref(),
@@ -312,7 +308,6 @@ impl MessageProcessor {
                 environment_manager,
                 thread_extensions(ThreadExtensionDependencies {
                     event_sink: Arc::clone(&extension_event_sink),
-                    credential_manager: credential_manager.clone(),
                     provider: provider.clone(),
                     state_db: state_db.clone(),
                     thread_manager: thread_manager.clone(),
@@ -346,8 +341,7 @@ impl MessageProcessor {
         let models_manager = thread_manager.get_models_manager();
         let models_refresh_worker =
             crate::models_refresh_worker::spawn(&models_manager, config.http_client_factory());
-        let turn_cost_worker =
-            TurnCostWorker::spawn(Arc::clone(&config), Arc::clone(&credential_manager));
+        let turn_cost_worker = TurnCostWorker::spawn(Arc::clone(&config));
         let skills_watcher = SkillsWatcher::new(
             thread_manager.skills_service(),
             &config.genex_home,
@@ -372,7 +366,7 @@ impl MessageProcessor {
                 request_serialization_queues.clone(),
             );
         let account_processor = AccountRequestProcessor::new(
-            credential_manager.clone(),
+            provider.clone(),
             Arc::clone(&thread_manager),
             outgoing.clone(),
             config_manager.clone(),
@@ -439,7 +433,6 @@ impl MessageProcessor {
             Arc::clone(&thread_list_state_permit),
         );
         let thread_processor = ThreadRequestProcessor::new(
-            credential_manager.clone(),
             Arc::clone(&thread_manager),
             outgoing.clone(),
             arg0_paths.clone(),

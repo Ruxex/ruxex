@@ -23,6 +23,7 @@ use genex_config::types::AuthCredentialsStoreMode;
 use genex_core::config::ConfigBuilder;
 use genex_exec_server::EnvironmentManager;
 use genex_login::AuthHeaders;
+use genex_login::CredentialManager;
 use genex_login::GenexAuth;
 use genex_model_provider::create_model_provider;
 use genex_protocol::protocol::SessionSource;
@@ -131,8 +132,10 @@ impl Harness {
         );
         let provider = Arc::new(BlockingProvider::default());
         let factory_provider = Arc::clone(&provider);
+        let model_provider =
+            create_model_provider(config.model_provider.clone(), Some(Arc::clone(&auth)));
         let service = Arc::new(Service {
-            credential_manager: Arc::clone(&auth),
+            model_provider: Arc::clone(&model_provider),
             provider: Arc::new(move |_| factory_provider.clone()),
             platform_supported: true,
             device_supported: supported,
@@ -148,8 +151,6 @@ impl Harness {
         );
         let (sender, messages) = mpsc::channel(/*buffer*/ 16);
         let outgoing = Arc::new(OutgoingMessageSender::new(sender, ()));
-        let model_provider =
-            create_model_provider(config.model_provider.clone(), Some(Arc::clone(&auth)));
         let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
             outgoing: Arc::clone(&outgoing),
             arg0_paths: Arg0DispatchPaths::default(),
@@ -160,7 +161,6 @@ impl Harness {
             state_db: None,
             config_warnings: Vec::new(),
             session_source: SessionSource::Cli,
-            credential_manager: Arc::clone(&auth),
             runtime: AppServerRuntimeBuilder::new(model_provider).build(),
             user_verification: Arc::clone(&service),
             installation_id: "11111111-1111-4111-8111-111111111111".into(),

@@ -1740,6 +1740,8 @@ mod tests {
             status: ProviderAuthStatus::Authenticated,
             account_id: Some("account-1".to_string()),
             display_name: Some("Example".to_string()),
+            managed_auth: false,
+            revision: None,
         });
 
         assert_eq!(auth_mode, Some(TelemetryAuthMode::ApiKey));

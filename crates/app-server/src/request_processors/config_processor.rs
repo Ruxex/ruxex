@@ -116,9 +116,7 @@ impl ConfigRequestProcessor {
             .map_err(map_error)?;
         let requirements = map_requirements_to_api(
             requirements,
-            self.thread_manager
-                .credential_manager()
-                .allowed_login_methods(),
+            vec![ForcedLoginMethod::Api, ForcedLoginMethod::Managed],
         );
 
         Ok(ConfigRequirementsReadResponse { requirements })

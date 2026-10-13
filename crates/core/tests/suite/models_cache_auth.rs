@@ -58,7 +58,11 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
-    assert!(managed.thread_manager.credential_manager().reload().await);
+    let credential_manager = genex_core::test_support::credential_manager_from_auth_with_home(
+        GenexAuth::from_api_key("api-key"),
+        home.path().to_path_buf(),
+    );
+    assert!(credential_manager.reload().await);
     let manager = managed.thread_manager.get_models_manager();
     let bundled = test_models_response()?.models;
     assert_eq!(manager.get_remote_models().await, bundled);
