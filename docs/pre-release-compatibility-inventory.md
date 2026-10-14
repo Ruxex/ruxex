@@ -97,9 +97,9 @@ build input, not a Ruxex binary distribution.
 
 | Surface | Producer / consumer audit | Decision |
 |---|---|---|
-| Cargo `v8` dependency and official ordinary artifacts | `v8` build.rs resolves official release URLs through `RUSTY_V8_MIRROR`; downstream library consumers invoke the same build path. | `retain` official `rusty_v8` artifact ownership |
+| Cargo `v8` dependency and sandbox artifact | `code-mode-runtime` enables `v8_enable_sandbox`; its runtime assertion requires the matching sandbox archive and bindings. Ruxex's supported `just` recipes provide those files through `RUSTY_V8_MIRROR`. | `retain` the `v8` crate and OpenAI sandbox artifact dependency for now; do not fetch or silently substitute an ordinary shared-cage archive |
 | `v8_enable_sandbox` | `code-mode-runtime` requires the feature and tests the linked sandbox symbol. Official prebuilt releases do not provide the matching archive. | `retain` current security behavior; require source/custom-artifact decision before removing the temporary bridge |
-| `scripts/download-rusty-v8.sh` and checked-in checksums | `just` recipes use the helper for checks/build/test; it downloads ordinary and sandbox variants and verifies the repository's manifests. | `migrate-in-place` later: use official artifacts where available, keep checksum/cache behavior, and define the sandbox source/custom-archive path |
+| `scripts/download-rusty-v8.sh` and checked-in checksums | `just` recipes use the helper for checks/build/test; it downloads the sandbox variant and verifies the repository's release manifest. | `migrate-in-place` completed for the current policy: use the OpenAI sandbox artifact only, keep checksum/cache behavior, and define Ruxex ownership later |
 | V8 binary distribution | Ruxex is a library/workspace; no release or package should ship a V8 binary to library users. | `retain` consumer-side build/artifact resolution; do not add V8 binaries to Ruxex releases |
 
 ## Repository-owned CI boundary (2026-10-14)

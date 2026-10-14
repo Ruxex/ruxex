@@ -22,9 +22,7 @@ esac
 
 mirror_root="${repo_root}/.build-cache/rusty-v8"
 download_dir="${mirror_root}/v${v8_version}"
-official_release_url="https://github.com/denoland/rusty_v8/releases/download/v${v8_version}"
 sandbox_release_url="https://github.com/openai/codex/releases/download/rusty-v8-v${v8_version}"
-official_manifest="${repo_root}/third_party/v8/rusty_v8_${v8_version//./_}_official.sha256"
 release_manifest="${repo_root}/third_party/v8/rusty_v8_${v8_version//./_}_release_manifests.sha256"
 
 sha256() {
@@ -51,37 +49,6 @@ download() {
 }
 
 mkdir -p "${download_dir}"
-download_official_variant() {
-  local variant="$1"
-  local asset_prefix="rusty_v8_${variant}release_${target}"
-  local archive_name="lib${asset_prefix}.a.gz"
-  local binding_name="src_binding_${variant}release_${target}.rs"
-  local archive_path="${download_dir}/${archive_name}"
-  local binding_path="${download_dir}/${binding_name}"
-
-  download_official_and_verify "${archive_name}" "${archive_path}"
-  download_official_and_verify "${binding_name}" "${binding_path}"
-}
-
-download_official_and_verify() {
-  local name="$1"
-  local destination="$2"
-  local expected
-  expected="$(awk -v name="${name}" '$2 == name { print $1 }' "${official_manifest}")"
-
-  if [[ -z "${expected}" ]]; then
-    echo "No official checksum is pinned for ${name}." >&2
-    exit 1
-  fi
-  if [[ ! -f "${destination}" ]] || [[ "$(sha256 "${destination}")" != "${expected}" ]]; then
-    download "${official_release_url}/${name}" "${destination}"
-  fi
-  if [[ "$(sha256 "${destination}")" != "${expected}" ]]; then
-    echo "Official artifact verification failed: ${destination}" >&2
-    exit 1
-  fi
-}
-
 download_sandbox_variant() {
   local variant="$1"
   local asset_prefix="rusty_v8_${variant}release_${target}"
@@ -131,13 +98,10 @@ download_and_verify() {
   fi
 }
 
-# Cargo may enable the sandbox feature for a full workspace run but omit it for
-# a package-scoped run. Populate both names so rusty_v8 can select the matching
-# archive and bindings itself.
-download_official_variant ""
-# `v8_enable_sandbox` is experimental and has no official prebuilt archive at
-# this pin. Keep this custom input isolated until the source-build/custom-
-# archive decision is completed; ordinary artifacts above come from upstream.
+# Ruxex supports the sandbox-enabled configuration only. The matching archive
+# and bindings are maintained by the OpenAI Codex artifact release until Ruxex
+# takes ownership of this build input. Do not silently fall back to an ordinary
+# shared-cage archive: code-mode-runtime verifies the sandbox symbol at runtime.
 download_sandbox_variant "ptrcomp_sandbox_"
 
 if [[ "${1:-}" == "--" ]]; then

@@ -78,11 +78,11 @@
 
 ### Task 4: Resolve Rusty V8 artifact ownership
 
-> Current ruling: keep the sandbox-enabled bridge unchanged until the
-> security/build-path decision is complete. Official `rusty_v8` artifacts are
-> the target for ordinary variants, but the pinned official release does not
-> publish a prebuilt archive for `v8_enable_sandbox`; do not silently disable
-> that feature.
+> Current ruling: use the OpenAI/Codex sandbox-enabled artifact as the sole
+> supported prebuilt V8 input for Ruxex. The pinned official release does not
+> publish a prebuilt archive for `v8_enable_sandbox`; do not silently use an
+> ordinary shared-cage archive or disable the feature. Ruxex ownership of the
+> artifact remains a later release task.
 
 **Files:**
 - Modify: `scripts/download-rusty-v8.sh`
@@ -90,12 +90,12 @@
 - Modify: `third_party/v8/*.sha256` and release metadata if required
 - Modify: `Cargo.toml`, `justfile`, and relevant build documentation
 
-- [ ] Confirm the pinned `rusty_v8` version and the exact Linux/macOS targets required by Ruxex.
-- [ ] Prefer the official `rusty_v8` release/artifact mechanism; remove the dependency on an `openai/codex` release unless a separately documented compatibility reason remains.
-- [ ] Keep checksum verification and sandbox/ptrcomp variant selection explicit.
-- [ ] Document that Ruxex is a library/workspace and does not distribute a V8 binary; consumers build through the crate's supported artifact path.
+- [x] Confirm the pinned `rusty_v8` version and the exact Linux/macOS targets required by Ruxex.
+- [x] Use the sandbox-enabled artifact required by Ruxex; the OpenAI/Codex release remains the explicitly documented source until Ruxex takes ownership.
+- [x] Keep checksum verification and sandbox/ptrcomp variant selection explicit.
+- [x] Document that Ruxex is a library/workspace and does not distribute a V8 binary; consumers build through the crate's supported artifact path.
 - [ ] Test a clean artifact fetch/build path on Linux and macOS, including cache miss and cache hit behavior.
-- [ ] Record unsupported targets and source-build instructions without making them mandatory for ordinary consumers.
+- [x] Record unsupported targets and source-build instructions without making them mandatory for ordinary consumers.
 
 ### Task 5: Add repository-owned CI and release hygiene
 
