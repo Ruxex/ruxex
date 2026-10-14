@@ -14,7 +14,7 @@
 
 - Work directly on local `develop`; do not create a worktree.
 - Preserve the complete existing Git history; do not rewrite history or force-push.
-- Remove repository-owned design/inspection documents from the public `main` tree, while retaining legal, third-party, provenance, and user-facing documentation required for operation.
+- Remove the development-only `.codex`, `docs`, `.vscode`, `.superpowers`, and unused `scripts` content as the final filesystem cleanup before commits are consolidated; extract any legally or operationally required text into retained root files first.
 - Preserve OpenAI endpoint URLs, request/response fields, authentication headers/variables, and model identifiers when they are external contracts.
 - Keep third-party, upstream, historical, and legal attribution identifiers where required; remove repository-owned OpenAI branding and assumptions only after producer/consumer auditing.
 - Run `just check`, `just check --tests` after Rust changes, and `just generate` when generated artifacts may be affected, using the repository's memory-limited systemd scope.
@@ -35,7 +35,7 @@
 - Create: `docs/upstream-commit-audit-2026-10-14.md` if the existing ledger needs a new dated section
 
 - [ ] Record the current `origin/main`, `ruxex/develop`, local `main`, and local `develop` commit IDs and remote roles.
-- [ ] Define the public-tree allowlist: runtime/source, user documentation, legal notices, third-party licenses, reproducibility metadata, and required examples.
+- [ ] Define the public-tree allowlist: runtime/source, root-level user-facing text, legal notices, third-party licenses, reproducibility metadata, and required examples. Treat the development `docs/` tree as a final removal target.
 - [ ] Classify each internal design document, inspection artifact, audit log, and generated artifact as `retain`, `move-to-private-record`, or `remove` before deleting anything.
 - [ ] Record each decision in the compatibility inventory before changing the corresponding files.
 - [ ] Commit the baseline decision separately and push it to `ruxex/develop`.
@@ -121,7 +121,9 @@
 - Modify: `README.md`, `CHANGELOG.md`, package metadata, and release documentation
 - Modify: generated schemas and checked-in artifacts only when their producers require it
 
-- [ ] Remove internal design/inspection documents from the candidate public tree while retaining user-facing architecture and API documentation.
+- [ ] Before removing development materials, extract the minimum required API/setup/legal/provenance text into retained root files such as `README.md`, `LICENSE`, `NOTICE`, `SECURITY.md`, or `CONTRIBUTING.md`.
+- [ ] As the final filesystem cleanup before commit consolidation, remove `.codex/`, `docs/`, `.vscode/`, `.superpowers/`, and scripts classified as unused; keep only scripts required by build, verification, artifact resolution, or release operations.
+- [ ] Do not delete those development materials during earlier implementation tasks; they remain available for audits and verification until this step.
 - [ ] Remove caches, local paths, private organization references, stale screenshots, and unused build scaffolding.
 - [ ] Verify that examples, README commands, crate names, data-root names, and CI URLs all describe Ruxex consistently.
 - [ ] Run the complete repository verification gate: `just check`, `just check --tests`, `just generate`, `git diff --check`, and the Linux/macOS CI matrix.

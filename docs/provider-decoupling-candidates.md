@@ -9,12 +9,14 @@ repository. The following are investigation candidates, not deletion decisions:
 
 | Candidate | Producer / consumer audit required | Initial decision |
 |---|---|---|
-| Internal plans, specifications, inspection maps, and architecture snapshots under `docs/superpowers`, `docs/inspection`, and `docs/cli-architecture` | Confirm no user-facing build, runtime, schema, or legal consumer; preserve any legal/provenance fact separately | `move-to-private-record` |
-| Compatibility inventories, provider-decoupling notes, Hawk reports, and line-count TSVs | Confirm they are maintainer-only audit outputs and identify any required public attribution summary | `move-to-private-record` |
+| The development `docs/**` tree, including plans, specifications, inspection maps, architecture snapshots, compatibility inventories, provider audits, upstream ledgers, Hawk reports, and line-count TSVs | Confirm no user-facing build, runtime, schema, or legal consumer; extract any required legal/provenance/setup text into retained root files | `remove` in the final pre-consolidation cleanup |
+| `.codex/**`, `.vscode/**`, and `.superpowers/**` | Confirm they are development-environment inputs only and are not required by build, runtime, or release scripts | `remove` in the final pre-consolidation cleanup |
 | Existing issue templates, CODEOWNERS, splash assets, desktop staging, and repository-owned support links | Inspect active GitHub, desktop, packaging, and contribution consumers after the Ruxex rename | `migrate-in-place` or `remove` |
 | Checked-in generated schemas and V8 checksum manifests | Confirm each producer and runtime/client consumer before removal; preserve reproducibility metadata | `retain` unless an explicit consumer audit proves it is obsolete |
 | Local build caches, temporary reports, and machine-specific paths | Confirm no source or release process expects them to be versioned | `remove` |
+| Unused files under `scripts/**` | Trace each script through `justfile`, CI, packaging, release, and contributor workflows before removal | `remove` in the final pre-consolidation cleanup |
 
+The cleanup is deliberately deferred until functional work and verification are complete.
 The publication boundary does not authorize removing external OpenAI endpoint contracts,
 third-party identifiers, legal notices, upstream attribution, or security behavior. Findings
 that cross those boundaries remain separate candidates and must receive a `remove`, `retain`,

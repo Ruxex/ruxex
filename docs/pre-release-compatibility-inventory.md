@@ -28,18 +28,20 @@ The public-tree allowlist for the Ruxex publication candidate is:
 | Path or artifact class | Producer / consumer audit | Decision |
 |---|---|---|
 | Rust source, workspace manifests, lockfile, toolchain file, active build scripts, active `just` recipes, required examples, and checked-in schemas consumed by a runtime or client | Cargo, host examples, AppServer/protocol consumers, build scripts, and users need these to build or embed Ruxex | `retain`, subject to the naming and dependency audits |
-| `README.md`, user-facing setup/config/authentication/install/sandbox/contribution/security documentation | Users need these to build, configure, embed, secure, and contribute to Ruxex | `retain` after repository-owned names and links are migrated |
+| `README.md`, root-level setup/config/authentication/install/sandbox/contribution/security text, and required release metadata | Users need these to build, configure, embed, secure, and contribute to Ruxex | `retain` after repository-owned names and links are migrated |
 | `LICENSE`, `SECURITY.md`, `docs/CLA`, `docs/license`, third-party license files, notices, attribution, and upstream provenance records required for redistribution | Legal obligations and third-party/upstream provenance are external or historical boundaries | `retain`; OpenAI/Codex references may remain where legally or historically required |
-| `docs/superpowers/plans/**`, `docs/superpowers/specs/**`, `docs/inspection/**`, `docs/cli-architecture/**`, and temporary implementation/design notes | Internal planning and inspection consumers are maintainers, not Ruxex users | `move-to-private-record` from the public tree; preserve in Git history and internal working records |
-| `docs/pre-release-compatibility-inventory.md`, `docs/provider-decoupling-candidates.md`, `docs/provider-decoupling-plan.md`, `docs/provider-specific-crates.md`, `docs/provider-neutral-gaps.md`, `docs/config-audit.md`, and Hawk/line-count audit files | Maintainer audit records document migration evidence but are not required to consume the library | `move-to-private-record` from the public tree; retain decision summaries and legal/provenance facts in public documentation where needed |
-| `docs/upstream-commit-audit-*.md` and `docs/upstream-commits-after-fork-*.md` | The upstream synchronization ledger is a maintainer workflow and a provenance source | `move-to-private-record` as detailed audit files; retain a concise public provenance statement and required notices |
+| `docs/**` including plans, specifications, inspection maps, architecture notes, compatibility inventories, provider audits, upstream ledgers, and generated analysis reports | These are development and maintainer records; no public runtime or library consumer should require the repository documentation tree | `remove` from the final public tree as the last pre-consolidation cleanup; preserve Git history and extract required legal/provenance/user text first |
+| `.codex/**`, `.vscode/**`, and `.superpowers/**` | Repository-local agent, editor, and planning tooling; consumers are development environments only | `remove` from the final public tree as the last pre-consolidation cleanup; retain neither as a runtime dependency |
 | `target/**`, `.build-cache/**`, local V8 caches, temporary reports, machine-local paths, and untracked generated output | No active producer or consumer requires these in a source distribution | `remove` from the publication candidate; never commit them |
 | checked-in generated protocol/config artifacts with an active producer and consumer | AppServer clients, protocol users, or build verification may require the generated output | `retain` and regenerate/inspect through `just generate` |
 | unused or provider-host-specific package assets, screenshots, issue templates, CODEOWNERS entries, and desktop scaffolding | Their consumers must be audited individually; names alone do not establish public necessity | `migrate-in-place` or `remove` only after the producer/consumer record is added to this inventory |
+| `scripts/**` | Build, verification, artifact-download, conformance, packaging, and audit scripts have different consumers; names alone do not establish necessity | `retain` active build/verification/release scripts; `remove` unused scripts in the same final pre-consolidation cleanup as `docs/` |
 
 This baseline is a publication-boundary decision, not permission to delete files immediately.
-Each `move-to-private-record` and `remove` row must be applied only after the corresponding
-public-tree diff is reviewed. The full Git history remains preserved.
+The listed development directories and unused scripts must remain available during implementation.
+They are deleted only after the last functional verification and immediately before commits are
+consolidated. Each removal must still be reviewed in the public-tree diff. The full Git history
+remains preserved.
 
 ## Single-provider boundary follow-up (2026-10-09)
 
