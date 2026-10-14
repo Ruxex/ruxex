@@ -1,4 +1,3 @@
-set working-directory := "."
 set positional-arguments
 export JUST_SHELL := justfile_directory() / "scripts/just-shell.py"
 set shell := ["python3", "-c", 'import os, runpy; runpy.run_path(os.environ["JUST_SHELL"], run_name="__main__")']
