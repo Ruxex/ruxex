@@ -148,10 +148,11 @@ active policy is recorded separately from the historical OpenAI-based audit.
 - [x] As the final filesystem cleanup before commit consolidation, remove `.codex/`, `.vscode/`, `.superpowers/`, and scripts classified as unused. Remove `docs/` except for the active publication plan and compatibility/upstream audit ledgers; keep only scripts required by build, verification, artifact resolution, or release operations.
 - [x] Do not delete those development materials during earlier implementation tasks; they remain available for audits and verification until this step.
 - [x] Remove caches, local paths, private organization references, stale screenshots, and unused build scaffolding.
-- [ ] Verify that examples, README commands, crate names, data-root names, and CI URLs all describe Ruxex consistently.
-- [ ] Run the complete repository verification gate: `just check`, `just check --tests`, `just generate`, `git diff --check`, and the Linux/macOS CI matrix.
-- [ ] Review the complete staged diff and a clean checkout of the candidate commit.
-- [ ] Commit the candidate on `develop` and push it to `ruxex/develop`.
+- [x] Verify that examples, README commands, crate names, data-root names, and CI URLs all describe Ruxex consistently.
+- [x] Run the local repository verification gate: `just check`, `just check --tests`, `just generate`, and `git diff --check`.
+- [ ] Confirm the hosted Linux/macOS CI matrix is green.
+- [x] Review the complete staged diff and the clean post-commit checkout of the candidate.
+- [x] Commit the candidate on `develop` and push it to `Ruxex/ruxex:develop`.
 
 ### Task 8: Promote and close the temporary branch
 
