@@ -83,29 +83,30 @@ jobs:
       - name: Build workspace
         run: just build --workspace
 
-  test:
-    name: test (${{ matrix.os }})
-    needs: build
-    runs-on: ${{ matrix.os }}
+  test-archive:
+    name: test archive (${{ matrix.os }})
+    runs-on: ${{ matrix.os == 'macos' && 'macos-15-xlarge' || 'ubuntu-24.04' }}
+    env:
+      CARGO_INCREMENTAL: 0
     strategy:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-24.04
-          - macos-14
+          - linux
+          - macos
 
     steps:
       - name: Check out source
         uses: actions/checkout@v4.2.2
 
       - name: Install Linux dependencies
-        if: runner.os == 'Linux'
+        if: matrix.os == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libcap-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
 
       - name: Install macOS dependencies
-        if: runner.os == 'macOS'
+        if: matrix.os == 'macos'
         run: brew install cmake just pkg-config
 
       - name: Select repository Rust toolchain
@@ -126,7 +127,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-rust-1.98.1-deps-v3-
 
-      - name: Inspect disk after cache restore
+      - name: Inspect disk before archive build
         run: |
           df -h .
           for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
@@ -135,5 +136,99 @@ jobs:
             fi
           done
 
-      - name: Run workspace tests
-        run: just test-cargo --workspace
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2.62.49
+        with:
+          tool: nextest
+          version: 0.9.103
+
+      - name: Build nextest archive
+        run: |
+          mkdir -p "$RUNNER_TEMP/ruxex-nextest"
+          just test-archive "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}.tar.zst"
+
+      - name: Upload nextest archive
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-nextest-${{ matrix.os }}
+          path: ${{ runner.temp }}/ruxex-nextest/ruxex-nextest-${{ matrix.os }}.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  test-shard:
+    name: test shard (${{ matrix.os }}, ${{ matrix.shard }}/4)
+    needs:
+      - build
+      - test-archive
+    if: ${{ always() && needs.build.result == 'success' }}
+    runs-on: ${{ matrix.os == 'macos' && 'macos-15-xlarge' || 'ubuntu-24.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - linux
+          - macos
+        shard:
+          - 1
+          - 2
+          - 3
+          - 4
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libcap-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
+
+      - name: Install macOS dependencies
+        if: matrix.os == 'macos'
+        run: brew install cmake just pkg-config
+
+      - name: Select repository Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal \
+            --component clippy --component rustfmt --component rust-src
+          rustup default 1.98.1
+          rustc --version --verbose
+
+      - name: Restore Cargo and native artifact caches
+        uses: actions/cache@v4.2.3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .build-cache/rusty-v8
+          key: ${{ runner.os }}-rust-1.98.1-deps-v3-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-1.98.1-deps-v3-
+
+      - name: Inspect disk before test shard
+        run: |
+          df -h .
+          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
+            if [ -e "$path" ]; then
+              du -sh "$path"
+            fi
+          done
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2.62.49
+        with:
+          tool: nextest
+          version: 0.9.103
+
+      - name: Download nextest archive
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: ruxex-nextest-${{ matrix.os }}
+          path: ${{ runner.temp }}/ruxex-nextest
+
+      - name: Run test shard
+        run: |
+          just test-archive-run \
+            "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}.tar.zst" \
+            --partition "hash:${{ matrix.shard }}/4"
