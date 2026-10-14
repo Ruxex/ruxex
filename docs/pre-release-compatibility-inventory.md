@@ -69,12 +69,16 @@ current repositories are public but belong to the temporary fork namespace;
 the Ruxex target repositories do not yet exist, so source URLs must not be
 changed until the mirrors are created and verified.
 
+User ruling: keep these dependencies on the current `openai-oss-forks` URLs for
+now. The Ruxex mirror migration is deliberately deferred to a later task; this
+does not waive the eventual license, history, patch, and availability audit.
+
 | Dependency | Producer / consumer evidence | Pinned fork change | Decision |
 |---|---|---|---|
 | `crossterm` | Root Cargo patch and lockfile resolve the terminal UI dependency to the pinned Git revision; the workspace consumes the published package name. | Fork history contains terminal input/event and color-query changes on top of upstream crossterm. | `migrate-in-place` to a Ruxex-owned mirror; retain MIT license and package name |
 | `tokio-tungstenite` | Root Cargo patch and lockfile resolve the async WebSocket dependency; its fork manifest also points at the patched `tungstenite` source. | Fork history adds opt-in proxy support, integration fixtures, and a tungstenite pin. | `migrate-in-place` to a Ruxex-owned mirror; update only the internal fork URL and retain MIT license/package/API |
 | `tungstenite` | Root Cargo patch and lockfile resolve the WebSocket implementation used through `tokio-tungstenite`. | Fork history adds environment proxy support and the WASM32 deflate compatibility change. | `migrate-in-place` to a Ruxex-owned mirror; retain MIT/Apache license files and package name |
-| Temporary fork URLs and upstream history | Current Cargo source URLs identify the temporary fork namespace; author history, upstream links, and license files are part of dependency provenance. | No Ruxex repositories are present yet; `gh` is unavailable and the browser session is not authenticated. | `retain` until mirrors are created; then remove temporary URLs from active declarations while retaining provenance in `CREDITS.md` |
+| Temporary fork URLs and upstream history | Current Cargo source URLs identify the temporary fork namespace; author history, upstream links, and license files are part of dependency provenance. | No Ruxex repositories are present yet; the user explicitly deferred this migration. | `retain for now`; later remove temporary URLs from active declarations while retaining provenance in `CREDITS.md` |
 
 ## Single-provider boundary follow-up (2026-10-09)
 

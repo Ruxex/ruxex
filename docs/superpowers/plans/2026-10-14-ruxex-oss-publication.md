@@ -59,6 +59,10 @@
 
 ### Task 3: Migrate OpenAI-derived library forks
 
+> User ruling: defer creation of the Ruxex mirrors and Cargo URL migration.
+> Keep the current public `openai-oss-forks` pins until a later dependency
+> migration pass; preserve this audit and provenance record in the meantime.
+
 **Files:**
 - Modify: `Cargo.toml`
 - Modify: `Cargo.lock`
