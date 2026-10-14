@@ -1,9 +1,5 @@
-# Core crate ownership.
-/crates/arg0/ @codex/codex-core-agent-team
-/crates/codex-mcp/ @codex/codex-core-agent-team
-/crates/core/ @codex/codex-core-agent-team
-/crates/exec-server/ @codex/codex-core-agent-team
-/crates/exec-server-protocol/ @codex/codex-core-agent-team
-/crates/ext/extension-api/ @codex/codex-core-agent-team
-/crates/prompts/ @codex/codex-core-agent-team
-/crates/utils/path-uri/ @codex/codex-core-agent-team
+# Repository-wide ownership is intentionally not configured yet.
+#
+# The previous entries referred to an upstream organization and teams that are
+# not Ruxex maintainers. Add verified Ruxex team handles here before enabling
+# required reviews; do not use placeholder or unverified handles.

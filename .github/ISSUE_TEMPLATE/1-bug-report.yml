@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible problem in Ruxex
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search existing issues before opening a new report. Remove credentials,
+        tokens, personal data, and private endpoint details from all content.
+        Do not use this form for security vulnerabilities; follow SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Ruxex revision or version
+      description: Include the commit, tag, or package version.
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system and architecture
+      description: For example, Ubuntu 24.04 x86_64 or macOS 14 arm64.
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Affected component
+      description: For example, provider host, AppServer, code mode, sandbox, or a crate.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reliable reproduction, including the command used.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include relevant error output with sensitive data removed.
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

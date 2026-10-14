@@ -116,6 +116,21 @@ local verification and hosted CI. The workflow does not use the unavailable
 | `justfile` Cargo invocation | Existing recipes used the local `rtk` wrapper, which is not a repository or hosted-runner dependency. Developers and CI need a direct Cargo path, while local users may still opt into a wrapper. | `migrate-in-place`: use `RUXEX_CARGO_RUNNER` with `cargo` as the default; retain `just test` for nextest and add `test-cargo` for the standard harness | `just --list`; dry-run recipe inspection; memory-limited `just check --tests` and `just build --workspace` |
 | README build-system description | The README described GitHub Actions as unmaintained, conflicting with the new workflow; no active consumer requires that statement. | `migrate-in-place`: document the workflow and remove the obsolete claim; retain the separate decision that Bazel and standalone SDKs are not maintained | README diff review; exact workflow/path inspection |
 
+## Public OSS governance surfaces (2026-10-14)
+
+The repository inherited governance files for the upstream hosted product.
+Their producers are GitHub's issue, review, and security-reporting surfaces;
+their consumers are prospective Ruxex contributors and maintainers. No
+verified Ruxex maintainer team handle was available, so ownership rules are
+left unconfigured rather than pointing at a nonexistent or upstream team.
+
+| Surface | Producer / consumer audit | Decision | Verification |
+|---|---|---|---|
+| `SECURITY.md` | GitHub security reporters and Ruxex maintainers consume the reporting policy; the former text routed reports to an upstream Bugcrowd program and provider-hosted documentation. | `migrate-in-place`: use GitHub private vulnerability reporting, describe Ruxex security scope, and remove upstream program links | Exact old-name/provider-host audit; Markdown review |
+| `CONTRIBUTING.md` and `docs/contributing.md` | Contributors need a repository-owned contribution contract; the previous guide rejected external pull requests and linked to the upstream issue tracker. The final `docs/` cleanup will remove the compatibility copy. | `migrate-in-place`: add a root canonical guide that accepts focused contributions and retain a temporary redirect in `docs/` | Exact old-name audit; guide review |
+| `.github/ISSUE_TEMPLATE/*` | GitHub renders these templates for public issue creation; the old templates targeted upstream App, IDE extension, CLI, and hosted-product surfaces. | `remove` obsolete upstream templates; `migrate-in-place` to generic Ruxex bug and feature forms plus a private security contact | Issue-template YAML parsing; exact old-name audit |
+| `.github/CODEOWNERS` | GitHub consumes ownership handles for review routing; the old file named an upstream organization/team and paths that are not verified Ruxex ownership boundaries. | `migrate-in-place`: retain a comment-only file until a real Ruxex team is configured; do not invent handles | Exact `@codex` audit; file review |
+
 ## Single-provider boundary follow-up (2026-10-09)
 
 | Surface | Producer / consumer audit | Decision |
