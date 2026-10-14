@@ -49,16 +49,26 @@ jobs:
           rustup default 1.98.1
           rustc --version --verbose
 
-      - name: Restore Cargo and native artifact caches
+      - name: Restore Cargo, native artifact, and target caches
         uses: actions/cache@v4.2.3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            target
             .build-cache/rusty-v8
-          key: ${{ runner.os }}-rust-1.98.1-deps-v2-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
+          key: ${{ runner.os }}-rust-1.98.1-target-probe-v1-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
           restore-keys: |
-            ${{ runner.os }}-rust-1.98.1-deps-v2-
+            ${{ runner.os }}-rust-1.98.1-target-probe-v1-
+
+      - name: Inspect disk after cache restore
+        run: |
+          df -h .
+          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
+            if [ -e "$path" ]; then
+              du -sh "$path"
+            fi
+          done
 
       - name: Check production targets
         run: just check
@@ -98,16 +108,26 @@ jobs:
           rustup default 1.98.1
           rustc --version --verbose
 
-      - name: Restore Cargo and native artifact caches
+      - name: Restore Cargo, native artifact, and target caches
         uses: actions/cache@v4.2.3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            target
             .build-cache/rusty-v8
-          key: ${{ runner.os }}-rust-1.98.1-deps-v2-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
+          key: ${{ runner.os }}-rust-1.98.1-target-probe-v1-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
           restore-keys: |
-            ${{ runner.os }}-rust-1.98.1-deps-v2-
+            ${{ runner.os }}-rust-1.98.1-target-probe-v1-
+
+      - name: Inspect disk after cache restore
+        run: |
+          df -h .
+          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
+            if [ -e "$path" ]; then
+              du -sh "$path"
+            fi
+          done
 
       # Temporarily disabled while the build jobs warm the dependency and
       # native-artifact caches. Re-enable after the compile-only run succeeds.
