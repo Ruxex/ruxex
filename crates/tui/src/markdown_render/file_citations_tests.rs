@@ -1,0 +1,139 @@
+//! Citation rendering, literal Markdown boundaries, and filesystem-path compatibility.
+
+use crate::markdown::render_markdown_agent_with_links_and_cwd;
+use crate::markdown_render::render_markdown_lines_with_width_and_cwd;
+use itertools::Itertools;
+use pretty_assertions::assert_eq;
+use std::path::Path;
+
+fn rendered_text(markdown: &str, cwd: Option<&Path>) -> String {
+    render_markdown_agent_with_links_and_cwd(markdown, /*width*/ None, cwd)
+        .into_iter()
+        .map(|line| line.line.to_string())
+        .join("\n")
+}
+
+#[test]
+fn file_citation_paths_preserve_markdown_significant_characters() {
+    for path in [
+        "/tmp/a*b*.txt",
+        "/tmp/$x$/report.md",
+        "/tmp/a`b`.txt",
+        "/tmp/a<b>.txt",
+        "/tmp/report#L10",
+        "/tmp/report:10",
+        "/tmp/report%20final.xlsx",
+        "/tmp/report?final.xlsx",
+    ] {
+        let markdown = format!(":ruxex-file-citation{{path=\"{path}\"}}");
+        assert_eq!(rendered_text(&markdown, /*cwd*/ None), path);
+    }
+}
+
+#[test]
+fn file_citations_inside_code_existing_links_and_html_remain_literal() {
+    let citation = r#":ruxex-file-citation{path="/tmp/report.xlsx" purpose="output"}"#;
+
+    for markdown in [
+        format!("`{citation}`"),
+        format!("```text\n{citation}\n```\n"),
+    ] {
+        assert_eq!(rendered_text(&markdown, /*cwd*/ None), citation);
+    }
+    for markdown in [
+        format!("<span title='{citation}'>"),
+        format!("<!-- {citation} -->"),
+    ] {
+        assert_eq!(rendered_text(&markdown, /*cwd*/ None), markdown);
+    }
+    assert_eq!(
+        rendered_text(
+            &format!("[{citation}](https://example.com)"),
+            /*cwd*/ None
+        ),
+        format!("{citation} (https://example.com)"),
+    );
+}
+
+#[test]
+fn file_citations_accept_unquoted_paths_and_trailing_windows_separators() {
+    for (citation, expected) in [
+        (
+            r#":ruxex-file-citation{path="C:\Users\me\.ruxex\report.xlsx"}"#,
+            "C:/Users/me/.ruxex/report.xlsx",
+        ),
+        (
+            ":ruxex-file-citation{path=/tmp/a*b*.txt purpose=output}",
+            "/tmp/a*b*.txt",
+        ),
+        (
+            r#":ruxex-file-citation{path="C:\repo\" purpose="output" sheet="Q1=Actual"}"#,
+            "C:/repo/",
+        ),
+        (
+            r#":ruxex-file-citation{path="/tmp/a\"b" label="team's \"report\""}"#,
+            "/tmp/a\"b",
+        ),
+    ] {
+        assert_eq!(rendered_text(citation, /*cwd*/ None), expected);
+    }
+}
+
+#[test]
+fn multiple_file_citations_render_without_interpreting_encoded_source() {
+    let cwd = std::env::temp_dir();
+    let second = cwd.join("second.xlsx");
+    let markdown = format!(
+        r#"&#58;ruxex-file-citation{{path="ignored.xlsx"}} :ruxex-file-citation{{artifact_kind="workbook" path="reports/final%20report.xlsx" purpose="output" sheet="Dashboard" range="A1:D8"}} and ::ruxex-file-citation{{path="{}"}}"#,
+        second.display(),
+    );
+
+    assert_eq!(
+        rendered_text(&markdown, Some(&cwd)),
+        r#":ruxex-file-citation{path="ignored.xlsx"} reports/final%20report.xlsx and second.xlsx"#,
+    );
+
+    // A work budget must not become a fixed count limit on legitimate citations.
+    let many = [":ruxex-file-citation{path=/tmp/report.xlsx}"; 512].join(" ");
+    assert_eq!(
+        rendered_text(&many, /*cwd*/ None),
+        ["/tmp/report.xlsx"; 512].join(" "),
+    );
+}
+
+#[test]
+fn file_citations_preserve_adjacent_entities_and_escaped_punctuation() {
+    assert_eq!(
+        rendered_text(
+            r"$\alpha$:ruxex-file-citation{path=/tmp/$x$/report.md}$\beta$",
+            /*cwd*/ None
+        ),
+        "α/tmp/$x$/report.mdβ",
+    );
+    let cwd = std::env::temp_dir();
+    for (markdown, expected) in [
+        (
+            r#"Préface &amp;:ruxex-file-citation{path="first&amp;.txt"}&#x1F642;:ruxex-file-citation{path="second.txt"}&lt;fin&gt;"#,
+            "Préface &first&amp;.txt🙂second.txt<fin>",
+        ),
+        (
+            r#"\[:ruxex-file-citation{path="first.txt"}\]\*:ruxex-file-citation{path="second.txt"}\!"#,
+            "[first.txt]*second.txt!",
+        ),
+    ] {
+        assert_eq!(rendered_text(markdown, Some(&cwd)), expected);
+    }
+}
+
+#[test]
+fn generic_markdown_keeps_assistant_directives_literal() {
+    let citation = r#":ruxex-file-citation{path="/tmp/report.xlsx"}"#;
+
+    assert_eq!(
+        render_markdown_lines_with_width_and_cwd(citation, /*width*/ None, /*cwd*/ None)
+            .into_iter()
+            .map(|line| line.line.to_string())
+            .join("\n"),
+        citation,
+    );
+}

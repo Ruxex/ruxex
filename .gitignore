@@ -4,19 +4,11 @@ node_modules
 .pnpm-store
 .pnpm-debug.log
 
-# Keep pnpm-lock.yaml
-!pnpm-lock.yaml
-
 # build
 dist/
-bazel-*
-user.bazelrc
 build/
 out/
 storybook-static/
-
-# ignore README for publishing
-codex-cli/README.md
 
 # ignore Nix derivation results
 result
@@ -35,6 +27,7 @@ CLAUDE.md
 AGENTS.override.md
 
 # caches
+/.build-cache/
 .cache/
 .turbo/
 .parcel-cache/
@@ -60,11 +53,15 @@ yarn-error.log*
 # ci
 .vercel/
 .netlify/
-/.tmp/sdk-ci/
 /upstream-rusty-v8/
 
 # patches
 apply_patch/
+
+# local planning state
+/.codex/
+/docs/
+.superpowers/
 
 # coverage
 coverage/
@@ -94,3 +91,13 @@ CHANGELOG.ignore.md
 # Python bytecode files
 __pycache__/
 *.pyc
+
+/target/
+/target-*/
+apps/desktop/src-tauri/gen/
+
+# local audit and generated inspection output
+/docs/inspection/
+/hawk.json
+/codex-cli.json
+/chatgpt-openai-line-counts*.tsv

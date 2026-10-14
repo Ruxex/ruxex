@@ -1,0 +1,2895 @@
+#[cfg(test)]
+use std::path::Path;
+use std::path::PathBuf;
+
+use crate::JSONRPCNotification;
+use crate::JSONRPCRequest;
+use crate::JsonSchema;
+use crate::RequestId;
+use crate::TS;
+#[cfg(test)]
+use crate::export::GeneratedSchema;
+#[cfg(test)]
+use crate::export::write_json_schema;
+use crate::protocol::v1;
+use crate::protocol::v2;
+use crate::protocol::v2::McpServerRefreshParams;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use serde::Deserialize;
+use serde::Serialize;
+use strum_macros::Display;
+
+/// Authentication mode for configured model providers.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Display, JsonSchema, TS)]
+#[serde(rename_all = "lowercase")]
+pub enum AuthMode {
+    /// API key provided by the caller and stored by Ruxex.
+    ApiKey,
+    /// Backend auth supplied as request headers.
+    #[serde(rename = "headers")]
+    #[ts(rename = "headers")]
+    #[strum(serialize = "headers")]
+    Headers,
+}
+
+macro_rules! experimental_reason_expr {
+    // If a request variant is explicitly marked experimental, that reason wins.
+    (variant $variant:ident, #[experimental($reason:expr)] $params:ident $(, $inspect_params:tt)?) => {
+        Some($reason)
+    };
+    // `inspect_params: true` is used when a method is mostly stable but needs
+    // field-level gating from its params type (for example, ThreadStart).
+    (variant $variant:ident, $params:ident, true) => {
+        crate::experimental_api::ExperimentalApi::experimental_reason($params)
+    };
+    (variant $variant:ident, $params:ident $(, $inspect_params:tt)?) => {
+        None
+    };
+}
+
+#[cfg(test)]
+macro_rules! experimental_method_entry {
+    (#[experimental($reason:expr)] => $wire:literal) => {
+        $wire
+    };
+    (#[experimental($reason:expr)]) => {
+        $reason
+    };
+    ($($tt:tt)*) => {
+        ""
+    };
+}
+
+#[cfg(test)]
+macro_rules! experimental_type_entry {
+    (#[experimental($reason:expr)] $ty:ty) => {
+        stringify!($ty)
+    };
+    ($ty:ty) => {
+        ""
+    };
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ClientRequestSerializationScope {
+    Global(&'static str),
+    GlobalSharedRead(&'static str),
+    Thread { thread_id: String },
+    ThreadPath { path: PathBuf },
+    CommandExecProcess { process_id: String },
+    Process { process_handle: String },
+    FuzzyFileSearchSession { session_id: String },
+    FsWatch { watch_id: String },
+    McpOauth { server_name: String },
+}
+
+macro_rules! serialization_scope_expr {
+    ($actual_params:ident, None) => {
+        None
+    };
+    ($actual_params:ident, global($key:literal)) => {
+        Some(ClientRequestSerializationScope::Global($key))
+    };
+    ($actual_params:ident, global_shared_read($key:literal)) => {
+        Some(ClientRequestSerializationScope::GlobalSharedRead($key))
+    };
+    ($actual_params:ident, thread_id($params:ident . $field:ident)) => {
+        Some(ClientRequestSerializationScope::Thread {
+            thread_id: $actual_params.$field.clone(),
+        })
+    };
+    ($actual_params:ident, optional_thread_id($params:ident . $field:ident)) => {
+        $actual_params
+            .$field
+            .clone()
+            .map(|thread_id| ClientRequestSerializationScope::Thread { thread_id })
+    };
+    ($actual_params:ident, thread_or_path($params:ident . $thread_field:ident, $params2:ident . $path_field:ident)) => {
+        if !$actual_params.$thread_field.is_empty() {
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: $actual_params.$thread_field.clone(),
+            })
+        } else if let Some(path) = $actual_params.$path_field.clone() {
+            Some(ClientRequestSerializationScope::ThreadPath { path })
+        } else {
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: $actual_params.$thread_field.clone(),
+            })
+        }
+    };
+    ($actual_params:ident, optional_command_process_id($params:ident . $field:ident)) => {
+        $actual_params
+            .$field
+            .clone()
+            .map(|process_id| ClientRequestSerializationScope::CommandExecProcess { process_id })
+    };
+    ($actual_params:ident, command_process_id($params:ident . $field:ident)) => {
+        Some(ClientRequestSerializationScope::CommandExecProcess {
+            process_id: $actual_params.$field.clone(),
+        })
+    };
+    ($actual_params:ident, process_handle($params:ident . $field:ident)) => {
+        Some(ClientRequestSerializationScope::Process {
+            process_handle: $actual_params.$field.clone(),
+        })
+    };
+    ($actual_params:ident, fuzzy_session_id($params:ident . $field:ident)) => {
+        Some(ClientRequestSerializationScope::FuzzyFileSearchSession {
+            session_id: $actual_params.$field.clone(),
+        })
+    };
+    ($actual_params:ident, fs_watch_id($params:ident . $field:ident)) => {
+        Some(ClientRequestSerializationScope::FsWatch {
+            watch_id: $actual_params.$field.clone(),
+        })
+    };
+    ($actual_params:ident, mcp_oauth_server($params:ident . $field:ident)) => {
+        Some(ClientRequestSerializationScope::McpOauth {
+            server_name: $actual_params.$field.clone(),
+        })
+    };
+}
+
+/// Generates an `enum ClientRequest` where each variant is a request that the
+/// client can send to the server. Each variant has associated `params` and
+/// `response` types. Also generates a `export_client_responses()` function to
+/// export all response types to TypeScript.
+macro_rules! client_request_definitions {
+    (
+        $(
+            $(#[experimental($reason:expr)])?
+            $(#[doc = $variant_doc:literal])*
+            $variant:ident => $wire:literal {
+                params: $(#[$params_meta:meta])* $params:ty,
+                $(inspect_params: $inspect_params:tt,)?
+                serialization: $serialization:ident $( ( $($serialization_args:tt)* ) )?,
+                $(manual_payload_conversion: $manual_payload_conversion:ident,)?
+                response: $response:ty,
+            }
+        ),* $(,)?
+    ) => {
+        /// Request from the client to the server.
+        #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+        #[serde(tag = "method", rename_all = "camelCase")]
+        pub enum ClientRequest {
+            $(
+                $(#[doc = $variant_doc])*
+                #[serde(rename = $wire)]
+                #[ts(rename = $wire)]
+                $variant {
+                    #[serde(rename = "id")]
+                    request_id: RequestId,
+                    $(#[$params_meta])*
+                    params: $params,
+                },
+            )*
+        }
+
+        impl ClientRequest {
+            pub fn id(&self) -> &RequestId {
+                match self {
+                    $(Self::$variant { request_id, .. } => request_id,)*
+                }
+            }
+
+            pub const fn method_name(&self) -> &'static str {
+                match self {
+                    $(Self::$variant { .. } => $wire,)*
+                }
+            }
+
+            pub fn serialization_scope(&self) -> Option<ClientRequestSerializationScope> {
+                match self {
+                    $(
+                        Self::$variant { params, .. } => {
+                            let _ = params;
+                            serialization_scope_expr!(
+                                params, $serialization $( ( $($serialization_args)* ) )?
+                            )
+                        }
+                    )*
+                }
+            }
+        }
+
+        impl TryFrom<JSONRPCRequest> for ClientRequest {
+            type Error = serde_json::Error;
+
+            fn try_from(request: JSONRPCRequest) -> Result<Self, Self::Error> {
+                let JSONRPCRequest {
+                    id: request_id,
+                    method,
+                    params,
+                    trace: _,
+                } = request;
+                let mut request = serde_json::Map::new();
+                request.insert("id".to_string(), serde_json::to_value(request_id)?);
+                request.insert("method".to_string(), serde_json::Value::String(method));
+                if let Some(params) = params {
+                    request.insert("params".to_string(), params);
+                }
+                serde_json::from_value(serde_json::Value::Object(request))
+            }
+        }
+
+        /// Typed response from the server to the client.
+        #[derive(Serialize, Deserialize, Debug, Clone, TS)]
+        #[allow(clippy::large_enum_variant)]
+        #[serde(tag = "method", rename_all = "camelCase")]
+        pub enum ClientResponse {
+            $(
+                $(#[doc = $variant_doc])*
+                #[serde(rename = $wire)]
+                #[ts(rename = $wire)]
+                $variant {
+                    #[serde(rename = "id")]
+                    #[ts(rename = "id")]
+                    request_id: RequestId,
+                    response: $response,
+                },
+            )*
+        }
+
+        impl ClientResponse {
+            pub fn id(&self) -> &RequestId {
+                match self {
+                    $(Self::$variant { request_id, .. } => request_id,)*
+                }
+            }
+
+            pub fn method(&self) -> String {
+                match self {
+                    $(Self::$variant { .. } => $wire.to_string(),)*
+                }
+            }
+
+            pub fn into_jsonrpc_parts(
+                self,
+            ) -> std::result::Result<(RequestId, crate::Result), serde_json::Error> {
+                match self {
+                    $(
+                        Self::$variant { request_id, response } => {
+                            serde_json::to_value(response).map(|result| (request_id, result))
+                        }
+                    )*
+                }
+            }
+        }
+
+        #[derive(Debug, Clone, Serialize)]
+        #[serde(untagged)]
+        #[allow(clippy::large_enum_variant)]
+        pub enum ClientResponsePayload {
+            $( $variant($response), )*
+            InterruptConversation(v1::InterruptConversationResponse),
+        }
+
+        impl ClientResponsePayload {
+            pub fn into_client_response(self, request_id: RequestId) -> Option<ClientResponse> {
+                match self {
+                    $(
+                        Self::$variant(response) => {
+                            Some(ClientResponse::$variant {
+                                request_id,
+                                response,
+                            })
+                        }
+                    )*
+                    Self::InterruptConversation(_) => None,
+                }
+            }
+
+            pub fn into_jsonrpc_parts(
+                self,
+                request_id: RequestId,
+            ) -> std::result::Result<(RequestId, crate::Result), serde_json::Error> {
+                self.to_jsonrpc_parts(request_id)
+            }
+
+            pub fn to_jsonrpc_parts(
+                &self,
+                request_id: RequestId,
+            ) -> std::result::Result<(RequestId, crate::Result), serde_json::Error> {
+                match self {
+                    $(
+                        Self::$variant(response) => {
+                            serde_json::to_value(response).map(|result| (request_id, result))
+                        }
+                    )*
+                    Self::InterruptConversation(response) => {
+                        serde_json::to_value(response).map(|result| (request_id, result))
+                    }
+                }
+            }
+        }
+
+        impl From<v1::InterruptConversationResponse> for ClientResponsePayload {
+            fn from(response: v1::InterruptConversationResponse) -> Self {
+                Self::InterruptConversation(response)
+            }
+        }
+
+        $(
+            client_response_payload_from_impl!(
+                $variant,
+                $response
+                $(, $manual_payload_conversion)?
+            );
+        )*
+
+        impl crate::experimental_api::ExperimentalApi for ClientRequest {
+            fn experimental_reason(&self) -> Option<&'static str> {
+                match self {
+                    $(
+                        Self::$variant { params: _params, .. } => {
+                            experimental_reason_expr!(
+                                variant $variant,
+                                $(#[experimental($reason)])?
+                                _params
+                                $(, $inspect_params)?
+                            )
+                        }
+                    )*
+                }
+            }
+        }
+
+        #[cfg(test)]
+        pub(crate) const EXPERIMENTAL_CLIENT_METHODS: &[&str] = &[
+            $(
+                experimental_method_entry!($(#[experimental($reason)])? => $wire),
+            )*
+        ];
+        #[cfg(test)]
+        pub(crate) const EXPERIMENTAL_CLIENT_METHOD_PARAM_TYPES: &[&str] = &[
+            $(
+                experimental_type_entry!($(#[experimental($reason)])? $params),
+            )*
+        ];
+        #[cfg(test)]
+        pub(crate) const EXPERIMENTAL_CLIENT_METHOD_RESPONSE_TYPES: &[&str] = &[
+            $(
+                experimental_type_entry!($(#[experimental($reason)])? $response),
+            )*
+        ];
+
+        #[cfg(test)]
+        pub fn export_client_responses(
+            out_dir: &::std::path::Path,
+        ) -> ::std::result::Result<(), ::ts_rs::ExportError> {
+            $(
+                <$response as ::ts_rs::TS>::export_all_to(out_dir)?;
+            )*
+            Ok(())
+        }
+
+        #[cfg(test)]
+        pub(crate) fn visit_client_response_types(v: &mut impl ::ts_rs::TypeVisitor) {
+            $(
+                v.visit::<$response>();
+            )*
+        }
+
+        #[cfg(test)]
+        #[allow(clippy::vec_init_then_push)]
+        pub fn export_client_response_schemas(
+            out_dir: &::std::path::Path,
+        ) -> ::anyhow::Result<Vec<GeneratedSchema>> {
+            let mut schemas = Vec::new();
+            $(
+                schemas.push(write_json_schema::<$response>(out_dir, stringify!($response))?);
+            )*
+            Ok(schemas)
+        }
+
+        #[cfg(test)]
+        #[allow(clippy::vec_init_then_push)]
+        pub fn export_client_param_schemas(
+            out_dir: &::std::path::Path,
+        ) -> ::anyhow::Result<Vec<GeneratedSchema>> {
+            let mut schemas = Vec::new();
+            $(
+                schemas.push(write_json_schema::<$params>(out_dir, stringify!($params))?);
+            )*
+            Ok(schemas)
+        }
+    };
+}
+
+macro_rules! client_response_payload_from_impl {
+    ($variant:ident, $response:ty) => {
+        impl From<$response> for ClientResponsePayload {
+            fn from(response: $response) -> Self {
+                Self::$variant(response)
+            }
+        }
+    };
+    ($variant:ident, $response:ty, manual) => {};
+}
+
+client_request_definitions! {
+    Initialize => "initialize" {
+        params: v1::InitializeParams,
+        serialization: None,
+        response: v1::InitializeResponse,
+    },
+
+    #[experimental("server/diagnostics")]
+    /// Read content-free, process-local diagnostics.
+    ServerDiagnostics => "server/diagnostics" {
+        params: v2::ServerDiagnosticsParams,
+        serialization: None,
+        response: v2::ServerDiagnosticsResponse,
+    },
+
+    #[experimental("userVerification/status")]
+    UserVerificationStatus => "userVerification/status" {
+        params: v2::UserVerificationStatusParams,
+        serialization: None,
+        response: v2::UserVerificationStatusResponse,
+    },
+
+    #[experimental("userVerification/enroll")]
+    UserVerificationEnroll => "userVerification/enroll" {
+        params: v2::UserVerificationEnrollParams,
+        serialization: None,
+        response: v2::UserVerificationEnrollResponse,
+    },
+
+    #[experimental("userVerification/delete")]
+    UserVerificationDelete => "userVerification/delete" {
+        params: v2::UserVerificationDeleteParams,
+        serialization: None,
+        response: v2::UserVerificationDeleteResponse,
+    },
+
+    #[experimental("userVerification/verify")]
+    UserVerificationVerify => "userVerification/verify" {
+        params: v2::UserVerificationVerifyParams,
+        serialization: None,
+        response: v2::UserVerificationVerifyResponse,
+    },
+
+    #[experimental("userVerification/cancel")]
+    UserVerificationCancel => "userVerification/cancel" {
+        params: v2::UserVerificationCancelParams,
+        serialization: None,
+        response: v2::UserVerificationCancelResponse,
+    },
+
+    /// NEW APIs
+    // Thread lifecycle
+    // Uses `inspect_params` because only some fields are experimental.
+    ThreadStart => "thread/start" {
+        params: v2::ThreadStartParams,
+        inspect_params: true,
+        serialization: None,
+        response: v2::ThreadStartResponse,
+    },
+    ThreadResume => "thread/resume" {
+        params: v2::ThreadResumeParams,
+        inspect_params: true,
+        serialization: thread_or_path(params.thread_id, params.path),
+        response: v2::ThreadResumeResponse,
+    },
+    ThreadFork => "thread/fork" {
+        params: v2::ThreadForkParams,
+        inspect_params: true,
+        serialization: thread_or_path(params.thread_id, params.path),
+        response: v2::ThreadForkResponse,
+    },
+    ThreadArchive => "thread/archive" {
+        params: v2::ThreadArchiveParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadArchiveResponse,
+    },
+    ThreadDelete => "thread/delete" {
+        params: v2::ThreadDeleteParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadDeleteResponse,
+    },
+    ThreadUnsubscribe => "thread/unsubscribe" {
+        params: v2::ThreadUnsubscribeParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadUnsubscribeResponse,
+    },
+    #[experimental("thread/increment_elicitation")]
+    /// Increment the thread-local out-of-band elicitation counter.
+    ///
+    /// This is used by external helpers to pause timeout accounting while a user
+    /// approval or other elicitation is pending outside the app-server request flow.
+    ThreadIncrementElicitation => "thread/increment_elicitation" {
+        params: v2::ThreadIncrementElicitationParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadIncrementElicitationResponse,
+    },
+    #[experimental("thread/decrement_elicitation")]
+    /// Decrement the thread-local out-of-band elicitation counter.
+    ///
+    /// When the count reaches zero, timeout accounting resumes for the thread.
+    ThreadDecrementElicitation => "thread/decrement_elicitation" {
+        params: v2::ThreadDecrementElicitationParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadDecrementElicitationResponse,
+    },
+    ThreadSetName => "thread/name/set" {
+        params: v2::ThreadSetNameParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadSetNameResponse,
+    },
+    ThreadGoalSet => "thread/goal/set" {
+        params: v2::ThreadGoalSetParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadGoalSetResponse,
+    },
+    ThreadGoalGet => "thread/goal/get" {
+        params: v2::ThreadGoalGetParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadGoalGetResponse,
+    },
+    ThreadGoalClear => "thread/goal/clear" {
+        params: v2::ThreadGoalClearParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadGoalClearResponse,
+    },
+    #[experimental("thread/queue/add")]
+    ThreadQueueAdd => "thread/queue/add" {
+        params: v2::ThreadQueueAddParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadQueueAddResponse,
+    },
+    #[experimental("thread/queue/list")]
+    ThreadQueueList => "thread/queue/list" {
+        params: v2::ThreadQueueListParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadQueueListResponse,
+    },
+    #[experimental("thread/queue/update")]
+    ThreadQueueUpdate => "thread/queue/update" {
+        params: v2::ThreadQueueUpdateParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadQueueUpdateResponse,
+    },
+    #[experimental("thread/queue/delete")]
+    ThreadQueueDelete => "thread/queue/delete" {
+        params: v2::ThreadQueueDeleteParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadQueueDeleteResponse,
+    },
+    #[experimental("thread/queue/reorder")]
+    ThreadQueueReorder => "thread/queue/reorder" {
+        params: v2::ThreadQueueReorderParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadQueueReorderResponse,
+    },
+    #[experimental("thread/queue/start")]
+    ThreadQueueStart => "thread/queue/start" {
+        params: v2::ThreadQueueStartParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadQueueStartResponse,
+    },
+    ThreadMetadataUpdate => "thread/metadata/update" {
+        params: v2::ThreadMetadataUpdateParams,
+        inspect_params: true,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadMetadataUpdateResponse,
+    },
+    ThreadAttachmentAdd => "thread/attachment/add" {
+        params: v2::ThreadAttachmentAddParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadAttachmentAddResponse,
+    },
+    ThreadAttachmentList => "thread/attachment/list" {
+        params: v2::ThreadAttachmentListParams,
+        serialization: None,
+        response: v2::ThreadAttachmentListResponse,
+    },
+    ThreadAttachmentRemove => "thread/attachment/remove" {
+        params: v2::ThreadAttachmentRemoveParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadAttachmentRemoveResponse,
+    },
+    ThreadSectionMove => "thread/section/move" {
+        params: v2::ThreadSectionMoveParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadSectionMoveResponse,
+    },
+    #[experimental("thread/settings/update")]
+    ThreadSettingsUpdate => "thread/settings/update" {
+        params: v2::ThreadSettingsUpdateParams,
+        inspect_params: true,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadSettingsUpdateResponse,
+    },
+    #[experimental("rollout/compress")]
+    /// Start a best-effort background compression pass for cold local rollouts.
+    RolloutCompress => "rollout/compress" {
+        params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
+        serialization: None,
+        response: v2::RolloutCompressResponse,
+    },
+    ThreadUnarchive => "thread/unarchive" {
+        params: v2::ThreadUnarchiveParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadUnarchiveResponse,
+    },
+    ThreadCompactStart => "thread/compact/start" {
+        params: v2::ThreadCompactStartParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadCompactStartResponse,
+    },
+    ThreadShellCommand => "thread/shellCommand" {
+        params: v2::ThreadShellCommandParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadShellCommandResponse,
+    },
+    #[experimental("thread/backgroundTerminals/clean")]
+    ThreadBackgroundTerminalsClean => "thread/backgroundTerminals/clean" {
+        params: v2::ThreadBackgroundTerminalsCleanParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadBackgroundTerminalsCleanResponse,
+    },
+    #[experimental("thread/backgroundTerminals/list")]
+    ThreadBackgroundTerminalsList => "thread/backgroundTerminals/list" {
+        params: v2::ThreadBackgroundTerminalsListParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadBackgroundTerminalsListResponse,
+    },
+    #[experimental("thread/backgroundTerminals/terminate")]
+    ThreadBackgroundTerminalsTerminate => "thread/backgroundTerminals/terminate" {
+        params: v2::ThreadBackgroundTerminalsTerminateParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadBackgroundTerminalsTerminateResponse,
+    },
+    ThreadRevert => "thread/revert" {
+        params: v2::ThreadRevertParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadRevertResponse,
+    },
+    ThreadList => "thread/list" {
+        params: v2::ThreadListParams,
+        inspect_params: true,
+        serialization: None,
+        response: v2::ThreadListResponse,
+    },
+    #[experimental("project/list")]
+    ProjectList => "project/list" {
+        params: v2::ProjectListParams,
+        serialization: global_shared_read("projects"),
+        response: v2::ProjectListResponse,
+    },
+    #[experimental("project/read")]
+    ProjectRead => "project/read" {
+        params: v2::ProjectReadParams,
+        serialization: global_shared_read("projects"),
+        response: v2::ProjectReadResponse,
+    },
+    #[experimental("project/create")]
+    ProjectCreate => "project/create" {
+        params: v2::ProjectCreateParams,
+        serialization: global("projects"),
+        response: v2::ProjectCreateResponse,
+    },
+    #[experimental("project/import")]
+    ProjectImport => "project/import" {
+        params: v2::ProjectImportParams,
+        serialization: global("projects"),
+        response: v2::ProjectImportResponse,
+    },
+    #[experimental("project/update")]
+    ProjectUpdate => "project/update" {
+        params: v2::ProjectUpdateParams,
+        serialization: global("projects"),
+        response: v2::ProjectUpdateResponse,
+    },
+    #[experimental("project/move")]
+    ProjectMove => "project/move" {
+        params: v2::ProjectMoveParams,
+        serialization: global("projects"),
+        response: v2::ProjectMoveResponse,
+    },
+    #[experimental("project/delete")]
+    ProjectDelete => "project/delete" {
+        params: v2::ProjectDeleteParams,
+        serialization: global("projects"),
+        response: v2::ProjectDeleteResponse,
+    },
+    ThreadSectionList => "threadSection/list" {
+        params: v2::ThreadSectionListParams,
+        serialization: global_shared_read("thread-sections"),
+        response: v2::ThreadSectionListResponse,
+    },
+    ThreadSectionCreate => "threadSection/create" {
+        params: v2::ThreadSectionCreateParams,
+        serialization: global("thread-sections"),
+        response: v2::ThreadSectionCreateResponse,
+    },
+    ThreadSectionUpdate => "threadSection/update" {
+        params: v2::ThreadSectionUpdateParams,
+        serialization: global("thread-sections"),
+        response: v2::ThreadSectionUpdateResponse,
+    },
+    ThreadSectionDelete => "threadSection/delete" {
+        params: v2::ThreadSectionDeleteParams,
+        serialization: global("thread-sections"),
+        response: v2::ThreadSectionDeleteResponse,
+    },
+    #[experimental("thread/search")]
+    ThreadSearch => "thread/search" {
+        params: v2::ThreadSearchParams,
+        serialization: None,
+        response: v2::ThreadSearchResponse,
+    },
+    #[experimental("thread/searchOccurrences")]
+    ThreadSearchOccurrences => "thread/searchOccurrences" {
+        params: v2::ThreadSearchOccurrencesParams,
+        // Explicitly concurrent: this reads persisted paginated history.
+        serialization: None,
+        response: v2::ThreadSearchOccurrencesResponse,
+    },
+    ThreadLoadedList => "thread/loaded/list" {
+        params: v2::ThreadLoadedListParams,
+        serialization: None,
+        response: v2::ThreadLoadedListResponse,
+    },
+    ThreadRead => "thread/read" {
+        params: v2::ThreadReadParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadReadResponse,
+    },
+    ThreadTurnsList => "thread/turns/list" {
+        params: v2::ThreadTurnsListParams,
+        // Explicitly concurrent: this primarily reads append-only rollout storage.
+        serialization: None,
+        response: v2::ThreadTurnsListResponse,
+    },
+    ThreadItemsList => "thread/items/list" {
+        params: v2::ThreadItemsListParams,
+        // Explicitly concurrent: this primarily reads append-only rollout storage.
+        serialization: None,
+        response: v2::ThreadItemsListResponse,
+    },
+    /// Append raw Responses API items to the thread history without starting a user turn.
+    ThreadInjectItems => "thread/inject_items" {
+        params: v2::ThreadInjectItemsParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadInjectItemsResponse,
+    },
+    SkillsList => "skills/list" {
+        params: v2::SkillsListParams,
+        serialization: global_shared_read("config"),
+        response: v2::SkillsListResponse,
+    },
+    SkillsExtraRootsSet => "skills/extraRoots/set" {
+        params: v2::SkillsExtraRootsSetParams,
+        serialization: global("config"),
+        response: v2::SkillsExtraRootsSetResponse,
+    },
+    HooksList => "hooks/list" {
+        params: v2::HooksListParams,
+        serialization: global_shared_read("config"),
+        response: v2::HooksListResponse,
+    },
+    MarketplaceAdd => "marketplace/add" {
+        params: v2::MarketplaceAddParams,
+        serialization: global("config"),
+        response: v2::MarketplaceAddResponse,
+    },
+    MarketplaceRemove => "marketplace/remove" {
+        params: v2::MarketplaceRemoveParams,
+        serialization: global("config"),
+        response: v2::MarketplaceRemoveResponse,
+    },
+    MarketplaceUpgrade => "marketplace/upgrade" {
+        params: v2::MarketplaceUpgradeParams,
+        serialization: global("config"),
+        response: v2::MarketplaceUpgradeResponse,
+    },
+    PluginList => "plugin/list" {
+        params: v2::PluginListParams,
+        serialization: None,
+        response: v2::PluginListResponse,
+    },
+    #[experimental("plugin/search")]
+    PluginSearch => "plugin/search" {
+        params: v2::PluginSearchParams,
+        serialization: None,
+        response: v2::PluginSearchResponse,
+    },
+    PluginInstalled => "plugin/installed" {
+        params: v2::PluginInstalledParams,
+        serialization: None,
+        response: v2::PluginInstalledResponse,
+    },
+    PluginReconcile => "plugin/reconcile" {
+        params: v2::PluginReconcileParams,
+        serialization: None,
+        response: v2::PluginReconcileResponse,
+    },
+    PluginRead => "plugin/read" {
+        params: v2::PluginReadParams,
+        serialization: None,
+        response: v2::PluginReadResponse,
+    },
+    // File system requests are intentionally concurrent. Desktop already treats local
+    // file system operations as concurrent, and app-server remote fs mirrors that model.
+    FsReadFile => "fs/readFile" {
+        params: v2::FsReadFileParams,
+        serialization: None,
+        response: v2::FsReadFileResponse,
+    },
+    FsWriteFile => "fs/writeFile" {
+        params: v2::FsWriteFileParams,
+        serialization: None,
+        response: v2::FsWriteFileResponse,
+    },
+    FsCreateDirectory => "fs/createDirectory" {
+        params: v2::FsCreateDirectoryParams,
+        serialization: None,
+        response: v2::FsCreateDirectoryResponse,
+    },
+    FsGetMetadata => "fs/getMetadata" {
+        params: v2::FsGetMetadataParams,
+        serialization: None,
+        response: v2::FsGetMetadataResponse,
+    },
+    FsReadDirectory => "fs/readDirectory" {
+        params: v2::FsReadDirectoryParams,
+        serialization: None,
+        response: v2::FsReadDirectoryResponse,
+    },
+    FsRemove => "fs/remove" {
+        params: v2::FsRemoveParams,
+        serialization: None,
+        response: v2::FsRemoveResponse,
+    },
+    FsCopy => "fs/copy" {
+        params: v2::FsCopyParams,
+        serialization: None,
+        response: v2::FsCopyResponse,
+    },
+    FsWatch => "fs/watch" {
+        params: v2::FsWatchParams,
+        serialization: fs_watch_id(params.watch_id),
+        response: v2::FsWatchResponse,
+    },
+    FsUnwatch => "fs/unwatch" {
+        params: v2::FsUnwatchParams,
+        serialization: fs_watch_id(params.watch_id),
+        response: v2::FsUnwatchResponse,
+    },
+    SkillsConfigWrite => "skills/config/write" {
+        params: v2::SkillsConfigWriteParams,
+        serialization: global("config"),
+        response: v2::SkillsConfigWriteResponse,
+    },
+    PluginInstall => "plugin/install" {
+        params: v2::PluginInstallParams,
+        serialization: global("config"),
+        response: v2::PluginInstallResponse,
+    },
+    PluginUninstall => "plugin/uninstall" {
+        params: v2::PluginUninstallParams,
+        serialization: global("config"),
+        response: v2::PluginUninstallResponse,
+    },
+    TurnStart => "turn/start" {
+        params: v2::TurnStartParams,
+        inspect_params: true,
+        serialization: thread_id(params.thread_id),
+        response: v2::TurnStartResponse,
+    },
+    #[experimental("turn/settings/update")]
+    TurnSettingsUpdate => "turn/settings/update" {
+        params: v2::TurnSettingsUpdateParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::TurnSettingsUpdateResponse,
+    },
+    TurnSteer => "turn/steer" {
+        params: v2::TurnSteerParams,
+        inspect_params: true,
+        serialization: thread_id(params.thread_id),
+        response: v2::TurnSteerResponse,
+    },
+    TurnInterrupt => "turn/interrupt" {
+        params: v2::TurnInterruptParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::TurnInterruptResponse,
+    },
+    #[experimental("thread/timeline/list")]
+    ThreadTimelineList => "thread/timeline/list" {
+        params: v2::ThreadTimelineListParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadTimelineListResponse,
+    },
+    ReviewStart => "review/start" {
+        params: v2::ReviewStartParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ReviewStartResponse,
+    },
+
+    ModelList => "model/list" {
+        params: v2::ModelListParams,
+        serialization: None,
+        response: v2::ModelListResponse,
+    },
+    ModelProviderCapabilitiesRead => "modelProvider/capabilities/read" {
+        params: v2::ModelProviderCapabilitiesReadParams,
+        serialization: None,
+        response: v2::ModelProviderCapabilitiesReadResponse,
+    },
+    ModelProviderRead => "modelProvider/read" {
+        params: v2::ModelProviderReadParams,
+        serialization: None,
+        response: v2::ModelProviderReadResponse,
+    },
+    PermissionProfileList => "permissionProfile/list" {
+        params: v2::PermissionProfileListParams,
+        serialization: global_shared_read("config"),
+        response: v2::PermissionProfileListResponse,
+    },
+    #[experimental("collaborationMode/list")]
+    /// Lists collaboration mode presets.
+    CollaborationModeList => "collaborationMode/list" {
+        params: v2::CollaborationModeListParams,
+        serialization: None,
+        response: v2::CollaborationModeListResponse,
+    },
+    #[experimental("environment/info")]
+    /// Reads information from a configured execution environment.
+    EnvironmentInfo => "environment/info" {
+        params: v2::EnvironmentInfoParams,
+        serialization: global_shared_read("environment"),
+        response: v2::EnvironmentInfoResponse,
+    },
+    #[experimental("environment/status")]
+    /// Reads the current status of a configured execution environment.
+    EnvironmentStatus => "environment/status" {
+        params: v2::EnvironmentStatusParams,
+        serialization: global_shared_read("environment"),
+        response: v2::EnvironmentStatusResponse,
+    },
+
+    McpServerOauthLogin => "mcpServer/oauth/login" {
+        params: v2::McpServerOauthLoginParams,
+        serialization: mcp_oauth_server(params.name),
+        response: v2::McpServerOauthLoginResponse,
+    },
+
+    McpServerRefresh => "config/mcpServer/reload" {
+        params: #[ts(type = "undefined | v2.McpServerRefreshParams")] #[serde(skip_serializing_if = "Option::is_none")] Option<McpServerRefreshParams>,
+        serialization: global("mcp-registry"),
+        response: v2::McpServerRefreshResponse,
+    },
+
+    McpServerStatusList => "mcpServerStatus/list" {
+        params: v2::ListMcpServerStatusParams,
+        serialization: global("mcp-registry"),
+        response: v2::ListMcpServerStatusResponse,
+    },
+
+    McpResourceRead => "mcpServer/resource/read" {
+        params: v2::McpResourceReadParams,
+        serialization: optional_thread_id(params.thread_id),
+        response: v2::McpResourceReadResponse,
+    },
+
+    McpServerToolCall => "mcpServer/tool/call" {
+        params: v2::McpServerToolCallParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::McpServerToolCallResponse,
+    },
+
+    LoginAccount => "account/login/start" {
+        params: v2::LoginAccountParams,
+        inspect_params: true,
+        serialization: global("account-auth"),
+        response: v2::LoginAccountResponse,
+    },
+
+    CancelLoginAccount => "account/login/cancel" {
+        params: v2::CancelLoginAccountParams,
+        serialization: global("account-auth"),
+        response: v2::CancelLoginAccountResponse,
+    },
+
+    LogoutAccount => "account/logout" {
+        params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
+        serialization: global("account-auth"),
+        response: v2::LogoutAccountResponse,
+    },
+
+    AccountDelete => "account/delete" {
+        params: v2::AccountDeleteParams,
+        serialization: global("account-auth"),
+        response: v2::AccountDeleteResponse,
+    },
+
+    /// Execute a standalone command (argv vector) under the server's sandbox.
+    OneOffCommandExec => "command/exec" {
+        params: v2::CommandExecParams,
+        inspect_params: true,
+        serialization: optional_command_process_id(params.process_id),
+        response: v2::CommandExecResponse,
+    },
+    /// Write stdin bytes to a running `command/exec` session or close stdin.
+    CommandExecWrite => "command/exec/write" {
+        params: v2::CommandExecWriteParams,
+        serialization: command_process_id(params.process_id),
+        response: v2::CommandExecWriteResponse,
+    },
+    /// Terminate a running `command/exec` session by client-supplied `processId`.
+    CommandExecTerminate => "command/exec/terminate" {
+        params: v2::CommandExecTerminateParams,
+        serialization: command_process_id(params.process_id),
+        response: v2::CommandExecTerminateResponse,
+    },
+    /// Resize a running PTY-backed `command/exec` session by client-supplied `processId`.
+    CommandExecResize => "command/exec/resize" {
+        params: v2::CommandExecResizeParams,
+        serialization: command_process_id(params.process_id),
+        response: v2::CommandExecResizeResponse,
+    },
+    #[experimental("process/spawn")]
+    /// Spawn a standalone process (argv vector) without a Ruxex sandbox.
+    ProcessSpawn => "process/spawn" {
+        params: v2::ProcessSpawnParams,
+        serialization: process_handle(params.process_handle),
+        response: v2::ProcessSpawnResponse,
+    },
+    #[experimental("process/writeStdin")]
+    /// Write stdin bytes to a running `process/spawn` session or close stdin.
+    ProcessWriteStdin => "process/writeStdin" {
+        params: v2::ProcessWriteStdinParams,
+        serialization: process_handle(params.process_handle),
+        response: v2::ProcessWriteStdinResponse,
+    },
+    #[experimental("process/kill")]
+    /// Terminate a running `process/spawn` session by client-supplied `processHandle`.
+    ProcessKill => "process/kill" {
+        params: v2::ProcessKillParams,
+        serialization: process_handle(params.process_handle),
+        response: v2::ProcessKillResponse,
+    },
+    #[experimental("process/resizePty")]
+    /// Resize a running PTY-backed `process/spawn` session by client-supplied `processHandle`.
+    ProcessResizePty => "process/resizePty" {
+        params: v2::ProcessResizePtyParams,
+        serialization: process_handle(params.process_handle),
+        response: v2::ProcessResizePtyResponse,
+    },
+
+    ConfigRead => "config/read" {
+        params: v2::ConfigReadParams,
+        serialization: global_shared_read("config"),
+        response: v2::ConfigReadResponse,
+    },
+    ConfigValueWrite => "config/value/write" {
+        params: v2::ConfigValueWriteParams,
+        serialization: global("config"),
+        manual_payload_conversion: manual,
+        response: v2::ConfigWriteResponse,
+    },
+    ConfigBatchWrite => "config/batchWrite" {
+        params: v2::ConfigBatchWriteParams,
+        serialization: global("config"),
+        manual_payload_conversion: manual,
+        response: v2::ConfigWriteResponse,
+    },
+
+    ConfigRequirementsRead => "configRequirements/read" {
+        params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
+        serialization: global_shared_read("config"),
+        response: v2::ConfigRequirementsReadResponse,
+    },
+
+    GetAccount => "account/read" {
+        params: v2::GetAccountParams,
+        serialization: global("account-auth"),
+        response: v2::GetAccountResponse,
+    },
+
+    // Legacy fuzzy search cancellation is intentionally concurrent: clients reuse a
+    // cancellation token so a newer request can cancel an older in-flight search.
+    FuzzyFileSearch => "fuzzyFileSearch" {
+        params: FuzzyFileSearchParams,
+        serialization: None,
+        response: FuzzyFileSearchResponse,
+    },
+    #[experimental("fuzzyFileSearch/sessionStart")]
+    FuzzyFileSearchSessionStart => "fuzzyFileSearch/sessionStart" {
+        params: FuzzyFileSearchSessionStartParams,
+        serialization: fuzzy_session_id(params.session_id),
+        response: FuzzyFileSearchSessionStartResponse,
+    },
+    #[experimental("fuzzyFileSearch/sessionUpdate")]
+    FuzzyFileSearchSessionUpdate => "fuzzyFileSearch/sessionUpdate" {
+        params: FuzzyFileSearchSessionUpdateParams,
+        serialization: fuzzy_session_id(params.session_id),
+        response: FuzzyFileSearchSessionUpdateResponse,
+    },
+    #[experimental("fuzzyFileSearch/sessionStop")]
+    FuzzyFileSearchSessionStop => "fuzzyFileSearch/sessionStop" {
+        params: FuzzyFileSearchSessionStopParams,
+        serialization: fuzzy_session_id(params.session_id),
+        response: FuzzyFileSearchSessionStopResponse,
+    },
+}
+
+/// Generates an `enum ServerRequest` where each variant is a request that the
+/// server can send to the client along with the corresponding params and
+/// response types. It also generates helper types used by the app/server
+/// infrastructure (payload enum, request constructor, and export helpers).
+macro_rules! server_request_definitions {
+    (
+        $(
+            $(#[experimental($reason:expr)])?
+            $(#[doc = $variant_doc:literal])*
+            $variant:ident $(=> $wire:literal)? {
+                params: $params:ty,
+                response: $response:ty,
+            }
+        ),* $(,)?
+    ) => {
+        /// Request initiated from the server and sent to the client.
+        #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+        #[allow(clippy::large_enum_variant)]
+        #[serde(tag = "method", rename_all = "camelCase")]
+        pub enum ServerRequest {
+            $(
+                $(#[doc = $variant_doc])*
+                $(#[serde(rename = $wire)] #[ts(rename = $wire)])?
+                $variant {
+                    #[serde(rename = "id")]
+                    request_id: RequestId,
+                    params: $params,
+                },
+            )*
+        }
+
+        impl ServerRequest {
+            pub fn id(&self) -> &RequestId {
+                match self {
+                    $(Self::$variant { request_id, .. } => request_id,)*
+                }
+            }
+
+            pub fn response_from_result(
+                &self,
+                result: crate::Result,
+            ) -> serde_json::Result<ServerResponse> {
+                match self {
+                    $(
+                        Self::$variant { request_id, .. } => {
+                            let response = serde_json::from_value::<$response>(result)?;
+                            Ok(ServerResponse::$variant {
+                                request_id: request_id.clone(),
+                                response,
+                            })
+                        }
+                    )*
+                }
+            }
+        }
+
+        /// Typed response from the client to the server.
+        #[derive(Serialize, Deserialize, Debug, Clone)]
+        #[serde(tag = "method", rename_all = "camelCase")]
+        pub enum ServerResponse {
+            $(
+                $(#[doc = $variant_doc])*
+                $(#[serde(rename = $wire)])?
+                $variant {
+                    #[serde(rename = "id")]
+                    request_id: RequestId,
+                    response: $response,
+                },
+            )*
+        }
+
+        impl ServerResponse {
+            pub fn id(&self) -> &RequestId {
+                match self {
+                    $(Self::$variant { request_id, .. } => request_id,)*
+                }
+            }
+
+            pub fn method(&self) -> String {
+                serde_json::to_value(self)
+                    .ok()
+                    .and_then(|value| {
+                        value
+                            .get("method")
+                            .and_then(serde_json::Value::as_str)
+                            .map(str::to_owned)
+                    })
+                    .unwrap_or_else(|| "<unknown>".to_string())
+            }
+        }
+
+        #[derive(Debug, Clone, PartialEq, JsonSchema)]
+        #[allow(clippy::large_enum_variant)]
+        pub enum ServerRequestPayload {
+            $( $variant($params), )*
+        }
+
+        impl ServerRequestPayload {
+            pub fn request_with_id(self, request_id: RequestId) -> ServerRequest {
+                match self {
+                    $(Self::$variant(params) => ServerRequest::$variant { request_id, params },)*
+                }
+            }
+        }
+
+        #[cfg(test)]
+        pub(crate) const EXPERIMENTAL_SERVER_METHODS: &[&str] = &[
+            $(
+                experimental_method_entry!($(#[experimental($reason)])? $(=> $wire)?),
+            )*
+        ];
+        #[cfg(test)]
+        pub(crate) const EXPERIMENTAL_SERVER_METHOD_PARAM_TYPES: &[&str] = &[
+            $(
+                experimental_type_entry!($(#[experimental($reason)])? $params),
+            )*
+        ];
+        #[cfg(test)]
+        pub(crate) const EXPERIMENTAL_SERVER_METHOD_RESPONSE_TYPES: &[&str] = &[
+            $(
+                experimental_type_entry!($(#[experimental($reason)])? $response),
+            )*
+        ];
+
+        #[cfg(test)]
+        pub fn export_server_responses(
+            out_dir: &::std::path::Path,
+        ) -> ::std::result::Result<(), ::ts_rs::ExportError> {
+            $(
+                <$response as ::ts_rs::TS>::export_all_to(out_dir)?;
+            )*
+            Ok(())
+        }
+
+        #[cfg(test)]
+        pub(crate) fn visit_server_response_types(v: &mut impl ::ts_rs::TypeVisitor) {
+            $(
+                v.visit::<$response>();
+            )*
+        }
+
+        #[cfg(test)]
+        #[allow(clippy::vec_init_then_push)]
+        pub fn export_server_response_schemas(
+            out_dir: &Path,
+        ) -> ::anyhow::Result<Vec<GeneratedSchema>> {
+            let mut schemas = Vec::new();
+            $(
+                schemas.push(crate::export::write_json_schema::<$response>(
+                    out_dir,
+                    concat!(stringify!($variant), "Response"),
+                )?);
+            )*
+            Ok(schemas)
+        }
+
+        #[cfg(test)]
+        #[allow(clippy::vec_init_then_push)]
+        pub fn export_server_param_schemas(
+            out_dir: &Path,
+        ) -> ::anyhow::Result<Vec<GeneratedSchema>> {
+            let mut schemas = Vec::new();
+            $(
+                schemas.push(crate::export::write_json_schema::<$params>(
+                    out_dir,
+                    concat!(stringify!($variant), "Params"),
+                )?);
+            )*
+            Ok(schemas)
+        }
+    };
+}
+
+/// Generates `ServerNotification` enum and helpers, including a JSON Schema
+/// exporter for each notification.
+macro_rules! server_notification_definitions {
+    (
+        $(
+            $(#[$variant_meta:meta])*
+            $variant:ident $(=> $wire:literal)? ( $payload:ty )
+        ),* $(,)?
+    ) => {
+        /// Notification sent from the server to the client.
+        #[derive(
+            Serialize,
+            Deserialize,
+            Debug,
+            Clone,
+            JsonSchema,
+            TS,
+            Display,
+            ExperimentalApi,
+        )]
+        #[allow(clippy::large_enum_variant)]
+        #[serde(tag = "method", content = "params", rename_all = "camelCase")]
+        #[strum(serialize_all = "camelCase")]
+        pub enum ServerNotification {
+            $(
+                $(#[$variant_meta])*
+                $(#[serde(rename = $wire)] #[ts(rename = $wire)] #[strum(serialize = $wire)])?
+                $variant($payload),
+            )*
+        }
+
+        impl ServerNotification {
+            pub fn to_params(self) -> Result<serde_json::Value, serde_json::Error> {
+                match self {
+                    $(Self::$variant(params) => serde_json::to_value(params),)*
+                }
+            }
+        }
+
+        impl TryFrom<JSONRPCNotification> for ServerNotification {
+            type Error = serde_json::Error;
+
+            fn try_from(value: JSONRPCNotification) -> Result<Self, serde_json::Error> {
+                serde_json::from_value(serde_json::to_value(value)?)
+            }
+        }
+
+        #[cfg(test)]
+        #[allow(clippy::vec_init_then_push)]
+        pub fn export_server_notification_schemas(
+            out_dir: &::std::path::Path,
+        ) -> ::anyhow::Result<Vec<GeneratedSchema>> {
+            let mut schemas = Vec::new();
+            $(schemas.push(crate::export::write_json_schema::<$payload>(out_dir, stringify!($payload))?);)*
+            Ok(schemas)
+        }
+    };
+}
+/// Notifications sent from the client to the server.
+macro_rules! client_notification_definitions {
+    (
+        $(
+            $(#[$variant_meta:meta])*
+            $variant:ident $( ( $payload:ty ) )?
+        ),* $(,)?
+    ) => {
+        #[derive(Serialize, Deserialize, Debug, Clone, JsonSchema, TS, Display)]
+        #[serde(tag = "method", content = "params", rename_all = "camelCase")]
+        #[strum(serialize_all = "camelCase")]
+        pub enum ClientNotification {
+            $(
+                $(#[$variant_meta])*
+                $variant $( ( $payload ) )?,
+            )*
+        }
+
+        #[cfg(test)]
+        pub fn export_client_notification_schemas(
+            _out_dir: &::std::path::Path,
+        ) -> ::anyhow::Result<Vec<GeneratedSchema>> {
+            let schemas = Vec::new();
+            $( $(schemas.push(crate::export::write_json_schema::<$payload>(_out_dir, stringify!($payload))?);)? )*
+            Ok(schemas)
+        }
+    };
+}
+
+impl TryFrom<JSONRPCRequest> for ServerRequest {
+    type Error = serde_json::Error;
+
+    fn try_from(value: JSONRPCRequest) -> Result<Self, Self::Error> {
+        serde_json::from_value(serde_json::to_value(value)?)
+    }
+}
+
+server_request_definitions! {
+    /// NEW APIs
+    /// Sent when approval is requested for a specific command execution.
+    /// This request is used for Turns started via turn/start.
+    CommandExecutionRequestApproval => "item/commandExecution/requestApproval" {
+        params: v2::CommandExecutionRequestApprovalParams,
+        response: v2::CommandExecutionRequestApprovalResponse,
+    },
+
+    /// Sent when approval is requested for a specific file change.
+    /// This request is used for Turns started via turn/start.
+    FileChangeRequestApproval => "item/fileChange/requestApproval" {
+        params: v2::FileChangeRequestApprovalParams,
+        response: v2::FileChangeRequestApprovalResponse,
+    },
+
+    /// EXPERIMENTAL - Request input from the user for a tool call.
+    ToolRequestUserInput => "item/tool/requestUserInput" {
+        params: v2::ToolRequestUserInputParams,
+        response: v2::ToolRequestUserInputResponse,
+    },
+
+    /// Request input for an MCP server elicitation.
+    McpServerElicitationRequest => "mcpServer/elicitation/request" {
+        params: v2::McpServerElicitationRequestParams,
+        response: v2::McpServerElicitationRequestResponse,
+    },
+
+    /// Request approval for additional permissions from the user.
+    PermissionsRequestApproval => "item/permissions/requestApproval" {
+        params: v2::PermissionsRequestApprovalParams,
+        response: v2::PermissionsRequestApprovalResponse,
+    },
+
+    /// Execute a dynamic tool call on the client.
+    DynamicToolCall => "item/tool/call" {
+        params: v2::DynamicToolCallParams,
+        response: v2::DynamicToolCallResponse,
+    },
+
+    /// Generate a fresh upstream attestation result on demand.
+    AttestationGenerate => "attestation/generate" {
+        params: v2::AttestationGenerateParams,
+        response: v2::AttestationGenerateResponse,
+    },
+
+    #[experimental("currentTime/read")]
+    /// Read the current time from an external clock owned by the client.
+    CurrentTimeRead => "currentTime/read" {
+        params: v2::CurrentTimeReadParams,
+        response: v2::CurrentTimeReadResponse,
+    },
+
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct FuzzyFileSearchParams {
+    pub query: String,
+    pub roots: Vec<String>,
+    // if provided, will cancel any previous request that used the same value
+    pub cancellation_token: Option<String>,
+}
+
+/// Superset of [`ruxex_file_search::FileMatch`]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+pub struct FuzzyFileSearchResult {
+    pub root: String,
+    pub path: String,
+    pub match_type: FuzzyFileSearchMatchType,
+    pub file_name: String,
+    pub score: u32,
+    pub indices: Option<Vec<u32>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum FuzzyFileSearchMatchType {
+    File,
+    Directory,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+pub struct FuzzyFileSearchResponse {
+    pub files: Vec<FuzzyFileSearchResult>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct FuzzyFileSearchSessionStartParams {
+    pub session_id: String,
+    pub roots: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS, Default)]
+pub struct FuzzyFileSearchSessionStartResponse {}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct FuzzyFileSearchSessionUpdateParams {
+    pub session_id: String,
+    pub query: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS, Default)]
+pub struct FuzzyFileSearchSessionUpdateResponse {}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct FuzzyFileSearchSessionStopParams {
+    pub session_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS, Default)]
+pub struct FuzzyFileSearchSessionStopResponse {}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct FuzzyFileSearchSessionUpdatedNotification {
+    pub session_id: String,
+    pub query: String,
+    pub files: Vec<FuzzyFileSearchResult>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct FuzzyFileSearchSessionCompletedNotification {
+    pub session_id: String,
+}
+
+server_notification_definitions! {
+    /// NEW NOTIFICATIONS
+    Error => "error" (v2::ErrorNotification),
+    ThreadStarted => "thread/started" (v2::ThreadStartedNotification),
+    ThreadStatusChanged => "thread/status/changed" (v2::ThreadStatusChangedNotification),
+    ThreadArchived => "thread/archived" (v2::ThreadArchivedNotification),
+    ThreadDeleted => "thread/deleted" (v2::ThreadDeletedNotification),
+    ThreadUnarchived => "thread/unarchived" (v2::ThreadUnarchivedNotification),
+    ThreadClosed => "thread/closed" (v2::ThreadClosedNotification),
+    ThreadReverted => "thread/reverted" (v2::ThreadRevertedNotification),
+    SkillsChanged => "skills/changed" (v2::SkillsChangedNotification),
+    ThreadNameUpdated => "thread/name/updated" (v2::ThreadNameUpdatedNotification),
+    ThreadAttachmentUpdated => "thread/attachment/updated" (v2::ThreadAttachmentUpdatedNotification),
+    ThreadGoalUpdated => "thread/goal/updated" (v2::ThreadGoalUpdatedNotification),
+    ThreadGoalCleared => "thread/goal/cleared" (v2::ThreadGoalClearedNotification),
+    #[experimental("thread/queue/changed")]
+    ThreadQueueChanged => "thread/queue/changed" (v2::ThreadQueueChangedNotification),
+    #[experimental("project/changed")]
+    ProjectChanged => "project/changed" (v2::ProjectChangedNotification),
+    #[experimental("thread/project/updated")]
+    ThreadProjectUpdated => "thread/project/updated" (v2::ThreadProjectUpdatedNotification),
+    #[experimental("thread/environment/connected")]
+    EnvironmentConnected => "thread/environment/connected" (v2::EnvironmentConnectionNotification),
+    #[experimental("thread/environment/disconnected")]
+    EnvironmentDisconnected => "thread/environment/disconnected" (v2::EnvironmentConnectionNotification),
+    #[experimental("thread/settings/updated")]
+    ThreadSettingsUpdated => "thread/settings/updated" (v2::ThreadSettingsUpdatedNotification),
+    ThreadTokenUsageUpdated => "thread/tokenUsage/updated" (v2::ThreadTokenUsageUpdatedNotification),
+    TurnStarted => "turn/started" (v2::TurnStartedNotification),
+    HookStarted => "hook/started" (v2::HookStartedNotification),
+    TurnCompleted => "turn/completed" (v2::TurnCompletedNotification),
+    HookCompleted => "hook/completed" (v2::HookCompletedNotification),
+    TurnDiffUpdated => "turn/diff/updated" (v2::TurnDiffUpdatedNotification),
+    TurnPlanUpdated => "turn/plan/updated" (v2::TurnPlanUpdatedNotification),
+    ItemStarted => "item/started" (v2::ItemStartedNotification),
+    ItemCompleted => "item/completed" (v2::ItemCompletedNotification),
+    /// This event is internal-only. Used by Codex Cloud.
+    RawResponseItemCompleted => "rawResponseItem/completed" (v2::RawResponseItemCompletedNotification),
+    /// This event is internal-only. Used by clients that need exact upstream usage.
+    RawResponseCompleted => "rawResponse/completed" (v2::RawResponseCompletedNotification),
+    AgentMessageDelta => "item/agentMessage/delta" (v2::AgentMessageDeltaNotification),
+    /// EXPERIMENTAL - proposed plan streaming deltas for plan items.
+    PlanDelta => "item/plan/delta" (v2::PlanDeltaNotification),
+    /// Stream base64-encoded stdout/stderr chunks for a running `command/exec` session.
+    CommandExecOutputDelta => "command/exec/outputDelta" (v2::CommandExecOutputDeltaNotification),
+    /// Stream base64-encoded stdout/stderr chunks for a running `process/spawn` session.
+    #[experimental("process/outputDelta")]
+    ProcessOutputDelta => "process/outputDelta" (v2::ProcessOutputDeltaNotification),
+    /// Final exit notification for a `process/spawn` session.
+    #[experimental("process/exited")]
+    ProcessExited => "process/exited" (v2::ProcessExitedNotification),
+    CommandExecutionOutputDelta => "item/commandExecution/outputDelta" (v2::CommandExecutionOutputDeltaNotification),
+    TerminalInteraction => "item/commandExecution/terminalInteraction" (v2::TerminalInteractionNotification),
+    /// Deprecated legacy apply_patch output stream notification.
+    FileChangeOutputDelta => "item/fileChange/outputDelta" (v2::FileChangeOutputDeltaNotification),
+    FileChangePatchUpdated => "item/fileChange/patchUpdated" (v2::FileChangePatchUpdatedNotification),
+    ServerRequestResolved => "serverRequest/resolved" (v2::ServerRequestResolvedNotification),
+    McpToolCallProgress => "item/mcpToolCall/progress" (v2::McpToolCallProgressNotification),
+    McpServerOauthLoginCompleted => "mcpServer/oauthLogin/completed" (v2::McpServerOauthLoginCompletedNotification),
+    McpServerStatusUpdated => "mcpServer/startupStatus/updated" (v2::McpServerStatusUpdatedNotification),
+    AccountUpdated => "account/updated" (v2::AccountUpdatedNotification),
+    AccountRateLimitsUpdated => "account/rateLimits/updated" (v2::AccountRateLimitsUpdatedNotification),
+    FsChanged => "fs/changed" (v2::FsChangedNotification),
+    ReasoningSummaryTextDelta => "item/reasoning/summaryTextDelta" (v2::ReasoningSummaryTextDeltaNotification),
+    ReasoningSummaryPartAdded => "item/reasoning/summaryPartAdded" (v2::ReasoningSummaryPartAddedNotification),
+    ReasoningTextDelta => "item/reasoning/textDelta" (v2::ReasoningTextDeltaNotification),
+    /// Deprecated: Use `ContextCompaction` item type instead.
+    ContextCompacted => "thread/compacted" (v2::ContextCompactedNotification),
+    ModelRerouted => "model/rerouted" (v2::ModelReroutedNotification),
+    ModelVerification => "model/verification" (v2::ModelVerificationNotification),
+    AuthRecoveryStarted => "modelProvider/authRecoveryStarted" (v2::AuthRecoveryNotification),
+    AuthRecoveryCompleted => "modelProvider/authRecoveryCompleted" (v2::AuthRecoveryNotification),
+    ModelSafetyBufferingUpdated => "model/safetyBuffering/updated" (v2::ModelSafetyBufferingUpdatedNotification),
+    Warning => "warning" (v2::WarningNotification),
+    DeprecationNotice => "deprecationNotice" (v2::DeprecationNoticeNotification),
+    ConfigWarning => "configWarning" (v2::ConfigWarningNotification),
+    FuzzyFileSearchSessionUpdated => "fuzzyFileSearch/sessionUpdated" (FuzzyFileSearchSessionUpdatedNotification),
+    FuzzyFileSearchSessionCompleted => "fuzzyFileSearch/sessionCompleted" (FuzzyFileSearchSessionCompletedNotification),
+    #[serde(rename = "account/login/completed")]
+    #[ts(rename = "account/login/completed")]
+    #[strum(serialize = "account/login/completed")]
+    AccountLoginCompleted(v2::AccountLoginCompletedNotification),
+
+}
+
+/// Server notification envelope sent over app-server transports.
+///
+/// `emitted_at_ms` records when app-server emitted the notification, before it
+/// is fanned out to individual connections.
+#[derive(Serialize, Deserialize, Debug, Clone, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct ServerNotificationEnvelope {
+    #[serde(flatten)]
+    pub notification: ServerNotification,
+    /// Unix timestamp (in milliseconds) when app-server emitted this notification.
+    ///
+    /// Optional so clients can decode notifications from older app-server
+    /// versions. Current app-server versions always populate it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    #[ts(type = "number")]
+    pub emitted_at_ms: Option<i64>,
+}
+
+client_notification_definitions! {
+    Initialized,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+    use pretty_assertions::assert_eq;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::config_types::MultiAgentMode;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
+    use serde_json::json;
+
+    fn absolute_path_string(path: &str) -> String {
+        let path = format!("/{}", path.trim_start_matches('/'));
+        test_path_buf(&path).display().to_string()
+    }
+
+    fn absolute_path(path: &str) -> AbsolutePathBuf {
+        let path = format!("/{}", path.trim_start_matches('/'));
+        test_path_buf(&path).abs()
+    }
+
+    fn request_id() -> RequestId {
+        const REQUEST_ID: i64 = 1;
+        RequestId::Integer(REQUEST_ID)
+    }
+
+    fn decode_client_request_through_json(
+        request: &JSONRPCRequest,
+    ) -> std::result::Result<ClientRequest, String> {
+        serde_json::to_value(request)
+            .and_then(serde_json::from_value)
+            .map_err(|err| err.to_string())
+    }
+
+    #[test]
+    fn jsonrpc_request_conversion_preserves_serde_enum_decoding() {
+        let requests = [
+            JSONRPCRequest {
+                id: RequestId::Integer(1),
+                method: "thread/archive".to_string(),
+                params: Some(json!({"threadId": "thread-1"})),
+                trace: Some(ruxex_protocol::protocol::W3cTraceContext {
+                    traceparent: Some("traceparent".to_string()),
+                    tracestate: Some("tracestate".to_string()),
+                }),
+            },
+            // Required params preserve distinct omitted and explicit-null errors.
+            JSONRPCRequest {
+                id: RequestId::Integer(2),
+                method: "thread/archive".to_string(),
+                params: None,
+                trace: None,
+            },
+            JSONRPCRequest {
+                id: RequestId::Integer(3),
+                method: "thread/archive".to_string(),
+                params: Some(serde_json::Value::Null),
+                trace: None,
+            },
+            JSONRPCRequest {
+                id: RequestId::Integer(8),
+                method: "unknown/method".to_string(),
+                params: Some(json!({})),
+                trace: None,
+            },
+        ];
+
+        for request in requests {
+            let expected = decode_client_request_through_json(&request);
+            let actual = ClientRequest::try_from(request).map_err(|err| err.to_string());
+            assert_eq!(actual, expected);
+        }
+    }
+
+    #[test]
+    fn thread_section_move_round_trips_and_serializes_by_thread() -> Result<()> {
+        assert_eq!(
+            serde_json::to_value(v2::ThreadSortKey::SectionPosition)?,
+            json!("section_position")
+        );
+        let request = ClientRequest::ThreadSectionMove {
+            request_id: request_id(),
+            params: v2::ThreadSectionMoveParams {
+                thread_id: "thread-1".to_string(),
+                section_id: Some("01984de2-8f74-7c91-a3b2-5c5e937cf318".to_string()),
+                before_thread_id: Some("thread-2".to_string()),
+            },
+        };
+        assert_eq!(
+            serde_json::to_value(&request)?,
+            json!({
+                "method": "thread/section/move",
+                "id": 1,
+                "params": {
+                    "threadId": "thread-1",
+                    "sectionId": "01984de2-8f74-7c91-a3b2-5c5e937cf318",
+                    "beforeThreadId": "thread-2"
+                }
+            })
+        );
+        assert_eq!(
+            request.serialization_scope(),
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: "thread-1".to_string()
+            })
+        );
+
+        let append_request = ClientRequest::try_from(JSONRPCRequest {
+            id: request_id(),
+            method: "thread/section/move".to_string(),
+            params: Some(json!({
+                "threadId": "thread-1",
+                "sectionId": "01984de2-8f74-7c91-a3b2-5c5e937cf318"
+            })),
+            trace: None,
+        })?;
+        assert_eq!(
+            append_request,
+            ClientRequest::ThreadSectionMove {
+                request_id: request_id(),
+                params: v2::ThreadSectionMoveParams {
+                    thread_id: "thread-1".to_string(),
+                    section_id: Some("01984de2-8f74-7c91-a3b2-5c5e937cf318".to_string()),
+                    before_thread_id: None,
+                },
+            }
+        );
+
+        let clear_request = ClientRequest::try_from(JSONRPCRequest {
+            id: request_id(),
+            method: "thread/section/move".to_string(),
+            params: Some(json!({
+                "threadId": "thread-1",
+                "sectionId": null
+            })),
+            trace: None,
+        })?;
+        assert_eq!(
+            clear_request,
+            ClientRequest::ThreadSectionMove {
+                request_id: request_id(),
+                params: v2::ThreadSectionMoveParams {
+                    thread_id: "thread-1".to_string(),
+                    section_id: None,
+                    before_thread_id: None,
+                },
+            }
+        );
+        assert!(
+            ClientRequest::try_from(JSONRPCRequest {
+                id: request_id(),
+                method: "thread/section/move".to_string(),
+                params: Some(json!({ "threadId": "thread-1" })),
+                trace: None,
+            })
+            .is_err()
+        );
+        Ok(())
+    }
+
+    #[cfg(any())]
+    #[test]
+    fn client_request_serialization_scope_covers_keyed_families() {
+        let thread_id = "thread-1".to_string();
+        let thread_resume = ClientRequest::ThreadResume {
+            request_id: request_id(),
+            params: v2::ThreadResumeParams {
+                thread_id: thread_id.clone(),
+                ..Default::default()
+            },
+        };
+        assert_eq!(
+            thread_resume.serialization_scope(),
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: thread_id.clone()
+            })
+        );
+
+        let thread_resume_with_path = ClientRequest::ThreadResume {
+            request_id: request_id(),
+            params: v2::ThreadResumeParams {
+                thread_id: thread_id.clone(),
+                path: Some(PathBuf::from("/tmp/resume-thread.jsonl")),
+                ..Default::default()
+            },
+        };
+        assert_eq!(
+            thread_resume_with_path.serialization_scope(),
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: thread_id.clone()
+            })
+        );
+
+        let thread_fork = ClientRequest::ThreadFork {
+            request_id: request_id(),
+            params: v2::ThreadForkParams {
+                thread_id: thread_id.clone(),
+                path: Some(PathBuf::from("/tmp/source-thread.jsonl")),
+                ..Default::default()
+            },
+        };
+        assert_eq!(
+            thread_fork.serialization_scope(),
+            Some(ClientRequestSerializationScope::Thread { thread_id })
+        );
+
+        let command_exec = ClientRequest::OneOffCommandExec {
+            request_id: request_id(),
+            params: v2::CommandExecParams {
+                command: vec!["sleep".to_string(), "10".to_string()],
+                process_id: Some("proc-1".to_string()),
+                tty: false,
+                stream_stdin: false,
+                stream_stdout_stderr: false,
+                output_bytes_cap: None,
+                disable_output_cap: false,
+                disable_timeout: false,
+                timeout_ms: None,
+                cwd: None,
+                env: None,
+                size: None,
+                sandbox_policy: None,
+                permission_profile: None,
+            },
+        };
+        assert_eq!(
+            command_exec.serialization_scope(),
+            Some(ClientRequestSerializationScope::CommandExecProcess {
+                process_id: "proc-1".to_string()
+            })
+        );
+
+        let fuzzy_update = ClientRequest::FuzzyFileSearchSessionUpdate {
+            request_id: request_id(),
+            params: FuzzyFileSearchSessionUpdateParams {
+                session_id: "search-1".to_string(),
+                query: "lib".to_string(),
+            },
+        };
+        assert_eq!(
+            fuzzy_update.serialization_scope(),
+            Some(ClientRequestSerializationScope::FuzzyFileSearchSession {
+                session_id: "search-1".to_string()
+            })
+        );
+
+        let fs_watch = ClientRequest::FsWatch {
+            request_id: request_id(),
+            params: v2::FsWatchParams {
+                watch_id: "watch-1".to_string(),
+                path: absolute_path("/tmp/repo"),
+            },
+        };
+        assert_eq!(
+            fs_watch.serialization_scope(),
+            Some(ClientRequestSerializationScope::FsWatch {
+                watch_id: "watch-1".to_string()
+            })
+        );
+
+        let plugin_install = ClientRequest::PluginInstall {
+            request_id: request_id(),
+            params: v2::PluginInstallParams {
+                marketplace_path: Some(absolute_path("/tmp/marketplace")),
+                remote_marketplace_name: None,
+                install_attempt_id: None,
+                plugin_name: "plugin-a".to_string(),
+            },
+        };
+        assert_eq!(
+            plugin_install.serialization_scope(),
+            Some(ClientRequestSerializationScope::Global("config"))
+        );
+
+        let skills_list = ClientRequest::SkillsList {
+            request_id: request_id(),
+            params: v2::SkillsListParams {
+                cwds: Vec::new(),
+                force_reload: false,
+            },
+        };
+        assert_eq!(
+            skills_list.serialization_scope(),
+            Some(ClientRequestSerializationScope::GlobalSharedRead("config"))
+        );
+
+        let hooks_list = ClientRequest::HooksList {
+            request_id: request_id(),
+            params: v2::HooksListParams { cwds: Vec::new() },
+        };
+        assert_eq!(
+            hooks_list.serialization_scope(),
+            Some(ClientRequestSerializationScope::GlobalSharedRead("config"))
+        );
+
+        let skills_extra_roots_set = ClientRequest::SkillsExtraRootsSet {
+            request_id: request_id(),
+            params: v2::SkillsExtraRootsSetParams {
+                extra_roots: vec![absolute_path("/tmp/skills")],
+            },
+        };
+        assert_eq!(
+            skills_extra_roots_set.serialization_scope(),
+            Some(ClientRequestSerializationScope::Global("config"))
+        );
+
+        let plugin_list = ClientRequest::PluginList {
+            request_id: request_id(),
+            params: v2::PluginListParams {
+                cwds: None,
+                marketplace_kinds: None,
+                force_refetch: false,
+            },
+        };
+        assert_eq!(plugin_list.serialization_scope(), None);
+
+        let plugin_read = ClientRequest::PluginRead {
+            request_id: request_id(),
+            params: v2::PluginReadParams {
+                marketplace_path: Some(absolute_path("/tmp/marketplace")),
+                remote_marketplace_name: None,
+                plugin_name: "plugin-a".to_string(),
+            },
+        };
+        assert_eq!(plugin_read.serialization_scope(), None);
+
+        let plugin_installed = ClientRequest::PluginInstalled {
+            request_id: request_id(),
+            params: v2::PluginInstalledParams {
+                cwds: None,
+                install_suggestion_plugin_names: None,
+            },
+        };
+        assert_eq!(plugin_installed.serialization_scope(), None);
+
+        let plugin_uninstall = ClientRequest::PluginUninstall {
+            request_id: request_id(),
+            params: v2::PluginUninstallParams {
+                plugin_id: "plugin-a".to_string(),
+            },
+        };
+        assert_eq!(
+            plugin_uninstall.serialization_scope(),
+            Some(ClientRequestSerializationScope::Global("config"))
+        );
+
+        let mcp_oauth = ClientRequest::McpServerOauthLogin {
+            request_id: request_id(),
+            params: v2::McpServerOauthLoginParams {
+                name: "server-a".to_string(),
+                thread_id: None,
+                client_registration: None,
+                scopes: None,
+                timeout_secs: None,
+            },
+        };
+        assert_eq!(
+            mcp_oauth.serialization_scope(),
+            Some(ClientRequestSerializationScope::McpOauth {
+                server_name: "server-a".to_string()
+            })
+        );
+
+        let mcp_resource_read = ClientRequest::McpResourceRead {
+            request_id: request_id(),
+            params: v2::McpResourceReadParams {
+                thread_id: Some("thread-1".to_string()),
+                server: "server-a".to_string(),
+                uri: "file:///tmp/resource".to_string(),
+            },
+        };
+        assert_eq!(
+            mcp_resource_read.serialization_scope(),
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: "thread-1".to_string()
+            })
+        );
+
+        let config_read = ClientRequest::ConfigRead {
+            request_id: request_id(),
+            params: v2::ConfigReadParams {
+                include_layers: false,
+                cwd: None,
+            },
+        };
+        assert_eq!(
+            config_read.serialization_scope(),
+            Some(ClientRequestSerializationScope::GlobalSharedRead("config"))
+        );
+
+        let config_requirements_read = ClientRequest::ConfigRequirementsRead {
+            request_id: request_id(),
+            params: None,
+        };
+        assert_eq!(
+            config_requirements_read.serialization_scope(),
+            Some(ClientRequestSerializationScope::GlobalSharedRead("config"))
+        );
+
+        let account_read = ClientRequest::GetAccount {
+            request_id: request_id(),
+            params: v2::GetAccountParams {
+                refresh_token: false,
+            },
+        };
+        assert_eq!(
+            account_read.serialization_scope(),
+            Some(ClientRequestSerializationScope::Global("account-auth"))
+        );
+
+        let thread_goal_set = ClientRequest::ThreadGoalSet {
+            request_id: request_id(),
+            params: v2::ThreadGoalSetParams {
+                thread_id: "goal-thread".to_string(),
+                objective: Some("ship it".to_string()),
+                status: None,
+                token_budget: None,
+            },
+        };
+        assert_eq!(
+            thread_goal_set.serialization_scope(),
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: "goal-thread".to_string()
+            })
+        );
+
+        let guardian_approval = ClientRequest::ThreadApproveGuardianDeniedAction {
+            request_id: request_id(),
+            params: v2::ThreadApproveGuardianDeniedActionParams {
+                thread_id: "guardian-thread".to_string(),
+                event: json!({ "type": "guardian" }),
+            },
+        };
+        assert_eq!(
+            guardian_approval.serialization_scope(),
+            Some(ClientRequestSerializationScope::Thread {
+                thread_id: "guardian-thread".to_string()
+            })
+        );
+
+        let marketplace_remove = ClientRequest::MarketplaceRemove {
+            request_id: request_id(),
+            params: v2::MarketplaceRemoveParams {
+                marketplace_name: "marketplace".to_string(),
+            },
+        };
+        assert_eq!(
+            marketplace_remove.serialization_scope(),
+            Some(ClientRequestSerializationScope::Global("config"))
+        );
+    }
+
+    #[test]
+    fn client_request_serialization_scope_covers_unkeyed_representatives() {
+        let initialize = ClientRequest::Initialize {
+            request_id: request_id(),
+            params: v1::InitializeParams {
+                client_info: v1::ClientInfo {
+                    name: "test".to_string(),
+                    title: None,
+                    version: "0.1.0".to_string(),
+                },
+                capabilities: None,
+            },
+        };
+        assert_eq!(initialize.serialization_scope(), None);
+
+        let thread_start = ClientRequest::ThreadStart {
+            request_id: request_id(),
+            params: v2::ThreadStartParams::default(),
+        };
+        assert_eq!(thread_start.serialization_scope(), None);
+
+        let command_exec = ClientRequest::OneOffCommandExec {
+            request_id: request_id(),
+            params: v2::CommandExecParams {
+                command: vec!["true".to_string()],
+                process_id: None,
+                tty: false,
+                stream_stdin: false,
+                stream_stdout_stderr: false,
+                output_bytes_cap: None,
+                disable_output_cap: false,
+                disable_timeout: false,
+                timeout_ms: None,
+                cwd: None,
+                env: None,
+                size: None,
+                sandbox_policy: None,
+                permission_profile: None,
+            },
+        };
+        assert_eq!(command_exec.serialization_scope(), None);
+
+        let fs_read = ClientRequest::FsReadFile {
+            request_id: request_id(),
+            params: v2::FsReadFileParams {
+                path: absolute_path("/tmp/file.txt"),
+            },
+        };
+        assert_eq!(fs_read.serialization_scope(), None);
+
+        let thread_turns_list = ClientRequest::ThreadTurnsList {
+            request_id: request_id(),
+            params: v2::ThreadTurnsListParams {
+                thread_id: "thread-1".to_string(),
+                cursor: None,
+                limit: None,
+                sort_direction: None,
+                items_view: None,
+            },
+        };
+        assert_eq!(thread_turns_list.serialization_scope(), None);
+
+        let thread_items_list = ClientRequest::ThreadItemsList {
+            request_id: request_id(),
+            params: v2::ThreadItemsListParams {
+                thread_id: "thread-1".to_string(),
+                turn_id: None,
+                cursor: None,
+                limit: None,
+                sort_direction: None,
+            },
+        };
+        assert_eq!(thread_items_list.serialization_scope(), None);
+
+        let mcp_resource_read = ClientRequest::McpResourceRead {
+            request_id: request_id(),
+            params: v2::McpResourceReadParams {
+                thread_id: None,
+                server: "server-a".to_string(),
+                uri: "file:///tmp/resource".to_string(),
+            },
+        };
+        assert_eq!(mcp_resource_read.serialization_scope(), None);
+    }
+
+    #[test]
+    fn serialize_initialize_capabilities() -> Result<()> {
+        let request = ClientRequest::Initialize {
+            request_id: RequestId::Integer(42),
+            params: v1::InitializeParams {
+                client_info: v1::ClientInfo {
+                    name: "codex_vscode".to_string(),
+                    title: Some("Codex VS Code Extension".to_string()),
+                    version: "0.1.0".to_string(),
+                },
+                capabilities: Some(v1::InitializeCapabilities {
+                    experimental_api: true,
+                    request_attestation: true,
+                    opt_out_notification_methods: Some(vec![
+                        "thread/started".to_string(),
+                        "item/agentMessage/delta".to_string(),
+                    ]),
+                    extensions: Some(std::collections::HashMap::from([(
+                        "io.modelcontextprotocol/ui".to_string(),
+                        json!({
+                            "mimeTypes": ["text/html;profile=mcp-app"],
+                        }),
+                    )])),
+                }),
+            },
+        };
+
+        assert_eq!(
+            json!({
+                "method": "initialize",
+                "id": 42,
+                "params": {
+                    "clientInfo": {
+                        "name": "codex_vscode",
+                        "title": "Codex VS Code Extension",
+                        "version": "0.1.0"
+                    },
+                    "capabilities": {
+                        "experimentalApi": true,
+                        "requestAttestation": true,
+                        "optOutNotificationMethods": [
+                            "thread/started",
+                            "item/agentMessage/delta"
+                        ],
+                        "extensions": {
+                            "io.modelcontextprotocol/ui": {
+                                "mimeTypes": ["text/html;profile=mcp-app"]
+                            }
+                        }
+                    }
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn deserialize_initialize_capabilities() -> Result<()> {
+        let request: ClientRequest = serde_json::from_value(json!({
+            "method": "initialize",
+            "id": 42,
+            "params": {
+                "clientInfo": {
+                    "name": "codex_vscode",
+                    "title": "Codex VS Code Extension",
+                    "version": "0.1.0"
+                },
+                "capabilities": {
+                    "experimentalApi": true,
+                    "requestAttestation": true,
+                    "optOutNotificationMethods": [
+                        "thread/started",
+                        "item/agentMessage/delta"
+                    ],
+                    "extensions": {
+                        "io.modelcontextprotocol/ui": {
+                            "mimeTypes": ["text/html;profile=mcp-app"]
+                        }
+                    }
+                }
+            }
+        }))?;
+
+        assert_eq!(
+            request,
+            ClientRequest::Initialize {
+                request_id: RequestId::Integer(42),
+                params: v1::InitializeParams {
+                    client_info: v1::ClientInfo {
+                        name: "codex_vscode".to_string(),
+                        title: Some("Codex VS Code Extension".to_string()),
+                        version: "0.1.0".to_string(),
+                    },
+                    capabilities: Some(v1::InitializeCapabilities {
+                        experimental_api: true,
+                        request_attestation: true,
+                        opt_out_notification_methods: Some(vec![
+                            "thread/started".to_string(),
+                            "item/agentMessage/delta".to_string(),
+                        ]),
+                        extensions: Some(std::collections::HashMap::from([(
+                            "io.modelcontextprotocol/ui".to_string(),
+                            json!({
+                                "mimeTypes": ["text/html;profile=mcp-app"],
+                            }),
+                        )])),
+                    }),
+                },
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn conversation_id_serializes_as_plain_string() -> Result<()> {
+        let id = ThreadId::from_string("67e55044-10b1-426f-9247-bb680e5fe0c8")?;
+
+        assert_eq!(
+            json!("67e55044-10b1-426f-9247-bb680e5fe0c8"),
+            serde_json::to_value(id)?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn conversation_id_deserializes_from_plain_string() -> Result<()> {
+        let id: ThreadId = serde_json::from_value(json!("67e55044-10b1-426f-9247-bb680e5fe0c8"))?;
+
+        assert_eq!(
+            ThreadId::from_string("67e55044-10b1-426f-9247-bb680e5fe0c8")?,
+            id,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_client_notification() -> Result<()> {
+        let notification = ClientNotification::Initialized;
+        // Note there is no "params" field for this notification.
+        assert_eq!(
+            json!({
+                "method": "initialized",
+            }),
+            serde_json::to_value(&notification)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_attestation_generate_request() -> Result<()> {
+        let params = v2::AttestationGenerateParams {};
+        let request = ServerRequest::AttestationGenerate {
+            request_id: RequestId::Integer(9),
+            params: params.clone(),
+        };
+        assert_eq!(
+            json!({
+                "method": "attestation/generate",
+                "id": 9,
+                "params": {}
+            }),
+            serde_json::to_value(&request)?,
+        );
+
+        let payload = ServerRequestPayload::AttestationGenerate(params);
+        assert_eq!(request.id(), &RequestId::Integer(9));
+        assert_eq!(payload.request_with_id(RequestId::Integer(9)), request);
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_current_time_read_request() -> Result<()> {
+        let params = v2::CurrentTimeReadParams {
+            thread_id: "thread-123".to_string(),
+        };
+        let request = ServerRequest::CurrentTimeRead {
+            request_id: RequestId::Integer(10),
+            params: params.clone(),
+        };
+        assert_eq!(
+            json!({
+                "method": "currentTime/read",
+                "id": 10,
+                "params": {
+                    "threadId": "thread-123"
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+
+        let payload = ServerRequestPayload::CurrentTimeRead(params);
+        assert_eq!(request.id(), &RequestId::Integer(10));
+        assert_eq!(payload.request_with_id(RequestId::Integer(10)), request);
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_server_response() -> Result<()> {
+        let response = ServerResponse::CommandExecutionRequestApproval {
+            request_id: RequestId::Integer(8),
+            response: v2::CommandExecutionRequestApprovalResponse {
+                decision: v2::CommandExecutionApprovalDecision::AcceptForSession,
+            },
+        };
+
+        assert_eq!(response.id(), &RequestId::Integer(8));
+        assert_eq!(response.method(), "item/commandExecution/requestApproval");
+        assert_eq!(
+            json!({
+                "method": "item/commandExecution/requestApproval",
+                "id": 8,
+                "response": {
+                    "decision": "acceptForSession"
+                }
+            }),
+            serde_json::to_value(&response)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_mcp_server_elicitation_request() -> Result<()> {
+        let requested_schema: v2::McpElicitationSchema = serde_json::from_value(json!({
+            "type": "object",
+            "properties": {
+                "confirmed": {
+                    "type": "boolean"
+                }
+            },
+            "required": ["confirmed"]
+        }))?;
+        let params = v2::McpServerElicitationRequestParams {
+            thread_id: "thr_123".to_string(),
+            turn_id: Some("turn_123".to_string()),
+            server_name: "calendar".to_string(),
+            request: v2::McpServerElicitationRequest::Form {
+                meta: None,
+                message: "Allow this request?".to_string(),
+                requested_schema,
+            },
+        };
+        let request = ServerRequest::McpServerElicitationRequest {
+            request_id: RequestId::Integer(9),
+            params: params.clone(),
+        };
+
+        assert_eq!(
+            json!({
+                "method": "mcpServer/elicitation/request",
+                "id": 9,
+                "params": {
+                    "threadId": "thr_123",
+                    "turnId": "turn_123",
+                    "serverName": "calendar",
+                    "mode": "form",
+                    "message": "Allow this request?",
+                    "requestedSchema": {
+                        "type": "object",
+                        "properties": {
+                            "confirmed": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": ["confirmed"]
+                    }
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+
+        let payload = ServerRequestPayload::McpServerElicitationRequest(params);
+        assert_eq!(request.id(), &RequestId::Integer(9));
+        assert_eq!(payload.request_with_id(RequestId::Integer(9)), request);
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_client_response() -> Result<()> {
+        let cwd = absolute_path("/tmp");
+        let response = ClientResponse::ThreadStart {
+            request_id: RequestId::Integer(7),
+            response: v2::ThreadStartResponse {
+                disabled_plugin_ids: Vec::new(),
+                thread: v2::Thread {
+                    originator: None,
+                    environments: None,
+                    id: "67e55044-10b1-426f-9247-bb680e5fe0c8".to_string(),
+                    extra: None,
+                    session_id: "67e55044-10b1-426f-9247-bb680e5fe0c7".to_string(),
+                    forked_from_id: None,
+                    parent_thread_id: None,
+                    preview: "first prompt".to_string(),
+                    ephemeral: true,
+                    section: None,
+                    section_entered_at: None,
+                    project_id: None,
+                    history_mode: Default::default(),
+                    model: None,
+                    reasoning_effort: None,
+                    created_at: 1,
+                    updated_at: 2,
+                    recency_at: Some(3),
+                    status: v2::ThreadStatus::Idle,
+                    path: None,
+                    cwd: cwd.clone(),
+                    cli_version: "0.0.0".to_string(),
+                    source: v2::SessionSource::Exec,
+                    can_accept_direct_input: None,
+                    thread_source: None,
+                    agent_nickname: None,
+                    agent_role: None,
+                    git_info: None,
+                    name: None,
+                    daybreak_enabled: None,
+                    turns: Vec::new(),
+                },
+                model: "example-model".to_string(),
+                service_tier: None,
+                cwd,
+                runtime_workspace_roots: Vec::new(),
+                instruction_sources: vec![
+                    ruxex_utils_path_uri::LegacyAppPathString::from_abs_path(&absolute_path(
+                        "/tmp/AGENTS.md",
+                    )),
+                ],
+                approval_policy: v2::AskForApproval::OnRequest,
+                sandbox: v2::SandboxPolicy::DangerFullAccess,
+                active_permission_profile: None,
+                reasoning_effort: None,
+                multi_agent_mode: MultiAgentMode::ExplicitRequestOnly,
+            },
+        };
+
+        assert_eq!(response.id(), &RequestId::Integer(7));
+        assert_eq!(response.method(), "thread/start");
+        assert_eq!(
+            json!({
+                "method": "thread/start",
+                "id": 7,
+                "response": {
+                    "thread": {
+                        "id": "67e55044-10b1-426f-9247-bb680e5fe0c8",
+                        "environments": null,
+                        "extra": null,
+                        "sessionId": "67e55044-10b1-426f-9247-bb680e5fe0c7",
+                        "forkedFromId": null,
+                        "parentThreadId": null,
+                        "preview": "first prompt",
+                        "ephemeral": true,
+                        "section": null,
+                        "sectionEnteredAt": null,
+                        "projectId": null,
+                        "historyMode": "paginated",
+                        "model": null,
+                        "reasoningEffort": null,
+                        "createdAt": 1,
+                        "updatedAt": 2,
+                        "recencyAt": 3,
+                        "status": {
+                            "type": "idle"
+                        },
+                        "path": null,
+                        "cwd": absolute_path_string("tmp"),
+                        "cliVersion": "0.0.0",
+                        "originator": null,
+                        "source": "exec",
+                        "canAcceptDirectInput": null,
+                        "threadSource": null,
+                        "agentNickname": null,
+                        "agentRole": null,
+                        "gitInfo": null,
+                        "name": null,
+                        "daybreakEnabled": null,
+                        "turns": []
+                    },
+                    "model": "example-model",
+                    "serviceTier": null,
+                    "disabledPluginIds": [],
+                    "cwd": absolute_path_string("tmp"),
+                    "runtimeWorkspaceRoots": [],
+                    "instructionSources": [absolute_path_string("tmp/AGENTS.md")],
+                    "approvalPolicy": "on-request",
+                    "sandbox": {
+                        "type": "dangerFullAccess"
+                    },
+                    "activePermissionProfile": null,
+                    "reasoningEffort": null,
+                    "multiAgentMode": "explicitRequestOnly"
+                }
+            }),
+            serde_json::to_value(&response)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_config_requirements_read() -> Result<()> {
+        let request = ClientRequest::ConfigRequirementsRead {
+            request_id: RequestId::Integer(1),
+            params: None,
+        };
+        assert_eq!(
+            json!({
+                "method": "configRequirements/read",
+                "id": 1,
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_account_login_api_key() -> Result<()> {
+        let request = ClientRequest::LoginAccount {
+            request_id: RequestId::Integer(2),
+            params: v2::LoginAccountParams::ApiKey {
+                api_key: "secret".to_string(),
+                credentials: std::collections::BTreeMap::new(),
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "account/login/start",
+                "id": 2,
+                "params": {
+                    "type": "apiKey",
+                    "apiKey": "secret"
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_account_logout() -> Result<()> {
+        let request = ClientRequest::LogoutAccount {
+            request_id: RequestId::Integer(5),
+            params: None,
+        };
+        assert_eq!(
+            json!({
+                "method": "account/logout",
+                "id": 5,
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_get_account() -> Result<()> {
+        let request = ClientRequest::GetAccount {
+            request_id: RequestId::Integer(6),
+            params: v2::GetAccountParams {
+                refresh_token: false,
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "account/read",
+                "id": 6,
+                "params": {}
+            }),
+            serde_json::to_value(&request)?,
+        );
+        let request = ClientRequest::GetAccount {
+            request_id: RequestId::Integer(7),
+            params: v2::GetAccountParams {
+                refresh_token: true,
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "account/read",
+                "id": 7,
+                "params": {
+                    "refreshToken": true
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn account_serializes_fields_in_camel_case() -> Result<()> {
+        let api_key = v2::Account::ApiKey {};
+        assert_eq!(
+            json!({
+                "type": "apiKey",
+            }),
+            serde_json::to_value(&api_key)?,
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_list_models() -> Result<()> {
+        let request = ClientRequest::ModelList {
+            request_id: RequestId::Integer(6),
+            params: v2::ModelListParams::default(),
+        };
+        assert_eq!(
+            json!({
+                "method": "model/list",
+                "id": 6,
+                "params": {
+                    "limit": null,
+                    "cursor": null,
+                    "includeHidden": null
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_model_provider_capabilities_read() -> Result<()> {
+        let request = ClientRequest::ModelProviderCapabilitiesRead {
+            request_id: RequestId::Integer(7),
+            params: v2::ModelProviderCapabilitiesReadParams {},
+        };
+        assert_eq!(
+            json!({
+                "method": "modelProvider/capabilities/read",
+                "id": 7,
+                "params": {}
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_list_collaboration_modes() -> Result<()> {
+        let request = ClientRequest::CollaborationModeList {
+            request_id: RequestId::Integer(7),
+            params: v2::CollaborationModeListParams::default(),
+        };
+        assert_eq!(
+            json!({
+                "method": "collaborationMode/list",
+                "id": 7,
+                "params": {}
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_fs_get_metadata() -> Result<()> {
+        let request = ClientRequest::FsGetMetadata {
+            request_id: RequestId::Integer(10),
+            params: v2::FsGetMetadataParams {
+                path: absolute_path("tmp/example"),
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "fs/getMetadata",
+                "id": 10,
+                "params": {
+                    "path": absolute_path_string("tmp/example")
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_fs_watch() -> Result<()> {
+        let request = ClientRequest::FsWatch {
+            request_id: RequestId::Integer(10),
+            params: v2::FsWatchParams {
+                watch_id: "watch-git".to_string(),
+                path: absolute_path("tmp/repo/.git"),
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "fs/watch",
+                "id": 10,
+                "params": {
+                    "watchId": "watch-git",
+                    "path": absolute_path_string("tmp/repo/.git")
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_thread_background_terminals_clean() -> Result<()> {
+        let request = ClientRequest::ThreadBackgroundTerminalsClean {
+            request_id: RequestId::Integer(8),
+            params: v2::ThreadBackgroundTerminalsCleanParams {
+                thread_id: "thr_123".to_string(),
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "thread/backgroundTerminals/clean",
+                "id": 8,
+                "params": {
+                    "threadId": "thr_123"
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_thread_background_terminals_list() -> Result<()> {
+        let request = ClientRequest::ThreadBackgroundTerminalsList {
+            request_id: RequestId::Integer(8),
+            params: v2::ThreadBackgroundTerminalsListParams {
+                thread_id: "thr_123".to_string(),
+                cursor: None,
+                limit: None,
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "thread/backgroundTerminals/list",
+                "id": 8,
+                "params": {
+                    "threadId": "thr_123",
+                    "cursor": null,
+                    "limit": null
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_thread_background_terminals_terminate() -> Result<()> {
+        let request = ClientRequest::ThreadBackgroundTerminalsTerminate {
+            request_id: RequestId::Integer(8),
+            params: v2::ThreadBackgroundTerminalsTerminateParams {
+                thread_id: "thr_123".to_string(),
+                process_id: "42".to_string(),
+            },
+        };
+        assert_eq!(
+            json!({
+                "method": "thread/backgroundTerminals/terminate",
+                "id": 8,
+                "params": {
+                    "threadId": "thr_123",
+                    "processId": "42"
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn command_execution_request_approval_additional_permissions_is_marked_experimental() {
+        let params = v2::CommandExecutionRequestApprovalParams {
+            kind: Default::default(),
+            thread_id: "thr_123".to_string(),
+            turn_id: "turn_123".to_string(),
+            item_id: "call_123".to_string(),
+            started_at_ms: 0,
+            approval_id: None,
+            environment_id: None,
+            reason: None,
+            network_approval_context: None,
+            command: Some("cat file".to_string()),
+            cwd: None,
+            command_actions: None,
+            additional_permissions: Some(v2::AdditionalPermissionProfile {
+                network: None,
+                file_system: Some(v2::AdditionalFileSystemPermissions {
+                    read: Some(vec![absolute_path("/tmp/allowed").into()]),
+                    write: None,
+                    glob_scan_max_depth: None,
+                    entries: None,
+                }),
+            }),
+            proposed_execpolicy_amendment: None,
+            proposed_network_policy_amendments: None,
+            available_decisions: None,
+        };
+        let reason = crate::experimental_api::ExperimentalApi::experimental_reason(&params);
+        assert_eq!(
+            reason,
+            Some("item/commandExecution/requestApproval.additionalPermissions")
+        );
+    }
+}
+
+#[cfg(test)]
+#[path = "common_tests.rs"]
+mod common_tests;

@@ -1,0 +1,20 @@
+[package]
+name = "ruxex-mermaid"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_mermaid"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+unicode-width = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+pretty_assertions = { workspace = true }

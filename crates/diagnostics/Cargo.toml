@@ -1,0 +1,19 @@
+[package]
+name = "ruxex-diagnostics"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_diagnostics"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+libc = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

@@ -1,0 +1,133 @@
+use std::fs;
+use std::io::Write;
+use std::path::Path;
+use std::path::PathBuf;
+
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR;
+use ruxex_utils_absolute_path::test_support::PathExt;
+use uuid::Uuid;
+
+use super::LocalThreadStoreConfig;
+
+pub(super) fn test_config(ruxex_home: &Path) -> LocalThreadStoreConfig {
+    LocalThreadStoreConfig {
+        ruxex_home: ruxex_home.to_path_buf(),
+        sqlite: ruxex_state::SqliteConfig::new_for_testing(ruxex_home.abs()),
+    }
+}
+
+pub(super) fn write_session_file(root: &Path, ts: &str, uuid: Uuid) -> std::io::Result<PathBuf> {
+    write_session_file_with_history_mode(root, ts, uuid, ThreadHistoryMode::Paginated)
+}
+
+pub(super) fn write_session_file_with_history_mode(
+    root: &Path,
+    ts: &str,
+    uuid: Uuid,
+    history_mode: ThreadHistoryMode,
+) -> std::io::Result<PathBuf> {
+    write_session_file_with(
+        root,
+        root.join("sessions/2025/01/03"),
+        ts,
+        uuid,
+        "Hello from user",
+        history_mode,
+    )
+}
+
+pub(super) fn write_archived_session_file(
+    root: &Path,
+    ts: &str,
+    uuid: Uuid,
+) -> std::io::Result<PathBuf> {
+    write_session_file_with(
+        root,
+        root.join(ARCHIVED_SESSIONS_SUBDIR),
+        ts,
+        uuid,
+        "Archived user message",
+        ThreadHistoryMode::Paginated,
+    )
+}
+
+pub(super) fn write_session_file_with(
+    root: &Path,
+    day_dir: PathBuf,
+    ts: &str,
+    uuid: Uuid,
+    first_user_message: &str,
+    history_mode: ThreadHistoryMode,
+) -> std::io::Result<PathBuf> {
+    write_session_file_with_fork(
+        root,
+        day_dir,
+        ts,
+        uuid,
+        first_user_message,
+        /*forked_from_id*/ None,
+        history_mode,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn write_session_file_with_fork(
+    root: &Path,
+    day_dir: PathBuf,
+    ts: &str,
+    uuid: Uuid,
+    first_user_message: &str,
+    forked_from_id: Option<Uuid>,
+    history_mode: ThreadHistoryMode,
+) -> std::io::Result<PathBuf> {
+    fs::create_dir_all(&day_dir)?;
+    let path = day_dir.join(format!("rollout-{ts}-{uuid}.jsonl"));
+    let mut file = fs::File::create(&path)?;
+    let mut meta = serde_json::json!({
+        "timestamp": ts,
+        "type": "session_meta",
+        "payload": {
+            "session_id": uuid,
+            "id": uuid,
+            "forked_from_id": forked_from_id,
+            "timestamp": ts,
+            "cwd": root,
+            "originator": "test_originator",
+            "cli_version": "test_version",
+            "source": "cli",
+            "history_mode": history_mode,
+            "git": {
+                "commit_hash": "abcdef",
+                "branch": "main",
+                "repository_url": "https://example.com/repo.git"
+            }
+        },
+    });
+    meta["ordinal"] = serde_json::json!(0);
+    writeln!(file, "{meta}")?;
+    let user_event = serde_json::json!({
+        "timestamp": ts,
+        "ordinal": 1,
+        "type": "event_msg",
+        "payload": {
+            "type": "item_completed",
+            "thread_id": uuid,
+            "turn_id": "test-turn",
+            "item": {
+                "type": "UserMessage",
+                "id": "user-test-turn",
+                "client_id": null,
+                "content": [{
+                    "type": "text",
+                    "text": first_user_message,
+                    "text_elements": []
+                }]
+            },
+            "started_at_ms": 0,
+            "completed_at_ms": 1
+        },
+    });
+    writeln!(file, "{user_event}")?;
+    Ok(path)
+}

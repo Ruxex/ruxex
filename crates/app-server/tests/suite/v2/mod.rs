@@ -1,0 +1,101 @@
+mod account;
+mod auto_env;
+mod client_metadata;
+mod code_mode_host;
+mod collaboration_mode_list;
+#[cfg(unix)]
+mod command_exec;
+mod compaction;
+mod config_requirements_application;
+#[path = "config_requirements_browser_use_tests.rs"]
+mod config_requirements_browser_use;
+#[path = "config_requirements_exec_tests.rs"]
+mod config_requirements_exec;
+mod config_requirements_in_app_browser;
+mod config_requirements_login;
+mod config_rpc;
+#[cfg(unix)]
+#[path = "connection_handling_stdio_tests.rs"]
+mod connection_handling_stdio;
+mod connection_handling_websocket;
+#[cfg(unix)]
+mod connection_handling_websocket_unix;
+#[cfg(unix)]
+mod curated_mcp_sync;
+mod current_time;
+mod cyber_access_program;
+mod daemon_update_recovery;
+mod dynamic_tools;
+mod environment_add;
+mod environment_info;
+mod environment_status;
+mod exec_server_test_support;
+#[cfg(not(target_os = "windows"))]
+mod executor_mcp;
+mod executor_skills;
+mod fs;
+mod history_notes_extension;
+mod hooks_list;
+mod host_skills;
+mod marketplace_add;
+mod marketplace_remove;
+mod marketplace_upgrade;
+mod mcp_server_status;
+mod misalignment_policy;
+mod model_list;
+mod model_provider_capabilities_read;
+mod model_provider_read;
+mod multi_agent_v2_developer_instructions;
+mod output_schema;
+mod permission_profile_list;
+mod plan_item;
+mod plugin_list;
+mod plugin_reconcile;
+mod plugin_search;
+mod plugin_uninstall;
+mod process_exec;
+mod projects;
+#[cfg(debug_assertions)]
+mod remote_thread_store;
+mod request_permissions;
+mod request_user_input;
+mod request_validation;
+mod residency;
+mod review;
+mod safety_check_downgrade;
+#[path = "rollout_compress_tests.rs"]
+mod rollout_compress;
+mod selected_environment;
+mod server_diagnostics;
+#[cfg(not(target_os = "windows"))]
+mod session_end;
+mod skills_list;
+mod sleep;
+mod thread_archive;
+mod thread_attachments;
+mod thread_delete;
+mod thread_environments;
+mod thread_fork;
+#[path = "thread_fork_multi_agent_tests.rs"]
+mod thread_fork_multi_agent;
+mod thread_goal_empty_responses;
+mod thread_inject_items;
+mod thread_list;
+mod thread_loaded_list;
+mod thread_metadata_update;
+mod thread_name_websocket;
+mod thread_queue;
+mod thread_read;
+mod thread_sections;
+mod thread_settings_update;
+mod thread_shell_command;
+mod thread_start;
+mod thread_unarchive;
+mod thread_unsubscribe;
+mod turn_interrupt;
+mod turn_settings_update;
+mod turn_steer;
+mod view_image;
+mod web_search;
+
+mod user_verification;

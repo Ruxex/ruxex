@@ -1,0 +1,34 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-web-search-extension"
+version.workspace = true
+
+[lib]
+name = "ruxex_web_search_extension"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-api = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-providers = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-tools = { workspace = true }
+http = { workspace = true }
+schemars = { workspace = true }
+serde_json = { workspace = true }
+url = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

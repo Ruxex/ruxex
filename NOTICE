@@ -1,6 +1,19 @@
-OpenAI Codex
-Copyright 2025 OpenAI
+# Ruxex notices
 
-This project includes code derived from [Ratatui](https://github.com/ratatui/ratatui), licensed under the MIT license.
-Copyright (c) 2016-2022 Florian Dehau
-Copyright (c) 2023-2025 The Ratatui Developers
+Ruxex is an independent derivative work based on the Codex project.
+Ruxex-specific changes are maintained by Ruxex contributors. Original
+copyright, license, trademark, and third-party attribution notices remain
+applicable to the portions of the work to which they relate.
+
+Ruxex includes patched revisions of these third-party packages. Their package
+names, upstream licenses, and license files remain unchanged:
+
+- `crossterm` — MIT — https://github.com/crossterm-rs/crossterm
+- `tokio-tungstenite` — MIT — https://github.com/snapview/tokio-tungstenite
+- `tungstenite` — MIT OR Apache-2.0 — https://github.com/snapview/tungstenite-rs
+
+Exact dependency revisions and sources are recorded in `Cargo.toml` and
+`Cargo.lock`.
+
+This notice does not grant permission to use any upstream or third-party
+trademark beyond what is allowed by the applicable license or law.

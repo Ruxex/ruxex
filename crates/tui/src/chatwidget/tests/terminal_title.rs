@@ -1,0 +1,231 @@
+//! Terminal-title focused tests for live chatwidget status-surface behavior.
+
+use super::*;
+use crate::bottom_pane::goal_status_indicator_line;
+use pretty_assertions::assert_eq;
+
+
+#[tokio::test]
+async fn terminal_title_shows_action_required_while_exec_approval_is_pending() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+    let (frame_requester, mut draw_rx) = FrameRequester::test_channel();
+    chat.frame_requester = frame_requester;
+    chat.bottom_pane.set_task_running(/*running*/ true);
+    let before_refresh = Instant::now();
+    chat.refresh_terminal_title();
+    let spinner_interval = std::time::Duration::from_millis(/*millis*/ 100);
+    assert!(
+        (before_refresh + spinner_interval..=Instant::now() + spinner_interval)
+            .contains(&chat.terminal_title_next_refresh.expect("spinner deadline"))
+    );
+    assert_eq!(
+        draw_rx.try_recv(),
+        Err(tokio::sync::mpsc::error::TryRecvError::Empty)
+    );
+
+    let request = ExecApprovalRequestEvent {
+        kind: Default::default(),
+        call_id: "call-action-required".into(),
+        approval_id: Some("call-action-required".into()),
+        turn_id: "turn-action-required".into(),
+        environment_id: None,
+        command: vec!["bash".into(), "-lc".into(), "echo hello".into()],
+        cwd: AbsolutePathBuf::current_dir().expect("current dir"),
+        reason: Some("need confirmation".into()),
+        network_approval_context: None,
+        proposed_execpolicy_amendment: None,
+        proposed_network_policy_amendments: None,
+        additional_permissions: None,
+        available_decisions: None,
+    };
+    handle_exec_approval_request(&mut chat, "sub-action-required", request);
+
+    let before_refresh = Instant::now();
+    chat.terminal_title_animation_origin = before_refresh;
+    chat.pre_draw_tick();
+    let blink_interval = std::time::Duration::from_secs(/*secs*/ 1);
+    assert!(
+        (before_refresh + blink_interval..=Instant::now() + blink_interval).contains(
+            &chat
+                .terminal_title_next_refresh
+                .expect("action-required deadline")
+        )
+    );
+
+    assert_eq!(
+        chat.last_terminal_title,
+        Some("[ ! ] Action Required | project".to_string())
+    );
+    assert!(!chat.should_animate_terminal_title_spinner());
+
+    chat.handle_key_event(KeyEvent::new(KeyCode::Char('y'), KeyModifiers::NONE));
+    chat.pre_draw_tick();
+
+    let title = chat
+        .last_terminal_title
+        .as_deref()
+        .expect("terminal title should be restored after approval");
+    assert!(title.contains("project"));
+    assert!(!title.contains("Action Required"));
+    assert!(chat.should_animate_terminal_title_spinner());
+
+    for (animations, title_items) in [(false, None), (true, Some(Vec::new()))] {
+        chat.local_settings.tui.animations = true;
+        chat.local_settings.tui.terminal_title = None;
+        chat.refresh_terminal_title();
+        assert!(chat.terminal_title_next_refresh.is_some());
+
+        chat.local_settings.tui.animations = animations;
+        chat.local_settings.tui.terminal_title = title_items;
+        chat.refresh_terminal_title();
+        assert!(chat.terminal_title_next_refresh.is_none());
+    }
+}
+
+#[tokio::test]
+async fn terminal_title_action_required_respects_spinner_setting() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+    chat.local_settings.tui.terminal_title = Some(vec!["project".to_string()]);
+    chat.bottom_pane.set_task_running(/*running*/ true);
+    chat.refresh_terminal_title();
+
+    let request = ExecApprovalRequestEvent {
+        kind: Default::default(),
+        call_id: "call-no-spinner".into(),
+        approval_id: Some("call-no-spinner".into()),
+        turn_id: "turn-no-spinner".into(),
+        environment_id: None,
+        command: vec!["bash".into(), "-lc".into(), "echo hello".into()],
+        cwd: AbsolutePathBuf::current_dir().expect("current dir"),
+        reason: Some("need confirmation".into()),
+        network_approval_context: None,
+        proposed_execpolicy_amendment: None,
+        proposed_network_policy_amendments: None,
+        additional_permissions: None,
+        available_decisions: None,
+    };
+    handle_exec_approval_request(&mut chat, "sub-no-spinner", request);
+
+    chat.pre_draw_tick();
+
+    assert_eq!(chat.last_terminal_title, Some("project".to_string()));
+    assert!(!chat.should_animate_terminal_title_action_required());
+}
+
+#[tokio::test]
+async fn terminal_title_action_required_blinks_when_animations_are_enabled() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+    chat.bottom_pane.set_task_running(/*running*/ true);
+    chat.refresh_terminal_title();
+
+    let request = ExecApprovalRequestEvent {
+        kind: Default::default(),
+        call_id: "call-blink".into(),
+        approval_id: Some("call-blink".into()),
+        turn_id: "turn-blink".into(),
+        environment_id: None,
+        command: vec!["bash".into(), "-lc".into(), "echo hello".into()],
+        cwd: AbsolutePathBuf::current_dir().expect("current dir"),
+        reason: Some("need confirmation".into()),
+        network_approval_context: None,
+        proposed_execpolicy_amendment: None,
+        proposed_network_policy_amendments: None,
+        additional_permissions: None,
+        available_decisions: None,
+    };
+    handle_exec_approval_request(&mut chat, "sub-blink", request);
+
+    chat.terminal_title_animation_origin =
+        Instant::now() - std::time::Duration::from_millis(/*millis*/ 1500);
+    chat.pre_draw_tick();
+
+    assert_eq!(
+        chat.last_terminal_title,
+        Some("[ . ] Action Required | project".to_string())
+    );
+    assert!(chat.should_animate_terminal_title_action_required());
+}
+
+#[tokio::test]
+async fn terminal_title_activity_indicators_do_not_animate_when_animations_are_disabled() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+    chat.local_settings.tui.animations = false;
+    chat.bottom_pane.set_task_running(/*running*/ true);
+    chat.terminal_title_animation_origin = Instant::now() - std::time::Duration::from_millis(1500);
+    chat.refresh_terminal_title();
+
+    assert_eq!(chat.last_terminal_title, Some("project".to_string()));
+    assert!(!chat.should_animate_terminal_title_spinner());
+
+    let request = ExecApprovalRequestEvent {
+        kind: Default::default(),
+        call_id: "call-no-animations".into(),
+        approval_id: Some("call-no-animations".into()),
+        turn_id: "turn-no-animations".into(),
+        environment_id: None,
+        command: vec!["bash".into(), "-lc".into(), "echo hello".into()],
+        cwd: AbsolutePathBuf::current_dir().expect("current dir"),
+        reason: Some("need confirmation".into()),
+        network_approval_context: None,
+        proposed_execpolicy_amendment: None,
+        proposed_network_policy_amendments: None,
+        additional_permissions: None,
+        available_decisions: None,
+    };
+    handle_exec_approval_request(&mut chat, "sub-no-animations", request);
+
+    chat.pre_draw_tick();
+
+    assert_eq!(
+        chat.last_terminal_title,
+        Some("[ ! ] Action Required | project".to_string())
+    );
+    assert!(!chat.should_animate_terminal_title_action_required());
+}
+
+
+#[tokio::test]
+async fn thread_title_progress_animates_when_main_turn_is_idle() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+    let (frame_requester, mut draw_rx) = FrameRequester::test_channel();
+    chat.frame_requester = frame_requester;
+    chat.local_settings.tui.terminal_title = Some(Vec::new());
+    chat.local_settings.tui.status_line = Some(vec!["thread-name".to_string()]);
+    chat.bottom_pane.set_task_running(/*running*/ false);
+    chat.set_thread_title_generation_pending(/*pending*/ true);
+    assert!(chat.terminal_title_next_refresh.is_some());
+    while draw_rx.try_recv().is_ok() {}
+
+    let now = Instant::now();
+    chat.terminal_title_animation_origin = now;
+    assert_eq!(
+        chat.terminal_title_value_for_item(TerminalTitleItem::ThreadName, now),
+        Some("⠋".to_string())
+    );
+    assert_eq!(
+        chat.terminal_title_value_for_item(
+            TerminalTitleItem::ThreadName,
+            now + Duration::from_millis(/*millis*/ 100)
+        ),
+        Some("⠙".to_string())
+    );
+    chat.refresh_thread_title_progress_for_time_tick();
+    assert!(draw_rx.try_recv().is_ok());
+
+    chat.local_settings.tui.status_line = Some(Vec::new());
+    chat.local_settings.tui.terminal_title = Some(vec!["thread-name".to_string()]);
+    chat.refresh_status_surfaces();
+    assert!(chat.terminal_title_next_refresh.is_some());
+    while draw_rx.try_recv().is_ok() {}
+    chat.refresh_thread_title_progress_for_time_tick();
+    assert!(draw_rx.try_recv().is_err());
+
+    chat.local_settings.tui.animations = false;
+    chat.refresh_status_surfaces();
+    assert!(chat.terminal_title_next_refresh.is_none());
+    assert_eq!(chat.last_terminal_title, Some("⠋".to_string()));
+    chat.local_settings.tui.animations = true;
+    chat.set_thread_title_generation_pending(/*pending*/ false);
+    assert_eq!(chat.last_terminal_title, None);
+    assert!(chat.terminal_title_next_refresh.is_none());
+}

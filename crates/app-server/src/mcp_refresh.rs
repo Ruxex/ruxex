@@ -1,0 +1,83 @@
+use crate::config_manager::ConfigManager;
+use ruxex_core::RuxexThread;
+use ruxex_core::ThreadManager;
+use ruxex_core::config::Config;
+use std::io;
+use std::sync::Arc;
+use tracing::warn;
+
+pub(crate) async fn reload_mcp_config(
+    thread_manager: &Arc<ThreadManager>,
+    config_manager: &ConfigManager,
+    server_name: Option<&str>,
+) -> io::Result<()> {
+    if let Some(server_name) = server_name {
+        for thread_id in thread_manager.list_thread_ids().await {
+            let thread = thread_manager.get_thread(thread_id).await.map_err(|err| {
+                io::Error::other(format!("failed to load thread {thread_id}: {err}"))
+            })?;
+            thread
+                .refresh_mcp_server_tools(server_name)
+                .await
+                .map_err(|err| {
+                    io::Error::other(format!(
+                        "failed to refresh MCP server '{server_name}' on thread {thread_id}: {err}"
+                    ))
+                })?;
+        }
+        return Ok(());
+    }
+
+    config_manager
+        .load_latest_config(/*fallback_cwd*/ None)
+        .await?;
+    let mut refreshes = Vec::new();
+    for thread_id in thread_manager.list_thread_ids().await {
+        let thread = thread_manager
+            .get_thread(thread_id)
+            .await
+            .map_err(|err| io::Error::other(format!("failed to load thread {thread_id}: {err}")))?;
+        let config = load_refresh_config(thread.as_ref(), config_manager).await?;
+        refreshes.push((thread, config));
+    }
+    for (thread, config) in refreshes {
+        thread.refresh_mcp_config(config).await;
+    }
+    Ok(())
+}
+
+pub(crate) async fn reload_mcp_config_best_effort(
+    thread_manager: &Arc<ThreadManager>,
+    config_manager: &ConfigManager,
+) {
+    for thread_id in thread_manager.list_thread_ids().await {
+        let thread = match thread_manager.get_thread(thread_id).await {
+            Ok(thread) => thread,
+            Err(err) => {
+                warn!(%thread_id, %err, "failed to load thread for MCP configuration refresh");
+                continue;
+            }
+        };
+        let config = match load_refresh_config(thread.as_ref(), config_manager).await {
+            Ok(config) => config,
+            Err(err) => {
+                warn!(%thread_id, %err, "failed to load thread MCP configuration");
+                continue;
+            }
+        };
+        thread.refresh_mcp_config(config).await;
+    }
+}
+
+async fn load_refresh_config(
+    thread: &RuxexThread,
+    config_manager: &ConfigManager,
+) -> io::Result<Config> {
+    let thread_config = thread.config().await;
+    config_manager
+        .load_latest_config_with_session_layers(
+            &thread_config.config_layer_stack,
+            &thread_config.cwd,
+        )
+        .await
+}

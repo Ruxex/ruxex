@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose an improvement to Ruxex
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search existing issues before opening a new request. For a substantial
+        provider, protocol, persistence, or security change, include the
+        affected boundary and compatibility considerations.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and use case
+      description: What problem would this solve, and who is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the API, runtime, or user-facing behavior you propose.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

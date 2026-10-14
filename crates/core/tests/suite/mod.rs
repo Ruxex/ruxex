@@ -1,0 +1,164 @@
+// Aggregates all former standalone integration tests as modules.
+use ruxex_apply_patch::RUXEX_CORE_APPLY_PATCH_ARG1;
+#[cfg(unix)]
+use ruxex_exec_server::RUXEX_ARG0_EXEC_HELPER_ARG1;
+use ruxex_exec_server::RUXEX_FS_HELPER_ARG1;
+use ruxex_sandboxing::landlock::RUXEX_LINUX_SANDBOX_ARG0;
+use ruxex_test_binary_support::TestBinaryDispatchGuard;
+use ruxex_test_binary_support::TestBinaryDispatchMode;
+use ruxex_test_binary_support::configure_test_binary_dispatch;
+use ctor::ctor;
+
+// This code runs before any other tests are run.
+// It allows the test binary to behave like ruxex and dispatch to apply_patch and ruxex-linux-sandbox
+// based on the arg0.
+// NOTE: this doesn't work on ARM
+#[ctor]
+pub static RUXEX_ALIASES_TEMP_DIR: Option<TestBinaryDispatchGuard> = {
+    configure_test_binary_dispatch("ruxex-core-tests", |exe_name, argv1| {
+        if argv1 == Some(RUXEX_CORE_APPLY_PATCH_ARG1) {
+            return TestBinaryDispatchMode::DispatchArg0Only;
+        }
+        #[cfg(unix)]
+        if argv1 == Some(RUXEX_ARG0_EXEC_HELPER_ARG1) {
+            return TestBinaryDispatchMode::DispatchArg0Only;
+        }
+        if argv1 == Some(RUXEX_FS_HELPER_ARG1) {
+            return TestBinaryDispatchMode::DispatchArg0Only;
+        }
+        if exe_name == RUXEX_LINUX_SANDBOX_ARG0 {
+            return TestBinaryDispatchMode::DispatchArg0Only;
+        }
+        TestBinaryDispatchMode::InstallAliases
+    })
+};
+
+#[cfg(not(target_os = "windows"))]
+mod abort_tasks;
+mod additional_context;
+mod agent_execution;
+mod agent_websocket;
+mod agents_md;
+mod apply_patch_cli;
+mod apply_patch_serialization;
+#[cfg(not(target_os = "windows"))]
+mod approvals;
+mod audio_truncation;
+mod catalog_permission_messages;
+mod client_websockets;
+mod cloud_config;
+mod code_mode_elicitation;
+mod collaboration_instructions;
+mod compact;
+mod compact_resume_fork;
+mod context_annotations;
+mod current_time_reminder;
+mod cyber_access_program;
+mod cyber_exec_policy;
+mod deprecation_notice;
+mod exec;
+mod exec_policy;
+mod external_auth;
+mod fork_thread;
+mod git_enrichment;
+// Uses the same command-approval harness as guardian_review below.
+#[cfg(not(target_os = "windows"))]
+#[cfg(not(target_os = "windows"))]
+mod hooks;
+#[cfg(not(target_os = "windows"))]
+#[cfg(not(target_os = "windows"))]
+mod hooks_mcp;
+mod image_rollout;
+mod injected_models_cache;
+#[cfg(not(target_os = "windows"))]
+mod interrupt_hooks;
+mod items;
+mod json_result;
+mod live_cli;
+#[path = "managed_threads_tests.rs"]
+mod managed_threads;
+mod mcp_ema_config;
+#[cfg(unix)]
+mod mcp_refresh_cleanup;
+mod mcp_startup_refresh_http_proxy;
+mod mcp_subagent_elicitation;
+mod mcp_user_verification;
+mod model_overrides;
+mod model_runtime_selectors;
+mod model_switching;
+mod model_visible_layout;
+mod models_cache_auth;
+mod models_cache_ttl;
+mod models_etag_responses;
+mod multi_agent_mode;
+mod multi_agent_resume;
+#[cfg(unix)]
+mod multi_exec_server_sandbox;
+mod network_approval;
+mod otel;
+mod override_updates;
+mod pending_input;
+mod pending_input_persistence;
+mod permissions_messages;
+mod prompt_cache_key;
+mod prompt_caching;
+mod prompt_debug_tests;
+mod quota_exceeded;
+mod reasoning_effort_override;
+mod remote_models;
+mod request_compression;
+#[cfg(not(target_os = "windows"))]
+mod request_permissions;
+#[cfg(not(target_os = "windows"))]
+mod request_permissions_tool;
+mod request_user_input;
+mod request_user_input_async;
+mod responses_api_proxy_headers;
+mod safety_check_downgrade;
+#[cfg(target_os = "linux")]
+mod responses_system_proxy;
+mod resume;
+mod resume_warning;
+mod retry_after;
+mod review;
+mod rollout_budget;
+mod rollout_compression;
+mod rollout_list_find;
+mod safety_buffering;
+mod scenarios;
+mod settings_commits;
+mod settings_constraints;
+mod shell_snapshot;
+mod skill_approval;
+mod skills;
+mod spawn_agent_description;
+mod spawn_agent_tool_descriptions;
+mod sqlite_state;
+mod startup_cancellation;
+mod step_settings_snapshots;
+mod stream_error_allows_next_turn;
+mod stream_no_completed;
+mod subagent_notifications;
+mod subagent_service_tier;
+mod token_budget;
+mod token_usage_rollout;
+mod tool_harness;
+mod tool_parallelism;
+mod tools;
+mod truncation;
+mod turn_input_submission;
+mod turn_state;
+mod unified_exec;
+mod unified_exec_process_events;
+mod unified_exec_stdin_approval;
+mod unified_exec_stdin_review_size;
+#[cfg(unix)]
+mod unstable_features_warning;
+mod user_notification;
+mod user_shell_cmd;
+mod view_image;
+mod web_search;
+mod websocket_fallback;
+mod window_headers;
+mod workspace_roots;
+mod worktree_trust;
