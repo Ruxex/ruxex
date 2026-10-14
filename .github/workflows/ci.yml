@@ -95,45 +95,130 @@ jobs:
           - linux
           - macos
         group:
-          - core
-          - app
+          - core-1
+          - core-2
+          - app-1
+          - app-2
           - runtime
         include:
-          - group: core
+          - group: core-1
             filter: >-
-              package(ruxex-core*) |
-              package(ruxex-config*) |
-              package(ruxex-state) |
-              package(ruxex-history) |
-              package(ruxex-thread-store) |
-              package(ruxex-message-history) |
-              package(ruxex-model*) |
-              package(ruxex-providers) |
-              package(ruxex-protocol) |
               package(ruxex-api) |
-              package(ruxex-context-fragments) |
-              package(ruxex-prompts) |
-              package(ruxex-rollout*) |
+              package(ruxex-config) |
+              package(ruxex-config-schema) |
+              package(ruxex-core) |
+              package(ruxex-core-api) |
+              package(ruxex-core-plugins) |
+              package(ruxex-model-provider) |
+              package(ruxex-model-provider-info) |
+              package(ruxex-models-manager) |
+              package(ruxex-protocol) |
+              package(ruxex-provider-host-example) |
+              package(ruxex-providers)
+            package_args: >-
+              --package ruxex-api
+              --package ruxex-config
+              --package ruxex-config-schema
+              --package ruxex-core
+              --package ruxex-core-api
+              --package ruxex-core-plugins
+              --package ruxex-model-provider
+              --package ruxex-model-provider-info
+              --package ruxex-models-manager
+              --package ruxex-protocol
+              --package ruxex-provider-host-example
+              --package ruxex-providers
+          - group: core-2
+            filter: >-
               package(core_test_support) |
               package(ruxex-agent-graph-store) |
               package(ruxex-agent-roles) |
               package(ruxex-attachment-store) |
-              package(ruxex-provider-host-example)
-          - group: app
+              package(ruxex-context-fragments) |
+              package(ruxex-history) |
+              package(ruxex-message-history) |
+              package(ruxex-prompts) |
+              package(ruxex-rollout) |
+              package(ruxex-rollout-trace) |
+              package(ruxex-state) |
+              package(ruxex-thread-store)
+            package_args: >-
+              --package core_test_support
+              --package ruxex-agent-graph-store
+              --package ruxex-agent-roles
+              --package ruxex-attachment-store
+              --package ruxex-context-fragments
+              --package ruxex-history
+              --package ruxex-message-history
+              --package ruxex-prompts
+              --package ruxex-rollout
+              --package ruxex-rollout-trace
+              --package ruxex-state
+              --package ruxex-thread-store
+          - group: app-1
             filter: >-
-              package(ruxex-app-server*) |
+              package(app_test_support) |
+              package(ruxex-app-server) |
+              package(ruxex-app-server-client) |
+              package(ruxex-app-server-daemon) |
+              package(ruxex-app-server-protocol) |
+              package(ruxex-app-server-protocol-noop-macros) |
+              package(ruxex-app-server-test-client) |
+              package(ruxex-app-server-transport) |
               package(ruxex-cli) |
-              package(ruxex-tui) |
-              package(ruxex-code-mode*) |
-              package(ruxex-plugin) |
-              package(ruxex-skills*) |
-              package(ruxex-tools) |
-              package(ruxex-extension*) |
-              package(ruxex-*-extension) |
-              package(ruxex-mcp) |
-              package(ruxex-rmcp-client) |
+              package(ruxex-code-mode-host)
+            package_args: >-
+              --package app_test_support
+              --package ruxex-app-server
+              --package ruxex-app-server-client
+              --package ruxex-app-server-daemon
+              --package ruxex-app-server-protocol
+              --package ruxex-app-server-protocol-noop-macros
+              --package ruxex-app-server-test-client
+              --package ruxex-app-server-transport
+              --package ruxex-cli
+              --package ruxex-code-mode-host
+          - group: app-2
+            filter: >-
+              package(ruxex-agent-extension) |
+              package(ruxex-code-mode) |
+              package(ruxex-code-mode-protocol) |
+              package(ruxex-code-mode-runtime) |
               package(ruxex-desktop) |
-              package(app_test_support)
+              package(ruxex-extension-api) |
+              package(ruxex-extension-items) |
+              package(ruxex-goal-extension) |
+              package(ruxex-history-notes-extension) |
+              package(ruxex-mcp) |
+              package(ruxex-mcp-extension) |
+              package(ruxex-plugin) |
+              package(ruxex-queue-extension) |
+              package(ruxex-rmcp-client) |
+              package(ruxex-skills) |
+              package(ruxex-skills-extension) |
+              package(ruxex-tools) |
+              package(ruxex-tui) |
+              package(ruxex-web-search-extension)
+            package_args: >-
+              --package ruxex-agent-extension
+              --package ruxex-code-mode
+              --package ruxex-code-mode-protocol
+              --package ruxex-code-mode-runtime
+              --package ruxex-desktop
+              --package ruxex-extension-api
+              --package ruxex-extension-items
+              --package ruxex-goal-extension
+              --package ruxex-history-notes-extension
+              --package ruxex-mcp
+              --package ruxex-mcp-extension
+              --package ruxex-plugin
+              --package ruxex-queue-extension
+              --package ruxex-rmcp-client
+              --package ruxex-skills
+              --package ruxex-skills-extension
+              --package ruxex-tools
+              --package ruxex-tui
+              --package ruxex-web-search-extension
           - group: runtime
             filter: >-
               not (
@@ -169,10 +254,88 @@ jobs:
                 package(ruxex-desktop) |
                 package(app_test_support)
               )
+            package_args: >-
+              --workspace
+              --exclude app_test_support
+              --exclude core_test_support
+              --exclude ruxex-agent-extension
+              --exclude ruxex-agent-graph-store
+              --exclude ruxex-agent-roles
+              --exclude ruxex-api
+              --exclude ruxex-app-server
+              --exclude ruxex-app-server-client
+              --exclude ruxex-app-server-daemon
+              --exclude ruxex-app-server-protocol
+              --exclude ruxex-app-server-protocol-noop-macros
+              --exclude ruxex-app-server-test-client
+              --exclude ruxex-app-server-transport
+              --exclude ruxex-attachment-store
+              --exclude ruxex-cli
+              --exclude ruxex-code-mode
+              --exclude ruxex-code-mode-host
+              --exclude ruxex-code-mode-protocol
+              --exclude ruxex-code-mode-runtime
+              --exclude ruxex-config
+              --exclude ruxex-config-schema
+              --exclude ruxex-core
+              --exclude ruxex-core-api
+              --exclude ruxex-core-plugins
+              --exclude ruxex-context-fragments
+              --exclude ruxex-desktop
+              --exclude ruxex-extension-api
+              --exclude ruxex-extension-items
+              --exclude ruxex-goal-extension
+              --exclude ruxex-history
+              --exclude ruxex-history-notes-extension
+              --exclude ruxex-message-history
+              --exclude ruxex-mcp
+              --exclude ruxex-mcp-extension
+              --exclude ruxex-model-provider
+              --exclude ruxex-model-provider-info
+              --exclude ruxex-models-manager
+              --exclude ruxex-plugin
+              --exclude ruxex-prompts
+              --exclude ruxex-protocol
+              --exclude ruxex-provider-host-example
+              --exclude ruxex-providers
+              --exclude ruxex-queue-extension
+              --exclude ruxex-rmcp-client
+              --exclude ruxex-rollout
+              --exclude ruxex-rollout-trace
+              --exclude ruxex-skills
+              --exclude ruxex-skills-extension
+              --exclude ruxex-state
+              --exclude ruxex-thread-store
+              --exclude ruxex-tools
+              --exclude ruxex-tui
+              --exclude ruxex-web-search-extension
 
     steps:
       - name: Check out source
         uses: actions/checkout@v4.2.2
+
+      - name: Free disk space on Linux
+        if: matrix.os == 'linux'
+        run: |
+          set -euo pipefail
+          echo "Disk before cleanup:"
+          df -h .
+          for path in \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/lib/android \
+            /usr/local/share/powershell \
+            /usr/local/share/vcpkg \
+            /usr/share/dotnet \
+            /usr/share/swift; do
+            if [ -e "$path" ]; then
+              sudo rm -rf -- "$path"
+            fi
+          done
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          echo "Disk after cleanup:"
+          df -h .
 
       - name: Install Linux dependencies
         if: matrix.os == 'linux'
@@ -220,11 +383,13 @@ jobs:
       - name: Build nextest archive
         env:
           NEXTEST_FILTERSET: ${{ matrix.filter }}
+          NEXTEST_PACKAGE_ARGS: ${{ matrix.package_args }}
         run: |
           mkdir -p "$RUNNER_TEMP/ruxex-nextest"
           just test-archive \
             "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst" \
-            "$NEXTEST_FILTERSET"
+            "$NEXTEST_FILTERSET" \
+            $NEXTEST_PACKAGE_ARGS
 
       - name: Inspect disk after archive build
         if: always()
@@ -261,8 +426,10 @@ jobs:
           - linux
           - macos
         group:
-          - core
-          - app
+          - core-1
+          - core-2
+          - app-1
+          - app-2
           - runtime
 
     steps:

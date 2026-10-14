@@ -70,7 +70,7 @@ test-cargo *args: prepare-rusty-v8
 # Build a portable nextest archive for CI test groups.
 [unix]
 test-archive archive_file filterset *args: prepare-rusty-v8
-    RUST_MIN_STACK={{ rust_min_stack }} RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest archive --workspace --archive-file "{{ archive_file }}" --filterset "{{ filterset }}" {{ args }}
+    RUST_MIN_STACK={{ rust_min_stack }} RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest archive --archive-file "{{ archive_file }}" --filterset "{{ filterset }}" {{ args }}
 
 # Run tests from a previously built nextest archive.
 [unix]
