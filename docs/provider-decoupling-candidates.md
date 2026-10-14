@@ -2,6 +2,24 @@
 
 この文書は、[provider 固有機能の段階的な分離計画](provider-decoupling-plan.md) に対する 2026-09-27 時点の追加調査結果を記録する。
 
+## Ruxex publication-boundary candidates (2026-10-14)
+
+The public publication candidate is intentionally narrower than the historical working
+repository. The following are investigation candidates, not deletion decisions:
+
+| Candidate | Producer / consumer audit required | Initial decision |
+|---|---|---|
+| Internal plans, specifications, inspection maps, and architecture snapshots under `docs/superpowers`, `docs/inspection`, and `docs/cli-architecture` | Confirm no user-facing build, runtime, schema, or legal consumer; preserve any legal/provenance fact separately | `move-to-private-record` |
+| Compatibility inventories, provider-decoupling notes, Hawk reports, and line-count TSVs | Confirm they are maintainer-only audit outputs and identify any required public attribution summary | `move-to-private-record` |
+| Existing issue templates, CODEOWNERS, splash assets, desktop staging, and repository-owned support links | Inspect active GitHub, desktop, packaging, and contribution consumers after the Ruxex rename | `migrate-in-place` or `remove` |
+| Checked-in generated schemas and V8 checksum manifests | Confirm each producer and runtime/client consumer before removal; preserve reproducibility metadata | `retain` unless an explicit consumer audit proves it is obsolete |
+| Local build caches, temporary reports, and machine-specific paths | Confirm no source or release process expects them to be versioned | `remove` |
+
+The publication boundary does not authorize removing external OpenAI endpoint contracts,
+third-party identifiers, legal notices, upstream attribution, or security behavior. Findings
+that cross those boundaries remain separate candidates and must receive a `remove`, `retain`,
+or `migrate-in-place` decision before implementation.
+
 ## 単一Provider runtimeの最終境界監査 (2026-10-09)
 
 ### 固定CLIバイナリのホスト移行監査 (2026-10-13)
