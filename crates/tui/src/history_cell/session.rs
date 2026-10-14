@@ -134,6 +134,7 @@ pub(crate) fn new_session_info(
     is_first_event: bool,
     tooltip_override: Option<String>,
     auth_plan: Option<PlanType>,
+    provider_name: &str,
 ) -> SessionInfoCell {
     // Header box rendered as history (so it appears at the very top)
     let header = SessionHeaderHistoryCell::new(
@@ -142,6 +143,7 @@ pub(crate) fn new_session_info(
         config.cwd.to_path_buf(),
         GENEX_CLI_VERSION,
     )
+    .with_provider_name(provider_name.to_string())
     .with_yolo_mode(has_yolo_permissions(
         session.approval_policy,
         &session.permission_profile,
@@ -227,6 +229,7 @@ pub(crate) fn has_yolo_permissions(
 }
 #[derive(Debug)]
 pub(crate) struct SessionHeaderHistoryCell {
+    provider_name: String,
     version: &'static str,
     model: String,
     model_style: Style,
@@ -259,6 +262,7 @@ impl SessionHeaderHistoryCell {
         version: &'static str,
     ) -> Self {
         Self {
+            provider_name: "Provider".to_string(),
             version,
             model,
             model_style,
@@ -270,6 +274,11 @@ impl SessionHeaderHistoryCell {
 
     pub(crate) fn with_yolo_mode(mut self, yolo_mode: bool) -> Self {
         self.yolo_mode = yolo_mode;
+        self
+    }
+
+    pub(crate) fn with_provider_name(mut self, provider_name: String) -> Self {
+        self.provider_name = provider_name;
         self
     }
 
@@ -315,10 +324,10 @@ impl HistoryCell for SessionHeaderHistoryCell {
 
         let make_row = |spans: Vec<Span<'static>>| Line::from(spans);
 
-        // Title line rendered inside the box: ">_ provider Genex (vX)"
+        // Title line rendered inside the box: ">_ provider <name> (vX)"
         let title_spans: Vec<Span<'static>> = vec![
             Span::from(">_ ").dim(),
-            Span::from("provider Genex").bold(),
+            Span::from(format!("provider {}", self.provider_name)).bold(),
             Span::from(" ").dim(),
             Span::from(format!("(v{})", self.version)).dim(),
         ];
@@ -385,7 +394,10 @@ impl HistoryCell for SessionHeaderHistoryCell {
 
     fn raw_lines(&self) -> Vec<Line<'static>> {
         let mut lines = vec![
-            Line::from(format!("provider Genex (v{})", self.version)),
+            Line::from(format!(
+                "provider {} (v{})",
+                self.provider_name, self.version
+            )),
             Line::from(format!(
                 "model: {}{}",
                 self.model,

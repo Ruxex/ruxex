@@ -674,6 +674,10 @@ impl App {
         if startup_session_cancelled {
             start_in_agents_overview = true;
         }
+        chat_widget.set_provider_context(
+            &bootstrap.provider_status,
+            bootstrap.provider_capabilities.clone(),
+        );
         chat_widget.note_rendered_width(tui.terminal.last_known_screen_size.width);
         chat_widget.remote_connection = remote_connection;
         chat_widget.snapshot_local_images = app_server_target.uses_remote_workspace();

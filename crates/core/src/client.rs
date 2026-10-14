@@ -34,8 +34,9 @@ use std::sync::atomic::Ordering;
 
 use crate::GenexResponsesHeaders;
 use async_channel::Sender;
-use genex_api::ApiError;
 use genex_login::default_client::add_originator_header;
+use genex_otel::ProviderResponseEvent;
+use genex_otel::ProviderSafetyBuffering;
 use genex_otel::SessionTelemetry;
 use genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
 use genex_otel::current_span_w3c_trace_context;
@@ -1697,13 +1698,13 @@ const STREAM_DROPPED_REASON: &str = "response stream dropped before provider ter
 
 pub(crate) fn provider_event_to_telemetry_event(
     event: &ProviderChatEvent,
-) -> genex_api::ResponseEvent {
+) -> ProviderResponseEvent {
     match event {
-        ProviderChatEvent::Created { response_id } => genex_api::ResponseEvent::Created {
+        ProviderChatEvent::Created { response_id } => ProviderResponseEvent::Created {
             response_id: response_id.clone(),
         },
         ProviderChatEvent::SafetyBuffering(buffering) => {
-            genex_api::ResponseEvent::SafetyBuffering(genex_api::SafetyBuffering {
+            ProviderResponseEvent::SafetyBuffering(ProviderSafetyBuffering {
                 use_cases: buffering.use_cases.clone(),
                 reasons: buffering.reasons.clone(),
                 show_buffering_ui: buffering.show_buffering_ui,
@@ -1711,39 +1712,37 @@ pub(crate) fn provider_event_to_telemetry_event(
             })
         }
         ProviderChatEvent::OutputItemDone(item) => {
-            genex_api::ResponseEvent::OutputItemDone(item.clone())
+            ProviderResponseEvent::OutputItemDone(item.clone())
         }
         ProviderChatEvent::OutputItemAdded(item) => {
-            genex_api::ResponseEvent::OutputItemAdded(item.clone())
+            ProviderResponseEvent::OutputItemAdded(item.clone())
         }
-        ProviderChatEvent::ServerModel(model) => {
-            genex_api::ResponseEvent::ServerModel(model.clone())
-        }
+        ProviderChatEvent::ServerModel(model) => ProviderResponseEvent::ServerModel(model.clone()),
         ProviderChatEvent::ModelVerifications(verifications) => {
-            genex_api::ResponseEvent::ModelVerifications(verifications.clone())
+            ProviderResponseEvent::ModelVerifications(verifications.clone())
         }
         ProviderChatEvent::ServerReasoningIncluded(included) => {
-            genex_api::ResponseEvent::ServerReasoningIncluded(*included)
+            ProviderResponseEvent::ServerReasoningIncluded(*included)
         }
         ProviderChatEvent::Completed {
             response_id,
             token_usage,
             usage_metadata,
             end_turn,
-        } => genex_api::ResponseEvent::Completed {
+        } => ProviderResponseEvent::Completed {
             response_id: response_id.clone(),
             token_usage: token_usage.clone(),
             usage_metadata: usage_metadata.clone(),
             end_turn: *end_turn,
         },
         ProviderChatEvent::OutputTextDelta(delta) => {
-            genex_api::ResponseEvent::OutputTextDelta(delta.clone())
+            ProviderResponseEvent::OutputTextDelta(delta.clone())
         }
         ProviderChatEvent::ToolCallInputDelta {
             item_id,
             call_id,
             delta,
-        } => genex_api::ResponseEvent::ToolCallInputDelta {
+        } => ProviderResponseEvent::ToolCallInputDelta {
             item_id: item_id.clone(),
             call_id: call_id.clone(),
             delta: delta.clone(),
@@ -1751,7 +1750,7 @@ pub(crate) fn provider_event_to_telemetry_event(
         ProviderChatEvent::ReasoningSummaryDelta {
             delta,
             summary_index,
-        } => genex_api::ResponseEvent::ReasoningSummaryDelta {
+        } => ProviderResponseEvent::ReasoningSummaryDelta {
             delta: delta.clone(),
             summary_index: *summary_index,
         },
@@ -1759,7 +1758,7 @@ pub(crate) fn provider_event_to_telemetry_event(
             item_id,
             text,
             summary_index,
-        } => genex_api::ResponseEvent::ReasoningSummaryDone {
+        } => ProviderResponseEvent::ReasoningSummaryDone {
             item_id: item_id.clone(),
             text: text.clone(),
             summary_index: *summary_index,
@@ -1767,19 +1766,19 @@ pub(crate) fn provider_event_to_telemetry_event(
         ProviderChatEvent::ReasoningContentDelta {
             delta,
             content_index,
-        } => genex_api::ResponseEvent::ReasoningContentDelta {
+        } => ProviderResponseEvent::ReasoningContentDelta {
             delta: delta.clone(),
             content_index: *content_index,
         },
         ProviderChatEvent::ReasoningSummaryPartAdded { summary_index } => {
-            genex_api::ResponseEvent::ReasoningSummaryPartAdded {
+            ProviderResponseEvent::ReasoningSummaryPartAdded {
                 summary_index: *summary_index,
             }
         }
         ProviderChatEvent::RateLimits(snapshot) => {
-            genex_api::ResponseEvent::RateLimits(snapshot.clone())
+            ProviderResponseEvent::RateLimits(snapshot.clone())
         }
-        ProviderChatEvent::ModelsEtag(etag) => genex_api::ResponseEvent::ModelsEtag(etag.clone()),
+        ProviderChatEvent::ModelsEtag(etag) => ProviderResponseEvent::ModelsEtag(etag.clone()),
     }
 }
 
@@ -2048,7 +2047,7 @@ impl ProviderStreamTelemetry for ApiTelemetry {
             ProviderStreamEvent::Message(payload) => {
                 Ok(Some(Ok(Message::Text(payload.to_string().into()))))
             }
-            ProviderStreamEvent::Error(error) => Err(ApiError::Stream(error.to_string())),
+            ProviderStreamEvent::Error(error) => Err(error.to_string()),
             ProviderStreamEvent::Closed => Ok(None),
             ProviderStreamEvent::Ignored => return,
         };

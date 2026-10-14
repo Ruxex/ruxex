@@ -18,6 +18,7 @@ pub(crate) use account::StatusAccountDisplay;
 pub(crate) use card::StatusHistoryHandle;
 #[cfg(test)]
 pub(crate) use card::new_status_output;
+pub(crate) use card::new_status_output_with_provider_context;
 #[cfg(test)]
 pub(crate) use card::new_status_output_with_rate_limits;
 pub(crate) use card::new_status_output_with_rate_limits_handle;

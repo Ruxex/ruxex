@@ -514,6 +514,7 @@ async fn session_info_uses_availability_nux_tooltip_override() {
         /*is_first_event*/ false,
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
+        "Provider",
     );
 
     let rendered = render_transcript(&cell).join("\n");
@@ -538,6 +539,7 @@ async fn session_info_first_event_suppresses_tooltips_and_nux() {
         /*is_first_event*/ true,
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
+        "Provider",
     );
 
     let rendered = render_transcript(&cell).join("\n");
@@ -557,6 +559,7 @@ async fn session_info_hides_tooltips_when_disabled() {
         /*is_first_event*/ false,
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
+        "Provider",
     );
 
     let rendered = render_transcript(&cell).join("\n");
@@ -799,6 +802,21 @@ fn session_header_includes_reasoning_level_when_present() {
 
     assert!(model_line.contains("legacy-model-4o high"));
     assert!(model_line.contains("/model to change"));
+}
+
+#[test]
+fn session_header_uses_injected_provider_name() {
+    let cell = SessionHeaderHistoryCell::new(
+        "example-model".to_string(),
+        None,
+        std::env::temp_dir(),
+        "test",
+    )
+    .with_provider_name("Injected Provider".to_string());
+
+    let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
+    assert!(rendered.contains("provider Injected Provider"));
+    assert!(!rendered.contains("provider Genex"));
 }
 
 

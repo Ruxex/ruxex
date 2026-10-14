@@ -4286,7 +4286,6 @@ dependencies = [
  "futures",
  "genex-agent-graph-store",
  "genex-agent-roles",
- "genex-api",
  "genex-app-server-protocol",
  "genex-apply-patch",
  "genex-async-utils",
@@ -5196,7 +5195,6 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "eventsource-stream",
- "genex-api",
  "genex-protocol",
  "genex-utils-absolute-path",
  "genex-utils-string",

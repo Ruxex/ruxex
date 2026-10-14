@@ -9,12 +9,23 @@ const ULTRA_REASONING_CONCURRENCY_WARNING_THRESHOLD: usize = 8;
 pub(super) const MODEL_SELECTION_VIEW_ID: &str = "model-selection";
 pub(super) const ALL_MODELS_SELECTION_VIEW_ID: &str = "all-models-selection";
 
+fn model_listing_supported(capabilities: Option<&ModelProviderCapabilitiesReadResponse>) -> bool {
+    capabilities.is_none_or(|capabilities| capabilities.model_listing)
+}
+
 impl ChatWidget {
     /// Open a popup with every picker-visible model from the active catalog.
     pub(crate) fn open_model_popup(&mut self) {
         if !self.is_session_configured() {
             self.add_info_message(
                 "Model selection is disabled until startup completes.".to_string(),
+                /*hint*/ None,
+            );
+            return;
+        }
+        if !model_listing_supported(self.provider_capabilities.as_ref()) {
+            self.add_info_message(
+                "This provider does not support model listing.".to_string(),
                 /*hint*/ None,
             );
             return;
@@ -599,5 +610,33 @@ impl ChatWidget {
         {
             action(&self.app_event_tx);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::model_listing_supported;
+    use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+    use genex_app_server_protocol::RemoteCompactionSupport;
+
+    #[test]
+    fn model_listing_affordance_is_hidden_when_provider_does_not_support_listing() {
+        let capabilities = ModelProviderCapabilitiesReadResponse {
+            model_listing: false,
+            api_key_model_discovery: false,
+            command_auth: false,
+            streaming: true,
+            websocket: false,
+            usage: false,
+            interactive_login: false,
+            namespace_tools: false,
+            web_search: false,
+            standalone_web_search: false,
+            external_web_access: false,
+            history_notes: false,
+            remote_compaction: RemoteCompactionSupport::Unsupported,
+        };
+
+        assert!(!model_listing_supported(Some(&capabilities)));
     }
 }

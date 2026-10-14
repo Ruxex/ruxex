@@ -1,4 +1,5 @@
 use super::new_status_output;
+use super::new_status_output_with_provider_context;
 use super::new_status_output_with_rate_limits;
 use super::new_status_output_with_rate_limits_handle;
 use super::rate_limit_snapshot_display;
@@ -233,6 +234,38 @@ fn buffer_to_text(buffer: &Buffer, width: u16) -> String {
         })
         .collect::<Vec<_>>();
     sanitize_directory(lines).join("\n")
+}
+
+#[tokio::test]
+async fn status_header_uses_server_provider_name() {
+    let temp_home = TempDir::new().expect("temp home");
+    let config = test_config(&temp_home).await;
+    let usage = TokenUsage::default();
+    let model_slug = get_model_offline_for_tests(config.model.as_deref());
+    let composite = new_status_output_with_provider_context(
+        &config,
+        None,
+        None,
+        None,
+        &usage,
+        &None,
+        None,
+        None,
+        &[],
+        None,
+        Local::now(),
+        &model_slug,
+        None,
+        None,
+        "<none>".to_string(),
+        false,
+        Some("Injected Provider"),
+    )
+    .0;
+
+    let rendered = render_lines(&composite.display_lines(/*width*/ 120));
+    assert!(rendered.iter().any(|line| line.contains("provider Injected Provider")));
+    assert!(!rendered.iter().any(|line| line.contains("provider Genex")));
 }
 
 fn reset_at_from(captured_at: &chrono::DateTime<chrono::Local>, seconds: i64) -> i64 {

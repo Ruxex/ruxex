@@ -95,6 +95,8 @@ use genex_app_server_protocol::ItemStartedNotification;
 use genex_app_server_protocol::McpServerElicitationRequest;
 use genex_app_server_protocol::McpServerElicitationRequestParams;
 use genex_app_server_protocol::McpServerStatusDetail;
+use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use genex_app_server_protocol::ModelProviderReadResponse;
 use genex_app_server_protocol::ModelVerification as AppServerModelVerification;
 use genex_app_server_protocol::RateLimitReachedType;
 use genex_app_server_protocol::RateLimitSnapshot;
@@ -535,6 +537,8 @@ pub(crate) struct ChatWidget {
     session_header: SessionHeader,
     pub(crate) initial_user_message: Option<UserMessage>,
     status_account_display: Option<StatusAccountDisplay>,
+    pub(crate) provider_display_name: String,
+    pub(crate) provider_capabilities: Option<ModelProviderCapabilitiesReadResponse>,
     pub(crate) remote_connection: Option<RemoteConnectionStatus>,
     /// Remote app servers cannot read image paths on the TUI host.
     pub(crate) snapshot_local_images: bool,

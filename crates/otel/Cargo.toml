@@ -16,7 +16,6 @@ workspace = true
 chrono = { workspace = true }
 genex-utils-absolute-path = { workspace = true }
 genex-utils-string = { workspace = true }
-genex-api = { workspace = true }
 genex-protocol = { workspace = true }
 eventsource-stream = { workspace = true }
 gethostname = { workspace = true }

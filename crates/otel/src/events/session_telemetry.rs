@@ -1,3 +1,4 @@
+use crate::ProviderResponseEvent;
 use crate::TelemetryAuthMode;
 use crate::ToolDecisionSource;
 use crate::events::shared::log_and_trace_event;
@@ -37,8 +38,6 @@ use crate::tool_result::ToolResultEvent;
 use crate::tool_result::emit_tool_result;
 use eventsource_stream::Event as StreamEvent;
 use eventsource_stream::EventStreamError as StreamError;
-use genex_api::ApiError;
-use genex_api::ResponseEvent;
 use genex_protocol::AgentPath;
 use genex_protocol::ThreadId;
 use genex_protocol::ToolName;
@@ -534,23 +533,23 @@ impl SessionTelemetry {
         }
     }
 
-    pub fn record_responses(&self, handle_responses_span: &Span, event: &ResponseEvent) {
+    pub fn record_responses(&self, handle_responses_span: &Span, event: &ProviderResponseEvent) {
         handle_responses_span.record("otel.name", SessionTelemetry::responses_type(event));
 
         match event {
-            ResponseEvent::OutputItemDone(item) => {
+            ProviderResponseEvent::OutputItemDone(item) => {
                 handle_responses_span.record("from", "output_item_done");
                 if let ResponseItem::FunctionCall { name, .. } = item {
                     handle_responses_span.record("tool_name", name.as_str());
                 }
             }
-            ResponseEvent::OutputItemAdded(item) => {
+            ProviderResponseEvent::OutputItemAdded(item) => {
                 handle_responses_span.record("from", "output_item_added");
                 if let ResponseItem::FunctionCall { name, .. } = item {
                     handle_responses_span.record("tool_name", name.as_str());
                 }
             }
-            ResponseEvent::Completed {
+            ProviderResponseEvent::Completed {
                 token_usage: Some(token_usage),
                 ..
             } => {
@@ -813,15 +812,7 @@ impl SessionTelemetry {
 
     pub fn record_websocket_event(
         &self,
-        result: &Result<
-            Option<
-                Result<
-                    tokio_tungstenite::tungstenite::Message,
-                    tokio_tungstenite::tungstenite::Error,
-                >,
-            >,
-            ApiError,
-        >,
+        result: &Result<Option<Result<tokio_tungstenite::tungstenite::Message, String>>, String>,
         duration: Duration,
     ) {
         let mut kind = None;
@@ -1256,27 +1247,28 @@ impl SessionTelemetry {
         }
     }
 
-    fn responses_type(event: &ResponseEvent) -> String {
+    fn responses_type(event: &ProviderResponseEvent) -> String {
         match event {
-            ResponseEvent::Created { .. } => "created".into(),
-            ResponseEvent::OutputItemDone(item) | ResponseEvent::OutputItemAdded(item) => {
+            ProviderResponseEvent::Created { .. } => "created".into(),
+            ProviderResponseEvent::OutputItemDone(item)
+            | ProviderResponseEvent::OutputItemAdded(item) => {
                 SessionTelemetry::responses_item_type(item)
             }
-            ResponseEvent::Completed { .. } => "completed".into(),
-            ResponseEvent::OutputTextDelta(_) => "text_delta".into(),
-            ResponseEvent::ToolCallInputDelta { .. } => "tool_input_delta".into(),
-            ResponseEvent::ReasoningSummaryDelta { .. } => "reasoning_summary_delta".into(),
-            ResponseEvent::ReasoningSummaryDone { .. } => "reasoning_summary_done".into(),
-            ResponseEvent::ReasoningContentDelta { .. } => "reasoning_content_delta".into(),
-            ResponseEvent::ReasoningSummaryPartAdded { .. } => {
+            ProviderResponseEvent::Completed { .. } => "completed".into(),
+            ProviderResponseEvent::OutputTextDelta(_) => "text_delta".into(),
+            ProviderResponseEvent::ToolCallInputDelta { .. } => "tool_input_delta".into(),
+            ProviderResponseEvent::ReasoningSummaryDelta { .. } => "reasoning_summary_delta".into(),
+            ProviderResponseEvent::ReasoningSummaryDone { .. } => "reasoning_summary_done".into(),
+            ProviderResponseEvent::ReasoningContentDelta { .. } => "reasoning_content_delta".into(),
+            ProviderResponseEvent::ReasoningSummaryPartAdded { .. } => {
                 "reasoning_summary_part_added".into()
             }
-            ResponseEvent::ServerModel(_) => "server_model".into(),
-            ResponseEvent::ModelVerifications(_) => "model_verifications".into(),
-            ResponseEvent::SafetyBuffering(_) => "safety_buffering".into(),
-            ResponseEvent::ServerReasoningIncluded(_) => "server_reasoning_included".into(),
-            ResponseEvent::RateLimits(_) => "rate_limits".into(),
-            ResponseEvent::ModelsEtag(_) => "models_etag".into(),
+            ProviderResponseEvent::ServerModel(_) => "server_model".into(),
+            ProviderResponseEvent::ModelVerifications(_) => "model_verifications".into(),
+            ProviderResponseEvent::SafetyBuffering(_) => "safety_buffering".into(),
+            ProviderResponseEvent::ServerReasoningIncluded(_) => "server_reasoning_included".into(),
+            ProviderResponseEvent::RateLimits(_) => "rate_limits".into(),
+            ProviderResponseEvent::ModelsEtag(_) => "models_etag".into(),
         }
     }
 

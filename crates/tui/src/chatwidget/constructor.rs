@@ -118,6 +118,8 @@ impl ChatWidget {
             session_header: SessionHeader::new(header_model),
             initial_user_message,
             status_account_display,
+            provider_display_name: "Provider".to_string(),
+            provider_capabilities: None,
             remote_connection: None,
             snapshot_local_images: false,
             pending_image_submission: None,

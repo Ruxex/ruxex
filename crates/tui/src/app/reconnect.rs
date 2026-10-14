@@ -441,6 +441,10 @@ impl App {
             bootstrap.has_managed_account,
             false,
         );
+        self.chat_widget.set_provider_context(
+            &bootstrap.provider_status,
+            bootstrap.provider_capabilities.clone(),
+        );
         if server_context_changed {
             tracing::info!(
                 "AppServer identity changed during reconnect; adopted a fresh server context"

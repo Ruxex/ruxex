@@ -5,6 +5,21 @@ use crate::app_event::AppEvent;
 use crate::chatwidget::rate_limits::RATE_LIMIT_SWITCH_PROMPT_VIEW_ID;
 
 impl ChatWidget {
+    pub(crate) fn set_provider_context(
+        &mut self,
+        status: &ModelProviderReadResponse,
+        capabilities: ModelProviderCapabilitiesReadResponse,
+    ) {
+        self.provider_display_name = status.name.clone();
+        self.provider_capabilities = Some(capabilities);
+        self.refresh_status_surfaces();
+    }
+
+    pub(crate) fn inherit_provider_context(&mut self, previous: &Self) {
+        self.provider_display_name = previous.provider_display_name.clone();
+        self.provider_capabilities = previous.provider_capabilities.clone();
+    }
+
     /// Set the approval policy in the widget's config copy.
     pub(crate) fn set_approval_policy(&mut self, policy: AskForApproval) {
         if let Err(err) = self

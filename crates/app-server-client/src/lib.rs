@@ -72,6 +72,24 @@ pub use crate::remote::RemoteAppServerClient;
 pub use crate::remote::RemoteAppServerConnectArgs;
 pub use crate::remote::RemoteAppServerEndpoint;
 
+fn mount_provider_home_for_startup(
+    config: &Config,
+    runtime: Option<&AppServerRuntime>,
+) -> IoResult<AppServerIdentity> {
+    let marker = match runtime {
+        Some(runtime) => {
+            genex_app_server::runtime::mount_provider_home_for_runtime(config, runtime)
+        }
+        None => genex_app_server::runtime::mount_provider_home_for_config(config),
+    }
+    .map_err(|error| IoError::new(ErrorKind::InvalidData, error.to_string()))?;
+    Ok(AppServerIdentity::from_provider_home(
+        marker.server_signature,
+        &marker.provider_protocol_version,
+        None,
+    ))
+}
+
 /// Transitional access to core-only embedded app-server types.
 ///
 /// New TUI behavior should prefer the app-server protocol methods. This
@@ -326,15 +344,7 @@ impl InProcessAppServerClient {
     /// Request queues remain bounded without blocking on unread notifications.
     pub async fn start(args: InProcessClientStartArgs) -> IoResult<Self> {
         let channel_capacity = args.channel_capacity.max(1);
-        let identity = genex_app_server::runtime::mount_provider_home_for_config(&args.config)
-            .map(|marker| {
-                AppServerIdentity::from_provider_home(
-                    marker.server_signature,
-                    &marker.provider_protocol_version,
-                    None,
-                )
-            })
-            .map_err(|error| IoError::new(ErrorKind::InvalidData, error.to_string()))?;
+        let identity = mount_provider_home_for_startup(&args.config, args.runtime.as_ref())?;
         let mut handle =
             genex_app_server::in_process::start(args.into_runtime_start_args()).await?;
         let request_sender = handle.sender();
@@ -880,6 +890,24 @@ mod tests {
             .await
             .expect("default config should load"),
         }
+    }
+
+    #[tokio::test]
+    async fn in_process_client_home_mount_prefers_injected_runtime() {
+        let genex_home = TempDir::new().expect("temporary provider home");
+        let config = build_test_config_for_genex_home(genex_home.path()).await;
+        let mut provider_info = config.model_provider.clone();
+        provider_info.id = Some("injected-provider".to_string());
+        let runtime = AppServerRuntimeBuilder::from_provider_info(provider_info, None).build();
+
+        let _identity = mount_provider_home_for_startup(&config, Some(&runtime))
+            .expect("injected provider home should mount");
+        let marker: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(genex_home.path().join("genex-home.json"))
+                .expect("provider home marker should be readable"),
+        )
+        .expect("provider home marker should be JSON");
+        assert_eq!(marker["providerKind"], "injected-provider");
     }
 
     struct TestClient {

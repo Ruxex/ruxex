@@ -125,8 +125,9 @@ core は provider-neutral な正規化 request、header context、turn continuat
 Responses WebSocket、auth recovery、wire transportはProvider契約へ移行済みである。
 同じ再走査で `genex_api::ResponseId` の唯一の producer（`session/turn.rs`）には consumer がなく、
 実行時の共有 state や外部契約に影響しないため、この dead extension-data insert は **remove** とした。
-なお `genex_api::ResponseEvent` への変換は `genex-otel` の既存 telemetry consumer が要求する
-内部観測境界として `client.rs::provider_event_to_telemetry_event` に限定して保持する。
+なお `genex_api::ResponseEvent` からの変換は provider adapter 内の
+`provider_chat_event_from_api` に限定し、Core/OTel の境界は provider-neutral な
+`ProviderResponseEvent` として保持する。
 
 さらに `SessionConfiguration` から `TurnContext` まで同じ contract handle を引き継ぎ、compaction、
 hosted/standalone Web Search、namespace tools の capability 判定を `ProviderCapabilities` へ移行した。
@@ -811,7 +812,7 @@ based on names alone; each entry records the current producer and consumer befor
 
 | Candidate | Producer/consumer audit | Decision | Verification |
 |---|---|---|---|
-| TUI provider-derived configuration | Bootstrap/reconnect now fetch server-owned catalog/status/capabilities. Connected TUI code no longer reads local `model_provider_id`, `wire_api`, or custom `base_url` for presentation; embedded-only provider selection remains a host startup input. | `migrate-in-place` completed: consume server-derived values in connected mode; retain client-local UI configuration. | Exact TUI field audit; bootstrap/reconnect implementation; scoped `just check --tests -p genex-tui`; workspace `just check` |
+| TUI provider-derived configuration | Bootstrap/reconnect fetch server-owned catalog/status/capabilities. The connected TUI now carries the provider name into `/status`, carries the capability snapshot into the model-listing affordance, and refreshes both on reconnect; it does not read local `model_provider_id`, `wire_api`, or custom `base_url` for presentation. Embedded-only provider selection remains a host startup input. | `migrate-in-place` completed: consume server-derived values in connected mode; retain client-local UI configuration. | Exact TUI field audit; bootstrap/reconnect/status/model-popup consumers; scoped `just check --tests -p genex-tui`; workspace `just check` |
 | Remote TUI state DB access | `crates/tui/src/lib.rs` now returns no state handle for Remote, so `crates/rollout/src/state_db.rs` and `crates/state/src/runtime.rs` are not reached by remote startup. Remote AppServer remains the producer/owner of thread, rollout, credential, and provider state. | `migrate-in-place` completed: no provider-owned `StateRuntime` for Remote; no separately named client-local SQLite consumer was required. | State consumer audit; remote no-open regression test; scoped and workspace checks |
 | Remote server metadata and client identity | `crates/app-server/src` produces `AppServerIdentity`; `crates/app-server-client/src/remote.rs` consumes it into `RemoteServerMetadata`; TUI session/bootstrap/reconnect consume it for server context. | `migrate-in-place` completed: carry `{signature, version, build_version?}`. The client identity/cache key excludes provider descriptor and endpoint path; `providerKind` remains only in the home marker. | Protocol/remote/TUI identity audit; generated schema inspection; `just generate`; scoped and workspace checks |
 | Provider-derived TUI caches | `crates/tui/src/model_catalog.rs` and bootstrap/reconnect code produce in-memory catalog data. The catalog is rebuilt on reconnect and carries `(AppServerIdentity.signature, AppServerIdentity.version)`; client-local preferences remain outside this scope. | `migrate-in-place` completed: invalidate provider-derived catalog state when either identity component changes; do not add provider or endpoint keys. | Cache-scope unit test; A→B reconnect replacement; scoped `just check --tests -p genex-tui`; workspace `just check` |

@@ -86,6 +86,96 @@ use genex_model_provider::headers_to_http;
 use genex_model_provider::provider_auth;
 use genex_model_provider::resolve_provider_auth;
 
+fn provider_chat_event_from_api(
+    event: genex_api::ResponseEvent,
+) -> genex_model_provider::ProviderChatEvent {
+    match event {
+        genex_api::ResponseEvent::Created { response_id } => {
+            genex_model_provider::ProviderChatEvent::Created { response_id }
+        }
+        genex_api::ResponseEvent::SafetyBuffering(buffering) => {
+            genex_model_provider::ProviderChatEvent::SafetyBuffering(
+                genex_model_provider::ProviderSafetyBuffering {
+                    use_cases: buffering.use_cases,
+                    reasons: buffering.reasons,
+                    show_buffering_ui: buffering.show_buffering_ui,
+                    faster_model: buffering.faster_model,
+                },
+            )
+        }
+        genex_api::ResponseEvent::OutputItemDone(item) => {
+            genex_model_provider::ProviderChatEvent::OutputItemDone(item)
+        }
+        genex_api::ResponseEvent::OutputItemAdded(item) => {
+            genex_model_provider::ProviderChatEvent::OutputItemAdded(item)
+        }
+        genex_api::ResponseEvent::ServerModel(model) => {
+            genex_model_provider::ProviderChatEvent::ServerModel(model)
+        }
+        genex_api::ResponseEvent::ModelVerifications(verifications) => {
+            genex_model_provider::ProviderChatEvent::ModelVerifications(verifications)
+        }
+        genex_api::ResponseEvent::ServerReasoningIncluded(included) => {
+            genex_model_provider::ProviderChatEvent::ServerReasoningIncluded(included)
+        }
+        genex_api::ResponseEvent::Completed {
+            response_id,
+            token_usage,
+            usage_metadata,
+            end_turn,
+        } => genex_model_provider::ProviderChatEvent::Completed {
+            response_id,
+            token_usage,
+            usage_metadata,
+            end_turn,
+        },
+        genex_api::ResponseEvent::OutputTextDelta(delta) => {
+            genex_model_provider::ProviderChatEvent::OutputTextDelta(delta)
+        }
+        genex_api::ResponseEvent::ToolCallInputDelta {
+            item_id,
+            call_id,
+            delta,
+        } => genex_model_provider::ProviderChatEvent::ToolCallInputDelta {
+            item_id,
+            call_id,
+            delta,
+        },
+        genex_api::ResponseEvent::ReasoningSummaryDelta {
+            delta,
+            summary_index,
+        } => genex_model_provider::ProviderChatEvent::ReasoningSummaryDelta {
+            delta,
+            summary_index,
+        },
+        genex_api::ResponseEvent::ReasoningSummaryDone {
+            item_id,
+            text,
+            summary_index,
+        } => genex_model_provider::ProviderChatEvent::ReasoningSummaryDone {
+            item_id,
+            text,
+            summary_index,
+        },
+        genex_api::ResponseEvent::ReasoningContentDelta {
+            delta,
+            content_index,
+        } => genex_model_provider::ProviderChatEvent::ReasoningContentDelta {
+            delta,
+            content_index,
+        },
+        genex_api::ResponseEvent::ReasoningSummaryPartAdded { summary_index } => {
+            genex_model_provider::ProviderChatEvent::ReasoningSummaryPartAdded { summary_index }
+        }
+        genex_api::ResponseEvent::RateLimits(snapshot) => {
+            genex_model_provider::ProviderChatEvent::RateLimits(snapshot)
+        }
+        genex_api::ResponseEvent::ModelsEtag(etag) => {
+            genex_model_provider::ProviderChatEvent::ModelsEtag(etag)
+        }
+    }
+}
+
 /// Current app-visible account state for a model provider.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct ProviderAccountState {
@@ -578,7 +668,7 @@ impl genex_model_provider::ProviderWebsocketConnection for RuntimeWebsocketConne
                 .map_err(map_api_error_to_provider_error)?;
             Ok(Box::pin(stream.map(|event| {
                 event
-                    .map(genex_model_provider::ProviderChatEvent::from)
+                    .map(provider_chat_event_from_api)
                     .map_err(map_api_error_to_provider_error)
             })) as genex_model_provider::ProviderChatStream)
         })
@@ -782,7 +872,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         .map_err(map_api_error_to_provider_error)?;
                     Ok(Box::pin(stream.map(|event| {
                         event
-                            .map(genex_model_provider::ProviderChatEvent::from)
+                            .map(provider_chat_event_from_api)
                             .map_err(map_api_error_to_provider_error)
                     }))
                         as genex_model_provider::ProviderChatStream)
@@ -829,7 +919,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         .map_err(map_api_error_to_provider_error)?;
                     Ok(Box::pin(stream.map(|event| {
                         event
-                            .map(genex_model_provider::ProviderChatEvent::from)
+                            .map(provider_chat_event_from_api)
                             .map_err(map_api_error_to_provider_error)
                     }))
                         as genex_model_provider::ProviderChatStream)
