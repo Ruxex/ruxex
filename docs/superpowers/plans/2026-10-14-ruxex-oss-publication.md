@@ -34,11 +34,11 @@
 - Modify: `docs/provider-decoupling-candidates.md`
 - Create: `docs/upstream-commit-audit-2026-10-14.md` if the existing ledger needs a new dated section
 
-- [ ] Record the current `origin/main`, `ruxex/develop`, local `main`, and local `develop` commit IDs and remote roles.
-- [ ] Define the public-tree allowlist: runtime/source, root-level user-facing text, legal notices, third-party licenses, reproducibility metadata, and required examples. Treat the development `docs/` tree as a final removal target.
-- [ ] Classify each internal design document, inspection artifact, audit log, and generated artifact as `retain`, `move-to-private-record`, or `remove` before deleting anything.
-- [ ] Record each decision in the compatibility inventory before changing the corresponding files.
-- [ ] Commit the baseline decision separately and push it to `ruxex/develop`.
+- [x] Record the current `origin/main`, `ruxex/develop`, local `main`, and local `develop` commit IDs and remote roles.
+- [x] Define the public-tree allowlist: runtime/source, root-level user-facing text, legal notices, third-party licenses, reproducibility metadata, and required examples. Treat the development `docs/` tree as a final removal target.
+- [x] Classify each internal design document, inspection artifact, audit log, and generated artifact as `retain`, `move-to-private-record`, or `remove` before deleting anything.
+- [x] Record each decision in the compatibility inventory before changing the corresponding files.
+- [x] Commit the baseline decision separately and push it to `ruxex/develop`.
 
 ### Task 2: Confirm Ruxex legal and package identity
 
@@ -49,13 +49,13 @@
 - Modify: root `Cargo.toml` and all affected `crates/*/Cargo.toml`
 - Modify: package metadata and user-facing documentation identified by the name audit
 
-- [ ] Confirm `Ruxex` as the product and organization name, and record trademark/domain/package-name clearance results outside the code rename.
-- [ ] Decide the exact copyright notice for new Ruxex-authored changes and retain required upstream attribution.
-- [ ] State plainly that Ruxex is derived from/forked from Codex, without presenting Ruxex as an OpenAI product.
-- [ ] Audit every package name, Rust crate name, binary name, environment variable, data-root marker, protocol/schema identifier, fixture, and documentation link.
-- [ ] Rename repository-owned identifiers in a controlled wave; preserve external wire identifiers and historical/legal records in the inventory.
-- [ ] Run the repository name audit and inspect all remaining matches manually.
-- [ ] Run `just check`, `just check --tests`, `just generate`, and `git diff --check`.
+- [x] Record preliminary Ruxex trademark/domain/package-name checks outside the code rename; leave formal legal clearance as an explicit publication gate.
+- [x] Decide the exact copyright notice for new Ruxex-authored changes and retain required upstream attribution.
+- [x] State plainly that Ruxex is derived from/forked from Codex, without presenting Ruxex as an OpenAI product.
+- [x] Audit every package name, Rust crate name, binary name, environment variable, data-root marker, protocol/schema identifier, fixture, and documentation link.
+- [x] Rename repository-owned identifiers in a controlled wave; preserve external wire identifiers and historical/legal records in the inventory.
+- [x] Run the repository name audit and inspect all remaining matches manually.
+- [x] Run `just check`, `just check --tests`, `just generate`, and `git diff --check`.
 
 ### Task 3: Migrate OpenAI-derived library forks
 
