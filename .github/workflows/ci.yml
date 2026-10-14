@@ -36,7 +36,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install --yes clang cmake just libssl-dev pkg-config
+          sudo apt-get install --yes binutils clang cmake just libssl-dev mold pkg-config
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
