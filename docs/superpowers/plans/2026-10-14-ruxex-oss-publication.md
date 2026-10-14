@@ -104,12 +104,18 @@
 - Create or modify: `.github/CODEOWNERS`, issue templates, `SECURITY.md`, and contribution documentation
 - Modify: `justfile` or CI helper scripts when needed
 
-- [ ] Add pull-request and `main`-push jobs for Linux and macOS covering Cargo check, build, and test targets through the supported repository recipes.
-- [ ] Pin toolchain and action versions, configure Rusty V8 caching, and avoid exposing credentials in logs.
-- [ ] Ensure CI can build from a clean checkout without the old OpenAI artifact release or private organization access.
+- [x] Add pull-request and `main`-push jobs for Linux and macOS covering Cargo check, build, and test targets through the supported repository recipes.
+- [x] Pin toolchain and action versions, configure Rusty V8 caching, and avoid exposing credentials in logs.
+- [x] Ensure CI can build from a clean checkout without the old OpenAI artifact release or private organization access for ordinary Rusty V8 artifacts.
 - [ ] Replace Codex-specific issue templates, ownership paths, links, and support language that are repository-owned.
 - [ ] Add a public contribution/security policy and state the supported platforms and provider-host model.
 - [ ] Validate workflow syntax and perform at least one successful run for pull-request-equivalent and `main`-equivalent events.
+
+Implementation note (2026-10-14): `.github/workflows/ci.yml` is now present and
+the `just` recipes default to direct `cargo`, with `RUXEX_CARGO_RUNNER` retained
+as an optional local override. Local recipe checks and a memory-limited
+workspace build passed; a hosted GitHub Actions run still requires a pull
+request or a push to `main`.
 
 ### Task 6: Finalize upstream synchronization policy
 

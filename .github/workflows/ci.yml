@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 2
+
+jobs:
+  verify:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-14
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang cmake just libglib2.0-dev libssl-dev pkg-config
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install cmake just pkg-config
+
+      - name: Select repository Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal \
+            --component clippy --component rustfmt --component rust-src
+          rustup default 1.98.1
+          rustc --version --verbose
+
+      - name: Restore Cargo and native artifact caches
+        uses: actions/cache@v4.2.3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            .build-cache/gstreamer
+            .build-cache/rusty-v8
+          key: ${{ runner.os }}-rust-1.98.1-${{ hashFiles('Cargo.lock', 'third_party/voice/sources.json', 'third_party/v8/*') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-1.98.1-
+
+      - name: Check production and test targets
+        run: just check --tests
+
+      - name: Build workspace
+        run: just build --workspace
+
+      - name: Run workspace tests
+        run: just test-cargo --workspace

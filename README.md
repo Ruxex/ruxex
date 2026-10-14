@@ -205,12 +205,13 @@ the neutral contract.
   and built-in adapters.
 - `docs/`: architecture, compatibility, provider-boundary, and generated
   protocol documentation.
+- `.github/workflows/`: Linux/macOS pull-request and `main` verification.
 - `scripts/`, `tools/`: development and generation helpers.
 - `third_party/`: vendored native sources and metadata.
 
-Standalone TypeScript/Python SDKs, package publishing, GitHub Actions, and
-Bazel build infrastructure are not maintained in this fork. AppServer JSON and
-TypeScript schemas remain under `crates/app-server-protocol/schema/`.
+Standalone TypeScript/Python SDKs, package publishing, and Bazel build
+infrastructure are not maintained in this fork. AppServer JSON and TypeScript
+schemas remain under `crates/app-server-protocol/schema/`.
 
 ## Development
 

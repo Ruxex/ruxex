@@ -102,6 +102,20 @@ build input, not a Ruxex binary distribution.
 | `scripts/download-rusty-v8.sh` and checked-in checksums | `just` recipes use the helper for checks/build/test; it downloads ordinary and sandbox variants and verifies the repository's manifests. | `migrate-in-place` later: use official artifacts where available, keep checksum/cache behavior, and define the sandbox source/custom-archive path |
 | V8 binary distribution | Ruxex is a library/workspace; no release or package should ship a V8 binary to library users. | `retain` consumer-side build/artifact resolution; do not add V8 binaries to Ruxex releases |
 
+## Repository-owned CI boundary (2026-10-14)
+
+The repository-owned verification contract is a Linux/macOS matrix that runs
+for pull requests and pushes to `main`. The jobs use the checked-in `just`
+recipes, so native GStreamer and Rusty V8 setup remains identical between
+local verification and hosted CI. The workflow does not use the unavailable
+`rtk` wrapper and does not require private OpenAI organization access.
+
+| Surface | Producer / consumer audit | Decision | Verification |
+|---|---|---|---|
+| `.github/workflows/ci.yml` | Pull requests and `main` pushes consume the workflow; the Rust workspace and `just` recipes produce the check, build, and test targets. | `migrate-in-place`: add repository-owned Linux/macOS verification while preserving the existing build/test contract | Workflow structure review; `just check --tests`; memory-limited `just build --workspace`; `git diff --check`; hosted run remains pending |
+| `justfile` Cargo invocation | Existing recipes used the local `rtk` wrapper, which is not a repository or hosted-runner dependency. Developers and CI need a direct Cargo path, while local users may still opt into a wrapper. | `migrate-in-place`: use `RUXEX_CARGO_RUNNER` with `cargo` as the default; retain `just test` for nextest and add `test-cargo` for the standard harness | `just --list`; dry-run recipe inspection; memory-limited `just check --tests` and `just build --workspace` |
+| README build-system description | The README described GitHub Actions as unmaintained, conflicting with the new workflow; no active consumer requires that statement. | `migrate-in-place`: document the workflow and remove the obsolete claim; retain the separate decision that Bazel and standalone SDKs are not maintained | README diff review; exact workflow/path inspection |
+
 ## Single-provider boundary follow-up (2026-10-09)
 
 | Surface | Producer / consumer audit | Decision |

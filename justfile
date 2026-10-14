@@ -6,6 +6,7 @@ set shell := ["python3", "-c", 'import os, runpy; runpy.run_path(os.environ["JUS
 
 rust_min_stack := "8388608" # 8 MiB
 python := "python3"
+cargo_runner := env_var_or_default("RUXEX_CARGO_RUNNER", "cargo")
 
 # Display help
 help:
@@ -14,11 +15,11 @@ help:
 # Run the provider-owned sample host with the same native GStreamer and rusty_v8 setup as `check`.
 alias c := run
 run *args:
-    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo run -p ruxex-provider-host-example -- "$@"
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- {{ cargo_runner }} run -p ruxex-provider-host-example -- "$@"
 
 # Build and stage the local runtime package used by the Tauri desktop app.
 before-desktop:
-    systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo build -p ruxex-provider-host-example -p ruxex-code-mode-host
+    systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- {{ cargo_runner }} build -p ruxex-provider-host-example -p ruxex-code-mode-host
     pnpm --dir {{ justfile_directory() }}/apps/desktop run stage:runtime --output {{ justfile_directory() }}/apps/desktop/src-tauri/resources/ruxex-package --ruxex-bin {{ justfile_directory() }}/target/debug/ruxex-provider-host-example --code-mode-host {{ justfile_directory() }}/target/debug/ruxex-code-mode-host
 
 # Start the local Tauri desktop application in development mode.
@@ -61,7 +62,7 @@ fix *args:
     cargo clippy --fix --tests --allow-dirty {args}
 
 clippy *args:
-    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo clippy --tests "$@"
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- {{ cargo_runner }} clippy --tests "$@"
 
 [unix]
 install:
@@ -75,12 +76,22 @@ install:
 # there should be no need to add `--all-features`.
 [unix]
 test *args:
-    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo nextest run --no-fail-fast "$@"
+    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- {{ cargo_runner }} nextest run --no-fail-fast "$@"
+
+# Run the standard Cargo test harness when cargo-nextest is not available.
+[unix]
+test-cargo *args:
+    RUST_MIN_STACK={{ rust_min_stack }} {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- {{ cargo_runner }} test "$@"
+
+# Build the workspace with the same native inputs used by `check` and `test`.
+[unix]
+build *args:
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- {{ cargo_runner }} build "$@"
 
 # Type-check with the same native V8 and GStreamer inputs used by `just test`.
 [unix]
 check *args:
-    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo check "$@"
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- {{ cargo_runner }} check "$@"
 
 # Run explicit workspace benchmark targets.
 bench *args:
