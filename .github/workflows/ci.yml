@@ -84,7 +84,7 @@ jobs:
         run: just build --workspace
 
   test-archive:
-    name: test archive (${{ matrix.os }})
+    name: test archive (${{ matrix.os }}, ${{ matrix.group }})
     runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
     env:
       CARGO_INCREMENTAL: 0
@@ -94,6 +94,81 @@ jobs:
         os:
           - linux
           - macos
+        group:
+          - core
+          - app
+          - runtime
+        include:
+          - group: core
+            filter: >-
+              package(ruxex-core*) |
+              package(ruxex-config*) |
+              package(ruxex-state) |
+              package(ruxex-history) |
+              package(ruxex-thread-store) |
+              package(ruxex-message-history) |
+              package(ruxex-model*) |
+              package(ruxex-providers) |
+              package(ruxex-protocol) |
+              package(ruxex-api) |
+              package(ruxex-context-fragments) |
+              package(ruxex-prompts) |
+              package(ruxex-rollout*) |
+              package(core_test_support) |
+              package(ruxex-agent-graph-store) |
+              package(ruxex-agent-roles) |
+              package(ruxex-attachment-store) |
+              package(ruxex-provider-host-example)
+          - group: app
+            filter: >-
+              package(ruxex-app-server*) |
+              package(ruxex-cli) |
+              package(ruxex-tui) |
+              package(ruxex-code-mode*) |
+              package(ruxex-plugin) |
+              package(ruxex-skills*) |
+              package(ruxex-tools) |
+              package(ruxex-extension*) |
+              package(ruxex-*-extension) |
+              package(ruxex-mcp) |
+              package(ruxex-rmcp-client) |
+              package(ruxex-desktop) |
+              package(app_test_support)
+          - group: runtime
+            filter: >-
+              not (
+                package(ruxex-core*) |
+                package(ruxex-config*) |
+                package(ruxex-state) |
+                package(ruxex-history) |
+                package(ruxex-thread-store) |
+                package(ruxex-message-history) |
+                package(ruxex-model*) |
+                package(ruxex-providers) |
+                package(ruxex-protocol) |
+                package(ruxex-api) |
+                package(ruxex-context-fragments) |
+                package(ruxex-prompts) |
+                package(ruxex-rollout*) |
+                package(core_test_support) |
+                package(ruxex-agent-graph-store) |
+                package(ruxex-agent-roles) |
+                package(ruxex-attachment-store) |
+                package(ruxex-provider-host-example) |
+                package(ruxex-app-server*) |
+                package(ruxex-cli) |
+                package(ruxex-tui) |
+                package(ruxex-code-mode*) |
+                package(ruxex-plugin) |
+                package(ruxex-skills*) |
+                package(ruxex-tools) |
+                package(ruxex-extension*) |
+                package(ruxex-*-extension) |
+                package(ruxex-mcp) |
+                package(ruxex-rmcp-client) |
+                package(ruxex-desktop) |
+                package(app_test_support)
+              )
 
     steps:
       - name: Check out source
@@ -143,24 +218,41 @@ jobs:
           version: 0.9.103
 
       - name: Build nextest archive
+        env:
+          NEXTEST_FILTERSET: ${{ matrix.filter }}
         run: |
           mkdir -p "$RUNNER_TEMP/ruxex-nextest"
-          just test-archive "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}.tar.zst"
+          just test-archive \
+            "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst" \
+            "$NEXTEST_FILTERSET"
+
+      - name: Inspect disk after archive build
+        if: always()
+        run: |
+          df -h .
+          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
+            if [ -e "$path" ]; then
+              du -sh "$path"
+            fi
+          done
+          if [ -d "$RUNNER_TEMP/ruxex-nextest" ]; then
+            du -sh "$RUNNER_TEMP/ruxex-nextest"/* 2>/dev/null || true
+          fi
 
       - name: Upload nextest archive
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: ruxex-nextest-${{ matrix.os }}
-          path: ${{ runner.temp }}/ruxex-nextest/ruxex-nextest-${{ matrix.os }}.tar.zst
+          name: ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}
+          path: ${{ runner.temp }}/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst
           if-no-files-found: error
           retention-days: 1
 
   test-shard:
-    name: test shard (${{ matrix.os }}, ${{ matrix.shard }}/4)
+    name: test group (${{ matrix.os }}, ${{ matrix.group }})
     needs:
       - build
       - test-archive
-    if: ${{ always() && needs.build.result == 'success' }}
+    if: ${{ needs.build.result == 'success' && needs.test-archive.result == 'success' }}
     runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
@@ -168,11 +260,10 @@ jobs:
         os:
           - linux
           - macos
-        shard:
-          - 1
-          - 2
-          - 3
-          - 4
+        group:
+          - core
+          - app
+          - runtime
 
     steps:
       - name: Check out source
@@ -206,7 +297,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-rust-1.98.1-deps-v3-
 
-      - name: Inspect disk before test shard
+      - name: Inspect disk before test group
         run: |
           df -h .
           for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
@@ -224,11 +315,10 @@ jobs:
       - name: Download nextest archive
         uses: actions/download-artifact@v4.3.0
         with:
-          name: ruxex-nextest-${{ matrix.os }}
+          name: ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}
           path: ${{ runner.temp }}/ruxex-nextest
 
-      - name: Run test shard
+      - name: Run test group
         run: |
           just test-archive-run \
-            "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}.tar.zst" \
-            --partition "hash:${{ matrix.shard }}/4"
+            "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst"
