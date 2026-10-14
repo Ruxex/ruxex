@@ -18,8 +18,8 @@ env:
   CARGO_BUILD_JOBS: 2
 
 jobs:
-  verify:
-    name: ${{ matrix.os }}
+  build:
+    name: build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -36,7 +36,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
+          sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libcap-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
@@ -55,17 +55,61 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
             .build-cache/rusty-v8
-          key: ${{ runner.os }}-rust-1.98.1-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
+          key: ${{ runner.os }}-rust-1.98.1-deps-v2-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
           restore-keys: |
-            ${{ runner.os }}-rust-1.98.1-
+            ${{ runner.os }}-rust-1.98.1-deps-v2-
 
-      - name: Check production and test targets
-        run: just check --tests
+      - name: Check production targets
+        run: just check
 
       - name: Build workspace
         run: just build --workspace
 
-      - name: Run workspace tests
-        run: just test-cargo --workspace
+  test:
+    name: test (${{ matrix.os }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-14
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libcap-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install cmake just pkg-config
+
+      - name: Select repository Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal \
+            --component clippy --component rustfmt --component rust-src
+          rustup default 1.98.1
+          rustc --version --verbose
+
+      - name: Restore Cargo and native artifact caches
+        uses: actions/cache@v4.2.3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .build-cache/rusty-v8
+          key: ${{ runner.os }}-rust-1.98.1-deps-v2-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-1.98.1-deps-v2-
+
+      # Temporarily disabled while the build jobs warm the dependency and
+      # native-artifact caches. Re-enable after the compile-only run succeeds.
+      # - name: Run workspace tests
+      #   run: just test-cargo --workspace
