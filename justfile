@@ -70,12 +70,12 @@ test-cargo *args: prepare-rusty-v8
 # Build a portable nextest archive for CI test sharding.
 [unix]
 test-archive archive_file *args: prepare-rusty-v8
-    RUST_MIN_STACK={{ rust_min_stack }} RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest archive --workspace --archive-file "{{ archive_file }}" "$@"
+    RUST_MIN_STACK={{ rust_min_stack }} RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest archive --workspace --archive-file "{{ archive_file }}" {{ args }}
 
 # Run one shard from a previously built nextest archive.
 [unix]
 test-archive-run archive_file *args: prepare-rusty-v8
-    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=default RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest run --no-fail-fast --archive-file "{{ archive_file }}" "$@"
+    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=default RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest run --no-fail-fast --archive-file "{{ archive_file }}" {{ args }}
 
 # Build the workspace with the same native V8 input used by `check` and `test`.
 [unix]
