@@ -80,6 +80,28 @@ does not waive the eventual license, history, patch, and availability audit.
 | `tungstenite` | Root Cargo patch and lockfile resolve the WebSocket implementation used through `tokio-tungstenite`. | Fork history adds environment proxy support and the WASM32 deflate compatibility change. | `migrate-in-place` to a Ruxex-owned mirror; retain MIT/Apache license files and package name |
 | Temporary fork URLs and upstream history | Current Cargo source URLs identify the temporary fork namespace; author history, upstream links, and license files are part of dependency provenance. | No Ruxex repositories are present yet; the user explicitly deferred this migration. | `retain for now`; later remove temporary URLs from active declarations while retaining provenance in `CREDITS.md` |
 
+## Rusty V8 artifact ownership and sandbox boundary (2026-10-14)
+
+The workspace pins `v8 = 150.4.0` and enables `v8_enable_sandbox` in the
+code-mode runtime. The official `denoland/rusty_v8` release mechanism is the
+correct Cargo-level artifact owner for ordinary supported variants: the crate
+build script selects the archive and binding by version, target, profile, and
+features. It does not make the V8 binary part of a Rust library dependency.
+
+The official `v150.4.0` release publishes ordinary and pointer-compression
+archives, but not a `v8_enable_sandbox` prebuilt archive. The upstream crate
+documents sandbox as an experimental feature requiring `V8_FROM_SOURCE=1` or
+a custom archive. The current download helper therefore still consumes the
+historical `openai/codex` release for the sandbox variant. This is a temporary
+build input, not a Ruxex binary distribution.
+
+| Surface | Producer / consumer audit | Decision |
+|---|---|---|
+| Cargo `v8` dependency and official ordinary artifacts | `v8` build.rs resolves official release URLs through `RUSTY_V8_MIRROR`; downstream library consumers invoke the same build path. | `retain` official `rusty_v8` artifact ownership |
+| `v8_enable_sandbox` | `code-mode-runtime` requires the feature and tests the linked sandbox symbol. Official prebuilt releases do not provide the matching archive. | `retain` current security behavior; require source/custom-artifact decision before removing the temporary bridge |
+| `scripts/download-rusty-v8.sh` and checked-in checksums | `just` recipes use the helper for checks/build/test; it downloads ordinary and sandbox variants and verifies the repository's manifests. | `migrate-in-place` later: use official artifacts where available, keep checksum/cache behavior, and define the sandbox source/custom-archive path |
+| V8 binary distribution | Ruxex is a library/workspace; no release or package should ship a V8 binary to library users. | `retain` consumer-side build/artifact resolution; do not add V8 binaries to Ruxex releases |
+
 ## Single-provider boundary follow-up (2026-10-09)
 
 | Surface | Producer / consumer audit | Decision |

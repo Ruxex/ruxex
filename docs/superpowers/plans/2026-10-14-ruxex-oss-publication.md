@@ -78,6 +78,12 @@
 
 ### Task 4: Resolve Rusty V8 artifact ownership
 
+> Current ruling: keep the sandbox-enabled bridge unchanged until the
+> security/build-path decision is complete. Official `rusty_v8` artifacts are
+> the target for ordinary variants, but the pinned official release does not
+> publish a prebuilt archive for `v8_enable_sandbox`; do not silently disable
+> that feature.
+
 **Files:**
 - Modify: `scripts/download-rusty-v8.sh`
 - Modify: `third_party/v8/README.md`

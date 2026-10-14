@@ -35,6 +35,20 @@ rename:
 | Remaining Codex names in protocol, legal, historical, upstream, and third-party contexts | Classify the producer/consumer and legal provenance before any rename. | `retain` or `migrate-in-place` per finding |
 | Ruxex trademark and package-name clearance | Check relevant trademark registries and package registries with legal review; repository search alone is insufficient. | `retain` as an open publication gate |
 
+## Rusty V8 artifact follow-up (2026-10-14)
+
+`v8 = 150.4.0` can use the official `denoland/rusty_v8` release mechanism
+through the crate build script, but the active `v8_enable_sandbox` feature has
+no matching official prebuilt archive. Do not remove the sandbox feature or
+change the helper to an ordinary official archive without a separate security
+and build-path decision.
+
+| Candidate | Producer / consumer audit required | Initial decision |
+|---|---|---|
+| Official ordinary `rusty_v8` artifacts | Verify Linux/macOS target coverage, cache behavior, binding selection, and checksum policy against the pinned crate release. | `migrate-in-place` |
+| Sandbox-enabled V8 artifact | Decide between consumer-side `V8_FROM_SOURCE=1`, a documented custom archive, or a future official sandbox release; preserve the linked sandbox check. | `retain` current bridge; resolve later |
+| V8 binary packaging | Verify library consumers can resolve the artifact through Cargo/build.rs and that no release asset embeds V8 binaries. | `retain` consumer-side resolution; `remove` any future Ruxex binary bundling |
+
 ## 単一Provider runtimeの最終境界監査 (2026-10-09)
 
 ### 固定CLIバイナリのホスト移行監査 (2026-10-13)
